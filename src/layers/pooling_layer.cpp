@@ -1,4 +1,5 @@
 #include "pooling_layer.h"
+#include "kernel.h"
 
 PoolingLayer::PoolingLayer(LayerType type) { layer_type_ = type; }
 PoolingLayer::~PoolingLayer() {}
@@ -69,8 +70,8 @@ void PoolingLayer::ForwardLayer() {
 
 #ifdef USE_CL
 void PoolingLayer::CLForwardLayer() {
-  CL::CLPooling(cl_in_data_, batch_, in_c_, in_h_, in_w_, ksize_, stride_,
-                out_h_, out_w_, pool_type_, cl_out_data_);
+  Kernel::CLPooling(cl_in_data_, batch_, in_c_, in_h_, in_w_, ksize_, stride_,
+                    out_h_, out_w_, pool_type_, cl_out_data_);
 }
 #endif
 

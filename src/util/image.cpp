@@ -1,8 +1,5 @@
 #include "image.h"
 
-Image::Image() {}
-Image::~Image() {}
-
 void Image::GetFloatData(unsigned char *image, int width, int height,
                          int channel, float *data) {
   int step = width * channel;
@@ -16,8 +13,8 @@ void Image::GetFloatData(unsigned char *image, int width, int height,
   }
 }
 
-float Image::Im2ColGetPixel(float *image, int in_h, int in_w, int im_row,
-                            int im_col, int channel, int pad) {
+float Im2ColGetPixel(float *image, int in_h, int in_w, int im_row, int im_col,
+                     int channel, int pad) {
   im_row -= pad;
   im_col -= pad;
   if (im_row < 0 || im_col < 0 || im_row >= in_h || im_col >= in_w)
@@ -66,26 +63,3 @@ void Image::Im2Col(float *im_data, int in_c, int in_h, int in_w, int ksize,
   //    }
   //  }
 }
-
-#ifdef USE_CL
-void Image::CLIm2Col(cl_mem im_data, int offset, int in_c, int in_h, int in_w,
-                     int ksize, int stride, int pad, int out_h, int out_w,
-                     cl_mem col_data) {
-  cl_kernel kernel = CL::cl_im2col_kernel_->GetKernel();
-  clSetKernelArg(kernel, 0, sizeof(cl_mem), &im_data);
-  clSetKernelArg(kernel, 1, sizeof(int), &offset);
-  clSetKernelArg(kernel, 2, sizeof(int), &in_c);
-  clSetKernelArg(kernel, 3, sizeof(int), &in_h);
-  clSetKernelArg(kernel, 4, sizeof(int), &in_w);
-  clSetKernelArg(kernel, 5, sizeof(int), &ksize);
-  clSetKernelArg(kernel, 6, sizeof(int), &stride);
-  clSetKernelArg(kernel, 7, sizeof(int), &pad);
-  clSetKernelArg(kernel, 8, sizeof(int), &out_h);
-  clSetKernelArg(kernel, 9, sizeof(int), &out_w);
-  clSetKernelArg(kernel, 10, sizeof(cl_mem), &col_data);
-  size_t global = in_c * out_h * out_w;
-  clEnqueueNDRangeKernel(*CL::easyCL->queue, kernel, 1, NULL, &global, NULL, 0,
-                         NULL, NULL);
-  clFinish(*CL::easyCL->queue);
-}
-#endif

@@ -2,13 +2,10 @@
 #define SHADOW_LAYER_H
 
 #include "activations.h"
-
-#ifdef USE_CL
 #include "cl.h"
-#endif
 
-#include <string>
 #include <iostream>
+#include <string>
 
 struct SizeParams {
   int batch;

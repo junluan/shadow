@@ -7,6 +7,7 @@
 #include "dropout_layer.h"
 #include "layer.h"
 #include "pooling_layer.h"
+
 #include <vector>
 
 class Network {

@@ -1,11 +1,13 @@
 #include "yolo.h"
 #include "cl.h"
-#include "parser.h"
 #include "image.h"
+#include "kernel.h"
+#include "parser.h"
 #include "util.h"
 
 #include <boost/algorithm/string.hpp>
 #include <ctime>
+
 using namespace std;
 
 Yolo::Yolo(string cfgfile, string weightfile, float threshold) {
@@ -18,6 +20,7 @@ Yolo::~Yolo() {}
 void Yolo::Setup() {
 #ifdef USE_CL
   CL::CLSetup();
+  Kernel::KernelSetup();
 #endif
   Parser parser;
   parser.ParseNetworkCfg(net_, cfgfile_);
@@ -33,6 +36,7 @@ void Yolo::Setup() {
 void Yolo::Release() {
   net_.ReleaseNetwork();
 #ifdef USE_CL
+  Kernel::KernelRelease();
   CL::CLRelease();
 #endif
 }
@@ -189,7 +193,7 @@ void Yolo::PredictYoloDetections(vector<cv::Mat> &images,
     for (int i = count; i < b * batch && i < num_im; ++i, ++c) {
       cv::resize(images[i], sized, cv::Size(net_.in_w_, net_.in_h_));
       Image::GetFloatData(sized.data, net_.in_w_, net_.in_h_, net_.in_c_,
-                                 index);
+                          index);
       index += net_.in_num_;
     }
     float *predictions = net_.NetworkPredict(data);

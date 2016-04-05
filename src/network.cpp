@@ -1,8 +1,5 @@
 #include "network.h"
-
-#ifdef USE_CL
 #include "cl.h"
-#endif
 
 Network::Network() {}
 Network::~Network() {}

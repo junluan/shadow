@@ -1,4 +1,5 @@
 #include "data_layer.h"
+#include "kernel.h"
 
 DataLayer::DataLayer(LayerType type) { layer_type_ = type; }
 DataLayer::~DataLayer() {}
@@ -37,8 +38,8 @@ void DataLayer::ForwardLayer(float *in_data) {
 void DataLayer::CLForwardLayer(float *in_data) {
   in_data_ = in_data;
   CL::CLWriteBuffer(batch_ * in_num_, cl_in_data_, in_data_);
-  CL::CLDataTransform(batch_ * out_num_, cl_in_data_, scale_, mean_value_,
-                      cl_out_data_);
+  Kernel::CLDataTransform(batch_ * out_num_, cl_in_data_, scale_, mean_value_,
+                          cl_out_data_);
 }
 #endif
 

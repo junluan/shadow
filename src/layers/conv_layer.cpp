@@ -1,6 +1,7 @@
 #include "conv_layer.h"
 #include "blas.h"
 #include "image.h"
+#include "kernel.h"
 
 int convolutional_out_size(int s, int size, int pad, int stride) {
   return (s + 2 * pad - size) / stride + 1;
@@ -67,8 +68,8 @@ void BiasOutput(float *out_data, float *biases, int batch, int n, int size) {
 void ConvLayer::ForwardLayer() {
   BiasOutput(out_data_, biases_, batch_, out_c_, out_map_size_);
   for (int b = 0; b < batch_; ++b) {
-    Image::Im2Col(in_data_ + b * in_num_, in_c_, in_h_, in_w_, ksize_,
-                         stride_, pad_, out_h_, out_w_, col_image_);
+    Image::Im2Col(in_data_ + b * in_num_, in_c_, in_h_, in_w_, ksize_, stride_,
+                  pad_, out_h_, out_w_, col_image_);
     Blas::BlasSGemm(0, 0, out_c_, out_map_size_, kernel_num_, 1, filters_,
                     kernel_num_, col_image_, out_map_size_, 1,
                     out_data_ + b * out_num_, out_map_size_);
@@ -78,16 +79,15 @@ void ConvLayer::ForwardLayer() {
 
 #ifdef USE_CL
 void ConvLayer::CLForwardLayer() {
-  CL::CLBiasOutput(cl_biases_, batch_, out_c_, out_map_size_, cl_out_data_);
+  Kernel::CLBiasOutput(cl_biases_, batch_, out_c_, out_map_size_, cl_out_data_);
   for (int b = 0; b < batch_; ++b) {
-    Image::CLIm2Col(cl_in_data_, b * in_num_, in_c_, in_h_, in_w_,
-                           ksize_, stride_, pad_, out_h_, out_w_,
-                           cl_col_image_);
+    Kernel::CLIm2Col(cl_in_data_, b * in_num_, in_c_, in_h_, in_w_, ksize_,
+                     stride_, pad_, out_h_, out_w_, cl_col_image_);
     Blas::CLBlasSGemm(0, 0, out_c_, out_map_size_, kernel_num_, 1, cl_filters_,
                       kernel_num_, cl_col_image_, out_map_size_, 1,
                       cl_out_data_, b * out_num_, out_map_size_);
   }
-  Activations::CLActivateArray(batch_ * out_num_, activation_, cl_out_data_);
+  Kernel::CLActivateArray(batch_ * out_num_, activation_, cl_out_data_);
 }
 #endif
 

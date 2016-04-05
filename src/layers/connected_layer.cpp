@@ -1,5 +1,6 @@
 #include "connected_layer.h"
 #include "blas.h"
+#include "kernel.h"
 
 ConnectedLayer::ConnectedLayer(LayerType type) { layer_type_ = type; }
 ConnectedLayer::~ConnectedLayer() {}
@@ -39,10 +40,10 @@ void ConnectedLayer::ForwardLayer() {
 
 #ifdef USE_CL
 void ConnectedLayer::CLForwardLayer() {
-  CL::CLBiasOutput(cl_biases_, batch_, out_num_, 1, cl_out_data_);
+  Kernel::CLBiasOutput(cl_biases_, batch_, out_num_, 1, cl_out_data_);
   Blas::CLBlasSGemm(0, 0, batch_, out_num_, in_num_, 1, cl_in_data_, in_num_,
                     cl_weights_, out_num_, 1, cl_out_data_, 0, out_num_);
-  Activations::CLActivateArray(batch_ * out_num_, activation_, cl_out_data_);
+  Kernel::CLActivateArray(batch_ * out_num_, activation_, cl_out_data_);
 }
 #endif
 

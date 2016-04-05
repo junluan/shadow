@@ -1,10 +1,8 @@
 #include "parser.h"
-#include "util.h"
-#include <fstream>
-
-#ifdef USE_CL
 #include "cl.h"
-#endif
+#include "util.h"
+
+#include <fstream>
 
 using namespace std;
 

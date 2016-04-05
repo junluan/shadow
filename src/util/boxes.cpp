@@ -1,8 +1,5 @@
 #include "boxes.h"
 
-Boxes::Boxes() {}
-Boxes::~Boxes() {}
-
 float BoxArea(Box box) { return box.w * box.h; }
 
 float BoxesOverlap(float x1, float w1, float x2, float w2) {
