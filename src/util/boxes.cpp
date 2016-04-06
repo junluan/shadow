@@ -24,38 +24,51 @@ float Boxes::BoxesIoU(Box box_a, Box box_b) {
   return BoxesIntersection(box_a, box_b) / BoxesUnion(box_a, box_b);
 }
 
-void Boxes::BoxesNMS(VecBox &boxes, int num_classes, float iou_threshold) {
+void Boxes::BoxesNMS(VecBox &boxes, float iou_threshold) {
   for (int i = 0; i < boxes.size(); ++i) {
-    bool is_object = false;
-    for (int k = 0; k < num_classes; ++k)
-      is_object |= (boxes[i].probability[k] > 0);
-    if (!is_object)
+    if (boxes[i].class_index == -1)
       continue;
     for (int j = i + 1; j < boxes.size(); ++j) {
+      if (boxes[j].class_index == -1 ||
+          boxes[i].class_index != boxes[j].class_index)
+        continue;
       if (BoxesIoU(boxes[i], boxes[j]) > iou_threshold) {
-        for (int k = 0; k < num_classes; ++k) {
-          if (boxes[i].probability[k] < boxes[j].probability[k])
-            boxes[i].probability[k] = 0;
-          else
-            boxes[j].probability[k] = 0;
-        }
+        if (boxes[i].score < boxes[j].score)
+          boxes[i].class_index = -1;
+        else
+          boxes[j].class_index = -1;
+        continue;
+      }
+      float in = BoxesIntersection(boxes[i], boxes[j]);
+      float cover_i = in / BoxArea(boxes[i]);
+      float cover_j = in / BoxArea(boxes[j]);
+      if (cover_i > cover_j && cover_i > 0.7) {
+        boxes[i].class_index = -1;
+      }
+      if (cover_i < cover_j && cover_j > 0.7) {
+        boxes[j].class_index = -1;
       }
     }
-    if (boxes[i].w / boxes[i].h < 0.3) {
-      // for (int k = 0; k < num_classes; ++k)
-      //  boxes[i].probability[k] = 0;
-    }
+  }
+}
 
-    int index = 0;
-    float value = boxes[i].probability[0];
-    for (int k = 1; k < num_classes; ++k) {
-      if (boxes[i].probability[k] > value) {
-        index = k;
-        value = boxes[i].probability[k];
+void MergeBoxes(Box &oldBox, Box &newBox, float smooth) {
+  newBox.x = oldBox.x + (newBox.x - oldBox.x) * smooth;
+  newBox.y = oldBox.y + (newBox.y - oldBox.y) * smooth;
+  newBox.w = oldBox.w + (newBox.w - oldBox.w) * smooth;
+  newBox.h = oldBox.h + (newBox.h - oldBox.h) * smooth;
+}
+
+void Boxes::SmoothBoxes(VecBox &oldBoxes, VecBox &newBoxes, float smooth) {
+  for (int i = 0; i < newBoxes.size(); ++i) {
+    Box &newBox = newBoxes[i];
+    for (int j = 0; j < oldBoxes.size(); ++j) {
+      Box oldBox = oldBoxes[j];
+      if (BoxesIoU(newBox, oldBox) > 0.7) {
+        MergeBoxes(oldBox, newBox, smooth);
+        break;
       }
     }
-    if (value > 0)
-      boxes[i].classindex = index;
   }
 }
 

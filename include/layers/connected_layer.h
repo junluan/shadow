@@ -13,6 +13,7 @@ public:
   void MakeConnectedLayer(SizeParams params, int outputs,
                           std::string activation);
   void ForwardLayer();
+  float *GetOutData();
 
 #ifdef USE_CL
   void CLForwardLayer();

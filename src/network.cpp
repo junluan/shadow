@@ -1,5 +1,4 @@
 #include "network.h"
-#include "cl.h"
 
 Network::Network() {}
 Network::~Network() {}
@@ -57,11 +56,7 @@ float *Network::GetNetworkOutput() {
   for (i = num_layers_ - 1; i > 0; --i)
     if (layers_[i]->layer_type_ != kCost)
       break;
-#ifdef USE_CL
-  Layer *l = layers_[i];
-  CL::CLReadBuffer(l->batch_ * l->out_num_, l->cl_out_data_, l->out_data_);
-#endif
-  return layers_[i]->out_data_;
+  return layers_[i]->GetOutData();
 }
 
 void Network::SetBatchNetwork(int batch) {

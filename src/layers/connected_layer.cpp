@@ -47,6 +47,13 @@ void ConnectedLayer::CLForwardLayer() {
 }
 #endif
 
+float *ConnectedLayer::GetOutData() {
+#ifdef USE_CL
+  CL::CLReadBuffer(batch_ * out_num_, cl_out_data_, out_data_);
+#endif
+  return out_data_;
+}
+
 void ConnectedLayer::ReleaseLayer() {
   if (out_data_ != NULL)
     delete[] out_data_;

@@ -33,6 +33,7 @@ public:
 
   virtual void ForwardLayer() { std::cout << "Forward Layer!" << std::endl; }
   virtual void ForwardLayer(float *in_data) {}
+  virtual float *GetOutData() { return NULL; }
 
 #ifdef USE_CL
   virtual void CLForwardLayer() { std::cout << "Forward Layer!" << std::endl; }
