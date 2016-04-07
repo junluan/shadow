@@ -1,7 +1,6 @@
 #include "yolo.h"
 #include "cl.h"
 #include "image.h"
-#include "kernel.h"
 #include "parser.h"
 #include "util.h"
 
@@ -20,7 +19,6 @@ Yolo::~Yolo() {}
 void Yolo::Setup() {
 #ifdef USE_CL
   CL::CLSetup();
-  Kernel::KernelSetup();
 #endif
   Parser parser;
   parser.ParseNetworkCfg(net_, cfgfile_);
@@ -36,7 +34,6 @@ void Yolo::Setup() {
 void Yolo::Release() {
   net_.ReleaseNetwork();
 #ifdef USE_CL
-  Kernel::KernelRelease();
   CL::CLRelease();
 #endif
 }

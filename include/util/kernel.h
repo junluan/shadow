@@ -7,8 +7,8 @@
 #ifdef USE_CL
 class Kernel {
 public:
-  static void KernelSetup();
-  static void KernelRelease();
+  static void CLKernelSetup();
+  static void CLKernelRelease();
 
   static void CLDataTransform(int N, cl_mem in_data, float scale,
                               float mean_value, cl_mem out_data);

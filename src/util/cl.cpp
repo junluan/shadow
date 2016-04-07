@@ -1,6 +1,7 @@
 #ifdef USE_CL
 
 #include "cl.h"
+#include "kernel.h"
 #include <clBLAS.h>
 
 EasyCL *CL::easyCL = NULL;
@@ -8,9 +9,11 @@ EasyCL *CL::easyCL = NULL;
 void CL::CLSetup() {
   clblasSetup();
   easyCL = EasyCL::createForFirstGpuOtherwiseCpu(true);
+  Kernel::CLKernelSetup();
 }
 
 void CL::CLRelease() {
+  Kernel::CLKernelRelease();
   clblasTeardown();
   easyCL->~EasyCL();
 }

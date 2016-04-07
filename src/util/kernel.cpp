@@ -9,7 +9,7 @@ CLKernel *Kernel::cl_pool_kernel_ = NULL;
 CLKernel *Kernel::cl_veccopy_kernel_ = NULL;
 CLKernel *Kernel::cl_datatransform_kernel_ = NULL;
 
-void Kernel::KernelSetup() {
+void Kernel::CLKernelSetup() {
   std::string kernelfile = "./src/ocl/kernels.cl";
   cl_activations_kernel_ = CL::easyCL->buildKernel(kernelfile, "ActivateArray");
   cl_im2col_kernel_ = CL::easyCL->buildKernel(kernelfile, "Im2Col");
@@ -20,7 +20,7 @@ void Kernel::KernelSetup() {
       CL::easyCL->buildKernel(kernelfile, "DataTransform");
 }
 
-void Kernel::KernelRelease() {
+void Kernel::CLKernelRelease() {
   cl_activations_kernel_->~CLKernel();
   cl_im2col_kernel_->~CLKernel();
   cl_biasoutput_kernel_->~CLKernel();

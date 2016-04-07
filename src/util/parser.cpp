@@ -208,9 +208,8 @@ void Parser::LoadWeightsUpto(Network &net, string weightfile, int cutoff) {
   if (!file.is_open())
     error("Load weight file error!");
 
-  float garbage[3];
-  file.read((char *)&garbage, sizeof(float) * 3);
-  file.read((char *)&garbage, sizeof(int));
+  char garbage[16];
+  file.read(garbage, sizeof(char) * 16);
 
   for (int i = 0; i < net.num_layers_ && i < cutoff; ++i) {
     Layer *layer = net.layers_[i];
