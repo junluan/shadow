@@ -225,25 +225,20 @@ void Yolo::ConvertYoloDetections(float *predictions, int classes, int box_num,
       int box_index = side * side * (classes + box_num) + (i * box_num + n) * 4;
 
       float x, y, w, h;
-      x = (predictions[box_index + 0] + col) / side * width;
-      y = (predictions[box_index + 1] + row) / side * height;
-      w = pow(predictions[box_index + 2], (square ? 2 : 1)) * width;
-      h = pow(predictions[box_index + 3], (square ? 2 : 1)) * height;
+      x = (predictions[box_index + 0] + col) / side;
+      y = (predictions[box_index + 1] + row) / side;
+      w = pow(predictions[box_index + 2], (square ? 2 : 1));
+      h = pow(predictions[box_index + 3], (square ? 2 : 1));
 
-      x = x - w / 2;
-      y = y - h / 2;
+      x = constrain(0, 1, x - w / 2);
+      y = constrain(0, 1, y - h / 2);
+      w = constrain(0, 1, x + w) - x;
+      h = constrain(0, 1, y + h) - y;
 
-      x = x > 0 ? x : 0;
-      x = x < width ? x : (width - 1);
-      y = y > 0 ? y : 0;
-      y = y < height ? y : (height - 1);
-      w = (x + w) < width ? w : (width - x - 1);
-      h = (y + h) < height ? h : (height - y - 1);
-
-      boxes[index].x = x;
-      boxes[index].y = y;
-      boxes[index].w = w;
-      boxes[index].h = h;
+      boxes[index].x = x * width;
+      boxes[index].y = y * height;
+      boxes[index].w = w * width;
+      boxes[index].h = h * height;
 
       float max_score = 0;
       int max_index = -1;
