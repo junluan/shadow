@@ -14,8 +14,8 @@ public:
 
 #ifdef USE_CL
   static void CLBlasSGemm(int TA, int TB, int M, int N, int K, float ALPHA,
-                          const cl_mem &bufA, int lda, const cl_mem &bufB,
-                          int ldb, float BETA, cl_mem &bufC, int offset,
+                          const cl_mem bufA, int lda, const cl_mem bufB,
+                          int ldb, float BETA, cl_mem bufC, int offset,
                           int ldc);
 #endif
 };

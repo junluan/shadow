@@ -23,19 +23,19 @@ cl_mem CL::CLMakeBuffer(int size, cl_mem_flags flags, void *host_ptr) {
                         NULL);
 }
 
-void CL::CLReadBuffer(int size, const cl_mem &src, float *des) {
+void CL::CLReadBuffer(int size, const cl_mem src, float *des) {
   clEnqueueReadBuffer(*easyCL->queue, src, CL_TRUE, 0, size * sizeof(float),
                       des, 0, NULL, NULL);
   clFinish(*easyCL->queue);
 }
 
-void CL::CLWriteBuffer(int size, cl_mem &des, float *src) {
+void CL::CLWriteBuffer(int size, cl_mem des, const float *src) {
   clEnqueueWriteBuffer(*easyCL->queue, des, CL_TRUE, 0, size * sizeof(float),
                        src, 0, NULL, NULL);
   clFinish(*easyCL->queue);
 }
 
-void CL::CLCopyBuffer(int size, const cl_mem &src, cl_mem &des) {
+void CL::CLCopyBuffer(int size, const cl_mem src, cl_mem des) {
   clEnqueueCopyBuffer(*easyCL->queue, src, des, 0, 0, size * sizeof(float), 0,
                       NULL, NULL);
   clFinish(*easyCL->queue);

@@ -85,8 +85,8 @@ void Blas::BlasSGemm(int TA, int TB, int M, int N, int K, float ALPHA, float *A,
 
 #ifdef USE_CL
 void Blas::CLBlasSGemm(int TA, int TB, int M, int N, int K, float ALPHA,
-                       const cl_mem &bufA, int lda, const cl_mem &bufB, int ldb,
-                       float BETA, cl_mem &bufC, int offset, int ldc) {
+                       const cl_mem bufA, int lda, const cl_mem bufB, int ldb,
+                       float BETA, cl_mem bufC, int offset, int ldc) {
   clblasTranspose transA = TA ? clblasTrans : clblasNoTrans;
   clblasTranspose transB = TB ? clblasTrans : clblasNoTrans;
   clblasSgemm(clblasRowMajor, transA, transB, M, N, K, ALPHA, bufA, 0, lda,
