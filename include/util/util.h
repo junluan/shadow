@@ -27,4 +27,23 @@ static float inline constrain(float min, float max, float value) {
   return value;
 }
 
+static std::string find_replace(const std::string str, std::string oldstr,
+                                std::string newstr) {
+  std::string origin(str);
+  size_t index = 0;
+  while ((index = origin.find(oldstr, index)) != std::string::npos) {
+    origin.replace(index, oldstr.length(), newstr);
+    index += newstr.length();
+  }
+  return origin;
+}
+
+static std::string find_replace_last(const std::string str, std::string oldstr,
+                                     std::string newstr) {
+  std::string origin(str);
+  size_t index = origin.find_last_of(oldstr);
+  origin.replace(index, oldstr.length(), newstr);
+  return origin;
+}
+
 #endif // SHADOW_UTIL_H

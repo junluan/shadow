@@ -5,7 +5,6 @@
 #include "parser.h"
 #include "util.h"
 
-#include <boost/algorithm/string.hpp>
 #include <ctime>
 
 using namespace std;
@@ -71,8 +70,7 @@ void Yolo::Test(string imagefile) {
 void Yolo::BatchTest(string listfile, bool write) {
   net_.SetNetworkBatch(2);
 
-  string outfile = listfile;
-  boost::replace_last(outfile, ".", "-result.");
+  string outfile = find_replace_last(listfile, ".", "-result.");
 
   vector<string> imagelist;
   Parser::LoadImageList(imagelist, listfile);
@@ -91,8 +89,7 @@ void Yolo::BatchTest(string listfile, bool write) {
     Boxes::BoxesNMS(Bboxes[j], 0.5);
     DrawYoloDetections(images[j], Bboxes[j], false);
     if (write) {
-      string path = imagelist[j];
-      boost::replace_last(path, ".", "-result.");
+      string path = find_replace_last(imagelist[j], ".", "-result.");
       cv::imwrite(path, images[j]);
     }
     PrintYoloDetections(file, Bboxes[j], j + 1);
@@ -108,8 +105,7 @@ void Yolo::BatchTest(string listfile, bool write) {
 void Yolo::VideoTest(string videofile, bool show) {
   net_.SetNetworkBatch(1);
 
-  string outfile = videofile;
-  boost::replace_last(outfile, ".", "-result.");
+  string outfile = find_replace_last(videofile, ".", "-result.");
 
   cv::VideoCapture capture;
   if (!capture.open(videofile))
