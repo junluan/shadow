@@ -63,3 +63,38 @@ void Image::Im2Col(float *im_data, int in_c, int in_h, int in_w, int ksize,
   //    }
   //  }
 }
+
+void Image::Pooling(float *in_data, int batch, int in_c, int in_h, int in_w,
+                    int ksize, int stride, int out_h, int out_w, int mode,
+                    float *out_data) {
+  int h_offset = ((in_h - ksize) % stride) / 2;
+  int w_offset = ((in_w - ksize) % stride) / 2;
+
+  for (int b = 0; b < batch; ++b) {
+    for (int c = 0; c < in_c; ++c) {
+      for (int h = 0; h < out_h; ++h) {
+        for (int w = 0; w < out_w; ++w) {
+          int out_index = w + out_w * (h + out_h * (c + in_c * b));
+          float max = -10000.0f;
+          float sum = 0.f;
+          for (int ki = 0; ki < ksize; ++ki) {
+            for (int kj = 0; kj < ksize; ++kj) {
+              int cur_h = h_offset + h * stride + ki;
+              int cur_w = w_offset + w * stride + kj;
+              int index = cur_w + in_w * (cur_h + in_h * (c + b * in_c));
+              bool valid =
+                  (cur_h >= 0 && cur_h < in_h && cur_w >= 0 && cur_w < in_w);
+              float value = valid ? in_data[index] : -10000.0f;
+              max = (value > max) ? value : max;
+              sum += valid ? in_data[index] : 0.f;
+            }
+          }
+          if (mode == 0)
+            out_data[out_index] = max;
+          else
+            out_data[out_index] = sum / (ksize * ksize);
+        }
+      }
+    }
+  }
+}

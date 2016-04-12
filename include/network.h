@@ -12,9 +12,6 @@
 
 class Network {
 public:
-  Network();
-  ~Network();
-
   int batch_;
   int in_c_, in_h_, in_w_;
   int in_num_, out_num_;
@@ -25,14 +22,18 @@ public:
   std::vector<Layer *> layers_;
 
   void MakeNetwork(int n);
+  float *PredictNetwork(float *in_data);
   int GetNetworkOutputSize();
   float *GetNetworkOutput();
-  void SetBatchNetwork(int batch);
-  float *NetworkPredict(float *in_data);
+  void SetNetworkBatch(int batch);
   void ReleaseNetwork();
 
 private:
   void ForwardNetwork(float *in_data);
+
+#ifdef USE_CUDA
+  void CUDAForwardNetwork(float *in_data);
+#endif
 
 #ifdef USE_CL
   void CLForwardNetwork(float *in_data);

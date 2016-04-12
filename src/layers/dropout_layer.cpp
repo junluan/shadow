@@ -1,7 +1,7 @@
 #include "dropout_layer.h"
 
 DropoutLayer::DropoutLayer(LayerType type) { layer_type_ = type; }
-DropoutLayer::~DropoutLayer() {}
+DropoutLayer::~DropoutLayer() { ReleaseLayer(); }
 
 void DropoutLayer::MakeDropoutLayer(SizeParams params, float probability) {
   batch_ = params.batch;
@@ -23,6 +23,10 @@ void DropoutLayer::MakeDropoutLayer(SizeParams params, float probability) {
 }
 
 void DropoutLayer::ForwardLayer() { out_data_ = in_data_; }
+
+#ifdef USE_CUDA
+void DropoutLayer::CUDAForwardLayer() { cuda_out_data_ = cuda_in_data_; }
+#endif
 
 #ifdef USE_CL
 void DropoutLayer::CLForwardLayer() { cl_out_data_ = cl_in_data_; }

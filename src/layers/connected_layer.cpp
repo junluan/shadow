@@ -3,7 +3,7 @@
 #include "kernel.h"
 
 ConnectedLayer::ConnectedLayer(LayerType type) { layer_type_ = type; }
-ConnectedLayer::~ConnectedLayer() {}
+ConnectedLayer::~ConnectedLayer() { ReleaseLayer(); }
 
 void ConnectedLayer::MakeConnectedLayer(SizeParams params, int out_num,
                                         std::string activation) {
@@ -17,6 +17,12 @@ void ConnectedLayer::MakeConnectedLayer(SizeParams params, int out_num,
   biases_ = new float[out_num_];
 
   activation_ = Activations::GetActivation(activation);
+
+#ifdef USE_CUDA
+  cuda_out_data_ = CUDA::CUDAMakeBuffer(batch_ * out_num_, NULL);
+  cuda_weights_ = CUDA::CUDAMakeBuffer(in_num_ * out_num_, NULL);
+  cuda_biases_ = CUDA::CUDAMakeBuffer(out_num_, NULL);
+#endif
 
 #ifdef USE_CL
   cl_out_data_ = CL::CLMakeBuffer(batch_ * out_num_, CL_MEM_READ_WRITE, NULL);
@@ -38,6 +44,16 @@ void ConnectedLayer::ForwardLayer() {
   Activations::ActivateArray(batch_ * out_num_, activation_, out_data_);
 }
 
+#ifdef USE_CUDA
+void ConnectedLayer::CUDAForwardLayer() {
+  Kernel::CUDABiasOutput(cuda_biases_, batch_, out_num_, 1, cuda_out_data_);
+  Blas::CUDABlasSGemm(0, 0, batch_, out_num_, in_num_, 1, cuda_in_data_,
+                      in_num_, cuda_weights_, out_num_, 1, cuda_out_data_, 0,
+                      out_num_);
+  Kernel::CUDAActivateArray(batch_ * out_num_, activation_, cuda_out_data_);
+}
+#endif
+
 #ifdef USE_CL
 void ConnectedLayer::CLForwardLayer() {
   Kernel::CLBiasOutput(cl_biases_, batch_, out_num_, 1, cl_out_data_);
@@ -48,8 +64,13 @@ void ConnectedLayer::CLForwardLayer() {
 #endif
 
 float *ConnectedLayer::GetOutData() {
+#ifdef USE_CUDA
+  CUDA::CUDAReadBuffer(batch_ * out_num_, cuda_out_data_, out_data_);
+
+#else
 #ifdef USE_CL
   CL::CLReadBuffer(batch_ * out_num_, cl_out_data_, out_data_);
+#endif
 #endif
   return out_data_;
 }
@@ -61,6 +82,15 @@ void ConnectedLayer::ReleaseLayer() {
     delete[] weights_;
   if (biases_ != NULL)
     delete[] biases_;
+
+#ifdef USE_CUDA
+  if (cuda_out_data_ != NULL)
+    CUDA::CUDAReleaseBuffer(cuda_out_data_);
+  if (cuda_weights_ != NULL)
+    CUDA::CUDAReleaseBuffer(cuda_weights_);
+  if (cuda_biases_ != NULL)
+    CUDA::CUDAReleaseBuffer(cuda_biases_);
+#endif
 
 #ifdef USE_CL
   if (cl_out_data_ != NULL)

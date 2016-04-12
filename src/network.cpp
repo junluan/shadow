@@ -1,24 +1,36 @@
 #include "network.h"
 
-Network::Network() {}
-Network::~Network() {}
-
 void Network::MakeNetwork(int n) {
   num_layers_ = n;
   layers_.reserve(n);
 }
 
-void Network::ForwardNetwork(float *in_data) {
+float *Network::PredictNetwork(float *in_data) {
+#ifdef USE_CUDA
+  CUDAForwardNetwork(in_data);
+#else
+#ifdef USE_CL
+  CLForwardNetwork(in_data);
+#else
+  ForwardNetwork(in_data);
+#endif
+#endif
+  return GetNetworkOutput();
+}
+
+#ifdef USE_CUDA
+void Network::CUDAForwardNetwork(float *in_data) {
   for (int i = 0; i < num_layers_; ++i) {
     if (layers_[i]->layer_type_ == kData)
-      layers_[i]->ForwardLayer(in_data);
+      layers_[i]->CUDAForwardLayer(in_data);
     else
-      layers_[i]->ForwardLayer();
+      layers_[i]->CUDAForwardLayer();
     if (i < num_layers_ - 1) {
-      layers_[i + 1]->in_data_ = layers_[i]->out_data_;
+      layers_[i + 1]->cuda_in_data_ = layers_[i]->cuda_out_data_;
     }
   }
 }
+#endif
 
 #ifdef USE_CL
 void Network::CLForwardNetwork(float *in_data) {
@@ -34,13 +46,16 @@ void Network::CLForwardNetwork(float *in_data) {
 }
 #endif
 
-float *Network::NetworkPredict(float *in_data) {
-#ifdef USE_CL
-  CLForwardNetwork(in_data);
-#else
-  ForwardNetwork(in_data);
-#endif
-  return GetNetworkOutput();
+void Network::ForwardNetwork(float *in_data) {
+  for (int i = 0; i < num_layers_; ++i) {
+    if (layers_[i]->layer_type_ == kData)
+      layers_[i]->ForwardLayer(in_data);
+    else
+      layers_[i]->ForwardLayer();
+    if (i < num_layers_ - 1) {
+      layers_[i + 1]->in_data_ = layers_[i]->out_data_;
+    }
+  }
 }
 
 int Network::GetNetworkOutputSize() {
@@ -59,7 +74,7 @@ float *Network::GetNetworkOutput() {
   return layers_[i]->GetOutData();
 }
 
-void Network::SetBatchNetwork(int batch) {
+void Network::SetNetworkBatch(int batch) {
   batch_ = batch;
   for (int i = 0; i < num_layers_; ++i)
     layers_[i]->batch_ = batch;

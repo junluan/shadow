@@ -27,6 +27,10 @@ public:
   int in_num_, out_num_;
   float *in_data_, *out_data_;
 
+#ifdef USE_CUDA
+  float *cuda_in_data_, *cuda_out_data_;
+#endif
+
 #ifdef USE_CL
   cl_mem cl_in_data_, cl_out_data_;
 #endif
@@ -35,9 +39,22 @@ public:
   virtual void ForwardLayer(float *in_data) {}
   virtual float *GetOutData() { return NULL; }
 
+#ifdef USE_CUDA
+  virtual void CUDAForwardLayer() {
+    std::cout << "CUDAForward Layer!" << std::endl;
+  }
+  virtual void CUDAForwardLayer(float *in_data) {
+    std::cout << "CUDAForward Layer!" << std::endl;
+  }
+#endif
+
 #ifdef USE_CL
-  virtual void CLForwardLayer() { std::cout << "Forward Layer!" << std::endl; }
-  virtual void CLForwardLayer(float *in_data) {}
+  virtual void CLForwardLayer() {
+    std::cout << "CLForward Layer!" << std::endl;
+  }
+  virtual void CLForwardLayer(float *in_data) {
+    std::cout << "CLForward Layer!" << std::endl;
+  }
 #endif
 
   virtual void ReleaseLayer() { std::cout << "Free Layer!" << std::endl; }

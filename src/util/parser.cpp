@@ -1,5 +1,6 @@
 #include "parser.h"
 #include "cl.h"
+#include "cuda.h"
 #include "util.h"
 
 #include <fstream>
@@ -45,9 +46,6 @@ int *ParaFindArrayInt(const Json::Value &params, string key) {
   }
   return arr;
 }
-
-Parser::Parser() {}
-Parser::~Parser() {}
 
 void Parser::LoadWeights(Network &net, string weightfile) {
   LoadWeightsUpto(net, weightfile, net.num_layers_);
@@ -218,6 +216,12 @@ void Parser::LoadWeightsUpto(Network &net, string weightfile, int cutoff) {
       int num = l->out_c_ * l->in_c_ * l->ksize_ * l->ksize_;
       file.read((char *)l->biases_, sizeof(float) * l->out_c_);
       file.read((char *)l->filters_, sizeof(float) * num);
+
+#ifdef USE_CUDA
+      CUDA::CUDAWriteBuffer(l->out_c_, l->cuda_biases_, l->biases_);
+      CUDA::CUDAWriteBuffer(num, l->cuda_filters_, l->filters_);
+#endif
+
 #ifdef USE_CL
       CL::CLWriteBuffer(l->out_c_, l->cl_biases_, l->biases_);
       CL::CLWriteBuffer(num, l->cl_filters_, l->filters_);
@@ -227,9 +231,16 @@ void Parser::LoadWeightsUpto(Network &net, string weightfile, int cutoff) {
       ConnectedLayer *l = reinterpret_cast<ConnectedLayer *>(layer);
       file.read((char *)l->biases_, sizeof(float) * l->out_num_);
       file.read((char *)l->weights_, sizeof(float) * l->out_num_ * l->in_num_);
+
+#ifdef USE_CUDA
+      CUDA::CUDAWriteBuffer(l->out_num_, l->cuda_biases_, l->biases_);
+      CUDA::CUDAWriteBuffer(l->in_num_ * l->out_num_, l->cuda_weights_,
+                            l->weights_);
+#endif
+
 #ifdef USE_CL
       CL::CLWriteBuffer(l->out_num_, l->cl_biases_, l->biases_);
-      CL::CLWriteBuffer(l->out_num_ * l->in_num_, l->cl_weights_, l->weights_);
+      CL::CLWriteBuffer(l->in_num_ * l->out_num_, l->cl_weights_, l->weights_);
 #endif
     }
   }

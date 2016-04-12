@@ -16,6 +16,10 @@ public:
                         std::string pool_type);
   void ForwardLayer();
 
+#ifdef USE_CUDA
+  void CUDAForwardLayer();
+#endif
+
 #ifdef USE_CL
   void CLForwardLayer();
 #endif

@@ -1,20 +1,19 @@
 #include "kernel.h"
 
 #ifdef USE_CL
-
 CLKernel *Kernel::cl_activations_kernel_ = NULL;
 CLKernel *Kernel::cl_im2col_kernel_ = NULL;
 CLKernel *Kernel::cl_biasoutput_kernel_ = NULL;
-CLKernel *Kernel::cl_pool_kernel_ = NULL;
+CLKernel *Kernel::cl_pooling_kernel_ = NULL;
 CLKernel *Kernel::cl_veccopy_kernel_ = NULL;
 CLKernel *Kernel::cl_datatransform_kernel_ = NULL;
 
 void Kernel::CLKernelSetup() {
-  std::string kernelfile = "./src/ocl/kernels.cl";
+  std::string kernelfile = "./src/util/kernel.cl";
   cl_activations_kernel_ = CL::easyCL->buildKernel(kernelfile, "ActivateArray");
   cl_im2col_kernel_ = CL::easyCL->buildKernel(kernelfile, "Im2Col");
   cl_biasoutput_kernel_ = CL::easyCL->buildKernel(kernelfile, "BiasOutput");
-  cl_pool_kernel_ = CL::easyCL->buildKernel(kernelfile, "Pool");
+  cl_pooling_kernel_ = CL::easyCL->buildKernel(kernelfile, "Pooling");
   cl_veccopy_kernel_ = CL::easyCL->buildKernel(kernelfile, "VecCopy");
   cl_datatransform_kernel_ =
       CL::easyCL->buildKernel(kernelfile, "DataTransform");
@@ -24,7 +23,7 @@ void Kernel::CLKernelRelease() {
   cl_activations_kernel_->~CLKernel();
   cl_im2col_kernel_->~CLKernel();
   cl_biasoutput_kernel_->~CLKernel();
-  cl_pool_kernel_->~CLKernel();
+  cl_pooling_kernel_->~CLKernel();
   cl_veccopy_kernel_->~CLKernel();
   cl_datatransform_kernel_->~CLKernel();
 }
@@ -67,7 +66,7 @@ void Kernel::CLIm2Col(cl_mem im_data, int offset, int in_c, int in_h, int in_w,
 void Kernel::CLPooling(cl_mem in_data, int batch, int in_c, int in_h, int in_w,
                        int ksize, int stride, int out_h, int out_w, int mode,
                        cl_mem out_data) {
-  cl_kernel kernel = cl_pool_kernel_->GetKernel();
+  cl_kernel kernel = cl_pooling_kernel_->GetKernel();
   clSetKernelArg(kernel, 0, sizeof(cl_mem), &in_data);
   clSetKernelArg(kernel, 1, sizeof(int), &batch);
   clSetKernelArg(kernel, 2, sizeof(int), &in_c);
@@ -85,7 +84,7 @@ void Kernel::CLPooling(cl_mem in_data, int batch, int in_c, int in_h, int in_w,
   clFinish(*CL::easyCL->queue);
 }
 
-void Kernel::CLActivateArray(const int N, const Activation a, cl_mem out_data) {
+void Kernel::CLActivateArray(int N, Activation a, cl_mem out_data) {
   cl_kernel kernel = Kernel::cl_activations_kernel_->GetKernel();
   clSetKernelArg(kernel, 0, sizeof(int), &N);
   clSetKernelArg(kernel, 1, sizeof(int), &a);
@@ -109,5 +108,4 @@ void Kernel::CLBiasOutput(cl_mem biases, int batch, int num, int size,
                          NULL, NULL);
   clFinish(*CL::easyCL->queue);
 }
-
 #endif

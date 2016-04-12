@@ -8,7 +8,7 @@ int convolutional_out_size(int s, int size, int pad, int stride) {
 }
 
 ConvLayer::ConvLayer(LayerType type) { layer_type_ = type; }
-ConvLayer::~ConvLayer() {}
+ConvLayer::~ConvLayer() { ReleaseLayer(); }
 
 void ConvLayer::MakeConvLayer(SizeParams params, int out_num, int ksize,
                               int stride, int pad, std::string activation) {
@@ -36,6 +36,13 @@ void ConvLayer::MakeConvLayer(SizeParams params, int out_num, int ksize,
   col_image_ = new float[out_map_size_ * kernel_num_];
 
   activation_ = Activations::GetActivation(activation);
+
+#ifdef USE_CUDA
+  cuda_out_data_ = CUDA::CUDAMakeBuffer(batch_ * out_num_, NULL);
+  cuda_filters_ = CUDA::CUDAMakeBuffer(kernel_num_ * out_c_, NULL);
+  cuda_biases_ = CUDA::CUDAMakeBuffer(out_c_, NULL);
+  cuda_col_image_ = CUDA::CUDAMakeBuffer(out_map_size_ * kernel_num_, NULL);
+#endif
 
 #ifdef USE_CL
   cl_out_data_ = CL::CLMakeBuffer(batch_ * out_num_, CL_MEM_READ_WRITE, NULL);
@@ -77,6 +84,22 @@ void ConvLayer::ForwardLayer() {
   Activations::ActivateArray(batch_ * out_num_, activation_, out_data_);
 }
 
+#ifdef USE_CUDA
+void ConvLayer::CUDAForwardLayer() {
+  Kernel::CUDABiasOutput(cuda_biases_, batch_, out_c_, out_map_size_,
+                         cuda_out_data_);
+  for (int b = 0; b < batch_; ++b) {
+    Kernel::CUDAIm2Col(cuda_in_data_, b * in_num_, in_c_, in_h_, in_w_, ksize_,
+                       stride_, pad_, out_h_, out_w_, cuda_col_image_);
+    Blas::CUDABlasSGemm(0, 0, out_c_, out_map_size_, kernel_num_, 1,
+                        cuda_filters_, kernel_num_, cuda_col_image_,
+                        out_map_size_, 1, cuda_out_data_, b * out_num_,
+                        out_map_size_);
+  }
+  Kernel::CUDAActivateArray(batch_ * out_num_, activation_, cuda_out_data_);
+}
+#endif
+
 #ifdef USE_CL
 void ConvLayer::CLForwardLayer() {
   Kernel::CLBiasOutput(cl_biases_, batch_, out_c_, out_map_size_, cl_out_data_);
@@ -100,6 +123,17 @@ void ConvLayer::ReleaseLayer() {
     delete[] biases_;
   if (col_image_ != NULL)
     delete[] col_image_;
+
+#ifdef USE_CUDA
+  if (cuda_out_data_ != NULL)
+    CUDA::CUDAReleaseBuffer(cuda_out_data_);
+  if (cuda_filters_ != NULL)
+    CUDA::CUDAReleaseBuffer(cuda_filters_);
+  if (cuda_biases_ != NULL)
+    CUDA::CUDAReleaseBuffer(cuda_biases_);
+  if (cuda_col_image_ != NULL)
+    CUDA::CUDAReleaseBuffer(cuda_col_image_);
+#endif
 
 #ifdef USE_CL
   if (cl_out_data_ != NULL)

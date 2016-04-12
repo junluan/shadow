@@ -11,6 +11,10 @@ public:
   void MakeDropoutLayer(SizeParams params, float probability);
   void ForwardLayer();
 
+#ifdef USE_CUDA
+  void CUDAForwardLayer();
+#endif
+
 #ifdef USE_CL
   void CLForwardLayer();
 #endif

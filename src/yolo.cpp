@@ -1,5 +1,6 @@
 #include "yolo.h"
 #include "cl.h"
+#include "cuda.h"
 #include "image.h"
 #include "parser.h"
 #include "util.h"
@@ -14,16 +15,22 @@ Yolo::Yolo(string cfgfile, string weightfile, float threshold) {
   weightfile_ = weightfile;
   threshold_ = threshold;
 }
-Yolo::~Yolo() {}
+
+Yolo::~Yolo() { Release(); }
 
 void Yolo::Setup() {
+#ifdef USE_CUDA
+  CUDA::CUDASetup(0);
+#endif
+
 #ifdef USE_CL
   CL::CLSetup();
 #endif
+
   Parser parser;
   parser.ParseNetworkCfg(net_, cfgfile_);
   if (weightfile_.empty())
-    error("weight file is empty!");
+    error("Weight file is empty!");
   parser.LoadWeights(net_, weightfile_);
   class_num_ = net_.class_num_;
   grid_size_ = net_.grid_size_;
@@ -31,15 +38,21 @@ void Yolo::Setup() {
   box_num_ = net_.box_num_;
   out_num_ = net_.out_num_;
 }
+
 void Yolo::Release() {
   net_.ReleaseNetwork();
+
+#ifdef USE_CUDA
+  CUDA::CUDARelease();
+#endif
+
 #ifdef USE_CL
   CL::CLRelease();
 #endif
 }
 
 void Yolo::Test(string imagefile) {
-  net_.SetBatchNetwork(1);
+  net_.SetNetworkBatch(1);
 
   clock_t time = clock();
   cv::Mat im = cv::imread(imagefile);
@@ -56,7 +69,7 @@ void Yolo::Test(string imagefile) {
 }
 
 void Yolo::BatchTest(string listfile, bool write) {
-  net_.SetBatchNetwork(2);
+  net_.SetNetworkBatch(2);
 
   string outfile = listfile;
   boost::replace_last(outfile, ".", "-result.");
@@ -93,7 +106,7 @@ void Yolo::BatchTest(string listfile, bool write) {
 }
 
 void Yolo::VideoTest(string videofile, bool show) {
-  net_.SetBatchNetwork(1);
+  net_.SetNetworkBatch(1);
 
   string outfile = videofile;
   boost::replace_last(outfile, ".", "-result.");
@@ -139,7 +152,7 @@ void Yolo::VideoTest(string videofile, bool show) {
 }
 
 void Yolo::Demo(int camera, bool save) {
-  net_.SetBatchNetwork(1);
+  net_.SetNetworkBatch(1);
 
   cv::VideoCapture capture;
   if (!capture.open(camera))
@@ -198,7 +211,7 @@ void Yolo::PredictYoloDetections(vector<cv::Mat> &images,
                           index);
       index += net_.in_num_;
     }
-    float *predictions = net_.NetworkPredict(data);
+    float *predictions = net_.PredictNetwork(data);
     index = predictions;
     for (int i = 0; i < c; ++i) {
       VecBox boxes(grid_size_ * grid_size_ * box_num_);

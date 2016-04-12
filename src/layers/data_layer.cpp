@@ -1,8 +1,9 @@
 #include "data_layer.h"
+#include "cuda.h"
 #include "kernel.h"
 
 DataLayer::DataLayer(LayerType type) { layer_type_ = type; }
-DataLayer::~DataLayer() {}
+DataLayer::~DataLayer() { ReleaseLayer(); }
 
 void DataLayer::MakeDataLayer(SizeParams params) {
   batch_ = params.batch;
@@ -17,6 +18,11 @@ void DataLayer::MakeDataLayer(SizeParams params) {
   out_num_ = out_c_ * out_h_ * out_w_;
 
   out_data_ = new float[batch_ * out_num_];
+
+#ifdef USE_CUDA
+  cuda_in_data_ = CUDA::CUDAMakeBuffer(batch_ * in_num_, NULL);
+  cuda_out_data_ = CUDA::CUDAMakeBuffer(batch_ * out_num_, NULL);
+#endif
 
 #ifdef USE_CL
   cl_in_data_ = CL::CLMakeBuffer(batch_ * in_num_, CL_MEM_READ_WRITE, NULL);
@@ -34,6 +40,15 @@ void DataLayer::ForwardLayer(float *in_data) {
   }
 }
 
+#ifdef USE_CUDA
+void DataLayer::CUDAForwardLayer(float *in_data) {
+  in_data_ = in_data;
+  CUDA::CUDAWriteBuffer(batch_ * in_num_, cuda_in_data_, in_data_);
+  Kernel::CUDADataTransform(batch_ * out_num_, cuda_in_data_, scale_,
+                            mean_value_, cuda_out_data_);
+}
+#endif
+
 #ifdef USE_CL
 void DataLayer::CLForwardLayer(float *in_data) {
   in_data_ = in_data;
@@ -44,10 +59,15 @@ void DataLayer::CLForwardLayer(float *in_data) {
 #endif
 
 void DataLayer::ReleaseLayer() {
-  if (in_data_ != NULL)
-    delete[] in_data_;
   if (out_data_ != NULL)
     delete[] out_data_;
+
+#ifdef USE_CUDA
+  if (cuda_in_data_ != NULL)
+    CUDA::CUDAReleaseBuffer(cuda_in_data_);
+  if (cuda_out_data_ != NULL)
+    CUDA::CUDAReleaseBuffer(cuda_out_data_);
+#endif
 
 #ifdef USE_CL
   if (cl_in_data_ != NULL)

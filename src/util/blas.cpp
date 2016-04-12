@@ -1,9 +1,5 @@
 #include "blas.h"
 
-#ifdef USE_CL
-#include <clBLAS.h>
-#endif
-
 void Blas::BlasCopy(int N, float *X, int INCX, float *Y, int INCY) {
   for (int i = 0; i < N; ++i)
     Y[i * INCY] = X[i * INCX];
@@ -83,7 +79,19 @@ void Blas::BlasSGemm(int TA, int TB, int M, int N, int K, float ALPHA, float *A,
     SGemmTT(M, N, K, ALPHA, A, lda, B, ldb, C, ldc);
 }
 
+#ifdef USE_CUDA
+void Blas::CUDABlasSGemm(int TA, int TB, int M, int N, int K, float ALPHA,
+                         float *bufA, int lda, float *bufB, int ldb, float BETA,
+                         float *bufC, int offset, int ldc) {
+  cublasOperation_t transA = TA ? CUBLAS_OP_T : CUBLAS_OP_N;
+  cublasOperation_t transB = TB ? CUBLAS_OP_T : CUBLAS_OP_N;
+  cublasSgemm_v2(CUDA::BlasHandle, transA, transB, N, M, K, &ALPHA, bufB, ldb,
+                 bufA, lda, &BETA, bufC + offset, ldc);
+}
+#endif
+
 #ifdef USE_CL
+#include <clBLAS.h>
 void Blas::CLBlasSGemm(int TA, int TB, int M, int N, int K, float ALPHA,
                        const cl_mem bufA, int lda, const cl_mem bufB, int ldb,
                        float BETA, cl_mem bufC, int offset, int ldc) {

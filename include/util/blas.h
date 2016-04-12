@@ -2,6 +2,7 @@
 #define SHADOW_BLAS_H
 
 #include "cl.h"
+#include "cuda.h"
 
 class Blas {
 public:
@@ -11,6 +12,12 @@ public:
   static void BlasSGemm(int TA, int TB, int M, int N, int K, float ALPHA,
                         float *A, int lda, float *B, int ldb, float BETA,
                         float *C, int ldc);
+
+#ifdef USE_CUDA
+  static void CUDABlasSGemm(int TA, int TB, int M, int N, int K, float ALPHA,
+                            float *bufA, int lda, float *bufB, int ldb,
+                            float BETA, float *bufC, int offset, int ldc);
+#endif
 
 #ifdef USE_CL
   static void CLBlasSGemm(int TA, int TB, int M, int N, int K, float ALPHA,

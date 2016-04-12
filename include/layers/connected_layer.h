@@ -15,6 +15,10 @@ public:
   void ForwardLayer();
   float *GetOutData();
 
+#ifdef USE_CUDA
+  void CUDAForwardLayer();
+#endif
+
 #ifdef USE_CL
   void CLForwardLayer();
 #endif
@@ -23,6 +27,10 @@ public:
 
   Activation activation_;
   float *weights_, *biases_;
+
+#ifdef USE_CUDA
+  float *cuda_weights_, *cuda_biases_;
+#endif
 
 #ifdef USE_CL
   cl_mem cl_weights_, cl_biases_;
