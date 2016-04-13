@@ -1,6 +1,4 @@
 #include "data_layer.h"
-#include "cuda.h"
-#include "kernel.h"
 
 DataLayer::DataLayer(LayerType type) { layer_type_ = type; }
 DataLayer::~DataLayer() { ReleaseLayer(); }

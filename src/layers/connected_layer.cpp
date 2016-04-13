@@ -1,6 +1,5 @@
 #include "connected_layer.h"
 #include "blas.h"
-#include "kernel.h"
 
 ConnectedLayer::ConnectedLayer(LayerType type) { layer_type_ = type; }
 ConnectedLayer::~ConnectedLayer() { ReleaseLayer(); }

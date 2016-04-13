@@ -1,6 +1,5 @@
 #include "pooling_layer.h"
 #include "image.h"
-#include "kernel.h"
 
 PoolingLayer::PoolingLayer(LayerType type) { layer_type_ = type; }
 PoolingLayer::~PoolingLayer() { ReleaseLayer(); }

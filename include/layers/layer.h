@@ -2,7 +2,7 @@
 #define SHADOW_LAYER_H
 
 #include "activations.h"
-#include "cl.h"
+#include "kernel.h"
 
 #include <iostream>
 #include <string>

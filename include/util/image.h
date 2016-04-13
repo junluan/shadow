@@ -3,8 +3,8 @@
 
 class Image {
 public:
-  static void GetFloatData(unsigned char *image, int width, int height,
-                           int channel, float *data);
+  static void GetFloatData(unsigned char *image, int channel, int height,
+                           int width, float *data);
   static void Im2Col(float *im_data, int in_c, int in_h, int in_w, int ksize,
                      int stride, int pad, int out_h, int out_w,
                      float *col_data);

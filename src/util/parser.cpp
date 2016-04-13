@@ -1,6 +1,5 @@
 #include "parser.h"
-#include "cl.h"
-#include "cuda.h"
+#include "kernel.h"
 #include "util.h"
 
 #include <fstream>
@@ -201,7 +200,9 @@ DropoutLayer *Parser::ParseDropout(Json::Value section, SizeParams params) {
 }
 
 void Parser::LoadWeightsUpto(Network &net, string weightfile, int cutoff) {
-  cout << "Loading weights from " << weightfile << " ... ";
+#ifdef VERBOSE
+  cout << "Load model from " << weightfile << " ... " << endl;
+#endif
   ifstream file(weightfile, ios::binary);
   if (!file.is_open())
     error("Load weight file error!");
@@ -246,7 +247,6 @@ void Parser::LoadWeightsUpto(Network &net, string weightfile, int cutoff) {
   }
 
   file.close();
-  cout << "Done!" << endl;
 }
 
 void Parser::LoadImageList(vector<string> &imagelist, string listfile) {

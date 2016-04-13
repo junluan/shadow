@@ -1,7 +1,6 @@
 #include "yolo.h"
-#include "cl.h"
-#include "cuda.h"
 #include "image.h"
+#include "kernel.h"
 #include "parser.h"
 #include "util.h"
 
@@ -15,16 +14,10 @@ Yolo::Yolo(string cfgfile, string weightfile, float threshold) {
   threshold_ = threshold;
 }
 
-Yolo::~Yolo() { Release(); }
+Yolo::~Yolo() {}
 
 void Yolo::Setup() {
-#ifdef USE_CUDA
-  CUDA::CUDASetup(0);
-#endif
-
-#ifdef USE_CL
-  CL::CLSetup();
-#endif
+  Kernel::KernelSetup();
 
   Parser parser;
   parser.ParseNetworkCfg(net_, cfgfile_);
@@ -40,14 +33,7 @@ void Yolo::Setup() {
 
 void Yolo::Release() {
   net_.ReleaseNetwork();
-
-#ifdef USE_CUDA
-  CUDA::CUDARelease();
-#endif
-
-#ifdef USE_CL
-  CL::CLRelease();
-#endif
+  Kernel::KernelRelease();
 }
 
 void Yolo::Test(string imagefile) {
@@ -203,7 +189,7 @@ void Yolo::PredictYoloDetections(vector<cv::Mat> &images,
     int c = 0;
     for (int i = count; i < b * batch && i < num_im; ++i, ++c) {
       cv::resize(images[i], sized, cv::Size(net_.in_w_, net_.in_h_));
-      Image::GetFloatData(sized.data, net_.in_w_, net_.in_h_, net_.in_c_,
+      Image::GetFloatData(sized.data, net_.in_c_, net_.in_h_, net_.in_w_,
                           index);
       index += net_.in_num_;
     }

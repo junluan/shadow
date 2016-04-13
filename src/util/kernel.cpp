@@ -1,36 +1,133 @@
 #include "kernel.h"
+#include "util.h"
+
+void Kernel::KernelSetup(int device_id) {
+#ifdef USE_CUDA
+  CUDA::CUDACheckError(cudaSetDevice(device_id));
+  cublasCreate(&CUDA::BlasHandle);
+#endif
 
 #ifdef USE_CL
-CLKernel *Kernel::cl_activations_kernel_ = NULL;
-CLKernel *Kernel::cl_im2col_kernel_ = NULL;
-CLKernel *Kernel::cl_biasoutput_kernel_ = NULL;
-CLKernel *Kernel::cl_pooling_kernel_ = NULL;
-CLKernel *Kernel::cl_veccopy_kernel_ = NULL;
-CLKernel *Kernel::cl_datatransform_kernel_ = NULL;
-
-void Kernel::CLKernelSetup() {
+  CL::easyCL = EasyCL::createForFirstGpuOtherwiseCpu(true);
   std::string kernelfile = "./src/util/kernel.cl";
-  cl_activations_kernel_ = CL::easyCL->buildKernel(kernelfile, "ActivateArray");
-  cl_im2col_kernel_ = CL::easyCL->buildKernel(kernelfile, "Im2Col");
-  cl_biasoutput_kernel_ = CL::easyCL->buildKernel(kernelfile, "BiasOutput");
-  cl_pooling_kernel_ = CL::easyCL->buildKernel(kernelfile, "Pooling");
-  cl_veccopy_kernel_ = CL::easyCL->buildKernel(kernelfile, "VecCopy");
-  cl_datatransform_kernel_ =
+  CL::cl_activations_kernel_ =
+      CL::easyCL->buildKernel(kernelfile, "ActivateArray");
+  CL::cl_im2col_kernel_ = CL::easyCL->buildKernel(kernelfile, "Im2Col");
+  CL::cl_biasoutput_kernel_ = CL::easyCL->buildKernel(kernelfile, "BiasOutput");
+  CL::cl_pooling_kernel_ = CL::easyCL->buildKernel(kernelfile, "Pooling");
+  CL::cl_veccopy_kernel_ = CL::easyCL->buildKernel(kernelfile, "VecCopy");
+  CL::cl_datatransform_kernel_ =
       CL::easyCL->buildKernel(kernelfile, "DataTransform");
+  clblasSetup();
+#endif
+}
+void Kernel::KernelRelease() {
+#ifdef USE_CUDA
+  if (CUDA::BlasHandle != NULL)
+    cublasDestroy(CUDA::BlasHandle);
+#endif
+
+#ifdef USE_CL
+  CL::cl_activations_kernel_->~CLKernel();
+  CL::cl_im2col_kernel_->~CLKernel();
+  CL::cl_biasoutput_kernel_->~CLKernel();
+  CL::cl_pooling_kernel_->~CLKernel();
+  CL::cl_veccopy_kernel_->~CLKernel();
+  CL::cl_datatransform_kernel_->~CLKernel();
+  CL::easyCL->~EasyCL();
+  clblasTeardown();
+#endif
 }
 
-void Kernel::CLKernelRelease() {
-  cl_activations_kernel_->~CLKernel();
-  cl_im2col_kernel_->~CLKernel();
-  cl_biasoutput_kernel_->~CLKernel();
-  cl_pooling_kernel_->~CLKernel();
-  cl_veccopy_kernel_->~CLKernel();
-  cl_datatransform_kernel_->~CLKernel();
+#ifdef USE_CUDA
+cublasHandle_t CUDA::BlasHandle = NULL;
+
+float *CUDA::CUDAMakeBuffer(int size, float *host_ptr) {
+  float *buffer;
+  CUDACheckError(cudaMalloc(&buffer, sizeof(float) * size));
+  if (host_ptr) {
+    CUDAWriteBuffer(size, buffer, host_ptr);
+  }
+  return buffer;
 }
+
+void CUDA::CUDAReadBuffer(int size, const float *src, float *des) {
+  CUDACheckError(
+      cudaMemcpy(des, src, sizeof(float) * size, cudaMemcpyDeviceToHost));
+}
+
+void CUDA::CUDAWriteBuffer(int size, float *des, const float *src) {
+  CUDACheckError(
+      cudaMemcpy(des, src, sizeof(float) * size, cudaMemcpyHostToDevice));
+}
+
+void CUDA::CUDAReleaseBuffer(float *buffer) {
+  CUDACheckError(cudaFree(buffer));
+}
+
+dim3 CUDA::CUDAGridDim(int size) {
+  unsigned int k = (unsigned int)(size - 1) / BLOCK + 1;
+  unsigned int x = k;
+  unsigned int y = 1;
+  if (x > 65535) {
+    x = (unsigned int)ceilf(sqrtf(k));
+    y = (size - 1) / (x * BLOCK) + 1;
+  }
+  return dim3(x, y, 1);
+}
+
+void CUDA::CUDACheckError(cudaError_t status) {
+  cudaError_t status2 = cudaGetLastError();
+  if (status != cudaSuccess) {
+    const char *s = cudaGetErrorString(status);
+    std::string message(s);
+    error("CUDA Error: " + message);
+  }
+  if (status2 != cudaSuccess) {
+    const char *s = cudaGetErrorString(status);
+    std::string message(s);
+    error("CUDA Error Prev: " + message);
+  }
+}
+#endif
+
+#ifdef USE_CL
+EasyCL *CL::easyCL = NULL;
+CLKernel *CL::cl_activations_kernel_ = NULL;
+CLKernel *CL::cl_im2col_kernel_ = NULL;
+CLKernel *CL::cl_biasoutput_kernel_ = NULL;
+CLKernel *CL::cl_pooling_kernel_ = NULL;
+CLKernel *CL::cl_veccopy_kernel_ = NULL;
+CLKernel *CL::cl_datatransform_kernel_ = NULL;
+
+cl_mem CL::CLMakeBuffer(int size, cl_mem_flags flags, void *host_ptr) {
+  return clCreateBuffer(*easyCL->context, flags, size * sizeof(float), host_ptr,
+                        NULL);
+}
+
+void CL::CLReadBuffer(int size, const cl_mem src, float *des) {
+  clEnqueueReadBuffer(*easyCL->queue, src, CL_TRUE, 0, size * sizeof(float),
+                      des, 0, NULL, NULL);
+  clFinish(*easyCL->queue);
+}
+
+void CL::CLWriteBuffer(int size, cl_mem des, const float *src) {
+  clEnqueueWriteBuffer(*easyCL->queue, des, CL_TRUE, 0, size * sizeof(float),
+                       src, 0, NULL, NULL);
+  clFinish(*easyCL->queue);
+}
+
+void CL::CLCopyBuffer(int size, const cl_mem src, cl_mem des) {
+  clEnqueueCopyBuffer(*easyCL->queue, src, des, 0, 0, size * sizeof(float), 0,
+                      NULL, NULL);
+  clFinish(*easyCL->queue);
+}
+
+void CL::CLReleaseBuffer(cl_mem buffer) { clReleaseMemObject(buffer); }
 
 void Kernel::CLDataTransform(int N, cl_mem in_data, float scale,
                              float mean_value, cl_mem out_data) {
-  cl_kernel kernel = cl_datatransform_kernel_->GetKernel();
+  cl_kernel kernel = CL::cl_datatransform_kernel_->GetKernel();
   clSetKernelArg(kernel, 0, sizeof(int), &N);
   clSetKernelArg(kernel, 1, sizeof(cl_mem), &in_data);
   clSetKernelArg(kernel, 2, sizeof(float), &scale);
@@ -45,7 +142,7 @@ void Kernel::CLDataTransform(int N, cl_mem in_data, float scale,
 void Kernel::CLIm2Col(cl_mem im_data, int offset, int in_c, int in_h, int in_w,
                       int ksize, int stride, int pad, int out_h, int out_w,
                       cl_mem col_data) {
-  cl_kernel kernel = cl_im2col_kernel_->GetKernel();
+  cl_kernel kernel = CL::cl_im2col_kernel_->GetKernel();
   clSetKernelArg(kernel, 0, sizeof(cl_mem), &im_data);
   clSetKernelArg(kernel, 1, sizeof(int), &offset);
   clSetKernelArg(kernel, 2, sizeof(int), &in_c);
@@ -66,7 +163,7 @@ void Kernel::CLIm2Col(cl_mem im_data, int offset, int in_c, int in_h, int in_w,
 void Kernel::CLPooling(cl_mem in_data, int batch, int in_c, int in_h, int in_w,
                        int ksize, int stride, int out_h, int out_w, int mode,
                        cl_mem out_data) {
-  cl_kernel kernel = cl_pooling_kernel_->GetKernel();
+  cl_kernel kernel = CL::cl_pooling_kernel_->GetKernel();
   clSetKernelArg(kernel, 0, sizeof(cl_mem), &in_data);
   clSetKernelArg(kernel, 1, sizeof(int), &batch);
   clSetKernelArg(kernel, 2, sizeof(int), &in_c);
@@ -85,7 +182,7 @@ void Kernel::CLPooling(cl_mem in_data, int batch, int in_c, int in_h, int in_w,
 }
 
 void Kernel::CLActivateArray(int N, Activation a, cl_mem out_data) {
-  cl_kernel kernel = Kernel::cl_activations_kernel_->GetKernel();
+  cl_kernel kernel = CL::cl_activations_kernel_->GetKernel();
   clSetKernelArg(kernel, 0, sizeof(int), &N);
   clSetKernelArg(kernel, 1, sizeof(int), &a);
   clSetKernelArg(kernel, 2, sizeof(cl_mem), &out_data);
@@ -97,7 +194,7 @@ void Kernel::CLActivateArray(int N, Activation a, cl_mem out_data) {
 
 void Kernel::CLBiasOutput(cl_mem biases, int batch, int num, int size,
                           cl_mem out_data) {
-  cl_kernel kernel = cl_biasoutput_kernel_->GetKernel();
+  cl_kernel kernel = CL::cl_biasoutput_kernel_->GetKernel();
   clSetKernelArg(kernel, 0, sizeof(cl_mem), &biases);
   clSetKernelArg(kernel, 1, sizeof(int), &batch);
   clSetKernelArg(kernel, 2, sizeof(int), &num);

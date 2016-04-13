@@ -85,8 +85,8 @@ void Blas::CUDABlasSGemm(int TA, int TB, int M, int N, int K, float ALPHA,
                          float *bufC, int offset, int ldc) {
   cublasOperation_t transA = TA ? CUBLAS_OP_T : CUBLAS_OP_N;
   cublasOperation_t transB = TB ? CUBLAS_OP_T : CUBLAS_OP_N;
-  cublasSgemm_v2(CUDA::BlasHandle, transA, transB, N, M, K, &ALPHA, bufB, ldb,
-                 bufA, lda, &BETA, bufC + offset, ldc);
+  cublasSgemm(CUDA::BlasHandle, transA, transB, N, M, K, &ALPHA, bufB, ldb,
+              bufA, lda, &BETA, bufC + offset, ldc);
 }
 #endif
 

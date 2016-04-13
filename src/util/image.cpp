@@ -1,13 +1,13 @@
 #include "image.h"
 
-void Image::GetFloatData(unsigned char *image, int width, int height,
-                         int channel, float *data) {
+void Image::GetFloatData(unsigned char *image, int channel, int height,
+                         int width, float *data) {
   int step = width * channel;
   int count = 0;
   for (int k = channel - 1; k >= 0; --k) {
     for (int i = 0; i < height; ++i) {
       for (int j = 0; j < width; ++j) {
-        data[count++] = image[i * step + j * channel + k] / 255.0f;
+        data[count++] = image[i * step + j * channel + k];
       }
     }
   }

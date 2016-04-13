@@ -1,4 +1,3 @@
-#include "cuda.h"
 #include "kernel.h"
 
 __global__ void CUDADataTransformKernel(int N, float *in_data, float scale,
