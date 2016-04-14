@@ -10,10 +10,7 @@ static void inline error(std::string msg) {
   exit(1);
 }
 
-static void inline warn(std::string msg) {
-  std::cout << msg << std::endl;
-  exit(0);
-}
+static void inline warn(std::string msg) { std::cout << msg << std::endl; }
 
 static float inline rand_uniform(float min, float max) {
   return ((float)std::rand() / RAND_MAX) * (max - min) + min;

@@ -40,20 +40,19 @@ void Yolo::Test(string imagefile) {
   net_.SetNetworkBatch(1);
 
   clock_t time = clock();
-  cv::Mat im = cv::imread(imagefile);
-  vector<cv::Mat> images(1, im);
+  image img = Image::ImRead(imagefile);
+  vector<image> images(1, img);
   vector<VecBox> Bboxes;
   PredictYoloDetections(images, Bboxes);
   Boxes::BoxesNMS(Bboxes[0], 0.5);
   cout << "Predicted in " << static_cast<float>(clock() - time) / CLOCKS_PER_SEC
        << " seconds" << endl;
 
-  DrawYoloDetections(im, Bboxes[0], true);
-  cv::imshow("result", im);
-  cv::waitKey();
+  Image::ImRectangle(img, Bboxes[0]);
+  Image::ImShow("result", img);
 }
 
-void Yolo::BatchTest(string listfile, bool write) {
+void Yolo::BatchTest(string listfile, bool image_write) {
   net_.SetNetworkBatch(2);
 
   string outfile = find_replace_last(listfile, ".", "-result.");
@@ -63,9 +62,9 @@ void Yolo::BatchTest(string listfile, bool write) {
   size_t num_im = imagelist.size();
 
   clock_t time = clock();
-  vector<cv::Mat> images;
+  vector<image> images;
   for (int i = 0; i < num_im; ++i) {
-    images.push_back(cv::imread(imagelist[i]));
+    images.push_back(Image::ImRead(imagelist[i]));
   }
   vector<VecBox> Bboxes;
   PredictYoloDetections(images, Bboxes);
@@ -73,10 +72,10 @@ void Yolo::BatchTest(string listfile, bool write) {
   ofstream file(outfile);
   for (int j = 0; j < num_im; ++j) {
     Boxes::BoxesNMS(Bboxes[j], 0.5);
-    DrawYoloDetections(images[j], Bboxes[j], false);
-    if (write) {
+    if (image_write) {
       string path = find_replace_last(imagelist[j], ".", "-result.");
-      cv::imwrite(path, images[j]);
+      Image::ImRectangle(images[j], Bboxes[j], false);
+      Image::ImWrite(path, images[j]);
     }
     PrintYoloDetections(file, Bboxes[j], j + 1);
     if (!((j + 1) % 100))
@@ -88,7 +87,7 @@ void Yolo::BatchTest(string listfile, bool write) {
        << "seconds" << endl;
 }
 
-void Yolo::VideoTest(string videofile, bool show) {
+void Yolo::VideoTest(string videofile, bool video_show) {
   net_.SetNetworkBatch(1);
 
   string outfile = find_replace_last(videofile, ".", "-result.");
@@ -101,29 +100,31 @@ void Yolo::VideoTest(string videofile, bool show) {
   int width = static_cast<int>(capture.get(CV_CAP_PROP_FRAME_WIDTH));
   int height = static_cast<int>(capture.get(CV_CAP_PROP_FRAME_HEIGHT));
   cv::VideoWriter writer(outfile, format, rate, cv::Size(width, height));
-  if (show) {
+  if (video_show) {
     cv::namedWindow("yolo video test!-:)", CV_WINDOW_NORMAL);
   }
-  cv::Mat im;
+  cv::Mat im_mat;
+  image im = Image::MakeImage(3, height, width);
   clock_t time;
   VecBox currBoxes;
-  while (capture.read(im)) {
-    if (im.empty())
+  while (capture.read(im_mat)) {
+    if (im_mat.empty())
       break;
     time = clock();
-    vector<cv::Mat> images(1, im);
+    Image::MatToImage(im_mat, im);
+    vector<image> images(1, im);
     vector<VecBox> Bboxes;
     PredictYoloDetections(images, Bboxes);
     Boxes::BoxesNMS(Bboxes[0], 0.5);
     Boxes::SmoothBoxes(currBoxes, Bboxes[0], 0.3);
     currBoxes = Bboxes[0];
-    DrawYoloDetections(im, Bboxes[0], show);
-    writer.write(im);
+    Image::ImRectangle(im_mat, Bboxes[0], true);
+    writer.write(im_mat);
     float sec = static_cast<float>(clock() - time) / CLOCKS_PER_SEC;
     int waittime = static_cast<int>(1000.0f * (1.0f / rate - sec));
     waittime = waittime > 1 ? waittime : 1;
-    if (show) {
-      cv::imshow("yolo video test!-:)", im);
+    if (video_show) {
+      cv::imshow("yolo video test!-:)", im_mat);
       if ((cv::waitKey(waittime) % 256) == 27)
         break;
       cout << "FPS:" << 1.0 / sec << endl;
@@ -133,7 +134,7 @@ void Yolo::VideoTest(string videofile, bool show) {
   writer.release();
 }
 
-void Yolo::Demo(int camera, bool save) {
+void Yolo::Demo(int camera, bool video_write) {
   net_.SetNetworkBatch(1);
 
   cv::VideoCapture capture;
@@ -145,27 +146,29 @@ void Yolo::Demo(int camera, bool save) {
                          CV_FOURCC('M', 'J', 'P', 'G'), 15,
                          cv::Size(width, height));
   cv::namedWindow("yolo demo!-:)", CV_WINDOW_NORMAL);
-  cv::Mat im;
+  cv::Mat im_mat;
+  image im = Image::MakeImage(3, height, width);
   clock_t time;
   VecBox currBoxes;
   while (true) {
-    capture.read(im);
-    if (im.empty())
+    capture.read(im_mat);
+    if (im_mat.empty())
       break;
     time = clock();
-    vector<cv::Mat> images(1, im);
+    Image::MatToImage(im_mat, im);
+    vector<image> images(1, im);
     vector<VecBox> Bboxes;
     PredictYoloDetections(images, Bboxes);
     Boxes::BoxesNMS(Bboxes[0], 0.5);
     Boxes::SmoothBoxes(currBoxes, Bboxes[0], 0.8);
     currBoxes = Bboxes[0];
-    DrawYoloDetections(im, Bboxes[0], true);
-    if (save)
-      writer.write(im);
+    Image::ImRectangle(im_mat, Bboxes[0], true);
+    if (video_write)
+      writer.write(im_mat);
     float sec = static_cast<float>(clock() - time) / CLOCKS_PER_SEC;
     int waittime = static_cast<int>(1000.0f * (1.0f / 25.0f - sec));
     waittime = waittime > 1 ? waittime : 1;
-    cv::imshow("yolo demo!-:)", im);
+    cv::imshow("yolo demo!-:)", im_mat);
     if ((cv::waitKey(waittime) % 256) == 27)
       break;
     cout << "FPS:" << 1.0 / sec << endl;
@@ -174,37 +177,37 @@ void Yolo::Demo(int camera, bool save) {
   writer.release();
 }
 
-void Yolo::PredictYoloDetections(vector<cv::Mat> &images,
-                                 vector<VecBox> &Bboxes) {
+void Yolo::PredictYoloDetections(std::vector<image> &images,
+                                 std::vector<VecBox> &Bboxes) {
   size_t num_im = images.size();
 
   int batch = net_.batch_;
   size_t batch_off = num_im % batch;
   size_t batch_num = num_im / batch + (batch_off > 0 ? 1 : 0);
 
-  cv::Mat sized;
-  float *data = new float[batch * net_.in_num_];
+  image im_res = Image::MakeImage(3, net_.in_h_, net_.in_w_);
+  float *batch_data = new float[batch * net_.in_num_];
+  float *predictions = NULL;
   for (int count = 0, b = 1; b <= batch_num; ++b) {
-    float *index = data;
+    float *index = batch_data;
     int c = 0;
     for (int i = count; i < b * batch && i < num_im; ++i, ++c) {
-      cv::resize(images[i], sized, cv::Size(net_.in_w_, net_.in_h_));
-      Image::GetFloatData(sized.data, net_.in_c_, net_.in_h_, net_.in_w_,
-                          index);
+      Image::ImResize(images[i], im_res);
+      Image::GenBatchData(im_res, index);
       index += net_.in_num_;
     }
-    float *predictions = net_.PredictNetwork(data);
+    predictions = net_.PredictNetwork(batch_data);
     index = predictions;
     for (int i = 0; i < c; ++i) {
       VecBox boxes(grid_size_ * grid_size_ * box_num_);
       ConvertYoloDetections(index, class_num_, box_num_, sqrt_box_, grid_size_,
-                            images[count + i].cols, images[count + i].rows,
-                            boxes);
+                            images[count + i].w, images[count + i].h, boxes);
       Bboxes.push_back(boxes);
       index += out_num_;
     }
     count += c;
   }
+  delete batch_data;
 }
 
 void Yolo::ConvertYoloDetections(float *predictions, int classes, int box_num,
@@ -246,29 +249,6 @@ void Yolo::ConvertYoloDetections(float *predictions, int classes, int box_num,
       }
       boxes[index].score = max_score;
       boxes[index].class_index = max_index;
-    }
-  }
-}
-
-void Yolo::DrawYoloDetections(cv::Mat &image, VecBox &boxes, bool show) {
-  for (int b = 0; b < boxes.size(); ++b) {
-    int classindex = boxes[b].class_index;
-    if (classindex == -1)
-      continue;
-
-    cv::Scalar scalar;
-    if (classindex == 0)
-      scalar = cv::Scalar(0, 255, 0);
-    else
-      scalar = cv::Scalar(255, 0, 0);
-
-    Box box = boxes[b];
-    cv::rectangle(image, cv::Point((int)box.x, (int)box.y),
-                  cv::Point((int)(box.x + box.w), (int)(box.y + box.h)), scalar,
-                  2, 8, 0);
-    if (show) {
-      cout << "x = " << box.x << ", y = " << box.y << ", w = " << box.w
-           << ", h = " << box.h << ", score = " << box.score << endl;
     }
   }
 }

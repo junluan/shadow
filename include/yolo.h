@@ -2,12 +2,11 @@
 #define SHADOW_YOLO_H
 
 #include "boxes.h"
+#include "image.h"
 #include "network.h"
 
 #include <fstream>
 #include <string>
-
-#include <opencv2/opencv.hpp>
 
 class Yolo {
 public:
@@ -16,9 +15,9 @@ public:
 
   void Setup();
   void Test(std::string imagefile);
-  void BatchTest(std::string listfile, bool write = false);
-  void VideoTest(std::string videofile, bool show = false);
-  void Demo(int camera, bool save = false);
+  void BatchTest(std::string listfile, bool image_write = false);
+  void VideoTest(std::string videofile, bool video_show = false);
+  void Demo(int camera, bool video_write = false);
   void Release();
 
 private:
@@ -27,12 +26,11 @@ private:
   Network net_;
   int class_num_, grid_size_, box_num_, sqrt_box_, out_num_;
 
-  void PredictYoloDetections(std::vector<cv::Mat> &images,
+  void PredictYoloDetections(std::vector<image> &images,
                              std::vector<VecBox> &Bboxes);
   void ConvertYoloDetections(float *predictions, int classes, int num,
                              int square, int side, int width, int height,
                              VecBox &boxes);
-  void DrawYoloDetections(cv::Mat &image, VecBox &boxes, bool show);
   void PrintYoloDetections(std::ofstream &file, VecBox &boxes, int count);
 };
 
