@@ -16,7 +16,8 @@ static float inline rand_uniform(float min, float max) {
   return ((float)std::rand() / RAND_MAX) * (max - min) + min;
 }
 
-static float inline constrain(float min, float max, float value) {
+template <typename Dtype>
+static Dtype inline constrain(Dtype min, Dtype max, Dtype value) {
   if (value < min)
     return min;
   if (value > max)

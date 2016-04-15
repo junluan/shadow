@@ -20,6 +20,7 @@ if (${USE_OpenCV} STREQUAL "ON")
   if (NOT OpenCV_FOUND)
     message(FATAL_ERROR "Can't find OpenCV, give the OpenCV_ROOT!")
   endif ()
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DUSE_OpenCV")
   include_directories(${OpenCV_INCLUDE_DIRS})
 endif ()
 

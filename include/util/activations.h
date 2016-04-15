@@ -3,17 +3,7 @@
 
 #include <string>
 
-enum Activation {
-  kLinear,
-  kRelu,
-  kLeaky,
-  kLogistic,
-  kRelie,
-  kRamp,
-  kTanh,
-  kPlse,
-  kElu
-};
+enum Activation { kLinear, kRelu, kLeaky };
 
 class Activations {
 public:

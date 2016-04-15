@@ -105,18 +105,14 @@ void Kernel::CUDAPooling(float *in_data, int batch, int in_c, int in_h,
   CUDA::CUDACheckError(cudaPeekAtLastError());
 }
 
-__device__ float linear_activate(float x) { return x; }
-__device__ float relu_activate(float x) { return x * (x > 0); }
-__device__ float leaky_activate(float x) { return (x > 0) ? x : .1f * x; }
-
 __device__ float Activate(float x, int mode) {
   switch (mode) {
   case 0:
-    return linear_activate(x);
+    return x; /*linear*/
   case 1:
-    return relu_activate(x);
+    return x * (x > 0); /*relu*/
   case 2:
-    return leaky_activate(x);
+    return (x > 0) ? x : .1f * x; /*leaky*/
   default:
     return x;
   }
