@@ -13,7 +13,7 @@ public:
   Yolo(std::string cfgfile, std::string weightfile, float threshold);
   ~Yolo();
 
-  void Setup();
+  void Setup(Box *roi = nullptr);
   void Test(std::string imagefile);
   void BatchTest(std::string listfile, bool image_write = false);
 #ifdef USE_OpenCV
@@ -27,8 +27,9 @@ private:
   float threshold_;
   Network net_;
   int class_num_, grid_size_, box_num_, sqrt_box_, out_num_;
-  float *batch_data_ = NULL, *predictions_ = NULL;
-  JImage *im_res_ = NULL;
+  float *batch_data_, *predictions_;
+  JImage *im_ini_, *im_crop_, *im_res_;
+  Box *roi_;
 
   void PredictYoloDetections(std::vector<JImage *> &images,
                              std::vector<VecBox> &Bboxes);

@@ -12,7 +12,7 @@ struct Scalar {
   unsigned char r, g, b;
 };
 
-JImage::JImage() {}
+JImage::JImage() { data_ = nullptr; }
 
 JImage::JImage(int channel, int height, int width, Order order) {
   c_ = channel;
@@ -25,10 +25,10 @@ JImage::JImage(int channel, int height, int width, Order order) {
 JImage::~JImage() { delete[] data_; }
 
 void JImage::Read(std::string im_path) {
-  if (data_ != NULL)
+  if (data_ != nullptr)
     error("JImage data must be uninitialized!");
   unsigned char *im_data = stbi_load(im_path.c_str(), &w_, &h_, &c_, 3);
-  if (im_data == NULL)
+  if (im_data == nullptr)
     error("Failed to read image " + im_path);
   order_ = kRGB;
   data_ = new unsigned char[c_ * h_ * w_];
@@ -37,7 +37,7 @@ void JImage::Read(std::string im_path) {
 }
 
 void JImage::Write(std::string im_path) {
-  if (data_ == NULL)
+  if (data_ == nullptr)
     error("JImage data is NULL!");
   int is_ok = -1;
   int step = w_ * c_;
@@ -56,7 +56,7 @@ void JImage::Write(std::string im_path) {
 }
 
 void JImage::Show(std::string show_name) {
-  if (data_ == NULL)
+  if (data_ == nullptr)
     error("JImage data is NULL!");
 #ifdef USE_OpenCV
   if (order_ == kRGB) {
@@ -80,9 +80,9 @@ void JImage::Show(std::string show_name) {
 }
 
 void JImage::CopyTo(JImage *im_copy) {
-  if (data_ == NULL)
+  if (data_ == nullptr)
     error("JImage data is NULL!");
-  if (im_copy->data_ != NULL)
+  if (im_copy->data_ != nullptr)
     error("Target copy data must be uninitialized!");
   im_copy->c_ = c_;
   im_copy->h_ = h_;
@@ -95,15 +95,15 @@ void JImage::CopyTo(JImage *im_copy) {
 void JImage::Release() { delete[] data_; }
 
 void JImage::Resize(JImage *im_res, int height, int width) {
-  if (data_ == NULL)
+  if (data_ == nullptr)
     error("JImage data is NULL!");
-  if (im_res->data_ != NULL && im_res->h_ * im_res->w_ != height * width)
-    error("Resize data is initialized and dimension is mismatch");
+  if (im_res->data_ != nullptr && im_res->h_ * im_res->w_ < height * width)
+    error("Resize data is initialized and memory is insufficient");
   im_res->c_ = c_;
   im_res->h_ = height;
   im_res->w_ = width;
-  im_res->order_ = order_;
-  if (im_res->data_ == NULL)
+  im_res->order_ = kRGB;
+  if (im_res->data_ == nullptr)
     im_res->data_ = new unsigned char[c_ * height * width];
   if (order_ == kRGB) {
     stbir_resize_uint8(data_, w_, h_, w_ * c_, im_res->data_, im_res->w_,
@@ -119,22 +119,52 @@ void JImage::Resize(JImage *im_res, int height, int width) {
   }
 }
 
+void JImage::Crop(JImage *im_crop, Box roi) {
+  if (data_ == nullptr)
+    error("JImage data is NULL!");
+  if (im_crop->data_ != nullptr && im_crop->h_ * im_crop->w_ < roi.h * roi.w)
+    error("Resize data is initialized and memory is insufficient");
+  if (roi.x < 0 || roi.y < 0 || roi.x + roi.w > w_ || roi.y + roi.h > h_)
+    error("Crop region overflow!");
+  im_crop->c_ = c_;
+  im_crop->h_ = static_cast<int>(roi.h);
+  im_crop->w_ = static_cast<int>(roi.w);
+  im_crop->order_ = order_;
+  if (im_crop->data_ == nullptr)
+    im_crop->data_ = new unsigned char[c_ * im_crop->h_ * im_crop->w_];
+  if (order_ != kRGB && order_ != kBGR) {
+    error("Unsupported format to crop!");
+  }
+  int step_src = w_ * c_;
+  int step_crop = im_crop->w_ * c_;
+  int w_off = static_cast<int>(roi.x);
+  int h_off = static_cast<int>(roi.y);
+  for (int c = 0; c < c_; ++c) {
+    for (int h = 0; h < im_crop->h_; ++h) {
+      for (int w = 0; w < im_crop->w_; ++w) {
+        im_crop->data_[h * step_crop + w * c_ + c] =
+            data_[(h + h_off) * step_src + (w + w_off) * c_ + c];
+      }
+    }
+  }
+}
+
 void JImage::FromI420(unsigned char *src_y, unsigned char *src_u,
                       unsigned char *src_v, int src_h, int src_w,
                       int src_stride) {
-  if (data_ != NULL && h_ * w_ != src_h * src_w)
-    error("JImage data is initialized and dimension is mismatch");
+  if (data_ != nullptr && h_ * w_ < src_h * src_w)
+    error("JImage data is initialized and memory is insufficient");
   c_ = 3;
   h_ = src_h;
   w_ = src_w;
   order_ = kRGB;
-  if (data_ == NULL)
+  if (data_ == nullptr)
     data_ = new unsigned char[c_ * h_ * w_];
   for (int h = 0; h < h_; ++h) {
     for (int w = 0; w < w_; ++w) {
-      unsigned char y = src_y[h * src_stride + w];
-      unsigned char u = src_u[(h >> 1) * (src_stride >> 1) + (w >> 1)];
-      unsigned char v = src_v[(h >> 1) * (src_stride >> 1) + (w >> 1)];
+      int y = src_y[h * src_stride + w];
+      int u = src_u[(h >> 1) * (src_stride >> 1) + (w >> 1)];
+      int v = src_v[(h >> 1) * (src_stride >> 1) + (w >> 1)];
       u -= 128;
       v -= 128;
       int r = y + v + ((v * 103) >> 8);
@@ -151,13 +181,13 @@ void JImage::FromI420(unsigned char *src_y, unsigned char *src_u,
 
 #ifdef USE_OpenCV
 void JImage::FromMat(cv::Mat &im_mat) {
-  if (data_ != NULL && h_ * w_ != im_mat.rows * im_mat.cols)
-    error("JImage data is initialized and dimension is mismatch");
+  if (data_ != nullptr && h_ * w_ < im_mat.rows * im_mat.cols)
+    error("JImage data is initialized and memory is insufficient");
   c_ = im_mat.channels();
   h_ = im_mat.rows;
   w_ = im_mat.cols;
   order_ = kBGR;
-  if (data_ == NULL)
+  if (data_ == nullptr)
     data_ = new unsigned char[c_ * h_ * w_];
   memcpy(data_, im_mat.data, c_ * h_ * w_);
 }
@@ -207,8 +237,8 @@ void JImage::Rectangle(VecBox &boxes, bool console_show) {
   }
 }
 
-void JImage::SetBatchData(float *batch_data) {
-  if (data_ == NULL)
+void JImage::GetBatchData(float *batch_data) {
+  if (data_ == nullptr)
     error("JImage data is NULL!");
   int step = w_ * c_;
   int count = 0;

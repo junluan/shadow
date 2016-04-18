@@ -15,7 +15,7 @@ Yolo::Yolo(string cfgfile, string weightfile, float threshold) {
 
 Yolo::~Yolo() {}
 
-void Yolo::Setup() {
+void Yolo::Setup(Box *roi) {
   Kernel::KernelSetup();
 
   Parser parser;
@@ -29,7 +29,10 @@ void Yolo::Setup() {
   box_num_ = net_.box_num_;
   out_num_ = net_.out_num_;
   batch_data_ = new float[net_.batch_ * net_.in_num_];
+  im_ini_ = new JImage();
+  im_crop_ = new JImage();
   im_res_ = new JImage(3, net_.in_h_, net_.in_w_);
+  roi_ = roi;
 }
 
 void Yolo::Release() {
@@ -41,16 +44,16 @@ void Yolo::Test(string imagefile) {
   net_.SetNetworkBatch(1);
 
   clock_t time = clock();
-  JImage *img = new JImage();
-  img->Read(imagefile);
-  vector<JImage *> images(1, img);
+  im_ini_->Read(imagefile);
+  vector<JImage *> images(1, im_ini_);
   vector<VecBox> Bboxes;
   PredictYoloDetections(images, Bboxes);
   Boxes::BoxesNMS(Bboxes[0], 0.5);
+  Boxes::AmendBoxes(Bboxes[0], roi_);
   cout << "Predicted in " << static_cast<float>(clock() - time) / CLOCKS_PER_SEC
        << " seconds" << endl;
-  img->Rectangle(Bboxes[0]);
-  img->Show("result");
+  im_ini_->Rectangle(Bboxes[0]);
+  im_ini_->Show("result");
 }
 
 void Yolo::BatchTest(string listfile, bool image_write) {
@@ -75,6 +78,7 @@ void Yolo::BatchTest(string listfile, bool image_write) {
   ofstream file(outfile);
   for (int j = 0; j < num_im; ++j) {
     Boxes::BoxesNMS(Bboxes[j], 0.5);
+    Boxes::AmendBoxes(Bboxes[j], roi_);
     if (image_write) {
       string path = find_replace_last(imagelist[j], ".", "-result.");
       images[j]->Rectangle(Bboxes[j], false);
@@ -99,17 +103,16 @@ void Yolo::VideoTest(string videofile, bool video_show) {
   cv::VideoCapture capture;
   if (!capture.open(videofile))
     error("error when opening video file " + videofile);
-  int format = static_cast<int>(capture.get(CV_CAP_PROP_FOURCC));
-  float rate = static_cast<float>(capture.get(CV_CAP_PROP_FPS));
-  int width = static_cast<int>(capture.get(CV_CAP_PROP_FRAME_WIDTH));
-  int height = static_cast<int>(capture.get(CV_CAP_PROP_FRAME_HEIGHT));
+  int format = static_cast<int>(capture.get(cv::CAP_PROP_FOURCC));
+  float rate = static_cast<float>(capture.get(cv::CAP_PROP_FPS));
+  int width = static_cast<int>(capture.get(cv::CAP_PROP_FRAME_WIDTH));
+  int height = static_cast<int>(capture.get(cv::CAP_PROP_FRAME_HEIGHT));
   cv::VideoWriter writer(outfile, format, rate, cv::Size(width, height));
   if (video_show) {
-    cv::namedWindow("yolo video test!-:)", CV_WINDOW_NORMAL);
+    cv::namedWindow("yolo video test!-:)", cv::WINDOW_NORMAL);
   }
   cv::Mat im_mat;
-  JImage *img = new JImage(3, height, width);
-  vector<JImage *> images(1, img);
+  vector<JImage *> images(1, im_ini_);
   clock_t time;
   VecBox currBoxes;
   while (capture.read(im_mat)) {
@@ -120,6 +123,7 @@ void Yolo::VideoTest(string videofile, bool video_show) {
     vector<VecBox> Bboxes;
     PredictYoloDetections(images, Bboxes);
     Boxes::BoxesNMS(Bboxes[0], 0.5);
+    Boxes::AmendBoxes(Bboxes[0], roi_);
     Boxes::SmoothBoxes(currBoxes, Bboxes[0], 0.3);
     currBoxes = Bboxes[0];
     DrawYoloDetections(im_mat, Bboxes[0], true);
@@ -144,15 +148,14 @@ void Yolo::Demo(int camera, bool video_write) {
   cv::VideoCapture capture;
   if (!capture.open(camera))
     error("error when opening camera!");
-  int width = static_cast<int>(capture.get(CV_CAP_PROP_FRAME_WIDTH));
-  int height = static_cast<int>(capture.get(CV_CAP_PROP_FRAME_HEIGHT));
+  int width = static_cast<int>(capture.get(cv::CAP_PROP_FRAME_WIDTH));
+  int height = static_cast<int>(capture.get(cv::CAP_PROP_FRAME_HEIGHT));
   cv::VideoWriter writer("./data/demo-result.avi",
                          CV_FOURCC('M', 'J', 'P', 'G'), 15,
                          cv::Size(width, height));
-  cv::namedWindow("yolo demo!-:)", CV_WINDOW_NORMAL);
+  cv::namedWindow("yolo demo!-:)", cv::WINDOW_NORMAL);
   cv::Mat im_mat;
-  JImage *img = new JImage(3, height, width);
-  vector<JImage *> images(1, img);
+  vector<JImage *> images(1, im_ini_);
   clock_t time;
   VecBox currBoxes;
   while (true) {
@@ -164,6 +167,7 @@ void Yolo::Demo(int camera, bool video_write) {
     vector<VecBox> Bboxes;
     PredictYoloDetections(images, Bboxes);
     Boxes::BoxesNMS(Bboxes[0], 0.5);
+    Boxes::AmendBoxes(Bboxes[0], roi_);
     Boxes::SmoothBoxes(currBoxes, Bboxes[0], 0.8);
     currBoxes = Bboxes[0];
     DrawYoloDetections(im_mat, Bboxes[0], true);
@@ -190,22 +194,28 @@ void Yolo::PredictYoloDetections(std::vector<JImage *> &images,
   size_t batch_off = num_im % batch;
   size_t batch_num = num_im / batch + (batch_off > 0 ? 1 : 0);
 
-  float *index = NULL;
+  float *index = nullptr;
   for (int count = 0, b = 1; b <= batch_num; ++b) {
     index = batch_data_;
     int c = 0;
     for (int i = count; i < b * batch && i < num_im; ++i, ++c) {
-      images[i]->Resize(im_res_, net_.in_h_, net_.in_w_);
-      im_res_->SetBatchData(index);
+      if (roi_ != nullptr) {
+        images[i]->Crop(im_crop_, *roi_);
+        im_crop_->Resize(im_res_, net_.in_h_, net_.in_w_);
+      } else {
+        images[i]->Resize(im_res_, net_.in_h_, net_.in_w_);
+      }
+      im_res_->GetBatchData(index);
       index += net_.in_num_;
     }
     predictions_ = net_.PredictNetwork(batch_data_);
     index = predictions_;
     for (int i = 0; i < c; ++i) {
       VecBox boxes(grid_size_ * grid_size_ * box_num_);
+      int height = roi_ != nullptr ? im_crop_->h_ : images[count + i]->h_;
+      int width = roi_ != nullptr ? im_crop_->w_ : images[count + i]->w_;
       ConvertYoloDetections(index, class_num_, box_num_, sqrt_box_, grid_size_,
-                            images[count + i]->w_, images[count + i]->h_,
-                            boxes);
+                            width, height, boxes);
       Bboxes.push_back(boxes);
       index += out_num_;
     }

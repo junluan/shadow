@@ -23,9 +23,10 @@ public:
   void CopyTo(JImage *im_copy);
   void Release();
   void Resize(JImage *im_res, int height, int width);
+  void Crop(JImage *im_crop, Box roi);
   void Rectangle(VecBox &boxes, bool console_show = true);
 
-  void SetBatchData(float *batch_data);
+  void GetBatchData(float *batch_data);
 
   void FromI420(unsigned char *src_y, unsigned char *src_u,
                 unsigned char *src_v, int src_h, int src_w, int src_stride);
@@ -34,7 +35,7 @@ public:
   void FromMat(cv::Mat &im_mat);
 #endif
 
-  unsigned char *data_ = NULL;
+  unsigned char *data_;
   int c_, h_, w_;
   Order order_;
 

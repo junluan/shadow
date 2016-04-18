@@ -23,7 +23,7 @@ string ParaFindString(const Json::Value &params, string key, string def) {
 }
 
 float *ParaFindArrayFloat(const Json::Value &params, string key) {
-  float *arr = NULL;
+  float *arr = nullptr;
   if (params.isMember(key)) {
     Json::Value array = params[key];
     arr = new float[array.size()];
@@ -35,7 +35,7 @@ float *ParaFindArrayFloat(const Json::Value &params, string key) {
 }
 
 int *ParaFindArrayInt(const Json::Value &params, string key) {
-  int *arr = NULL;
+  int *arr = nullptr;
   if (params.isMember(key)) {
     Json::Value array = params[key];
     arr = new int[array.size()];
@@ -74,7 +74,7 @@ void Parser::ParseNetworkCfg(Network &net, string cfgfile) {
 #endif
     Json::Value section = sections[i + 1];
     string layer_type = section["type"].asString();
-    Layer *l = NULL;
+    Layer *l = nullptr;
     if (!layer_type.compare("Data")) {
       l = ParseData(section, params);
     } else if (!layer_type.compare("Convolution")) {
@@ -90,7 +90,7 @@ void Parser::ParseNetworkCfg(Network &net, string cfgfile) {
       error("Type not recognized");
     }
     net.layers_.push_back(l);
-    if (i != net.num_layers_ - 1 && l != NULL) {
+    if (i != net.num_layers_ - 1 && l != nullptr) {
       params.in_c = l->out_c_;
       params.in_h = l->out_h_;
       params.in_w = l->out_w_;

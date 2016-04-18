@@ -72,11 +72,29 @@ void Boxes::SmoothBoxes(VecBox &oldBoxes, VecBox &newBoxes, float smooth) {
   }
 }
 
-Box Boxes::BoxFromFloat(float *value) {
-  Box box;
-  box.x = value[0];
-  box.y = value[1];
-  box.w = value[2];
-  box.h = value[3];
-  return box;
+void Boxes::AmendBoxes(VecBox &boxes, Box *roi) {
+  if (roi == nullptr)
+    return;
+  for (int i = 0; i < boxes.size(); ++i) {
+    boxes[i].x += roi->x;
+    boxes[i].y += roi->y;
+  }
+}
+
+void Boxes::SelectRoI(int event, int x, int y, int flags, void *roi) {
+  Box *roi_ = reinterpret_cast<Box *>(roi);
+  switch (event) {
+  case cv::EVENT_LBUTTONDOWN: {
+    std::cout << "Mouse Pressed" << std::endl;
+    roi_->x = x;
+    roi_->y = y;
+  }
+  case cv::EVENT_LBUTTONUP: {
+    std::cout << "Mouse LBUTTON Released" << std::endl;
+    roi_->w = x - roi_->x;
+    roi_->h = y - roi_->y;
+  }
+  default:
+    return;
+  }
 }
