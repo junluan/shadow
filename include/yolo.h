@@ -17,7 +17,8 @@ public:
   void Test(std::string imagefile);
   void BatchTest(std::string listfile, bool image_write = false);
 #ifdef USE_OpenCV
-  void VideoTest(std::string videofile, bool video_show = false);
+  void VideoTest(std::string videofile, bool video_show = false,
+                 bool video_write = false);
   void Demo(int camera, bool video_write = false);
 #endif
   void Release();
@@ -37,6 +38,8 @@ private:
                              int square, int side, int width, int height,
                              VecBox &boxes);
 #ifdef USE_OpenCV
+  void CaptureTest(cv::VideoCapture capture, std::string window_name,
+                   bool video_show, cv::VideoWriter writer, bool video_write);
   void DrawYoloDetections(cv::Mat &im_mat, VecBox &boxes,
                           bool console_show = true);
 #endif

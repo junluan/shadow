@@ -44,4 +44,11 @@ static std::string find_replace_last(const std::string str, std::string oldstr,
   return origin;
 }
 
+static std::string change_extension(const std::string str, std::string newext) {
+  std::string origin(str);
+  size_t index = origin.find_last_of(".");
+  origin.replace(index, origin.length(), newext);
+  return origin;
+}
+
 #endif // SHADOW_UTIL_H

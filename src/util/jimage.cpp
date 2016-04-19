@@ -26,14 +26,11 @@ JImage::~JImage() { delete[] data_; }
 
 void JImage::Read(std::string im_path) {
   if (data_ != nullptr)
-    error("JImage data must be uninitialized!");
-  unsigned char *im_data = stbi_load(im_path.c_str(), &w_, &h_, &c_, 3);
-  if (im_data == nullptr)
+    delete[] data_;
+  data_ = stbi_load(im_path.c_str(), &w_, &h_, &c_, 3);
+  if (data_ == nullptr)
     error("Failed to read image " + im_path);
   order_ = kRGB;
-  data_ = new unsigned char[c_ * h_ * w_];
-  memcpy(data_, im_data, c_ * h_ * w_);
-  delete im_data;
 }
 
 void JImage::Write(std::string im_path) {
@@ -41,12 +38,13 @@ void JImage::Write(std::string im_path) {
     error("JImage data is NULL!");
   int is_ok = -1;
   int step = w_ * c_;
+  std::string path = change_extension(im_path, ".png");
   if (order_ == kRGB) {
-    is_ok = stbi_write_png(im_path.c_str(), w_, h_, c_, data_, step);
+    is_ok = stbi_write_png(path.c_str(), w_, h_, c_, data_, step);
   } else if (order_ == kBGR) {
     unsigned char *data_inv = new unsigned char[c_ * h_ * w_];
     GetInv(data_inv);
-    is_ok = stbi_write_png(im_path.c_str(), w_, h_, c_, data_inv, step);
+    is_ok = stbi_write_png(path.c_str(), w_, h_, c_, data_inv, step);
     delete[] data_inv;
   } else {
     error("Unsupported format to disk!");
@@ -82,84 +80,82 @@ void JImage::Show(std::string show_name) {
 void JImage::CopyTo(JImage *im_copy) {
   if (data_ == nullptr)
     error("JImage data is NULL!");
-  if (im_copy->data_ != nullptr)
-    error("Target copy data must be uninitialized!");
+  if (im_copy->data_ == nullptr) {
+    im_copy->data_ = new unsigned char[c_ * h_ * w_];
+  } else if (im_copy->h_ * im_copy->w_ < h_ * w_) {
+    delete[] im_copy->data_;
+    im_copy->data_ = new unsigned char[c_ * h_ * w_];
+  }
   im_copy->c_ = c_;
   im_copy->h_ = h_;
   im_copy->w_ = w_;
   im_copy->order_ = order_;
-  im_copy->data_ = new unsigned char[c_ * h_ * w_];
   memcpy(im_copy->data_, data_, c_ * h_ * w_);
 }
-
-void JImage::Release() { delete[] data_; }
 
 void JImage::Resize(JImage *im_res, int height, int width) {
   if (data_ == nullptr)
     error("JImage data is NULL!");
-  if (im_res->data_ != nullptr && im_res->h_ * im_res->w_ < height * width)
-    error("Resize data is initialized and memory is insufficient");
+  if (im_res->data_ == nullptr) {
+    im_res->data_ = new unsigned char[c_ * height * width];
+  } else if (im_res->h_ * im_res->w_ < height * width) {
+    delete[] im_res->data_;
+    im_res->data_ = new unsigned char[c_ * height * width];
+  }
   im_res->c_ = c_;
   im_res->h_ = height;
   im_res->w_ = width;
-  im_res->order_ = kRGB;
-  if (im_res->data_ == nullptr)
-    im_res->data_ = new unsigned char[c_ * height * width];
-  if (order_ == kRGB) {
-    stbir_resize_uint8(data_, w_, h_, w_ * c_, im_res->data_, im_res->w_,
-                       im_res->h_, im_res->w_ * im_res->c_, c_);
-  } else if (order_ == kBGR) {
-    unsigned char *data_inv = new unsigned char[c_ * h_ * w_];
-    GetInv(data_inv);
-    stbir_resize_uint8(data_inv, w_, h_, w_ * c_, im_res->data_, im_res->w_,
-                       im_res->h_, im_res->w_ * im_res->c_, c_);
-    delete[] data_inv;
-  } else {
-    error("Unsupported format resize!");
-  }
+  im_res->order_ = order_;
+  if (order_ != kRGB && order_ != kBGR)
+    error("Unsupported format to resize!");
+  stbir_resize_uint8(data_, w_, h_, w_ * c_, im_res->data_, im_res->w_,
+                     im_res->h_, im_res->w_ * im_res->c_, c_);
 }
 
-void JImage::Crop(JImage *im_crop, Box roi) {
+void JImage::Crop(JImage *im_crop, Box crop) {
   if (data_ == nullptr)
     error("JImage data is NULL!");
-  if (im_crop->data_ != nullptr && im_crop->h_ * im_crop->w_ < roi.h * roi.w)
-    error("Resize data is initialized and memory is insufficient");
-  if (roi.x < 0 || roi.y < 0 || roi.x + roi.w > w_ || roi.y + roi.h > h_)
+  if (crop.x < 0 || crop.y < 0 || crop.x + crop.w > w_ || crop.y + crop.h > h_)
     error("Crop region overflow!");
-  im_crop->c_ = c_;
-  im_crop->h_ = static_cast<int>(roi.h);
-  im_crop->w_ = static_cast<int>(roi.w);
-  im_crop->order_ = order_;
-  if (im_crop->data_ == nullptr)
-    im_crop->data_ = new unsigned char[c_ * im_crop->h_ * im_crop->w_];
-  if (order_ != kRGB && order_ != kBGR) {
-    error("Unsupported format to crop!");
+  int height = static_cast<int>(crop.h);
+  int width = static_cast<int>(crop.w);
+  if (im_crop->data_ == nullptr) {
+    im_crop->data_ = new unsigned char[c_ * height * width];
+  } else if (im_crop->h_ * im_crop->w_ < height * width) {
+    delete[] im_crop->data_;
+    im_crop->data_ = new unsigned char[c_ * height * width];
   }
+  im_crop->c_ = c_;
+  im_crop->h_ = height;
+  im_crop->w_ = width;
+  im_crop->order_ = order_;
+  if (order_ != kRGB && order_ != kBGR)
+    error("Unsupported format to crop!");
   int step_src = w_ * c_;
   int step_crop = im_crop->w_ * c_;
-  int w_off = static_cast<int>(roi.x);
-  int h_off = static_cast<int>(roi.y);
-  for (int c = 0; c < c_; ++c) {
-    for (int h = 0; h < im_crop->h_; ++h) {
-      for (int w = 0; w < im_crop->w_; ++w) {
-        im_crop->data_[h * step_crop + w * c_ + c] =
-            data_[(h + h_off) * step_src + (w + w_off) * c_ + c];
-      }
-    }
+  int w_off = static_cast<int>(crop.x);
+  int h_off = static_cast<int>(crop.y);
+  unsigned char *index_src, *index_crop;
+  for (int h = 0; h < im_crop->h_; ++h) {
+    index_src = data_ + (h + h_off) * step_src + w_off * c_;
+    index_crop = im_crop->data_ + h * step_crop;
+    memcpy(index_crop, index_src, step_crop);
   }
 }
 
 void JImage::FromI420(unsigned char *src_y, unsigned char *src_u,
                       unsigned char *src_v, int src_h, int src_w,
                       int src_stride) {
-  if (data_ != nullptr && h_ * w_ < src_h * src_w)
-    error("JImage data is initialized and memory is insufficient");
+  if (data_ == nullptr) {
+    data_ = new unsigned char[3 * src_h * src_w];
+  } else if (h_ * w_ < src_h * src_w) {
+    delete[] data_;
+    data_ = new unsigned char[3 * src_h * src_w];
+  }
   c_ = 3;
   h_ = src_h;
   w_ = src_w;
   order_ = kRGB;
-  if (data_ == nullptr)
-    data_ = new unsigned char[c_ * h_ * w_];
   for (int h = 0; h < h_; ++h) {
     for (int w = 0; w < w_; ++w) {
       int y = src_y[h * src_stride + w];
@@ -181,14 +177,16 @@ void JImage::FromI420(unsigned char *src_y, unsigned char *src_u,
 
 #ifdef USE_OpenCV
 void JImage::FromMat(cv::Mat &im_mat) {
-  if (data_ != nullptr && h_ * w_ < im_mat.rows * im_mat.cols)
-    error("JImage data is initialized and memory is insufficient");
+  if (data_ == nullptr) {
+    data_ = new unsigned char[im_mat.channels() * im_mat.rows * im_mat.cols];
+  } else if (h_ * w_ < im_mat.rows * im_mat.cols) {
+    delete[] data_;
+    data_ = new unsigned char[im_mat.channels() * im_mat.rows * im_mat.cols];
+  }
   c_ = im_mat.channels();
   h_ = im_mat.rows;
   w_ = im_mat.cols;
   order_ = kBGR;
-  if (data_ == nullptr)
-    data_ = new unsigned char[c_ * h_ * w_];
   memcpy(data_, im_mat.data, c_ * h_ * w_);
 }
 #endif
@@ -232,7 +230,8 @@ void JImage::Rectangle(VecBox &boxes, bool console_show) {
     }
     if (console_show) {
       std::cout << "x = " << box.x << ", y = " << box.y << ", w = " << box.w
-                << ", h = " << box.h << ", score = " << box.score << std::endl;
+                << ", h = " << box.h << ", score = " << box.score
+                << ", label = " << box.class_index << std::endl;
     }
   }
 }
@@ -240,16 +239,27 @@ void JImage::Rectangle(VecBox &boxes, bool console_show) {
 void JImage::GetBatchData(float *batch_data) {
   if (data_ == nullptr)
     error("JImage data is NULL!");
-  int step = w_ * c_;
-  int count = 0;
+  bool is_rgb = false;
+  if (order_ == kRGB) {
+    is_rgb = true;
+  } else if (order_ == kBGR) {
+    is_rgb = false;
+  } else {
+    error("Unsupported format to get batch data!");
+  }
+  int ch_src, offset, count = 0, step = w_ * c_;
   for (int c = 0; c < c_; ++c) {
     for (int h = 0; h < h_; ++h) {
       for (int w = 0; w < w_; ++w) {
-        batch_data[count++] = data_[h * step + w * c_ + c];
+        ch_src = is_rgb ? c : c_ - c - 1;
+        offset = h * step + w * c_;
+        batch_data[count++] = data_[offset + ch_src];
       }
     }
   }
 }
+
+void JImage::Release() { delete[] data_; }
 
 void JImage::GetInv(unsigned char *im_inv) {
   bool is_rgb2bgr = false;
@@ -260,14 +270,14 @@ void JImage::GetInv(unsigned char *im_inv) {
   } else {
     error("Unsupported format to inverse!");
   }
-  int ch_src, ch_inv;
-  int step = w_ * c_;
+  int ch_src, ch_inv, offset, step = w_ * c_;
   for (int c = 0; c < c_; ++c) {
     for (int h = 0; h < h_; ++h) {
       for (int w = 0; w < w_; ++w) {
         ch_src = is_rgb2bgr ? c : c_ - c - 1;
-        ch_inv = is_rgb2bgr ? c_ - c - 1 : c;
-        im_inv[h * step + w * c_ + ch_inv] = data_[h * step + w * c_ + ch_src];
+        ch_inv = c_ - 1 - ch_src;
+        offset = h * step + w * c_;
+        im_inv[offset + ch_inv] = data_[offset + ch_src];
       }
     }
   }
