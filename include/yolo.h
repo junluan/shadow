@@ -13,7 +13,7 @@ public:
   Yolo(std::string cfgfile, std::string weightfile, float threshold);
   ~Yolo();
 
-  void Setup(Box *roi = nullptr);
+  void Setup(int batch = 1, Box *roi = nullptr);
   void Test(std::string imagefile);
   void BatchTest(std::string listfile, bool image_write = false);
 #ifdef USE_OpenCV
@@ -27,7 +27,6 @@ private:
   std::string cfgfile_, weightfile_;
   float threshold_;
   Network net_;
-  int class_num_, grid_size_, box_num_, sqrt_box_, out_num_;
   float *batch_data_, *predictions_;
   JImage *im_ini_, *im_crop_, *im_res_;
   Box *roi_;

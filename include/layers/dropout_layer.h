@@ -5,7 +5,7 @@
 
 class DropoutLayer : public Layer {
 public:
-  DropoutLayer(LayerType type);
+  explicit DropoutLayer(LayerType type);
   ~DropoutLayer();
 
   void MakeDropoutLayer(SizeParams params, float probability);

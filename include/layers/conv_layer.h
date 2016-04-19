@@ -7,7 +7,7 @@
 
 class ConvLayer : public Layer {
 public:
-  ConvLayer(LayerType type);
+  explicit ConvLayer(LayerType type);
   ~ConvLayer();
 
   void MakeConvLayer(SizeParams params, int out_num, int ksize, int stride,

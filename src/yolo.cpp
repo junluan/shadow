@@ -15,19 +15,14 @@ Yolo::Yolo(string cfgfile, string weightfile, float threshold) {
 
 Yolo::~Yolo() {}
 
-void Yolo::Setup(Box *roi) {
+void Yolo::Setup(int batch, Box *roi) {
   Kernel::KernelSetup();
 
   Parser parser;
-  parser.ParseNetworkCfg(net_, cfgfile_);
+  parser.ParseNetworkCfg(net_, cfgfile_, batch);
   if (weightfile_.empty())
     error("Weight file is empty!");
   parser.LoadWeights(net_, weightfile_);
-  class_num_ = net_.class_num_;
-  grid_size_ = net_.grid_size_;
-  sqrt_box_ = net_.sqrt_box_;
-  box_num_ = net_.box_num_;
-  out_num_ = net_.out_num_;
   batch_data_ = new float[net_.batch_ * net_.in_num_];
   im_ini_ = new JImage();
   im_crop_ = new JImage();
@@ -41,12 +36,10 @@ void Yolo::Release() {
 }
 
 void Yolo::Test(string imagefile) {
-  net_.SetNetworkBatch(1);
-
   clock_t time = clock();
   im_ini_->Read(imagefile);
   vector<JImage *> images(1, im_ini_);
-  vector<VecBox> Bboxes;
+  vector<VecBox> Bboxes(1);
   PredictYoloDetections(images, Bboxes);
   Boxes::BoxesNMS(Bboxes[0], 0.5);
   Boxes::AmendBoxes(Bboxes[0], roi_);
@@ -57,36 +50,30 @@ void Yolo::Test(string imagefile) {
 }
 
 void Yolo::BatchTest(string listfile, bool image_write) {
-  net_.SetNetworkBatch(2);
-
-  string outfile = find_replace_last(listfile, ".", "-result.");
-
   vector<string> imagelist;
   Parser::LoadImageList(imagelist, listfile);
   size_t num_im = imagelist.size();
 
   clock_t time = clock();
-  vector<JImage *> images;
-  for (int i = 0; i < num_im; ++i) {
-    JImage *img = new JImage();
-    img->Read(imagelist[i]);
-    images.push_back(img);
-  }
-  vector<VecBox> Bboxes;
+  vector<JImage *> images(num_im);
+  vector<VecBox> Bboxes(num_im);
+  for (int i = 0; i < num_im; ++i)
+    images[i] = new JImage(imagelist[i]);
+
   PredictYoloDetections(images, Bboxes);
 
-  ofstream file(outfile);
-  for (int j = 0; j < num_im; ++j) {
-    Boxes::BoxesNMS(Bboxes[j], 0.5);
-    Boxes::AmendBoxes(Bboxes[j], roi_);
+  ofstream file(find_replace_last(listfile, ".", "-result."));
+  for (int i = 0; i < num_im; ++i) {
+    Boxes::BoxesNMS(Bboxes[i], 0.5);
+    Boxes::AmendBoxes(Bboxes[i], roi_);
     if (image_write) {
-      string path = find_replace_last(imagelist[j], ".", "-result.");
-      images[j]->Rectangle(Bboxes[j], false);
-      images[j]->Write(path);
+      string path = find_replace_last(imagelist[i], ".", "-result.");
+      images[i]->Rectangle(Bboxes[i], false);
+      images[i]->Write(path);
     }
-    PrintYoloDetections(file, Bboxes[j], j + 1);
-    if (!((j + 1) % 100))
-      cout << "Processing: " << j + 1 << " / " << num_im << endl;
+    PrintYoloDetections(file, Bboxes[i], i + 1);
+    if (!((i + 1) % 100))
+      cout << "Processing: " << i + 1 << " / " << num_im << endl;
   }
   cout << "Processing: " << num_im << " / " << num_im << endl;
   float sec = static_cast<float>(clock() - time) / CLOCKS_PER_SEC;
@@ -96,7 +83,6 @@ void Yolo::BatchTest(string listfile, bool image_write) {
 
 #ifdef USE_OpenCV
 void Yolo::VideoTest(string videofile, bool video_show, bool video_write) {
-  net_.SetNetworkBatch(1);
   cv::VideoCapture capture;
   if (!capture.open(videofile))
     error("error when opening video file " + videofile);
@@ -116,7 +102,6 @@ void Yolo::VideoTest(string videofile, bool video_show, bool video_write) {
 }
 
 void Yolo::Demo(int camera, bool video_write) {
-  net_.SetNetworkBatch(1);
   cv::VideoCapture capture;
   if (!capture.open(camera))
     error("error when opening camera!");
@@ -142,6 +127,7 @@ void Yolo::CaptureTest(cv::VideoCapture capture, string window_name,
     cv::namedWindow(window_name, cv::WINDOW_NORMAL);
   cv::Mat im_mat;
   vector<JImage *> images(1, im_ini_);
+  vector<VecBox> Bboxes(1);
   clock_t time;
   VecBox currBoxes;
   while (capture.read(im_mat)) {
@@ -149,7 +135,6 @@ void Yolo::CaptureTest(cv::VideoCapture capture, string window_name,
       break;
     time = clock();
     images[0]->FromMat(im_mat);
-    vector<VecBox> Bboxes;
     PredictYoloDetections(images, Bboxes);
     Boxes::BoxesNMS(Bboxes[0], 0.5);
     Boxes::AmendBoxes(Bboxes[0], roi_);
@@ -196,13 +181,14 @@ void Yolo::PredictYoloDetections(std::vector<JImage *> &images,
     predictions_ = net_.PredictNetwork(batch_data_);
     index = predictions_;
     for (int i = 0; i < c; ++i) {
-      VecBox boxes(grid_size_ * grid_size_ * box_num_);
+      VecBox boxes(net_.grid_size_ * net_.grid_size_ * net_.box_num_);
       int height = roi_ != nullptr ? im_crop_->h_ : images[count + i]->h_;
       int width = roi_ != nullptr ? im_crop_->w_ : images[count + i]->w_;
-      ConvertYoloDetections(index, class_num_, box_num_, sqrt_box_, grid_size_,
-                            width, height, boxes);
-      Bboxes.push_back(boxes);
-      index += out_num_;
+      ConvertYoloDetections(index, net_.class_num_, net_.box_num_,
+                            net_.sqrt_box_, net_.grid_size_, width, height,
+                            boxes);
+      Bboxes[count + i] = boxes;
+      index += net_.out_num_;
     }
     count += c;
   }

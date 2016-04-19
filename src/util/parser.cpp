@@ -50,7 +50,7 @@ void Parser::LoadWeights(Network &net, string weightfile) {
   LoadWeightsUpto(net, weightfile, net.num_layers_);
 }
 
-void Parser::ParseNetworkCfg(Network &net, string cfgfile) {
+void Parser::ParseNetworkCfg(Network &net, string cfgfile, int batch) {
   ifstream file(cfgfile);
   Json::Reader reader;
   Json::Value root;
@@ -60,6 +60,7 @@ void Parser::ParseNetworkCfg(Network &net, string cfgfile) {
 
   net.MakeNetwork(sections.size() - 1);
   ParseNet(net, sections[0]);
+  net.batch_ = batch;
 
   SizeParams params;
   params.batch = net.batch_;
@@ -104,7 +105,6 @@ void Parser::ParseNetworkCfg(Network &net, string cfgfile) {
 void Parser::ParseNet(Network &net, Json::Value section) {
   Json::Value layer_params = section["parameters"];
 
-  net.batch_ = ParaFindInt(layer_params, "batch", 1);
   net.in_c_ = ParaFindInt(layer_params, "channels", 0);
   net.in_h_ = ParaFindInt(layer_params, "height", 0);
   net.in_w_ = ParaFindInt(layer_params, "width", 0);

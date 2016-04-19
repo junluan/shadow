@@ -5,7 +5,7 @@
 
 class DataLayer : public Layer {
 public:
-  DataLayer(LayerType type);
+  explicit DataLayer(LayerType type);
   ~DataLayer();
 
   void MakeDataLayer(SizeParams params);

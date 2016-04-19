@@ -7,7 +7,7 @@
 
 class ConnectedLayer : public Layer {
 public:
-  ConnectedLayer(LayerType type);
+  explicit ConnectedLayer(LayerType type);
   ~ConnectedLayer();
 
   void MakeConnectedLayer(SizeParams params, int outputs,

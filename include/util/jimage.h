@@ -14,6 +14,7 @@ enum Order { kRGB, kBGR };
 class JImage {
 public:
   JImage();
+  explicit JImage(std::string im_path);
   JImage(int channel, int height, int width, Order order = kRGB);
   ~JImage();
 

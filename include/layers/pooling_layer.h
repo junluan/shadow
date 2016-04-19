@@ -9,7 +9,7 @@ enum PoolType { kMax, kAve };
 
 class PoolingLayer : public Layer {
 public:
-  PoolingLayer(LayerType type);
+  explicit PoolingLayer(LayerType type);
   ~PoolingLayer();
 
   void MakePoolingLayer(SizeParams params, int ksize, int stride,

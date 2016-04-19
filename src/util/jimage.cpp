@@ -14,6 +14,11 @@ struct Scalar {
 
 JImage::JImage() { data_ = nullptr; }
 
+JImage::JImage(std::string im_path) {
+  data_ = nullptr;
+  Read(im_path);
+}
+
 JImage::JImage(int channel, int height, int width, Order order) {
   c_ = channel;
   h_ = height;
