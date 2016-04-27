@@ -1,7 +1,7 @@
 #ifndef SHADOW_CONNECTED_LAYER_H
 #define SHADOW_CONNECTED_LAYER_H
 
-#include "layer.h"
+#include "layer.hpp"
 
 #include <string>
 

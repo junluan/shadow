@@ -1,6 +1,6 @@
-#include "parser.h"
-#include "kernel.h"
-#include "util.h"
+#include "parser.hpp"
+#include "kernel.hpp"
+#include "util.hpp"
 
 #include <fstream>
 

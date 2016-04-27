@@ -1,7 +1,7 @@
 #ifndef SHADOW_DROPOUT_LAYER_H
 #define SHADOW_DROPOUT_LAYER_H
 
-#include "layer.h"
+#include "layer.hpp"
 
 class DropoutLayer : public Layer {
 public:

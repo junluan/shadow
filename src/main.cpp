@@ -1,9 +1,9 @@
-#include "yolo.h"
+#include "yolo.hpp"
 
 int main(int argc, char const *argv[]) {
 
   Yolo yolo("./cfg/yolo-refine.conv_adas.json",
-            "./models/yolo-refine_final.weights", 0.2);
+            "./models/yolo-refine.conv_adas.weights", 0.2);
 
   Box roi;
   roi.x = 700;

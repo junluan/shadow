@@ -1,12 +1,12 @@
 #ifndef SHADOW_NETWORK_H
 #define SHADOW_NETWORK_H
 
-#include "connected_layer.h"
-#include "conv_layer.h"
-#include "data_layer.h"
-#include "dropout_layer.h"
-#include "layer.h"
-#include "pooling_layer.h"
+#include "connected_layer.hpp"
+#include "conv_layer.hpp"
+#include "data_layer.hpp"
+#include "dropout_layer.hpp"
+#include "layer.hpp"
+#include "pooling_layer.hpp"
 
 #include <vector>
 

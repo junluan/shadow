@@ -1,4 +1,4 @@
-#include "activations.h"
+#include "activations.hpp"
 #include <cmath>
 
 float Activate(float x, Activation a) {

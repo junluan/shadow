@@ -1,7 +1,7 @@
-#include "yolo.h"
-#include "kernel.h"
-#include "parser.h"
-#include "util.h"
+#include "yolo.hpp"
+#include "kernel.hpp"
+#include "parser.hpp"
+#include "util.hpp"
 
 #include <ctime>
 

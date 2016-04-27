@@ -1,4 +1,4 @@
-#include "blas.h"
+#include "blas.hpp"
 
 void Blas::BlasCopy(int N, float *X, int INCX, float *Y, int INCY) {
   for (int i = 0; i < N; ++i)

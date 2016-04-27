@@ -1,7 +1,7 @@
 #ifndef SHADOW_POOLING_LAYER_H
 #define SHADOW_POOLING_LAYER_H
 
-#include "layer.h"
+#include "layer.hpp"
 
 #include <string>
 

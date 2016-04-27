@@ -2,7 +2,7 @@
 #define SHADOW_PARSER_H
 
 #include "json.h"
-#include "network.h"
+#include "network.hpp"
 
 #include <string>
 #include <vector>

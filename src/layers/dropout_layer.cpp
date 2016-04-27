@@ -1,4 +1,4 @@
-#include "dropout_layer.h"
+#include "dropout_layer.hpp"
 
 DropoutLayer::DropoutLayer(LayerType type) { layer_type_ = type; }
 DropoutLayer::~DropoutLayer() { ReleaseLayer(); }

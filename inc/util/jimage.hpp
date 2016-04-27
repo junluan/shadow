@@ -1,7 +1,7 @@
 #ifndef SHADOW_JIMAGE_H
 #define SHADOW_JIMAGE_H
 
-#include "boxes.h"
+#include "boxes.hpp"
 
 #include <string>
 

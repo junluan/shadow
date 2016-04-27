@@ -1,4 +1,4 @@
-#include "kernel.h"
+#include "kernel.hpp"
 
 __global__ void CUDADataTransformKernel(int N, float *in_data, float scale,
                                         float mean_value, float *out_data) {

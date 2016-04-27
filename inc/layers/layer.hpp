@@ -1,8 +1,8 @@
 #ifndef SHADOW_LAYER_H
 #define SHADOW_LAYER_H
 
-#include "activations.h"
-#include "kernel.h"
+#include "activations.hpp"
+#include "kernel.hpp"
 
 #include <iostream>
 #include <string>

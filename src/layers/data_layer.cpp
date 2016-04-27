@@ -1,4 +1,4 @@
-#include "data_layer.h"
+#include "data_layer.hpp"
 
 DataLayer::DataLayer(LayerType type) { layer_type_ = type; }
 DataLayer::~DataLayer() { ReleaseLayer(); }

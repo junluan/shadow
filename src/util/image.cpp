@@ -1,4 +1,4 @@
-#include "image.h"
+#include "image.hpp"
 
 float Im2ColGetPixel(float *image, int in_h, int in_w, int im_row, int im_col,
                      int channel, int pad) {

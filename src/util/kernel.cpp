@@ -1,5 +1,5 @@
-#include "kernel.h"
-#include "util.h"
+#include "kernel.hpp"
+#include "util.hpp"
 
 void Kernel::KernelSetup(int device_id) {
 #ifdef USE_CUDA

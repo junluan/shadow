@@ -1,5 +1,5 @@
-#include "jimage.h"
-#include "util.h"
+#include "jimage.hpp"
+#include "util.hpp"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"

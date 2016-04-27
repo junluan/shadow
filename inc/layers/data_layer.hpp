@@ -1,7 +1,7 @@
 #ifndef SHADOW_DATA_LAYER_H
 #define SHADOW_DATA_LAYER_H
 
-#include "layer.h"
+#include "layer.hpp"
 
 class DataLayer : public Layer {
 public:

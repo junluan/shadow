@@ -1,9 +1,9 @@
 #ifndef SHADOW_YOLO_H
 #define SHADOW_YOLO_H
 
-#include "boxes.h"
-#include "jimage.h"
-#include "network.h"
+#include "boxes.hpp"
+#include "jimage.hpp"
+#include "network.hpp"
 
 #include <fstream>
 #include <string>

@@ -1,4 +1,4 @@
-#include "boxes.h"
+#include "boxes.hpp"
 
 float BoxArea(Box box) { return box.w * box.h; }
 

@@ -1,7 +1,7 @@
 #ifndef SHADOW_BLAS_H
 #define SHADOW_BLAS_H
 
-#include "kernel.h"
+#include "kernel.hpp"
 
 class Blas {
 public:

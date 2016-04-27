@@ -1,6 +1,6 @@
-#include "conv_layer.h"
-#include "blas.h"
-#include "image.h"
+#include "conv_layer.hpp"
+#include "blas.hpp"
+#include "image.hpp"
 
 int convolutional_out_size(int s, int size, int pad, int stride) {
   return (s + 2 * pad - size) / stride + 1;

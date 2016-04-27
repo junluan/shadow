@@ -1,7 +1,7 @@
 #ifndef SHADOW_KERNEL_H
 #define SHADOW_KERNEL_H
 
-#include "activations.h"
+#include "activations.hpp"
 
 #ifdef USE_CUDA
 #include "cublas_v2.h"

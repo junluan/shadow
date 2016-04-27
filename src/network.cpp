@@ -1,4 +1,4 @@
-#include "network.h"
+#include "network.hpp"
 
 void Network::MakeNetwork(int n) {
   num_layers_ = n;
