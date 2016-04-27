@@ -26,7 +26,7 @@ endif ()
 
 include_directories("./inc" "./inc/layers" "./inc/util")
 file(GLOB shadow_lib_src "./src/network.cpp" "./src/layers/*.cpp" "./src/util/*.cpp")
-file(GLOB shadow_lib_inc "inc/network.hpp" "./inc/layers/*.h" "./inc/util/*.h")
+file(GLOB shadow_lib_inc "inc/network.hpp" "./inc/layers/*.hpp" "./inc/util/*.hpp")
 
 if (${USE_CUDA} STREQUAL "ON")
   find_package(CUDA REQUIRED)
