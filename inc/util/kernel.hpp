@@ -21,31 +21,31 @@ public:
 
 #ifdef USE_CUDA
 public:
-  static void CUDADataTransform(int N, float *in_data, float scale,
+  static void CUDADataTransform(int N, const float *in_data, float scale,
                                 float mean_value, float *out_data);
-  static void CUDAIm2Col(float *im_data, int offset, int in_c, int in_h,
+  static void CUDAIm2Col(const float *im_data, int offset, int in_c, int in_h,
                          int in_w, int ksize, int stride, int pad, int out_h,
                          int out_w, float *col_data);
-  static void CUDAPooling(float *in_data, int batch, int in_c, int in_h,
+  static void CUDAPooling(const float *in_data, int batch, int in_c, int in_h,
                           int in_w, int ksize, int stride, int out_h, int out_w,
                           int mode, float *out_data);
   static void CUDAActivateArray(int N, Activation a, float *out_data);
-  static void CUDABiasOutput(float *biases, int batch, int num, int size,
+  static void CUDABiasOutput(const float *biases, int batch, int num, int size,
                              float *out_data);
 #endif
 
 #ifdef USE_CL
 public:
-  static void CLDataTransform(int N, cl_mem in_data, float scale,
+  static void CLDataTransform(int N, const cl_mem in_data, float scale,
                               float mean_value, cl_mem out_data);
-  static void CLIm2Col(cl_mem im_data, int offset, int in_c, int in_h, int in_w,
-                       int ksize, int stride, int pad, int out_h, int out_w,
-                       cl_mem col_data);
-  static void CLPooling(cl_mem in_data, int batch, int in_c, int in_h, int in_w,
-                        int ksize, int stride, int out_h, int out_w, int mode,
-                        cl_mem out_data);
+  static void CLIm2Col(const cl_mem im_data, int offset, int in_c, int in_h,
+                       int in_w, int ksize, int stride, int pad, int out_h,
+                       int out_w, cl_mem col_data);
+  static void CLPooling(const cl_mem in_data, int batch, int in_c, int in_h,
+                        int in_w, int ksize, int stride, int out_h, int out_w,
+                        int mode, cl_mem out_data);
   static void CLActivateArray(int N, Activation a, cl_mem out_data);
-  static void CLBiasOutput(cl_mem biases, int batch, int num, int size,
+  static void CLBiasOutput(const cl_mem biases, int batch, int num, int size,
                            cl_mem out_data);
 #endif
 };

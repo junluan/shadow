@@ -23,8 +23,7 @@ Activation Activations::GetActivation(std::string s) {
   return kLinear;
 }
 
-void Activations::ActivateArray(const int N, const Activation a,
-                                float *out_data) {
+void Activations::ActivateArray(int N, Activation a, float *out_data) {
   for (int i = 0; i < N; ++i) {
     out_data[i] = Activate(out_data[i], a);
   }

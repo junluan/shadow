@@ -28,10 +28,10 @@ public:
   void FromI420(unsigned char *src_y, unsigned char *src_u,
                 unsigned char *src_v, int src_h, int src_w, int src_stride);
 #ifdef USE_OpenCV
-  void FromMat(cv::Mat &im_mat);
+  void FromMat(const cv::Mat &im_mat);
 #endif
 
-  void Rectangle(VecBox &boxes, bool console_show = true);
+  void Rectangle(const VecBox &boxes, bool console_show = true);
   void GetBatchData(float *batch_data);
 
   void Release();

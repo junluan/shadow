@@ -1,7 +1,7 @@
 #include "image.hpp"
 
-float Im2ColGetPixel(float *image, int in_h, int in_w, int im_row, int im_col,
-                     int channel, int pad) {
+float Im2ColGetPixel(const float *image, int in_h, int in_w, int im_row,
+                     int im_col, int channel, int pad) {
   im_row -= pad;
   im_col -= pad;
   if (im_row < 0 || im_col < 0 || im_row >= in_h || im_col >= in_w)
@@ -9,8 +9,9 @@ float Im2ColGetPixel(float *image, int in_h, int in_w, int im_row, int im_col,
   return image[im_col + in_w * (im_row + in_h * channel)];
 }
 
-void Image::Im2Col(float *im_data, int in_c, int in_h, int in_w, int ksize,
-                   int stride, int pad, int out_h, int out_w, float *col_data) {
+void Image::Im2Col(const float *im_data, int in_c, int in_h, int in_w,
+                   int ksize, int stride, int pad, int out_h, int out_w,
+                   float *col_data) {
   int kernel_num_ = in_c * ksize * ksize;
   for (int c = 0; c < kernel_num_; ++c) {
     int w_offset = c % ksize;
@@ -51,9 +52,9 @@ void Image::Im2Col(float *im_data, int in_c, int in_h, int in_w, int ksize,
   //  }
 }
 
-void Image::Pooling(float *in_data, int batch, int in_c, int in_h, int in_w,
-                    int ksize, int stride, int out_h, int out_w, int mode,
-                    float *out_data) {
+void Image::Pooling(const float *in_data, int batch, int in_c, int in_h,
+                    int in_w, int ksize, int stride, int out_h, int out_w,
+                    int mode, float *out_data) {
   int h_offset = ((in_h - ksize) % stride) / 2;
   int w_offset = ((in_w - ksize) % stride) / 2;
 

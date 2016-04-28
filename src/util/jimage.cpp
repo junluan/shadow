@@ -181,7 +181,7 @@ void JImage::FromI420(unsigned char *src_y, unsigned char *src_u,
 }
 
 #ifdef USE_OpenCV
-void JImage::FromMat(cv::Mat &im_mat) {
+void JImage::FromMat(const cv::Mat &im_mat) {
   if (data_ == nullptr) {
     data_ = new unsigned char[im_mat.channels() * im_mat.rows * im_mat.cols];
   } else if (h_ * w_ < im_mat.rows * im_mat.cols) {
@@ -196,7 +196,7 @@ void JImage::FromMat(cv::Mat &im_mat) {
 }
 #endif
 
-void JImage::Rectangle(VecBox &boxes, bool console_show) {
+void JImage::Rectangle(const VecBox &boxes, bool console_show) {
   for (int b = 0; b < boxes.size(); ++b) {
     if (boxes[b].class_index == -1)
       continue;

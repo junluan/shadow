@@ -46,11 +46,11 @@ int *ParaFindArrayInt(const Json::Value &params, string key) {
   return arr;
 }
 
-void Parser::LoadWeights(Network &net, string weightfile) {
-  LoadWeightsUpto(net, weightfile, net.num_layers_);
+void Parser::LoadWeights(Network *net, string weightfile) {
+  LoadWeightsUpto(net, weightfile, net->num_layers_);
 }
 
-void Parser::ParseNetworkCfg(Network &net, string cfgfile, int batch) {
+void Parser::ParseNetworkCfg(Network *net, string cfgfile, int batch) {
   ifstream file(cfgfile);
   Json::Reader reader;
   Json::Value root;
@@ -58,18 +58,18 @@ void Parser::ParseNetworkCfg(Network &net, string cfgfile, int batch) {
     error("Parse configure file error");
   Json::Value sections = root["network"];
 
-  net.MakeNetwork(sections.size() - 1);
+  net->MakeNetwork(sections.size() - 1);
   ParseNet(net, sections[0]);
-  net.batch_ = batch;
+  net->batch_ = batch;
 
   SizeParams params;
-  params.batch = net.batch_;
-  params.in_c = net.in_c_;
-  params.in_h = net.in_h_;
-  params.in_w = net.in_w_;
-  params.in_num = net.in_num_;
+  params.batch = net->batch_;
+  params.in_c = net->in_c_;
+  params.in_h = net->in_h_;
+  params.in_w = net->in_w_;
+  params.in_num = net->in_num_;
 
-  for (int i = 0; i < net.num_layers_; ++i) {
+  for (int i = 0; i < net->num_layers_; ++i) {
 #ifdef VERBOSE
     printf("%2d: ", i);
 #endif
@@ -86,12 +86,12 @@ void Parser::ParseNetworkCfg(Network &net, string cfgfile, int batch) {
       l = ParseConnected(section, params);
     } else if (!layer_type.compare("Dropout")) {
       l = ParseDropout(section, params);
-      l->out_data_ = net.layers_[i - 1]->out_data_;
+      l->out_data_ = net->layers_[i - 1]->out_data_;
     } else {
       error("Type not recognized");
     }
-    net.layers_.push_back(l);
-    if (i != net.num_layers_ - 1 && l != nullptr) {
+    net->layers_.push_back(l);
+    if (i != net->num_layers_ - 1 && l != nullptr) {
       params.in_c = l->out_c_;
       params.in_h = l->out_h_;
       params.in_w = l->out_w_;
@@ -99,22 +99,22 @@ void Parser::ParseNetworkCfg(Network &net, string cfgfile, int batch) {
     }
   }
 
-  net.out_num_ = net.GetNetworkOutputSize();
+  net->out_num_ = net->GetNetworkOutputSize();
 }
 
-void Parser::ParseNet(Network &net, Json::Value section) {
+void Parser::ParseNet(Network *net, Json::Value section) {
   Json::Value layer_params = section["parameters"];
 
-  net.in_c_ = ParaFindInt(layer_params, "channels", 0);
-  net.in_h_ = ParaFindInt(layer_params, "height", 0);
-  net.in_w_ = ParaFindInt(layer_params, "width", 0);
-  net.class_num_ = ParaFindInt(layer_params, "class_num", 1);
-  net.grid_size_ = ParaFindInt(layer_params, "grid_size", 7);
-  net.sqrt_box_ = ParaFindInt(layer_params, "sqrt_box", 1);
-  net.box_num_ = ParaFindInt(layer_params, "box_num", 2);
+  net->in_c_ = ParaFindInt(layer_params, "channels", 0);
+  net->in_h_ = ParaFindInt(layer_params, "height", 0);
+  net->in_w_ = ParaFindInt(layer_params, "width", 0);
+  net->class_num_ = ParaFindInt(layer_params, "class_num", 1);
+  net->grid_size_ = ParaFindInt(layer_params, "grid_size", 7);
+  net->sqrt_box_ = ParaFindInt(layer_params, "sqrt_box", 1);
+  net->box_num_ = ParaFindInt(layer_params, "box_num", 2);
 
-  net.in_num_ = net.in_c_ * net.in_h_ * net.in_w_;
-  if (!net.in_num_ && !(net.in_c_ && net.in_h_ && net.in_w_))
+  net->in_num_ = net->in_c_ * net->in_h_ * net->in_w_;
+  if (!net->in_num_ && !(net->in_c_ && net->in_h_ && net->in_w_))
     error("No input parameters supplied");
 }
 
@@ -199,7 +199,7 @@ DropoutLayer *Parser::ParseDropout(Json::Value section, SizeParams params) {
   return drop_layer;
 }
 
-void Parser::LoadWeightsUpto(Network &net, string weightfile, int cutoff) {
+void Parser::LoadWeightsUpto(Network *net, string weightfile, int cutoff) {
 #ifdef VERBOSE
   cout << "Load model from " << weightfile << " ... " << endl;
 #endif
@@ -210,8 +210,8 @@ void Parser::LoadWeightsUpto(Network &net, string weightfile, int cutoff) {
   char garbage[16];
   file.read(garbage, sizeof(char) * 16);
 
-  for (int i = 0; i < net.num_layers_ && i < cutoff; ++i) {
-    Layer *layer = net.layers_[i];
+  for (int i = 0; i < net->num_layers_ && i < cutoff; ++i) {
+    Layer *layer = net->layers_[i];
     if (layer->layer_type_ == kConvolutional) {
       ConvLayer *l = reinterpret_cast<ConvLayer *>(layer);
       int num = l->out_c_ * l->in_c_ * l->ksize_ * l->ksize_;
@@ -249,7 +249,7 @@ void Parser::LoadWeightsUpto(Network &net, string weightfile, int cutoff) {
   file.close();
 }
 
-void Parser::LoadImageList(vector<string> &imagelist, string listfile) {
+void Parser::LoadImageList(vector<string> *imagelist, string listfile) {
   cout << "Loading image list from " << listfile << " ... ";
   ifstream file(listfile);
   if (!file.is_open())
@@ -258,7 +258,7 @@ void Parser::LoadImageList(vector<string> &imagelist, string listfile) {
   string dir;
   while (getline(file, dir)) {
     if (dir.length())
-      imagelist.push_back(dir);
+      imagelist->push_back(dir);
   }
   file.close();
   cout << "Done!" << endl;

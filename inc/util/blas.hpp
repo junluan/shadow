@@ -5,17 +5,18 @@
 
 class Blas {
 public:
-  static void BlasCopy(int N, float *X, int INCX, float *Y, int INCY);
-  static void BlasAxpy(int N, float ALPHA, float *X, int INCX, float *Y,
+  static void BlasCopy(int N, const float *X, int INCX, float *Y, int INCY);
+  static void BlasAxpy(int N, float ALPHA, const float *X, int INCX, float *Y,
                        int INCY);
   static void BlasSGemm(int TA, int TB, int M, int N, int K, float ALPHA,
-                        float *A, int lda, float *B, int ldb, float BETA,
-                        float *C, int ldc);
+                        const float *A, int lda, const float *B, int ldb,
+                        float BETA, float *C, int ldc);
 
 #ifdef USE_CUDA
   static void CUDABlasSGemm(int TA, int TB, int M, int N, int K, float ALPHA,
-                            float *bufA, int lda, float *bufB, int ldb,
-                            float BETA, float *bufC, int offset, int ldc);
+                            const float *bufA, int lda, const float *bufB,
+                            int ldb, float BETA, float *bufC, int offset,
+                            int ldc);
 #endif
 
 #ifdef USE_CL

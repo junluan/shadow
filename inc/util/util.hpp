@@ -5,15 +5,17 @@
 #include <iostream>
 #include <string>
 
-static void inline error(std::string msg) {
+static void inline error(const std::string msg) {
   std::cerr << msg << std::endl;
   exit(1);
 }
 
-static void inline warn(std::string msg) { std::cout << msg << std::endl; }
+static void inline warn(const std::string msg) {
+  std::cout << msg << std::endl;
+}
 
 static float inline rand_uniform(float min, float max) {
-  return ((float)std::rand() / RAND_MAX) * (max - min) + min;
+  return (static_cast<float>(std::rand()) / RAND_MAX) * (max - min) + min;
 }
 
 template <typename Dtype>
@@ -25,8 +27,8 @@ static Dtype inline constrain(Dtype min, Dtype max, Dtype value) {
   return value;
 }
 
-static std::string find_replace(const std::string str, std::string oldstr,
-                                std::string newstr) {
+static std::string find_replace(const std::string str, const std::string oldstr,
+                                const std::string newstr) {
   std::string origin(str);
   size_t index = 0;
   while ((index = origin.find(oldstr, index)) != std::string::npos) {
@@ -36,15 +38,17 @@ static std::string find_replace(const std::string str, std::string oldstr,
   return origin;
 }
 
-static std::string find_replace_last(const std::string str, std::string oldstr,
-                                     std::string newstr) {
+static std::string find_replace_last(const std::string str,
+                                     const std::string oldstr,
+                                     const std::string newstr) {
   std::string origin(str);
   size_t index = origin.find_last_of(oldstr);
   origin.replace(index, oldstr.length(), newstr);
   return origin;
 }
 
-static std::string change_extension(const std::string str, std::string newext) {
+static std::string change_extension(const std::string str,
+                                    const std::string newext) {
   std::string origin(str);
   size_t index = origin.find_last_of(".");
   origin.replace(index, origin.length(), newext);

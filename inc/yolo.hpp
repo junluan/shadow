@@ -7,6 +7,7 @@
 
 #include <fstream>
 #include <string>
+#include <vector>
 
 class Yolo {
 public:
@@ -31,18 +32,18 @@ private:
   JImage *im_ini_, *im_crop_, *im_res_;
   Box *roi_;
 
-  void PredictYoloDetections(std::vector<JImage *> &images,
-                             std::vector<VecBox> &Bboxes);
+  void PredictYoloDetections(const std::vector<JImage *> &images,
+                             std::vector<VecBox> *Bboxes);
   void ConvertYoloDetections(float *predictions, int classes, int num,
                              int square, int side, int width, int height,
-                             VecBox &boxes);
+                             VecBox *boxes);
 #ifdef USE_OpenCV
   void CaptureTest(cv::VideoCapture capture, std::string window_name,
                    bool video_show, cv::VideoWriter writer, bool video_write);
-  void DrawYoloDetections(cv::Mat &im_mat, VecBox &boxes,
+  void DrawYoloDetections(const VecBox &boxes, cv::Mat *im_mat,
                           bool console_show = true);
 #endif
-  void PrintYoloDetections(std::ofstream &file, VecBox &boxes, int count);
+  void PrintYoloDetections(const VecBox &boxes, int count, std::ofstream *file);
 };
 
 #endif // SHADOW_YOLO_H

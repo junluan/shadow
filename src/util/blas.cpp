@@ -1,18 +1,18 @@
 #include "blas.hpp"
 
-void Blas::BlasCopy(int N, float *X, int INCX, float *Y, int INCY) {
+void Blas::BlasCopy(int N, const float *X, int INCX, float *Y, int INCY) {
   for (int i = 0; i < N; ++i)
     Y[i * INCY] = X[i * INCX];
 }
 
-void Blas::BlasAxpy(int N, float ALPHA, float *X, int INCX, float *Y,
+void Blas::BlasAxpy(int N, float ALPHA, const float *X, int INCX, float *Y,
                     int INCY) {
   for (int i = 0; i < N; ++i)
     Y[i * INCY] += ALPHA * X[i * INCX];
 }
 
-void SGemmNN(int M, int N, int K, float ALPHA, float *A, int lda, float *B,
-             int ldb, float *C, int ldc) {
+void SGemmNN(int M, int N, int K, float ALPHA, const float *A, int lda,
+             const float *B, int ldb, float *C, int ldc) {
   for (int i = 0; i < M; ++i) {
     for (int k = 0; k < K; ++k) {
       float A_PART = ALPHA * A[i * lda + k];
@@ -23,8 +23,8 @@ void SGemmNN(int M, int N, int K, float ALPHA, float *A, int lda, float *B,
   }
 }
 
-void SGemmNT(int M, int N, int K, float ALPHA, float *A, int lda, float *B,
-             int ldb, float *C, int ldc) {
+void SGemmNT(int M, int N, int K, float ALPHA, const float *A, int lda,
+             const float *B, int ldb, float *C, int ldc) {
   for (int i = 0; i < M; ++i) {
     for (int j = 0; j < N; ++j) {
       float sum = 0;
@@ -36,8 +36,8 @@ void SGemmNT(int M, int N, int K, float ALPHA, float *A, int lda, float *B,
   }
 }
 
-void SGemmTN(int M, int N, int K, float ALPHA, float *A, int lda, float *B,
-             int ldb, float *C, int ldc) {
+void SGemmTN(int M, int N, int K, float ALPHA, const float *A, int lda,
+             const float *B, int ldb, float *C, int ldc) {
   for (int i = 0; i < M; ++i) {
     for (int k = 0; k < K; ++k) {
       float A_PART = ALPHA * A[k * lda + i];
@@ -48,8 +48,8 @@ void SGemmTN(int M, int N, int K, float ALPHA, float *A, int lda, float *B,
   }
 }
 
-void SGemmTT(int M, int N, int K, float ALPHA, float *A, int lda, float *B,
-             int ldb, float *C, int ldc) {
+void SGemmTT(int M, int N, int K, float ALPHA, const float *A, int lda,
+             const float *B, int ldb, float *C, int ldc) {
   for (int i = 0; i < M; ++i) {
     for (int j = 0; j < N; ++j) {
       float sum = 0;
@@ -61,9 +61,9 @@ void SGemmTT(int M, int N, int K, float ALPHA, float *A, int lda, float *B,
   }
 }
 
-void Blas::BlasSGemm(int TA, int TB, int M, int N, int K, float ALPHA, float *A,
-                     int lda, float *B, int ldb, float BETA, float *C,
-                     int ldc) {
+void Blas::BlasSGemm(int TA, int TB, int M, int N, int K, float ALPHA,
+                     const float *A, int lda, const float *B, int ldb,
+                     float BETA, float *C, int ldc) {
   for (int i = 0; i < M; ++i) {
     for (int j = 0; j < N; ++j) {
       C[i * ldc + j] *= BETA;
@@ -81,8 +81,8 @@ void Blas::BlasSGemm(int TA, int TB, int M, int N, int K, float ALPHA, float *A,
 
 #ifdef USE_CUDA
 void Blas::CUDABlasSGemm(int TA, int TB, int M, int N, int K, float ALPHA,
-                         float *bufA, int lda, float *bufB, int ldb, float BETA,
-                         float *bufC, int offset, int ldc) {
+                         const float *bufA, int lda, const float *bufB, int ldb,
+                         float BETA, float *bufC, int offset, int ldc) {
   cublasOperation_t transA = TA ? CUBLAS_OP_T : CUBLAS_OP_N;
   cublasOperation_t transB = TB ? CUBLAS_OP_T : CUBLAS_OP_N;
   cublasSgemm(CUDA::BlasHandle, transA, transB, N, M, K, &ALPHA, bufB, ldb,

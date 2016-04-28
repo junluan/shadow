@@ -1,7 +1,8 @@
 #include "kernel.hpp"
 
-__global__ void CUDADataTransformKernel(int N, float *in_data, float scale,
-                                        float mean_value, float *out_data) {
+__global__ void CUDADataTransformKernel(int N, const float *in_data,
+                                        float scale, float mean_value,
+                                        float *out_data) {
   int globalid =
       (blockIdx.x + blockIdx.y * gridDim.x) * blockDim.x + threadIdx.x;
   if (globalid > N)
@@ -10,16 +11,17 @@ __global__ void CUDADataTransformKernel(int N, float *in_data, float scale,
   out_data[globalid] = (in_data[globalid] - mean_value) * scale;
 }
 
-void Kernel::CUDADataTransform(int N, float *in_data, float scale,
+void Kernel::CUDADataTransform(int N, const float *in_data, float scale,
                                float mean_value, float *out_data) {
   CUDADataTransformKernel<<<CUDA::CUDAGridDim(N), BLOCK>>>(
       N, in_data, scale, mean_value, out_data);
   CUDA::CUDACheckError(cudaPeekAtLastError());
 }
 
-__global__ void CUDAIm2ColKernel(float *im_data, int offset, int in_c, int in_h,
-                                 int in_w, int ksize, int stride, int pad,
-                                 int out_h, int out_w, float *col_data) {
+__global__ void CUDAIm2ColKernel(const float *im_data, int offset, int in_c,
+                                 int in_h, int in_w, int ksize, int stride,
+                                 int pad, int out_h, int out_w,
+                                 float *col_data) {
   int globalid =
       (blockIdx.x + blockIdx.y * gridDim.x) * blockDim.x + threadIdx.x;
   if (globalid >= in_c * out_h * out_w)
@@ -47,7 +49,7 @@ __global__ void CUDAIm2ColKernel(float *im_data, int offset, int in_c, int in_h,
   }
 }
 
-void Kernel::CUDAIm2Col(float *im_data, int offset, int in_c, int in_h,
+void Kernel::CUDAIm2Col(const float *im_data, int offset, int in_c, int in_h,
                         int in_w, int ksize, int stride, int pad, int out_h,
                         int out_w, float *col_data) {
   int N = in_c * out_h * out_w;
@@ -57,9 +59,10 @@ void Kernel::CUDAIm2Col(float *im_data, int offset, int in_c, int in_h,
   CUDA::CUDACheckError(cudaPeekAtLastError());
 }
 
-__global__ void CUDAPoolingKernel(float *in_data, int batch, int in_c, int in_h,
-                                  int in_w, int ksize, int stride, int out_h,
-                                  int out_w, int mode, float *out_data) {
+__global__ void CUDAPoolingKernel(const float *in_data, int batch, int in_c,
+                                  int in_h, int in_w, int ksize, int stride,
+                                  int out_h, int out_w, int mode,
+                                  float *out_data) {
   int globalid =
       (blockIdx.x + blockIdx.y * gridDim.x) * blockDim.x + threadIdx.x;
   if (globalid >= batch * in_c * out_h * out_w)
@@ -95,7 +98,7 @@ __global__ void CUDAPoolingKernel(float *in_data, int batch, int in_c, int in_h,
     out_data[globalid] = sum / (ksize * ksize);
 }
 
-void Kernel::CUDAPooling(float *in_data, int batch, int in_c, int in_h,
+void Kernel::CUDAPooling(const float *in_data, int batch, int in_c, int in_h,
                          int in_w, int ksize, int stride, int out_h, int out_w,
                          int mode, float *out_data) {
   int N = batch * in_c * out_h * out_w;
@@ -132,7 +135,7 @@ void Kernel::CUDAActivateArray(int N, Activation a, float *out_data) {
   CUDA::CUDACheckError(cudaPeekAtLastError());
 }
 
-__global__ void CUDABiasOutputKernel(float *biases, int batch, int num,
+__global__ void CUDABiasOutputKernel(const float *biases, int batch, int num,
                                      int size, float *out_data) {
   int globalid =
       (blockIdx.x + blockIdx.y * gridDim.x) * blockDim.x + threadIdx.x;
@@ -145,7 +148,7 @@ __global__ void CUDABiasOutputKernel(float *biases, int batch, int num,
   out_data[(b_out * num + n_out) * size + s_out] = biases[n_out];
 }
 
-void Kernel::CUDABiasOutput(float *biases, int batch, int num, int size,
+void Kernel::CUDABiasOutput(const float *biases, int batch, int num, int size,
                             float *out_data) {
   int N = batch * num * size;
   CUDABiasOutputKernel<<<CUDA::CUDAGridDim(N), BLOCK>>>(biases, batch, num,

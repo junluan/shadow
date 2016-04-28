@@ -21,6 +21,7 @@ void Kernel::KernelSetup(int device_id) {
   clblasSetup();
 #endif
 }
+
 void Kernel::KernelRelease() {
 #ifdef USE_CUDA
   if (CUDA::BlasHandle != NULL)
@@ -125,7 +126,7 @@ void CL::CLCopyBuffer(int size, const cl_mem src, cl_mem des) {
 
 void CL::CLReleaseBuffer(cl_mem buffer) { clReleaseMemObject(buffer); }
 
-void Kernel::CLDataTransform(int N, cl_mem in_data, float scale,
+void Kernel::CLDataTransform(int N, const cl_mem in_data, float scale,
                              float mean_value, cl_mem out_data) {
   cl_kernel kernel = CL::cl_datatransform_kernel_->GetKernel();
   clSetKernelArg(kernel, 0, sizeof(int), &N);
@@ -139,9 +140,9 @@ void Kernel::CLDataTransform(int N, cl_mem in_data, float scale,
   clFinish(*CL::easyCL->queue);
 }
 
-void Kernel::CLIm2Col(cl_mem im_data, int offset, int in_c, int in_h, int in_w,
-                      int ksize, int stride, int pad, int out_h, int out_w,
-                      cl_mem col_data) {
+void Kernel::CLIm2Col(const cl_mem im_data, int offset, int in_c, int in_h,
+                      int in_w, int ksize, int stride, int pad, int out_h,
+                      int out_w, cl_mem col_data) {
   cl_kernel kernel = CL::cl_im2col_kernel_->GetKernel();
   clSetKernelArg(kernel, 0, sizeof(cl_mem), &im_data);
   clSetKernelArg(kernel, 1, sizeof(int), &offset);
@@ -160,9 +161,9 @@ void Kernel::CLIm2Col(cl_mem im_data, int offset, int in_c, int in_h, int in_w,
   clFinish(*CL::easyCL->queue);
 }
 
-void Kernel::CLPooling(cl_mem in_data, int batch, int in_c, int in_h, int in_w,
-                       int ksize, int stride, int out_h, int out_w, int mode,
-                       cl_mem out_data) {
+void Kernel::CLPooling(const cl_mem in_data, int batch, int in_c, int in_h,
+                       int in_w, int ksize, int stride, int out_h, int out_w,
+                       int mode, cl_mem out_data) {
   cl_kernel kernel = CL::cl_pooling_kernel_->GetKernel();
   clSetKernelArg(kernel, 0, sizeof(cl_mem), &in_data);
   clSetKernelArg(kernel, 1, sizeof(int), &batch);
@@ -192,7 +193,7 @@ void Kernel::CLActivateArray(int N, Activation a, cl_mem out_data) {
   clFinish(*CL::easyCL->queue);
 }
 
-void Kernel::CLBiasOutput(cl_mem biases, int batch, int num, int size,
+void Kernel::CLBiasOutput(const cl_mem biases, int batch, int num, int size,
                           cl_mem out_data) {
   cl_kernel kernel = CL::cl_biasoutput_kernel_->GetKernel();
   clSetKernelArg(kernel, 0, sizeof(cl_mem), &biases);
