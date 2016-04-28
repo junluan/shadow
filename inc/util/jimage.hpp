@@ -1,5 +1,5 @@
-#ifndef SHADOW_JIMAGE_H
-#define SHADOW_JIMAGE_H
+#ifndef SHADOW_JIMAGE_HPP
+#define SHADOW_JIMAGE_HPP
 
 #include "boxes.hpp"
 
@@ -44,4 +44,4 @@ private:
   void GetInv(unsigned char *im_inv);
 };
 
-#endif // SHADOW_JIMAGE_H
+#endif // SHADOW_JIMAGE_HPP

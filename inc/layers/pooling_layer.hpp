@@ -1,5 +1,5 @@
-#ifndef SHADOW_POOLING_LAYER_H
-#define SHADOW_POOLING_LAYER_H
+#ifndef SHADOW_POOLING_LAYER_HPP
+#define SHADOW_POOLING_LAYER_HPP
 
 #include "layer.hpp"
 
@@ -31,4 +31,4 @@ public:
   PoolType pool_type_;
 };
 
-#endif // SHADOW_POOLING_LAYER_H
+#endif // SHADOW_POOLING_LAYER_HPP

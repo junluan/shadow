@@ -1,5 +1,5 @@
-#ifndef SHADOW_NETWORK_H
-#define SHADOW_NETWORK_H
+#ifndef SHADOW_NETWORK_HPP
+#define SHADOW_NETWORK_HPP
 
 #include "connected_layer.hpp"
 #include "conv_layer.hpp"

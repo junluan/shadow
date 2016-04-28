@@ -1,5 +1,5 @@
-#ifndef SHADOW_ACTIVATIONS_H
-#define SHADOW_ACTIVATIONS_H
+#ifndef SHADOW_ACTIVATIONS_HPP
+#define SHADOW_ACTIVATIONS_HPP
 
 #include <string>
 
@@ -11,4 +11,4 @@ public:
   static void ActivateArray(int N, Activation a, float *out_data);
 };
 
-#endif // SHADOW_ACTIVATIONS_H
+#endif // SHADOW_ACTIVATIONS_HPP

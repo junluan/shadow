@@ -1,5 +1,5 @@
-#ifndef SHADOW_DATA_LAYER_H
-#define SHADOW_DATA_LAYER_H
+#ifndef SHADOW_DATA_LAYER_HPP
+#define SHADOW_DATA_LAYER_HPP
 
 #include "layer.hpp"
 
@@ -25,4 +25,4 @@ public:
   float mean_value_;
 };
 
-#endif // SHADOW_DATA_LAYER_H
+#endif // SHADOW_DATA_LAYER_HPP

@@ -1,5 +1,5 @@
-#ifndef SHADOW_BOXES_H
-#define SHADOW_BOXES_H
+#ifndef SHADOW_BOXES_HPP
+#define SHADOW_BOXES_HPP
 
 #include <vector>
 
@@ -27,4 +27,4 @@ public:
 #endif
 };
 
-#endif // SHADOW_BOXES_H
+#endif // SHADOW_BOXES_HPP

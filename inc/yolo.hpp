@@ -1,5 +1,5 @@
-#ifndef SHADOW_YOLO_H
-#define SHADOW_YOLO_H
+#ifndef SHADOW_YOLO_HPP
+#define SHADOW_YOLO_HPP
 
 #include "boxes.hpp"
 #include "jimage.hpp"
@@ -46,4 +46,4 @@ private:
   void PrintYoloDetections(const VecBox &boxes, int count, std::ofstream *file);
 };
 
-#endif // SHADOW_YOLO_H
+#endif // SHADOW_YOLO_HPP

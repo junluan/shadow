@@ -1,5 +1,5 @@
-#ifndef SHADOW_UTIL_H
-#define SHADOW_UTIL_H
+#ifndef SHADOW_UTIL_HPP
+#define SHADOW_UTIL_HPP
 
 #include <cmath>
 #include <iostream>
@@ -55,4 +55,4 @@ static std::string change_extension(const std::string str,
   return origin;
 }
 
-#endif // SHADOW_UTIL_H
+#endif // SHADOW_UTIL_HPP

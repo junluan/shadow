@@ -1,5 +1,5 @@
-#ifndef SHADOW_PARSER_H
-#define SHADOW_PARSER_H
+#ifndef SHADOW_PARSER_HPP
+#define SHADOW_PARSER_HPP
 
 #include "json.h"
 #include "network.hpp"
@@ -25,4 +25,4 @@ private:
   void LoadWeightsUpto(Network *net, std::string weightfile, int cutoff);
 };
 
-#endif // SHADOW_PARSER_H
+#endif // SHADOW_PARSER_HPP

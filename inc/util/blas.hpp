@@ -1,5 +1,5 @@
-#ifndef SHADOW_BLAS_H
-#define SHADOW_BLAS_H
+#ifndef SHADOW_BLAS_HPP
+#define SHADOW_BLAS_HPP
 
 #include "kernel.hpp"
 
@@ -27,4 +27,4 @@ public:
 #endif
 };
 
-#endif // SHADOW_BLAS_H
+#endif // SHADOW_BLAS_HPP

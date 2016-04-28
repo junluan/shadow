@@ -1,5 +1,5 @@
-#ifndef SHADOW_IMAGE_H
-#define SHADOW_IMAGE_H
+#ifndef SHADOW_IMAGE_HPP
+#define SHADOW_IMAGE_HPP
 
 class Image {
 public:
@@ -11,4 +11,4 @@ public:
                       int mode, float *out_data);
 };
 
-#endif // SHADOW_IMAGE_H
+#endif // SHADOW_IMAGE_HPP

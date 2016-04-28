@@ -1,5 +1,5 @@
-#ifndef SHADOW_CONV_LAYER_H
-#define SHADOW_CONV_LAYER_H
+#ifndef SHADOW_CONV_LAYER_HPP
+#define SHADOW_CONV_LAYER_HPP
 
 #include "layer.hpp"
 
@@ -37,4 +37,4 @@ public:
 #endif
 };
 
-#endif // SHADOW_CONV_LAYER_H
+#endif // SHADOW_CONV_LAYER_HPP

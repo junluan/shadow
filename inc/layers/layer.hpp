@@ -1,5 +1,5 @@
-#ifndef SHADOW_LAYER_H
-#define SHADOW_LAYER_H
+#ifndef SHADOW_LAYER_HPP
+#define SHADOW_LAYER_HPP
 
 #include "activations.hpp"
 #include "kernel.hpp"
@@ -60,4 +60,4 @@ public:
   virtual void ReleaseLayer() { std::cout << "Free Layer!" << std::endl; }
 };
 
-#endif // SHADOW_LAYER_H
+#endif // SHADOW_LAYER_HPP

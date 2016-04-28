@@ -1,5 +1,5 @@
-#ifndef SHADOW_DROPOUT_LAYER_H
-#define SHADOW_DROPOUT_LAYER_H
+#ifndef SHADOW_DROPOUT_LAYER_HPP
+#define SHADOW_DROPOUT_LAYER_HPP
 
 #include "layer.hpp"
 
@@ -22,4 +22,4 @@ public:
   void ReleaseLayer();
 };
 
-#endif // SHADOW_DROPOUT_LAYER_H
+#endif // SHADOW_DROPOUT_LAYER_HPP

@@ -1,5 +1,5 @@
-#ifndef SHADOW_KERNEL_H
-#define SHADOW_KERNEL_H
+#ifndef SHADOW_KERNEL_HPP
+#define SHADOW_KERNEL_HPP
 
 #include "activations.hpp"
 
@@ -83,4 +83,4 @@ public:
 };
 #endif
 
-#endif // SHADOW_KERNEL_H
+#endif // SHADOW_KERNEL_HPP
