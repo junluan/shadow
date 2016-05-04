@@ -24,6 +24,7 @@ public:
   void CopyTo(JImage *im_copy);
   void Resize(JImage *im_res, int height, int width);
   void Crop(JImage *im_crop, Box crop);
+  void Filter2D(float *kernel, int height, int width);
 
   void FromI420(unsigned char *src_y, unsigned char *src_u,
                 unsigned char *src_v, int src_h, int src_w, int src_stride);

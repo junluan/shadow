@@ -148,6 +148,37 @@ void JImage::Crop(JImage *im_crop, Box crop) {
   }
 }
 
+void JImage::Filter2D(float *kernel, int height, int width) {
+  unsigned char *data_f_ = new unsigned char[c_ * h_ * w_];
+  for (int h = 0; h < h_; ++h) {
+    for (int w = 0; w < w_; ++w) {
+      float val_c0 = 0.f, val_c1 = 0.f, val_c2 = 0.f;
+      int im_h, im_w, im_index, kernel_index;
+      for (int k_h = 0; k_h < height; ++k_h) {
+        for (int k_w = 0; k_w < width; ++k_w) {
+          im_h = std::abs(h - height / 2 + k_h);
+          im_w = std::abs(w - width / 2 + k_w);
+          im_h = im_h < h_ ? im_h : 2 * h_ - 2 - im_h;
+          im_w = im_w < w_ ? im_w : 2 * w_ - 2 - im_w;
+          im_index = (w_ * im_h + im_w) * c_;
+          kernel_index = k_h * width + k_w;
+          val_c0 += data_[im_index + 0] * kernel[kernel_index];
+          val_c1 += data_[im_index + 1] * kernel[kernel_index];
+          val_c2 += data_[im_index + 2] * kernel[kernel_index];
+        }
+      }
+      int offset = (w_ * h + w) * c_;
+      data_f_[offset + 0] =
+          (unsigned char)constrain(0, 255, static_cast<int>(val_c0));
+      data_f_[offset + 1] =
+          (unsigned char)constrain(0, 255, static_cast<int>(val_c1));
+      data_f_[offset + 2] =
+          (unsigned char)constrain(0, 255, static_cast<int>(val_c2));
+    }
+  }
+  memcpy(data_, data_f_, c_ * h_ * w_);
+}
+
 void JImage::FromI420(unsigned char *src_y, unsigned char *src_u,
                       unsigned char *src_v, int src_h, int src_w,
                       int src_stride) {
