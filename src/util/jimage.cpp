@@ -120,10 +120,10 @@ void JImage::Resize(JImage *im_res, int height, int width) {
 void JImage::Crop(JImage *im_crop, Box crop) {
   if (data_ == nullptr)
     error("JImage data is NULL!");
-  if (crop.x < 0 || crop.y < 0 || crop.x + crop.w > w_ || crop.y + crop.h > h_)
+  if (crop.x < 0 || crop.y < 0 || crop.x + crop.w > 1 || crop.y + crop.h > 1)
     error("Crop region overflow!");
-  int height = static_cast<int>(crop.h);
-  int width = static_cast<int>(crop.w);
+  int height = static_cast<int>(crop.h * h_);
+  int width = static_cast<int>(crop.w * w_);
   if (im_crop->data_ == nullptr) {
     im_crop->data_ = new unsigned char[c_ * height * width];
   } else if (im_crop->h_ * im_crop->w_ < height * width) {
@@ -138,8 +138,8 @@ void JImage::Crop(JImage *im_crop, Box crop) {
     error("Unsupported format to crop!");
   int step_src = w_ * c_;
   int step_crop = im_crop->w_ * c_;
-  int w_off = static_cast<int>(crop.x);
-  int h_off = static_cast<int>(crop.y);
+  int w_off = static_cast<int>(crop.x * w_);
+  int h_off = static_cast<int>(crop.y * h_);
   unsigned char *index_src, *index_crop;
   for (int h = 0; h < im_crop->h_; ++h) {
     index_src = data_ + (h + h_off) * step_src + w_off * c_;
@@ -211,6 +211,42 @@ void JImage::FromI420(unsigned char *src_y, unsigned char *src_u,
   }
 }
 
+void JImage::FromI420WithCropResize(unsigned char *src_y, unsigned char *src_u,
+                                    unsigned char *src_v, int src_h, int src_w,
+                                    int src_stride, Box roi, int resize_h,
+                                    int resize_w, float *batch_data) {
+  Box roi_p;
+  roi_p.x = roi.x * src_w;
+  roi_p.y = roi.y * src_h;
+  roi_p.w = roi.w * src_w;
+  roi_p.h = roi.h * src_h;
+
+  float step_w = roi_p.w / resize_w;
+  float step_h = roi_p.h / resize_h;
+  int step_ch = resize_h * resize_w;
+
+  for (int h = 0; h < resize_h; ++h) {
+    for (int w = 0; w < resize_w; ++w) {
+      int s_h = static_cast<int>(roi_p.y + step_h * h);
+      int s_w = static_cast<int>(roi_p.x + step_w * w);
+
+      int y = src_y[s_h * src_stride + s_w];
+      int u = src_u[(s_h >> 1) * (src_stride >> 1) + (s_w >> 1)];
+      int v = src_v[(s_h >> 1) * (src_stride >> 1) + (s_w >> 1)];
+      u -= 128;
+      v -= 128;
+      int r = y + v + ((v * 103) >> 8);
+      int g = y - ((u * 88) >> 8) + ((v * 183) >> 8);
+      int b = y + u + ((u * 198) >> 8);
+
+      int offset = h * resize_w + w;
+      batch_data[offset + step_ch * 0] = (unsigned char)constrain(0, 255, r);
+      batch_data[offset + step_ch * 1] = (unsigned char)constrain(0, 255, g);
+      batch_data[offset + step_ch * 2] = (unsigned char)constrain(0, 255, b);
+    }
+  }
+}
+
 #ifdef USE_OpenCV
 void JImage::FromMat(const cv::Mat &im_mat) {
   if (data_ == nullptr) {
@@ -224,6 +260,32 @@ void JImage::FromMat(const cv::Mat &im_mat) {
   w_ = im_mat.cols;
   order_ = kBGR;
   memcpy(data_, im_mat.data, c_ * h_ * w_);
+}
+
+void JImage::FromMatWithCropResize(const cv::Mat &im_mat, Box roi, int resize_h,
+                                   int resize_w, float *batch_data) {
+  Box roi_p;
+  roi_p.x = roi.x * im_mat.cols;
+  roi_p.y = roi.y * im_mat.rows;
+  roi_p.w = roi.w * im_mat.cols;
+  roi_p.h = roi.h * im_mat.rows;
+
+  float step_w = roi_p.w / resize_w;
+  float step_h = roi_p.h / resize_h;
+  int step_ch = resize_h * resize_w;
+  int step = im_mat.cols * im_mat.channels();
+
+  for (int h = 0; h < resize_h; ++h) {
+    for (int w = 0; w < resize_w; ++w) {
+      int s_h = static_cast<int>(roi_p.y + step_h * h);
+      int s_w = static_cast<int>(roi_p.x + step_w * w);
+      int src_offset = s_h * step + s_w * im_mat.channels();
+      int offset = h * resize_w + w;
+      batch_data[offset + step_ch * 0] = im_mat.data[src_offset + 2];
+      batch_data[offset + step_ch * 1] = im_mat.data[src_offset + 1];
+      batch_data[offset + step_ch * 2] = im_mat.data[src_offset + 0];
+    }
+  }
 }
 #endif
 

@@ -28,8 +28,14 @@ public:
 
   void FromI420(unsigned char *src_y, unsigned char *src_u,
                 unsigned char *src_v, int src_h, int src_w, int src_stride);
+  void FromI420WithCropResize(unsigned char *src_y, unsigned char *src_u,
+                              unsigned char *src_v, int src_h, int src_w,
+                              int src_stride, Box roi, int resize_h,
+                              int resize_w, float *batch_data);
 #ifdef USE_OpenCV
   void FromMat(const cv::Mat &im_mat);
+  void FromMatWithCropResize(const cv::Mat &im_mat, Box roi, int resize_h,
+                             int resize_w, float *batch_data);
 #endif
 
   void Rectangle(const VecBox &boxes, bool console_show = true);

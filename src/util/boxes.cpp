@@ -24,32 +24,39 @@ float Boxes::BoxesIoU(const Box &box_a, const Box &box_b) {
   return BoxesIntersection(box_a, box_b) / BoxesUnion(box_a, box_b);
 }
 
-void Boxes::BoxesNMS(VecBox *boxes, float iou_threshold) {
-  for (int i = 0; i < boxes->size(); ++i) {
-    if ((*boxes)[i].class_index == -1)
+VecBox Boxes::BoxesNMS(const std::vector<VecBox> &Bboxes, float iou_threshold) {
+  VecBox boxes;
+  for (int i = 0; i < Bboxes.size(); ++i) {
+    for (int j = 0; j < Bboxes[i].size(); ++j) {
+      boxes.push_back(Bboxes[i][j]);
+    }
+  }
+  for (int i = 0; i < boxes.size(); ++i) {
+    if (boxes[i].class_index == -1)
       continue;
-    for (int j = i + 1; j < boxes->size(); ++j) {
-      if ((*boxes)[j].class_index == -1 ||
-          (*boxes)[i].class_index != (*boxes)[j].class_index)
+    for (int j = i + 1; j < boxes.size(); ++j) {
+      if (boxes[j].class_index == -1 ||
+          boxes[i].class_index != boxes[j].class_index)
         continue;
-      if (BoxesIoU((*boxes)[i], (*boxes)[j]) > iou_threshold) {
-        if ((*boxes)[i].score < (*boxes)[j].score)
-          (*boxes)[i].class_index = -1;
+      if (BoxesIoU(boxes[i], boxes[j]) > iou_threshold) {
+        if (boxes[i].score < boxes[j].score)
+          boxes[i].class_index = -1;
         else
-          (*boxes)[j].class_index = -1;
+          boxes[j].class_index = -1;
         continue;
       }
-      float in = BoxesIntersection((*boxes)[i], (*boxes)[j]);
-      float cover_i = in / BoxArea((*boxes)[i]);
-      float cover_j = in / BoxArea((*boxes)[j]);
+      float in = BoxesIntersection(boxes[i], boxes[j]);
+      float cover_i = in / BoxArea(boxes[i]);
+      float cover_j = in / BoxArea(boxes[j]);
       if (cover_i > cover_j && cover_i > 0.7) {
-        (*boxes)[i].class_index = -1;
+        boxes[i].class_index = -1;
       }
       if (cover_i < cover_j && cover_j > 0.7) {
-        (*boxes)[j].class_index = -1;
+        boxes[j].class_index = -1;
       }
     }
   }
+  return boxes;
 }
 
 void MergeBoxes(const Box &oldBox, Box *newBox, float smooth) {
@@ -73,12 +80,13 @@ void Boxes::SmoothBoxes(const VecBox &oldBoxes, VecBox *newBoxes,
   }
 }
 
-void Boxes::AmendBoxes(VecBox *boxes, Box *roi) {
-  if (roi == nullptr)
-    return;
-  for (int i = 0; i < boxes->size(); ++i) {
-    (*boxes)[i].x += roi->x;
-    (*boxes)[i].y += roi->y;
+void Boxes::AmendBoxes(std::vector<VecBox> *boxes, int height, int width,
+                       VecBox rois) {
+  for (int i = 0; i < rois.size(); ++i) {
+    for (int b = 0; b < (*boxes)[i].size(); ++b) {
+      (*boxes)[i][b].x += rois[i].x * width;
+      (*boxes)[i][b].y += rois[i].y * height;
+    }
   }
 }
 

@@ -17,10 +17,12 @@ typedef std::vector<Box> VecBox;
 class Boxes {
 public:
   static float BoxesIoU(const Box &boxA, const Box &boxB);
-  static void BoxesNMS(VecBox *boxes, float iou_threshold);
+  static VecBox BoxesNMS(const std::vector<VecBox> &Bboxes,
+                         float iou_threshold);
   static void SmoothBoxes(const VecBox &oldBoxes, VecBox *newBoxes,
                           float smooth);
-  static void AmendBoxes(VecBox *boxes, Box *roi);
+  static void AmendBoxes(std::vector<VecBox> *boxes, int height, int width,
+                         VecBox rois);
 
 #ifdef USE_OpenCV
   static void SelectRoI(int event, int x, int y, int flags, void *roi);
