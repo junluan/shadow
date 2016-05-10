@@ -1,6 +1,6 @@
 #include "boxes.hpp"
 
-float BoxArea(const Box box) { return box.w * box.h; }
+float BoxArea(const Box &box) { return box.w * box.h; }
 
 float BoxesOverlap(float x1, float w1, float x2, float w2) {
   float left = x1 > x2 ? x1 : x2;
@@ -8,7 +8,7 @@ float BoxesOverlap(float x1, float w1, float x2, float w2) {
   return right - left;
 }
 
-float BoxesIntersection(const Box box_a, const Box box_b) {
+float BoxesIntersection(const Box &box_a, const Box &box_b) {
   float width = BoxesOverlap(box_a.x, box_a.w, box_b.x, box_b.w);
   float height = BoxesOverlap(box_a.y, box_a.h, box_b.y, box_b.h);
   if (width < 0 || height < 0)
@@ -16,8 +16,15 @@ float BoxesIntersection(const Box box_a, const Box box_b) {
   return width * height;
 }
 
-float BoxesUnion(const Box box_a, const Box box_b) {
+float BoxesUnion(const Box &box_a, const Box &box_b) {
   return BoxArea(box_a) + BoxArea(box_b) - BoxesIntersection(box_a, box_b);
+}
+
+void MergeBoxes(const Box &old_box, Box *new_box, float smooth) {
+  new_box->x = old_box.x + (new_box->x - old_box.x) * smooth;
+  new_box->y = old_box.y + (new_box->y - old_box.y) * smooth;
+  new_box->w = old_box.w + (new_box->w - old_box.w) * smooth;
+  new_box->h = old_box.h + (new_box->h - old_box.h) * smooth;
 }
 
 float Boxes::BoxesIoU(const Box &box_a, const Box &box_b) {
@@ -28,7 +35,8 @@ VecBox Boxes::BoxesNMS(const std::vector<VecBox> &Bboxes, float iou_threshold) {
   VecBox boxes;
   for (int i = 0; i < Bboxes.size(); ++i) {
     for (int j = 0; j < Bboxes[i].size(); ++j) {
-      boxes.push_back(Bboxes[i][j]);
+      if (Bboxes[i][j].class_index != -1)
+        boxes.push_back(Bboxes[i][j]);
     }
   }
   for (int i = 0; i < boxes.size(); ++i) {
@@ -39,39 +47,34 @@ VecBox Boxes::BoxesNMS(const std::vector<VecBox> &Bboxes, float iou_threshold) {
           boxes[i].class_index != boxes[j].class_index)
         continue;
       if (BoxesIoU(boxes[i], boxes[j]) > iou_threshold) {
-        if (boxes[i].score < boxes[j].score)
-          boxes[i].class_index = -1;
-        else
-          boxes[j].class_index = -1;
+        float smooth = boxes[i].score / (boxes[i].score + boxes[j].score);
+        MergeBoxes(boxes[j], &boxes[i], smooth);
+        boxes[j].class_index = -1;
         continue;
       }
       float in = BoxesIntersection(boxes[i], boxes[j]);
       float cover_i = in / BoxArea(boxes[i]);
       float cover_j = in / BoxArea(boxes[j]);
-      if (cover_i > cover_j && cover_i > 0.7) {
+      if (cover_i > cover_j && cover_i > 0.7)
         boxes[i].class_index = -1;
-      }
-      if (cover_i < cover_j && cover_j > 0.7) {
+      if (cover_i < cover_j && cover_j > 0.7)
         boxes[j].class_index = -1;
-      }
     }
   }
-  return boxes;
+  VecBox out_boxes;
+  for (int i = 0; i < boxes.size(); ++i) {
+    if (boxes[i].class_index != -1)
+      out_boxes.push_back(boxes[i]);
+  }
+  return out_boxes;
 }
 
-void MergeBoxes(const Box &oldBox, Box *newBox, float smooth) {
-  newBox->x = oldBox.x + (newBox->x - oldBox.x) * smooth;
-  newBox->y = oldBox.y + (newBox->y - oldBox.y) * smooth;
-  newBox->w = oldBox.w + (newBox->w - oldBox.w) * smooth;
-  newBox->h = oldBox.h + (newBox->h - oldBox.h) * smooth;
-}
-
-void Boxes::SmoothBoxes(const VecBox &oldBoxes, VecBox *newBoxes,
+void Boxes::SmoothBoxes(const VecBox &old_boxes, VecBox *new_boxes,
                         float smooth) {
-  for (int i = 0; i < newBoxes->size(); ++i) {
-    Box &newBox = (*newBoxes)[i];
-    for (int j = 0; j < oldBoxes.size(); ++j) {
-      Box oldBox = oldBoxes[j];
+  for (int i = 0; i < new_boxes->size(); ++i) {
+    Box &newBox = (*new_boxes)[i];
+    for (int j = 0; j < old_boxes.size(); ++j) {
+      Box oldBox = old_boxes[j];
       if (BoxesIoU(oldBox, newBox) > 0.7) {
         MergeBoxes(oldBox, &newBox, smooth);
         break;
@@ -81,15 +84,16 @@ void Boxes::SmoothBoxes(const VecBox &oldBoxes, VecBox *newBoxes,
 }
 
 void Boxes::AmendBoxes(std::vector<VecBox> *boxes, int height, int width,
-                       VecBox rois) {
-  for (int i = 0; i < rois.size(); ++i) {
+                       VecRectF crops) {
+  for (int i = 0; i < crops.size(); ++i) {
     for (int b = 0; b < (*boxes)[i].size(); ++b) {
-      (*boxes)[i][b].x += rois[i].x * width;
-      (*boxes)[i][b].y += rois[i].y * height;
+      (*boxes)[i][b].x += crops[i].x * width;
+      (*boxes)[i][b].y += crops[i].y * height;
     }
   }
 }
 
+#ifdef USE_OpenCV
 void Boxes::SelectRoI(int event, int x, int y, int flags, void *roi) {
   Box *roi_ = reinterpret_cast<Box *>(roi);
   switch (event) {
@@ -107,3 +111,4 @@ void Boxes::SelectRoI(int event, int x, int y, int flags, void *roi) {
     return;
   }
 }
+#endif

@@ -1,5 +1,4 @@
 #include "jimage.hpp"
-#include "util.hpp"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -7,10 +6,6 @@
 #include "stb_image_write.h"
 #define STB_IMAGE_RESIZE_IMPLEMENTATION
 #include "stb_image_resize.h"
-
-struct Scalar {
-  unsigned char r, g, b;
-};
 
 JImage::JImage() { data_ = nullptr; }
 
@@ -117,11 +112,13 @@ void JImage::Resize(JImage *im_res, int height, int width) {
                      im_res->h_, im_res->w_ * im_res->c_, c_);
 }
 
-void JImage::Crop(JImage *im_crop, Box crop) {
+void JImage::Crop(JImage *im_crop, RectF crop) {
   if (data_ == nullptr)
     error("JImage data is NULL!");
   if (crop.x < 0 || crop.y < 0 || crop.x + crop.w > 1 || crop.y + crop.h > 1)
     error("Crop region overflow!");
+  if (order_ != kRGB && order_ != kBGR)
+    error("Unsupported format to crop!");
   int height = static_cast<int>(crop.h * h_);
   int width = static_cast<int>(crop.w * w_);
   if (im_crop->data_ == nullptr) {
@@ -134,8 +131,6 @@ void JImage::Crop(JImage *im_crop, Box crop) {
   im_crop->h_ = height;
   im_crop->w_ = width;
   im_crop->order_ = order_;
-  if (order_ != kRGB && order_ != kBGR)
-    error("Unsupported format to crop!");
   int step_src = w_ * c_;
   int step_crop = im_crop->w_ * c_;
   int w_off = static_cast<int>(crop.x * w_);
@@ -145,6 +140,40 @@ void JImage::Crop(JImage *im_crop, Box crop) {
     index_src = data_ + (h + h_off) * step_src + w_off * c_;
     index_crop = im_crop->data_ + h * step_crop;
     memcpy(index_crop, index_src, step_crop);
+  }
+}
+
+void JImage::CropWithResize(JImage *im_res, RectF crop, int height, int width) {
+  if (data_ == nullptr)
+    error("JImage data is NULL!");
+  if (crop.x < 0 || crop.y < 0 || crop.x + crop.w > 1 || crop.y + crop.h > 1)
+    error("Crop region overflow!");
+  if (order_ != kRGB && order_ != kBGR)
+    error("Unsupported format to crop and resize!");
+  if (im_res->data_ == nullptr) {
+    im_res->data_ = new unsigned char[c_ * height * width];
+  } else if (im_res->h_ * im_res->w_ < height * width) {
+    delete[] im_res->data_;
+    im_res->data_ = new unsigned char[c_ * height * width];
+  }
+  im_res->c_ = c_;
+  im_res->h_ = height;
+  im_res->w_ = width;
+  im_res->order_ = order_;
+  float step_h = crop.h * h_ / height;
+  float step_w = crop.w * w_ / width;
+  float h_off = crop.y * h_, w_off = crop.x * w_;
+  int src_step = w_ * c_, dst_step = width * c_;
+  for (int c = 0; c < c_; ++c) {
+    for (int h = 0; h < height; ++h) {
+      for (int w = 0; w < width; ++w) {
+        int s_h = static_cast<int>(h_off + step_h * h);
+        int s_w = static_cast<int>(w_off + step_w * w);
+        int src_offset = s_h * src_step + s_w * c_;
+        int dst_offset = h * dst_step + w * c_;
+        im_res->data_[dst_offset + c] = data_[src_offset + c];
+      }
+    }
   }
 }
 
@@ -213,22 +242,22 @@ void JImage::FromI420(unsigned char *src_y, unsigned char *src_u,
 
 void JImage::FromI420WithCropResize(unsigned char *src_y, unsigned char *src_u,
                                     unsigned char *src_v, int src_h, int src_w,
-                                    int src_stride, Box roi, int resize_h,
+                                    int src_stride, RectF crop, int resize_h,
                                     int resize_w, float *batch_data) {
-  Box roi_p;
-  roi_p.x = roi.x * src_w;
-  roi_p.y = roi.y * src_h;
-  roi_p.w = roi.w * src_w;
-  roi_p.h = roi.h * src_h;
+  RectF crop_p;
+  crop_p.x = crop.x * src_w;
+  crop_p.y = crop.y * src_h;
+  crop_p.w = crop.w * src_w;
+  crop_p.h = crop.h * src_h;
 
-  float step_w = roi_p.w / resize_w;
-  float step_h = roi_p.h / resize_h;
+  float step_w = crop_p.w / resize_w;
+  float step_h = crop_p.h / resize_h;
   int step_ch = resize_h * resize_w;
 
   for (int h = 0; h < resize_h; ++h) {
     for (int w = 0; w < resize_w; ++w) {
-      int s_h = static_cast<int>(roi_p.y + step_h * h);
-      int s_w = static_cast<int>(roi_p.x + step_w * w);
+      int s_h = static_cast<int>(crop_p.y + step_h * h);
+      int s_w = static_cast<int>(crop_p.x + step_w * w);
 
       int y = src_y[s_h * src_stride + s_w];
       int u = src_u[(s_h >> 1) * (src_stride >> 1) + (s_w >> 1)];
@@ -262,28 +291,30 @@ void JImage::FromMat(const cv::Mat &im_mat) {
   memcpy(data_, im_mat.data, c_ * h_ * w_);
 }
 
-void JImage::FromMatWithCropResize(const cv::Mat &im_mat, Box roi, int resize_h,
-                                   int resize_w, float *batch_data) {
-  Box roi_p;
-  roi_p.x = roi.x * im_mat.cols;
-  roi_p.y = roi.y * im_mat.rows;
-  roi_p.w = roi.w * im_mat.cols;
-  roi_p.h = roi.h * im_mat.rows;
+void JImage::FromMatWithCropResize(const cv::Mat &im_mat, RectF crop,
+                                   int resize_h, int resize_w,
+                                   float *batch_data) {
+  RectF crop_p;
+  crop_p.x = crop.x * im_mat.cols;
+  crop_p.y = crop.y * im_mat.rows;
+  crop_p.w = crop.w * im_mat.cols;
+  crop_p.h = crop.h * im_mat.rows;
 
-  float step_w = roi_p.w / resize_w;
-  float step_h = roi_p.h / resize_h;
+  float step_w = crop_p.w / resize_w;
+  float step_h = crop_p.h / resize_h;
   int step_ch = resize_h * resize_w;
-  int step = im_mat.cols * im_mat.channels();
-
-  for (int h = 0; h < resize_h; ++h) {
-    for (int w = 0; w < resize_w; ++w) {
-      int s_h = static_cast<int>(roi_p.y + step_h * h);
-      int s_w = static_cast<int>(roi_p.x + step_w * w);
-      int src_offset = s_h * step + s_w * im_mat.channels();
-      int offset = h * resize_w + w;
-      batch_data[offset + step_ch * 0] = im_mat.data[src_offset + 2];
-      batch_data[offset + step_ch * 1] = im_mat.data[src_offset + 1];
-      batch_data[offset + step_ch * 2] = im_mat.data[src_offset + 0];
+  int ch_offset, ch_src, step = im_mat.cols * im_mat.channels();
+  for (int c = 0; c < 3; ++c) {
+    ch_offset = step_ch * c;
+    ch_src = c_ - c - 1;
+    for (int h = 0; h < resize_h; ++h) {
+      for (int w = 0; w < resize_w; ++w) {
+        int s_h = static_cast<int>(crop_p.y + step_h * h);
+        int s_w = static_cast<int>(crop_p.x + step_w * w);
+        int src_offset = s_h * step + s_w * im_mat.channels();
+        int offset = h * resize_w + w;
+        batch_data[offset + ch_offset] = im_mat.data[src_offset + ch_src];
+      }
     }
   }
 }
@@ -302,9 +333,9 @@ void JImage::Rectangle(const VecBox &boxes, bool console_show) {
 
     Scalar scalar;
     if (box.class_index == 0)
-      scalar = {0, 255, 0};
+      scalar = Scalar(0, 255, 0);
     else
-      scalar = {0, 0, 255};
+      scalar = Scalar(0, 0, 255);
 
     for (int i = x1; i <= x2; ++i) {
       int offset = (w_ * y1 + i) * c_;
@@ -347,9 +378,9 @@ void JImage::GetBatchData(float *batch_data) {
   }
   int ch_src, offset, count = 0, step = w_ * c_;
   for (int c = 0; c < c_; ++c) {
+    ch_src = is_rgb ? c : c_ - c - 1;
     for (int h = 0; h < h_; ++h) {
       for (int w = 0; w < w_; ++w) {
-        ch_src = is_rgb ? c : c_ - c - 1;
         offset = h * step + w * c_;
         batch_data[count++] = data_[offset + ch_src];
       }

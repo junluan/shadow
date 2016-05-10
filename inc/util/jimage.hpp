@@ -2,12 +2,24 @@
 #define SHADOW_JIMAGE_HPP
 
 #include "boxes.hpp"
+#include "util.hpp"
 
 #include <string>
 
 #ifdef USE_OpenCV
 #include <opencv2/opencv.hpp>
 #endif
+
+class Scalar {
+public:
+  Scalar() {}
+  Scalar(int r_t, int g_t, int b_t) {
+    r = (unsigned char)constrain(0, 255, r_t);
+    g = (unsigned char)constrain(0, 255, g_t);
+    b = (unsigned char)constrain(0, 255, b_t);
+  }
+  unsigned char r, g, b;
+};
 
 enum Order { kRGB, kBGR };
 
@@ -23,18 +35,19 @@ public:
   void Show(std::string show_name);
   void CopyTo(JImage *im_copy);
   void Resize(JImage *im_res, int height, int width);
-  void Crop(JImage *im_crop, Box crop);
+  void Crop(JImage *im_crop, RectF crop);
+  void CropWithResize(JImage *im_res, RectF crop, int height, int width);
   void Filter2D(float *kernel, int height, int width);
 
   void FromI420(unsigned char *src_y, unsigned char *src_u,
                 unsigned char *src_v, int src_h, int src_w, int src_stride);
   void FromI420WithCropResize(unsigned char *src_y, unsigned char *src_u,
                               unsigned char *src_v, int src_h, int src_w,
-                              int src_stride, Box roi, int resize_h,
+                              int src_stride, RectF crop, int resize_h,
                               int resize_w, float *batch_data);
 #ifdef USE_OpenCV
   void FromMat(const cv::Mat &im_mat);
-  void FromMatWithCropResize(const cv::Mat &im_mat, Box roi, int resize_h,
+  void FromMatWithCropResize(const cv::Mat &im_mat, RectF crop, int resize_h,
                              int resize_w, float *batch_data);
 #endif
 

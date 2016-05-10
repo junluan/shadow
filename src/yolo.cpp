@@ -15,7 +15,7 @@ Yolo::Yolo(string cfgfile, string weightfile, float threshold) {
 
 Yolo::~Yolo() {}
 
-void Yolo::Setup(int batch, VecBox *rois) {
+void Yolo::Setup(int batch, VecRectF *rois) {
   Kernel::KernelSetup();
 
   Parser parser;
@@ -25,15 +25,9 @@ void Yolo::Setup(int batch, VecBox *rois) {
   parser.LoadWeights(&net_, weightfile_);
   batch_data_ = new float[net_.batch_ * net_.in_num_];
   im_ini_ = new JImage();
-  im_crop_ = new JImage();
   im_res_ = new JImage(3, net_.in_h_, net_.in_w_);
   if (rois == nullptr) {
-    Box roi;
-    roi.x = 0;
-    roi.y = 0;
-    roi.w = 1;
-    roi.h = 1;
-    rois_.push_back(roi);
+    rois_.push_back(RectF(0.f, 0.f, 1.f, 1.f));
   } else {
     rois_ = *rois;
   }
@@ -174,8 +168,7 @@ void Yolo::PredictYoloDetections(JImage *image, std::vector<VecBox> *Bboxes) {
     index = batch_data_;
     int c = 0;
     for (int i = count; i < b * batch && i < num_im; ++i, ++c) {
-      image->Crop(im_crop_, rois_[i]);
-      im_crop_->Resize(im_res_, net_.in_h_, net_.in_w_);
+      image->CropWithResize(im_res_, rois_[i], net_.in_h_, net_.in_w_);
       im_res_->GetBatchData(index);
       index += net_.in_num_;
     }
