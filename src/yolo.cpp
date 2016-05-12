@@ -86,14 +86,14 @@ void Yolo::VideoTest(string videofile, bool video_show, bool video_write) {
   cv::VideoCapture capture;
   if (!capture.open(videofile))
     error("error when opening video file " + videofile);
-  float rate = static_cast<float>(capture.get(cv::CAP_PROP_FPS));
-  int width = static_cast<int>(capture.get(cv::CAP_PROP_FRAME_WIDTH));
-  int height = static_cast<int>(capture.get(cv::CAP_PROP_FRAME_HEIGHT));
+  float rate = static_cast<float>(capture.get(CV_CAP_PROP_FPS));
+  int width = static_cast<int>(capture.get(CV_CAP_PROP_FRAME_WIDTH));
+  int height = static_cast<int>(capture.get(CV_CAP_PROP_FRAME_HEIGHT));
   cv::VideoWriter writer;
   if (video_write) {
     string outfile = find_replace_last(videofile, ".", "-result.");
     outfile = change_extension(outfile, ".avi");
-    int format = writer.fourcc('X', '2', '6', '4');
+    int format = CV_FOURCC('X', '2', '6', '4');
     writer.open(outfile, format, rate, cv::Size(width, height));
   }
   CaptureTest(capture, "yolo video test!-:)", video_show, writer, video_write);
@@ -105,12 +105,12 @@ void Yolo::Demo(int camera, bool video_write) {
   cv::VideoCapture capture;
   if (!capture.open(camera))
     error("error when opening camera!");
-  float rate = static_cast<float>(capture.get(cv::CAP_PROP_FPS));
-  int width = static_cast<int>(capture.get(cv::CAP_PROP_FRAME_WIDTH));
-  int height = static_cast<int>(capture.get(cv::CAP_PROP_FRAME_HEIGHT));
+  float rate = static_cast<float>(capture.get(CV_CAP_PROP_FPS));
+  int width = static_cast<int>(capture.get(CV_CAP_PROP_FRAME_WIDTH));
+  int height = static_cast<int>(capture.get(CV_CAP_PROP_FRAME_HEIGHT));
   cv::VideoWriter writer;
   if (video_write) {
-    int format = writer.fourcc('X', '2', '6', '4');
+    int format = CV_FOURCC('X', '2', '6', '4');
     writer.open("./data/demo-result.avi", format, rate,
                 cv::Size(width, height));
   }
@@ -122,7 +122,7 @@ void Yolo::Demo(int camera, bool video_write) {
 void Yolo::CaptureTest(cv::VideoCapture capture, string window_name,
                        bool video_show, cv::VideoWriter writer,
                        bool video_write) {
-  float rate = static_cast<float>(capture.get(cv::CAP_PROP_FPS));
+  float rate = static_cast<float>(capture.get(CV_CAP_PROP_FPS));
   if (video_show)
     cv::namedWindow(window_name, cv::WINDOW_NORMAL);
   cv::Mat im_mat;
@@ -156,7 +156,7 @@ void Yolo::CaptureTest(cv::VideoCapture capture, string window_name,
 }
 #endif
 
-void Yolo::PredictYoloDetections(JImage *image, std::vector<VecBox> *Bboxes) {
+void Yolo::PredictYoloDetections(JImage *image, vector<VecBox> *Bboxes) {
   Bboxes->clear();
   size_t num_im = rois_.size();
   int batch = net_.batch_;
@@ -252,16 +252,15 @@ void Yolo::DrawYoloDetections(const VecBox &boxes, cv::Mat *im_mat,
                             static_cast<int>(box.y + box.h)),
                   scalar, 2, 8, 0);
     if (console_show) {
-      std::cout << "x = " << box.x << ", y = " << box.y << ", w = " << box.w
-                << ", h = " << box.h << ", score = " << box.score
-                << ", label = " << box.class_index << std::endl;
+      cout << "x = " << box.x << ", y = " << box.y << ", w = " << box.w
+           << ", h = " << box.h << ", score = " << box.score
+           << ", label = " << box.class_index << endl;
     }
   }
 }
 #endif
 
-void Yolo::PrintYoloDetections(const VecBox &boxes, int count,
-                               std::ofstream *file) {
+void Yolo::PrintYoloDetections(const VecBox &boxes, int count, ofstream *file) {
   for (int b = 0; b < boxes.size(); ++b) {
     Box box = boxes[b];
     if (box.class_index == -1)

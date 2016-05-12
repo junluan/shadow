@@ -26,6 +26,8 @@ typedef std::vector<Box> VecBox;
 
 class Boxes {
 public:
+  static float BoxesIntersection(const Box &boxA, const Box &boxB);
+  static float BoxesUnion(const Box &box_a, const Box &box_b);
   static float BoxesIoU(const Box &boxA, const Box &boxB);
   static VecBox BoxesNMS(const std::vector<VecBox> &Bboxes,
                          float iou_threshold);

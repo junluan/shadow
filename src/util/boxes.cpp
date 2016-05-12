@@ -8,7 +8,7 @@ float BoxesOverlap(float x1, float w1, float x2, float w2) {
   return right - left;
 }
 
-float BoxesIntersection(const Box &box_a, const Box &box_b) {
+float Boxes::BoxesIntersection(const Box &box_a, const Box &box_b) {
   float width = BoxesOverlap(box_a.x, box_a.w, box_b.x, box_b.w);
   float height = BoxesOverlap(box_a.y, box_a.h, box_b.y, box_b.h);
   if (width < 0 || height < 0)
@@ -16,7 +16,7 @@ float BoxesIntersection(const Box &box_a, const Box &box_b) {
   return width * height;
 }
 
-float BoxesUnion(const Box &box_a, const Box &box_b) {
+float Boxes::BoxesUnion(const Box &box_a, const Box &box_b) {
   return BoxArea(box_a) + BoxArea(box_b) - BoxesIntersection(box_a, box_b);
 }
 
