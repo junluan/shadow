@@ -10,6 +10,11 @@
 #include <opencv2/opencv.hpp>
 #endif
 
+#define USE_ArcSoft
+#ifdef USE_ArcSoft
+#include "asvloffscreen.h"
+#endif
+
 class Scalar {
 public:
   Scalar() {}
@@ -39,16 +44,21 @@ public:
   void CropWithResize(JImage *im_res, RectF crop, int height, int width);
   void Filter2D(float *kernel, int height, int width);
 
-  void FromI420(unsigned char *src_y, unsigned char *src_u,
-                unsigned char *src_v, int src_h, int src_w, int src_stride);
-  void FromI420WithCropResize(unsigned char *src_y, unsigned char *src_u,
-                              unsigned char *src_v, int src_h, int src_w,
-                              int src_stride, RectF crop, int resize_h,
-                              int resize_w, float *batch_data);
 #ifdef USE_OpenCV
   void FromMat(const cv::Mat &im_mat);
   void FromMatWithCropResize(const cv::Mat &im_mat, RectF crop, int resize_h,
                              int resize_w, float *batch_data);
+#endif
+
+#ifdef USE_ArcSoft
+  void FromArcImage(const ASVLOFFSCREEN &im_arc);
+  void FromArcImageWithCropResize(const ASVLOFFSCREEN &im_arc, RectF crop,
+                                  int resize_h, int resize_w,
+                                  float *batch_data);
+#ifdef USE_OpenCV
+  static void Mat2ArcImage(const cv::Mat &im_mat, ASVLOFFSCREEN *im_arc,
+                           unsigned char *buffer, int arc_format);
+#endif
 #endif
 
   void Rectangle(const VecBox &boxes, bool console_show = true);

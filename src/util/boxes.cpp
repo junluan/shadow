@@ -66,6 +66,7 @@ VecBox Boxes::BoxesNMS(const std::vector<VecBox> &Bboxes, float iou_threshold) {
     if (boxes[i].class_index != -1)
       out_boxes.push_back(boxes[i]);
   }
+  boxes.clear();
   return out_boxes;
 }
 

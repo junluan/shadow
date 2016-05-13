@@ -163,26 +163,21 @@ void Yolo::PredictYoloDetections(JImage *image, vector<VecBox> *Bboxes) {
   size_t batch_off = num_im % batch;
   size_t batch_num = num_im / batch + (batch_off > 0 ? 1 : 0);
 
-  float *index = nullptr;
   for (int count = 0, b = 1; b <= batch_num; ++b) {
-    index = batch_data_;
     int c = 0;
     for (int i = count; i < b * batch && i < num_im; ++i, ++c) {
       image->CropWithResize(im_res_, rois_[i], net_.in_h_, net_.in_w_);
-      im_res_->GetBatchData(index);
-      index += net_.in_num_;
+      im_res_->GetBatchData(batch_data_ + c * net_.in_num_);
     }
     predictions_ = net_.PredictNetwork(batch_data_);
-    index = predictions_;
     for (int i = 0; i < c; ++i) {
       VecBox boxes(net_.grid_size_ * net_.grid_size_ * net_.box_num_);
       int height = static_cast<int>(rois_[count + i].h * image->h_);
       int width = static_cast<int>(rois_[count + i].w * image->w_);
-      ConvertYoloDetections(index, net_.class_num_, net_.box_num_,
-                            net_.sqrt_box_, net_.grid_size_, width, height,
-                            &boxes);
+      ConvertYoloDetections(predictions_ + i * net_.out_num_, net_.class_num_,
+                            net_.box_num_, net_.sqrt_box_, net_.grid_size_,
+                            width, height, &boxes);
       Bboxes->push_back(boxes);
-      index += net_.out_num_;
     }
     count += c;
   }
