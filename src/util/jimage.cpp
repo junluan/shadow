@@ -5,10 +5,21 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
 
-JImage::JImage() { data_ = nullptr; }
+JImage::JImage() {
+  data_ = nullptr;
+
+#ifdef USE_ArcSoft
+  arc_data_ = nullptr;
+#endif
+}
 
 JImage::JImage(std::string im_path) {
   data_ = nullptr;
+
+#ifdef USE_ArcSoft
+  arc_data_ = nullptr;
+#endif
+
   Read(im_path);
 }
 
@@ -20,7 +31,15 @@ JImage::JImage(int channel, int height, int width, Order order) {
   data_ = new unsigned char[c_ * h_ * w_];
 }
 
-JImage::~JImage() { delete[] data_; }
+JImage::~JImage() {
+  if (data_ != nullptr)
+    delete[] data_;
+
+#ifdef USE_ArcSoft
+  if (arc_data_ != nullptr)
+    delete[] arc_data_;
+#endif
+}
 
 void JImage::Read(std::string im_path) {
   if (data_ != nullptr)
@@ -269,60 +288,45 @@ void JImage::FromMatWithCropResize(const cv::Mat &im_mat, RectF crop,
 #define yuvYb fix(0.114, 10)
 #define yuvCr fix(0.713, 10)
 #define yuvCb fix(0.564, 10)
-void BGR2I420(unsigned char *src_bgr, int src_h, int src_w, int src_step,
-              unsigned char *dst_i420) {
-  int uv_offset = src_h * src_w, uv_step = src_h * src_w / 4, count = 0;
-  for (int h = 0; h < src_h; h += 2) {
-    for (int w = 0; w < src_w;) {
-      int b = src_bgr[h * src_step + w * 3 + 0];
-      int g = src_bgr[h * src_step + w * 3 + 1];
-      int r = src_bgr[h * src_step + w * 3 + 2];
 
-      int y1 = (b * yuvYb + g * yuvYg + r * yuvYr) >> 10;
-      int cb1 = ((b - y1) * yuvCb + (128 << 10)) >> 10;
-      int cr1 = ((r - y1) * yuvCr + (128 << 10)) >> 10;
-      dst_i420[h * src_w + w] = (unsigned char)y1;
-
-      w++;
-      b = src_bgr[h * src_step + w * 3 + 0];
-      g = src_bgr[h * src_step + w * 3 + 1];
-      r = src_bgr[h * src_step + w * 3 + 2];
-
-      y1 = (b * yuvYb + g * yuvYg + r * yuvYr) >> 10;
-      cb1 += ((b - y1) * yuvCb + (128 << 10)) >> 10;
-      cr1 += ((r - y1) * yuvCr + (128 << 10)) >> 10;
-      dst_i420[h * src_w + w] = (unsigned char)y1;
-
-      h++;
-      w--;
-      b = src_bgr[h * src_step + w * 3 + 0];
-      g = src_bgr[h * src_step + w * 3 + 1];
-      r = src_bgr[h * src_step + w * 3 + 2];
-
-      y1 = (b * yuvYb + g * yuvYg + r * yuvYr) >> 10;
-      cb1 += ((b - y1) * yuvCb + (128 << 10)) >> 10;
-      cr1 += ((r - y1) * yuvCr + (128 << 10)) >> 10;
-      dst_i420[h * src_w + w] = (unsigned char)y1;
-
-      w++;
-      b = src_bgr[h * src_step + w * 3];
-      g = src_bgr[h * src_step + w * 3 + 1];
-      r = src_bgr[h * src_step + w * 3 + 2];
-
-      y1 = (b * yuvYb + g * yuvYg + r * yuvYr) >> 10;
-      cb1 += ((b - y1) * yuvCb + (128 << 10)) >> 10;
-      cr1 += ((r - y1) * yuvCr + (128 << 10)) >> 10;
-      dst_i420[h * src_w + w] = (unsigned char)y1;
-
-      cb1 = CLIP((cb1 >> 2));
-      cr1 = CLIP((cr1 >> 2));
-
-      dst_i420[uv_offset + count] = (unsigned char)cb1;
-      dst_i420[uv_offset + count + uv_step] = (unsigned char)cr1;
-      count++;
-
-      w++;
-      h--;
+void RGB2I420(unsigned char *src_bgr, int src_h, int src_w, int src_step,
+              Order order, unsigned char *dst_i420) {
+  int loc_r = 0, loc_g = 1, loc_b = 2;
+  if (order == kRGB) {
+    loc_r = 0;
+    loc_g = 1;
+    loc_b = 2;
+  } else if (order == kBGR) {
+    loc_r = 2;
+    loc_g = 1;
+    loc_b = 0;
+  } else {
+    error("Unsupported order to convert to I420!");
+  }
+  int r, g, b;
+  int dst_h = src_h / 2, dst_w = src_w / 2;
+  int uv_offset = src_h * src_w, uv_step = dst_h * dst_w;
+  for (int h = 0; h < dst_h; ++h) {
+    for (int w = 0; w < dst_w; ++w) {
+      int s_h = 2 * h, s_w = 2 * w, y, cb = 0, cr = 0;
+      for (int h_off = 0; h_off < 2; ++h_off) {
+        for (int w_off = 0; w_off < 2; ++w_off) {
+          int src_offset = (s_h + h_off) * src_step + (s_w + w_off) * 3;
+          int y_offset = (s_h + h_off) * src_w + s_w + w_off;
+          r = src_bgr[src_offset + loc_r];
+          g = src_bgr[src_offset + loc_g];
+          b = src_bgr[src_offset + loc_b];
+          y = (b * yuvYb + g * yuvYg + r * yuvYr) >> 10;
+          cb += ((b - y) * yuvCb + (128 << 10)) >> 10;
+          cr += ((r - y) * yuvCr + (128 << 10)) >> 10;
+          dst_i420[y_offset] = (unsigned char)y;
+        }
+      }
+      cb = CLIP((cb >> 2));
+      cr = CLIP((cr >> 2));
+      int offset = uv_offset + h * dst_w + w;
+      dst_i420[offset] = (unsigned char)cb;
+      dst_i420[offset + uv_step] = (unsigned char)cr;
     }
   }
 }
@@ -426,27 +430,35 @@ void JImage::FromArcImageWithCropResize(const ASVLOFFSCREEN &im_arc, RectF crop,
   }
 }
 
-void JImage::Mat2ArcImage(const cv::Mat &im_mat, ASVLOFFSCREEN *im_arc,
-                          unsigned char *buffer, int arc_format) {
+void JImage::JImageToArcImage(int arc_format) {
+  if (data_ == nullptr)
+    error("JImage data is NULL!");
+  if (order_ == kArc)
+    return;
+  if (order_ != kRGB && order_ != kBGR)
+    error("Unsupported format to convert JImage to ArcImage!");
   switch (arc_format) {
   case ASVL_PAF_I420: {
-    int src_h = (im_mat.rows >> 1) << 1;
-    int src_w = (im_mat.cols >> 1) << 1;
-    int src_step = static_cast<int>(im_mat.step);
-    BGR2I420(im_mat.data, src_h, src_w, src_step, buffer);
-    im_arc->i32Width = im_mat.cols;
-    im_arc->i32Height = im_mat.rows;
-    im_arc->ppu8Plane[0] = buffer;
-    im_arc->ppu8Plane[1] = buffer + src_h * src_w;
-    im_arc->ppu8Plane[2] = buffer + src_h * src_w * 5 / 4;
-    im_arc->pi32Pitch[0] = src_w;
-    im_arc->pi32Pitch[1] = src_w >> 1;
-    im_arc->pi32Pitch[2] = src_w >> 1;
-    im_arc->u32PixelArrayFormat = ASVL_PAF_I420;
+    int src_h = (h_ >> 1) << 1;
+    int src_w = (w_ >> 1) << 1;
+    int src_step = w_ * c_;
+    if (arc_data_ == nullptr) {
+      arc_data_ = new unsigned char[src_h * src_w * 3 / 2];
+    }
+    RGB2I420(data_, src_h, src_w, src_step, order_, arc_data_);
+    arc_image_.i32Height = src_h;
+    arc_image_.i32Width = src_w;
+    arc_image_.ppu8Plane[0] = arc_data_;
+    arc_image_.ppu8Plane[1] = arc_data_ + src_h * src_w;
+    arc_image_.ppu8Plane[2] = arc_data_ + src_h * src_w * 5 / 4;
+    arc_image_.pi32Pitch[0] = src_w;
+    arc_image_.pi32Pitch[1] = src_w >> 1;
+    arc_image_.pi32Pitch[2] = src_w >> 1;
+    arc_image_.u32PixelArrayFormat = ASVL_PAF_I420;
     break;
   }
   default: {
-    error("Unsupported format to convert Mat to ArcImage!");
+    error("Unsupported ArcImage format!");
     break;
   }
   }
@@ -521,7 +533,15 @@ void JImage::GetBatchData(float *batch_data) {
   }
 }
 
-void JImage::Release() { delete[] data_; }
+void JImage::Release() {
+  if (data_ != nullptr)
+    delete[] data_;
+
+#ifdef USE_ArcSoft
+  if (arc_data_ != nullptr)
+    delete[] arc_data_;
+#endif
+}
 
 void JImage::GetInv(unsigned char *im_inv) {
   bool is_rgb2bgr = false;

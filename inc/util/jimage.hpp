@@ -26,7 +26,7 @@ public:
   unsigned char r, g, b;
 };
 
-enum Order { kRGB, kBGR };
+enum Order { kRGB, kBGR, kArc };
 
 class JImage {
 public:
@@ -55,10 +55,7 @@ public:
   void FromArcImageWithCropResize(const ASVLOFFSCREEN &im_arc, RectF crop,
                                   int resize_h, int resize_w,
                                   float *batch_data);
-#ifdef USE_OpenCV
-  static void Mat2ArcImage(const cv::Mat &im_mat, ASVLOFFSCREEN *im_arc,
-                           unsigned char *buffer, int arc_format);
-#endif
+  void JImageToArcImage(int arc_format);
 #endif
 
   void Rectangle(const VecBox &boxes, bool console_show = true);
@@ -66,12 +63,18 @@ public:
 
   void Release();
 
-  unsigned char *data_;
   int c_, h_, w_;
-  Order order_;
+
+#ifdef USE_ArcSoft
+  ASVLOFFSCREEN arc_image_;
+  unsigned char *arc_data_;
+#endif
 
 private:
   void GetInv(unsigned char *im_inv);
+
+  unsigned char *data_;
+  Order order_;
 };
 
 #endif // SHADOW_JIMAGE_HPP
