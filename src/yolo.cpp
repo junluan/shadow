@@ -48,7 +48,16 @@ void Yolo::Test(string imagefile) {
 
   cout << "Predicted in " << static_cast<float>(clock() - time) / CLOCKS_PER_SEC
        << " seconds" << endl;
-  im_ini_->Rectangle(boxes);
+
+  for (int i = 0; i < boxes.size(); ++i) {
+    Box box = boxes[i];
+    Scalar scalar;
+    if (box.class_index == 0)
+      scalar = Scalar(0, 255, 0);
+    else
+      scalar = Scalar(0, 0, 255);
+    im_ini_->Rectangle(box, scalar, false);
+  }
   im_ini_->Show("result");
 }
 
@@ -67,10 +76,18 @@ void Yolo::BatchTest(string listfile, bool image_write) {
     VecBox boxes = Boxes::BoxesNMS(Bboxes, 0.5);
     if (image_write) {
       string path = find_replace_last(imagelist[i], ".", "-result.");
-      im_ini_->Rectangle(boxes, false);
+      for (int j = 0; j < boxes.size(); ++j) {
+        Box box = boxes[j];
+        Scalar scalar;
+        if (box.class_index == 0)
+          scalar = Scalar(0, 255, 0);
+        else
+          scalar = Scalar(0, 0, 255);
+        im_ini_->Rectangle(box, scalar, false);
+      }
       im_ini_->Write(path);
     }
-    PrintYoloDetections(Bboxes[i], i + 1, &file);
+    PrintYoloDetections(boxes, i + 1, &file);
     if (!((i + 1) % 100))
       cout << "Processing: " << i + 1 << " / " << num_im << endl;
   }
@@ -201,15 +218,13 @@ void Yolo::ConvertYoloDetections(float *predictions, int classes, int box_num,
       w = pow(predictions[box_index + 2], (square ? 2 : 1));
       h = pow(predictions[box_index + 3], (square ? 2 : 1));
 
-      x = constrain(0.f, 1.f, x - w / 2);
-      y = constrain(0.f, 1.f, y - h / 2);
-      w = constrain(0.f, 1.f, x + w) - x;
-      h = constrain(0.f, 1.f, y + h) - y;
+      x = x - w / 2;
+      y = y - h / 2;
 
-      (*boxes)[index].x = x * width;
-      (*boxes)[index].y = y * height;
-      (*boxes)[index].w = w * width;
-      (*boxes)[index].h = h * height;
+      (*boxes)[index].x = constrain(0.f, width - 1.f, x * width);
+      (*boxes)[index].y = constrain(0.f, height - 1.f, y * height);
+      (*boxes)[index].w = constrain(0.f, width - 1.f, w * width);
+      (*boxes)[index].h = constrain(0.f, height - 1.f, h * height);
 
       float max_score = 0;
       int max_index = -1;

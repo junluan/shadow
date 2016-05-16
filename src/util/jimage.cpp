@@ -70,24 +70,24 @@ void JImage::Write(std::string im_path) {
     error("Failed to write image to " + im_path);
 }
 
-void JImage::Show(std::string show_name) {
+void JImage::Show(std::string show_name, int wait_time) {
   if (data_ == nullptr)
     error("JImage data is NULL!");
 #ifdef USE_OpenCV
+  cv::namedWindow(show_name, cv::WINDOW_NORMAL);
   if (order_ == kRGB) {
     unsigned char *data_inv = new unsigned char[c_ * h_ * w_];
     GetInv(data_inv);
     cv::Mat im_mat(h_, w_, CV_8UC3, data_inv);
     cv::imshow(show_name, im_mat);
-    cv::waitKey(0);
     delete[] data_inv;
   } else if (order_ == kBGR) {
     cv::Mat im_mat(h_, w_, CV_8UC3, data_);
     cv::imshow(show_name, im_mat);
-    cv::waitKey(0);
   } else {
     error("Unsupported format to show!");
   }
+  cv::waitKey(wait_time);
 #else
   warn("Not compiled with OpenCV, saving image to " + show_name + ".png");
   Write(show_name + ".png");
@@ -465,48 +465,42 @@ void JImage::JImageToArcImage(int arc_format) {
 }
 #endif
 
-void JImage::Rectangle(const VecBox &boxes, bool console_show) {
+void JImage::Rectangle(const Box &box, Scalar scalar, bool console_show) {
+  int x1 = constrain(0, w_ - 1, static_cast<int>(box.x));
+  int y1 = constrain(0, h_ - 1, static_cast<int>(box.y));
+  int x2 = constrain(x1, w_ - 1, static_cast<int>(x1 + box.w));
+  int y2 = constrain(y1, h_ - 1, static_cast<int>(y1 + box.h));
+
+  for (int i = x1; i <= x2; ++i) {
+    int offset = (w_ * y1 + i) * c_;
+    data_[offset + 0] = scalar.r;
+    data_[offset + 1] = scalar.g;
+    data_[offset + 2] = scalar.b;
+    offset = (w_ * y2 + i) * c_;
+    data_[offset + 0] = scalar.r;
+    data_[offset + 1] = scalar.g;
+    data_[offset + 2] = scalar.b;
+  }
+  for (int i = y1; i <= y2; ++i) {
+    int offset = (w_ * i + x1) * c_;
+    data_[offset + 0] = scalar.r;
+    data_[offset + 1] = scalar.g;
+    data_[offset + 2] = scalar.b;
+    offset = (w_ * i + x2) * c_;
+    data_[offset + 0] = scalar.r;
+    data_[offset + 1] = scalar.g;
+    data_[offset + 2] = scalar.b;
+  }
+  if (console_show) {
+    std::cout << "x = " << box.x << ", y = " << box.y << ", w = " << box.w
+              << ", h = " << box.h << ", score = " << box.score
+              << ", label = " << box.class_index << std::endl;
+  }
+}
+
+void JImage::Rectangle(const VecBox &boxes, Scalar scalar, bool console_show) {
   for (int b = 0; b < boxes.size(); ++b) {
-    if (boxes[b].class_index == -1)
-      continue;
-
-    Box box = boxes[b];
-    int x1 = constrain(0, w_ - 1, static_cast<int>(box.x));
-    int y1 = constrain(0, h_ - 1, static_cast<int>(box.y));
-    int x2 = constrain(x1, w_ - 1, static_cast<int>(x1 + box.w));
-    int y2 = constrain(y1, h_ - 1, static_cast<int>(y1 + box.h));
-
-    Scalar scalar;
-    if (box.class_index == 0)
-      scalar = Scalar(0, 255, 0);
-    else
-      scalar = Scalar(0, 0, 255);
-
-    for (int i = x1; i <= x2; ++i) {
-      int offset = (w_ * y1 + i) * c_;
-      data_[offset + 0] = scalar.r;
-      data_[offset + 1] = scalar.g;
-      data_[offset + 2] = scalar.b;
-      offset = (w_ * y2 + i) * c_;
-      data_[offset + 0] = scalar.r;
-      data_[offset + 1] = scalar.g;
-      data_[offset + 2] = scalar.b;
-    }
-    for (int i = y1; i <= y2; ++i) {
-      int offset = (w_ * i + x1) * c_;
-      data_[offset + 0] = scalar.r;
-      data_[offset + 1] = scalar.g;
-      data_[offset + 2] = scalar.b;
-      offset = (w_ * i + x2) * c_;
-      data_[offset + 0] = scalar.r;
-      data_[offset + 1] = scalar.g;
-      data_[offset + 2] = scalar.b;
-    }
-    if (console_show) {
-      std::cout << "x = " << box.x << ", y = " << box.y << ", w = " << box.w
-                << ", h = " << box.h << ", score = " << box.score
-                << ", label = " << box.class_index << std::endl;
-    }
+    Rectangle(boxes[b], scalar, console_show);
   }
 }
 

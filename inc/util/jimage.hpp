@@ -37,7 +37,7 @@ public:
 
   void Read(std::string im_path);
   void Write(std::string im_path);
-  void Show(std::string show_name);
+  void Show(std::string show_name, int wait_time = 0);
   void CopyTo(JImage *im_copy);
   void Resize(JImage *im_res, int height, int width);
   void Crop(JImage *im_crop, RectF crop);
@@ -58,7 +58,10 @@ public:
   void JImageToArcImage(int arc_format);
 #endif
 
-  void Rectangle(const VecBox &boxes, bool console_show = true);
+  void Rectangle(const Box &box, Scalar scalar = Scalar(0, 255, 0),
+                 bool console_show = true);
+  void Rectangle(const VecBox &boxes, Scalar scalar = Scalar(0, 255, 0),
+                 bool console_show = true);
   void GetBatchData(float *batch_data);
 
   void Release();

@@ -28,26 +28,27 @@ include_directories("./inc" "./inc/layers" "./inc/util" "./external/arcsoft" "./
 file(GLOB shadow_lib_src "./src/network.cpp" "./src/layers/*.cpp" "./src/util/*.cpp" "./external/jsoncpp/jsoncpp.cpp")
 file(GLOB shadow_lib_inc "inc/network.hpp" "./inc/layers/*.hpp" "./inc/util/*.hpp")
 
-if (${USE_CUDA} STREQUAL "ON")
+if (${USE_CUDA} STREQUAL "ON" AND ${USE_CL} STREQUAL "OFF")
   find_package(CUDA REQUIRED)
   if (NOT CUDA_FOUND)
     message(FATAL_ERROR "Can't find CUDA")
   endif ()
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DUSE_CUDA")
-  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -L${PROJECT_SOURCE_DIR}/external/arcsoft")
-  set(CUDA_NVCC_FLAGS "-gencode arch=compute_30,code=\"compute_30,sm_30\"")
+  set(CUDA_NVCC_FLAGS "-gencode arch=compute_20,code=\"compute_20,sm_20\"")
+
   cuda_add_library(shadow "./src/util/kernel.cu" ${shadow_lib_src} ${shadow_lib_inc})
 
   file(GLOB yolo_src "./src/main.cpp" "./src/yolo.cpp" "inc/yolo.hpp")
   cuda_add_executable(yolo ${yolo_src})
   target_link_libraries(yolo shadow ${CUDA_cublas_LIBRARY} ${OpenCV_LIBS})
 
-  file(GLOB vpd_src "./src/testvpdlib.cpp" "./src/vpd.cpp" "./inc/vpd.h" "./src/ot.cpp" "./inc/ot.hpp" "./external/arcsoft/DataConvert.cpp")
+  file(GLOB vpd_src "./src/testvpdlib.cpp" "./src/vpd.cpp" "./inc/vpd.h" "./src/ot.cpp" "./inc/ot.hpp")
   cuda_add_executable(testvpdlib ${vpd_src})
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -L${PROJECT_SOURCE_DIR}/external/arcsoft")
   target_link_libraries(testvpdlib shadow arcsoft_object_tracking mpbase ${CUDA_cublas_LIBRARY} ${OpenCV_LIBS})
 endif ()
 
-if (${USE_CL} STREQUAL "ON")
+if (${USE_CUDA} STREQUAL "OFF" AND ${USE_CL} STREQUAL "ON")
   find_package(OpenCL REQUIRED)
   if (NOT OpenCL_FOUND)
     message(FATAL_ERROR "Can't find OpenCL")
@@ -56,13 +57,28 @@ if (${USE_CL} STREQUAL "ON")
   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -L${PROJECT_SOURCE_DIR}/external/EasyCL/dist/lib")
   include_directories("${PROJECT_SOURCE_DIR}/external/EasyCL/dist/include/easycl")
   include_directories(${OpenCL_INCLUDE_DIRS})
+
   add_library(shadow ${shadow_lib_src} ${shadow_lib_inc})
-  add_executable(yolo "./src/main.cpp" "./src/yolo.cpp" "inc/yolo.hpp")
+
+  file(GLOB yolo_src "./src/main.cpp" "./src/yolo.cpp" "inc/yolo.hpp")
+  add_executable(yolo ${yolo_src})
   target_link_libraries(yolo shadow clBLAS clew EasyCL ${OpenCL_LIBRARIES} ${OpenCV_LIBS})
+
+  file(GLOB vpd_src "./src/testvpdlib.cpp" "./src/vpd.cpp" "./inc/vpd.h" "./src/ot.cpp" "./inc/ot.hpp")
+  add_executable(testvpdlib ${vpd_src})
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -L${PROJECT_SOURCE_DIR}/external/arcsoft")
+  target_link_libraries(testvpdlib shadow clBLAS clew EasyCL arcsoft_object_tracking mpbase ${OpenCL_LIBRARIES} ${OpenCV_LIBS})
 endif ()
 
 if (${USE_CUDA} STREQUAL "OFF" AND ${USE_CL} STREQUAL "OFF")
   add_library(shadow ${shadow_lib_src} ${shadow_lib_inc})
-  add_executable(yolo "./src/main.cpp" "./src/yolo.cpp" "inc/yolo.hpp")
+
+  file(GLOB yolo_src "./src/main.cpp" "./src/yolo.cpp" "inc/yolo.hpp")
+  add_executable(yolo ${yolo_src})
   target_link_libraries(yolo shadow ${OpenCV_LIBS})
+
+  file(GLOB vpd_src "./src/testvpdlib.cpp" "./src/vpd.cpp" "./inc/vpd.h" "./src/ot.cpp" "./inc/ot.hpp")
+  add_executable(testvpdlib ${vpd_src})
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -L${PROJECT_SOURCE_DIR}/external/arcsoft")
+  target_link_libraries(testvpdlib shadow arcsoft_object_tracking mpbase ${OpenCV_LIBS})
 endif ()
