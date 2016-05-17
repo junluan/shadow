@@ -9,7 +9,7 @@
 #include <opencv2/opencv.hpp>
 #endif
 
-class Box {
+class Box : public Rect<float> {
 public:
   Box() {}
   Box(float x_t, float y_t, float w_t, float h_t) {
@@ -18,7 +18,7 @@ public:
     w = w_t;
     h = h_t;
   }
-  float x, y, w, h, score;
+  float score;
   int class_index;
 };
 
