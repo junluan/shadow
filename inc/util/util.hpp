@@ -2,6 +2,7 @@
 #define SHADOW_UTIL_HPP
 
 #include <cmath>
+#include <fstream>
 #include <iostream>
 #include <string>
 #include <vector>
@@ -83,6 +84,23 @@ static std::string change_extension(const std::string str,
   size_t index = origin.find_last_of(".");
   origin.replace(index, origin.length(), new_ext);
   return origin;
+}
+
+static std::vector<std::string> LoadList(std::string list_file) {
+  std::cout << "Loading image list from " << list_file << " ... ";
+  std::ifstream file(list_file);
+  if (!file.is_open())
+    error("Load image list file error!");
+
+  std::string dir;
+  std::vector<std::string> image_list;
+  while (getline(file, dir)) {
+    if (dir.length())
+      image_list.push_back(dir);
+  }
+  file.close();
+  std::cout << "Done!" << std::endl;
+  return image_list;
 }
 
 #endif // SHADOW_UTIL_HPP

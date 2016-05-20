@@ -8,6 +8,7 @@
 #include "layer.hpp"
 #include "pooling_layer.hpp"
 
+#include <string>
 #include <vector>
 
 class Network {
@@ -21,14 +22,16 @@ public:
   int num_layers_;
   std::vector<Layer *> layers_;
 
-  void MakeNetwork(int n);
+  void LoadModel(std::string cfg_file, std::string weight_file, int batch = 1);
+
   float *PredictNetwork(float *in_data);
-  int GetNetworkOutputSize();
-  float *GetNetworkOutput();
-  void SetNetworkBatch(int batch);
   void ReleaseNetwork();
 
+  int GetNetworkOutputSize();
+
 private:
+  float *GetNetworkOutput();
+
   void ForwardNetwork(float *in_data);
 
 #ifdef USE_CUDA

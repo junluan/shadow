@@ -9,10 +9,8 @@
 
 class Parser {
 public:
-  void ParseNetworkCfg(Network *net, std::string cfgfile, int batch = 1);
-  void LoadWeights(Network *net, std::string weightfile);
-  static void LoadImageList(std::vector<std::string> *imagelist,
-                            std::string listfile);
+  void ParseNetworkCfg(Network *net, std::string cfg_file, int batch);
+  void LoadWeights(Network *net, std::string weight_file);
 
 private:
   void ParseNet(Network *net, Json::Value section);

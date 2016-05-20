@@ -4,25 +4,24 @@
 
 #include <fstream>
 
-using namespace std;
-
-bool ParaFindBool(const Json::Value &params, string key, bool def) {
+bool ParaFindBool(const Json::Value &params, std::string key, bool def) {
   return params.isMember(key) ? params[key].asBool() : def;
 }
 
-float ParaFindFloat(const Json::Value &params, string key, float def) {
+float ParaFindFloat(const Json::Value &params, std::string key, float def) {
   return params.isMember(key) ? params[key].asFloat() : def;
 }
 
-int ParaFindInt(const Json::Value &params, string key, int def) {
+int ParaFindInt(const Json::Value &params, std::string key, int def) {
   return params.isMember(key) ? params[key].asInt() : def;
 }
 
-string ParaFindString(const Json::Value &params, string key, string def) {
+std::string ParaFindString(const Json::Value &params, std::string key,
+                           std::string def) {
   return params.isMember(key) ? params[key].asString() : def;
 }
 
-float *ParaFindArrayFloat(const Json::Value &params, string key) {
+float *ParaFindArrayFloat(const Json::Value &params, std::string key) {
   float *arr = nullptr;
   if (params.isMember(key)) {
     Json::Value array = params[key];
@@ -34,7 +33,7 @@ float *ParaFindArrayFloat(const Json::Value &params, string key) {
   return arr;
 }
 
-int *ParaFindArrayInt(const Json::Value &params, string key) {
+int *ParaFindArrayInt(const Json::Value &params, std::string key) {
   int *arr = nullptr;
   if (params.isMember(key)) {
     Json::Value array = params[key];
@@ -46,19 +45,20 @@ int *ParaFindArrayInt(const Json::Value &params, string key) {
   return arr;
 }
 
-void Parser::LoadWeights(Network *net, string weightfile) {
-  LoadWeightsUpto(net, weightfile, net->num_layers_);
+void Parser::LoadWeights(Network *net, std::string weight_file) {
+  LoadWeightsUpto(net, weight_file, net->num_layers_);
 }
 
-void Parser::ParseNetworkCfg(Network *net, string cfgfile, int batch) {
-  ifstream file(cfgfile);
+void Parser::ParseNetworkCfg(Network *net, std::string cfg_file, int batch) {
+  std::ifstream file(cfg_file);
   Json::Reader reader;
   Json::Value root;
   if (!reader.parse(file, root, false))
     error("Parse configure file error");
   Json::Value sections = root["network"];
 
-  net->MakeNetwork(sections.size() - 1);
+  net->num_layers_ = sections.size() - 1;
+  net->layers_.reserve(net->num_layers_);
   ParseNet(net, sections[0]);
   net->batch_ = batch;
 
@@ -74,7 +74,7 @@ void Parser::ParseNetworkCfg(Network *net, string cfgfile, int batch) {
     printf("%2d: ", i);
 #endif
     Json::Value section = sections[i + 1];
-    string layer_type = section["type"].asString();
+    std::string layer_type = section["type"].asString();
     Layer *l = nullptr;
     if (!layer_type.compare("Data")) {
       l = ParseData(section, params);
@@ -143,7 +143,7 @@ ConvLayer *Parser::ParseConvolutional(Json::Value section, SizeParams params) {
   int ksize = ParaFindInt(layer_params, "kernel_size", 3);
   int stride = ParaFindInt(layer_params, "stride", 1);
   int pad = ParaFindInt(layer_params, "pad", 0);
-  string activation = ParaFindString(layer_params, "activation", "leaky");
+  std::string activation = ParaFindString(layer_params, "activation", "leaky");
 
   ConvLayer *conv_layer = new ConvLayer(kConvolutional);
   conv_layer->MakeConvLayer(params, out_num, ksize, stride, pad, activation);
@@ -158,7 +158,7 @@ PoolingLayer *Parser::ParsePooling(Json::Value section, SizeParams params) {
 
   Json::Value layer_params = section["parameters"];
 
-  string pool_type = ParaFindString(layer_params, "pool", "Max");
+  std::string pool_type = ParaFindString(layer_params, "pool", "Max");
   int ksize = ParaFindInt(layer_params, "kernel_size", 2);
   int stride = ParaFindInt(layer_params, "stride", 2);
 
@@ -176,7 +176,7 @@ ConnectedLayer *Parser::ParseConnected(Json::Value section, SizeParams params) {
   Json::Value layer_params = section["parameters"];
 
   int out_num = ParaFindInt(layer_params, "num_output", 1);
-  string activation = ParaFindString(layer_params, "activation", "leaky");
+  std::string activation = ParaFindString(layer_params, "activation", "leaky");
 
   ConnectedLayer *conn_layer = new ConnectedLayer(kConnected);
   conn_layer->MakeConnectedLayer(params, out_num, activation);
@@ -199,11 +199,11 @@ DropoutLayer *Parser::ParseDropout(Json::Value section, SizeParams params) {
   return drop_layer;
 }
 
-void Parser::LoadWeightsUpto(Network *net, string weightfile, int cutoff) {
+void Parser::LoadWeightsUpto(Network *net, std::string weightfile, int cutoff) {
 #ifdef VERBOSE
-  cout << "Load model from " << weightfile << " ... " << endl;
+  std::cout << "Load model from " << weightfile << " ... " << std::endl;
 #endif
-  ifstream file(weightfile, ios::binary);
+  std::ifstream file(weightfile, std::ios::binary);
   if (!file.is_open())
     error("Load weight file error!");
 
@@ -247,19 +247,4 @@ void Parser::LoadWeightsUpto(Network *net, string weightfile, int cutoff) {
   }
 
   file.close();
-}
-
-void Parser::LoadImageList(vector<string> *imagelist, string listfile) {
-  cout << "Loading image list from " << listfile << " ... ";
-  ifstream file(listfile);
-  if (!file.is_open())
-    error("Load image list file error!");
-
-  string dir;
-  while (getline(file, dir)) {
-    if (dir.length())
-      imagelist->push_back(dir);
-  }
-  file.close();
-  cout << "Done!" << endl;
 }
