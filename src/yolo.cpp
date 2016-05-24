@@ -1,6 +1,5 @@
 #include "yolo.hpp"
 #include "kernel.hpp"
-#include "parser.hpp"
 #include "util.hpp"
 
 #include <ctime>
@@ -8,8 +7,8 @@
 using namespace std;
 
 Yolo::Yolo(string cfgfile, string weightfile, float threshold) {
-  cfgfile_ = cfgfile;
-  weightfile_ = weightfile;
+  cfg_file_ = cfgfile;
+  weight_file_ = weightfile;
   threshold_ = threshold;
 }
 
@@ -18,11 +17,7 @@ Yolo::~Yolo() {}
 void Yolo::Setup(int batch, VecRectF *rois) {
   Kernel::KernelSetup();
 
-  Parser parser;
-  parser.ParseNetworkCfg(&net_, cfgfile_, batch);
-  if (weightfile_.empty())
-    error("Weight file is empty!");
-  parser.LoadWeights(&net_, weightfile_);
+  net_.LoadModel(cfg_file_, weight_file_, batch);
   batch_data_ = new float[net_.batch_ * net_.in_num_];
   im_ini_ = new JImage();
   im_res_ = new JImage(3, net_.in_h_, net_.in_w_);
@@ -38,9 +33,9 @@ void Yolo::Release() {
   Kernel::KernelRelease();
 }
 
-void Yolo::Test(string imagefile) {
+void Yolo::Test(string image_file) {
   clock_t time = clock();
-  im_ini_->Read(imagefile);
+  im_ini_->Read(image_file);
   vector<VecBox> Bboxes;
   PredictYoloDetections(im_ini_, &Bboxes);
   Boxes::AmendBoxes(&Bboxes, im_ini_->h_, im_ini_->w_, rois_);
@@ -61,21 +56,20 @@ void Yolo::Test(string imagefile) {
   im_ini_->Show("result");
 }
 
-void Yolo::BatchTest(string listfile, bool image_write) {
-  vector<string> imagelist;
-  Parser::LoadImageList(&imagelist, listfile);
-  size_t num_im = imagelist.size();
+void Yolo::BatchTest(string list_file, bool image_write) {
+  vector<string> image_list = LoadList(list_file);
+  size_t num_im = image_list.size();
 
   clock_t time = clock();
-  ofstream file(find_replace_last(listfile, ".", "-result."));
+  ofstream file(find_replace_last(list_file, ".", "-result."));
   for (int i = 0; i < num_im; ++i) {
-    im_ini_->Read(imagelist[i]);
+    im_ini_->Read(image_list[i]);
     vector<VecBox> Bboxes;
     PredictYoloDetections(im_ini_, &Bboxes);
     Boxes::AmendBoxes(&Bboxes, im_ini_->h_, im_ini_->w_, rois_);
     VecBox boxes = Boxes::BoxesNMS(Bboxes, 0.5);
     if (image_write) {
-      string path = find_replace_last(imagelist[i], ".", "-result.");
+      string path = find_replace_last(image_list[i], ".", "-result.");
       for (int j = 0; j < boxes.size(); ++j) {
         Box box = boxes[j];
         Scalar scalar;
@@ -99,16 +93,16 @@ void Yolo::BatchTest(string listfile, bool image_write) {
 }
 
 #ifdef USE_OpenCV
-void Yolo::VideoTest(string videofile, bool video_show, bool video_write) {
+void Yolo::VideoTest(string video_file, bool video_show, bool video_write) {
   cv::VideoCapture capture;
-  if (!capture.open(videofile))
-    error("error when opening video file " + videofile);
+  if (!capture.open(video_file))
+    error("error when opening video file " + video_file);
   float rate = static_cast<float>(capture.get(CV_CAP_PROP_FPS));
   int width = static_cast<int>(capture.get(CV_CAP_PROP_FRAME_WIDTH));
   int height = static_cast<int>(capture.get(CV_CAP_PROP_FRAME_HEIGHT));
   cv::VideoWriter writer;
   if (video_write) {
-    string outfile = find_replace_last(videofile, ".", "-result.");
+    string outfile = find_replace_last(video_file, ".", "-result.");
     outfile = change_extension(outfile, ".avi");
     int format = CV_FOURCC('X', '2', '6', '4');
     writer.open(outfile, format, rate, cv::Size(width, height));

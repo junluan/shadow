@@ -5,27 +5,27 @@
 #include "jimage.hpp"
 #include "network.hpp"
 
-#include <fstream>
 #include <string>
 #include <vector>
+#include <fstream>
 
 class Yolo {
 public:
-  Yolo(std::string cfgfile, std::string weightfile, float threshold);
+  Yolo(std::string cfg_file, std::string weight_file, float threshold);
   ~Yolo();
 
   void Setup(int batch = 1, VecRectF *rois = nullptr);
-  void Test(std::string imagefile);
-  void BatchTest(std::string listfile, bool image_write = false);
+  void Test(std::string image_file);
+  void BatchTest(std::string list_file, bool image_write = false);
 #ifdef USE_OpenCV
-  void VideoTest(std::string videofile, bool video_show = false,
+  void VideoTest(std::string video_file, bool video_show = false,
                  bool video_write = false);
   void Demo(int camera, bool video_write = false);
 #endif
   void Release();
 
 private:
-  std::string cfgfile_, weightfile_;
+  std::string cfg_file_, weight_file_;
   float threshold_;
   Network net_;
   float *batch_data_, *predictions_;
