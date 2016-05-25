@@ -82,12 +82,12 @@ void CUDA::CUDACheckError(cudaError_t status) {
   if (status != cudaSuccess) {
     const char *s = cudaGetErrorString(status);
     std::string message(s);
-    error("CUDA Error: " + message);
+    Fatal("CUDA Error: " + message);
   }
   if (status2 != cudaSuccess) {
     const char *s = cudaGetErrorString(status);
     std::string message(s);
-    error("CUDA Error Prev: " + message);
+    Fatal("CUDA Error Prev: " + message);
   }
 }
 #endif

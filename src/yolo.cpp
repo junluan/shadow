@@ -96,7 +96,7 @@ void Yolo::BatchTest(string list_file, bool image_write) {
 void Yolo::VideoTest(string video_file, bool video_show, bool video_write) {
   cv::VideoCapture capture;
   if (!capture.open(video_file))
-    error("error when opening video file " + video_file);
+    Fatal("error when opening video file " + video_file);
   float rate = static_cast<float>(capture.get(CV_CAP_PROP_FPS));
   int width = static_cast<int>(capture.get(CV_CAP_PROP_FRAME_WIDTH));
   int height = static_cast<int>(capture.get(CV_CAP_PROP_FRAME_HEIGHT));
@@ -115,7 +115,7 @@ void Yolo::VideoTest(string video_file, bool video_show, bool video_write) {
 void Yolo::Demo(int camera, bool video_write) {
   cv::VideoCapture capture;
   if (!capture.open(camera))
-    error("error when opening camera!");
+    Fatal("error when opening camera!");
   float rate = static_cast<float>(capture.get(CV_CAP_PROP_FPS));
   int width = static_cast<int>(capture.get(CV_CAP_PROP_FRAME_WIDTH));
   int height = static_cast<int>(capture.get(CV_CAP_PROP_FRAME_HEIGHT));

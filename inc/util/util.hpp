@@ -1,6 +1,10 @@
 #ifndef SHADOW_UTIL_HPP
 #define SHADOW_UTIL_HPP
 
+#ifdef USE_GLog
+#include <glog/logging.h>
+#endif
+
 #include <cmath>
 #include <fstream>
 #include <iostream>
@@ -35,14 +39,28 @@ typedef Size<int> SizeI;
 typedef std::vector<RectF> VecRectF;
 typedef std::vector<RectI> VecRectI;
 
-static void inline error(const std::string msg) {
+#ifdef USE_GLog
+#define Info(msg)                                                              \
+  { LOG(INFO) << msg; }
+
+#define Warning(msg)                                                           \
+  { LOG(WARNING) << msg; }
+
+#define Error(msg)                                                             \
+  { LOG(ERROR) << msg; }
+
+#define Fatal(msg)                                                             \
+  { LOG(FATAL) << msg; }
+#else
+static void inline Fatal(const std::string msg) {
   std::cerr << msg << std::endl;
   exit(1);
 }
 
-static void inline warn(const std::string msg) {
+static void inline Warning(const std::string msg) {
   std::cout << msg << std::endl;
 }
+#endif
 
 static float inline rand_uniform(float min, float max) {
   return (static_cast<float>(std::rand()) / RAND_MAX) * (max - min) + min;
@@ -90,7 +108,7 @@ static std::vector<std::string> LoadList(std::string list_file) {
   std::cout << "Loading image list from " << list_file << " ... ";
   std::ifstream file(list_file);
   if (!file.is_open())
-    error("Load image list file error!");
+    Fatal("Load image list file error!");
 
   std::string dir;
   std::vector<std::string> image_list;

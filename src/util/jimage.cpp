@@ -46,13 +46,13 @@ void JImage::Read(std::string im_path) {
     delete[] data_;
   data_ = stbi_load(im_path.c_str(), &w_, &h_, &c_, 3);
   if (data_ == nullptr)
-    error("Failed to read image " + im_path);
+    Fatal("Failed to read image " + im_path);
   order_ = kRGB;
 }
 
 void JImage::Write(std::string im_path) {
   if (data_ == nullptr)
-    error("JImage data is NULL!");
+    Fatal("JImage data is NULL!");
   int is_ok = -1;
   int step = w_ * c_;
   std::string path = change_extension(im_path, ".png");
@@ -64,15 +64,15 @@ void JImage::Write(std::string im_path) {
     is_ok = stbi_write_png(path.c_str(), w_, h_, c_, data_inv, step);
     delete[] data_inv;
   } else {
-    error("Unsupported format to disk!");
+    Fatal("Unsupported format to disk!");
   }
   if (!is_ok)
-    error("Failed to write image to " + im_path);
+    Fatal("Failed to write image to " + im_path);
 }
 
 void JImage::Show(std::string show_name, int wait_time) {
   if (data_ == nullptr)
-    error("JImage data is NULL!");
+    Fatal("JImage data is NULL!");
 #ifdef USE_OpenCV
   cv::namedWindow(show_name, cv::WINDOW_NORMAL);
   if (order_ == kRGB) {
@@ -85,7 +85,7 @@ void JImage::Show(std::string show_name, int wait_time) {
     cv::Mat im_mat(h_, w_, CV_8UC3, data_);
     cv::imshow(show_name, im_mat);
   } else {
-    error("Unsupported format to show!");
+    Fatal("Unsupported format to show!");
   }
   cv::waitKey(wait_time);
 #else
@@ -96,7 +96,7 @@ void JImage::Show(std::string show_name, int wait_time) {
 
 void JImage::CopyTo(JImage *im_copy) {
   if (data_ == nullptr)
-    error("JImage data is NULL!");
+    Fatal("JImage data is NULL!");
   if (im_copy->data_ == nullptr) {
     im_copy->data_ = new unsigned char[c_ * h_ * w_];
   } else if (im_copy->h_ * im_copy->w_ < h_ * w_) {
@@ -112,9 +112,9 @@ void JImage::CopyTo(JImage *im_copy) {
 
 void JImage::Resize(JImage *im_res, int height, int width) {
   if (data_ == nullptr)
-    error("JImage data is NULL!");
+    Fatal("JImage data is NULL!");
   if (order_ != kRGB && order_ != kBGR)
-    error("Unsupported format to resize!");
+    Fatal("Unsupported format to resize!");
   if (im_res->data_ == nullptr) {
     im_res->data_ = new unsigned char[c_ * height * width];
   } else if (im_res->h_ * im_res->w_ < height * width) {
@@ -143,11 +143,11 @@ void JImage::Resize(JImage *im_res, int height, int width) {
 
 void JImage::Crop(JImage *im_crop, RectF crop) {
   if (data_ == nullptr)
-    error("JImage data is NULL!");
+    Fatal("JImage data is NULL!");
   if (order_ != kRGB && order_ != kBGR)
-    error("Unsupported format to crop!");
+    Fatal("Unsupported format to crop!");
   if (crop.x < 0 || crop.y < 0 || crop.x + crop.w > 1 || crop.y + crop.h > 1)
-    error("Crop region overflow!");
+    Fatal("Crop region overflow!");
   int height = static_cast<int>(crop.h * h_);
   int width = static_cast<int>(crop.w * w_);
   if (im_crop->data_ == nullptr) {
@@ -174,11 +174,11 @@ void JImage::Crop(JImage *im_crop, RectF crop) {
 
 void JImage::CropWithResize(JImage *im_res, RectF crop, int height, int width) {
   if (data_ == nullptr)
-    error("JImage data is NULL!");
+    Fatal("JImage data is NULL!");
   if (order_ != kRGB && order_ != kBGR)
-    error("Unsupported format to crop and resize!");
+    Fatal("Unsupported format to crop and resize!");
   if (crop.x < 0 || crop.y < 0 || crop.x + crop.w > 1 || crop.y + crop.h > 1)
-    error("Crop region overflow!");
+    Fatal("Crop region overflow!");
   if (im_res->data_ == nullptr) {
     im_res->data_ = new unsigned char[c_ * height * width];
   } else if (im_res->h_ * im_res->w_ < height * width) {
@@ -301,7 +301,7 @@ void RGB2I420(unsigned char *src_bgr, int src_h, int src_w, int src_step,
     loc_g = 1;
     loc_b = 0;
   } else {
-    error("Unsupported order to convert to I420!");
+    Fatal("Unsupported order to convert to I420!");
   }
   int r, g, b;
   int dst_h = src_h / 2, dst_w = src_w / 2;
@@ -354,7 +354,7 @@ void I4202RGB(unsigned char *src_y, unsigned char *src_u, unsigned char *src_v,
         dst_rgb[offset + 0] = (unsigned char)constrain(0, 255, b);
         dst_rgb[offset + 2] = (unsigned char)constrain(0, 255, r);
       } else {
-        error("Unsupported format to convert i420 to rgb!");
+        Fatal("Unsupported format to convert i420 to rgb!");
       }
     }
   }
@@ -382,7 +382,7 @@ void JImage::FromArcImage(const ASVLOFFSCREEN &im_arc) {
     break;
   }
   default: {
-    error("Unsupported format to convert ArcImage to JImage!");
+    Fatal("Unsupported format to convert ArcImage to JImage!");
     break;
   }
   }
@@ -432,11 +432,11 @@ void JImage::FromArcImageWithCropResize(const ASVLOFFSCREEN &im_arc, RectF crop,
 
 void JImage::JImageToArcImage(int arc_format) {
   if (data_ == nullptr)
-    error("JImage data is NULL!");
+    Fatal("JImage data is NULL!");
   if (order_ == kArc)
     return;
   if (order_ != kRGB && order_ != kBGR)
-    error("Unsupported format to convert JImage to ArcImage!");
+    Fatal("Unsupported format to convert JImage to ArcImage!");
   switch (arc_format) {
   case ASVL_PAF_I420: {
     int src_h = (h_ >> 1) << 1;
@@ -458,7 +458,7 @@ void JImage::JImageToArcImage(int arc_format) {
     break;
   }
   default: {
-    error("Unsupported ArcImage format!");
+    Fatal("Unsupported ArcImage format!");
     break;
   }
   }
@@ -506,14 +506,14 @@ void JImage::Rectangle(const VecBox &boxes, Scalar scalar, bool console_show) {
 
 void JImage::GetBatchData(float *batch_data) {
   if (data_ == nullptr)
-    error("JImage data is NULL!");
+    Fatal("JImage data is NULL!");
   bool is_rgb = false;
   if (order_ == kRGB) {
     is_rgb = true;
   } else if (order_ == kBGR) {
     is_rgb = false;
   } else {
-    error("Unsupported format to get batch data!");
+    Fatal("Unsupported format to get batch data!");
   }
   int ch_src, offset, count = 0, step = w_ * c_;
   for (int c = 0; c < c_; ++c) {
@@ -544,7 +544,7 @@ void JImage::GetInv(unsigned char *im_inv) {
   } else if (order_ == kBGR) {
     is_rgb2bgr = false;
   } else {
-    error("Unsupported format to inverse!");
+    Fatal("Unsupported format to inverse!");
   }
   int ch_src, ch_inv, offset, step = w_ * c_;
   for (int c = 0; c < c_; ++c) {

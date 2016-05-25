@@ -54,7 +54,7 @@ void Parser::ParseNetworkCfg(Network *net, std::string cfg_file, int batch) {
   Json::Reader reader;
   Json::Value root;
   if (!reader.parse(file, root, false))
-    error("Parse configure file error");
+    Fatal("Parse configure file error");
   Json::Value sections = root["network"];
 
   net->num_layers_ = sections.size() - 1;
@@ -88,7 +88,7 @@ void Parser::ParseNetworkCfg(Network *net, std::string cfg_file, int batch) {
       l = ParseDropout(section, params);
       l->out_data_ = net->layers_[i - 1]->out_data_;
     } else {
-      error("Type not recognized");
+      Fatal("Type not recognized");
     }
     net->layers_.push_back(l);
     if (i != net->num_layers_ - 1 && l != nullptr) {
@@ -115,12 +115,12 @@ void Parser::ParseNet(Network *net, Json::Value section) {
 
   net->in_num_ = net->in_c_ * net->in_h_ * net->in_w_;
   if (!net->in_num_ && !(net->in_c_ && net->in_h_ && net->in_w_))
-    error("No input parameters supplied");
+    Fatal("No input parameters supplied");
 }
 
 DataLayer *Parser::ParseData(Json::Value section, SizeParams params) {
   if (!(params.in_c && params.in_h && params.in_w))
-    error("Channel, height and width must greater than zero.");
+    Fatal("Channel, height and width must greater than zero.");
 
   Json::Value layer_params = section["parameters"];
 
@@ -135,7 +135,7 @@ DataLayer *Parser::ParseData(Json::Value section, SizeParams params) {
 
 ConvLayer *Parser::ParseConvolutional(Json::Value section, SizeParams params) {
   if (!(params.in_c && params.in_h && params.in_w))
-    error("Channel, height and width must greater than zero.");
+    Fatal("Channel, height and width must greater than zero.");
 
   Json::Value layer_params = section["parameters"];
 
@@ -154,7 +154,7 @@ ConvLayer *Parser::ParseConvolutional(Json::Value section, SizeParams params) {
 
 PoolingLayer *Parser::ParsePooling(Json::Value section, SizeParams params) {
   if (!(params.in_c && params.in_h && params.in_w))
-    error("Channel, height and width must greater than zero.");
+    Fatal("Channel, height and width must greater than zero.");
 
   Json::Value layer_params = section["parameters"];
 
@@ -171,7 +171,7 @@ PoolingLayer *Parser::ParsePooling(Json::Value section, SizeParams params) {
 
 ConnectedLayer *Parser::ParseConnected(Json::Value section, SizeParams params) {
   if (!(params.in_num))
-    error("input dimension must greater than zero.");
+    Fatal("input dimension must greater than zero.");
 
   Json::Value layer_params = section["parameters"];
 
@@ -187,7 +187,7 @@ ConnectedLayer *Parser::ParseConnected(Json::Value section, SizeParams params) {
 
 DropoutLayer *Parser::ParseDropout(Json::Value section, SizeParams params) {
   if (!(params.in_num))
-    error("input dimension must greater than zero.");
+    Fatal("input dimension must greater than zero.");
 
   Json::Value layer_params = section["parameters"];
 
@@ -205,7 +205,7 @@ void Parser::LoadWeightsUpto(Network *net, std::string weightfile, int cutoff) {
 #endif
   std::ifstream file(weightfile, std::ios::binary);
   if (!file.is_open())
-    error("Load weight file error!");
+    Fatal("Load weight file error!");
 
   char garbage[16];
   file.read(garbage, sizeof(char) * 16);

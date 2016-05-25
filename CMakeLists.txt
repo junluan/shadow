@@ -3,13 +3,18 @@ project(shadow)
 
 option(USE_CUDA "Using CUDA!" ON)
 option(USE_CL "Using OpenCL!" OFF)
-option(USE_OpenCV "Using OpenCV to read, write and show image!" ON)
+option(USE_GLog "Using GLog!" ON)
 option(VERBOSE "Showing verbose message" ON)
+option(USE_OpenCV "Using OpenCV to read, write and show image!" ON)
 
 set(OpenCV_ROOT "/usr/local" CACHE STRING "Give the root of OpenCV!")
 
 set(CMAKE_CXX_COMPILER "/usr/bin/clang++-3.8")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+
+if (${USE_GLog} STREQUAL "ON")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DUSE_GLog")
+endif ()
 
 if (${VERBOSE} STREQUAL "ON")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DVERBOSE")
@@ -40,7 +45,7 @@ if (${USE_CUDA} STREQUAL "ON" AND ${USE_CL} STREQUAL "OFF")
 
   file(GLOB yolo_src "./src/main.cpp" "./src/yolo.cpp" "inc/yolo.hpp")
   cuda_add_executable(yolo ${yolo_src})
-  target_link_libraries(yolo shadow ${CUDA_cublas_LIBRARY} ${OpenCV_LIBS})
+  target_link_libraries(yolo shadow glog ${CUDA_cublas_LIBRARY} ${OpenCV_LIBS})
 endif ()
 
 if (${USE_CUDA} STREQUAL "OFF" AND ${USE_CL} STREQUAL "ON")
