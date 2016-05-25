@@ -29,7 +29,7 @@ if (${USE_OpenCV} STREQUAL "ON")
   include_directories(${OpenCV_INCLUDE_DIRS})
 endif ()
 
-include_directories("./inc" "./inc/layers" "./inc/util" "./external/arcsoft" "./external/jsoncpp" "./external/stb")
+include_directories("./inc" "./inc/layers" "./inc/util" "./external/jsoncpp" "./external/stb")
 file(GLOB shadow_lib_src "./src/network.cpp" "./src/layers/*.cpp" "./src/util/*.cpp" "./external/jsoncpp/jsoncpp.cpp")
 file(GLOB shadow_lib_inc "inc/network.hpp" "./inc/layers/*.hpp" "./inc/util/*.hpp")
 
@@ -62,7 +62,7 @@ if (${USE_CUDA} STREQUAL "OFF" AND ${USE_CL} STREQUAL "ON")
 
   file(GLOB yolo_src "./src/main.cpp" "./src/yolo.cpp" "inc/yolo.hpp")
   add_executable(yolo ${yolo_src})
-  target_link_libraries(yolo shadow clBLAS clew EasyCL ${OpenCL_LIBRARIES} ${OpenCV_LIBS})
+  target_link_libraries(yolo shadow glog clBLAS clew EasyCL ${OpenCL_LIBRARIES} ${OpenCV_LIBS})
 endif ()
 
 if (${USE_CUDA} STREQUAL "OFF" AND ${USE_CL} STREQUAL "OFF")
@@ -70,5 +70,5 @@ if (${USE_CUDA} STREQUAL "OFF" AND ${USE_CL} STREQUAL "OFF")
 
   file(GLOB yolo_src "./src/main.cpp" "./src/yolo.cpp" "inc/yolo.hpp")
   add_executable(yolo ${yolo_src})
-  target_link_libraries(yolo shadow ${OpenCV_LIBS})
+  target_link_libraries(yolo shadow glog ${OpenCV_LIBS})
 endif ()

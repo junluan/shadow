@@ -10,11 +10,6 @@
 #include <opencv2/opencv.hpp>
 #endif
 
-#define USE_ArcSoft
-#ifdef USE_ArcSoft
-#include "asvloffscreen.h"
-#endif
-
 class Scalar {
 public:
   Scalar() {}
@@ -26,7 +21,7 @@ public:
   unsigned char r, g, b;
 };
 
-enum Order { kRGB, kBGR, kArc };
+enum Order { kRGB, kBGR };
 
 class JImage {
 public:
@@ -50,14 +45,6 @@ public:
                              int resize_w, float *batch_data);
 #endif
 
-#ifdef USE_ArcSoft
-  void FromArcImage(const ASVLOFFSCREEN &im_arc);
-  void FromArcImageWithCropResize(const ASVLOFFSCREEN &im_arc, RectF crop,
-                                  int resize_h, int resize_w,
-                                  float *batch_data);
-  void JImageToArcImage(int arc_format);
-#endif
-
   void Rectangle(const Box &box, Scalar scalar = Scalar(0, 255, 0),
                  bool console_show = true);
   void Rectangle(const VecBox &boxes, Scalar scalar = Scalar(0, 255, 0),
@@ -67,11 +54,6 @@ public:
   void Release();
 
   int c_, h_, w_;
-
-#ifdef USE_ArcSoft
-  ASVLOFFSCREEN arc_image_;
-  unsigned char *arc_data_;
-#endif
 
 private:
   void GetInv(unsigned char *im_inv);

@@ -5,21 +5,10 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
 
-JImage::JImage() {
-  data_ = nullptr;
-
-#ifdef USE_ArcSoft
-  arc_data_ = nullptr;
-#endif
-}
+JImage::JImage() { data_ = nullptr; }
 
 JImage::JImage(std::string im_path) {
   data_ = nullptr;
-
-#ifdef USE_ArcSoft
-  arc_data_ = nullptr;
-#endif
-
   Read(im_path);
 }
 
@@ -34,11 +23,6 @@ JImage::JImage(int channel, int height, int width, Order order) {
 JImage::~JImage() {
   if (data_ != nullptr)
     delete[] data_;
-
-#ifdef USE_ArcSoft
-  if (arc_data_ != nullptr)
-    delete[] arc_data_;
-#endif
 }
 
 void JImage::Read(std::string im_path) {
@@ -360,111 +344,6 @@ void I4202RGB(unsigned char *src_y, unsigned char *src_u, unsigned char *src_v,
   }
 }
 
-#ifdef USE_ArcSoft
-void JImage::FromArcImage(const ASVLOFFSCREEN &im_arc) {
-  int src_h = static_cast<int>(im_arc.i32Height);
-  int src_w = static_cast<int>(im_arc.i32Width);
-  int src_step = static_cast<int>(im_arc.pi32Pitch[0]);
-  if (data_ == nullptr) {
-    data_ = new unsigned char[3 * src_h * src_w];
-  } else if (h_ * w_ < src_h * src_w) {
-    delete[] data_;
-    data_ = new unsigned char[3 * src_h * src_w];
-  }
-  c_ = 3;
-  h_ = src_h;
-  w_ = src_w;
-  order_ = kRGB;
-  switch (im_arc.u32PixelArrayFormat) {
-  case ASVL_PAF_I420: {
-    I4202RGB(im_arc.ppu8Plane[0], im_arc.ppu8Plane[1], im_arc.ppu8Plane[2],
-             src_h, src_w, src_step, data_, order_);
-    break;
-  }
-  default: {
-    Fatal("Unsupported format to convert ArcImage to JImage!");
-    break;
-  }
-  }
-}
-
-void JImage::FromArcImageWithCropResize(const ASVLOFFSCREEN &im_arc, RectF crop,
-                                        int resize_h, int resize_w,
-                                        float *batch_data) {
-  int src_h = static_cast<int>(im_arc.i32Height);
-  int src_w = static_cast<int>(im_arc.i32Width);
-  int src_step = static_cast<int>(im_arc.pi32Pitch[0]);
-  unsigned char *src_y = im_arc.ppu8Plane[0];
-  unsigned char *src_u = im_arc.ppu8Plane[1];
-  unsigned char *src_v = im_arc.ppu8Plane[2];
-
-  RectF crop_p;
-  crop_p.x = crop.x * src_w;
-  crop_p.y = crop.y * src_h;
-  crop_p.w = crop.w * src_w;
-  crop_p.h = crop.h * src_h;
-
-  float step_w = crop_p.w / resize_w;
-  float step_h = crop_p.h / resize_h;
-  int step_ch = resize_h * resize_w;
-
-  for (int h = 0; h < resize_h; ++h) {
-    for (int w = 0; w < resize_w; ++w) {
-      int s_h = static_cast<int>(crop_p.y + step_h * h);
-      int s_w = static_cast<int>(crop_p.x + step_w * w);
-
-      int y = src_y[s_h * src_step + s_w];
-      int u = src_u[(s_h >> 1) * (src_step >> 1) + (s_w >> 1)];
-      int v = src_v[(s_h >> 1) * (src_step >> 1) + (s_w >> 1)];
-      u -= 128;
-      v -= 128;
-      int r = y + v + ((v * 103) >> 8);
-      int g = y - ((u * 88) >> 8) + ((v * 183) >> 8);
-      int b = y + u + ((u * 198) >> 8);
-
-      int offset = h * resize_w + w;
-      batch_data[offset + step_ch * 0] = (unsigned char)constrain(0, 255, r);
-      batch_data[offset + step_ch * 1] = (unsigned char)constrain(0, 255, g);
-      batch_data[offset + step_ch * 2] = (unsigned char)constrain(0, 255, b);
-    }
-  }
-}
-
-void JImage::JImageToArcImage(int arc_format) {
-  if (data_ == nullptr)
-    Fatal("JImage data is NULL!");
-  if (order_ == kArc)
-    return;
-  if (order_ != kRGB && order_ != kBGR)
-    Fatal("Unsupported format to convert JImage to ArcImage!");
-  switch (arc_format) {
-  case ASVL_PAF_I420: {
-    int src_h = (h_ >> 1) << 1;
-    int src_w = (w_ >> 1) << 1;
-    int src_step = w_ * c_;
-    if (arc_data_ == nullptr) {
-      arc_data_ = new unsigned char[src_h * src_w * 3 / 2];
-    }
-    RGB2I420(data_, src_h, src_w, src_step, order_, arc_data_);
-    arc_image_.i32Height = src_h;
-    arc_image_.i32Width = src_w;
-    arc_image_.ppu8Plane[0] = arc_data_;
-    arc_image_.ppu8Plane[1] = arc_data_ + src_h * src_w;
-    arc_image_.ppu8Plane[2] = arc_data_ + src_h * src_w * 5 / 4;
-    arc_image_.pi32Pitch[0] = src_w;
-    arc_image_.pi32Pitch[1] = src_w >> 1;
-    arc_image_.pi32Pitch[2] = src_w >> 1;
-    arc_image_.u32PixelArrayFormat = ASVL_PAF_I420;
-    break;
-  }
-  default: {
-    Fatal("Unsupported ArcImage format!");
-    break;
-  }
-  }
-}
-#endif
-
 void JImage::Rectangle(const Box &box, Scalar scalar, bool console_show) {
   int x1 = constrain(0, w_ - 1, static_cast<int>(box.x));
   int y1 = constrain(0, h_ - 1, static_cast<int>(box.y));
@@ -530,11 +409,6 @@ void JImage::GetBatchData(float *batch_data) {
 void JImage::Release() {
   if (data_ != nullptr)
     delete[] data_;
-
-#ifdef USE_ArcSoft
-  if (arc_data_ != nullptr)
-    delete[] arc_data_;
-#endif
 }
 
 void JImage::GetInv(unsigned char *im_inv) {
