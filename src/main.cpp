@@ -2,7 +2,7 @@
 
 int main(int argc, char const *argv[]) {
 
-  Yolo yolo("./cfg/yolo-refine.conv_adas.json",
+  Yolo yolo("./cfg/yolo-refine.conv_adas.prototxt",
             "./models/df/ex2/yolo-refine_80000.weights", 0.2);
 
   VecBox roi(1);

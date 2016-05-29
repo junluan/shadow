@@ -1,0 +1,73 @@
+syntax = "proto2";
+
+package shadow;
+
+message BlobShape {
+  repeated int32 dim = 1;
+}
+
+message Blob {
+	optional BlobShape shape = 1;
+	optional int32 num = 2;
+	repeated float data = 3;
+	repeated float cuda_data = 4;
+}
+
+message DataParameter {
+	optional float scale = 1 [default = 1];
+	optional float mean_value = 2 [default = 0];
+}
+
+message ConvolutionParameter {
+	optional int32 num_output = 1;
+	optional int32 kernel_size = 2;
+	optional int32 stride = 3 [default = 1];
+	optional int32 pad = 4 [default = 0];
+	optional string activation = 5 [default = "Relu"];
+}
+
+message PoolingParameter {
+	optional string pool = 1 [default = "Max"];
+	optional int32 kernel_size = 2;
+	optional int32 stride = 3 [default = 1];
+	optional int32 pad = 4 [default = 0];
+}
+
+message ConnectedParameter {
+	optional int32 num_output = 1;
+	optional string activation = 2 [default = "Relu"];
+}
+
+message DropoutParameter {
+	optional float probability = 1 [default = 0.5];
+}
+
+message LayerParameter {
+	optional string name = 1;
+	optional string type = 2;
+	repeated string bottom = 3;
+	repeated string top = 4;
+
+	optional Blob blob = 5;
+
+	optional DataParameter data_param = 10;
+	optional ConvolutionParameter convolution_param = 11;
+	optional PoolingParameter pooling_param = 12;
+	optional ConnectedParameter connected_param = 13;
+	optional DropoutParameter dropout_param = 14;
+}
+
+message NetParameter {
+	optional string name = 1;
+	optional BlobShape input_shape = 2;
+	optional int32 class_num = 3;
+	optional int32 grid_size = 4;
+	optional int32 sqrt_box = 5;
+	optional int32 box_num = 6;
+
+	repeated LayerParameter layer = 10;
+}
+
+message Test {
+	optional string test_id = 1;
+}

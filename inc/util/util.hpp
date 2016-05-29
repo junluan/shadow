@@ -6,6 +6,7 @@
 #endif
 
 #include <cmath>
+#include <fcntl.h>
 #include <fstream>
 #include <iostream>
 #include <string>

@@ -3,6 +3,7 @@
 
 #include "activations.hpp"
 #include "kernel.hpp"
+#include "shadow.pb.h"
 
 #include <iostream>
 #include <string>
@@ -26,6 +27,8 @@ public:
 
   int in_num_, out_num_;
   float *in_data_, *out_data_;
+
+  shadow::LayerParameter layer_param_;
 
 #ifdef USE_CUDA
   float *cuda_in_data_, *cuda_out_data_;

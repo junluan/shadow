@@ -22,6 +22,8 @@ public:
   int num_layers_;
   std::vector<Layer *> layers_;
 
+  shadow::NetParameter net_param_;
+
   void LoadModel(std::string cfg_file, std::string weight_file, int batch = 1);
 
   float *PredictNetwork(float *in_data);

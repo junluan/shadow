@@ -2,64 +2,29 @@
 #include "kernel.hpp"
 #include "util.hpp"
 
-#include <fstream>
+#include <google/protobuf/io/zero_copy_stream_impl.h>
+#include <google/protobuf/text_format.h>
 
-bool ParaFindBool(const Json::Value &params, std::string key, bool def) {
-  return params.isMember(key) ? params[key].asBool() : def;
-}
-
-float ParaFindFloat(const Json::Value &params, std::string key, float def) {
-  return params.isMember(key) ? params[key].asFloat() : def;
-}
-
-int ParaFindInt(const Json::Value &params, std::string key, int def) {
-  return params.isMember(key) ? params[key].asInt() : def;
-}
-
-std::string ParaFindString(const Json::Value &params, std::string key,
-                           std::string def) {
-  return params.isMember(key) ? params[key].asString() : def;
-}
-
-float *ParaFindArrayFloat(const Json::Value &params, std::string key) {
-  float *arr = nullptr;
-  if (params.isMember(key)) {
-    Json::Value array = params[key];
-    arr = new float[array.size()];
-    for (int i = 0; i < array.size(); ++i) {
-      arr[i] = array[i].asFloat();
-    }
-  }
-  return arr;
-}
-
-int *ParaFindArrayInt(const Json::Value &params, std::string key) {
-  int *arr = nullptr;
-  if (params.isMember(key)) {
-    Json::Value array = params[key];
-    arr = new int[array.size()];
-    for (int i = 0; i < array.size(); ++i) {
-      arr[i] = array[i].asInt();
-    }
-  }
-  return arr;
-}
+using google::protobuf::io::FileInputStream;
+using google::protobuf::TextFormat;
 
 void Parser::LoadWeights(Network *net, std::string weight_file) {
   LoadWeightsUpto(net, weight_file, net->num_layers_);
 }
 
-void Parser::ParseNetworkCfg(Network *net, std::string cfg_file, int batch) {
-  std::ifstream file(cfg_file);
-  Json::Reader reader;
-  Json::Value root;
-  if (!reader.parse(file, root, false))
+void Parser::ParseNetworkProto(Network *net, std::string prototxt_file,
+                               int batch) {
+  int fd = open(prototxt_file.c_str(), O_RDONLY);
+  if (fd == -1)
+    Fatal("File not found: " + prototxt_file);
+  FileInputStream *input = new FileInputStream(fd);
+  bool success = TextFormat::Parse(input, &net->net_param_);
+  delete input;
+  close(fd);
+  if (!success)
     Fatal("Parse configure file error");
-  Json::Value sections = root["network"];
 
-  net->num_layers_ = sections.size() - 1;
-  net->layers_.reserve(net->num_layers_);
-  ParseNet(net, sections[0]);
+  ParseNet(net);
   net->batch_ = batch;
 
   SizeParams params;
@@ -73,19 +38,19 @@ void Parser::ParseNetworkCfg(Network *net, std::string cfg_file, int batch) {
 #ifdef VERBOSE
     printf("%2d: ", i);
 #endif
-    Json::Value section = sections[i + 1];
-    std::string layer_type = section["type"].asString();
+    shadow::LayerParameter layer_param = net->net_param_.layer(i);
+    std::string layer_type = layer_param.type();
     Layer *l = nullptr;
     if (!layer_type.compare("Data")) {
-      l = ParseData(section, params);
+      l = ParseData(layer_param, params);
     } else if (!layer_type.compare("Convolution")) {
-      l = ParseConvolutional(section, params);
+      l = ParseConvolution(layer_param, params);
     } else if (!layer_type.compare("Pooling")) {
-      l = ParsePooling(section, params);
+      l = ParsePooling(layer_param, params);
     } else if (!layer_type.compare("Connected")) {
-      l = ParseConnected(section, params);
+      l = ParseConnected(layer_param, params);
     } else if (!layer_type.compare("Dropout")) {
-      l = ParseDropout(section, params);
+      l = ParseDropout(layer_param, params);
       l->out_data_ = net->layers_[i - 1]->out_data_;
     } else {
       Fatal("Type not recognized");
@@ -102,99 +67,105 @@ void Parser::ParseNetworkCfg(Network *net, std::string cfg_file, int batch) {
   net->out_num_ = net->GetNetworkOutputSize();
 }
 
-void Parser::ParseNet(Network *net, Json::Value section) {
-  Json::Value layer_params = section["parameters"];
+void Parser::ParseNet(Network *net) {
+  net->num_layers_ = net->net_param_.layer_size();
+  net->layers_.reserve(net->num_layers_);
 
-  net->in_c_ = ParaFindInt(layer_params, "channels", 0);
-  net->in_h_ = ParaFindInt(layer_params, "height", 0);
-  net->in_w_ = ParaFindInt(layer_params, "width", 0);
-  net->class_num_ = ParaFindInt(layer_params, "class_num", 1);
-  net->grid_size_ = ParaFindInt(layer_params, "grid_size", 7);
-  net->sqrt_box_ = ParaFindInt(layer_params, "sqrt_box", 1);
-  net->box_num_ = ParaFindInt(layer_params, "box_num", 2);
+  net->in_c_ = net->net_param_.input_shape().dim(1);
+  net->in_h_ = net->net_param_.input_shape().dim(2);
+  net->in_w_ = net->net_param_.input_shape().dim(3);
+  net->class_num_ = net->net_param_.class_num();
+  net->grid_size_ = net->net_param_.grid_size();
+  net->sqrt_box_ = net->net_param_.sqrt_box();
+  net->box_num_ = net->net_param_.box_num();
 
   net->in_num_ = net->in_c_ * net->in_h_ * net->in_w_;
   if (!net->in_num_ && !(net->in_c_ && net->in_h_ && net->in_w_))
     Fatal("No input parameters supplied");
 }
 
-DataLayer *Parser::ParseData(Json::Value section, SizeParams params) {
+Layer *Parser::ParseData(shadow::LayerParameter layer_param,
+                         SizeParams params) {
   if (!(params.in_c && params.in_h && params.in_w))
     Fatal("Channel, height and width must greater than zero.");
 
-  Json::Value layer_params = section["parameters"];
+  shadow::DataParameter data_param = layer_param.data_param();
 
   DataLayer *data_layer = new DataLayer(kData);
   data_layer->MakeDataLayer(params);
-  data_layer->layer_name_ = section["name"].asString();
-  data_layer->scale_ = ParaFindFloat(layer_params, "scale", 1);
-  data_layer->mean_value_ = ParaFindFloat(layer_params, "mean_value", 0);
+  data_layer->layer_name_ = layer_param.name();
+  data_layer->scale_ = data_param.scale();
+  data_layer->mean_value_ = data_param.mean_value();
 
   return data_layer;
 }
 
-ConvLayer *Parser::ParseConvolutional(Json::Value section, SizeParams params) {
+Layer *Parser::ParseConvolution(shadow::LayerParameter layer_param,
+                                SizeParams params) {
   if (!(params.in_c && params.in_h && params.in_w))
     Fatal("Channel, height and width must greater than zero.");
 
-  Json::Value layer_params = section["parameters"];
+  shadow::ConvolutionParameter conv_param = layer_param.convolution_param();
 
-  int out_num = ParaFindInt(layer_params, "num_output", 1);
-  int ksize = ParaFindInt(layer_params, "kernel_size", 3);
-  int stride = ParaFindInt(layer_params, "stride", 1);
-  int pad = ParaFindInt(layer_params, "pad", 0);
-  std::string activation = ParaFindString(layer_params, "activation", "leaky");
+  int out_num = conv_param.num_output();
+  int ksize = conv_param.kernel_size();
+  int stride = conv_param.stride();
+  int pad = conv_param.pad();
+  std::string activation = conv_param.activation();
 
   ConvLayer *conv_layer = new ConvLayer(kConvolutional);
   conv_layer->MakeConvLayer(params, out_num, ksize, stride, pad, activation);
-  conv_layer->layer_name_ = section["name"].asString();
+  conv_layer->layer_name_ = layer_param.name();
 
   return conv_layer;
 }
 
-PoolingLayer *Parser::ParsePooling(Json::Value section, SizeParams params) {
+Layer *Parser::ParsePooling(shadow::LayerParameter layer_param,
+                            SizeParams params) {
   if (!(params.in_c && params.in_h && params.in_w))
     Fatal("Channel, height and width must greater than zero.");
 
-  Json::Value layer_params = section["parameters"];
+  shadow::PoolingParameter pooling_param = layer_param.pooling_param();
 
-  std::string pool_type = ParaFindString(layer_params, "pool", "Max");
-  int ksize = ParaFindInt(layer_params, "kernel_size", 2);
-  int stride = ParaFindInt(layer_params, "stride", 2);
+  std::string pool_type = pooling_param.pool();
+  int ksize = pooling_param.kernel_size();
+  int stride = pooling_param.stride();
 
   PoolingLayer *pooling_layer = new PoolingLayer(kMaxpool);
   pooling_layer->MakePoolingLayer(params, ksize, stride, pool_type);
-  pooling_layer->layer_name_ = section["name"].asString();
+  pooling_layer->layer_name_ = layer_param.name();
 
   return pooling_layer;
 }
 
-ConnectedLayer *Parser::ParseConnected(Json::Value section, SizeParams params) {
+Layer *Parser::ParseConnected(shadow::LayerParameter layer_param,
+                              SizeParams params) {
   if (!(params.in_num))
     Fatal("input dimension must greater than zero.");
 
-  Json::Value layer_params = section["parameters"];
+  shadow::ConnectedParameter conn_param = layer_param.connected_param();
 
-  int out_num = ParaFindInt(layer_params, "num_output", 1);
-  std::string activation = ParaFindString(layer_params, "activation", "leaky");
+  int out_num = conn_param.num_output();
+  std::string activation = conn_param.activation();
 
   ConnectedLayer *conn_layer = new ConnectedLayer(kConnected);
   conn_layer->MakeConnectedLayer(params, out_num, activation);
-  conn_layer->layer_name_ = section["name"].asString();
+  conn_layer->layer_name_ = layer_param.name();
 
   return conn_layer;
 }
 
-DropoutLayer *Parser::ParseDropout(Json::Value section, SizeParams params) {
+Layer *Parser::ParseDropout(shadow::LayerParameter layer_param,
+                            SizeParams params) {
   if (!(params.in_num))
     Fatal("input dimension must greater than zero.");
 
-  Json::Value layer_params = section["parameters"];
+  shadow::DropoutParameter dropout_param = layer_param.dropout_param();
 
-  float probability = ParaFindFloat(layer_params, "probability", 0.5);
+  float probability = dropout_param.probability();
   DropoutLayer *drop_layer = new DropoutLayer(kDropout);
   drop_layer->MakeDropoutLayer(params, probability);
-  drop_layer->layer_name_ = section["name"].asString();
+  drop_layer->layer_name_ = layer_param.name();
 
   return drop_layer;
 }

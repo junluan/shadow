@@ -4,7 +4,7 @@
 void Network::LoadModel(std::string cfg_file, std::string weight_file,
                         int batch) {
   Parser parser;
-  parser.ParseNetworkCfg(this, cfg_file, batch);
+  parser.ParseNetworkProto(this, cfg_file, batch);
   parser.LoadWeights(this, weight_file);
 }
 
