@@ -43,7 +43,7 @@ void PoolingLayer::MakeLayer(shadow::BlobShape *shape) {
 #endif
 
 #ifdef USE_CL
-  cl_out_data_ = CL::CLMakeBuffer(batch_ * out_num_, CL_MEM_READ_WRITE, NULL);
+  cl_out_data_ = CL::CLMakeBuffer(out_blob->count(), CL_MEM_READ_WRITE, NULL);
 #endif
 
 #ifdef VERBOSE
@@ -74,8 +74,11 @@ void PoolingLayer::CUDAForwardLayer() {
 
 #ifdef USE_CL
 void PoolingLayer::CLForwardLayer() {
-  Kernel::CLPooling(cl_in_data_, batch_, in_c_, in_h_, in_w_, ksize_, stride_,
-                    out_h_, out_w_, pool_type_, cl_out_data_);
+  int batch = in_blob->shape().dim(0), in_c = in_blob->shape().dim(1);
+  int in_h = in_blob->shape().dim(2), in_w = in_blob->shape().dim(3);
+  int out_h = out_blob->shape().dim(2), out_w = out_blob->shape().dim(3);
+  Kernel::CLPooling(cl_in_data_, batch, in_c, in_h, in_w, kernel_size_, stride_,
+                    out_h, out_w, pool_type_, cl_out_data_);
 }
 #endif
 

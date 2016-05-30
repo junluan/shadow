@@ -36,8 +36,8 @@ void DataLayer::MakeLayer(shadow::BlobShape *shape) {
 #endif
 
 #ifdef USE_CL
-  cl_in_data_ = CL::CLMakeBuffer(batch_ * in_num_, CL_MEM_READ_WRITE, NULL);
-  cl_out_data_ = CL::CLMakeBuffer(batch_ * out_num_, CL_MEM_READ_WRITE, NULL);
+  cl_in_data_ = CL::CLMakeBuffer(in_blob->count(), CL_MEM_READ_WRITE, NULL);
+  cl_out_data_ = CL::CLMakeBuffer(out_blob->count(), CL_MEM_READ_WRITE, NULL);
 #endif
 
 #ifdef VERBOSE
@@ -63,8 +63,8 @@ void DataLayer::CUDAForwardLayer(float *in_data) {
 #ifdef USE_CL
 void DataLayer::CLForwardLayer(float *in_data) {
   in_data_ = in_data;
-  CL::CLWriteBuffer(batch_ * in_num_, cl_in_data_, in_data_);
-  Kernel::CLDataTransform(batch_ * out_num_, cl_in_data_, scale_, mean_value_,
+  CL::CLWriteBuffer(in_blob->count(), cl_in_data_, in_data_);
+  Kernel::CLDataTransform(out_blob->count(), cl_in_data_, scale_, mean_value_,
                           cl_out_data_);
 }
 #endif

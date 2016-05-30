@@ -61,9 +61,9 @@ void ConvLayer::MakeLayer(shadow::BlobShape *shape) {
 #endif
 
 #ifdef USE_CL
-  cl_out_data_ = CL::CLMakeBuffer(batch_ * out_num_, CL_MEM_READ_WRITE, NULL);
-  cl_filters_ = CL::CLMakeBuffer(kernel_num_ * out_c_, CL_MEM_READ_ONLY, NULL);
-  cl_biases_ = CL::CLMakeBuffer(out_c_, CL_MEM_READ_ONLY, NULL);
+  cl_out_data_ = CL::CLMakeBuffer(out_blob->count(), CL_MEM_READ_WRITE, NULL);
+  cl_filters_ = CL::CLMakeBuffer(kernel_num_ * out_c, CL_MEM_READ_ONLY, NULL);
+  cl_biases_ = CL::CLMakeBuffer(out_c, CL_MEM_READ_ONLY, NULL);
   cl_col_image_ =
       CL::CLMakeBuffer(out_map_size_ * kernel_num_, CL_MEM_READ_WRITE, NULL);
 #endif
@@ -126,15 +126,19 @@ void ConvLayer::CUDAForwardLayer() {
 
 #ifdef USE_CL
 void ConvLayer::CLForwardLayer() {
-  Kernel::CLBiasOutput(cl_biases_, batch_, out_c_, out_map_size_, cl_out_data_);
-  for (int b = 0; b < batch_; ++b) {
-    Kernel::CLIm2Col(cl_in_data_, b * in_num_, in_c_, in_h_, in_w_, ksize_,
-                     stride_, pad_, out_h_, out_w_, cl_col_image_);
-    Blas::CLBlasSGemm(0, 0, out_c_, out_map_size_, kernel_num_, 1, cl_filters_,
+  int batch = in_blob->shape().dim(0), in_c = in_blob->shape().dim(1);
+  int in_h = in_blob->shape().dim(2), in_w = in_blob->shape().dim(3);
+  int out_c = out_blob->shape().dim(1);
+  int out_h = out_blob->shape().dim(2), out_w = out_blob->shape().dim(3);
+  Kernel::CLBiasOutput(cl_biases_, batch, out_c, out_map_size_, cl_out_data_);
+  for (int b = 0; b < batch; ++b) {
+    Kernel::CLIm2Col(cl_in_data_, b * in_blob->num(), in_c, in_h, in_w,
+                     kernel_size_, stride_, pad_, out_h, out_w, cl_col_image_);
+    Blas::CLBlasSGemm(0, 0, out_c, out_map_size_, kernel_num_, 1, cl_filters_,
                       kernel_num_, cl_col_image_, out_map_size_, 1,
-                      cl_out_data_, b * out_num_, out_map_size_);
+                      cl_out_data_, b * out_blob->num(), out_map_size_);
   }
-  Kernel::CLActivateArray(batch_ * out_num_, activation_, cl_out_data_);
+  Kernel::CLActivateArray(out_blob->count(), activate_, cl_out_data_);
 }
 #endif
 

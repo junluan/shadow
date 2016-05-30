@@ -74,7 +74,7 @@ void Network::CUDAForwardNetwork(float *in_data) {
 #ifdef USE_CL
 void Network::CLForwardNetwork(float *in_data) {
   for (int i = 0; i < num_layers_; ++i) {
-    if (layers_[i]->layer_type_ == kData)
+    if (layers_[i]->layer_type_ == shadow::LayerType::Data)
       layers_[i]->CLForwardLayer(in_data);
     else
       layers_[i]->CLForwardLayer();

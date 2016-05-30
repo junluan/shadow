@@ -44,9 +44,9 @@ void ConnectedLayer::MakeLayer(shadow::BlobShape *shape) {
 #endif
 
 #ifdef USE_CL
-  cl_out_data_ = CL::CLMakeBuffer(batch_ * out_num_, CL_MEM_READ_WRITE, NULL);
-  cl_weights_ = CL::CLMakeBuffer(in_num_ * out_num_, CL_MEM_READ_ONLY, NULL);
-  cl_biases_ = CL::CLMakeBuffer(out_num_, CL_MEM_READ_ONLY, NULL);
+  cl_out_data_ = CL::CLMakeBuffer(out_blob->count(), CL_MEM_READ_WRITE, NULL);
+  cl_weights_ = CL::CLMakeBuffer(in_num * out_num, CL_MEM_READ_ONLY, NULL);
+  cl_biases_ = CL::CLMakeBuffer(out_num, CL_MEM_READ_ONLY, NULL);
 #endif
 
 #ifdef VERBOSE
@@ -80,20 +80,21 @@ void ConnectedLayer::CUDAForwardLayer() {
 
 #ifdef USE_CL
 void ConnectedLayer::CLForwardLayer() {
-  Kernel::CLBiasOutput(cl_biases_, batch_, out_num_, 1, cl_out_data_);
-  Blas::CLBlasSGemm(0, 0, batch_, out_num_, in_num_, 1, cl_in_data_, in_num_,
-                    cl_weights_, out_num_, 1, cl_out_data_, 0, out_num_);
-  Kernel::CLActivateArray(batch_ * out_num_, activation_, cl_out_data_);
+  int batch = in_blob->shape().dim(0);
+  Kernel::CLBiasOutput(cl_biases_, batch, out_blob->num(), 1, cl_out_data_);
+  Blas::CLBlasSGemm(0, 0, batch, out_blob->num(), in_blob->num(), 1,
+                    cl_in_data_, in_blob->num(), cl_weights_, out_blob->num(),
+                    1, cl_out_data_, 0, out_blob->num());
+  Kernel::CLActivateArray(out_blob->count(), activate_, cl_out_data_);
 }
 #endif
 
 float *ConnectedLayer::GetOutData() {
 #ifdef USE_CUDA
   CUDA::CUDAReadBuffer(out_blob->count(), cuda_out_data_, out_data_);
-
 #else
 #ifdef USE_CL
-  CL::CLReadBuffer(batch_ * out_num_, cl_out_data_, out_data_);
+  CL::CLReadBuffer(out_blob->count(), cl_out_data_, out_data_);
 #endif
 #endif
   return out_data_;

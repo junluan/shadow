@@ -120,7 +120,7 @@ void Parser::LoadWeightsUpto(Network *net, std::string weight_file,
 #endif
 
 #ifdef USE_CL
-      CL::CLWriteBuffer(l->out_c_, l->cl_biases_, l->biases_);
+      CL::CLWriteBuffer(out_c, l->cl_biases_, l->biases_);
       CL::CLWriteBuffer(num, l->cl_filters_, l->filters_);
 #endif
     }
@@ -137,8 +137,8 @@ void Parser::LoadWeightsUpto(Network *net, std::string weight_file,
 #endif
 
 #ifdef USE_CL
-      CL::CLWriteBuffer(l->out_num_, l->cl_biases_, l->biases_);
-      CL::CLWriteBuffer(l->in_num_ * l->out_num_, l->cl_weights_, l->weights_);
+      CL::CLWriteBuffer(out_num, l->cl_biases_, l->biases_);
+      CL::CLWriteBuffer(in_num * out_num, l->cl_weights_, l->weights_);
 #endif
     }
   }

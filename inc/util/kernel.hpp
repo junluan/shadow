@@ -44,7 +44,7 @@ public:
   static void CLPooling(const cl_mem in_data, int batch, int in_c, int in_h,
                         int in_w, int ksize, int stride, int out_h, int out_w,
                         int mode, cl_mem out_data);
-  static void CLActivateArray(int N, Activation a, cl_mem out_data);
+  static void CLActivateArray(int N, shadow::ActivateType a, cl_mem out_data);
   static void CLBiasOutput(const cl_mem biases, int batch, int num, int size,
                            cl_mem out_data);
 #endif

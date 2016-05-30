@@ -182,7 +182,7 @@ void Kernel::CLPooling(const cl_mem in_data, int batch, int in_c, int in_h,
   clFinish(*CL::easyCL->queue);
 }
 
-void Kernel::CLActivateArray(int N, Activation a, cl_mem out_data) {
+void Kernel::CLActivateArray(int N, shadow::ActivateType a, cl_mem out_data) {
   cl_kernel kernel = CL::cl_activations_kernel_->GetKernel();
   clSetKernelArg(kernel, 0, sizeof(int), &N);
   clSetKernelArg(kernel, 1, sizeof(int), &a);
