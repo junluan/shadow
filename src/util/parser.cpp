@@ -106,7 +106,7 @@ void Parser::LoadWeightsUpto(Network *net, std::string weight_file,
 
   for (int i = 0; i < net->num_layers_ && i < cut_off; ++i) {
     Layer *layer = net->layers_[i];
-    if (layer->layer_type_ == shadow::LayerType::Convolution) {
+    if (layer->layer_param_.type() == shadow::LayerType::Convolution) {
       ConvLayer *l = reinterpret_cast<ConvLayer *>(layer);
       int in_c = l->in_blob->shape().dim(1),
           out_c = l->out_blob->shape().dim(1);
@@ -124,7 +124,7 @@ void Parser::LoadWeightsUpto(Network *net, std::string weight_file,
       CL::CLWriteBuffer(num, l->cl_filters_, l->filters_);
 #endif
     }
-    if (layer->layer_type_ == shadow::LayerType::Connected) {
+    if (layer->layer_param_.type() == shadow::LayerType::Connected) {
       ConnectedLayer *l = reinterpret_cast<ConnectedLayer *>(layer);
       int in_num = l->in_blob->num(), out_num = l->out_blob->num();
       file.read(reinterpret_cast<char *>(l->biases_), sizeof(float) * out_num);

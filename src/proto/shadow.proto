@@ -10,8 +10,6 @@ message Blob {
     optional BlobShape shape = 1;
     optional int32 num = 2;
     optional int32 count = 3;
-    repeated float data = 4;
-    repeated float cuda_data = 5;
 }
 
 message DataParameter {

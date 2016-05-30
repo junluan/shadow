@@ -11,8 +11,6 @@ void DropoutLayer::MakeLayer(shadow::BlobShape *shape) {
   if (!(shape->dim(1) && shape->dim(2) && shape->dim(3)))
     Fatal("Channel, height and width must greater than zero.");
 
-  layer_type_ = shadow::LayerType::Dropout;
-
   int in_num = shape->dim(1) * shape->dim(2) * shape->dim(3);
   int out_num = in_num;
 

@@ -12,8 +12,6 @@
 
 class Layer {
 public:
-  shadow::LayerType layer_type_;
-
   float *in_data_, *out_data_;
 
   shadow::LayerParameter layer_param_;

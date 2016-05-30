@@ -17,7 +17,6 @@ void ConvLayer::MakeLayer(shadow::BlobShape *shape) {
   if (!(shape->dim(1) && shape->dim(2) && shape->dim(3)))
     Fatal("Channel, height and width must greater than zero.");
 
-  layer_type_ = shadow::LayerType::Convolution;
   num_output_ = layer_param_.convolution_param().num_output();
   kernel_size_ = layer_param_.convolution_param().kernel_size();
   stride_ = layer_param_.convolution_param().stride();

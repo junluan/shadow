@@ -32,7 +32,7 @@ void Network::ReleaseNetwork() {
 int Network::GetNetworkOutputSize() {
   int i;
   for (i = num_layers_ - 1; i > 0; --i)
-    if (layers_[i]->layer_type_ != shadow::LayerType::Cost)
+    if (layers_[i]->layer_param_.type() != shadow::LayerType::Cost)
       break;
   return layers_[i]->out_blob->num();
 }
@@ -40,14 +40,14 @@ int Network::GetNetworkOutputSize() {
 float *Network::GetNetworkOutput() {
   int i;
   for (i = num_layers_ - 1; i > 0; --i)
-    if (layers_[i]->layer_type_ != shadow::LayerType::Cost)
+    if (layers_[i]->layer_param_.type() != shadow::LayerType::Cost)
       break;
   return layers_[i]->GetOutData();
 }
 
 void Network::ForwardNetwork(float *in_data) {
   for (int i = 0; i < num_layers_; ++i) {
-    if (layers_[i]->layer_type_ == shadow::LayerType::Data)
+    if (layers_[i]->layer_param_.type() == shadow::LayerType::Data)
       layers_[i]->ForwardLayer(in_data);
     else
       layers_[i]->ForwardLayer();
@@ -60,7 +60,7 @@ void Network::ForwardNetwork(float *in_data) {
 #ifdef USE_CUDA
 void Network::CUDAForwardNetwork(float *in_data) {
   for (int i = 0; i < num_layers_; ++i) {
-    if (layers_[i]->layer_type_ == shadow::LayerType::Data)
+    if (layers_[i]->layer_param_.type() == shadow::LayerType::Data)
       layers_[i]->CUDAForwardLayer(in_data);
     else
       layers_[i]->CUDAForwardLayer();
@@ -74,7 +74,7 @@ void Network::CUDAForwardNetwork(float *in_data) {
 #ifdef USE_CL
 void Network::CLForwardNetwork(float *in_data) {
   for (int i = 0; i < num_layers_; ++i) {
-    if (layers_[i]->layer_type_ == shadow::LayerType::Data)
+    if (layers_[i]->layer_param_.type() == shadow::LayerType::Data)
       layers_[i]->CLForwardLayer(in_data);
     else
       layers_[i]->CLForwardLayer();

@@ -12,7 +12,6 @@ void ConnectedLayer::MakeLayer(shadow::BlobShape *shape) {
   if (!(shape->dim(1) && shape->dim(2) && shape->dim(3)))
     Fatal("Channel, height and width must greater than zero.");
 
-  layer_type_ = shadow::LayerType::Connected;
   num_output_ = layer_param_.connected_param().num_output();
   activate_ = layer_param_.connected_param().activate();
 

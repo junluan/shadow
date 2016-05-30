@@ -11,7 +11,6 @@ void DataLayer::MakeLayer(shadow::BlobShape *shape) {
   if (!(shape->dim(1) && shape->dim(2) && shape->dim(3)))
     Fatal("Channel, height and width must greater than zero.");
 
-  layer_type_ = shadow::LayerType::Data;
   scale_ = layer_param_.data_param().scale();
   mean_value_ = layer_param_.data_param().mean_value();
 
