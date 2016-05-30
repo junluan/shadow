@@ -1,6 +1,6 @@
 #include "yolo.hpp"
-#include "kernel.hpp"
-#include "util.hpp"
+#include "shadow/kernel.hpp"
+#include "shadow/util/util.hpp"
 
 #include <ctime>
 

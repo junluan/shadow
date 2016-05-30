@@ -1,13 +1,13 @@
 #ifndef SHADOW_YOLO_HPP
 #define SHADOW_YOLO_HPP
 
-#include "boxes.hpp"
-#include "jimage.hpp"
-#include "network.hpp"
+#include "shadow/network.hpp"
+#include "shadow/util/boxes.hpp"
+#include "shadow/util/jimage.hpp"
 
+#include <fstream>
 #include <string>
 #include <vector>
-#include <fstream>
 
 class Yolo {
 public:
