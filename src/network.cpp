@@ -32,22 +32,22 @@ void Network::ReleaseNetwork() {
 int Network::GetNetworkOutputSize() {
   int i;
   for (i = num_layers_ - 1; i > 0; --i)
-    if (layers_[i]->layer_type_ != kCost)
+    if (layers_[i]->layer_type_ != shadow::LayerType::Cost)
       break;
-  return layers_[i]->out_num_;
+  return layers_[i]->out_blob->num();
 }
 
 float *Network::GetNetworkOutput() {
   int i;
   for (i = num_layers_ - 1; i > 0; --i)
-    if (layers_[i]->layer_type_ != kCost)
+    if (layers_[i]->layer_type_ != shadow::LayerType::Cost)
       break;
   return layers_[i]->GetOutData();
 }
 
 void Network::ForwardNetwork(float *in_data) {
   for (int i = 0; i < num_layers_; ++i) {
-    if (layers_[i]->layer_type_ == kData)
+    if (layers_[i]->layer_type_ == shadow::LayerType::Data)
       layers_[i]->ForwardLayer(in_data);
     else
       layers_[i]->ForwardLayer();
@@ -60,7 +60,7 @@ void Network::ForwardNetwork(float *in_data) {
 #ifdef USE_CUDA
 void Network::CUDAForwardNetwork(float *in_data) {
   for (int i = 0; i < num_layers_; ++i) {
-    if (layers_[i]->layer_type_ == kData)
+    if (layers_[i]->layer_type_ == shadow::LayerType::Data)
       layers_[i]->CUDAForwardLayer(in_data);
     else
       layers_[i]->CUDAForwardLayer();

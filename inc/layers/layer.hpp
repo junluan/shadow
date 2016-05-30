@@ -3,32 +3,21 @@
 
 #include "activations.hpp"
 #include "kernel.hpp"
+#include "util.hpp"
+
 #include "shadow.pb.h"
 
 #include <iostream>
 #include <string>
 
-struct SizeParams {
-  int batch;
-  int in_num;
-  int in_c, in_h, in_w;
-};
-
-enum LayerType { kData, kConvolutional, kMaxpool, kConnected, kDropout, kCost };
-
 class Layer {
 public:
-  std::string layer_name_;
-  LayerType layer_type_;
+  shadow::LayerType layer_type_;
 
-  int batch_;
-  int in_c_, in_h_, in_w_;
-  int out_c_, out_h_, out_w_;
-
-  int in_num_, out_num_;
   float *in_data_, *out_data_;
 
   shadow::LayerParameter layer_param_;
+  shadow::Blob *in_blob, *out_blob;
 
 #ifdef USE_CUDA
   float *cuda_in_data_, *cuda_out_data_;
@@ -38,8 +27,13 @@ public:
   cl_mem cl_in_data_, cl_out_data_;
 #endif
 
+  virtual void MakeLayer(shadow::BlobShape *shape) {
+    std::cout << "Make Layer!" << std::endl;
+  }
   virtual void ForwardLayer() { std::cout << "Forward Layer!" << std::endl; }
-  virtual void ForwardLayer(float *in_data) {}
+  virtual void ForwardLayer(float *in_data) {
+    std::cout << "Forward Layer!" << std::endl;
+  }
   virtual float *GetOutData() { return NULL; }
 
 #ifdef USE_CUDA

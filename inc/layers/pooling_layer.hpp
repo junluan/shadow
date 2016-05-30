@@ -5,15 +5,12 @@
 
 #include <string>
 
-enum PoolType { kMax, kAve };
-
 class PoolingLayer : public Layer {
 public:
-  explicit PoolingLayer(LayerType type);
+  explicit PoolingLayer(shadow::LayerParameter layer_param);
   ~PoolingLayer();
 
-  void MakePoolingLayer(SizeParams params, int ksize, int stride,
-                        std::string pool_type);
+  void MakeLayer(shadow::BlobShape *shape);
   void ForwardLayer();
 
 #ifdef USE_CUDA
@@ -26,9 +23,8 @@ public:
 
   void ReleaseLayer();
 
-  int ksize_;
-  int stride_;
-  PoolType pool_type_;
+  shadow::PoolType pool_type_;
+  int kernel_size_, stride_;
 };
 
 #endif // SHADOW_POOLING_LAYER_HPP

@@ -5,10 +5,10 @@
 
 class DataLayer : public Layer {
 public:
-  explicit DataLayer(LayerType type);
+  explicit DataLayer(shadow::LayerParameter layer_param);
   ~DataLayer();
 
-  void MakeDataLayer(SizeParams params);
+  void MakeLayer(shadow::BlobShape *shape);
   void ForwardLayer(float *in_data);
 
 #ifdef USE_CUDA
@@ -21,8 +21,7 @@ public:
 
   void ReleaseLayer();
 
-  float scale_;
-  float mean_value_;
+  float scale_, mean_value_;
 };
 
 #endif // SHADOW_DATA_LAYER_HPP

@@ -1,12 +1,7 @@
 #ifndef SHADOW_NETWORK_HPP
 #define SHADOW_NETWORK_HPP
 
-#include "connected_layer.hpp"
-#include "conv_layer.hpp"
-#include "data_layer.hpp"
-#include "dropout_layer.hpp"
 #include "layer.hpp"
-#include "pooling_layer.hpp"
 
 #include <string>
 #include <vector>

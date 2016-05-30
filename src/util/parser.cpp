@@ -2,6 +2,12 @@
 #include "kernel.hpp"
 #include "util.hpp"
 
+#include "connected_layer.hpp"
+#include "conv_layer.hpp"
+#include "data_layer.hpp"
+#include "dropout_layer.hpp"
+#include "pooling_layer.hpp"
+
 #include <google/protobuf/io/zero_copy_stream_impl.h>
 #include <google/protobuf/text_format.h>
 
@@ -27,41 +33,19 @@ void Parser::ParseNetworkProto(Network *net, std::string prototxt_file,
   ParseNet(net);
   net->batch_ = batch;
 
-  SizeParams params;
-  params.batch = net->batch_;
-  params.in_c = net->in_c_;
-  params.in_h = net->in_h_;
-  params.in_w = net->in_w_;
-  params.in_num = net->in_num_;
+  shadow::BlobShape shape;
+  shape.add_dim(net->batch_);
+  shape.add_dim(net->in_c_);
+  shape.add_dim(net->in_h_);
+  shape.add_dim(net->in_w_);
 
   for (int i = 0; i < net->num_layers_; ++i) {
 #ifdef VERBOSE
     printf("%2d: ", i);
 #endif
     shadow::LayerParameter layer_param = net->net_param_.layer(i);
-    std::string layer_type = layer_param.type();
-    Layer *l = nullptr;
-    if (!layer_type.compare("Data")) {
-      l = ParseData(layer_param, params);
-    } else if (!layer_type.compare("Convolution")) {
-      l = ParseConvolution(layer_param, params);
-    } else if (!layer_type.compare("Pooling")) {
-      l = ParsePooling(layer_param, params);
-    } else if (!layer_type.compare("Connected")) {
-      l = ParseConnected(layer_param, params);
-    } else if (!layer_type.compare("Dropout")) {
-      l = ParseDropout(layer_param, params);
-      l->out_data_ = net->layers_[i - 1]->out_data_;
-    } else {
-      Fatal("Type not recognized");
-    }
-    net->layers_.push_back(l);
-    if (i != net->num_layers_ - 1 && l != nullptr) {
-      params.in_c = l->out_c_;
-      params.in_h = l->out_h_;
-      params.in_w = l->out_w_;
-      params.in_num = l->out_num_;
-    }
+    Layer *layer = LayerFactory(layer_param, &shape);
+    net->layers_.push_back(layer);
   }
 
   net->out_num_ = net->GetNetworkOutputSize();
@@ -81,116 +65,57 @@ void Parser::ParseNet(Network *net) {
 
   net->in_num_ = net->in_c_ * net->in_h_ * net->in_w_;
   if (!net->in_num_ && !(net->in_c_ && net->in_h_ && net->in_w_))
-    Fatal("No input parameters supplied");
+    Fatal("No input parameters supplied!");
 }
 
-Layer *Parser::ParseData(shadow::LayerParameter layer_param,
-                         SizeParams params) {
-  if (!(params.in_c && params.in_h && params.in_w))
-    Fatal("Channel, height and width must greater than zero.");
-
-  shadow::DataParameter data_param = layer_param.data_param();
-
-  DataLayer *data_layer = new DataLayer(kData);
-  data_layer->MakeDataLayer(params);
-  data_layer->layer_name_ = layer_param.name();
-  data_layer->scale_ = data_param.scale();
-  data_layer->mean_value_ = data_param.mean_value();
-
-  return data_layer;
+Layer *Parser::LayerFactory(shadow::LayerParameter layer_param,
+                            shadow::BlobShape *shape) {
+  shadow::LayerType layer_type = layer_param.type();
+  Layer *layer = nullptr;
+  if (layer_type == shadow::LayerType::Data) {
+    layer = new DataLayer(layer_param);
+  } else if (layer_type == shadow::LayerType::Convolution) {
+    layer = new ConvLayer(layer_param);
+  } else if (layer_type == shadow::LayerType::Pooling) {
+    layer = new PoolingLayer(layer_param);
+  } else if (layer_type == shadow::LayerType::Connected) {
+    layer = new ConnectedLayer(layer_param);
+  } else if (layer_type == shadow::LayerType::Dropout) {
+    layer = new DropoutLayer(layer_param);
+  } else {
+    Fatal("Type not recognized!");
+  }
+  if (layer != nullptr)
+    layer->MakeLayer(shape);
+  else
+    Fatal("Make layer error!");
+  return layer;
 }
 
-Layer *Parser::ParseConvolution(shadow::LayerParameter layer_param,
-                                SizeParams params) {
-  if (!(params.in_c && params.in_h && params.in_w))
-    Fatal("Channel, height and width must greater than zero.");
-
-  shadow::ConvolutionParameter conv_param = layer_param.convolution_param();
-
-  int out_num = conv_param.num_output();
-  int ksize = conv_param.kernel_size();
-  int stride = conv_param.stride();
-  int pad = conv_param.pad();
-  std::string activation = conv_param.activation();
-
-  ConvLayer *conv_layer = new ConvLayer(kConvolutional);
-  conv_layer->MakeConvLayer(params, out_num, ksize, stride, pad, activation);
-  conv_layer->layer_name_ = layer_param.name();
-
-  return conv_layer;
-}
-
-Layer *Parser::ParsePooling(shadow::LayerParameter layer_param,
-                            SizeParams params) {
-  if (!(params.in_c && params.in_h && params.in_w))
-    Fatal("Channel, height and width must greater than zero.");
-
-  shadow::PoolingParameter pooling_param = layer_param.pooling_param();
-
-  std::string pool_type = pooling_param.pool();
-  int ksize = pooling_param.kernel_size();
-  int stride = pooling_param.stride();
-
-  PoolingLayer *pooling_layer = new PoolingLayer(kMaxpool);
-  pooling_layer->MakePoolingLayer(params, ksize, stride, pool_type);
-  pooling_layer->layer_name_ = layer_param.name();
-
-  return pooling_layer;
-}
-
-Layer *Parser::ParseConnected(shadow::LayerParameter layer_param,
-                              SizeParams params) {
-  if (!(params.in_num))
-    Fatal("input dimension must greater than zero.");
-
-  shadow::ConnectedParameter conn_param = layer_param.connected_param();
-
-  int out_num = conn_param.num_output();
-  std::string activation = conn_param.activation();
-
-  ConnectedLayer *conn_layer = new ConnectedLayer(kConnected);
-  conn_layer->MakeConnectedLayer(params, out_num, activation);
-  conn_layer->layer_name_ = layer_param.name();
-
-  return conn_layer;
-}
-
-Layer *Parser::ParseDropout(shadow::LayerParameter layer_param,
-                            SizeParams params) {
-  if (!(params.in_num))
-    Fatal("input dimension must greater than zero.");
-
-  shadow::DropoutParameter dropout_param = layer_param.dropout_param();
-
-  float probability = dropout_param.probability();
-  DropoutLayer *drop_layer = new DropoutLayer(kDropout);
-  drop_layer->MakeDropoutLayer(params, probability);
-  drop_layer->layer_name_ = layer_param.name();
-
-  return drop_layer;
-}
-
-void Parser::LoadWeightsUpto(Network *net, std::string weightfile, int cutoff) {
+void Parser::LoadWeightsUpto(Network *net, std::string weight_file,
+                             int cut_off) {
 #ifdef VERBOSE
-  std::cout << "Load model from " << weightfile << " ... " << std::endl;
+  std::cout << "Load model from " << weight_file << " ... " << std::endl;
 #endif
-  std::ifstream file(weightfile, std::ios::binary);
+  std::ifstream file(weight_file, std::ios::binary);
   if (!file.is_open())
     Fatal("Load weight file error!");
 
   char garbage[16];
   file.read(garbage, sizeof(char) * 16);
 
-  for (int i = 0; i < net->num_layers_ && i < cutoff; ++i) {
+  for (int i = 0; i < net->num_layers_ && i < cut_off; ++i) {
     Layer *layer = net->layers_[i];
-    if (layer->layer_type_ == kConvolutional) {
+    if (layer->layer_type_ == shadow::LayerType::Convolution) {
       ConvLayer *l = reinterpret_cast<ConvLayer *>(layer);
-      int num = l->out_c_ * l->in_c_ * l->ksize_ * l->ksize_;
-      file.read((char *)l->biases_, sizeof(float) * l->out_c_);
-      file.read((char *)l->filters_, sizeof(float) * num);
+      int in_c = l->in_blob->shape().dim(1),
+          out_c = l->out_blob->shape().dim(1);
+      int num = out_c * in_c * l->kernel_size_ * l->kernel_size_;
+      file.read(reinterpret_cast<char *>(l->biases_), sizeof(float) * out_c);
+      file.read(reinterpret_cast<char *>(l->filters_), sizeof(float) * num);
 
 #ifdef USE_CUDA
-      CUDA::CUDAWriteBuffer(l->out_c_, l->cuda_biases_, l->biases_);
+      CUDA::CUDAWriteBuffer(out_c, l->cuda_biases_, l->biases_);
       CUDA::CUDAWriteBuffer(num, l->cuda_filters_, l->filters_);
 #endif
 
@@ -199,15 +124,16 @@ void Parser::LoadWeightsUpto(Network *net, std::string weightfile, int cutoff) {
       CL::CLWriteBuffer(num, l->cl_filters_, l->filters_);
 #endif
     }
-    if (layer->layer_type_ == kConnected) {
+    if (layer->layer_type_ == shadow::LayerType::Connected) {
       ConnectedLayer *l = reinterpret_cast<ConnectedLayer *>(layer);
-      file.read((char *)l->biases_, sizeof(float) * l->out_num_);
-      file.read((char *)l->weights_, sizeof(float) * l->out_num_ * l->in_num_);
+      int in_num = l->in_blob->num(), out_num = l->out_blob->num();
+      file.read(reinterpret_cast<char *>(l->biases_), sizeof(float) * out_num);
+      file.read(reinterpret_cast<char *>(l->weights_),
+                sizeof(float) * in_num * out_num);
 
 #ifdef USE_CUDA
-      CUDA::CUDAWriteBuffer(l->out_num_, l->cuda_biases_, l->biases_);
-      CUDA::CUDAWriteBuffer(l->in_num_ * l->out_num_, l->cuda_weights_,
-                            l->weights_);
+      CUDA::CUDAWriteBuffer(out_num, l->cuda_biases_, l->biases_);
+      CUDA::CUDAWriteBuffer(in_num * out_num, l->cuda_weights_, l->weights_);
 #endif
 
 #ifdef USE_CL

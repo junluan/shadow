@@ -7,11 +7,10 @@
 
 class ConnectedLayer : public Layer {
 public:
-  explicit ConnectedLayer(LayerType type);
+  explicit ConnectedLayer(shadow::LayerParameter layer_param);
   ~ConnectedLayer();
 
-  void MakeConnectedLayer(SizeParams params, int outputs,
-                          std::string activation);
+  void MakeLayer(shadow::BlobShape *shape);
   void ForwardLayer();
   float *GetOutData();
 
@@ -25,7 +24,8 @@ public:
 
   void ReleaseLayer();
 
-  Activation activation_;
+  int num_output_;
+  shadow::ActivateType activate_;
   float *weights_, *biases_;
 
 #ifdef USE_CUDA

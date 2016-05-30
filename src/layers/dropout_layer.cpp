@@ -1,24 +1,24 @@
 #include "dropout_layer.hpp"
 
-DropoutLayer::DropoutLayer(LayerType type) { layer_type_ = type; }
+DropoutLayer::DropoutLayer(shadow::LayerParameter layer_param) {
+  layer_param_ = layer_param;
+  in_blob = new shadow::Blob();
+  out_blob = new shadow::Blob();
+}
 DropoutLayer::~DropoutLayer() { ReleaseLayer(); }
 
-void DropoutLayer::MakeDropoutLayer(SizeParams params, float probability) {
-  batch_ = params.batch;
-  out_c_ = params.in_c;
-  out_h_ = params.in_h;
-  out_w_ = params.in_w;
+void DropoutLayer::MakeLayer(shadow::BlobShape *shape) {
+  if (!(shape->dim(1) && shape->dim(2) && shape->dim(3)))
+    Fatal("Channel, height and width must greater than zero.");
 
-  in_num_ = params.in_num;
-  out_num_ = params.in_num;
+  layer_type_ = shadow::LayerType::Dropout;
 
-#ifdef USE_CL
-// cl_out_data_ = CL::CLMakeBuffer(batch_ * out_num_, CL_MEM_READ_WRITE, NULL);
-#endif
+  int in_num = shape->dim(1) * shape->dim(2) * shape->dim(3);
+  int out_num = in_num;
 
 #ifdef VERBOSE
-  printf("Dropout Layer: %d input, %d output, %.1f probability\n", in_num_,
-         out_num_, probability);
+  printf("Dropout Layer: %d input, %d output, %.1f probability\n", in_num,
+         out_num, layer_param_.dropout_param().probability());
 #endif
 }
 

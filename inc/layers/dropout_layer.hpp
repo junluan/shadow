@@ -5,10 +5,10 @@
 
 class DropoutLayer : public Layer {
 public:
-  explicit DropoutLayer(LayerType type);
+  explicit DropoutLayer(shadow::LayerParameter layer_param);
   ~DropoutLayer();
 
-  void MakeDropoutLayer(SizeParams params, float probability);
+  void MakeLayer(shadow::BlobShape *shape);
   void ForwardLayer();
 
 #ifdef USE_CUDA

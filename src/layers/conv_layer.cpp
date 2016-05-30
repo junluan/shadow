@@ -2,44 +2,61 @@
 #include "blas.hpp"
 #include "image.hpp"
 
-int convolutional_out_size(int s, int size, int pad, int stride) {
+int inline convolutional_out_size(int s, int size, int pad, int stride) {
   return (s + 2 * pad - size) / stride + 1;
 }
 
-ConvLayer::ConvLayer(LayerType type) { layer_type_ = type; }
+ConvLayer::ConvLayer(shadow::LayerParameter layer_param) {
+  layer_param_ = layer_param;
+  in_blob = new shadow::Blob();
+  out_blob = new shadow::Blob();
+}
 ConvLayer::~ConvLayer() { ReleaseLayer(); }
 
-void ConvLayer::MakeConvLayer(SizeParams params, int out_num, int ksize,
-                              int stride, int pad, std::string activation) {
-  batch_ = params.batch;
-  in_c_ = params.in_c;
-  in_h_ = params.in_h;
-  in_w_ = params.in_w;
-  out_c_ = out_num;
-  out_h_ = convolutional_out_size(in_h_, ksize, pad, stride);
-  out_w_ = convolutional_out_size(in_w_, ksize, pad, stride);
+void ConvLayer::MakeLayer(shadow::BlobShape *shape) {
+  if (!(shape->dim(1) && shape->dim(2) && shape->dim(3)))
+    Fatal("Channel, height and width must greater than zero.");
 
-  ksize_ = ksize;
-  stride_ = stride;
-  pad_ = pad;
+  layer_type_ = shadow::LayerType::Convolution;
+  num_output_ = layer_param_.convolution_param().num_output();
+  kernel_size_ = layer_param_.convolution_param().kernel_size();
+  stride_ = layer_param_.convolution_param().stride();
+  pad_ = layer_param_.convolution_param().pad();
+  activate_ = layer_param_.convolution_param().activate();
 
-  in_num_ = in_c_ * in_h_ * in_w_;
-  out_num_ = out_c_ * out_h_ * out_w_;
-  out_map_size_ = out_h_ * out_w_;
-  kernel_num_ = ksize_ * ksize_ * in_c_;
+  int batch = shape->dim(0);
+  int in_c = shape->dim(1), in_h = shape->dim(2), in_w = shape->dim(3);
+  int out_c = num_output_;
+  int out_h = convolutional_out_size(in_h, kernel_size_, pad_, stride_);
+  int out_w = convolutional_out_size(in_w, kernel_size_, pad_, stride_);
 
-  out_data_ = new float[batch_ * out_num_];
+  int in_num = in_c * in_h * in_w;
+  int out_num = out_c * out_h * out_w;
 
-  filters_ = new float[kernel_num_ * out_c_];
-  biases_ = new float[out_c_];
+  *in_blob->mutable_shape() = *shape;
+  shape->set_dim(1, out_c);
+  shape->set_dim(2, out_h);
+  shape->set_dim(3, out_w);
+  *out_blob->mutable_shape() = *shape;
+
+  in_blob->set_num(in_num);
+  out_blob->set_num(out_num);
+  in_blob->set_count(batch * in_num);
+  out_blob->set_count(batch * out_num);
+
+  out_map_size_ = out_h * out_w;
+  kernel_num_ = kernel_size_ * kernel_size_ * in_c;
+
+  out_data_ = new float[out_blob->count()];
+
+  filters_ = new float[kernel_num_ * out_c];
+  biases_ = new float[out_c];
   col_image_ = new float[out_map_size_ * kernel_num_];
 
-  activation_ = Activations::GetActivation(activation);
-
 #ifdef USE_CUDA
-  cuda_out_data_ = CUDA::CUDAMakeBuffer(batch_ * out_num_, NULL);
-  cuda_filters_ = CUDA::CUDAMakeBuffer(kernel_num_ * out_c_, NULL);
-  cuda_biases_ = CUDA::CUDAMakeBuffer(out_c_, NULL);
+  cuda_out_data_ = CUDA::CUDAMakeBuffer(out_blob->count(), NULL);
+  cuda_filters_ = CUDA::CUDAMakeBuffer(kernel_num_ * out_c, NULL);
+  cuda_biases_ = CUDA::CUDAMakeBuffer(out_c, NULL);
   cuda_col_image_ = CUDA::CUDAMakeBuffer(out_map_size_ * kernel_num_, NULL);
 #endif
 
@@ -54,10 +71,9 @@ void ConvLayer::MakeConvLayer(SizeParams params, int out_num, int ksize,
 #ifdef VERBOSE
   printf(
       "Convolutional Layer: %d x %d x %d input -> %d_%dx%d_s%d_p%d filters -> "
-      "%d x %d x %d "
-      "output\n",
-      in_h_, in_w_, in_c_, out_c_, ksize_, ksize_, stride_, pad_, out_h_,
-      out_w_, out_c_);
+      "%d x %d x %d output\n",
+      in_c, in_h, in_w, out_c, kernel_size_, kernel_size_, stride_, pad_, out_c,
+      out_h, out_w);
 #endif
 }
 
@@ -72,30 +88,39 @@ void BiasOutput(float *out_data, float *biases, int batch, int n, int size) {
 }
 
 void ConvLayer::ForwardLayer() {
-  BiasOutput(out_data_, biases_, batch_, out_c_, out_map_size_);
-  for (int b = 0; b < batch_; ++b) {
-    Image::Im2Col(in_data_ + b * in_num_, in_c_, in_h_, in_w_, ksize_, stride_,
-                  pad_, out_h_, out_w_, col_image_);
-    Blas::BlasSGemm(0, 0, out_c_, out_map_size_, kernel_num_, 1, filters_,
+  int batch = in_blob->shape().dim(0), in_c = in_blob->shape().dim(1);
+  int in_h = in_blob->shape().dim(2), in_w = in_blob->shape().dim(3);
+  int out_c = out_blob->shape().dim(1);
+  int out_h = out_blob->shape().dim(2), out_w = out_blob->shape().dim(3);
+  BiasOutput(out_data_, biases_, batch, out_c, out_map_size_);
+  for (int b = 0; b < batch; ++b) {
+    Image::Im2Col(in_data_ + b * in_blob->num(), in_c, in_h, in_w, kernel_size_,
+                  stride_, pad_, out_h, out_w, col_image_);
+    Blas::BlasSGemm(0, 0, out_c, out_map_size_, kernel_num_, 1, filters_,
                     kernel_num_, col_image_, out_map_size_, 1,
-                    out_data_ + b * out_num_, out_map_size_);
+                    out_data_ + b * out_blob->num(), out_map_size_);
   }
-  Activations::ActivateArray(batch_ * out_num_, activation_, out_data_);
+  Activations::ActivateArray(out_blob->count(), activate_, out_data_);
 }
 
 #ifdef USE_CUDA
 void ConvLayer::CUDAForwardLayer() {
-  Kernel::CUDABiasOutput(cuda_biases_, batch_, out_c_, out_map_size_,
+  int batch = in_blob->shape().dim(0), in_c = in_blob->shape().dim(1);
+  int in_h = in_blob->shape().dim(2), in_w = in_blob->shape().dim(3);
+  int out_c = out_blob->shape().dim(1);
+  int out_h = out_blob->shape().dim(2), out_w = out_blob->shape().dim(3);
+  Kernel::CUDABiasOutput(cuda_biases_, batch, out_c, out_map_size_,
                          cuda_out_data_);
-  for (int b = 0; b < batch_; ++b) {
-    Kernel::CUDAIm2Col(cuda_in_data_, b * in_num_, in_c_, in_h_, in_w_, ksize_,
-                       stride_, pad_, out_h_, out_w_, cuda_col_image_);
-    Blas::CUDABlasSGemm(0, 0, out_c_, out_map_size_, kernel_num_, 1,
+  for (int b = 0; b < batch; ++b) {
+    Kernel::CUDAIm2Col(cuda_in_data_, b * in_blob->num(), in_c, in_h, in_w,
+                       kernel_size_, stride_, pad_, out_h, out_w,
+                       cuda_col_image_);
+    Blas::CUDABlasSGemm(0, 0, out_c, out_map_size_, kernel_num_, 1,
                         cuda_filters_, kernel_num_, cuda_col_image_,
-                        out_map_size_, 1, cuda_out_data_, b * out_num_,
+                        out_map_size_, 1, cuda_out_data_, b * out_blob->num(),
                         out_map_size_);
   }
-  Kernel::CUDAActivateArray(batch_ * out_num_, activation_, cuda_out_data_);
+  Kernel::CUDAActivateArray(out_blob->count(), activate_, cuda_out_data_);
 }
 #endif
 

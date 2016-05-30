@@ -130,7 +130,7 @@ __global__ void CUDAActivateArrayKernel(int N, int mode, float *out_data) {
   out_data[globalid] = Activate(out_data[globalid], mode);
 }
 
-void Kernel::CUDAActivateArray(int N, Activation a, float *out_data) {
+void Kernel::CUDAActivateArray(int N, shadow::ActivateType a, float *out_data) {
   CUDAActivateArrayKernel<<<CUDA::CUDAGridDim(N), BLOCK>>>(N, a, out_data);
   CUDA::CUDACheckError(cudaPeekAtLastError());
 }

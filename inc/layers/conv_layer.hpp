@@ -7,11 +7,10 @@
 
 class ConvLayer : public Layer {
 public:
-  explicit ConvLayer(LayerType type);
+  explicit ConvLayer(shadow::LayerParameter layer_param);
   ~ConvLayer();
 
-  void MakeConvLayer(SizeParams params, int out_num, int ksize, int stride,
-                     int pad, std::string activation);
+  void MakeLayer(shadow::BlobShape *shape);
   void ForwardLayer();
 
 #ifdef USE_CUDA
@@ -24,8 +23,8 @@ public:
 
   void ReleaseLayer();
 
-  Activation activation_;
-  int ksize_, stride_, pad_, out_map_size_, kernel_num_;
+  int num_output_, kernel_size_, stride_, pad_, out_map_size_, kernel_num_;
+  shadow::ActivateType activate_;
   float *filters_, *biases_, *col_image_;
 
 #ifdef USE_CUDA

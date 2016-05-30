@@ -29,7 +29,7 @@ public:
   static void CUDAPooling(const float *in_data, int batch, int in_c, int in_h,
                           int in_w, int ksize, int stride, int out_h, int out_w,
                           int mode, float *out_data);
-  static void CUDAActivateArray(int N, Activation a, float *out_data);
+  static void CUDAActivateArray(int N, shadow::ActivateType a, float *out_data);
   static void CUDABiasOutput(const float *biases, int batch, int num, int size,
                              float *out_data);
 #endif

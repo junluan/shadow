@@ -13,14 +13,10 @@ public:
 
 private:
   void ParseNet(Network *net);
-  Layer *ParseData(shadow::LayerParameter layer_param, SizeParams params);
-  Layer *ParseConvolution(shadow::LayerParameter layer_param,
-                          SizeParams params);
-  Layer *ParsePooling(shadow::LayerParameter layer_param, SizeParams params);
-  Layer *ParseConnected(shadow::LayerParameter layer_param, SizeParams params);
-  Layer *ParseDropout(shadow::LayerParameter layer_param, SizeParams params);
+  Layer *LayerFactory(shadow::LayerParameter layer_param,
+                      shadow::BlobShape *shape);
 
-  void LoadWeightsUpto(Network *net, std::string weightfile, int cutoff);
+  void LoadWeightsUpto(Network *net, std::string weight_file, int cut_off);
 };
 
 #endif // SHADOW_PARSER_HPP
