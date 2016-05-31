@@ -10,7 +10,7 @@ public:
   explicit ConnectedLayer(shadow::LayerParameter layer_param);
   ~ConnectedLayer();
 
-  void MakeLayer(shadow::BlobShape *shape);
+  void MakeLayer(Blob *blob);
   void ForwardLayer();
   float *GetOutData();
 

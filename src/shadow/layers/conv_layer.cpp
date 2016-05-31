@@ -2,19 +2,19 @@
 #include "shadow/util/blas.hpp"
 #include "shadow/util/image.hpp"
 
-int inline convolutional_out_size(int s, int size, int pad, int stride) {
+inline int convolutional_out_size(int s, int size, int pad, int stride) {
   return (s + 2 * pad - size) / stride + 1;
 }
 
 ConvLayer::ConvLayer(shadow::LayerParameter layer_param) {
   layer_param_ = layer_param;
-  in_blob = new shadow::Blob();
-  out_blob = new shadow::Blob();
+  in_blob = new Blob();
+  out_blob = new Blob();
 }
 ConvLayer::~ConvLayer() { ReleaseLayer(); }
 
-void ConvLayer::MakeLayer(shadow::BlobShape *shape) {
-  if (!(shape->dim(1) && shape->dim(2) && shape->dim(3)))
+void ConvLayer::MakeLayer(Blob *blob) {
+  if (!(blob->shape(1) && blob->shape(2) && blob->shape(3)))
     Fatal("Channel, height and width must greater than zero.");
 
   num_output_ = layer_param_.convolution_param().num_output();
@@ -23,8 +23,8 @@ void ConvLayer::MakeLayer(shadow::BlobShape *shape) {
   pad_ = layer_param_.convolution_param().pad();
   activate_ = layer_param_.convolution_param().activate();
 
-  int batch = shape->dim(0);
-  int in_c = shape->dim(1), in_h = shape->dim(2), in_w = shape->dim(3);
+  int batch = blob->shape(0);
+  int in_c = blob->shape(1), in_h = blob->shape(2), in_w = blob->shape(3);
   int out_c = num_output_;
   int out_h = convolutional_out_size(in_h, kernel_size_, pad_, stride_);
   int out_w = convolutional_out_size(in_w, kernel_size_, pad_, stride_);
@@ -32,11 +32,11 @@ void ConvLayer::MakeLayer(shadow::BlobShape *shape) {
   int in_num = in_c * in_h * in_w;
   int out_num = out_c * out_h * out_w;
 
-  *in_blob->mutable_shape() = *shape;
-  shape->set_dim(1, out_c);
-  shape->set_dim(2, out_h);
-  shape->set_dim(3, out_w);
-  *out_blob->mutable_shape() = *shape;
+  *in_blob->mutable_shape() = blob->shape();
+  blob->set_shape(1, out_c);
+  blob->set_shape(2, out_h);
+  blob->set_shape(3, out_w);
+  *out_blob->mutable_shape() = blob->shape();
 
   in_blob->set_num(in_num);
   out_blob->set_num(out_num);
@@ -87,10 +87,10 @@ void BiasOutput(float *out_data, float *biases, int batch, int n, int size) {
 }
 
 void ConvLayer::ForwardLayer() {
-  int batch = in_blob->shape().dim(0), in_c = in_blob->shape().dim(1);
-  int in_h = in_blob->shape().dim(2), in_w = in_blob->shape().dim(3);
-  int out_c = out_blob->shape().dim(1);
-  int out_h = out_blob->shape().dim(2), out_w = out_blob->shape().dim(3);
+  int batch = in_blob->shape(0), in_c = in_blob->shape(1);
+  int in_h = in_blob->shape(2), in_w = in_blob->shape(3);
+  int out_c = out_blob->shape(1);
+  int out_h = out_blob->shape(2), out_w = out_blob->shape(3);
   BiasOutput(out_data_, biases_, batch, out_c, out_map_size_);
   for (int b = 0; b < batch; ++b) {
     Image::Im2Col(in_data_ + b * in_blob->num(), in_c, in_h, in_w, kernel_size_,
@@ -104,10 +104,10 @@ void ConvLayer::ForwardLayer() {
 
 #ifdef USE_CUDA
 void ConvLayer::CUDAForwardLayer() {
-  int batch = in_blob->shape().dim(0), in_c = in_blob->shape().dim(1);
-  int in_h = in_blob->shape().dim(2), in_w = in_blob->shape().dim(3);
-  int out_c = out_blob->shape().dim(1);
-  int out_h = out_blob->shape().dim(2), out_w = out_blob->shape().dim(3);
+  int batch = in_blob->shape(0), in_c = in_blob->shape(1);
+  int in_h = in_blob->shape(2), in_w = in_blob->shape(3);
+  int out_c = out_blob->shape(1);
+  int out_h = out_blob->shape(2), out_w = out_blob->shape(3);
   Kernel::CUDABiasOutput(cuda_biases_, batch, out_c, out_map_size_,
                          cuda_out_data_);
   for (int b = 0; b < batch; ++b) {

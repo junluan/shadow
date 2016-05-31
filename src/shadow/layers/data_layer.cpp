@@ -2,25 +2,25 @@
 
 DataLayer::DataLayer(shadow::LayerParameter layer_param) {
   layer_param_ = layer_param;
-  in_blob = new shadow::Blob();
-  out_blob = new shadow::Blob();
+  in_blob = new Blob();
+  out_blob = new Blob();
 }
 DataLayer::~DataLayer() { ReleaseLayer(); }
 
-void DataLayer::MakeLayer(shadow::BlobShape *shape) {
-  if (!(shape->dim(1) && shape->dim(2) && shape->dim(3)))
+void DataLayer::MakeLayer(Blob *blob) {
+  if (!(blob->shape(1) && blob->shape(2) && blob->shape(3)))
     Fatal("Channel, height and width must greater than zero.");
 
   scale_ = layer_param_.data_param().scale();
   mean_value_ = layer_param_.data_param().mean_value();
 
-  int batch = shape->dim(0);
-  int in_c = shape->dim(1), in_h = shape->dim(2), in_w = shape->dim(3);
+  int batch = blob->shape(0);
+  int in_c = blob->shape(1), in_h = blob->shape(2), in_w = blob->shape(3);
 
   int num = in_c * in_h * in_w;
 
-  *in_blob->mutable_shape() = *shape;
-  *out_blob->mutable_shape() = *shape;
+  *in_blob->mutable_shape() = blob->shape();
+  *out_blob->mutable_shape() = blob->shape();
 
   in_blob->set_num(num);
   out_blob->set_num(num);

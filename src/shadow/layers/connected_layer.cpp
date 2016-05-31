@@ -3,28 +3,28 @@
 
 ConnectedLayer::ConnectedLayer(shadow::LayerParameter layer_param) {
   layer_param_ = layer_param;
-  in_blob = new shadow::Blob();
-  out_blob = new shadow::Blob();
+  in_blob = new Blob();
+  out_blob = new Blob();
 }
 ConnectedLayer::~ConnectedLayer() { ReleaseLayer(); }
 
-void ConnectedLayer::MakeLayer(shadow::BlobShape *shape) {
-  if (!(shape->dim(1) && shape->dim(2) && shape->dim(3)))
+void ConnectedLayer::MakeLayer(Blob *blob) {
+  if (!(blob->shape(1) && blob->shape(2) && blob->shape(3)))
     Fatal("Channel, height and width must greater than zero.");
 
   num_output_ = layer_param_.connected_param().num_output();
   activate_ = layer_param_.connected_param().activate();
 
-  int batch = shape->dim(0);
+  int batch = blob->shape(0);
 
-  int in_num = shape->dim(1) * shape->dim(2) * shape->dim(3);
+  int in_num = blob->shape(1) * blob->shape(2) * blob->shape(3);
   int out_num = num_output_;
 
-  *in_blob->mutable_shape() = *shape;
-  shape->set_dim(1, num_output_);
-  shape->set_dim(2, 1);
-  shape->set_dim(3, 1);
-  *out_blob->mutable_shape() = *shape;
+  *in_blob->mutable_shape() = blob->shape();
+  blob->set_shape(1, num_output_);
+  blob->set_shape(2, 1);
+  blob->set_shape(3, 1);
+  *out_blob->mutable_shape() = blob->shape();
 
   in_blob->set_num(in_num);
   out_blob->set_num(out_num);
@@ -54,7 +54,7 @@ void ConnectedLayer::MakeLayer(shadow::BlobShape *shape) {
 }
 
 void ConnectedLayer::ForwardLayer() {
-  int batch = in_blob->shape().dim(0);
+  int batch = in_blob->shape(0);
   for (int b = 0; b < batch; ++b) {
     Blas::BlasCopy(out_blob->num(), biases_, 1, out_data_ + b * out_blob->num(),
                    1);
@@ -67,7 +67,7 @@ void ConnectedLayer::ForwardLayer() {
 
 #ifdef USE_CUDA
 void ConnectedLayer::CUDAForwardLayer() {
-  int batch = in_blob->shape().dim(0);
+  int batch = in_blob->shape(0);
   Kernel::CUDABiasOutput(cuda_biases_, batch, out_blob->num(), 1,
                          cuda_out_data_);
   Blas::CUDABlasSGemm(0, 0, batch, out_blob->num(), in_blob->num(), 1,

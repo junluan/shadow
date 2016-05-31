@@ -6,7 +6,6 @@
 #endif
 
 #include <cmath>
-#include <fcntl.h>
 #include <fstream>
 #include <iostream>
 #include <string>
@@ -53,22 +52,22 @@ typedef std::vector<RectI> VecRectI;
 #define Fatal(msg)                                                             \
   { LOG(FATAL) << msg; }
 #else
-static void inline Fatal(const std::string msg) {
+inline static void Fatal(const std::string msg) {
   std::cerr << msg << std::endl;
   exit(1);
 }
 
-static void inline Warning(const std::string msg) {
+inline static void Warning(const std::string msg) {
   std::cout << msg << std::endl;
 }
 #endif
 
-static float inline rand_uniform(float min, float max) {
+inline static float rand_uniform(float min, float max) {
   return (static_cast<float>(std::rand()) / RAND_MAX) * (max - min) + min;
 }
 
 template <typename Dtype>
-static Dtype inline constrain(Dtype min, Dtype max, Dtype value) {
+inline static Dtype constrain(Dtype min, Dtype max, Dtype value) {
   if (value < min)
     return min;
   if (value > max)

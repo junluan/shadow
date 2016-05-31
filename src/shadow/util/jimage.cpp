@@ -73,7 +73,7 @@ void JImage::Show(std::string show_name, int wait_time) {
   }
   cv::waitKey(wait_time);
 #else
-  warn("Not compiled with OpenCV, saving image to " + show_name + ".png");
+  Warning("Not compiled with OpenCV, saving image to " + show_name + ".png");
   Write(show_name + ".png");
 #endif
 }

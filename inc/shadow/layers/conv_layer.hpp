@@ -10,7 +10,7 @@ public:
   explicit ConvLayer(shadow::LayerParameter layer_param);
   ~ConvLayer();
 
-  void MakeLayer(shadow::BlobShape *shape);
+  void MakeLayer(Blob *blob);
   void ForwardLayer();
 
 #ifdef USE_CUDA

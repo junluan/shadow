@@ -8,7 +8,7 @@ public:
   explicit DropoutLayer(shadow::LayerParameter layer_param);
   ~DropoutLayer();
 
-  void MakeLayer(shadow::BlobShape *shape);
+  void MakeLayer(Blob *blob);
   void ForwardLayer();
 
 #ifdef USE_CUDA

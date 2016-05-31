@@ -1,11 +1,10 @@
 #ifndef SHADOW_LAYERS_LAYER_HPP
 #define SHADOW_LAYERS_LAYER_HPP
 
+#include "shadow/blob.hpp"
 #include "shadow/kernel.hpp"
 #include "shadow/util/activations.hpp"
 #include "shadow/util/util.hpp"
-
-#include "shadow/proto/shadow.pb.h"
 
 #include <iostream>
 #include <string>
@@ -15,7 +14,7 @@ public:
   float *in_data_, *out_data_;
 
   shadow::LayerParameter layer_param_;
-  shadow::Blob *in_blob, *out_blob;
+  Blob *in_blob, *out_blob;
 
 #ifdef USE_CUDA
   float *cuda_in_data_, *cuda_out_data_;
@@ -25,7 +24,7 @@ public:
   cl_mem cl_in_data_, cl_out_data_;
 #endif
 
-  virtual void MakeLayer(shadow::BlobShape *shape) {
+  virtual void MakeLayer(Blob *blob) {
     std::cout << "Make Layer!" << std::endl;
   }
   virtual void ForwardLayer() { std::cout << "Forward Layer!" << std::endl; }

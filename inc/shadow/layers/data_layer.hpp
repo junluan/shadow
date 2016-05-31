@@ -8,7 +8,7 @@ public:
   explicit DataLayer(shadow::LayerParameter layer_param);
   ~DataLayer();
 
-  void MakeLayer(shadow::BlobShape *shape);
+  void MakeLayer(Blob *blob);
   void ForwardLayer(float *in_data);
 
 #ifdef USE_CUDA

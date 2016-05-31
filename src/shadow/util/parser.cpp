@@ -11,6 +11,12 @@
 #include <google/protobuf/io/zero_copy_stream_impl.h>
 #include <google/protobuf/text_format.h>
 
+#ifdef __unix__
+#include <fcntl.h>
+#else
+#include <io.h>
+#endif
+
 using google::protobuf::io::FileInputStream;
 using google::protobuf::TextFormat;
 
@@ -33,21 +39,22 @@ void Parser::ParseNetworkProto(Network *net, std::string prototxt_file,
   ParseNet(net);
   net->batch_ = batch;
 
-  shadow::BlobShape shape;
-  shape.add_dim(net->batch_);
-  shape.add_dim(net->in_c_);
-  shape.add_dim(net->in_h_);
-  shape.add_dim(net->in_w_);
+  Blob *blob = new Blob();
+  blob->add_shape(net->batch_);
+  blob->add_shape(net->in_c_);
+  blob->add_shape(net->in_h_);
+  blob->add_shape(net->in_w_);
 
   for (int i = 0; i < net->num_layers_; ++i) {
 #ifdef VERBOSE
     printf("%2d: ", i);
 #endif
     shadow::LayerParameter layer_param = net->net_param_.layer(i);
-    Layer *layer = LayerFactory(layer_param, &shape);
+    Layer *layer = LayerFactory(layer_param, blob);
     net->layers_.push_back(layer);
   }
 
+  // TODO: remove this
   net->out_num_ = net->GetNetworkOutputSize();
 }
 
@@ -68,8 +75,7 @@ void Parser::ParseNet(Network *net) {
     Fatal("No input parameters supplied!");
 }
 
-Layer *Parser::LayerFactory(shadow::LayerParameter layer_param,
-                            shadow::BlobShape *shape) {
+Layer *Parser::LayerFactory(shadow::LayerParameter layer_param, Blob *blob) {
   shadow::LayerType layer_type = layer_param.type();
   Layer *layer = nullptr;
   if (layer_type == shadow::LayerType::Data) {
@@ -86,7 +92,7 @@ Layer *Parser::LayerFactory(shadow::LayerParameter layer_param,
     Fatal("Type not recognized!");
   }
   if (layer != nullptr)
-    layer->MakeLayer(shape);
+    layer->MakeLayer(blob);
   else
     Fatal("Make layer error!");
   return layer;
@@ -108,8 +114,7 @@ void Parser::LoadWeightsUpto(Network *net, std::string weight_file,
     Layer *layer = net->layers_[i];
     if (layer->layer_param_.type() == shadow::LayerType::Convolution) {
       ConvLayer *l = reinterpret_cast<ConvLayer *>(layer);
-      int in_c = l->in_blob->shape().dim(1),
-          out_c = l->out_blob->shape().dim(1);
+      int in_c = l->in_blob->shape(1), out_c = l->out_blob->shape(1);
       int num = out_c * in_c * l->kernel_size_ * l->kernel_size_;
       file.read(reinterpret_cast<char *>(l->biases_), sizeof(float) * out_c);
       file.read(reinterpret_cast<char *>(l->filters_), sizeof(float) * num);

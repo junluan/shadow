@@ -10,7 +10,7 @@ public:
   explicit PoolingLayer(shadow::LayerParameter layer_param);
   ~PoolingLayer();
 
-  void MakeLayer(shadow::BlobShape *shape);
+  void MakeLayer(Blob *blob);
   void ForwardLayer();
 
 #ifdef USE_CUDA

@@ -2,16 +2,16 @@
 
 DropoutLayer::DropoutLayer(shadow::LayerParameter layer_param) {
   layer_param_ = layer_param;
-  in_blob = new shadow::Blob();
-  out_blob = new shadow::Blob();
+  in_blob = new Blob();
+  out_blob = new Blob();
 }
 DropoutLayer::~DropoutLayer() { ReleaseLayer(); }
 
-void DropoutLayer::MakeLayer(shadow::BlobShape *shape) {
-  if (!(shape->dim(1) && shape->dim(2) && shape->dim(3)))
+void DropoutLayer::MakeLayer(Blob *blob) {
+  if (!(blob->shape(1) && blob->shape(2) && blob->shape(3)))
     Fatal("Channel, height and width must greater than zero.");
 
-  int in_num = shape->dim(1) * shape->dim(2) * shape->dim(3);
+  int in_num = blob->shape(1) * blob->shape(2) * blob->shape(3);
   int out_num = in_num;
 
 #ifdef VERBOSE
