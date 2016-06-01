@@ -1,14 +1,13 @@
 #include "yolo.hpp"
 #include "shadow/kernel.hpp"
-#include "shadow/util/util.hpp"
 
 #include <ctime>
 
 using namespace std;
 
-Yolo::Yolo(string cfgfile, string weightfile, float threshold) {
-  cfg_file_ = cfgfile;
-  weight_file_ = weightfile;
+Yolo::Yolo(string cfg_file, string weight_file, float threshold) {
+  cfg_file_ = cfg_file;
+  weight_file_ = weight_file;
   threshold_ = threshold;
 }
 
@@ -18,9 +17,18 @@ void Yolo::Setup(int batch, VecRectF *rois) {
   Kernel::KernelSetup();
 
   net_.LoadModel(cfg_file_, weight_file_, batch);
-  batch_data_ = new float[net_.batch_ * net_.in_num_];
+
+  batch_ = net_.in_shape_.dim(0);
+  in_num_ =
+      net_.in_shape_.dim(1) * net_.in_shape_.dim(2) * net_.in_shape_.dim(3);
+  const Layer *layer = net_.GetLayerByName("yolo_output");
+  out_num_ = layer->layer_param_.connected_param().num_output();
+
+  class_num_ = 2;
+  batch_data_ = new float[batch_ * in_num_];
+  predictions_ = new float[out_num_];
   im_ini_ = new JImage();
-  im_res_ = new JImage(3, net_.in_h_, net_.in_w_);
+  im_res_ = new JImage(3, net_.in_shape_.dim(2), net_.in_shape_.dim(3));
   if (rois == nullptr) {
     rois_.push_back(RectF(0.f, 0.f, 1.f, 1.f));
   } else {
@@ -92,7 +100,7 @@ void Yolo::BatchTest(string list_file, bool image_write) {
        << "seconds" << endl;
 }
 
-#ifdef USE_OpenCV
+#if defined(USE_OpenCV)
 void Yolo::VideoTest(string video_file, bool video_show, bool video_write) {
   cv::VideoCapture capture;
   if (!capture.open(video_file))
@@ -170,33 +178,37 @@ void Yolo::CaptureTest(cv::VideoCapture capture, string window_name,
 void Yolo::PredictYoloDetections(JImage *image, vector<VecBox> *Bboxes) {
   Bboxes->clear();
   size_t num_im = rois_.size();
-  int batch = net_.batch_;
-  size_t batch_off = num_im % batch;
-  size_t batch_num = num_im / batch + (batch_off > 0 ? 1 : 0);
+  size_t batch_off = num_im % batch_;
+  size_t batch_num = num_im / batch_ + (batch_off > 0 ? 1 : 0);
 
   for (int count = 0, b = 1; b <= batch_num; ++b) {
     int c = 0;
-    for (int i = count; i < b * batch && i < num_im; ++i, ++c) {
-      image->CropWithResize(im_res_, rois_[i], net_.in_h_, net_.in_w_);
-      im_res_->GetBatchData(batch_data_ + c * net_.in_num_);
+    for (int i = count; i < b * batch_ && i < num_im; ++i, ++c) {
+      image->CropWithResize(im_res_, rois_[i], net_.in_shape_.dim(2),
+                            net_.in_shape_.dim(3));
+      im_res_->GetBatchData(batch_data_ + c * in_num_);
     }
-    predictions_ = net_.PredictNetwork(batch_data_);
+    net_.Forward(batch_data_);
+    const Layer *layer = net_.GetLayerByName("yolo_output");
+    if (layer != nullptr)
+      layer->out_blob_->copy_data(predictions_);
+    else
+      Fatal("Unknown Blob name yolo_output");
     for (int i = 0; i < c; ++i) {
-      VecBox boxes(net_.grid_size_ * net_.grid_size_ * net_.box_num_);
+      VecBox boxes(98);
       int height = static_cast<int>(rois_[count + i].h * image->h_);
       int width = static_cast<int>(rois_[count + i].w * image->w_);
-      ConvertYoloDetections(predictions_ + i * net_.out_num_, net_.class_num_,
-                            net_.box_num_, net_.sqrt_box_, net_.grid_size_,
-                            width, height, &boxes);
+      ConvertYoloDetections(predictions_ + i * out_num_, class_num_, width,
+                            height, &boxes);
       Bboxes->push_back(boxes);
     }
     count += c;
   }
 }
 
-void Yolo::ConvertYoloDetections(float *predictions, int classes, int box_num,
-                                 int square, int side, int width, int height,
-                                 VecBox *boxes) {
+void Yolo::ConvertYoloDetections(float *predictions, int classes, int width,
+                                 int height, VecBox *boxes) {
+  int side = 7, box_num = 2;
   for (int i = 0; i < side * side; ++i) {
     int row = i / side;
     int col = i % side;
@@ -209,8 +221,8 @@ void Yolo::ConvertYoloDetections(float *predictions, int classes, int box_num,
       float x, y, w, h;
       x = (predictions[box_index + 0] + col) / side;
       y = (predictions[box_index + 1] + row) / side;
-      w = pow(predictions[box_index + 2], (square ? 2 : 1));
-      h = pow(predictions[box_index + 3], (square ? 2 : 1));
+      w = pow(predictions[box_index + 2], 2);
+      h = pow(predictions[box_index + 3], 2);
 
       x = x - w / 2;
       y = y - h / 2;
@@ -235,7 +247,7 @@ void Yolo::ConvertYoloDetections(float *predictions, int classes, int box_num,
   }
 }
 
-#ifdef USE_OpenCV
+#if defined(USE_OpenCV)
 void Yolo::DrawYoloDetections(const VecBox &boxes, cv::Mat *im_mat,
                               bool console_show) {
   for (int b = 0; b < boxes.size(); ++b) {

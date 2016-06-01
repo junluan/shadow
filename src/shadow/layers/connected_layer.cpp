@@ -1,14 +1,17 @@
 #include "shadow/layers/connected_layer.hpp"
+#include "shadow/util/activations.hpp"
 #include "shadow/util/blas.hpp"
 
 ConnectedLayer::ConnectedLayer(shadow::LayerParameter layer_param) {
   layer_param_ = layer_param;
-  in_blob = new Blob();
-  out_blob = new Blob();
+  in_blob_ = new Blob<BType>();
+  out_blob_ = new Blob<BType>();
+  weights_ = new Blob<BType>();
+  biases_ = new Blob<BType>();
 }
 ConnectedLayer::~ConnectedLayer() { ReleaseLayer(); }
 
-void ConnectedLayer::MakeLayer(Blob *blob) {
+void ConnectedLayer::MakeLayer(Blob<BType> *blob) {
   if (!(blob->shape(1) && blob->shape(2) && blob->shape(3)))
     Fatal("Channel, height and width must greater than zero.");
 
@@ -20,109 +23,54 @@ void ConnectedLayer::MakeLayer(Blob *blob) {
   int in_num = blob->shape(1) * blob->shape(2) * blob->shape(3);
   int out_num = num_output_;
 
-  *in_blob->mutable_shape() = blob->shape();
+  *in_blob_->mutable_shape() = blob->shape();
   blob->set_shape(1, num_output_);
   blob->set_shape(2, 1);
   blob->set_shape(3, 1);
-  *out_blob->mutable_shape() = blob->shape();
+  *out_blob_->mutable_shape() = blob->shape();
 
-  in_blob->set_num(in_num);
-  out_blob->set_num(out_num);
-  in_blob->set_count(batch * in_num);
-  out_blob->set_count(batch * out_num);
+  in_blob_->set_num(in_num);
+  out_blob_->set_num(out_num);
+  in_blob_->set_count(batch * in_num);
+  out_blob_->set_count(batch * out_num);
 
-  out_data_ = new float[out_blob->count()];
+  out_data_ = new float[out_blob_->count()];
+  out_blob_->allocate_data(out_blob_->count());
 
-  weights_ = new float[in_num * out_num];
-  biases_ = new float[out_num];
+  weights_->allocate_data(in_num * out_num);
+  biases_->allocate_data(out_num);
 
-#ifdef USE_CUDA
-  cuda_out_data_ = CUDA::CUDAMakeBuffer(out_blob->count(), NULL);
-  cuda_weights_ = CUDA::CUDAMakeBuffer(in_num * out_num, NULL);
-  cuda_biases_ = CUDA::CUDAMakeBuffer(out_num, NULL);
-#endif
-
-#ifdef USE_CL
-  cl_out_data_ = CL::CLMakeBuffer(out_blob->count(), CL_MEM_READ_WRITE, NULL);
-  cl_weights_ = CL::CLMakeBuffer(in_num * out_num, CL_MEM_READ_ONLY, NULL);
-  cl_biases_ = CL::CLMakeBuffer(out_num, CL_MEM_READ_ONLY, NULL);
-#endif
-
-#ifdef VERBOSE
+#if defined(VERBOSE)
   printf("Connected Layer: %d input, %d output\n", in_num, out_num);
 #endif
 }
 
 void ConnectedLayer::ForwardLayer() {
-  int batch = in_blob->shape(0);
+  int batch = in_blob_->shape(0);
+  float *out_data = out_blob_->mutable_data();
+
+#if !defined(USE_CUDA) & !defined(USE_CL)
   for (int b = 0; b < batch; ++b) {
-    Blas::BlasCopy(out_blob->num(), biases_, 1, out_data_ + b * out_blob->num(),
-                   1);
+    Blas::BlasCopy(out_blob_->num(), biases_->data(), 1,
+                   out_data + b * out_blob_->num(), 1);
   }
-  Blas::BlasSGemm(0, 0, batch, out_blob->num(), in_blob->num(), 1, in_data_,
-                  in_blob->num(), weights_, out_blob->num(), 1, out_data_,
-                  out_blob->num());
-  Activations::ActivateArray(out_blob->count(), activate_, out_data_);
-}
-
-#ifdef USE_CUDA
-void ConnectedLayer::CUDAForwardLayer() {
-  int batch = in_blob->shape(0);
-  Kernel::CUDABiasOutput(cuda_biases_, batch, out_blob->num(), 1,
-                         cuda_out_data_);
-  Blas::CUDABlasSGemm(0, 0, batch, out_blob->num(), in_blob->num(), 1,
-                      cuda_in_data_, in_blob->num(), cuda_weights_,
-                      out_blob->num(), 1, cuda_out_data_, 0, out_blob->num());
-  Kernel::CUDAActivateArray(out_blob->count(), activate_, cuda_out_data_);
-}
-#endif
-
-#ifdef USE_CL
-void ConnectedLayer::CLForwardLayer() {
-  int batch = in_blob->shape().dim(0);
-  Kernel::CLBiasOutput(cl_biases_, batch, out_blob->num(), 1, cl_out_data_);
-  Blas::CLBlasSGemm(0, 0, batch, out_blob->num(), in_blob->num(), 1,
-                    cl_in_data_, in_blob->num(), cl_weights_, out_blob->num(),
-                    1, cl_out_data_, 0, out_blob->num());
-  Kernel::CLActivateArray(out_blob->count(), activate_, cl_out_data_);
-}
-#endif
-
-float *ConnectedLayer::GetOutData() {
-#ifdef USE_CUDA
-  CUDA::CUDAReadBuffer(out_blob->count(), cuda_out_data_, out_data_);
+  Blas::BlasSGemm(0, 0, batch, out_blob_->num(), in_blob_->num(), 1,
+                  in_blob_->data(), in_blob_->num(), weights_->data(),
+                  out_blob_->num(), 1, out_data, 0, out_blob_->num());
+  Activations::ActivateArray(out_blob_->count(), activate_, out_data);
 #else
-#ifdef USE_CL
-  CL::CLReadBuffer(out_blob->count(), cl_out_data_, out_data_);
+  Kernel::BiasOutput(biases_->data(), batch, out_blob_->num(), 1, out_data);
+  Blas::BlasSGemm(0, 0, batch, out_blob_->num(), in_blob_->num(), 1,
+                  in_blob_->data(), in_blob_->num(), weights_->data(),
+                  out_blob_->num(), 1, out_data, 0, out_blob_->num());
+  Kernel::ActivateArray(out_blob_->count(), activate_, out_data);
 #endif
-#endif
-  return out_data_;
 }
 
 void ConnectedLayer::ReleaseLayer() {
-  if (out_data_ != NULL)
-    delete[] out_data_;
-  if (weights_ != NULL)
-    delete[] weights_;
-  if (biases_ != NULL)
-    delete[] biases_;
+  out_blob_->clear();
 
-#ifdef USE_CUDA
-  if (cuda_out_data_ != NULL)
-    CUDA::CUDAReleaseBuffer(cuda_out_data_);
-  if (cuda_weights_ != NULL)
-    CUDA::CUDAReleaseBuffer(cuda_weights_);
-  if (cuda_biases_ != NULL)
-    CUDA::CUDAReleaseBuffer(cuda_biases_);
-#endif
-
-#ifdef USE_CL
-  if (cl_out_data_ != NULL)
-    CL::CLReleaseBuffer(cl_out_data_);
-  if (cl_weights_ != NULL)
-    CL::CLReleaseBuffer(cl_weights_);
-  if (cl_biases_ != NULL)
-    CL::CLReleaseBuffer(cl_biases_);
-#endif
+  weights_->clear();
+  biases_->clear();
   // std::cout << "Free ConnectedLayer!" << std::endl;
 }

@@ -80,10 +80,6 @@ message LayerParameter {
 message NetParameter {
     optional string name = 1;
     optional BlobShape input_shape = 2;
-    optional int32 class_num = 3;
-    optional int32 grid_size = 4;
-    optional int32 sqrt_box = 5;
-    optional int32 box_num = 6;
 
     repeated LayerParameter layer = 10;
 }

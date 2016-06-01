@@ -8,16 +8,9 @@ public:
   explicit DataLayer(shadow::LayerParameter layer_param);
   ~DataLayer();
 
-  void MakeLayer(Blob *blob);
+  void MakeLayer(Blob<BType> *blob);
+
   void ForwardLayer(float *in_data);
-
-#ifdef USE_CUDA
-  void CUDAForwardLayer(float *in_data);
-#endif
-
-#ifdef USE_CL
-  void CLForwardLayer(float *in_data);
-#endif
 
   void ReleaseLayer();
 

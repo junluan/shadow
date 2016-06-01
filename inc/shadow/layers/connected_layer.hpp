@@ -3,38 +3,23 @@
 
 #include "shadow/layers/layer.hpp"
 
-#include <string>
-
 class ConnectedLayer : public Layer {
 public:
   explicit ConnectedLayer(shadow::LayerParameter layer_param);
   ~ConnectedLayer();
 
-  void MakeLayer(Blob *blob);
+  void MakeLayer(Blob<BType> *blob);
+
   void ForwardLayer();
-  float *GetOutData();
-
-#ifdef USE_CUDA
-  void CUDAForwardLayer();
-#endif
-
-#ifdef USE_CL
-  void CLForwardLayer();
-#endif
 
   void ReleaseLayer();
 
   int num_output_;
   shadow::ActivateType activate_;
-  float *weights_, *biases_;
 
-#ifdef USE_CUDA
-  float *cuda_weights_, *cuda_biases_;
-#endif
+  float *out_data_;
 
-#ifdef USE_CL
-  cl_mem cl_weights_, cl_biases_;
-#endif
+  Blob<BType> *weights_, *biases_;
 };
 
 #endif // SHADOW_LAYERS_CONNECTED_LAYER_HPP

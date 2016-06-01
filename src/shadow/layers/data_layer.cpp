@@ -2,12 +2,12 @@
 
 DataLayer::DataLayer(shadow::LayerParameter layer_param) {
   layer_param_ = layer_param;
-  in_blob = new Blob();
-  out_blob = new Blob();
+  in_blob_ = new Blob<BType>();
+  out_blob_ = new Blob<BType>();
 }
 DataLayer::~DataLayer() { ReleaseLayer(); }
 
-void DataLayer::MakeLayer(Blob *blob) {
+void DataLayer::MakeLayer(Blob<BType> *blob) {
   if (!(blob->shape(1) && blob->shape(2) && blob->shape(3)))
     Fatal("Channel, height and width must greater than zero.");
 
@@ -19,71 +19,37 @@ void DataLayer::MakeLayer(Blob *blob) {
 
   int num = in_c * in_h * in_w;
 
-  *in_blob->mutable_shape() = blob->shape();
-  *out_blob->mutable_shape() = blob->shape();
+  *in_blob_->mutable_shape() = blob->shape();
+  *out_blob_->mutable_shape() = blob->shape();
 
-  in_blob->set_num(num);
-  out_blob->set_num(num);
-  in_blob->set_count(batch * num);
-  out_blob->set_count(batch * num);
+  in_blob_->set_num(num);
+  out_blob_->set_num(num);
+  in_blob_->set_count(batch * num);
+  out_blob_->set_count(batch * num);
 
-  out_data_ = new float[out_blob->count()];
+  in_blob_->allocate_data(in_blob_->count());
+  out_blob_->allocate_data(out_blob_->count());
 
-#ifdef USE_CUDA
-  cuda_in_data_ = CUDA::CUDAMakeBuffer(in_blob->count(), NULL);
-  cuda_out_data_ = CUDA::CUDAMakeBuffer(out_blob->count(), NULL);
-#endif
-
-#ifdef USE_CL
-  cl_in_data_ = CL::CLMakeBuffer(in_blob->count(), CL_MEM_READ_WRITE, NULL);
-  cl_out_data_ = CL::CLMakeBuffer(out_blob->count(), CL_MEM_READ_WRITE, NULL);
-#endif
-
-#ifdef VERBOSE
+#if defined(VERBOSE)
   printf("Data Layer: %d x %d x %d input\n", in_c, in_h, in_w);
 #endif
 }
 
 void DataLayer::ForwardLayer(float *in_data) {
-  for (int i = 0; i < in_blob->count(); ++i) {
-    out_data_[i] = (in_data[i] - mean_value_) * scale_;
+#if !defined(USE_CUDA) & !defined(USE_CL)
+  // in_blob_->set_data(in_data);
+  for (int i = 0; i < in_blob_->count(); ++i) {
+    out_blob_->mutable_data()[i] = (in_data[i] - mean_value_) * scale_;
   }
-}
-
-#ifdef USE_CUDA
-void DataLayer::CUDAForwardLayer(float *in_data) {
-  in_data_ = in_data;
-  CUDA::CUDAWriteBuffer(in_blob->count(), cuda_in_data_, in_data_);
-  Kernel::CUDADataTransform(out_blob->count(), cuda_in_data_, scale_,
-                            mean_value_, cuda_out_data_);
-}
+#else
+  in_blob_->set_data(in_data);
+  Kernel::DataTransform(out_blob_->count(), in_blob_->data(), scale_,
+                        mean_value_, out_blob_->mutable_data());
 #endif
-
-#ifdef USE_CL
-void DataLayer::CLForwardLayer(float *in_data) {
-  in_data_ = in_data;
-  CL::CLWriteBuffer(in_blob->count(), cl_in_data_, in_data_);
-  Kernel::CLDataTransform(out_blob->count(), cl_in_data_, scale_, mean_value_,
-                          cl_out_data_);
 }
-#endif
 
 void DataLayer::ReleaseLayer() {
-  if (out_data_ != NULL)
-    delete[] out_data_;
-
-#ifdef USE_CUDA
-  if (cuda_in_data_ != NULL)
-    CUDA::CUDAReleaseBuffer(cuda_in_data_);
-  if (cuda_out_data_ != NULL)
-    CUDA::CUDAReleaseBuffer(cuda_out_data_);
-#endif
-
-#ifdef USE_CL
-  if (cl_in_data_ != NULL)
-    CL::CLReleaseBuffer(cl_in_data_);
-  if (cl_out_data_ != NULL)
-    CL::CLReleaseBuffer(cl_out_data_);
-#endif
+  in_blob_->clear();
+  out_blob_->clear();
   // std::cout << "Free DataLayer!" << std::endl;
 }

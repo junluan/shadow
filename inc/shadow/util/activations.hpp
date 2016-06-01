@@ -3,8 +3,6 @@
 
 #include "shadow/proto/shadow.pb.h"
 
-#include <string>
-
 static float Activate(float x, shadow::ActivateType a) {
   switch (a) {
   case shadow::ActivateType::Linear:

@@ -3,26 +3,18 @@
 
 #include "shadow/layers/layer.hpp"
 
-#include <string>
-
 class PoolingLayer : public Layer {
 public:
   explicit PoolingLayer(shadow::LayerParameter layer_param);
   ~PoolingLayer();
 
-  void MakeLayer(Blob *blob);
+  void MakeLayer(Blob<BType> *blob);
+
   void ForwardLayer();
-
-#ifdef USE_CUDA
-  void CUDAForwardLayer();
-#endif
-
-#ifdef USE_CL
-  void CLForwardLayer();
-#endif
 
   void ReleaseLayer();
 
+private:
   shadow::PoolType pool_type_;
   int kernel_size_, stride_;
 };

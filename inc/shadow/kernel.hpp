@@ -3,15 +3,18 @@
 
 #include "shadow/util/activations.hpp"
 
-#ifdef USE_CUDA
+#if defined(USE_CUDA)
 #include "cublas_v2.h"
 #include "cuda_runtime.h"
 #define BLOCK 512
 #endif
 
-#ifdef USE_CL
+#if defined(USE_CL)
 #include <EasyCL.h>
 #include <clBLAS.h>
+#define BType cl_mem
+#else
+#define BType float
 #endif
 
 class Kernel {
@@ -19,38 +22,20 @@ public:
   static void KernelSetup(int device_id = 0);
   static void KernelRelease();
 
-#ifdef USE_CUDA
-public:
-  static void CUDADataTransform(int N, const float *in_data, float scale,
-                                float mean_value, float *out_data);
-  static void CUDAIm2Col(const float *im_data, int offset, int in_c, int in_h,
-                         int in_w, int ksize, int stride, int pad, int out_h,
-                         int out_w, float *col_data);
-  static void CUDAPooling(const float *in_data, int batch, int in_c, int in_h,
-                          int in_w, int ksize, int stride, int out_h, int out_w,
-                          int mode, float *out_data);
-  static void CUDAActivateArray(int N, shadow::ActivateType a, float *out_data);
-  static void CUDABiasOutput(const float *biases, int batch, int num, int size,
-                             float *out_data);
-#endif
-
-#ifdef USE_CL
-public:
-  static void CLDataTransform(int N, const cl_mem in_data, float scale,
-                              float mean_value, cl_mem out_data);
-  static void CLIm2Col(const cl_mem im_data, int offset, int in_c, int in_h,
-                       int in_w, int ksize, int stride, int pad, int out_h,
-                       int out_w, cl_mem col_data);
-  static void CLPooling(const cl_mem in_data, int batch, int in_c, int in_h,
-                        int in_w, int ksize, int stride, int out_h, int out_w,
-                        int mode, cl_mem out_data);
-  static void CLActivateArray(int N, shadow::ActivateType a, cl_mem out_data);
-  static void CLBiasOutput(const cl_mem biases, int batch, int num, int size,
-                           cl_mem out_data);
-#endif
+  static void DataTransform(int N, const BType *in_data, float scale,
+                            float mean_value, BType *out_data);
+  static void Im2Col(const BType *im_data, int offset, int in_c, int in_h,
+                     int in_w, int ksize, int stride, int pad, int out_h,
+                     int out_w, BType *col_data);
+  static void Pooling(const BType *in_data, int batch, int in_c, int in_h,
+                      int in_w, int ksize, int stride, int out_h, int out_w,
+                      int mode, BType *out_data);
+  static void ActivateArray(int N, shadow::ActivateType a, BType *out_data);
+  static void BiasOutput(const BType *biases, int batch, int num, int size,
+                         BType *out_data);
 };
 
-#ifdef USE_CUDA
+#if defined(USE_CUDA)
 class CUDA {
 public:
   static float *CUDAMakeBuffer(int size, float *host_ptr);
@@ -64,14 +49,14 @@ public:
 };
 #endif
 
-#ifdef USE_CL
+#if defined(USE_CL)
 class CL {
 public:
   static cl_mem CLMakeBuffer(int size, cl_mem_flags flags, void *host_ptr);
-  static void CLReadBuffer(int size, const cl_mem src, float *des);
-  static void CLWriteBuffer(int size, cl_mem des, const float *src);
-  static void CLCopyBuffer(int size, const cl_mem src, cl_mem des);
-  static void CLReleaseBuffer(cl_mem buffer);
+  static void CLReadBuffer(int size, const cl_mem *src, float *des);
+  static void CLWriteBuffer(int size, cl_mem *des, const float *src);
+  static void CLCopyBuffer(int size, const cl_mem *src, cl_mem des);
+  static void CLReleaseBuffer(cl_mem *buffer);
 
   static EasyCL *easyCL;
   static CLKernel *cl_activations_kernel_;

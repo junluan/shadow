@@ -61,26 +61,29 @@ void SGemmTT(int M, int N, int K, float ALPHA, const float *A, int lda,
   }
 }
 
+#if !defined(USE_CUDA) & !defined(USE_CL)
 void Blas::BlasSGemm(int TA, int TB, int M, int N, int K, float ALPHA,
                      const float *A, int lda, const float *B, int ldb,
-                     float BETA, float *C, int ldc) {
+                     float BETA, float *C, int offset, int ldc) {
+  float *C_off = C + offset;
   for (int i = 0; i < M; ++i) {
     for (int j = 0; j < N; ++j) {
-      C[i * ldc + j] *= BETA;
+      C_off[i * ldc + j] *= BETA;
     }
   }
   if (!TA && !TB)
-    SGemmNN(M, N, K, ALPHA, A, lda, B, ldb, C, ldc);
+    SGemmNN(M, N, K, ALPHA, A, lda, B, ldb, C_off, ldc);
   else if (TA && !TB)
-    SGemmTN(M, N, K, ALPHA, A, lda, B, ldb, C, ldc);
+    SGemmTN(M, N, K, ALPHA, A, lda, B, ldb, C_off, ldc);
   else if (!TA && TB)
-    SGemmNT(M, N, K, ALPHA, A, lda, B, ldb, C, ldc);
+    SGemmNT(M, N, K, ALPHA, A, lda, B, ldb, C_off, ldc);
   else
-    SGemmTT(M, N, K, ALPHA, A, lda, B, ldb, C, ldc);
+    SGemmTT(M, N, K, ALPHA, A, lda, B, ldb, C_off, ldc);
 }
+#endif
 
-#ifdef USE_CUDA
-void Blas::CUDABlasSGemm(int TA, int TB, int M, int N, int K, float ALPHA,
+#if defined(USE_CUDA)
+void Blas::BlasSGemm(int TA, int TB, int M, int N, int K, float ALPHA,
                          const float *bufA, int lda, const float *bufB, int ldb,
                          float BETA, float *bufC, int offset, int ldc) {
   cublasOperation_t transA = TA ? CUBLAS_OP_T : CUBLAS_OP_N;
@@ -90,15 +93,15 @@ void Blas::CUDABlasSGemm(int TA, int TB, int M, int N, int K, float ALPHA,
 }
 #endif
 
-#ifdef USE_CL
+#if defined(USE_CL)
 #include <clBLAS.h>
-void Blas::CLBlasSGemm(int TA, int TB, int M, int N, int K, float ALPHA,
-                       const cl_mem bufA, int lda, const cl_mem bufB, int ldb,
-                       float BETA, cl_mem bufC, int offset, int ldc) {
+void Blas::BlasSGemm(int TA, int TB, int M, int N, int K, float ALPHA,
+                       const cl_mem *bufA, int lda, const cl_mem *bufB, int ldb,
+                       float BETA, cl_mem *bufC, int offset, int ldc) {
   clblasTranspose transA = TA ? clblasTrans : clblasNoTrans;
   clblasTranspose transB = TB ? clblasTrans : clblasNoTrans;
-  clblasSgemm(clblasRowMajor, transA, transB, M, N, K, ALPHA, bufA, 0, lda,
-              bufB, 0, ldb, BETA, bufC, offset, ldc, 1, CL::easyCL->queue, 0,
+  clblasSgemm(clblasRowMajor, transA, transB, M, N, K, ALPHA, *bufA, 0, lda,
+              *bufB, 0, ldb, BETA, *bufC, offset, ldc, 1, CL::easyCL->queue, 0,
               NULL, NULL);
 }
 #endif

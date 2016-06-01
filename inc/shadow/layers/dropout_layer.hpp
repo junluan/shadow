@@ -8,16 +8,9 @@ public:
   explicit DropoutLayer(shadow::LayerParameter layer_param);
   ~DropoutLayer();
 
-  void MakeLayer(Blob *blob);
+  void MakeLayer(Blob<BType> *blob);
+
   void ForwardLayer();
-
-#ifdef USE_CUDA
-  void CUDAForwardLayer();
-#endif
-
-#ifdef USE_CL
-  void CLForwardLayer();
-#endif
 
   void ReleaseLayer();
 };

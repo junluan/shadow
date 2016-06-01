@@ -37,13 +37,13 @@ void Parser::ParseNetworkProto(Network *net, std::string prototxt_file,
     Fatal("Parse configure file error");
 
   ParseNet(net);
-  net->batch_ = batch;
+  net->in_shape_.set_dim(0, batch);
 
-  Blob *blob = new Blob();
-  blob->add_shape(net->batch_);
-  blob->add_shape(net->in_c_);
-  blob->add_shape(net->in_h_);
-  blob->add_shape(net->in_w_);
+  Blob<BType> *blob = new Blob<BType>();
+  blob->add_shape(net->in_shape_.dim(0));
+  blob->add_shape(net->in_shape_.dim(1));
+  blob->add_shape(net->in_shape_.dim(2));
+  blob->add_shape(net->in_shape_.dim(3));
 
   for (int i = 0; i < net->num_layers_; ++i) {
 #ifdef VERBOSE
@@ -53,29 +53,20 @@ void Parser::ParseNetworkProto(Network *net, std::string prototxt_file,
     Layer *layer = LayerFactory(layer_param, blob);
     net->layers_.push_back(layer);
   }
-
-  // TODO: remove this
-  net->out_num_ = net->GetNetworkOutputSize();
 }
 
 void Parser::ParseNet(Network *net) {
   net->num_layers_ = net->net_param_.layer_size();
   net->layers_.reserve(net->num_layers_);
 
-  net->in_c_ = net->net_param_.input_shape().dim(1);
-  net->in_h_ = net->net_param_.input_shape().dim(2);
-  net->in_w_ = net->net_param_.input_shape().dim(3);
-  net->class_num_ = net->net_param_.class_num();
-  net->grid_size_ = net->net_param_.grid_size();
-  net->sqrt_box_ = net->net_param_.sqrt_box();
-  net->box_num_ = net->net_param_.box_num();
-
-  net->in_num_ = net->in_c_ * net->in_h_ * net->in_w_;
-  if (!net->in_num_ && !(net->in_c_ && net->in_h_ && net->in_w_))
+  net->in_shape_ = net->net_param_.input_shape();
+  if (!(net->in_shape_.dim(1) && net->in_shape_.dim(2) &&
+        net->in_shape_.dim(3)))
     Fatal("No input parameters supplied!");
 }
 
-Layer *Parser::LayerFactory(shadow::LayerParameter layer_param, Blob *blob) {
+Layer *Parser::LayerFactory(shadow::LayerParameter layer_param,
+                            Blob<BType> *blob) {
   shadow::LayerType layer_type = layer_param.type();
   Layer *layer = nullptr;
   if (layer_type == shadow::LayerType::Data) {
@@ -114,37 +105,40 @@ void Parser::LoadWeightsUpto(Network *net, std::string weight_file,
     Layer *layer = net->layers_[i];
     if (layer->layer_param_.type() == shadow::LayerType::Convolution) {
       ConvLayer *l = reinterpret_cast<ConvLayer *>(layer);
-      int in_c = l->in_blob->shape(1), out_c = l->out_blob->shape(1);
+      int in_c = l->in_blob_->shape(1), out_c = l->out_blob_->shape(1);
       int num = out_c * in_c * l->kernel_size_ * l->kernel_size_;
-      file.read(reinterpret_cast<char *>(l->biases_), sizeof(float) * out_c);
-      file.read(reinterpret_cast<char *>(l->filters_), sizeof(float) * num);
+      float *biases = new float[out_c], *filters = new float[num];
+      file.read(reinterpret_cast<char *>(biases), sizeof(float) * out_c);
+      file.read(reinterpret_cast<char *>(filters), sizeof(float) * num);
 
-#ifdef USE_CUDA
-      CUDA::CUDAWriteBuffer(out_c, l->cuda_biases_, l->biases_);
-      CUDA::CUDAWriteBuffer(num, l->cuda_filters_, l->filters_);
-#endif
+      l->biases_->set_data(biases);
+      l->filters_->set_data(filters);
 
-#ifdef USE_CL
-      CL::CLWriteBuffer(out_c, l->cl_biases_, l->biases_);
-      CL::CLWriteBuffer(num, l->cl_filters_, l->filters_);
-#endif
+      delete[] biases;
+      delete[] filters;
+
+      //#ifdef USE_CL
+      //      CL::CLWriteBuffer(out_c, l->cl_biases_, l->biases_);
+      //      CL::CLWriteBuffer(num, l->cl_filters_, l->filters_);
+      //#endif
     }
     if (layer->layer_param_.type() == shadow::LayerType::Connected) {
       ConnectedLayer *l = reinterpret_cast<ConnectedLayer *>(layer);
-      int in_num = l->in_blob->num(), out_num = l->out_blob->num();
-      file.read(reinterpret_cast<char *>(l->biases_), sizeof(float) * out_num);
-      file.read(reinterpret_cast<char *>(l->weights_),
-                sizeof(float) * in_num * out_num);
+      int out_num = l->out_blob_->num(), num = l->in_blob_->num() * out_num;
+      float *biases = new float[out_num], *weights = new float[num];
+      file.read(reinterpret_cast<char *>(biases), sizeof(float) * out_num);
+      file.read(reinterpret_cast<char *>(weights), sizeof(float) * num);
 
-#ifdef USE_CUDA
-      CUDA::CUDAWriteBuffer(out_num, l->cuda_biases_, l->biases_);
-      CUDA::CUDAWriteBuffer(in_num * out_num, l->cuda_weights_, l->weights_);
-#endif
+      l->biases_->set_data(biases);
+      l->weights_->set_data(weights);
 
-#ifdef USE_CL
-      CL::CLWriteBuffer(out_num, l->cl_biases_, l->biases_);
-      CL::CLWriteBuffer(in_num * out_num, l->cl_weights_, l->weights_);
-#endif
+      delete[] biases;
+      delete[] weights;
+
+      //#ifdef USE_CL
+      //      CL::CLWriteBuffer(out_num, l->cl_biases_, l->biases_);
+      //      CL::CLWriteBuffer(in_num * out_num, l->cl_weights_, l->weights_);
+      //#endif
     }
   }
 
