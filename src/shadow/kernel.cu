@@ -132,23 +132,35 @@ void Kernel::ActivateArray(int N, shadow::ActivateType a, float *out_data) {
   CUDA::CUDACheckError(cudaPeekAtLastError());
 }
 
-__global__ void BiasOutputKernel(const float *biases, int batch, int num,
-                                 int size, float *out_data) {
+__global__ void SetArrayKernel(int N, float value, float *out_data) {
   int globalid =
       (blockIdx.x + blockIdx.y * gridDim.x) * blockDim.x + threadIdx.x;
-  if (globalid >= batch * num * size)
+  if (globalid >= N)
     return;
 
-  int b_out = (globalid / (num * size)) % batch;
-  int n_out = (globalid / size) % num;
-  int s_out = globalid % size;
-  out_data[(b_out * num + n_out) * size + s_out] = biases[n_out];
+  out_data[globalid] = value;
 }
 
-void Kernel::BiasOutput(const float *biases, int batch, int num, int size,
-                        float *out_data) {
-  int N = batch * num * size;
-  BiasOutputKernel<<<CUDA::CUDAGridDim(N), BLOCK>>>(biases, batch, num, size,
-                                                    out_data);
+void Kernel::SetArray(int N, float value, float *out_data) {
+  float val = {value};
+  SetArrayKernel<<<CUDA::CUDAGridDim(N), BLOCK>>>(N, val, out_data);
+  CUDA::CUDACheckError(cudaPeekAtLastError());
+}
+
+__global__ void SetArrayRepeatKernel(int N, const float *value, int value_size,
+                                     float *out_data) {
+  int globalid =
+      (blockIdx.x + blockIdx.y * gridDim.x) * blockDim.x + threadIdx.x;
+  if (globalid >= N * value_size)
+    return;
+
+  int value_index = globalid / N;
+  out_data[globalid] = value[value_index];
+}
+
+void Kernel::SetArrayRepeat(int N, const float *value, int value_size,
+                            float *out_data) {
+  SetArrayRepeatKernel<<<CUDA::CUDAGridDim(N * value_size), BLOCK>>>(
+      N, value, value_size, out_data);
   CUDA::CUDACheckError(cudaPeekAtLastError());
 }

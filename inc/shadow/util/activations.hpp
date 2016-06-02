@@ -1,7 +1,7 @@
 #ifndef SHADOW_UTIL_ACTIVATIONS_HPP
 #define SHADOW_UTIL_ACTIVATIONS_HPP
 
-#include "shadow/proto/shadow.pb.h"
+#include "shadow/kernel.hpp"
 
 static float Activate(float x, shadow::ActivateType a) {
   switch (a) {
@@ -17,10 +17,14 @@ static float Activate(float x, shadow::ActivateType a) {
 
 class Activations {
 public:
-  static void ActivateArray(int N, shadow::ActivateType a, float *out_data) {
+  static void ActivateArray(int N, shadow::ActivateType a, BType *out_data) {
+#if !defined(USE_CUDA) & !defined(USE_CL)
     for (int i = 0; i < N; ++i) {
       out_data[i] = Activate(out_data[i], a);
     }
+#else
+    Kernel::ActivateArray(N, a, out_data);
+#endif
   }
 };
 

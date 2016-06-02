@@ -65,28 +65,18 @@ void ConvLayer::MakeLayer(Blob<BType> *blob) {
 #endif
 }
 
-void BiasOutput(float *out_data, const float *biases, int batch, int n,
-                int size) {
-  for (int b = 0; b < batch; ++b) {
-    for (int i = 0; i < n; ++i) {
-      for (int j = 0; j < size; ++j) {
-        out_data[(b * n + i) * size + j] = biases[i];
-      }
-    }
-  }
-}
-
 void ConvLayer::ForwardLayer() {
   int batch = in_blob_->shape(0), in_c = in_blob_->shape(1);
   int in_h = in_blob_->shape(2), in_w = in_blob_->shape(3);
   int out_c = out_blob_->shape(1);
   int out_h = out_blob_->shape(2), out_w = out_blob_->shape(3);
-  float *out_data = out_blob_->mutable_data();
-
-#if !defined(USE_CUDA) & !defined(USE_CL)
-  BiasOutput(out_data, biases_->data(), batch, out_c, out_map_size_);
+  BType *out_data = out_blob_->mutable_data();
   for (int b = 0; b < batch; ++b) {
-    Image::Im2Col(in_blob_->data() + b * in_blob_->num(), in_c, in_h, in_w,
+    Blas::SetArrayRepeat(out_map_size_, biases_->data(), out_c,
+                         out_data + b * out_blob_->num());
+  }
+  for (int b = 0; b < batch; ++b) {
+    Image::Im2Col(in_blob_->data(), b * in_blob_->num(), in_c, in_h, in_w,
                   kernel_size_, stride_, pad_, out_h, out_w,
                   col_image_->mutable_data());
     Blas::BlasSGemm(0, 0, out_c, out_map_size_, kernel_num_, 1,
@@ -95,19 +85,6 @@ void ConvLayer::ForwardLayer() {
                     out_map_size_);
   }
   Activations::ActivateArray(out_blob_->count(), activate_, out_data);
-#else
-  Kernel::BiasOutput(biases_->data(), batch, out_c, out_map_size_, out_data);
-  for (int b = 0; b < batch; ++b) {
-    Kernel::Im2Col(in_blob_->data(), b * in_blob_->num(), in_c, in_h, in_w,
-                   kernel_size_, stride_, pad_, out_h, out_w,
-                   col_image_->mutable_data());
-    Blas::BlasSGemm(0, 0, out_c, out_map_size_, kernel_num_, 1,
-                    filters_->data(), kernel_num_, col_image_->mutable_data(),
-                    out_map_size_, 1, out_data, b * out_blob_->num(),
-                    out_map_size_);
-  }
-  Kernel::ActivateArray(out_blob_->count(), activate_, out_data);
-#endif
 }
 
 void ConvLayer::ReleaseLayer() {

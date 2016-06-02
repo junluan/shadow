@@ -49,14 +49,8 @@ void PoolingLayer::ForwardLayer() {
   int batch = in_blob_->shape(0), in_c = in_blob_->shape(1);
   int in_h = in_blob_->shape(2), in_w = in_blob_->shape(3);
   int out_h = out_blob_->shape(2), out_w = out_blob_->shape(3);
-
-#if !defined(USE_CUDA) & !defined(USE_CL)
   Image::Pooling(in_blob_->data(), batch, in_c, in_h, in_w, kernel_size_,
                  stride_, out_h, out_w, pool_type_, out_blob_->mutable_data());
-#else
-  Kernel::Pooling(in_blob_->data(), batch, in_c, in_h, in_w, kernel_size_,
-                  stride_, out_h, out_w, pool_type_, out_blob_->mutable_data());
-#endif
 }
 
 void PoolingLayer::ReleaseLayer() {

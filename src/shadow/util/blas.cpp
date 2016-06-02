@@ -1,8 +1,35 @@
 #include "shadow/util/blas.hpp"
 
-void Blas::BlasCopy(int N, const float *X, int INCX, float *Y, int INCY) {
-  for (int i = 0; i < N; ++i)
-    Y[i * INCY] = X[i * INCX];
+void Blas::SetArray(int N, float value, BType *out_data) {
+#if !defined(USE_CUDA) & !defined(USE_CL)
+  std::fill(out_data, out_data + N, value);
+#else
+  Kernel::SetArray(N, value, out_data);
+#endif
+}
+
+void Blas::SetArrayRepeat(int N, const BType *value, int value_size,
+                          BType *out_data) {
+#if !defined(USE_CUDA) & !defined(USE_CL)
+  for (int i = 0; i < value_size; ++i) {
+    BType *out_data_offset = out_data + i * N;
+    std::fill(out_data_offset, out_data_offset + N, value[i]);
+  }
+#else
+  Kernel::SetArrayRepeat(N, value, value_size, out_data);
+#endif
+}
+
+void Blas::BlasCopy(int N, const BType *X, int incx, BType *Y, int incy) {
+#if !defined(USE_CUDA) & !defined(USE_CL)
+  for (int i = 0; i < N; ++i) {
+    Y[i * incy] = X[i * incx];
+  }
+#elif defined(USE_CUDA)
+  cublasScopy(CUDA::BlasHandle, N, X, incx, Y, incy);
+#else
+  clblasScopy(N, *X, 0, incx, *Y, 0, incy, 1, CL::easyCL->queue, 0, NULL, NULL);
+#endif
 }
 
 void Blas::BlasAxpy(int N, float ALPHA, const float *X, int INCX, float *Y,
@@ -84,8 +111,8 @@ void Blas::BlasSGemm(int TA, int TB, int M, int N, int K, float ALPHA,
 
 #if defined(USE_CUDA)
 void Blas::BlasSGemm(int TA, int TB, int M, int N, int K, float ALPHA,
-                         const float *bufA, int lda, const float *bufB, int ldb,
-                         float BETA, float *bufC, int offset, int ldc) {
+                     const float *bufA, int lda, const float *bufB, int ldb,
+                     float BETA, float *bufC, int offset, int ldc) {
   cublasOperation_t transA = TA ? CUBLAS_OP_T : CUBLAS_OP_N;
   cublasOperation_t transB = TB ? CUBLAS_OP_T : CUBLAS_OP_N;
   cublasSgemm(CUDA::BlasHandle, transA, transB, N, M, K, &ALPHA, bufB, ldb,
@@ -94,10 +121,9 @@ void Blas::BlasSGemm(int TA, int TB, int M, int N, int K, float ALPHA,
 #endif
 
 #if defined(USE_CL)
-#include <clBLAS.h>
 void Blas::BlasSGemm(int TA, int TB, int M, int N, int K, float ALPHA,
-                       const cl_mem *bufA, int lda, const cl_mem *bufB, int ldb,
-                       float BETA, cl_mem *bufC, int offset, int ldc) {
+                     const cl_mem *bufA, int lda, const cl_mem *bufB, int ldb,
+                     float BETA, cl_mem *bufC, int offset, int ldc) {
   clblasTranspose transA = TA ? clblasTrans : clblasNoTrans;
   clblasTranspose transB = TB ? clblasTrans : clblasNoTrans;
   clblasSgemm(clblasRowMajor, transA, transB, M, N, K, ALPHA, *bufA, 0, lda,

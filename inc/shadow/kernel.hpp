@@ -1,7 +1,7 @@
 #ifndef SHADOW_KERNEL_HPP
 #define SHADOW_KERNEL_HPP
 
-#include "shadow/util/activations.hpp"
+#include "shadow/proto/shadow.pb.h"
 
 #if defined(USE_CUDA)
 #include "cublas_v2.h"
@@ -31,8 +31,9 @@ public:
                       int in_w, int ksize, int stride, int out_h, int out_w,
                       int mode, BType *out_data);
   static void ActivateArray(int N, shadow::ActivateType a, BType *out_data);
-  static void BiasOutput(const BType *biases, int batch, int num, int size,
-                         BType *out_data);
+  static void SetArray(int N, float value, BType *out_data);
+  static void SetArrayRepeat(int N, const BType *value, int value_size,
+                             BType *out_data);
 };
 
 #if defined(USE_CUDA)
@@ -59,12 +60,12 @@ public:
   static void CLReleaseBuffer(cl_mem *buffer);
 
   static EasyCL *easyCL;
-  static CLKernel *cl_activations_kernel_;
-  static CLKernel *cl_im2col_kernel_;
-  static CLKernel *cl_biasoutput_kernel_;
-  static CLKernel *cl_pooling_kernel_;
-  static CLKernel *cl_veccopy_kernel_;
   static CLKernel *cl_datatransform_kernel_;
+  static CLKernel *cl_im2col_kernel_;
+  static CLKernel *cl_pooling_kernel_;
+  static CLKernel *cl_activations_kernel_;
+  static CLKernel *cl_setarray_kernel_;
+  static CLKernel *cl_setarrayrepeat_kernel_;
 };
 #endif
 

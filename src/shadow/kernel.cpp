@@ -2,45 +2,46 @@
 #include "shadow/util/util.hpp"
 
 void Kernel::KernelSetup(int device_id) {
-#ifdef USE_CUDA
+#if defined(USE_CUDA)
   CUDA::CUDACheckError(cudaSetDevice(device_id));
   cublasCreate(&CUDA::BlasHandle);
 #endif
 
-#ifdef USE_CL
+#if defined(USE_CL)
   CL::easyCL = EasyCL::createForFirstGpuOtherwiseCpu(true);
   std::string kernelfile = "./src/shadow/kernel.cl";
-  CL::cl_activations_kernel_ =
-      CL::easyCL->buildKernel(kernelfile, "ActivateArray");
-  CL::cl_im2col_kernel_ = CL::easyCL->buildKernel(kernelfile, "Im2Col");
-  CL::cl_biasoutput_kernel_ = CL::easyCL->buildKernel(kernelfile, "BiasOutput");
-  CL::cl_pooling_kernel_ = CL::easyCL->buildKernel(kernelfile, "Pooling");
-  CL::cl_veccopy_kernel_ = CL::easyCL->buildKernel(kernelfile, "VecCopy");
   CL::cl_datatransform_kernel_ =
       CL::easyCL->buildKernel(kernelfile, "DataTransform");
+  CL::cl_im2col_kernel_ = CL::easyCL->buildKernel(kernelfile, "Im2Col");
+  CL::cl_pooling_kernel_ = CL::easyCL->buildKernel(kernelfile, "Pooling");
+  CL::cl_activations_kernel_ =
+      CL::easyCL->buildKernel(kernelfile, "ActivateArray");
+  CL::cl_setarray_kernel_ = CL::easyCL->buildKernel(kernelfile, "SetArray");
+  CL::cl_setarrayrepeat_kernel_ =
+      CL::easyCL->buildKernel(kernelfile, "SetArrayRepeat");
   clblasSetup();
 #endif
 }
 
 void Kernel::KernelRelease() {
-#ifdef USE_CUDA
+#if defined(USE_CUDA)
   if (CUDA::BlasHandle != NULL)
     cublasDestroy(CUDA::BlasHandle);
 #endif
 
-#ifdef USE_CL
-  CL::cl_activations_kernel_->~CLKernel();
-  CL::cl_im2col_kernel_->~CLKernel();
-  CL::cl_biasoutput_kernel_->~CLKernel();
-  CL::cl_pooling_kernel_->~CLKernel();
-  CL::cl_veccopy_kernel_->~CLKernel();
+#if defined(USE_CL)
   CL::cl_datatransform_kernel_->~CLKernel();
+  CL::cl_im2col_kernel_->~CLKernel();
+  CL::cl_pooling_kernel_->~CLKernel();
+  CL::cl_activations_kernel_->~CLKernel();
+  CL::cl_setarray_kernel_->~CLKernel();
+  CL::cl_setarrayrepeat_kernel_->~CLKernel();
   CL::easyCL->~EasyCL();
   clblasTeardown();
 #endif
 }
 
-#ifdef USE_CUDA
+#if defined(USE_CUDA)
 cublasHandle_t CUDA::BlasHandle = NULL;
 
 float *CUDA::CUDAMakeBuffer(int size, float *host_ptr) {
@@ -85,21 +86,20 @@ void CUDA::CUDACheckError(cudaError_t status) {
     Fatal("CUDA Error: " + message);
   }
   if (status2 != cudaSuccess) {
-    const char *s = cudaGetErrorString(status);
-    std::string message(s);
+    std::string message(cudaGetErrorString(status));
     Fatal("CUDA Error Prev: " + message);
   }
 }
 #endif
 
-#ifdef USE_CL
+#if defined(USE_CL)
 EasyCL *CL::easyCL = NULL;
-CLKernel *CL::cl_activations_kernel_ = NULL;
-CLKernel *CL::cl_im2col_kernel_ = NULL;
-CLKernel *CL::cl_biasoutput_kernel_ = NULL;
-CLKernel *CL::cl_pooling_kernel_ = NULL;
-CLKernel *CL::cl_veccopy_kernel_ = NULL;
 CLKernel *CL::cl_datatransform_kernel_ = NULL;
+CLKernel *CL::cl_im2col_kernel_ = NULL;
+CLKernel *CL::cl_pooling_kernel_ = NULL;
+CLKernel *CL::cl_activations_kernel_ = NULL;
+CLKernel *CL::cl_setarray_kernel_ = NULL;
+CLKernel *CL::cl_setarrayrepeat_kernel_ = NULL;
 
 cl_mem CL::CLMakeBuffer(int size, cl_mem_flags flags, void *host_ptr) {
   return clCreateBuffer(*easyCL->context, flags, size * sizeof(float), host_ptr,
@@ -193,15 +193,25 @@ void Kernel::ActivateArray(int N, shadow::ActivateType a, cl_mem *out_data) {
   clFinish(*CL::easyCL->queue);
 }
 
-void Kernel::BiasOutput(const cl_mem *biases, int batch, int num, int size,
-                        cl_mem *out_data) {
-  cl_kernel kernel = CL::cl_biasoutput_kernel_->GetKernel();
-  clSetKernelArg(kernel, 0, sizeof(cl_mem), biases);
-  clSetKernelArg(kernel, 1, sizeof(int), &batch);
-  clSetKernelArg(kernel, 2, sizeof(int), &num);
-  clSetKernelArg(kernel, 3, sizeof(int), &size);
-  clSetKernelArg(kernel, 4, sizeof(cl_mem), out_data);
-  size_t global = batch * num * size;
+void Kernel::SetArray(int N, float value, cl_mem *out_data) {
+  cl_kernel kernel = CL::cl_setarray_kernel_->GetKernel();
+  clSetKernelArg(kernel, 0, sizeof(int), &N);
+  clSetKernelArg(kernel, 1, sizeof(float), &value);
+  clSetKernelArg(kernel, 2, sizeof(cl_mem), out_data);
+  size_t global = N;
+  clEnqueueNDRangeKernel(*CL::easyCL->queue, kernel, 1, NULL, &global, NULL, 0,
+                         NULL, NULL);
+  clFinish(*CL::easyCL->queue);
+}
+
+void Kernel::SetArrayRepeat(int N, const cl_mem *value, int value_size,
+                            cl_mem *out_data) {
+  cl_kernel kernel = CL::cl_setarrayrepeat_kernel_->GetKernel();
+  clSetKernelArg(kernel, 0, sizeof(int), &N);
+  clSetKernelArg(kernel, 1, sizeof(cl_mem), value);
+  clSetKernelArg(kernel, 2, sizeof(int), &value_size);
+  clSetKernelArg(kernel, 3, sizeof(cl_mem), out_data);
+  size_t global = N * value_size;
   clEnqueueNDRangeKernel(*CL::easyCL->queue, kernel, 1, NULL, &global, NULL, 0,
                          NULL, NULL);
   clFinish(*CL::easyCL->queue);

@@ -1,4 +1,5 @@
 #include "shadow/layers/data_layer.hpp"
+#include "shadow/util/image.hpp"
 
 DataLayer::DataLayer(shadow::LayerParameter layer_param) {
   layer_param_ = layer_param;
@@ -36,16 +37,9 @@ void DataLayer::MakeLayer(Blob<BType> *blob) {
 }
 
 void DataLayer::ForwardLayer(float *in_data) {
-#if !defined(USE_CUDA) & !defined(USE_CL)
-  // in_blob_->set_data(in_data);
-  for (int i = 0; i < in_blob_->count(); ++i) {
-    out_blob_->mutable_data()[i] = (in_data[i] - mean_value_) * scale_;
-  }
-#else
   in_blob_->set_data(in_data);
-  Kernel::DataTransform(out_blob_->count(), in_blob_->data(), scale_,
-                        mean_value_, out_blob_->mutable_data());
-#endif
+  Image::DataTransform(out_blob_->count(), in_blob_->data(), scale_,
+                       mean_value_, out_blob_->mutable_data());
 }
 
 void DataLayer::ReleaseLayer() {

@@ -47,9 +47,7 @@ void ConnectedLayer::MakeLayer(Blob<BType> *blob) {
 
 void ConnectedLayer::ForwardLayer() {
   int batch = in_blob_->shape(0);
-  float *out_data = out_blob_->mutable_data();
-
-#if !defined(USE_CUDA) & !defined(USE_CL)
+  BType *out_data = out_blob_->mutable_data();
   for (int b = 0; b < batch; ++b) {
     Blas::BlasCopy(out_blob_->num(), biases_->data(), 1,
                    out_data + b * out_blob_->num(), 1);
@@ -58,13 +56,6 @@ void ConnectedLayer::ForwardLayer() {
                   in_blob_->data(), in_blob_->num(), weights_->data(),
                   out_blob_->num(), 1, out_data, 0, out_blob_->num());
   Activations::ActivateArray(out_blob_->count(), activate_, out_data);
-#else
-  Kernel::BiasOutput(biases_->data(), batch, out_blob_->num(), 1, out_data);
-  Blas::BlasSGemm(0, 0, batch, out_blob_->num(), in_blob_->num(), 1,
-                  in_blob_->data(), in_blob_->num(), weights_->data(),
-                  out_blob_->num(), 1, out_data, 0, out_blob_->num());
-  Kernel::ActivateArray(out_blob_->count(), activate_, out_data);
-#endif
 }
 
 void ConnectedLayer::ReleaseLayer() {

@@ -1,5 +1,19 @@
 #include "shadow/util/image.hpp"
 
+#if !defined(USE_CUDA) & !defined(USE_CL)
+void Image::DataTransform(int N, const BType *in_data, float scale,
+                          float mean_value, BType *out_data) {
+  for (int i = 0; i < N; ++i) {
+    out_data[i] = (in_data[i] - mean_value) * scale;
+  }
+}
+#else
+void Image::DataTransform(int N, const BType *in_data, float scale,
+                          float mean_value, BType *out_data) {
+  Kernel::DataTransform(N, in_data, scale, mean_value, out_data);
+}
+#endif
+
 float Im2ColGetPixel(const float *image, int in_h, int in_w, int im_row,
                      int im_col, int channel, int pad) {
   im_row -= pad;
@@ -9,9 +23,11 @@ float Im2ColGetPixel(const float *image, int in_h, int in_w, int im_row,
   return image[im_col + in_w * (im_row + in_h * channel)];
 }
 
-void Image::Im2Col(const float *im_data, int in_c, int in_h, int in_w,
-                   int ksize, int stride, int pad, int out_h, int out_w,
-                   float *col_data) {
+#if !defined(USE_CUDA) & !defined(USE_CL)
+void Image::Im2Col(const BType *im_data, int offset, int in_c, int in_h,
+                   int in_w, int ksize, int stride, int pad, int out_h,
+                   int out_w, BType *col_data) {
+  const BType *im_data_offset = im_data + offset;
   int kernel_num_ = in_c * ksize * ksize;
   for (int c = 0; c < kernel_num_; ++c) {
     int w_offset = c % ksize;
@@ -22,8 +38,8 @@ void Image::Im2Col(const float *im_data, int in_c, int in_h, int in_w,
         int im_row = h_offset + h * stride;
         int im_col = w_offset + w * stride;
         int col_index = (c * out_h + h) * out_w + w;
-        col_data[col_index] =
-            Im2ColGetPixel(im_data, in_h, in_w, im_row, im_col, c_im, pad);
+        col_data[col_index] = Im2ColGetPixel(im_data_offset, in_h, in_w, im_row,
+                                             im_col, c_im, pad);
       }
     }
   }
@@ -51,10 +67,19 @@ void Image::Im2Col(const float *im_data, int in_c, int in_h, int in_w,
   //    }
   //  }
 }
+#else
+void Image::Im2Col(const BType *im_data, int offset, int in_c, int in_h,
+                   int in_w, int ksize, int stride, int pad, int out_h,
+                   int out_w, BType *col_data) {
+  Kernel::Im2Col(im_data, offset, in_c, in_h, in_w, ksize, stride, pad, out_h,
+                 out_w, col_data);
+}
+#endif
 
-void Image::Pooling(const float *in_data, int batch, int in_c, int in_h,
+#if !defined(USE_CUDA) & !defined(USE_CL)
+void Image::Pooling(const BType *in_data, int batch, int in_c, int in_h,
                     int in_w, int ksize, int stride, int out_h, int out_w,
-                    int mode, float *out_data) {
+                    int mode, BType *out_data) {
   int h_offset = ((in_h - ksize) % stride) / 2;
   int w_offset = ((in_w - ksize) % stride) / 2;
 
@@ -86,3 +111,11 @@ void Image::Pooling(const float *in_data, int batch, int in_c, int in_h,
     }
   }
 }
+#else
+void Image::Pooling(const BType *in_data, int batch, int in_c, int in_h,
+                    int in_w, int ksize, int stride, int out_h, int out_w,
+                    int mode, BType *out_data) {
+  Kernel::Pooling(in_data, batch, in_c, in_h, in_w, ksize, stride, out_h, out_w,
+                  mode, out_data);
+}
+#endif

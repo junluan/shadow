@@ -9,7 +9,7 @@ option(USE_OpenCV "Using OpenCV to read, write and show image!" ON)
 
 set(OpenCV_ROOT "/usr/local" CACHE STRING "Give the root of OpenCV!")
 
-#set(CMAKE_CXX_COMPILER "/usr/bin/clang++-3.8")
+set(CMAKE_CXX_COMPILER "/usr/bin/clang++-3.8")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
 if (${USE_GLog} STREQUAL "ON")

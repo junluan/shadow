@@ -53,10 +53,10 @@ public:
     }
   }
 
-  const std::vector<int> shape() { return shape_; }
-  std::vector<int> *mutable_shape() { return &shape_; }
+  inline const std::vector<int> shape() { return shape_; }
+  inline std::vector<int> *mutable_shape() { return &shape_; }
 
-  const inline int shape(int index) {
+  inline const int shape(int index) {
     if (index < 0 || index >= shape_.size())
       Fatal("Index out of blob shape range!");
     return shape_[index];

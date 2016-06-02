@@ -5,7 +5,10 @@
 
 class Blas {
 public:
-  static void BlasCopy(int N, const float *X, int INCX, float *Y, int INCY);
+  static void SetArray(int N, float value, BType *out_data);
+  static void SetArrayRepeat(int N, const BType *value, int value_size,
+                             BType *out_data);
+  static void BlasCopy(int N, const BType *X, int incx, BType *Y, int incy);
   static void BlasAxpy(int N, float ALPHA, const float *X, int INCX, float *Y,
                        int INCY);
   static void BlasSGemm(int TA, int TB, int M, int N, int K, float ALPHA,

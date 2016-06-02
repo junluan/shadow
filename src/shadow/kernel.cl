@@ -1,28 +1,3 @@
-float linear_activate(float x) { return x; }
-float relu_activate(float x) { return x * (x > 0); }
-float leaky_activate(float x) { return (x > 0) ? x : .1f * x; }
-
-float Activate(float x, int mode) {
-  switch (mode) {
-  case 0:
-    return linear_activate(x);
-  case 1:
-    return relu_activate(x);
-  case 2:
-    return leaky_activate(x);
-  default:
-    return x;
-  }
-}
-
-__kernel void ActivateArray(int N, int mode, __global float *out_data) {
-  const int globalid = get_global_id(0);
-  if (globalid >= N)
-    return;
-
-  out_data[globalid] = Activate(out_data[globalid], mode);
-}
-
 __kernel void DataTransform(int N, __global float *in_data, float scale,
                             float mean_value, __global float *out_data) {
   const int globalid = get_global_id(0);
@@ -30,6 +5,35 @@ __kernel void DataTransform(int N, __global float *in_data, float scale,
     return;
 
   out_data[globalid] = (in_data[globalid] - mean_value) * scale;
+}
+
+__kernel void Im2Col(__global float *im_data, int offset, int in_c, int in_h,
+                     int in_w, int ksize, int stride, int pad, int out_h,
+                     int out_w, __global float *col_data) {
+  const int globalid = get_global_id(0);
+  if (globalid >= in_c * out_h * out_w)
+    return;
+
+  int c_out = (globalid / (out_w * out_h)) % in_c;
+  int i_out = (globalid / out_w) % out_h;
+  int j_out = globalid % out_w;
+
+  int i_inp = -pad + i_out * stride;
+  int j_inp = -pad + j_out * stride;
+
+  im_data += offset + c_out * in_h * in_w;
+  col_data += (c_out * ksize * ksize * out_h + i_out) * out_w + j_out;
+
+  for (int ki = 0; ki < ksize; ++ki) {
+    for (int kj = 0; kj < ksize; ++kj) {
+      int i = i_inp + ki;
+      int j = j_inp + kj;
+      *col_data = (i >= 0 && j >= 0 && i < in_h && j < in_w)
+                      ? im_data[i * in_w + j]
+                      : 0.f;
+      col_data += out_h * out_w;
+    }
+  }
 }
 
 __kernel void Pooling(__global float *in_data, int batch, int in_c, int in_h,
@@ -69,52 +73,45 @@ __kernel void Pooling(__global float *in_data, int batch, int in_c, int in_h,
     out_data[globalid] = sum / (ksize * ksize);
 }
 
-__kernel void BiasOutput(__global float *biases, int batch, int num, int size,
-                         __global float *out_data) {
-  const int globalid = get_global_id(0);
-  if (globalid >= batch * num * size)
-    return;
+float linear_activate(float x) { return x; }
+float relu_activate(float x) { return x * (x > 0); }
+float leaky_activate(float x) { return (x > 0) ? x : .1f * x; }
 
-  int b_out = (globalid / (num * size)) % batch;
-  int n_out = (globalid / size) % num;
-  int s_out = globalid % size;
-  out_data[(b_out * num + n_out) * size + s_out] = biases[n_out];
-}
-
-__kernel void Im2Col(__global float *im_data, int offset, int in_c, int in_h,
-                     int in_w, int ksize, int stride, int pad, int out_h,
-                     int out_w, __global float *col_data) {
-  const int globalid = get_global_id(0);
-  if (globalid >= in_c * out_h * out_w)
-    return;
-
-  int c_out = (globalid / (out_w * out_h)) % in_c;
-  int i_out = (globalid / out_w) % out_h;
-  int j_out = globalid % out_w;
-
-  int i_inp = -pad + i_out * stride;
-  int j_inp = -pad + j_out * stride;
-
-  im_data += offset + c_out * in_h * in_w;
-  col_data += (c_out * ksize * ksize * out_h + i_out) * out_w + j_out;
-
-  for (int ki = 0; ki < ksize; ++ki) {
-    for (int kj = 0; kj < ksize; ++kj) {
-      int i = i_inp + ki;
-      int j = j_inp + kj;
-      *col_data = (i >= 0 && j >= 0 && i < in_h && j < in_w)
-                      ? im_data[i * in_w + j]
-                      : 0.f;
-      col_data += out_h * out_w;
-    }
+float Activate(float x, int mode) {
+  switch (mode) {
+  case 0:
+    return linear_activate(x);
+  case 1:
+    return relu_activate(x);
+  case 2:
+    return leaky_activate(x);
+  default:
+    return x;
   }
 }
 
-__kernel void VecCopy(__global float *biases, int batch, int num,
-                      __global float *out_data) {
+__kernel void ActivateArray(int N, int mode, __global float *out_data) {
   const int globalid = get_global_id(0);
-  if (globalid >= batch * num)
+  if (globalid >= N)
     return;
 
-  out_data[globalid] = biases[globalid];
+  out_data[globalid] = Activate(out_data[globalid], mode);
+}
+
+__kernel void SetArray(int N, float value, __global float *out_data) {
+  const int globalid = get_global_id(0);
+  if (globalid >= N)
+    return;
+
+  out_data[globalid] = value;
+}
+
+__kernel void SetArrayRepeat(int N, __global float *value, int value_size,
+                             __global float *out_data) {
+  const int globalid = get_global_id(0);
+  if (globalid >= N * value_size)
+    return;
+
+  int value_index = globalid / N;
+  out_data[globalid] = value[value_index];
 }
