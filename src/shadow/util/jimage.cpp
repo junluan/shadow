@@ -57,7 +57,7 @@ void JImage::Write(std::string im_path) {
 void JImage::Show(std::string show_name, int wait_time) {
   if (data_ == nullptr)
     Fatal("JImage data is NULL!");
-#ifdef USE_OpenCV
+#if defined(USE_OpenCV)
   cv::namedWindow(show_name, cv::WINDOW_NORMAL);
   if (order_ == kRGB) {
     unsigned char *data_inv = new unsigned char[c_ * h_ * w_];
@@ -221,7 +221,7 @@ void JImage::Filter2D(float *kernel, int height, int width) {
   memcpy(data_, data_f_, c_ * h_ * w_);
 }
 
-#ifdef USE_OpenCV
+#if defined(USE_OpenCV)
 void JImage::FromMat(const cv::Mat &im_mat) {
   if (data_ == nullptr) {
     data_ = new unsigned char[im_mat.channels() * im_mat.rows * im_mat.cols];

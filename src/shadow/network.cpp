@@ -4,7 +4,7 @@
 void Network::LoadModel(std::string cfg_file, std::string weight_file,
                         int batch) {
   Parser parser;
-  parser.ParseNetworkProto(this, cfg_file, batch);
+  parser.ParseNetworkProtoTxt(this, cfg_file, batch);
   parser.LoadWeights(this, weight_file);
 }
 
@@ -22,7 +22,7 @@ const Layer *Network::GetLayerByName(std::string layer_name) {
 void Network::ReleaseNetwork() {
   for (int i = 0; i < num_layers_; ++i)
     layers_[i]->ReleaseLayer();
-#ifdef VERBOSE
+#if defined(VERBOSE)
   std::cout << "Release Network!" << std::endl;
 #endif
 }

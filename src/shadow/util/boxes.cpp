@@ -94,7 +94,7 @@ void Boxes::AmendBoxes(std::vector<VecBox> *boxes, int height, int width,
   }
 }
 
-#ifdef USE_OpenCV
+#if defined(USE_OpenCV)
 void Boxes::SelectRoI(int event, int x, int y, int flags, void *roi) {
   Box *roi_ = reinterpret_cast<Box *>(roi);
   switch (event) {

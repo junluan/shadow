@@ -1,7 +1,7 @@
 #ifndef SHADOW_UTIL_UTIL_HPP
 #define SHADOW_UTIL_UTIL_HPP
 
-#ifdef USE_GLog
+#if defined(USE_GLog)
 #include <glog/logging.h>
 #endif
 
@@ -39,7 +39,7 @@ typedef Size<int> SizeI;
 typedef std::vector<RectF> VecRectF;
 typedef std::vector<RectI> VecRectI;
 
-#ifdef USE_GLog
+#if defined(USE_GLog)
 #define Info(msg)                                                              \
   { LOG(INFO) << msg; }
 
@@ -75,9 +75,9 @@ inline static Dtype constrain(Dtype min, Dtype max, Dtype value) {
   return value;
 }
 
-static std::string find_replace(const std::string str,
-                                const std::string old_str,
-                                const std::string new_str) {
+inline static std::string find_replace(const std::string str,
+                                       const std::string old_str,
+                                       const std::string new_str) {
   std::string origin(str);
   size_t index = 0;
   while ((index = origin.find(old_str, index)) != std::string::npos) {
@@ -87,38 +87,69 @@ static std::string find_replace(const std::string str,
   return origin;
 }
 
-static std::string find_replace_last(const std::string str,
-                                     const std::string old_str,
-                                     const std::string new_str) {
+inline static std::string find_replace_last(const std::string str,
+                                            const std::string old_str,
+                                            const std::string new_str) {
   std::string origin(str);
   size_t index = origin.find_last_of(old_str);
   origin.replace(index, old_str.length(), new_str);
   return origin;
 }
 
-static std::string change_extension(const std::string str,
-                                    const std::string new_ext) {
+inline static std::string change_extension(const std::string str,
+                                           const std::string new_ext) {
   std::string origin(str);
   size_t index = origin.find_last_of(".");
   origin.replace(index, origin.length(), new_ext);
   return origin;
 }
 
-static std::vector<std::string> LoadList(std::string list_file) {
-  std::cout << "Loading image list from " << list_file << " ... ";
+inline static std::vector<std::string> LoadList(const std::string list_file) {
   std::ifstream file(list_file);
   if (!file.is_open())
     Fatal("Load image list file error!");
 
-  std::string dir;
   std::vector<std::string> image_list;
-  while (getline(file, dir)) {
+  std::string dir;
+  while (std::getline(file, dir)) {
     if (dir.length())
       image_list.push_back(dir);
   }
   file.close();
-  std::cout << "Done!" << std::endl;
   return image_list;
 }
+
+inline static std::string read_text_from_file(const std::string filename) {
+  std::ifstream file(filename);
+  if (!file.is_open()) {
+    Warning("Can't open text file " + filename);
+    return std::string();
+  }
+
+  std::stringstream result;
+  std::string tmp;
+  while (std::getline(file, tmp))
+    result << tmp << std::endl;
+  file.close();
+  return result.str();
+}
+
+#include <ctime>
+class Timer {
+public:
+  Timer() : ts(clock()) {}
+
+  void start() { ts = clock(); }
+  double get_second() const {
+    return static_cast<double>(clock() - ts) / CLOCKS_PER_SEC;
+  }
+  double get_millisecond() const {
+    return 1000.0 * static_cast<double>(clock() - ts) / CLOCKS_PER_SEC;
+  }
+  double get_microsecond() const { return static_cast<double>(clock() - ts); }
+
+private:
+  clock_t ts;
+};
 
 #endif // SHADOW_UTIL_UTIL_HPP

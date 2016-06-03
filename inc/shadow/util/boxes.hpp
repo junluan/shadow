@@ -5,7 +5,7 @@
 
 #include <vector>
 
-#ifdef USE_OpenCV
+#if defined(USE_OpenCV)
 #include <opencv2/opencv.hpp>
 #endif
 
@@ -36,7 +36,7 @@ public:
   static void AmendBoxes(std::vector<VecBox> *boxes, int height, int width,
                          VecRectF crops);
 
-#ifdef USE_OpenCV
+#if defined(USE_OpenCV)
   static void SelectRoI(int event, int x, int y, int flags, void *roi);
 #endif
 };

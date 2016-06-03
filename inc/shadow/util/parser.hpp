@@ -7,7 +7,7 @@
 
 class Parser {
 public:
-  void ParseNetworkProto(Network *net, std::string prototxt_file, int batch);
+  void ParseNetworkProtoTxt(Network *net, std::string prototxt_file, int batch);
   void LoadWeights(Network *net, std::string weight_file);
 
 private:

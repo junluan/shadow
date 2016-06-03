@@ -6,7 +6,7 @@
 
 #include <string>
 
-#ifdef USE_OpenCV
+#if defined(USE_OpenCV)
 #include <opencv2/opencv.hpp>
 #endif
 
@@ -39,7 +39,7 @@ public:
   void CropWithResize(JImage *im_res, RectF crop, int height, int width);
   void Filter2D(float *kernel, int height, int width);
 
-#ifdef USE_OpenCV
+#if defined(USE_OpenCV)
   void FromMat(const cv::Mat &im_mat);
   void FromMatWithCropResize(const cv::Mat &im_mat, RectF crop, int resize_h,
                              int resize_w, float *batch_data);

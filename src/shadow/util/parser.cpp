@@ -8,45 +8,30 @@
 #include "shadow/layers/dropout_layer.hpp"
 #include "shadow/layers/pooling_layer.hpp"
 
-#include <google/protobuf/io/zero_copy_stream_impl.h>
 #include <google/protobuf/text_format.h>
 
-#ifdef __unix__
-#include <fcntl.h>
-#else
-#include <io.h>
-#endif
-
-using google::protobuf::io::FileInputStream;
 using google::protobuf::TextFormat;
 
 void Parser::LoadWeights(Network *net, std::string weight_file) {
   LoadWeightsUpto(net, weight_file, net->num_layers_);
 }
 
-void Parser::ParseNetworkProto(Network *net, std::string prototxt_file,
-                               int batch) {
-  int fd = open(prototxt_file.c_str(), O_RDONLY);
-  if (fd == -1)
-    Fatal("File not found: " + prototxt_file);
-  FileInputStream *input = new FileInputStream(fd);
-  bool success = TextFormat::Parse(input, &net->net_param_);
-  delete input;
-  close(fd);
-  if (!success)
+void Parser::ParseNetworkProtoTxt(Network *net, std::string prototxt_file,
+                                  int batch) {
+  std::string proto_str = read_text_from_file(prototxt_file);
+  bool success = TextFormat::ParseFromString(proto_str, &net->net_param_);
+
+  if (!proto_str.compare("") || !success)
     Fatal("Parse configure file error");
 
   ParseNet(net);
   net->in_shape_.set_dim(0, batch);
 
   Blob<BType> *blob = new Blob<BType>();
-  blob->add_shape(net->in_shape_.dim(0));
-  blob->add_shape(net->in_shape_.dim(1));
-  blob->add_shape(net->in_shape_.dim(2));
-  blob->add_shape(net->in_shape_.dim(3));
+  blob->set_shape(net->in_shape_);
 
   for (int i = 0; i < net->num_layers_; ++i) {
-#ifdef VERBOSE
+#if defined(VERBOSE)
     printf("%2d: ", i);
 #endif
     shadow::LayerParameter layer_param = net->net_param_.layer(i);
@@ -91,7 +76,7 @@ Layer *Parser::LayerFactory(shadow::LayerParameter layer_param,
 
 void Parser::LoadWeightsUpto(Network *net, std::string weight_file,
                              int cut_off) {
-#ifdef VERBOSE
+#if defined(VERBOSE)
   std::cout << "Load model from " << weight_file << " ... " << std::endl;
 #endif
   std::ifstream file(weight_file, std::ios::binary);
@@ -110,17 +95,10 @@ void Parser::LoadWeightsUpto(Network *net, std::string weight_file,
       float *biases = new float[out_c], *filters = new float[num];
       file.read(reinterpret_cast<char *>(biases), sizeof(float) * out_c);
       file.read(reinterpret_cast<char *>(filters), sizeof(float) * num);
-
       l->biases_->set_data(biases);
       l->filters_->set_data(filters);
-
       delete[] biases;
       delete[] filters;
-
-      //#ifdef USE_CL
-      //      CL::CLWriteBuffer(out_c, l->cl_biases_, l->biases_);
-      //      CL::CLWriteBuffer(num, l->cl_filters_, l->filters_);
-      //#endif
     }
     if (layer->layer_param_.type() == shadow::LayerType::Connected) {
       ConnectedLayer *l = reinterpret_cast<ConnectedLayer *>(layer);
@@ -128,17 +106,10 @@ void Parser::LoadWeightsUpto(Network *net, std::string weight_file,
       float *biases = new float[out_num], *weights = new float[num];
       file.read(reinterpret_cast<char *>(biases), sizeof(float) * out_num);
       file.read(reinterpret_cast<char *>(weights), sizeof(float) * num);
-
       l->biases_->set_data(biases);
       l->weights_->set_data(weights);
-
       delete[] biases;
       delete[] weights;
-
-      //#ifdef USE_CL
-      //      CL::CLWriteBuffer(out_num, l->cl_biases_, l->biases_);
-      //      CL::CLWriteBuffer(in_num * out_num, l->cl_weights_, l->weights_);
-      //#endif
     }
   }
 

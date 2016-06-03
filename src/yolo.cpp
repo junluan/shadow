@@ -42,15 +42,14 @@ void Yolo::Release() {
 }
 
 void Yolo::Test(string image_file) {
-  clock_t time = clock();
+  Timer timer;
+  timer.start();
   im_ini_->Read(image_file);
   vector<VecBox> Bboxes;
   PredictYoloDetections(im_ini_, &Bboxes);
   Boxes::AmendBoxes(&Bboxes, im_ini_->h_, im_ini_->w_, rois_);
   VecBox boxes = Boxes::BoxesNMS(Bboxes, 0.5);
-
-  cout << "Predicted in " << static_cast<float>(clock() - time) / CLOCKS_PER_SEC
-       << " seconds" << endl;
+  cout << "Predicted in " << timer.get_second() << " seconds" << endl;
 
   for (int i = 0; i < boxes.size(); ++i) {
     Box box = boxes[i];
@@ -68,7 +67,8 @@ void Yolo::BatchTest(string list_file, bool image_write) {
   vector<string> image_list = LoadList(list_file);
   size_t num_im = image_list.size();
 
-  clock_t time = clock();
+  Timer timer;
+  timer.start();
   ofstream file(find_replace_last(list_file, ".", "-result."));
   for (int i = 0; i < num_im; ++i) {
     im_ini_->Read(image_list[i]);
@@ -95,7 +95,7 @@ void Yolo::BatchTest(string list_file, bool image_write) {
   }
   file.close();
   cout << "Processing: " << num_im << " / " << num_im << endl;
-  float sec = static_cast<float>(clock() - time) / CLOCKS_PER_SEC;
+  double sec = timer.get_second();
   cout << "Processed in: " << sec << " seconds, each frame: " << sec / num_im
        << "seconds" << endl;
 }
@@ -148,11 +148,11 @@ void Yolo::CaptureTest(cv::VideoCapture capture, string window_name,
 
   vector<VecBox> Bboxes;
   VecBox boxes, oldBoxes;
-  clock_t time;
+  Timer timer;
   while (capture.read(im_mat)) {
     if (im_mat.empty())
       break;
-    time = clock();
+    timer.start();
     im_ini_->FromMat(im_mat);
     PredictYoloDetections(im_ini_, &Bboxes);
     Boxes::AmendBoxes(&Bboxes, im_ini_->h_, im_ini_->w_, rois_);
@@ -162,7 +162,7 @@ void Yolo::CaptureTest(cv::VideoCapture capture, string window_name,
     DrawYoloDetections(boxes, &im_mat, true);
     if (video_write)
       writer.write(im_mat);
-    float sec = static_cast<float>(clock() - time) / CLOCKS_PER_SEC;
+    double sec = timer.get_second();
     int waittime = static_cast<int>(1000.0f * (1.0f / rate - sec));
     waittime = waittime > 1 ? waittime : 1;
     if (video_show) {

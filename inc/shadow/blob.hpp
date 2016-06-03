@@ -66,6 +66,12 @@ public:
       Fatal("Index out of blob shape range!");
     shape_[index] = value;
   }
+  inline void set_shape(shadow::BlobShape shape) {
+    shape_.clear();
+    for (int i = 0; i < shape.dim_size(); ++i) {
+      shape_.push_back(shape.dim(i));
+    }
+  }
   inline void add_shape(int value) { shape_.push_back(value); }
 
   inline const int num() { return num_; }
