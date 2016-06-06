@@ -8,6 +8,7 @@
 #include <cmath>
 #include <fstream>
 #include <iostream>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -73,6 +74,12 @@ inline static Dtype constrain(Dtype min, Dtype max, Dtype value) {
   if (value > max)
     return max;
   return value;
+}
+
+template <typename Dtype> inline static std::string to_string(Dtype val) {
+  std::ostringstream out;
+  out << val;
+  return out.str();
 }
 
 inline static std::string find_replace(const std::string str,
