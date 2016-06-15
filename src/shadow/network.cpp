@@ -8,7 +8,11 @@ void Network::LoadModel(std::string cfg_file, std::string weight_file,
   parser.LoadWeights(this, weight_file);
 }
 
-void Network::Forward(float *in_data) { ForwardNetwork(in_data); }
+void Network::Forward(float *in_data) {
+  if (in_data != nullptr)
+    PreFillData(in_data);
+  ForwardNetwork();
+}
 
 const Layer *Network::GetLayerByName(std::string layer_name) {
   for (int i = 0; i < num_layers_; ++i) {
@@ -21,20 +25,27 @@ const Layer *Network::GetLayerByName(std::string layer_name) {
 
 void Network::ReleaseNetwork() {
   for (int i = 0; i < num_layers_; ++i)
-    layers_[i]->ReleaseLayer();
+    layers_[i]->Release();
+
+  for (int i = 0; i < blobs_.size(); ++i)
+    blobs_[i]->clear();
+
 #if defined(VERBOSE)
   std::cout << "Release Network!" << std::endl;
 #endif
 }
 
-void Network::ForwardNetwork(float *in_data) {
+void Network::PreFillData(float *in_data) {
   for (int i = 0; i < num_layers_; ++i) {
-    if (layers_[i]->layer_param_.type() == shadow::LayerType::Data)
-      layers_[i]->ForwardLayer(in_data);
-    else
-      layers_[i]->ForwardLayer();
-    if (i < num_layers_ - 1) {
-      layers_[i + 1]->in_blob_ = layers_[i]->out_blob_;
+    if (layers_[i]->layer_param_.type() == shadow::LayerType::Data) {
+      layers_[i]->bottom_[0]->set_data(in_data);
+      break;
     }
+  }
+}
+
+void Network::ForwardNetwork() {
+  for (int i = 0; i < num_layers_; ++i) {
+    layers_[i]->Forward();
   }
 }

@@ -8,18 +8,18 @@ public:
   explicit ConnectedLayer(shadow::LayerParameter layer_param);
   ~ConnectedLayer();
 
-  void MakeLayer(Blob<BType> *blob);
+  void Setup(VecBlob *blobs);
+  void Forward();
+  void Release();
 
-  void ForwardLayer();
+  void set_weights(float *weights) { weights_->set_data(weights); }
+  void set_biases(float *biases) { biases_->set_data(biases); }
 
-  void ReleaseLayer();
-
+private:
   int num_output_;
   shadow::ActivateType activate_;
 
-  float *out_data_;
-
-  Blob<BType> *weights_, *biases_;
+  Blob *weights_, *biases_;
 };
 
 #endif // SHADOW_LAYERS_CONNECTED_LAYER_HPP

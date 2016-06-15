@@ -8,16 +8,20 @@ public:
   explicit ConvLayer(shadow::LayerParameter layer_param);
   ~ConvLayer();
 
-  void MakeLayer(Blob<BType> *blob);
+  void Setup(VecBlob *blobs);
+  void Forward();
+  void Release();
 
-  void ForwardLayer();
+  int kernel_size() { return kernel_size_; }
 
-  void ReleaseLayer();
+  void set_filters(float *filters) { filters_->set_data(filters); }
+  void set_biases(float *biases) { biases_->set_data(biases); }
 
+private:
   int num_output_, kernel_size_, stride_, pad_, out_map_size_, kernel_num_;
   shadow::ActivateType activate_;
 
-  Blob<BType> *filters_, *biases_, *col_image_;
+  Blob *filters_, *biases_, *col_image_;
 };
 
 #endif // SHADOW_LAYERS_CONV_LAYER_HPP

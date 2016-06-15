@@ -2,16 +2,16 @@
 
 DropoutLayer::DropoutLayer(shadow::LayerParameter layer_param) {
   layer_param_ = layer_param;
-  in_blob_ = new Blob<BType>();
-  out_blob_ = new Blob<BType>();
 }
-DropoutLayer::~DropoutLayer() { ReleaseLayer(); }
+DropoutLayer::~DropoutLayer() { Release(); }
 
-void DropoutLayer::MakeLayer(Blob<BType> *blob) {
-  if (!(blob->shape(1) && blob->shape(2) && blob->shape(3)))
+void DropoutLayer::Setup(VecBlob *blobs) {
+  Blob *bottom = find_blob_by_name(*blobs, layer_param_.bottom(0));
+
+  if (!(bottom->shape(1) && bottom->shape(2) && bottom->shape(3)))
     Fatal("Channel, height and width must greater than zero.");
 
-  int in_num = blob->shape(1) * blob->shape(2) * blob->shape(3);
+  int in_num = bottom->shape(1) * bottom->shape(2) * bottom->shape(3);
   int out_num = in_num;
 
 #if defined(VERBOSE)
@@ -20,8 +20,8 @@ void DropoutLayer::MakeLayer(Blob<BType> *blob) {
 #endif
 }
 
-void DropoutLayer::ForwardLayer() { out_blob_ = in_blob_; }
+void DropoutLayer::Forward() {}
 
-void DropoutLayer::ReleaseLayer() {
+void DropoutLayer::Release() {
   // std::cout << "Free DropoutLayer!" << std::endl;
 }

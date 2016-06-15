@@ -8,11 +8,9 @@ public:
   explicit PoolingLayer(shadow::LayerParameter layer_param);
   ~PoolingLayer();
 
-  void MakeLayer(Blob<BType> *blob);
-
-  void ForwardLayer();
-
-  void ReleaseLayer();
+  void Setup(VecBlob *blobs);
+  void Forward();
+  void Release();
 
 private:
   shadow::PoolType pool_type_;

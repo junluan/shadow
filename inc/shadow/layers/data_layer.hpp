@@ -8,12 +8,11 @@ public:
   explicit DataLayer(shadow::LayerParameter layer_param);
   ~DataLayer();
 
-  void MakeLayer(Blob<BType> *blob);
+  void Setup(VecBlob *blobs);
+  void Forward();
+  void Release();
 
-  void ForwardLayer(float *in_data);
-
-  void ReleaseLayer();
-
+private:
   float scale_, mean_value_;
 };
 

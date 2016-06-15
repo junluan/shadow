@@ -7,19 +7,18 @@
 
 class Layer {
 public:
-  virtual void MakeLayer(Blob<BType> *blob) {
-    std::cout << "Make Layer!" << std::endl;
+  virtual void Setup(VecBlob *blobs) {
+    std::cout << "Setup Layer!" << std::endl;
   }
-  virtual void ForwardLayer() { std::cout << "Forward Layer!" << std::endl; }
-  virtual void ForwardLayer(float *in_data) {
-    std::cout << "Forward Layer!" << std::endl;
-  }
+  virtual void Forward() { std::cout << "Forward Layer!" << std::endl; }
 
-  virtual void ReleaseLayer() { std::cout << "Free Layer!" << std::endl; }
+  virtual void Release() { std::cout << "Release Layer!" << std::endl; }
 
   shadow::LayerParameter layer_param_;
 
-  Blob<BType> *in_blob_, *out_blob_;
+  VecBlob bottom_, top_;
 };
+
+typedef std::vector<Layer *> VecLayer;
 
 #endif // SHADOW_LAYERS_LAYER_HPP

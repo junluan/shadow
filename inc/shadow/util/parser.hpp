@@ -12,7 +12,7 @@ public:
 
 private:
   void ParseNet(Network *net);
-  Layer *LayerFactory(shadow::LayerParameter layer_param, Blob<BType> *blob);
+  Layer *LayerFactory(shadow::LayerParameter layer_param, VecBlob *blobs);
 
   void LoadWeightsUpto(Network *net, std::string weight_file, int cut_off);
 };

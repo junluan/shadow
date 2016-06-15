@@ -6,22 +6,23 @@
 
 #include "shadow/proto/shadow.pb.h"
 
-#include <vector>
-
-template <class Dtype> class Blob {
+template <class Dtype> class BaseBlob {
 public:
-  inline const Dtype *data() { return (const Dtype *)data_; }
+  BaseBlob() {}
+  explicit BaseBlob(std::string name) { name_ = name; }
+
+  inline const Dtype *data() const { return data_; }
   inline Dtype *mutable_data() { return data_; }
 
   inline void set_data(float *data) {
 #if defined(USE_CUDA)
-    CUDA::CUDAWriteBuffer(count_, data_, data);
+    CUDA::CUDAWriteBuffer(count(), data_, data);
     on_gpu_ = true;
 #elif defined(USE_CL)
-    CL::CLWriteBuffer(count_, data_, data);
+    CL::CLWriteBuffer(count(), data_, data);
     on_gpu_ = true;
 #else
-    memcpy(data_, data, sizeof(float) * count_);
+    memcpy(data_, data, sizeof(float) * count());
     on_gpu_ = false;
 #endif
   }
@@ -38,25 +39,29 @@ public:
     data_ = new float[count];
     on_gpu_ = false;
 #endif
-    count_ = count;
+    if (shape_.size() == 0)
+      add_shape(count);
   }
 
   inline void copy_data(float *out_data) const {
     if (on_gpu_) {
 #if defined(USE_CUDA)
-      CUDA::CUDAReadBuffer(count_, data_, out_data);
+      CUDA::CUDAReadBuffer(count(), data_, out_data);
 #elif defined(USE_CL)
-      CL::CLReadBuffer(count_, data_, out_data);
+      CL::CLReadBuffer(count(), data_, out_data);
 #endif
     } else {
-      memcpy(out_data, data_, sizeof(float) * count_);
+      memcpy(out_data, data_, sizeof(float) * count());
     }
   }
 
-  inline const std::vector<int> shape() { return shape_; }
+  inline const std::string name() const { return name_; }
+  inline void set_name(std::string name) { name_ = name; }
+
+  inline const std::vector<int> shape() const { return shape_; }
   inline std::vector<int> *mutable_shape() { return &shape_; }
 
-  inline const int shape(int index) {
+  inline const int shape(int index) const {
     if (index < 0 || index >= shape_.size())
       Fatal("Index out of blob shape range!");
     return shape_[index];
@@ -74,10 +79,13 @@ public:
   }
   inline void add_shape(int value) { shape_.push_back(value); }
 
-  inline const int num() { return num_; }
-  inline void set_num(int num) { num_ = num; }
-  inline const int count() { return count_; }
-  inline void set_count(int count) { count_ = count; }
+  inline const int num() const { return count() / shape(0); }
+  inline const int count() const {
+    int count = 1;
+    for (int i = 0; i < shape_.size(); ++i)
+      count *= shape(i);
+    return count;
+  }
 
   inline void clear() {
     if (data_ != nullptr) {
@@ -90,16 +98,25 @@ public:
 #endif
     }
     shape_.clear();
-    num_ = -1;
-    count_ = -1;
   }
 
 private:
   Dtype *data_;
 
+  std::string name_;
   std::vector<int> shape_;
-  int num_, count_;
   bool on_gpu_;
 };
+
+typedef BaseBlob<BType> Blob;
+typedef std::vector<Blob *> VecBlob;
+
+inline static Blob *find_blob_by_name(const VecBlob &blobs, std::string name) {
+  for (int i = 0; i < blobs.size(); ++i) {
+    if (!name.compare(blobs.at(i)->name()))
+      return blobs.at(i);
+  }
+  return nullptr;
+}
 
 #endif // SHADOW_BLOB_HPP

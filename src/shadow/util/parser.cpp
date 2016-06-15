@@ -27,15 +27,18 @@ void Parser::ParseNetworkProtoTxt(Network *net, std::string prototxt_file,
   ParseNet(net);
   net->in_shape_.set_dim(0, batch);
 
-  Blob<BType> *blob = new Blob<BType>();
-  blob->set_shape(net->in_shape_);
+  Blob *in_blob = new Blob("in_blob");
+  in_blob->set_shape(net->in_shape_);
+  in_blob->allocate_data(in_blob->count());
+  net->blobs_.push_back(in_blob);
 
   for (int i = 0; i < net->num_layers_; ++i) {
 #if defined(VERBOSE)
-    printf("%2d: ", i);
+    std::cout << format_int(i, 2) << ": ";
 #endif
+
     shadow::LayerParameter layer_param = net->net_param_.layer(i);
-    Layer *layer = LayerFactory(layer_param, blob);
+    Layer *layer = LayerFactory(layer_param, &net->blobs_);
     net->layers_.push_back(layer);
   }
 }
@@ -43,6 +46,7 @@ void Parser::ParseNetworkProtoTxt(Network *net, std::string prototxt_file,
 void Parser::ParseNet(Network *net) {
   net->num_layers_ = net->net_param_.layer_size();
   net->layers_.reserve(net->num_layers_);
+  net->blobs_.reserve(net->num_layers_);
 
   net->in_shape_ = net->net_param_.input_shape();
   if (!(net->in_shape_.dim(1) && net->in_shape_.dim(2) &&
@@ -51,7 +55,7 @@ void Parser::ParseNet(Network *net) {
 }
 
 Layer *Parser::LayerFactory(shadow::LayerParameter layer_param,
-                            Blob<BType> *blob) {
+                            VecBlob *blobs) {
   shadow::LayerType layer_type = layer_param.type();
   Layer *layer = nullptr;
   if (layer_type == shadow::LayerType::Data) {
@@ -68,7 +72,7 @@ Layer *Parser::LayerFactory(shadow::LayerParameter layer_param,
     Fatal("Type not recognized!");
   }
   if (layer != nullptr)
-    layer->MakeLayer(blob);
+    layer->Setup(blobs);
   else
     Fatal("Make layer error!");
   return layer;
@@ -90,24 +94,24 @@ void Parser::LoadWeightsUpto(Network *net, std::string weight_file,
     Layer *layer = net->layers_[i];
     if (layer->layer_param_.type() == shadow::LayerType::Convolution) {
       ConvLayer *l = reinterpret_cast<ConvLayer *>(layer);
-      int in_c = l->in_blob_->shape(1), out_c = l->out_blob_->shape(1);
-      int num = out_c * in_c * l->kernel_size_ * l->kernel_size_;
+      int in_c = l->bottom_[0]->shape(1), out_c = l->top_[0]->shape(1);
+      int num = out_c * in_c * l->kernel_size() * l->kernel_size();
       float *biases = new float[out_c], *filters = new float[num];
       file.read(reinterpret_cast<char *>(biases), sizeof(float) * out_c);
       file.read(reinterpret_cast<char *>(filters), sizeof(float) * num);
-      l->biases_->set_data(biases);
-      l->filters_->set_data(filters);
+      l->set_biases(biases);
+      l->set_filters(filters);
       delete[] biases;
       delete[] filters;
     }
     if (layer->layer_param_.type() == shadow::LayerType::Connected) {
       ConnectedLayer *l = reinterpret_cast<ConnectedLayer *>(layer);
-      int out_num = l->out_blob_->num(), num = l->in_blob_->num() * out_num;
+      int out_num = l->top_[0]->num(), num = l->bottom_[0]->num() * out_num;
       float *biases = new float[out_num], *weights = new float[num];
       file.read(reinterpret_cast<char *>(biases), sizeof(float) * out_num);
       file.read(reinterpret_cast<char *>(weights), sizeof(float) * num);
-      l->biases_->set_data(biases);
-      l->weights_->set_data(weights);
+      l->set_biases(biases);
+      l->set_weights(weights);
       delete[] biases;
       delete[] weights;
     }

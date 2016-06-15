@@ -8,11 +8,9 @@ public:
   explicit DropoutLayer(shadow::LayerParameter layer_param);
   ~DropoutLayer();
 
-  void MakeLayer(Blob<BType> *blob);
-
-  void ForwardLayer();
-
-  void ReleaseLayer();
+  void Setup(VecBlob *blobs);
+  void Forward();
+  void Release();
 };
 
 #endif // SHADOW_LAYERS_DROPOUT_LAYER_HPP

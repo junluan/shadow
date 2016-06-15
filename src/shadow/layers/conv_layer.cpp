@@ -9,16 +9,21 @@ inline int convolutional_out_size(int s, int size, int pad, int stride) {
 
 ConvLayer::ConvLayer(shadow::LayerParameter layer_param) {
   layer_param_ = layer_param;
-  in_blob_ = new Blob<BType>();
-  out_blob_ = new Blob<BType>();
-  filters_ = new Blob<BType>();
-  biases_ = new Blob<BType>();
-  col_image_ = new Blob<BType>();
+  filters_ = new Blob();
+  biases_ = new Blob();
+  col_image_ = new Blob();
 }
-ConvLayer::~ConvLayer() { ReleaseLayer(); }
+ConvLayer::~ConvLayer() { Release(); }
 
-void ConvLayer::MakeLayer(Blob<BType> *blob) {
-  if (!(blob->shape(1) && blob->shape(2) && blob->shape(3)))
+void ConvLayer::Setup(VecBlob *blobs) {
+  Blob *bottom = find_blob_by_name(*blobs, layer_param_.bottom(0));
+  if (bottom == nullptr)
+    Fatal("Layer: " + layer_param_.name() + ", bottom " +
+          layer_param_.bottom(0) + " not exist!");
+
+  Blob *top = new Blob(layer_param_.top(0));
+
+  if (!(bottom->shape(1) && bottom->shape(2) && bottom->shape(3)))
     Fatal("Channel, height and width must greater than zero.");
 
   num_output_ = layer_param_.convolution_param().num_output();
@@ -27,30 +32,25 @@ void ConvLayer::MakeLayer(Blob<BType> *blob) {
   pad_ = layer_param_.convolution_param().pad();
   activate_ = layer_param_.convolution_param().activate();
 
-  int batch = blob->shape(0);
-  int in_c = blob->shape(1), in_h = blob->shape(2), in_w = blob->shape(3);
+  int in_c = bottom->shape(1), in_h = bottom->shape(2), in_w = bottom->shape(3);
   int out_c = num_output_;
   int out_h = convolutional_out_size(in_h, kernel_size_, pad_, stride_);
   int out_w = convolutional_out_size(in_w, kernel_size_, pad_, stride_);
 
-  int in_num = in_c * in_h * in_w;
-  int out_num = out_c * out_h * out_w;
+  *top->mutable_shape() = bottom->shape();
+  top->set_shape(1, out_c);
+  top->set_shape(2, out_h);
+  top->set_shape(3, out_w);
 
-  *in_blob_->mutable_shape() = blob->shape();
-  blob->set_shape(1, out_c);
-  blob->set_shape(2, out_h);
-  blob->set_shape(3, out_w);
-  *out_blob_->mutable_shape() = blob->shape();
+  top->allocate_data(top->count());
 
-  in_blob_->set_num(in_num);
-  out_blob_->set_num(out_num);
-  in_blob_->set_count(batch * in_num);
-  out_blob_->set_count(batch * out_num);
+  bottom_.push_back(bottom);
+  top_.push_back(top);
+
+  blobs->push_back(top);
 
   out_map_size_ = out_h * out_w;
   kernel_num_ = kernel_size_ * kernel_size_ * in_c;
-
-  out_blob_->allocate_data(out_blob_->count());
 
   filters_->allocate_data(kernel_num_ * out_c);
   biases_->allocate_data(out_c);
@@ -65,33 +65,37 @@ void ConvLayer::MakeLayer(Blob<BType> *blob) {
 #endif
 }
 
-void ConvLayer::ForwardLayer() {
-  int batch = in_blob_->shape(0), in_c = in_blob_->shape(1);
-  int in_h = in_blob_->shape(2), in_w = in_blob_->shape(3);
-  int out_c = out_blob_->shape(1);
-  int out_h = out_blob_->shape(2), out_w = out_blob_->shape(3);
-  BType *out_data = out_blob_->mutable_data();
+void ConvLayer::Forward() {
+  Blob *bottom = bottom_.at(0);
+  Blob *top = top_.at(0);
+
+  int batch = bottom->shape(0), in_c = bottom->shape(1);
+  int in_h = bottom->shape(2), in_w = bottom->shape(3);
+  int out_c = top->shape(1);
+  int out_h = top->shape(2), out_w = top->shape(3);
+  BType *out_data = top->mutable_data();
   for (int b = 0; b < batch; ++b) {
     Blas::SetArrayRepeat(out_map_size_, biases_->data(), out_c,
-                         out_data + b * out_blob_->num());
+                         out_data + b * top->num());
   }
   for (int b = 0; b < batch; ++b) {
-    Image::Im2Col(in_blob_->data(), b * in_blob_->num(), in_c, in_h, in_w,
+    Image::Im2Col(bottom->data(), b * bottom->num(), in_c, in_h, in_w,
                   kernel_size_, stride_, pad_, out_h, out_w,
                   col_image_->mutable_data());
     Blas::BlasSGemm(0, 0, out_c, out_map_size_, kernel_num_, 1,
                     filters_->data(), kernel_num_, col_image_->data(),
-                    out_map_size_, 1, out_data, b * out_blob_->num(),
-                    out_map_size_);
+                    out_map_size_, 1, out_data, b * top->num(), out_map_size_);
   }
-  Activations::ActivateArray(out_blob_->count(), activate_, out_data);
+  Activations::ActivateArray(top->count(), activate_, out_data);
 }
 
-void ConvLayer::ReleaseLayer() {
-  out_blob_->clear();
+void ConvLayer::Release() {
+  bottom_.clear();
+  top_.clear();
 
   filters_->clear();
   biases_->clear();
   col_image_->clear();
+
   // std::cout << "Free ConvLayer!" << std::endl;
 }

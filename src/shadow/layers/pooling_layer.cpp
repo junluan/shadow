@@ -3,39 +3,39 @@
 
 PoolingLayer::PoolingLayer(shadow::LayerParameter layer_param) {
   layer_param_ = layer_param;
-  in_blob_ = new Blob<BType>();
-  out_blob_ = new Blob<BType>();
 }
-PoolingLayer::~PoolingLayer() { ReleaseLayer(); }
+PoolingLayer::~PoolingLayer() { Release(); }
 
-void PoolingLayer::MakeLayer(Blob<BType> *blob) {
-  if (!(blob->shape(1) && blob->shape(2) && blob->shape(3)))
+void PoolingLayer::Setup(VecBlob *blobs) {
+  Blob *bottom = find_blob_by_name(*blobs, layer_param_.bottom(0));
+  if (bottom == nullptr)
+    Fatal("Layer: " + layer_param_.name() + ", bottom " +
+          layer_param_.bottom(0) + " not exist!");
+
+  Blob *top = new Blob(layer_param_.top(0));
+
+  if (!(bottom->shape(1) && bottom->shape(2) && bottom->shape(3)))
     Fatal("Channel, height and width must greater than zero.");
 
   pool_type_ = layer_param_.pooling_param().pool();
   kernel_size_ = layer_param_.pooling_param().kernel_size();
   stride_ = layer_param_.pooling_param().stride();
 
-  int batch = blob->shape(0);
-  int in_c = blob->shape(1), in_h = blob->shape(2), in_w = blob->shape(3);
+  int in_c = bottom->shape(1), in_h = bottom->shape(2), in_w = bottom->shape(3);
   int out_c = in_c;
   int out_h = (in_h - kernel_size_) / stride_ + 1;
   int out_w = (in_w - kernel_size_) / stride_ + 1;
 
-  int in_num = in_c * in_h * in_w;
-  int out_num = out_c * out_h * out_w;
+  *top->mutable_shape() = bottom->shape();
+  top->set_shape(2, out_h);
+  top->set_shape(3, out_w);
 
-  *in_blob_->mutable_shape() = blob->shape();
-  blob->set_shape(2, out_h);
-  blob->set_shape(3, out_w);
-  *out_blob_->mutable_shape() = blob->shape();
+  top->allocate_data(top->count());
 
-  in_blob_->set_num(in_num);
-  out_blob_->set_num(out_num);
-  in_blob_->set_count(batch * in_num);
-  out_blob_->set_count(batch * out_num);
+  bottom_.push_back(bottom);
+  top_.push_back(top);
 
-  out_blob_->allocate_data(out_blob_->count());
+  blobs->push_back(top);
 
 #if defined(VERBOSE)
   printf(
@@ -45,15 +45,20 @@ void PoolingLayer::MakeLayer(Blob<BType> *blob) {
 #endif
 }
 
-void PoolingLayer::ForwardLayer() {
-  int batch = in_blob_->shape(0), in_c = in_blob_->shape(1);
-  int in_h = in_blob_->shape(2), in_w = in_blob_->shape(3);
-  int out_h = out_blob_->shape(2), out_w = out_blob_->shape(3);
-  Image::Pooling(in_blob_->data(), batch, in_c, in_h, in_w, kernel_size_,
-                 stride_, out_h, out_w, pool_type_, out_blob_->mutable_data());
+void PoolingLayer::Forward() {
+  Blob *bottom = bottom_.at(0);
+  Blob *top = top_.at(0);
+
+  int batch = bottom->shape(0), in_c = bottom->shape(1);
+  int in_h = bottom->shape(2), in_w = bottom->shape(3);
+  int out_h = top->shape(2), out_w = top->shape(3);
+  Image::Pooling(bottom->data(), batch, in_c, in_h, in_w, kernel_size_, stride_,
+                 out_h, out_w, pool_type_, top->mutable_data());
 }
 
-void PoolingLayer::ReleaseLayer() {
-  out_blob_->clear();
+void PoolingLayer::Release() {
+  bottom_.clear();
+  top_.clear();
+
   // std::cout << "Free PoolingLayer!" << std::endl;
 }

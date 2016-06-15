@@ -10,7 +10,7 @@ class Network {
 public:
   void LoadModel(std::string cfg_file, std::string weight_file, int batch = 1);
 
-  void Forward(float *in_data);
+  void Forward(float *in_data = nullptr);
   const Layer *GetLayerByName(std::string layer_name);
   void ReleaseNetwork();
 
@@ -18,10 +18,12 @@ public:
   shadow::BlobShape in_shape_;
 
   int num_layers_;
-  std::vector<Layer *> layers_;
+  VecLayer layers_;
+  VecBlob blobs_;
 
 private:
-  void ForwardNetwork(float *in_data);
+  void PreFillData(float *in_data);
+  void ForwardNetwork();
 };
 
 #endif // SHADOW_NETWORK_HPP

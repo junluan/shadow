@@ -7,6 +7,7 @@
 
 #include <cmath>
 #include <fstream>
+#include <iomanip>
 #include <iostream>
 #include <sstream>
 #include <string>
@@ -79,6 +80,12 @@ inline static Dtype constrain(Dtype min, Dtype max, Dtype value) {
 template <typename Dtype> inline static std::string to_string(Dtype val) {
   std::ostringstream out;
   out << val;
+  return out.str();
+}
+
+inline static std::string format_int(int n, int width, char pad = ' ') {
+  std::stringstream out;
+  out << std::setw(width) << std::setfill(pad) << n;
   return out.str();
 }
 
