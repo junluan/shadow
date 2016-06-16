@@ -6,21 +6,28 @@
 #if defined(USE_CUDA)
 #include "cublas_v2.h"
 #include "cuda_runtime.h"
-#define BLOCK 512
-#endif
+const int BLOCK = 512;
+#define BType float
 
-#if defined(USE_CL)
+#elif defined(USE_CL)
 #include <EasyCL.h>
 #include <clBLAS.h>
 #define BType cl_mem
+
 #else
 #define BType float
 #endif
 
 class Kernel {
 public:
-  static void KernelSetup(int device_id = 0);
-  static void KernelRelease();
+  static void Setup(int device_id = 0);
+  static void Release();
+
+  static BType *MakeBuffer(int size, float *host_ptr);
+  static void ReadBuffer(int size, const BType *src, float *des);
+  static void WriteBuffer(int size, const float *src, BType *des);
+  static void CopyBuffer(int size, const BType *src, BType *des);
+  static void ReleaseBuffer(BType *buffer);
 
   static void DataTransform(int N, const BType *in_data, float scale,
                             float mean_value, BType *out_data);
@@ -34,31 +41,18 @@ public:
   static void SetArray(int N, float value, BType *out_data);
   static void SetArrayRepeat(int N, const BType *value, int value_size,
                              BType *out_data);
-};
 
+  static void *GetHandle();
+  static void *GetQueue();
+
+private:
 #if defined(USE_CUDA)
-class CUDA {
-public:
-  static float *CUDAMakeBuffer(int size, float *host_ptr);
-  static void CUDAReadBuffer(int size, const float *src, float *des);
-  static void CUDAWriteBuffer(int size, float *des, const float *src);
-  static void CUDAReleaseBuffer(float *buffer);
-  static void CUDACheckError(cudaError_t status);
-  static dim3 CUDAGridDim(int size);
+  static dim3 GridDim(int size);
+  static void CheckError(cudaError_t status);
 
-  static cublasHandle_t BlasHandle;
-};
-#endif
+  static cublasHandle_t cublas_handle_;
 
-#if defined(USE_CL)
-class CL {
-public:
-  static cl_mem CLMakeBuffer(int size, cl_mem_flags flags, void *host_ptr);
-  static void CLReadBuffer(int size, const cl_mem *src, float *des);
-  static void CLWriteBuffer(int size, cl_mem *des, const float *src);
-  static void CLCopyBuffer(int size, const cl_mem *src, cl_mem des);
-  static void CLReleaseBuffer(cl_mem *buffer);
-
+#elif defined(USE_CL)
   static EasyCL *easyCL;
   static CLKernel *cl_datatransform_kernel_;
   static CLKernel *cl_im2col_kernel_;
@@ -66,7 +60,7 @@ public:
   static CLKernel *cl_activations_kernel_;
   static CLKernel *cl_setarray_kernel_;
   static CLKernel *cl_setarrayrepeat_kernel_;
-};
 #endif
+};
 
 #endif // SHADOW_KERNEL_HPP

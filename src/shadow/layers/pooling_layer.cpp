@@ -1,11 +1,6 @@
 #include "shadow/layers/pooling_layer.hpp"
 #include "shadow/util/image.hpp"
 
-PoolingLayer::PoolingLayer(shadow::LayerParameter layer_param) {
-  layer_param_ = layer_param;
-}
-PoolingLayer::~PoolingLayer() { Release(); }
-
 void PoolingLayer::Setup(VecBlob *blobs) {
   Blob *bottom = find_blob_by_name(*blobs, layer_param_.bottom(0));
   if (bottom == nullptr)

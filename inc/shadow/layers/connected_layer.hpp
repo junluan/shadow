@@ -5,8 +5,10 @@
 
 class ConnectedLayer : public Layer {
 public:
-  explicit ConnectedLayer(shadow::LayerParameter layer_param);
-  ~ConnectedLayer();
+  ConnectedLayer() {}
+  explicit ConnectedLayer(shadow::LayerParameter layer_param)
+      : Layer(layer_param) {}
+  ~ConnectedLayer() { Release(); }
 
   void Setup(VecBlob *blobs);
   void Forward();

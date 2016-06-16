@@ -23,7 +23,7 @@ const Layer *Network::GetLayerByName(std::string layer_name) {
   return nullptr;
 }
 
-void Network::ReleaseNetwork() {
+void Network::Release() {
   for (int i = 0; i < num_layers_; ++i)
     layers_[i]->Release();
 

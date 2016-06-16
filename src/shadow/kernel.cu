@@ -12,9 +12,9 @@ __global__ void DataTransformKernel(int N, const float *in_data, float scale,
 
 void Kernel::DataTransform(int N, const float *in_data, float scale,
                            float mean_value, float *out_data) {
-  DataTransformKernel<<<CUDA::CUDAGridDim(N), BLOCK>>>(N, in_data, scale,
-                                                       mean_value, out_data);
-  CUDA::CUDACheckError(cudaPeekAtLastError());
+  DataTransformKernel<<<GridDim(N), BLOCK>>>(N, in_data, scale, mean_value,
+                                             out_data);
+  CheckError(cudaPeekAtLastError());
 }
 
 __global__ void Im2ColKernel(const float *im_data, int offset, int in_c,
@@ -51,10 +51,9 @@ void Kernel::Im2Col(const float *im_data, int offset, int in_c, int in_h,
                     int in_w, int ksize, int stride, int pad, int out_h,
                     int out_w, float *col_data) {
   int N = in_c * out_h * out_w;
-  Im2ColKernel<<<CUDA::CUDAGridDim(N), BLOCK>>>(im_data, offset, in_c, in_h,
-                                                in_w, ksize, stride, pad, out_h,
-                                                out_w, col_data);
-  CUDA::CUDACheckError(cudaPeekAtLastError());
+  Im2ColKernel<<<GridDim(N), BLOCK>>>(im_data, offset, in_c, in_h, in_w, ksize,
+                                      stride, pad, out_h, out_w, col_data);
+  CheckError(cudaPeekAtLastError());
 }
 
 __global__ void PoolingKernel(const float *in_data, int batch, int in_c,
@@ -99,10 +98,9 @@ void Kernel::Pooling(const float *in_data, int batch, int in_c, int in_h,
                      int in_w, int ksize, int stride, int out_h, int out_w,
                      int mode, float *out_data) {
   int N = batch * in_c * out_h * out_w;
-  PoolingKernel<<<CUDA::CUDAGridDim(N), BLOCK>>>(in_data, batch, in_c, in_h,
-                                                 in_w, ksize, stride, out_h,
-                                                 out_w, mode, out_data);
-  CUDA::CUDACheckError(cudaPeekAtLastError());
+  PoolingKernel<<<GridDim(N), BLOCK>>>(in_data, batch, in_c, in_h, in_w, ksize,
+                                       stride, out_h, out_w, mode, out_data);
+  CheckError(cudaPeekAtLastError());
 }
 
 __device__ float Activate(float x, int mode) {
@@ -128,8 +126,8 @@ __global__ void ActivateArrayKernel(int N, int mode, float *out_data) {
 }
 
 void Kernel::ActivateArray(int N, shadow::ActivateType a, float *out_data) {
-  ActivateArrayKernel<<<CUDA::CUDAGridDim(N), BLOCK>>>(N, a, out_data);
-  CUDA::CUDACheckError(cudaPeekAtLastError());
+  ActivateArrayKernel<<<GridDim(N), BLOCK>>>(N, a, out_data);
+  CheckError(cudaPeekAtLastError());
 }
 
 __global__ void SetArrayKernel(int N, float value, float *out_data) {
@@ -143,8 +141,8 @@ __global__ void SetArrayKernel(int N, float value, float *out_data) {
 
 void Kernel::SetArray(int N, float value, float *out_data) {
   float val = {value};
-  SetArrayKernel<<<CUDA::CUDAGridDim(N), BLOCK>>>(N, val, out_data);
-  CUDA::CUDACheckError(cudaPeekAtLastError());
+  SetArrayKernel<<<GridDim(N), BLOCK>>>(N, val, out_data);
+  CheckError(cudaPeekAtLastError());
 }
 
 __global__ void SetArrayRepeatKernel(int N, const float *value, int value_size,
@@ -160,7 +158,7 @@ __global__ void SetArrayRepeatKernel(int N, const float *value, int value_size,
 
 void Kernel::SetArrayRepeat(int N, const float *value, int value_size,
                             float *out_data) {
-  SetArrayRepeatKernel<<<CUDA::CUDAGridDim(N * value_size), BLOCK>>>(
-      N, value, value_size, out_data);
-  CUDA::CUDACheckError(cudaPeekAtLastError());
+  SetArrayRepeatKernel<<<GridDim(N * value_size), BLOCK>>>(N, value, value_size,
+                                                           out_data);
+  CheckError(cudaPeekAtLastError());
 }

@@ -5,8 +5,10 @@
 
 class PoolingLayer : public Layer {
 public:
-  explicit PoolingLayer(shadow::LayerParameter layer_param);
-  ~PoolingLayer();
+  PoolingLayer() {}
+  explicit PoolingLayer(shadow::LayerParameter layer_param)
+      : Layer(layer_param) {}
+  ~PoolingLayer() { Release(); }
 
   void Setup(VecBlob *blobs);
   void Forward();

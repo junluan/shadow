@@ -1,10 +1,5 @@
 #include "shadow/layers/dropout_layer.hpp"
 
-DropoutLayer::DropoutLayer(shadow::LayerParameter layer_param) {
-  layer_param_ = layer_param;
-}
-DropoutLayer::~DropoutLayer() { Release(); }
-
 void DropoutLayer::Setup(VecBlob *blobs) {
   Blob *bottom = find_blob_by_name(*blobs, layer_param_.bottom(0));
 

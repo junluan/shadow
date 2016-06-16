@@ -22,6 +22,7 @@ public:
     for (int i = 0; i < N; ++i) {
       out_data[i] = Activate(out_data[i], a);
     }
+
 #else
     Kernel::ActivateArray(N, a, out_data);
 #endif

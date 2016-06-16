@@ -1,11 +1,6 @@
 #include "shadow/layers/data_layer.hpp"
 #include "shadow/util/image.hpp"
 
-DataLayer::DataLayer(shadow::LayerParameter layer_param) {
-  layer_param_ = layer_param;
-}
-DataLayer::~DataLayer() { Release(); }
-
 void DataLayer::Setup(VecBlob *blobs) {
   Blob *bottom = find_blob_by_name(*blobs, "in_blob");
   if (bottom == nullptr)

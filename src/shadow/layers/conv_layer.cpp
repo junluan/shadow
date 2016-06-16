@@ -7,14 +7,6 @@ inline int convolutional_out_size(int s, int size, int pad, int stride) {
   return (s + 2 * pad - size) / stride + 1;
 }
 
-ConvLayer::ConvLayer(shadow::LayerParameter layer_param) {
-  layer_param_ = layer_param;
-  filters_ = new Blob();
-  biases_ = new Blob();
-  col_image_ = new Blob();
-}
-ConvLayer::~ConvLayer() { Release(); }
-
 void ConvLayer::Setup(VecBlob *blobs) {
   Blob *bottom = find_blob_by_name(*blobs, layer_param_.bottom(0));
   if (bottom == nullptr)
@@ -51,6 +43,10 @@ void ConvLayer::Setup(VecBlob *blobs) {
 
   out_map_size_ = out_h * out_w;
   kernel_num_ = kernel_size_ * kernel_size_ * in_c;
+
+  filters_ = new Blob();
+  biases_ = new Blob();
+  col_image_ = new Blob();
 
   filters_->allocate_data(kernel_num_ * out_c);
   biases_->allocate_data(out_c);

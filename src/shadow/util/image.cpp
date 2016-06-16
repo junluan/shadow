@@ -7,6 +7,7 @@ void Image::DataTransform(int N, const BType *in_data, float scale,
     out_data[i] = (in_data[i] - mean_value) * scale;
   }
 }
+
 #else
 void Image::DataTransform(int N, const BType *in_data, float scale,
                           float mean_value, BType *out_data) {
@@ -14,8 +15,8 @@ void Image::DataTransform(int N, const BType *in_data, float scale,
 }
 #endif
 
-float Im2ColGetPixel(const float *image, int in_h, int in_w, int im_row,
-                     int im_col, int channel, int pad) {
+inline float Im2ColGetPixel(const float *image, int in_h, int in_w, int im_row,
+                            int im_col, int channel, int pad) {
   im_row -= pad;
   im_col -= pad;
   if (im_row < 0 || im_col < 0 || im_row >= in_h || im_col >= in_w)
@@ -67,6 +68,7 @@ void Image::Im2Col(const BType *im_data, int offset, int in_c, int in_h,
   //    }
   //  }
 }
+
 #else
 void Image::Im2Col(const BType *im_data, int offset, int in_c, int in_h,
                    int in_w, int ksize, int stride, int pad, int out_h,
@@ -111,6 +113,7 @@ void Image::Pooling(const BType *in_data, int batch, int in_c, int in_h,
     }
   }
 }
+
 #else
 void Image::Pooling(const BType *in_data, int batch, int in_c, int in_h,
                     int in_w, int ksize, int stride, int out_h, int out_w,

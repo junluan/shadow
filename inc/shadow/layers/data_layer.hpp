@@ -5,8 +5,9 @@
 
 class DataLayer : public Layer {
 public:
-  explicit DataLayer(shadow::LayerParameter layer_param);
-  ~DataLayer();
+  DataLayer() {}
+  explicit DataLayer(shadow::LayerParameter layer_param) : Layer(layer_param) {}
+  ~DataLayer() { Release(); }
 
   void Setup(VecBlob *blobs);
   void Forward();

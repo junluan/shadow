@@ -12,7 +12,7 @@ public:
 
   void Forward(float *in_data = nullptr);
   const Layer *GetLayerByName(std::string layer_name);
-  void ReleaseNetwork();
+  void Release();
 
   shadow::NetParameter net_param_;
   shadow::BlobShape in_shape_;

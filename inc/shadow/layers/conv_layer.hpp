@@ -5,8 +5,9 @@
 
 class ConvLayer : public Layer {
 public:
-  explicit ConvLayer(shadow::LayerParameter layer_param);
-  ~ConvLayer();
+  ConvLayer() {}
+  explicit ConvLayer(shadow::LayerParameter layer_param) : Layer(layer_param) {}
+  ~ConvLayer() { Release(); }
 
   void Setup(VecBlob *blobs);
   void Forward();

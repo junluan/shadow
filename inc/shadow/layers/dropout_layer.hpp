@@ -5,8 +5,10 @@
 
 class DropoutLayer : public Layer {
 public:
-  explicit DropoutLayer(shadow::LayerParameter layer_param);
-  ~DropoutLayer();
+  DropoutLayer() {}
+  explicit DropoutLayer(shadow::LayerParameter layer_param)
+      : Layer(layer_param) {}
+  ~DropoutLayer() { Release(); }
 
   void Setup(VecBlob *blobs);
   void Forward();

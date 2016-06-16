@@ -2,13 +2,6 @@
 #include "shadow/util/activations.hpp"
 #include "shadow/util/blas.hpp"
 
-ConnectedLayer::ConnectedLayer(shadow::LayerParameter layer_param) {
-  layer_param_ = layer_param;
-  weights_ = new Blob();
-  biases_ = new Blob();
-}
-ConnectedLayer::~ConnectedLayer() { Release(); }
-
 void ConnectedLayer::Setup(VecBlob *blobs) {
   Blob *bottom = find_blob_by_name(*blobs, layer_param_.bottom(0));
   if (bottom == nullptr)
@@ -37,6 +30,9 @@ void ConnectedLayer::Setup(VecBlob *blobs) {
   top_.push_back(top);
 
   blobs->push_back(top);
+
+  weights_ = new Blob();
+  biases_ = new Blob();
 
   weights_->allocate_data(in_num * out_num);
   biases_->allocate_data(out_num);

@@ -16,22 +16,15 @@
 template <class Dtype> class Rect {
 public:
   Rect() {}
-  Rect(Dtype x_t, Dtype y_t, Dtype w_t, Dtype h_t) {
-    x = x_t;
-    y = y_t;
-    w = w_t;
-    h = h_t;
-  }
+  Rect(Dtype x_t, Dtype y_t, Dtype w_t, Dtype h_t)
+      : x(x_t), y(y_t), w(w_t), h(h_t) {}
   Dtype x, y, w, h;
 };
 
 template <class Dtype> class Size {
 public:
   Size() {}
-  Size(Dtype w_t, Dtype h_t) {
-    w = w_t;
-    h = h_t;
-  }
+  Size(Dtype w_t, Dtype h_t) : w(w_t), h(h_t) {}
   Dtype w, h;
 };
 

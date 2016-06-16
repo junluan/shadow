@@ -12,12 +12,8 @@
 class Box : public Rect<float> {
 public:
   Box() {}
-  Box(float x_t, float y_t, float w_t, float h_t) {
-    x = x_t;
-    y = y_t;
-    w = w_t;
-    h = h_t;
-  }
+  Box(float x_t, float y_t, float w_t, float h_t)
+      : Rect<float>(x_t, y_t, w_t, h_t) {}
   float score;
   int class_index;
 };

@@ -9,35 +9,30 @@
 template <class Dtype> class BaseBlob {
 public:
   BaseBlob() {}
-  explicit BaseBlob(std::string name) { name_ = name; }
+  explicit BaseBlob(std::string name) : name_(name) {}
 
   inline const Dtype *data() const { return data_; }
   inline Dtype *mutable_data() { return data_; }
 
   inline void set_data(float *data) {
-#if defined(USE_CUDA)
-    CUDA::CUDAWriteBuffer(count(), data_, data);
-    on_gpu_ = true;
-#elif defined(USE_CL)
-    CL::CLWriteBuffer(count(), data_, data);
-    on_gpu_ = true;
-#else
+#if !defined(USE_CUDA) & !defined(USE_CL)
     memcpy(data_, data, sizeof(float) * count());
     on_gpu_ = false;
+
+#else
+    Kernel::WriteBuffer(count(), data, data_);
+    on_gpu_ = true;
 #endif
   }
 
   inline void allocate_data(int count) {
-#if defined(USE_CUDA)
-    data_ = CUDA::CUDAMakeBuffer(count, NULL);
-    on_gpu_ = true;
-#elif defined(USE_CL)
-    data_ = new cl_mem();
-    *data_ = CL::CLMakeBuffer(count, CL_MEM_READ_WRITE, nullptr);
-    on_gpu_ = true;
-#else
+#if !defined(USE_CUDA) & !defined(USE_CL)
     data_ = new float[count];
     on_gpu_ = false;
+
+#else
+    data_ = Kernel::MakeBuffer(count, nullptr);
+    on_gpu_ = true;
 #endif
     if (shape_.size() == 0)
       add_shape(count);
@@ -45,11 +40,7 @@ public:
 
   inline void copy_data(float *out_data) const {
     if (on_gpu_) {
-#if defined(USE_CUDA)
-      CUDA::CUDAReadBuffer(count(), data_, out_data);
-#elif defined(USE_CL)
-      CL::CLReadBuffer(count(), data_, out_data);
-#endif
+      Kernel::ReadBuffer(count(), data_, out_data);
     } else {
       memcpy(out_data, data_, sizeof(float) * count());
     }
@@ -89,12 +80,12 @@ public:
 
   inline void clear() {
     if (data_ != nullptr) {
-#if defined(USE_CUDA)
-      CUDA::CUDAReleaseBuffer(data_);
-#elif defined(USE_CL)
-      CL::CLReleaseBuffer(data_);
-#else
+#if !defined(USE_CUDA) & !defined(USE_CL)
       delete[] data_;
+
+#else
+      Kernel::ReleaseBuffer(data_);
+      data_ = nullptr;
 #endif
     }
     shape_.clear();

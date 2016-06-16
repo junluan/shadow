@@ -3,6 +3,7 @@
 void Blas::SetArray(int N, float value, BType *out_data) {
 #if !defined(USE_CUDA) & !defined(USE_CL)
   std::fill(out_data, out_data + N, value);
+
 #else
   Kernel::SetArray(N, value, out_data);
 #endif
@@ -15,20 +16,26 @@ void Blas::SetArrayRepeat(int N, const BType *value, int value_size,
     BType *out_data_offset = out_data + i * N;
     std::fill(out_data_offset, out_data_offset + N, value[i]);
   }
+
 #else
   Kernel::SetArrayRepeat(N, value, value_size, out_data);
 #endif
 }
 
 void Blas::BlasCopy(int N, const BType *X, int incx, BType *Y, int incy) {
-#if !defined(USE_CUDA) & !defined(USE_CL)
+#if defined(USE_CUDA)
+  cublasScopy(reinterpret_cast<cublasHandle_t>(Kernel::GetHandle()), N, X, incx,
+              Y, incy);
+
+#elif defined(USE_CL)
+  clblasScopy(N, *X, 0, incx, *Y, 0, incy, 1,
+              reinterpret_cast<cl_command_queue *>(Kernel::GetQueue()), 0,
+              nullptr, nullptr);
+
+#else
   for (int i = 0; i < N; ++i) {
     Y[i * incy] = X[i * incx];
   }
-#elif defined(USE_CUDA)
-  cublasScopy(CUDA::BlasHandle, N, X, incx, Y, incy);
-#else
-  clblasScopy(N, *X, 0, incx, *Y, 0, incy, 1, CL::easyCL->queue, 0, NULL, NULL);
 #endif
 }
 
@@ -88,7 +95,30 @@ void SGemmTT(int M, int N, int K, float ALPHA, const float *A, int lda,
   }
 }
 
-#if !defined(USE_CUDA) & !defined(USE_CL)
+#if defined(USE_CUDA)
+void Blas::BlasSGemm(int TA, int TB, int M, int N, int K, float ALPHA,
+                     const float *bufA, int lda, const float *bufB, int ldb,
+                     float BETA, float *bufC, int offset, int ldc) {
+  cublasOperation_t transA = TA ? CUBLAS_OP_T : CUBLAS_OP_N;
+  cublasOperation_t transB = TB ? CUBLAS_OP_T : CUBLAS_OP_N;
+  cublasSgemm(reinterpret_cast<cublasHandle_t>(Kernel::GetHandle()), transA,
+              transB, N, M, K, &ALPHA, bufB, ldb, bufA, lda, &BETA,
+              bufC + offset, ldc);
+}
+
+#elif defined(USE_CL)
+void Blas::BlasSGemm(int TA, int TB, int M, int N, int K, float ALPHA,
+                     const cl_mem *bufA, int lda, const cl_mem *bufB, int ldb,
+                     float BETA, cl_mem *bufC, int offset, int ldc) {
+  clblasTranspose transA = TA ? clblasTrans : clblasNoTrans;
+  clblasTranspose transB = TB ? clblasTrans : clblasNoTrans;
+  clblasSgemm(clblasRowMajor, transA, transB, M, N, K, ALPHA, *bufA, 0, lda,
+              *bufB, 0, ldb, BETA, *bufC, offset, ldc, 1,
+              reinterpret_cast<cl_command_queue *>(Kernel::GetQueue()), 0,
+              nullptr, nullptr);
+}
+
+#else
 void Blas::BlasSGemm(int TA, int TB, int M, int N, int K, float ALPHA,
                      const float *A, int lda, const float *B, int ldb,
                      float BETA, float *C, int offset, int ldc) {
@@ -106,28 +136,5 @@ void Blas::BlasSGemm(int TA, int TB, int M, int N, int K, float ALPHA,
     SGemmNT(M, N, K, ALPHA, A, lda, B, ldb, C_off, ldc);
   else
     SGemmTT(M, N, K, ALPHA, A, lda, B, ldb, C_off, ldc);
-}
-#endif
-
-#if defined(USE_CUDA)
-void Blas::BlasSGemm(int TA, int TB, int M, int N, int K, float ALPHA,
-                     const float *bufA, int lda, const float *bufB, int ldb,
-                     float BETA, float *bufC, int offset, int ldc) {
-  cublasOperation_t transA = TA ? CUBLAS_OP_T : CUBLAS_OP_N;
-  cublasOperation_t transB = TB ? CUBLAS_OP_T : CUBLAS_OP_N;
-  cublasSgemm(CUDA::BlasHandle, transA, transB, N, M, K, &ALPHA, bufB, ldb,
-              bufA, lda, &BETA, bufC + offset, ldc);
-}
-#endif
-
-#if defined(USE_CL)
-void Blas::BlasSGemm(int TA, int TB, int M, int N, int K, float ALPHA,
-                     const cl_mem *bufA, int lda, const cl_mem *bufB, int ldb,
-                     float BETA, cl_mem *bufC, int offset, int ldc) {
-  clblasTranspose transA = TA ? clblasTrans : clblasNoTrans;
-  clblasTranspose transB = TB ? clblasTrans : clblasNoTrans;
-  clblasSgemm(clblasRowMajor, transA, transB, M, N, K, ALPHA, *bufA, 0, lda,
-              *bufB, 0, ldb, BETA, *bufC, offset, ldc, 1, CL::easyCL->queue, 0,
-              NULL, NULL);
 }
 #endif

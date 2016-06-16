@@ -14,7 +14,7 @@ Yolo::Yolo(string cfg_file, string weight_file, float threshold) {
 Yolo::~Yolo() {}
 
 void Yolo::Setup(int batch, VecRectF *rois) {
-  Kernel::KernelSetup();
+  Kernel::Setup();
 
   net_.LoadModel(cfg_file_, weight_file_, batch);
 
@@ -37,8 +37,8 @@ void Yolo::Setup(int batch, VecRectF *rois) {
 }
 
 void Yolo::Release() {
-  net_.ReleaseNetwork();
-  Kernel::KernelRelease();
+  net_.Release();
+  Kernel::Release();
 }
 
 void Yolo::Test(string image_file) {
