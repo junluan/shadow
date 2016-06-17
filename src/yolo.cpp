@@ -26,7 +26,7 @@ void Yolo::Setup(int batch, VecRectF *rois) {
 
   class_num_ = 2;
   batch_data_ = new float[batch_ * in_num_];
-  predictions_ = new float[out_num_];
+  predictions_ = new float[batch_ * out_num_];
   im_ini_ = new JImage();
   im_res_ = new JImage(3, net_.in_shape_.dim(2), net_.in_shape_.dim(3));
   if (rois == nullptr) {

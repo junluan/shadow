@@ -8,7 +8,7 @@
 class Layer {
 public:
   Layer() {}
-  explicit Layer(shadow::LayerParameter layer_param)
+  explicit Layer(const shadow::LayerParameter &layer_param)
       : layer_param_(layer_param) {}
 
   virtual void Setup(VecBlob *blobs) {

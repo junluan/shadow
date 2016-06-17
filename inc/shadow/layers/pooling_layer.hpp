@@ -6,7 +6,7 @@
 class PoolingLayer : public Layer {
 public:
   PoolingLayer() {}
-  explicit PoolingLayer(shadow::LayerParameter layer_param)
+  explicit PoolingLayer(const shadow::LayerParameter &layer_param)
       : Layer(layer_param) {}
   ~PoolingLayer() { Release(); }
 

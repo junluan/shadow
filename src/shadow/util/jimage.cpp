@@ -5,27 +5,7 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb/stb_image_write.h"
 
-JImage::JImage() { data_ = nullptr; }
-
-JImage::JImage(std::string im_path) {
-  data_ = nullptr;
-  Read(im_path);
-}
-
-JImage::JImage(int channel, int height, int width, Order order) {
-  c_ = channel;
-  h_ = height;
-  w_ = width;
-  order_ = order;
-  data_ = new unsigned char[c_ * h_ * w_];
-}
-
-JImage::~JImage() {
-  if (data_ != nullptr)
-    delete[] data_;
-}
-
-void JImage::Read(std::string im_path) {
+void JImage::Read(const std::string im_path) {
   if (data_ != nullptr)
     delete[] data_;
   data_ = stbi_load(im_path.c_str(), &w_, &h_, &c_, 3);
@@ -34,7 +14,7 @@ void JImage::Read(std::string im_path) {
   order_ = kRGB;
 }
 
-void JImage::Write(std::string im_path) {
+void JImage::Write(const std::string im_path) {
   if (data_ == nullptr)
     Fatal("JImage data is NULL!");
   int is_ok = -1;
@@ -54,7 +34,7 @@ void JImage::Write(std::string im_path) {
     Fatal("Failed to write image to " + im_path);
 }
 
-void JImage::Show(std::string show_name, int wait_time) {
+void JImage::Show(const std::string show_name, int wait_time) {
   if (data_ == nullptr)
     Fatal("JImage data is NULL!");
 #if defined(USE_OpenCV)
@@ -190,7 +170,7 @@ void JImage::CropWithResize(JImage *im_res, RectF crop, int height, int width) {
   }
 }
 
-void JImage::Filter2D(float *kernel, int height, int width) {
+void JImage::Filter2D(const float *kernel, int height, int width) {
   unsigned char *data_f_ = new unsigned char[c_ * h_ * w_];
   for (int h = 0; h < h_; ++h) {
     for (int w = 0; w < w_; ++w) {
@@ -236,7 +216,7 @@ void JImage::FromMat(const cv::Mat &im_mat) {
   memcpy(data_, im_mat.data, c_ * h_ * w_);
 }
 
-void JImage::FromMatWithCropResize(const cv::Mat &im_mat, RectF crop,
+void JImage::FromMatWithCropResize(const cv::Mat &im_mat, const RectF crop,
                                    int resize_h, int resize_w,
                                    float *batch_data) {
   RectF crop_p;
@@ -344,7 +324,7 @@ void I4202RGB(unsigned char *src_y, unsigned char *src_u, unsigned char *src_v,
   }
 }
 
-void JImage::Rectangle(const Box &box, Scalar scalar, bool console_show) {
+void JImage::Rectangle(const Box &box, const Scalar scalar, bool console_show) {
   int x1 = constrain(0, w_ - 1, static_cast<int>(box.x));
   int y1 = constrain(0, h_ - 1, static_cast<int>(box.y));
   int x2 = constrain(x1, w_ - 1, static_cast<int>(x1 + box.w));
@@ -377,7 +357,8 @@ void JImage::Rectangle(const Box &box, Scalar scalar, bool console_show) {
   }
 }
 
-void JImage::Rectangle(const VecBox &boxes, Scalar scalar, bool console_show) {
+void JImage::Rectangle(const VecBox &boxes, const Scalar scalar,
+                       bool console_show) {
   for (int b = 0; b < boxes.size(); ++b) {
     Rectangle(boxes[b], scalar, console_show);
   }

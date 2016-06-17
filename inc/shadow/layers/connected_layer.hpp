@@ -6,7 +6,7 @@
 class ConnectedLayer : public Layer {
 public:
   ConnectedLayer() {}
-  explicit ConnectedLayer(shadow::LayerParameter layer_param)
+  explicit ConnectedLayer(const shadow::LayerParameter &layer_param)
       : Layer(layer_param) {}
   ~ConnectedLayer() { Release(); }
 

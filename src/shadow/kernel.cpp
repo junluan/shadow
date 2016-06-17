@@ -212,10 +212,11 @@ void Kernel::Pooling(const cl_mem *in_data, int batch, int in_c, int in_h,
   clFinish(*easyCL->queue);
 }
 
-void Kernel::ActivateArray(int N, shadow::ActivateType a, cl_mem *out_data) {
+void Kernel::ActivateArray(int N, const shadow::ActivateType &type,
+                           cl_mem *out_data) {
   cl_kernel kernel = cl_activations_kernel_->GetKernel();
   clSetKernelArg(kernel, 0, sizeof(int), &N);
-  clSetKernelArg(kernel, 1, sizeof(int), &a);
+  clSetKernelArg(kernel, 1, sizeof(int), &type);
   clSetKernelArg(kernel, 2, sizeof(cl_mem), out_data);
   size_t global = N;
   clEnqueueNDRangeKernel(*easyCL->queue, kernel, 1, nullptr, &global, nullptr,
@@ -235,12 +236,13 @@ void Kernel::SetArray(int N, float value, cl_mem *out_data) {
 }
 
 void Kernel::SetArrayRepeat(int N, const cl_mem *value, int value_size,
-                            cl_mem *out_data) {
+                            cl_mem *out_data, int offset) {
   cl_kernel kernel = cl_setarrayrepeat_kernel_->GetKernel();
   clSetKernelArg(kernel, 0, sizeof(int), &N);
   clSetKernelArg(kernel, 1, sizeof(cl_mem), value);
   clSetKernelArg(kernel, 2, sizeof(int), &value_size);
   clSetKernelArg(kernel, 3, sizeof(cl_mem), out_data);
+  clSetKernelArg(kernel, 4, sizeof(int), &offset);
   size_t global = N * value_size;
   clEnqueueNDRangeKernel(*easyCL->queue, kernel, 1, nullptr, &global, nullptr,
                          0, nullptr, nullptr);

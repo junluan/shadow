@@ -49,8 +49,7 @@ void ConnectedLayer::Forward() {
   int batch = bottom->shape(0);
   BType *out_data = top->mutable_data();
   for (int b = 0; b < batch; ++b) {
-    Blas::BlasCopy(top->num(), biases_->data(), 1, out_data + b * top->num(),
-                   1);
+    Blas::BlasCopy(top->num(), biases_->data(), 1, out_data, b * top->num(), 1);
   }
   Blas::BlasSGemm(0, 0, batch, top->num(), bottom->num(), 1, bottom->data(),
                   bottom->num(), weights_->data(), top->num(), 1, out_data, 0,

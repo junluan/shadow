@@ -12,11 +12,7 @@
 
 using google::protobuf::TextFormat;
 
-void Parser::LoadWeights(Network *net, std::string weight_file) {
-  LoadWeightsUpto(net, weight_file, net->num_layers_);
-}
-
-void Parser::ParseNetworkProtoTxt(Network *net, std::string prototxt_file,
+void Parser::ParseNetworkProtoTxt(Network *net, const std::string prototxt_file,
                                   int batch) {
   std::string proto_str = read_text_from_file(prototxt_file);
   bool success = TextFormat::ParseFromString(proto_str, &net->net_param_);
@@ -43,6 +39,10 @@ void Parser::ParseNetworkProtoTxt(Network *net, std::string prototxt_file,
   }
 }
 
+void Parser::LoadWeights(Network *net, const std::string weight_file) {
+  LoadWeightsUpto(net, weight_file, net->num_layers_);
+}
+
 void Parser::ParseNet(Network *net) {
   net->num_layers_ = net->net_param_.layer_size();
   net->layers_.reserve(net->num_layers_);
@@ -54,7 +54,7 @@ void Parser::ParseNet(Network *net) {
     Fatal("No input parameters supplied!");
 }
 
-Layer *Parser::LayerFactory(shadow::LayerParameter layer_param,
+Layer *Parser::LayerFactory(const shadow::LayerParameter &layer_param,
                             VecBlob *blobs) {
   shadow::LayerType layer_type = layer_param.type();
   Layer *layer = nullptr;
@@ -78,7 +78,7 @@ Layer *Parser::LayerFactory(shadow::LayerParameter layer_param,
   return layer;
 }
 
-void Parser::LoadWeightsUpto(Network *net, std::string weight_file,
+void Parser::LoadWeightsUpto(Network *net, const std::string weight_file,
                              int cut_off) {
 #if defined(VERBOSE)
   std::cout << "Load model from " << weight_file << " ... " << std::endl;

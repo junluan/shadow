@@ -37,10 +37,11 @@ public:
   static void Pooling(const BType *in_data, int batch, int in_c, int in_h,
                       int in_w, int ksize, int stride, int out_h, int out_w,
                       int mode, BType *out_data);
-  static void ActivateArray(int N, shadow::ActivateType a, BType *out_data);
+  static void ActivateArray(int N, const shadow::ActivateType &type,
+                            BType *out_data);
   static void SetArray(int N, float value, BType *out_data);
   static void SetArrayRepeat(int N, const BType *value, int value_size,
-                             BType *out_data);
+                             BType *out_data, int offset);
 
   static void *GetHandle();
   static void *GetQueue();

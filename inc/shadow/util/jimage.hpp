@@ -25,29 +25,32 @@ enum Order { kRGB, kBGR };
 
 class JImage {
 public:
-  JImage();
-  explicit JImage(std::string im_path);
-  JImage(int channel, int height, int width, Order order = kRGB);
-  ~JImage();
+  JImage() : data_(nullptr) {}
+  explicit JImage(const std::string im_path) : data_(nullptr) { Read(im_path); }
+  JImage(int channel, int height, int width, Order order = kRGB)
+      : c_(channel), h_(height), w_(width), order_(order) {
+    data_ = new unsigned char[c_ * h_ * w_];
+  }
+  ~JImage() { Release(); }
 
-  void Read(std::string im_path);
-  void Write(std::string im_path);
-  void Show(std::string show_name, int wait_time = 0);
+  void Read(const std::string im_path);
+  void Write(const std::string im_path);
+  void Show(const std::string show_name, int wait_time = 0);
   void CopyTo(JImage *im_copy);
   void Resize(JImage *im_res, int height, int width);
   void Crop(JImage *im_crop, RectF crop);
   void CropWithResize(JImage *im_res, RectF crop, int height, int width);
-  void Filter2D(float *kernel, int height, int width);
+  void Filter2D(const float *kernel, int height, int width);
 
 #if defined(USE_OpenCV)
   void FromMat(const cv::Mat &im_mat);
-  void FromMatWithCropResize(const cv::Mat &im_mat, RectF crop, int resize_h,
-                             int resize_w, float *batch_data);
+  void FromMatWithCropResize(const cv::Mat &im_mat, const RectF crop,
+                             int resize_h, int resize_w, float *batch_data);
 #endif
 
-  void Rectangle(const Box &box, Scalar scalar = Scalar(0, 255, 0),
+  void Rectangle(const Box &box, const Scalar scalar = Scalar(0, 255, 0),
                  bool console_show = true);
-  void Rectangle(const VecBox &boxes, Scalar scalar = Scalar(0, 255, 0),
+  void Rectangle(const VecBox &boxes, const Scalar scalar = Scalar(0, 255, 0),
                  bool console_show = true);
   void GetBatchData(float *batch_data);
 

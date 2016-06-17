@@ -1,8 +1,8 @@
 #include "shadow/network.hpp"
 #include "shadow/util/parser.hpp"
 
-void Network::LoadModel(std::string cfg_file, std::string weight_file,
-                        int batch) {
+void Network::LoadModel(const std::string cfg_file,
+                        const std::string weight_file, int batch) {
   Parser parser;
   parser.ParseNetworkProtoTxt(this, cfg_file, batch);
   parser.LoadWeights(this, weight_file);
@@ -14,7 +14,7 @@ void Network::Forward(float *in_data) {
   ForwardNetwork();
 }
 
-const Layer *Network::GetLayerByName(std::string layer_name) {
+const Layer *Network::GetLayerByName(const std::string layer_name) {
   for (int i = 0; i < num_layers_; ++i) {
     if (!layer_name.compare(layers_[i]->layer_param_.name())) {
       return (const Layer *)layers_[i];

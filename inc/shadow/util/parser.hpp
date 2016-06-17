@@ -7,14 +7,17 @@
 
 class Parser {
 public:
-  void ParseNetworkProtoTxt(Network *net, std::string prototxt_file, int batch);
-  void LoadWeights(Network *net, std::string weight_file);
+  void ParseNetworkProtoTxt(Network *net, const std::string prototxt_file,
+                            int batch);
+  void LoadWeights(Network *net, const std::string weight_file);
 
 private:
   void ParseNet(Network *net);
-  Layer *LayerFactory(shadow::LayerParameter layer_param, VecBlob *blobs);
+  Layer *LayerFactory(const shadow::LayerParameter &layer_param,
+                      VecBlob *blobs);
 
-  void LoadWeightsUpto(Network *net, std::string weight_file, int cut_off);
+  void LoadWeightsUpto(Network *net, const std::string weight_file,
+                       int cut_off);
 };
 
 #endif // SHADOW_UTIL_PARSER_HPP

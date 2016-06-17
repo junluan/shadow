@@ -8,10 +8,11 @@
 
 class Network {
 public:
-  void LoadModel(std::string cfg_file, std::string weight_file, int batch = 1);
+  void LoadModel(const std::string cfg_file, const std::string weight_file,
+                 int batch = 1);
 
   void Forward(float *in_data = nullptr);
-  const Layer *GetLayerByName(std::string layer_name);
+  const Layer *GetLayerByName(const std::string layer_name);
   void Release();
 
   shadow::NetParameter net_param_;

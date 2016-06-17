@@ -125,8 +125,9 @@ __global__ void ActivateArrayKernel(int N, int mode, float *out_data) {
   out_data[globalid] = Activate(out_data[globalid], mode);
 }
 
-void Kernel::ActivateArray(int N, shadow::ActivateType a, float *out_data) {
-  ActivateArrayKernel<<<GridDim(N), BLOCK>>>(N, a, out_data);
+void Kernel::ActivateArray(int N, const shadow::ActivateType &type,
+                           float *out_data) {
+  ActivateArrayKernel<<<GridDim(N), BLOCK>>>(N, type, out_data);
   CheckError(cudaPeekAtLastError());
 }
 
@@ -146,19 +147,19 @@ void Kernel::SetArray(int N, float value, float *out_data) {
 }
 
 __global__ void SetArrayRepeatKernel(int N, const float *value, int value_size,
-                                     float *out_data) {
+                                     float *out_data, int offset) {
   int globalid =
       (blockIdx.x + blockIdx.y * gridDim.x) * blockDim.x + threadIdx.x;
   if (globalid >= N * value_size)
     return;
 
   int value_index = globalid / N;
-  out_data[globalid] = value[value_index];
+  out_data[offset + globalid] = value[value_index];
 }
 
 void Kernel::SetArrayRepeat(int N, const float *value, int value_size,
-                            float *out_data) {
+                            float *out_data, int offset) {
   SetArrayRepeatKernel<<<GridDim(N * value_size), BLOCK>>>(N, value, value_size,
-                                                           out_data);
+                                                           out_data, offset);
   CheckError(cudaPeekAtLastError());
 }

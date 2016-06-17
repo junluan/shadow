@@ -9,12 +9,12 @@
 template <class Dtype> class BaseBlob {
 public:
   BaseBlob() {}
-  explicit BaseBlob(std::string name) : name_(name) {}
+  explicit BaseBlob(const std::string &name) : name_(name) {}
 
   inline const Dtype *data() const { return data_; }
   inline Dtype *mutable_data() { return data_; }
 
-  inline void set_data(float *data) {
+  inline void set_data(const float *data) {
 #if !defined(USE_CUDA) & !defined(USE_CL)
     memcpy(data_, data, sizeof(float) * count());
     on_gpu_ = false;
@@ -47,7 +47,7 @@ public:
   }
 
   inline const std::string name() const { return name_; }
-  inline void set_name(std::string name) { name_ = name; }
+  inline void set_name(const std::string &name) { name_ = name; }
 
   inline const std::vector<int> shape() const { return shape_; }
   inline std::vector<int> *mutable_shape() { return &shape_; }
@@ -62,7 +62,7 @@ public:
       Fatal("Index out of blob shape range!");
     shape_[index] = value;
   }
-  inline void set_shape(shadow::BlobShape shape) {
+  inline void set_shape(const shadow::BlobShape &shape) {
     shape_.clear();
     for (int i = 0; i < shape.dim_size(); ++i) {
       shape_.push_back(shape.dim(i));
@@ -102,7 +102,8 @@ private:
 typedef BaseBlob<BType> Blob;
 typedef std::vector<Blob *> VecBlob;
 
-inline static Blob *find_blob_by_name(const VecBlob &blobs, std::string name) {
+inline static Blob *find_blob_by_name(const VecBlob &blobs,
+                                      const std::string &name) {
   for (int i = 0; i < blobs.size(); ++i) {
     if (!name.compare(blobs.at(i)->name()))
       return blobs.at(i);

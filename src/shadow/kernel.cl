@@ -77,8 +77,8 @@ float linear_activate(float x) { return x; }
 float relu_activate(float x) { return x * (x > 0); }
 float leaky_activate(float x) { return (x > 0) ? x : .1f * x; }
 
-float Activate(float x, int mode) {
-  switch (mode) {
+float Activate(float x, int type) {
+  switch (type) {
   case 0:
     return linear_activate(x);
   case 1:
@@ -90,12 +90,12 @@ float Activate(float x, int mode) {
   }
 }
 
-__kernel void ActivateArray(int N, int mode, __global float *out_data) {
+__kernel void ActivateArray(int N, int type, __global float *out_data) {
   const int globalid = get_global_id(0);
   if (globalid >= N)
     return;
 
-  out_data[globalid] = Activate(out_data[globalid], mode);
+  out_data[globalid] = Activate(out_data[globalid], type);
 }
 
 __kernel void SetArray(int N, float value, __global float *out_data) {
@@ -107,11 +107,11 @@ __kernel void SetArray(int N, float value, __global float *out_data) {
 }
 
 __kernel void SetArrayRepeat(int N, __global float *value, int value_size,
-                             __global float *out_data) {
+                             __global float *out_data, int offset) {
   const int globalid = get_global_id(0);
   if (globalid >= N * value_size)
     return;
 
   int value_index = globalid / N;
-  out_data[globalid] = value[value_index];
+  out_data[offset + globalid] = value[value_index];
 }

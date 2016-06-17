@@ -3,8 +3,8 @@
 
 #include "shadow/kernel.hpp"
 
-static float Activate(float x, shadow::ActivateType a) {
-  switch (a) {
+static float Activate(float x, const shadow::ActivateType &type) {
+  switch (type) {
   case shadow::ActivateType::Linear:
     return x;
   case shadow::ActivateType::Relu:
@@ -17,14 +17,15 @@ static float Activate(float x, shadow::ActivateType a) {
 
 class Activations {
 public:
-  static void ActivateArray(int N, shadow::ActivateType a, BType *out_data) {
+  static void ActivateArray(int N, const shadow::ActivateType &type,
+                            BType *out_data) {
 #if !defined(USE_CUDA) & !defined(USE_CL)
     for (int i = 0; i < N; ++i) {
-      out_data[i] = Activate(out_data[i], a);
+      out_data[i] = Activate(out_data[i], type);
     }
 
 #else
-    Kernel::ActivateArray(N, a, out_data);
+    Kernel::ActivateArray(N, type, out_data);
 #endif
   }
 };

@@ -10,31 +10,32 @@ void Blas::SetArray(int N, float value, BType *out_data) {
 }
 
 void Blas::SetArrayRepeat(int N, const BType *value, int value_size,
-                          BType *out_data) {
+                          BType *out_data, int offset) {
 #if !defined(USE_CUDA) & !defined(USE_CL)
   for (int i = 0; i < value_size; ++i) {
-    BType *out_data_offset = out_data + i * N;
+    BType *out_data_offset = out_data + offset + i * N;
     std::fill(out_data_offset, out_data_offset + N, value[i]);
   }
 
 #else
-  Kernel::SetArrayRepeat(N, value, value_size, out_data);
+  Kernel::SetArrayRepeat(N, value, value_size, out_data, offset);
 #endif
 }
 
-void Blas::BlasCopy(int N, const BType *X, int incx, BType *Y, int incy) {
+void Blas::BlasCopy(int N, const BType *X, int incx, BType *Y, int offset,
+                    int incy) {
 #if defined(USE_CUDA)
   cublasScopy(reinterpret_cast<cublasHandle_t>(Kernel::GetHandle()), N, X, incx,
-              Y, incy);
+              Y + offset, incy);
 
 #elif defined(USE_CL)
-  clblasScopy(N, *X, 0, incx, *Y, 0, incy, 1,
+  clblasScopy(N, *X, 0, incx, *Y, offset, incy, 1,
               reinterpret_cast<cl_command_queue *>(Kernel::GetQueue()), 0,
               nullptr, nullptr);
 
 #else
   for (int i = 0; i < N; ++i) {
-    Y[i * incy] = X[i * incx];
+    Y[offset + i * incy] = X[i * incx];
   }
 #endif
 }

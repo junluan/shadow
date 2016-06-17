@@ -85,7 +85,7 @@ void Boxes::SmoothBoxes(const VecBox &old_boxes, VecBox *new_boxes,
 }
 
 void Boxes::AmendBoxes(std::vector<VecBox> *boxes, int height, int width,
-                       VecRectF crops) {
+                       const VecRectF &crops) {
   for (int i = 0; i < crops.size(); ++i) {
     for (int b = 0; b < (*boxes)[i].size(); ++b) {
       (*boxes)[i][b].x += crops[i].x * width;

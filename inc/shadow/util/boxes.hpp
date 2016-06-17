@@ -30,7 +30,7 @@ public:
   static void SmoothBoxes(const VecBox &old_boxes, VecBox *new_boxes,
                           float smooth);
   static void AmendBoxes(std::vector<VecBox> *boxes, int height, int width,
-                         VecRectF crops);
+                         const VecRectF &crops);
 
 #if defined(USE_OpenCV)
   static void SelectRoI(int event, int x, int y, int flags, void *roi);

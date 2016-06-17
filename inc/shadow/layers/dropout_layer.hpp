@@ -6,7 +6,7 @@
 class DropoutLayer : public Layer {
 public:
   DropoutLayer() {}
-  explicit DropoutLayer(shadow::LayerParameter layer_param)
+  explicit DropoutLayer(const shadow::LayerParameter &layer_param)
       : Layer(layer_param) {}
   ~DropoutLayer() { Release(); }
 
