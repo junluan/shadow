@@ -5,18 +5,18 @@
 
 static float Activate(float x, const shadow::ActivateType &type) {
   switch (type) {
-  case shadow::ActivateType::Linear:
-    return x;
-  case shadow::ActivateType::Relu:
-    return x * (x > 0);
-  case shadow::ActivateType::Leaky:
-    return (x > 0) ? x : .1f * x;
+    case shadow::ActivateType::Linear:
+      return x;
+    case shadow::ActivateType::Relu:
+      return x * (x > 0);
+    case shadow::ActivateType::Leaky:
+      return (x > 0) ? x : .1f * x;
   }
   return x;
 }
 
 class Activations {
-public:
+ public:
   static void ActivateArray(int N, const shadow::ActivateType &type,
                             BType *out_data) {
 #if !defined(USE_CUDA) & !defined(USE_CL)
@@ -30,4 +30,4 @@ public:
   }
 };
 
-#endif // SHADOW_UTIL_ACTIVATIONS_HPP
+#endif  // SHADOW_UTIL_ACTIVATIONS_HPP

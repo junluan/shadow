@@ -6,12 +6,12 @@
 #include <string>
 
 class Parser {
-public:
+ public:
   void ParseNetworkProtoTxt(Network *net, const std::string prototxt_file,
                             int batch);
   void LoadWeights(Network *net, const std::string weight_file);
 
-private:
+ private:
   void ParseNet(Network *net);
   Layer *LayerFactory(const shadow::LayerParameter &layer_param,
                       VecBlob *blobs);
@@ -20,4 +20,4 @@ private:
                        int cut_off);
 };
 
-#endif // SHADOW_UTIL_PARSER_HPP
+#endif  // SHADOW_UTIL_PARSER_HPP

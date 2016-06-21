@@ -7,7 +7,7 @@
 #include <vector>
 
 class Network {
-public:
+ public:
   void LoadModel(const std::string cfg_file, const std::string weight_file,
                  int batch = 1);
 
@@ -22,9 +22,9 @@ public:
   VecLayer layers_;
   VecBlob blobs_;
 
-private:
+ private:
   void PreFillData(float *in_data);
   void ForwardNetwork();
 };
 
-#endif // SHADOW_NETWORK_HPP
+#endif  // SHADOW_NETWORK_HPP

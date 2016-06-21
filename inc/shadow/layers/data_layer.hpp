@@ -4,7 +4,7 @@
 #include "shadow/layers/layer.hpp"
 
 class DataLayer : public Layer {
-public:
+ public:
   DataLayer() {}
   explicit DataLayer(const shadow::LayerParameter &layer_param)
       : Layer(layer_param) {}
@@ -14,8 +14,8 @@ public:
   void Forward();
   void Release();
 
-private:
+ private:
   float scale_, mean_value_;
 };
 
-#endif // SHADOW_LAYERS_DATA_LAYER_HPP
+#endif  // SHADOW_LAYERS_DATA_LAYER_HPP

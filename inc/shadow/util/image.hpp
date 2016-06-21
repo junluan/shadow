@@ -4,7 +4,7 @@
 #include "shadow/kernel.hpp"
 
 class Image {
-public:
+ public:
   static void DataTransform(int N, const BType *in_data, float scale,
                             float mean_value, BType *out_data);
   static void Im2Col(const BType *im_data, int offset, int in_c, int in_h,
@@ -15,4 +15,4 @@ public:
                       int mode, BType *out_data);
 };
 
-#endif // SHADOW_UTIL_IMAGE_HPP
+#endif  // SHADOW_UTIL_IMAGE_HPP

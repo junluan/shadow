@@ -43,7 +43,7 @@ void ConnectedLayer::Setup(VecBlob *blobs) {
 }
 
 void ConnectedLayer::Forward() {
-  Blob *bottom = bottom_.at(0);
+  const Blob *bottom = bottom_.at(0);
   Blob *top = top_.at(0);
 
   int batch = bottom->shape(0);

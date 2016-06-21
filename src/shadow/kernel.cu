@@ -4,8 +4,7 @@ __global__ void DataTransformKernel(int N, const float *in_data, float scale,
                                     float mean_value, float *out_data) {
   int globalid =
       (blockIdx.x + blockIdx.y * gridDim.x) * blockDim.x + threadIdx.x;
-  if (globalid > N)
-    return;
+  if (globalid > N) return;
 
   out_data[globalid] = (in_data[globalid] - mean_value) * scale;
 }
@@ -22,8 +21,7 @@ __global__ void Im2ColKernel(const float *im_data, int offset, int in_c,
                              int out_h, int out_w, float *col_data) {
   int globalid =
       (blockIdx.x + blockIdx.y * gridDim.x) * blockDim.x + threadIdx.x;
-  if (globalid >= in_c * out_h * out_w)
-    return;
+  if (globalid >= in_c * out_h * out_w) return;
 
   int c_out = (globalid / (out_w * out_h)) % in_c;
   int i_out = (globalid / out_w) % out_h;
@@ -61,8 +59,7 @@ __global__ void PoolingKernel(const float *in_data, int batch, int in_c,
                               int out_h, int out_w, int mode, float *out_data) {
   int globalid =
       (blockIdx.x + blockIdx.y * gridDim.x) * blockDim.x + threadIdx.x;
-  if (globalid >= batch * in_c * out_h * out_w)
-    return;
+  if (globalid >= batch * in_c * out_h * out_w) return;
 
   int h_offset = ((in_h - ksize) % stride) / 2;
   int w_offset = ((in_w - ksize) % stride) / 2;
@@ -105,22 +102,21 @@ void Kernel::Pooling(const float *in_data, int batch, int in_c, int in_h,
 
 __device__ float Activate(float x, int mode) {
   switch (mode) {
-  case 0:
-    return x; /*linear*/
-  case 1:
-    return x * (x > 0); /*relu*/
-  case 2:
-    return (x > 0) ? x : .1f * x; /*leaky*/
-  default:
-    return x;
+    case 0:
+      return x; /*linear*/
+    case 1:
+      return x * (x > 0); /*relu*/
+    case 2:
+      return (x > 0) ? x : .1f * x; /*leaky*/
+    default:
+      return x;
   }
 }
 
 __global__ void ActivateArrayKernel(int N, int mode, float *out_data) {
   int globalid =
       (blockIdx.x + blockIdx.y * gridDim.x) * blockDim.x + threadIdx.x;
-  if (globalid >= N)
-    return;
+  if (globalid >= N) return;
 
   out_data[globalid] = Activate(out_data[globalid], mode);
 }
@@ -134,8 +130,7 @@ void Kernel::ActivateArray(int N, const shadow::ActivateType &type,
 __global__ void SetArrayKernel(int N, float value, float *out_data) {
   int globalid =
       (blockIdx.x + blockIdx.y * gridDim.x) * blockDim.x + threadIdx.x;
-  if (globalid >= N)
-    return;
+  if (globalid >= N) return;
 
   out_data[globalid] = value;
 }
@@ -150,8 +145,7 @@ __global__ void SetArrayRepeatKernel(int N, const float *value, int value_size,
                                      float *out_data, int offset) {
   int globalid =
       (blockIdx.x + blockIdx.y * gridDim.x) * blockDim.x + threadIdx.x;
-  if (globalid >= N * value_size)
-    return;
+  if (globalid >= N * value_size) return;
 
   int value_index = globalid / N;
   out_data[offset + globalid] = value[value_index];

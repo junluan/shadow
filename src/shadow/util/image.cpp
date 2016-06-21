@@ -19,8 +19,7 @@ inline float Im2ColGetPixel(const float *image, int in_h, int in_w, int im_row,
                             int im_col, int channel, int pad) {
   im_row -= pad;
   im_col -= pad;
-  if (im_row < 0 || im_col < 0 || im_row >= in_h || im_col >= in_w)
-    return 0;
+  if (im_row < 0 || im_col < 0 || im_row >= in_h || im_col >= in_w) return 0;
   return image[im_col + in_w * (im_row + in_h * channel)];
 }
 

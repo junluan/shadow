@@ -6,17 +6,14 @@
 #include "stb/stb_image_write.h"
 
 void JImage::Read(const std::string im_path) {
-  if (data_ != nullptr)
-    delete[] data_;
+  if (data_ != nullptr) delete[] data_;
   data_ = stbi_load(im_path.c_str(), &w_, &h_, &c_, 3);
-  if (data_ == nullptr)
-    Fatal("Failed to read image " + im_path);
+  if (data_ == nullptr) Fatal("Failed to read image " + im_path);
   order_ = kRGB;
 }
 
 void JImage::Write(const std::string im_path) {
-  if (data_ == nullptr)
-    Fatal("JImage data is NULL!");
+  if (data_ == nullptr) Fatal("JImage data is NULL!");
   int is_ok = -1;
   int step = w_ * c_;
   std::string path = change_extension(im_path, ".png");
@@ -30,13 +27,11 @@ void JImage::Write(const std::string im_path) {
   } else {
     Fatal("Unsupported format to disk!");
   }
-  if (!is_ok)
-    Fatal("Failed to write image to " + im_path);
+  if (!is_ok) Fatal("Failed to write image to " + im_path);
 }
 
 void JImage::Show(const std::string show_name, int wait_time) {
-  if (data_ == nullptr)
-    Fatal("JImage data is NULL!");
+  if (data_ == nullptr) Fatal("JImage data is NULL!");
 #if defined(USE_OpenCV)
   cv::namedWindow(show_name, cv::WINDOW_NORMAL);
   if (order_ == kRGB) {
@@ -59,8 +54,7 @@ void JImage::Show(const std::string show_name, int wait_time) {
 }
 
 void JImage::CopyTo(JImage *im_copy) {
-  if (data_ == nullptr)
-    Fatal("JImage data is NULL!");
+  if (data_ == nullptr) Fatal("JImage data is NULL!");
   if (im_copy->data_ == nullptr) {
     im_copy->data_ = new unsigned char[c_ * h_ * w_];
   } else if (im_copy->h_ * im_copy->w_ < h_ * w_) {
@@ -75,10 +69,8 @@ void JImage::CopyTo(JImage *im_copy) {
 }
 
 void JImage::Resize(JImage *im_res, int height, int width) {
-  if (data_ == nullptr)
-    Fatal("JImage data is NULL!");
-  if (order_ != kRGB && order_ != kBGR)
-    Fatal("Unsupported format to resize!");
+  if (data_ == nullptr) Fatal("JImage data is NULL!");
+  if (order_ != kRGB && order_ != kBGR) Fatal("Unsupported format to resize!");
   if (im_res->data_ == nullptr) {
     im_res->data_ = new unsigned char[c_ * height * width];
   } else if (im_res->h_ * im_res->w_ < height * width) {
@@ -106,10 +98,8 @@ void JImage::Resize(JImage *im_res, int height, int width) {
 }
 
 void JImage::Crop(JImage *im_crop, RectF crop) {
-  if (data_ == nullptr)
-    Fatal("JImage data is NULL!");
-  if (order_ != kRGB && order_ != kBGR)
-    Fatal("Unsupported format to crop!");
+  if (data_ == nullptr) Fatal("JImage data is NULL!");
+  if (order_ != kRGB && order_ != kBGR) Fatal("Unsupported format to crop!");
   if (crop.x < 0 || crop.y < 0 || crop.x + crop.w > 1 || crop.y + crop.h > 1)
     Fatal("Crop region overflow!");
   int height = static_cast<int>(crop.h * h_);
@@ -137,8 +127,7 @@ void JImage::Crop(JImage *im_crop, RectF crop) {
 }
 
 void JImage::CropWithResize(JImage *im_res, RectF crop, int height, int width) {
-  if (data_ == nullptr)
-    Fatal("JImage data is NULL!");
+  if (data_ == nullptr) Fatal("JImage data is NULL!");
   if (order_ != kRGB && order_ != kBGR)
     Fatal("Unsupported format to crop and resize!");
   if (crop.x < 0 || crop.y < 0 || crop.x + crop.w > 1 || crop.y + crop.h > 1)
@@ -365,8 +354,7 @@ void JImage::Rectangle(const VecBox &boxes, const Scalar scalar,
 }
 
 void JImage::GetBatchData(float *batch_data) {
-  if (data_ == nullptr)
-    Fatal("JImage data is NULL!");
+  if (data_ == nullptr) Fatal("JImage data is NULL!");
   bool is_rgb = false;
   if (order_ == kRGB) {
     is_rgb = true;
@@ -388,8 +376,7 @@ void JImage::GetBatchData(float *batch_data) {
 }
 
 void JImage::Release() {
-  if (data_ != nullptr)
-    delete[] data_;
+  if (data_ != nullptr) delete[] data_;
 }
 
 void JImage::GetInv(unsigned char *im_inv) {

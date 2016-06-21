@@ -4,7 +4,7 @@
 #include "shadow/kernel.hpp"
 
 class Blas {
-public:
+ public:
   static void SetArray(int N, float value, BType *out_data);
   static void SetArrayRepeat(int N, const BType *value, int value_size,
                              BType *out_data, int offset);
@@ -17,4 +17,4 @@ public:
                         float BETA, BType *C, int offset, int ldc);
 };
 
-#endif // SHADOW_UTIL_BLAS_HPP
+#endif  // SHADOW_UTIL_BLAS_HPP

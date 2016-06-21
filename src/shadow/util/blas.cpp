@@ -42,8 +42,7 @@ void Blas::BlasCopy(int N, const BType *X, int incx, BType *Y, int offset,
 
 void Blas::BlasAxpy(int N, float ALPHA, const float *X, int INCX, float *Y,
                     int INCY) {
-  for (int i = 0; i < N; ++i)
-    Y[i * INCY] += ALPHA * X[i * INCX];
+  for (int i = 0; i < N; ++i) Y[i * INCY] += ALPHA * X[i * INCX];
 }
 
 void SGemmNN(int M, int N, int K, float ALPHA, const float *A, int lda,

@@ -4,7 +4,7 @@
 #include "shadow/layers/layer.hpp"
 
 class PoolingLayer : public Layer {
-public:
+ public:
   PoolingLayer() {}
   explicit PoolingLayer(const shadow::LayerParameter &layer_param)
       : Layer(layer_param) {}
@@ -14,9 +14,9 @@ public:
   void Forward();
   void Release();
 
-private:
+ private:
   shadow::PoolType pool_type_;
   int kernel_size_, stride_;
 };
 
-#endif // SHADOW_LAYERS_POOLING_LAYER_HPP
+#endif  // SHADOW_LAYERS_POOLING_LAYER_HPP

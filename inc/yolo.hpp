@@ -7,7 +7,7 @@
 #include "shadow/util/util.hpp"
 
 class Yolo {
-public:
+ public:
   Yolo(std::string cfg_file, std::string weight_file, float threshold);
   ~Yolo();
 
@@ -21,7 +21,7 @@ public:
 #endif
   void Release();
 
-private:
+ private:
   void PredictYoloDetections(JImage *image, std::vector<VecBox> *Bboxes);
   void ConvertYoloDetections(float *predictions, int classes, int width,
                              int height, VecBox *boxes);
@@ -42,4 +42,4 @@ private:
   VecRectF rois_;
 };
 
-#endif // SHADOW_YOLO_HPP
+#endif  // SHADOW_YOLO_HPP

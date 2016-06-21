@@ -9,26 +9,21 @@ void Network::LoadModel(const std::string cfg_file,
 }
 
 void Network::Forward(float *in_data) {
-  if (in_data != nullptr)
-    PreFillData(in_data);
+  if (in_data != nullptr) PreFillData(in_data);
   ForwardNetwork();
 }
 
 const Layer *Network::GetLayerByName(const std::string layer_name) {
   for (int i = 0; i < num_layers_; ++i) {
-    if (!layer_name.compare(layers_[i]->layer_param_.name())) {
+    if (!layer_name.compare(layers_[i]->layer_param_.name()))
       return (const Layer *)layers_[i];
-    }
   }
   return nullptr;
 }
 
 void Network::Release() {
-  for (int i = 0; i < num_layers_; ++i)
-    layers_[i]->Release();
-
-  for (int i = 0; i < blobs_.size(); ++i)
-    blobs_[i]->clear();
+  for (int i = 0; i < num_layers_; ++i) layers_[i]->Release();
+  for (int i = 0; i < blobs_.size(); ++i) blobs_[i]->clear();
 
 #if defined(VERBOSE)
   std::cout << "Release Network!" << std::endl;

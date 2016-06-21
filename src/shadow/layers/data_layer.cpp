@@ -31,7 +31,7 @@ void DataLayer::Setup(VecBlob *blobs) {
 }
 
 void DataLayer::Forward() {
-  Blob *bottom = bottom_.at(0);
+  const Blob *bottom = bottom_.at(0);
   Blob *top = top_.at(0);
 
   Image::DataTransform(top->count(), bottom->data(), scale_, mean_value_,

@@ -4,7 +4,7 @@
 #include "shadow/layers/layer.hpp"
 
 class DropoutLayer : public Layer {
-public:
+ public:
   DropoutLayer() {}
   explicit DropoutLayer(const shadow::LayerParameter &layer_param)
       : Layer(layer_param) {}
@@ -15,4 +15,4 @@ public:
   void Release();
 };
 
-#endif // SHADOW_LAYERS_DROPOUT_LAYER_HPP
+#endif  // SHADOW_LAYERS_DROPOUT_LAYER_HPP

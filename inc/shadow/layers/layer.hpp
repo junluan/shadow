@@ -6,7 +6,7 @@
 #include "shadow/util/util.hpp"
 
 class Layer {
-public:
+ public:
   Layer() {}
   explicit Layer(const shadow::LayerParameter &layer_param)
       : layer_param_(layer_param) {}
@@ -24,4 +24,4 @@ public:
 
 typedef std::vector<Layer *> VecLayer;
 
-#endif // SHADOW_LAYERS_LAYER_HPP
+#endif  // SHADOW_LAYERS_LAYER_HPP

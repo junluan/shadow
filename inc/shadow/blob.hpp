@@ -6,8 +6,9 @@
 
 #include "shadow/proto/shadow.pb.h"
 
-template <class Dtype> class BaseBlob {
-public:
+template <class Dtype>
+class BaseBlob {
+ public:
   BaseBlob() {}
   explicit BaseBlob(const std::string &name) : name_(name) {}
 
@@ -34,8 +35,7 @@ public:
     data_ = Kernel::MakeBuffer(count, nullptr);
     on_gpu_ = true;
 #endif
-    if (shape_.size() == 0)
-      add_shape(count);
+    if (shape_.size() == 0) add_shape(count);
   }
 
   inline void copy_data(float *out_data) const {
@@ -73,8 +73,7 @@ public:
   inline const int num() const { return count() / shape(0); }
   inline const int count() const {
     int count = 1;
-    for (int i = 0; i < shape_.size(); ++i)
-      count *= shape(i);
+    for (int i = 0; i < shape_.size(); ++i) count *= shape(i);
     return count;
   }
 
@@ -91,7 +90,7 @@ public:
     shape_.clear();
   }
 
-private:
+ private:
   Dtype *data_;
 
   std::string name_;
@@ -105,10 +104,9 @@ typedef std::vector<Blob *> VecBlob;
 inline static Blob *find_blob_by_name(const VecBlob &blobs,
                                       const std::string &name) {
   for (int i = 0; i < blobs.size(); ++i) {
-    if (!name.compare(blobs.at(i)->name()))
-      return blobs.at(i);
+    if (!name.compare(blobs.at(i)->name())) return blobs.at(i);
   }
   return nullptr;
 }
 
-#endif // SHADOW_BLOB_HPP
+#endif  // SHADOW_BLOB_HPP

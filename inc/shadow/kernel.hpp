@@ -19,7 +19,7 @@ const int BLOCK = 512;
 #endif
 
 class Kernel {
-public:
+ public:
   static void Setup(int device_id = 0);
   static void Release();
 
@@ -46,7 +46,7 @@ public:
   static void *GetHandle();
   static void *GetQueue();
 
-private:
+ private:
 #if defined(USE_CUDA)
   static dim3 GridDim(int size);
   static void CheckError(cudaError_t status);
@@ -64,4 +64,4 @@ private:
 #endif
 };
 
-#endif // SHADOW_KERNEL_HPP
+#endif  // SHADOW_KERNEL_HPP

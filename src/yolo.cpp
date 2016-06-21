@@ -122,8 +122,7 @@ void Yolo::VideoTest(string video_file, bool video_show, bool video_write) {
 
 void Yolo::Demo(int camera, bool video_write) {
   cv::VideoCapture capture;
-  if (!capture.open(camera))
-    Fatal("error when opening camera!");
+  if (!capture.open(camera)) Fatal("error when opening camera!");
   float rate = static_cast<float>(capture.get(CV_CAP_PROP_FPS));
   int width = static_cast<int>(capture.get(CV_CAP_PROP_FRAME_WIDTH));
   int height = static_cast<int>(capture.get(CV_CAP_PROP_FRAME_HEIGHT));
@@ -142,16 +141,14 @@ void Yolo::CaptureTest(cv::VideoCapture capture, string window_name,
                        bool video_show, cv::VideoWriter writer,
                        bool video_write) {
   float rate = static_cast<float>(capture.get(CV_CAP_PROP_FPS));
-  if (video_show)
-    cv::namedWindow(window_name, cv::WINDOW_NORMAL);
+  if (video_show) cv::namedWindow(window_name, cv::WINDOW_NORMAL);
   cv::Mat im_mat;
 
   vector<VecBox> Bboxes;
   VecBox boxes, oldBoxes;
   Timer timer;
   while (capture.read(im_mat)) {
-    if (im_mat.empty())
-      break;
+    if (im_mat.empty()) break;
     timer.start();
     im_ini_->FromMat(im_mat);
     PredictYoloDetections(im_ini_, &Bboxes);
@@ -160,15 +157,13 @@ void Yolo::CaptureTest(cv::VideoCapture capture, string window_name,
     Boxes::SmoothBoxes(oldBoxes, &boxes, 0.3);
     oldBoxes = boxes;
     DrawYoloDetections(boxes, &im_mat, true);
-    if (video_write)
-      writer.write(im_mat);
+    if (video_write) writer.write(im_mat);
     double sec = timer.get_second();
     int waittime = static_cast<int>(1000.0f * (1.0f / rate - sec));
     waittime = waittime > 1 ? waittime : 1;
     if (video_show) {
       cv::imshow(window_name, im_mat);
-      if ((cv::waitKey(waittime) % 256) == 27)
-        break;
+      if ((cv::waitKey(waittime) % 256) == 27) break;
       cout << "FPS:" << 1.0 / sec << endl;
     }
   }
@@ -252,8 +247,7 @@ void Yolo::DrawYoloDetections(const VecBox &boxes, cv::Mat *im_mat,
                               bool console_show) {
   for (int b = 0; b < boxes.size(); ++b) {
     int classindex = boxes[b].class_index;
-    if (classindex == -1)
-      continue;
+    if (classindex == -1) continue;
 
     cv::Scalar scalar;
     if (classindex == 0)
@@ -279,8 +273,7 @@ void Yolo::DrawYoloDetections(const VecBox &boxes, cv::Mat *im_mat,
 void Yolo::PrintYoloDetections(const VecBox &boxes, int count, ofstream *file) {
   for (int b = 0; b < boxes.size(); ++b) {
     Box box = boxes[b];
-    if (box.class_index == -1)
-      continue;
+    if (box.class_index == -1) continue;
     *file << count << ", " << box.x << ", " << box.y << ", " << box.w << ", "
           << box.h << ", " << box.score << endl;
   }

@@ -1,8 +1,7 @@
 __kernel void DataTransform(int N, __global float *in_data, float scale,
                             float mean_value, __global float *out_data) {
   const int globalid = get_global_id(0);
-  if (globalid >= N)
-    return;
+  if (globalid >= N) return;
 
   out_data[globalid] = (in_data[globalid] - mean_value) * scale;
 }
@@ -11,8 +10,7 @@ __kernel void Im2Col(__global float *im_data, int offset, int in_c, int in_h,
                      int in_w, int ksize, int stride, int pad, int out_h,
                      int out_w, __global float *col_data) {
   const int globalid = get_global_id(0);
-  if (globalid >= in_c * out_h * out_w)
-    return;
+  if (globalid >= in_c * out_h * out_w) return;
 
   int c_out = (globalid / (out_w * out_h)) % in_c;
   int i_out = (globalid / out_w) % out_h;
@@ -40,8 +38,7 @@ __kernel void Pooling(__global float *in_data, int batch, int in_c, int in_h,
                       int in_w, int ksize, int stride, int out_h, int out_w,
                       int mode, __global float *out_data) {
   const int globalid = get_global_id(0);
-  if (globalid >= batch * in_c * out_h * out_w)
-    return;
+  if (globalid >= batch * in_c * out_h * out_w) return;
 
   int h_offset = ((in_h - ksize) % stride) / 2;
   int w_offset = ((in_w - ksize) % stride) / 2;
@@ -79,29 +76,27 @@ float leaky_activate(float x) { return (x > 0) ? x : .1f * x; }
 
 float Activate(float x, int type) {
   switch (type) {
-  case 0:
-    return linear_activate(x);
-  case 1:
-    return relu_activate(x);
-  case 2:
-    return leaky_activate(x);
-  default:
-    return x;
+    case 0:
+      return linear_activate(x);
+    case 1:
+      return relu_activate(x);
+    case 2:
+      return leaky_activate(x);
+    default:
+      return x;
   }
 }
 
 __kernel void ActivateArray(int N, int type, __global float *out_data) {
   const int globalid = get_global_id(0);
-  if (globalid >= N)
-    return;
+  if (globalid >= N) return;
 
   out_data[globalid] = Activate(out_data[globalid], type);
 }
 
 __kernel void SetArray(int N, float value, __global float *out_data) {
   const int globalid = get_global_id(0);
-  if (globalid >= N)
-    return;
+  if (globalid >= N) return;
 
   out_data[globalid] = value;
 }
@@ -109,8 +104,7 @@ __kernel void SetArray(int N, float value, __global float *out_data) {
 __kernel void SetArrayRepeat(int N, __global float *value, int value_size,
                              __global float *out_data, int offset) {
   const int globalid = get_global_id(0);
-  if (globalid >= N * value_size)
-    return;
+  if (globalid >= N * value_size) return;
 
   int value_index = globalid / N;
   out_data[offset + globalid] = value[value_index];

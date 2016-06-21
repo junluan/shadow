@@ -1,7 +1,6 @@
 #include "yolo.hpp"
 
 int main(int argc, char const *argv[]) {
-
   Yolo yolo("./cfg/yolo-refine.conv_adas.prototxt",
             "./models/df/ex2/yolo-refine_80000.weights", 0.2);
 

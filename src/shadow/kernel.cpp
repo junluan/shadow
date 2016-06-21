@@ -21,8 +21,7 @@ void Kernel::Setup(int device_id) {
 
 void Kernel::Release() {
 #if defined(USE_CUDA)
-  if (cublas_handle_ != nullptr)
-    cublasDestroy(cublas_handle_);
+  if (cublas_handle_ != nullptr) cublasDestroy(cublas_handle_);
 
 #elif defined(USE_CL)
   cl_datatransform_kernel_->~CLKernel();

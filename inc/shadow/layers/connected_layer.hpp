@@ -4,7 +4,7 @@
 #include "shadow/layers/layer.hpp"
 
 class ConnectedLayer : public Layer {
-public:
+ public:
   ConnectedLayer() {}
   explicit ConnectedLayer(const shadow::LayerParameter &layer_param)
       : Layer(layer_param) {}
@@ -17,11 +17,11 @@ public:
   void set_weights(float *weights) { weights_->set_data(weights); }
   void set_biases(float *biases) { biases_->set_data(biases); }
 
-private:
+ private:
   int num_output_;
   shadow::ActivateType activate_;
 
   Blob *weights_, *biases_;
 };
 
-#endif // SHADOW_LAYERS_CONNECTED_LAYER_HPP
+#endif  // SHADOW_LAYERS_CONNECTED_LAYER_HPP

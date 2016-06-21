@@ -10,7 +10,7 @@
 #endif
 
 class Box : public Rect<float> {
-public:
+ public:
   Box() {}
   Box(float x_t, float y_t, float w_t, float h_t)
       : Rect<float>(x_t, y_t, w_t, h_t) {}
@@ -21,7 +21,7 @@ public:
 typedef std::vector<Box> VecBox;
 
 class Boxes {
-public:
+ public:
   static float BoxesIntersection(const Box &boxA, const Box &boxB);
   static float BoxesUnion(const Box &box_a, const Box &box_b);
   static float BoxesIoU(const Box &boxA, const Box &boxB);
@@ -37,4 +37,4 @@ public:
 #endif
 };
 
-#endif // SHADOW_UTIL_BOXES_HPP
+#endif  // SHADOW_UTIL_BOXES_HPP

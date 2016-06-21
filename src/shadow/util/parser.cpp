@@ -17,8 +17,7 @@ void Parser::ParseNetworkProtoTxt(Network *net, const std::string prototxt_file,
   std::string proto_str = read_text_from_file(prototxt_file);
   bool success = TextFormat::ParseFromString(proto_str, &net->net_param_);
 
-  if (!proto_str.compare("") || !success)
-    Fatal("Parse configure file error");
+  if (!proto_str.compare("") || !success) Fatal("Parse configure file error");
 
   ParseNet(net);
   net->in_shape_.set_dim(0, batch);
@@ -84,8 +83,7 @@ void Parser::LoadWeightsUpto(Network *net, const std::string weight_file,
   std::cout << "Load model from " << weight_file << " ... " << std::endl;
 #endif
   std::ifstream file(weight_file, std::ios::binary);
-  if (!file.is_open())
-    Fatal("Load weight file error!");
+  if (!file.is_open()) Fatal("Load weight file error!");
 
   char garbage[16];
   file.read(garbage, sizeof(char) * 16);

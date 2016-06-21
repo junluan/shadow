@@ -11,7 +11,7 @@
 #endif
 
 class Scalar {
-public:
+ public:
   Scalar() {}
   Scalar(int r_t, int g_t, int b_t) {
     r = (unsigned char)constrain(0, 255, r_t);
@@ -24,7 +24,7 @@ public:
 enum Order { kRGB, kBGR };
 
 class JImage {
-public:
+ public:
   JImage() : data_(nullptr) {}
   explicit JImage(const std::string im_path) : data_(nullptr) { Read(im_path); }
   JImage(int channel, int height, int width, Order order = kRGB)
@@ -58,11 +58,11 @@ public:
 
   int c_, h_, w_;
 
-private:
+ private:
   void GetInv(unsigned char *im_inv);
 
   unsigned char *data_;
   Order order_;
 };
 
-#endif // SHADOW_UTIL_JIMAGE_HPP
+#endif  // SHADOW_UTIL_JIMAGE_HPP

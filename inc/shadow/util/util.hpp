@@ -13,16 +13,18 @@
 #include <string>
 #include <vector>
 
-template <class Dtype> class Rect {
-public:
+template <class Dtype>
+class Rect {
+ public:
   Rect() {}
   Rect(Dtype x_t, Dtype y_t, Dtype w_t, Dtype h_t)
       : x(x_t), y(y_t), w(w_t), h(h_t) {}
   Dtype x, y, w, h;
 };
 
-template <class Dtype> class Size {
-public:
+template <class Dtype>
+class Size {
+ public:
   Size() {}
   Size(Dtype w_t, Dtype h_t) : w(w_t), h(h_t) {}
   Dtype w, h;
@@ -35,16 +37,16 @@ typedef std::vector<RectF> VecRectF;
 typedef std::vector<RectI> VecRectI;
 
 #if defined(USE_GLog)
-#define Info(msg)                                                              \
+#define Info(msg) \
   { LOG(INFO) << msg; }
 
-#define Warning(msg)                                                           \
+#define Warning(msg) \
   { LOG(WARNING) << msg; }
 
-#define Error(msg)                                                             \
+#define Error(msg) \
   { LOG(ERROR) << msg; }
 
-#define Fatal(msg)                                                             \
+#define Fatal(msg) \
   { LOG(FATAL) << msg; }
 #else
 inline static void Fatal(const std::string msg) {
@@ -63,14 +65,13 @@ inline static float rand_uniform(float min, float max) {
 
 template <typename Dtype>
 inline static Dtype constrain(Dtype min, Dtype max, Dtype value) {
-  if (value < min)
-    return min;
-  if (value > max)
-    return max;
+  if (value < min) return min;
+  if (value > max) return max;
   return value;
 }
 
-template <typename Dtype> inline static std::string to_string(Dtype val) {
+template <typename Dtype>
+inline static std::string to_string(Dtype val) {
   std::ostringstream out;
   out << val;
   return out.str();
@@ -113,14 +114,12 @@ inline static std::string change_extension(const std::string str,
 
 inline static std::vector<std::string> LoadList(const std::string list_file) {
   std::ifstream file(list_file);
-  if (!file.is_open())
-    Fatal("Load image list file error!");
+  if (!file.is_open()) Fatal("Load image list file error!");
 
   std::vector<std::string> image_list;
   std::string dir;
   while (std::getline(file, dir)) {
-    if (dir.length())
-      image_list.push_back(dir);
+    if (dir.length()) image_list.push_back(dir);
   }
   file.close();
   return image_list;
@@ -135,15 +134,14 @@ inline static std::string read_text_from_file(const std::string filename) {
 
   std::stringstream result;
   std::string tmp;
-  while (std::getline(file, tmp))
-    result << tmp << std::endl;
+  while (std::getline(file, tmp)) result << tmp << std::endl;
   file.close();
   return result.str();
 }
 
 #include <ctime>
 class Timer {
-public:
+ public:
   Timer() : ts(clock()) {}
 
   void start() { ts = clock(); }
@@ -155,8 +153,8 @@ public:
   }
   double get_microsecond() const { return static_cast<double>(clock() - ts); }
 
-private:
+ private:
   clock_t ts;
 };
 
-#endif // SHADOW_UTIL_UTIL_HPP
+#endif  // SHADOW_UTIL_UTIL_HPP
