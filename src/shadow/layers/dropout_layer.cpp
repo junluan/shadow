@@ -1,7 +1,7 @@
 #include "shadow/layers/dropout_layer.hpp"
 
 void DropoutLayer::Setup(VecBlob *blobs) {
-  Blob *bottom = find_blob_by_name(*blobs, layer_param_.bottom(0));
+  Blob<float> *bottom = find_blob_by_name(*blobs, layer_param_.bottom(0));
   if (bottom == nullptr)
     Fatal("Layer: " + layer_param_.name() + ", bottom " +
           layer_param_.bottom(0) + " not exist!");

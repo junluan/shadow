@@ -23,7 +23,7 @@ class ConvLayer : public Layer {
   int num_output_, kernel_size_, stride_, pad_, out_map_size_, kernel_num_;
   shadow::ActivateType activate_;
 
-  Blob *filters_, *biases_, *col_image_;
+  Blob<float> *filters_, *biases_, *col_image_;
 };
 
 #endif  // SHADOW_LAYERS_CONV_LAYER_HPP

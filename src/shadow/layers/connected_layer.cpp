@@ -3,12 +3,12 @@
 #include "shadow/util/blas.hpp"
 
 void ConnectedLayer::Setup(VecBlob *blobs) {
-  Blob *bottom = find_blob_by_name(*blobs, layer_param_.bottom(0));
+  Blob<float> *bottom = find_blob_by_name(*blobs, layer_param_.bottom(0));
   if (bottom == nullptr)
     Fatal("Layer: " + layer_param_.name() + ", bottom " +
           layer_param_.bottom(0) + " not exist!");
 
-  Blob *top = new Blob(layer_param_.top(0));
+  Blob<float> *top = new Blob<float>(layer_param_.top(0));
 
   num_output_ = layer_param_.connected_param().num_output();
   activate_ = layer_param_.connected_param().activate();
@@ -26,8 +26,8 @@ void ConnectedLayer::Setup(VecBlob *blobs) {
 
   blobs->push_back(top);
 
-  weights_ = new Blob(in_num * out_num);
-  biases_ = new Blob(out_num);
+  weights_ = new Blob<float>(in_num * out_num);
+  biases_ = new Blob<float>(out_num);
 
 #if defined(VERBOSE)
   std::cout << "Connected Layer: " << format_vector(bottom->shape(), " x ")
@@ -37,18 +37,18 @@ void ConnectedLayer::Setup(VecBlob *blobs) {
 }
 
 void ConnectedLayer::Forward() {
-  const Blob *bottom = bottom_.at(0);
-  Blob *top = top_.at(0);
+  const Blob<float> *bottom = bottom_.at(0);
+  Blob<float> *top = top_.at(0);
 
   int batch = bottom->shape(0);
-  BType *out_data = top->mutable_data();
   for (int b = 0; b < batch; ++b) {
-    Blas::BlasCopy(top->num(), biases_->data(), 1, out_data, b * top->num(), 1);
+    Blas::BlasCopy(top->num(), biases_->data(), 1, top->mutable_data(),
+                   b * top->num(), 1);
   }
   Blas::BlasSGemm(0, 0, batch, top->num(), bottom->num(), 1, bottom->data(),
-                  bottom->num(), weights_->data(), top->num(), 1, out_data, 0,
-                  top->num());
-  Activations::ActivateArray(top->count(), activate_, out_data);
+                  bottom->num(), weights_->data(), top->num(), 1,
+                  top->mutable_data(), 0, top->num());
+  Activations::ActivateArray(top->count(), activate_, top->mutable_data());
 }
 
 void ConnectedLayer::Release() {

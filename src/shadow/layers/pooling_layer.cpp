@@ -2,12 +2,12 @@
 #include "shadow/util/image.hpp"
 
 void PoolingLayer::Setup(VecBlob *blobs) {
-  Blob *bottom = find_blob_by_name(*blobs, layer_param_.bottom(0));
+  Blob<float> *bottom = find_blob_by_name(*blobs, layer_param_.bottom(0));
   if (bottom == nullptr)
     Fatal("Layer: " + layer_param_.name() + ", bottom " +
           layer_param_.bottom(0) + " not exist!");
 
-  Blob *top = new Blob(layer_param_.top(0));
+  Blob<float> *top = new Blob<float>(layer_param_.top(0));
 
   if (!(bottom->shape(1) && bottom->shape(2) && bottom->shape(3)))
     Fatal("Channel, height and width must greater than zero.");
@@ -40,8 +40,8 @@ void PoolingLayer::Setup(VecBlob *blobs) {
 }
 
 void PoolingLayer::Forward() {
-  const Blob *bottom = bottom_.at(0);
-  Blob *top = top_.at(0);
+  const Blob<float> *bottom = bottom_.at(0);
+  Blob<float> *top = top_.at(0);
 
   Image::Pooling(bottom->shape(), bottom->data(), kernel_size_, stride_,
                  pool_type_, top->shape(), top->mutable_data());

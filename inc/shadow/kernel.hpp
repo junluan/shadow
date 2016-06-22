@@ -7,64 +7,77 @@
 #include "cublas_v2.h"
 #include "cuda_runtime.h"
 const int BLOCK = 512;
-#define BType float
+#endif
 
-#elif defined(USE_CL)
+#if defined(USE_CL)
 #include <EasyCL.h>
 #include <clBLAS.h>
-#define BType cl_mem
-
-#else
-#define BType float
 #endif
 
-class Kernel {
- public:
-  static void Setup(int device_id = 0);
-  static void Release();
+namespace Kernel {
 
-  static BType *MakeBuffer(int size, float *host_ptr);
-  static void ReadBuffer(int size, const BType *src, float *des);
-  static void WriteBuffer(int size, const float *src, BType *des);
-  static void CopyBuffer(int size, const BType *src, BType *des);
-  static void ReleaseBuffer(BType *buffer);
+void Setup(int device_id = 0);
+void Release();
 
-  static void DataTransform(int N, const BType *in_data, float scale,
-                            float mean_value, BType *out_data);
-  static void Im2Col(const BType *im_data, int offset, int in_c, int in_h,
-                     int in_w, int kernel_size, int stride, int pad, int out_h,
-                     int out_w, BType *col_data);
-  static void Pooling(const BType *in_data, int batch, int in_c, int in_h,
-                      int in_w, int kernel_size, int stride, int out_h,
-                      int out_w, int mode, BType *out_data);
-  static void Permute(const BType *in_data, int batch, int in_c, int in_h,
-                      int in_w, int out_c, int out_h, int out_w,
-                      BType *out_data);
-  static void ActivateArray(int N, const shadow::ActivateType &type,
-                            BType *out_data);
-  static void SetArray(int N, float value, BType *out_data);
-  static void SetArrayRepeat(int N, const BType *value, int value_size,
-                             BType *out_data, int offset);
+template <typename T, typename Dtype>
+T *MakeBuffer(int size, Dtype *host_ptr);
 
-  static void *GetHandle();
-  static void *GetQueue();
+template <typename T, typename Dtype>
+void ReadBuffer(int size, const T *src, Dtype *des);
 
- private:
+template <typename T, typename Dtype>
+void WriteBuffer(int size, const Dtype *src, T *des);
+
+template <typename T, typename Dtype>
+void CopyBuffer(int size, const T *src, T *des);
+
+template <typename T>
+void ReleaseBuffer(T *buffer);
+
+template <typename T>
+void DataTransform(int N, const T *in_data, float scale, float mean_value,
+                   T *out_data);
+
+template <typename T>
+void Im2Col(const T *in_data, int offset, int in_c, int in_h, int in_w,
+            int kernel_size, int stride, int pad, int out_h, int out_w,
+            T *out_data);
+
+template <typename T>
+void Pooling(const T *in_data, int batch, int in_c, int in_h, int in_w,
+             int kernel_size, int stride, int out_h, int out_w, int mode,
+             T *out_data);
+
+template <typename T>
+void Permute(const T *in_data, int batch, int in_c, int in_h, int in_w,
+             int out_c, int out_h, int out_w, T *out_data);
+
+template <typename T>
+void ActivateArray(int N, const shadow::ActivateType &type, T *out_data);
+
+template <typename T>
+void SetArray(int N, float value, T *out_data);
+
+template <typename T>
+void SetArrayRepeat(int N, const T *value, int value_size, T *out_data,
+                    int offset);
+
 #if defined(USE_CUDA)
-  static dim3 GridDim(int size);
-  static void CheckError(cudaError_t status);
+dim3 GridDim(int size);
+void CheckError(cudaError_t status);
 
-  static cublasHandle_t cublas_handle_;
+extern cublasHandle_t cublas_handle_;
 
 #elif defined(USE_CL)
-  static EasyCL *easyCL;
-  static CLKernel *cl_datatransform_kernel_;
-  static CLKernel *cl_im2col_kernel_;
-  static CLKernel *cl_pooling_kernel_;
-  static CLKernel *cl_activations_kernel_;
-  static CLKernel *cl_setarray_kernel_;
-  static CLKernel *cl_setarrayrepeat_kernel_;
+extern EasyCL *easyCL;
+static CLKernel *cl_datatransform_kernel_ = nullptr;
+static CLKernel *cl_im2col_kernel_ = nullptr;
+static CLKernel *cl_pooling_kernel_ = nullptr;
+static CLKernel *cl_activations_kernel_ = nullptr;
+static CLKernel *cl_setarray_kernel_ = nullptr;
+static CLKernel *cl_setarrayrepeat_kernel_ = nullptr;
 #endif
-};
+
+}  // namespace Kernel
 
 #endif  // SHADOW_KERNEL_HPP

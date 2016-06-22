@@ -22,7 +22,7 @@ void Parser::ParseNetworkProtoTxt(Network *net, const std::string prototxt_file,
   ParseNet(net);
   net->in_shape_.set_dim(0, batch);
 
-  Blob *in_blob = new Blob("in_blob");
+  Blob<float> *in_blob = new Blob<float>("in_blob");
   in_blob->set_shape(net->in_shape_);
   in_blob->allocate_data(in_blob->count());
   net->blobs_.push_back(in_blob);

@@ -6,23 +6,29 @@
 
 #include "shadow/proto/shadow.pb.h"
 
-template <class Dtype>
-class BaseBlob {
+#if defined(USE_CL)
+#define BACKEND cl_mem
+#else
+#define BACKEND Dtype
+#endif
+
+template <typename Dtype>
+class Blob {
  public:
-  BaseBlob() {}
-  explicit BaseBlob(const std::string &name) : name_(name) {}
-  explicit BaseBlob(int count, float *data = nullptr) {
+  Blob() {}
+  explicit Blob(const std::string &name) : name_(name) {}
+  explicit Blob(int count, Dtype *data = nullptr) {
     allocate_data(count);
     if (data != nullptr) set_data(data);
   }
 
-  inline const Dtype *data() const { return data_; }
-  inline Dtype *mutable_data() { return data_; }
+  inline const BACKEND *data() const { return data_; }
+  inline BACKEND *mutable_data() { return data_; }
 
-  inline void set_data(const float *data) {
+  inline void set_data(const Dtype *data) {
     if (data == nullptr) Fatal("Set data for blob is nullptr!");
 #if !defined(USE_CUDA) & !defined(USE_CL)
-    memcpy(data_, data, sizeof(float) * count());
+    memcpy(data_, data, count() * sizeof(Dtype));
     on_gpu_ = false;
 
 #else
@@ -33,22 +39,23 @@ class BaseBlob {
 
   inline void allocate_data(int count) {
 #if !defined(USE_CUDA) & !defined(USE_CL)
-    data_ = new float[count];
+    data_ = new Dtype[count];
     on_gpu_ = false;
 
 #else
-    data_ = Kernel::MakeBuffer(count, nullptr);
+    data_ = Kernel::MakeBuffer<BACKEND>(count, static_cast<Dtype *>(nullptr));
     on_gpu_ = true;
 #endif
     if (shape_.size() == 0) add_shape(count);
   }
 
-  inline void copy_data(float *out_data) const {
-    if (on_gpu_) {
-      Kernel::ReadBuffer(count(), data_, out_data);
-    } else {
-      memcpy(out_data, data_, sizeof(float) * count());
-    }
+  inline void copy_data(Dtype *out_data) const {
+#if !defined(USE_CUDA) & !defined(USE_CL)
+    memcpy(out_data, data_, count() * sizeof(Dtype));
+
+#else
+    Kernel::ReadBuffer(count(), data_, out_data);
+#endif
   }
 
   inline const std::string name() const { return name_; }
@@ -103,19 +110,17 @@ class BaseBlob {
   }
 
  private:
-  Dtype *data_;
+  BACKEND *data_;
 
   std::string name_;
   std::vector<int> shape_;
   bool on_gpu_;
 };
 
-// TODO(jun): fix Blob template structure
-typedef BaseBlob<BType> Blob;
-typedef std::vector<Blob *> VecBlob;
+typedef std::vector<Blob<float> *> VecBlob;
 
-inline static Blob *find_blob_by_name(const VecBlob &blobs,
-                                      const std::string &name) {
+inline static Blob<float> *find_blob_by_name(const VecBlob &blobs,
+                                             const std::string &name) {
   for (int i = 0; i < blobs.size(); ++i) {
     if (!name.compare(blobs.at(i)->name())) return blobs.at(i);
   }

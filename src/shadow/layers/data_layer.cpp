@@ -2,12 +2,12 @@
 #include "shadow/util/image.hpp"
 
 void DataLayer::Setup(VecBlob *blobs) {
-  Blob *bottom = find_blob_by_name(*blobs, "in_blob");
+  Blob<float> *bottom = find_blob_by_name(*blobs, "in_blob");
   if (bottom == nullptr)
     Fatal("Layer: " + layer_param_.name() + ", bottom " +
           layer_param_.bottom(0) + " not exist!");
 
-  Blob *top = new Blob(layer_param_.top(0));
+  Blob<float> *top = new Blob<float>(layer_param_.top(0));
 
   if (!(bottom->shape(1) && bottom->shape(2) && bottom->shape(3)))
     Fatal("Channel, height and width must greater than zero.");
@@ -30,8 +30,8 @@ void DataLayer::Setup(VecBlob *blobs) {
 }
 
 void DataLayer::Forward() {
-  const Blob *bottom = bottom_.at(0);
-  Blob *top = top_.at(0);
+  const Blob<float> *bottom = bottom_.at(0);
+  Blob<float> *top = top_.at(0);
 
   Image::DataTransform(top->count(), bottom->data(), scale_, mean_value_,
                        top->mutable_data());

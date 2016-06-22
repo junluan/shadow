@@ -3,18 +3,23 @@
 
 #include "shadow/kernel.hpp"
 
-class Blas {
- public:
-  static void SetArray(int N, float value, BType *out_data);
-  static void SetArrayRepeat(int N, const BType *value, int value_size,
-                             BType *out_data, int offset);
-  static void BlasCopy(int N, const BType *X, int incx, BType *Y, int offset,
-                       int incy);
-  static void BlasAxpy(int N, float ALPHA, const float *X, int INCX, float *Y,
-                       int INCY);
-  static void BlasSGemm(int TA, int TB, int M, int N, int K, float ALPHA,
-                        const BType *A, int lda, const BType *B, int ldb,
-                        float BETA, BType *C, int offset, int ldc);
-};
+namespace Blas {
+
+template <typename T>
+void SetArray(int N, float value, T *out_data);
+
+template <typename T>
+void SetArrayRepeat(int N, const T *value, int value_size, T *out_data,
+                    int offset);
+
+template <typename T>
+void BlasCopy(int N, const T *X, int incx, T *Y, int offset, int incy);
+
+template <typename T>
+void BlasSGemm(int TA, int TB, int M, int N, int K, float ALPHA, const T *A,
+               int lda, const T *B, int ldb, float BETA, T *C, int offset,
+               int ldc);
+
+}  // namespace Blas
 
 #endif  // SHADOW_UTIL_BLAS_HPP

@@ -21,7 +21,7 @@ class ConnectedLayer : public Layer {
   int num_output_;
   shadow::ActivateType activate_;
 
-  Blob *weights_, *biases_;
+  Blob<float> *weights_, *biases_;
 };
 
 #endif  // SHADOW_LAYERS_CONNECTED_LAYER_HPP

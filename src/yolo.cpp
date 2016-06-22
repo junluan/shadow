@@ -14,7 +14,9 @@ Yolo::Yolo(string cfg_file, string weight_file, float threshold) {
 Yolo::~Yolo() {}
 
 void Yolo::Setup(int batch, VecRectF *rois) {
+#if defined(USE_CUDA) | defined(USE_CL)
   Kernel::Setup();
+#endif
 
   net_.LoadModel(cfg_file_, weight_file_, batch);
 
@@ -38,7 +40,9 @@ void Yolo::Setup(int batch, VecRectF *rois) {
 
 void Yolo::Release() {
   net_.Release();
+#if defined(USE_CUDA) | defined(USE_CL)
   Kernel::Release();
+#endif
 }
 
 void Yolo::Test(string image_file) {

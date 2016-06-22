@@ -3,7 +3,7 @@
 
 #include "shadow/kernel.hpp"
 
-static float Activate(float x, const shadow::ActivateType &type) {
+inline float Activate(float x, const shadow::ActivateType &type) {
   switch (type) {
     case shadow::ActivateType::Linear:
       return x;
@@ -15,19 +15,20 @@ static float Activate(float x, const shadow::ActivateType &type) {
   return x;
 }
 
-class Activations {
- public:
-  static void ActivateArray(int N, const shadow::ActivateType &type,
-                            BType *out_data) {
+namespace Activations {
+
+template <typename T>
+void ActivateArray(int N, const shadow::ActivateType &type, T *out_data) {
 #if !defined(USE_CUDA) & !defined(USE_CL)
-    for (int i = 0; i < N; ++i) {
-      out_data[i] = Activate(out_data[i], type);
-    }
+  for (int i = 0; i < N; ++i) {
+    out_data[i] = Activate(out_data[i], type);
+  }
 
 #else
-    Kernel::ActivateArray(N, type, out_data);
+  Kernel::ActivateArray(N, type, out_data);
 #endif
-  }
-};
+}
+
+}  // namespace Activations
 
 #endif  // SHADOW_UTIL_ACTIVATIONS_HPP

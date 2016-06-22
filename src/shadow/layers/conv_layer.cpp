@@ -8,12 +8,12 @@ inline int convolutional_out_size(int s, int size, int pad, int stride) {
 }
 
 void ConvLayer::Setup(VecBlob *blobs) {
-  Blob *bottom = find_blob_by_name(*blobs, layer_param_.bottom(0));
+  Blob<float> *bottom = find_blob_by_name(*blobs, layer_param_.bottom(0));
   if (bottom == nullptr)
     Fatal("Layer: " + layer_param_.name() + ", bottom " +
           layer_param_.bottom(0) + " not exist!");
 
-  Blob *top = new Blob(layer_param_.top(0));
+  Blob<float> *top = new Blob<float>(layer_param_.top(0));
 
   if (!(bottom->shape(1) && bottom->shape(2) && bottom->shape(3)))
     Fatal("Channel, height and width must greater than zero.");
@@ -44,9 +44,9 @@ void ConvLayer::Setup(VecBlob *blobs) {
   out_map_size_ = out_h * out_w;
   kernel_num_ = kernel_size_ * kernel_size_ * in_c;
 
-  filters_ = new Blob(kernel_num_ * out_c);
-  biases_ = new Blob(out_c);
-  col_image_ = new Blob(out_map_size_ * kernel_num_);
+  filters_ = new Blob<float>(kernel_num_ * out_c);
+  biases_ = new Blob<float>(out_c);
+  col_image_ = new Blob<float>(out_map_size_ * kernel_num_);
 
 #if defined(VERBOSE)
   std::cout << "Convolution Layer: " << format_vector(bottom->shape(), " x ")
@@ -57,15 +57,14 @@ void ConvLayer::Setup(VecBlob *blobs) {
 }
 
 void ConvLayer::Forward() {
-  const Blob *bottom = bottom_.at(0);
-  Blob *top = top_.at(0);
+  const Blob<float> *bottom = bottom_.at(0);
+  Blob<float> *top = top_.at(0);
 
   int batch = bottom->shape(0);
   int out_c = top->shape(1);
-  BType *out_data = top->mutable_data();
   for (int b = 0; b < batch; ++b) {
-    Blas::SetArrayRepeat(out_map_size_, biases_->data(), out_c, out_data,
-                         b * top->num());
+    Blas::SetArrayRepeat(out_map_size_, biases_->data(), out_c,
+                         top->mutable_data(), b * top->num());
   }
   for (int b = 0; b < batch; ++b) {
     Image::Im2Col(bottom->shape(), bottom->data(), b * bottom->num(),
@@ -73,9 +72,10 @@ void ConvLayer::Forward() {
                   col_image_->mutable_data());
     Blas::BlasSGemm(0, 0, out_c, out_map_size_, kernel_num_, 1,
                     filters_->data(), kernel_num_, col_image_->data(),
-                    out_map_size_, 1, out_data, b * top->num(), out_map_size_);
+                    out_map_size_, 1, top->mutable_data(), b * top->num(),
+                    out_map_size_);
   }
-  Activations::ActivateArray(top->count(), activate_, out_data);
+  Activations::ActivateArray(top->count(), activate_, top->mutable_data());
 }
 
 void ConvLayer::Release() {
