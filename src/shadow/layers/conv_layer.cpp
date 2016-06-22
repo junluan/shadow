@@ -44,20 +44,15 @@ void ConvLayer::Setup(VecBlob *blobs) {
   out_map_size_ = out_h * out_w;
   kernel_num_ = kernel_size_ * kernel_size_ * in_c;
 
-  filters_ = new Blob();
-  biases_ = new Blob();
-  col_image_ = new Blob();
-
-  filters_->allocate_data(kernel_num_ * out_c);
-  biases_->allocate_data(out_c);
-  col_image_->allocate_data(out_map_size_ * kernel_num_);
+  filters_ = new Blob(kernel_num_ * out_c);
+  biases_ = new Blob(out_c);
+  col_image_ = new Blob(out_map_size_ * kernel_num_);
 
 #if defined(VERBOSE)
-  printf(
-      "Convolutional Layer: %d x %d x %d input -> %d_%dx%d_s%d_p%d filters -> "
-      "%d x %d x %d output\n",
-      in_c, in_h, in_w, out_c, kernel_size_, kernel_size_, stride_, pad_, out_c,
-      out_h, out_w);
+  std::cout << "Convolution Layer: " << format_vector(bottom->shape(), " x ")
+            << " input -> " << out_c << "_" << kernel_size_ << "x"
+            << kernel_size_ << "_s" << stride_ << "_p" << pad_ << " filters -> "
+            << format_vector(top->shape(), " x ") << " output" << std::endl;
 #endif
 }
 
@@ -65,18 +60,16 @@ void ConvLayer::Forward() {
   const Blob *bottom = bottom_.at(0);
   Blob *top = top_.at(0);
 
-  int batch = bottom->shape(0), in_c = bottom->shape(1);
-  int in_h = bottom->shape(2), in_w = bottom->shape(3);
+  int batch = bottom->shape(0);
   int out_c = top->shape(1);
-  int out_h = top->shape(2), out_w = top->shape(3);
   BType *out_data = top->mutable_data();
   for (int b = 0; b < batch; ++b) {
     Blas::SetArrayRepeat(out_map_size_, biases_->data(), out_c, out_data,
                          b * top->num());
   }
   for (int b = 0; b < batch; ++b) {
-    Image::Im2Col(bottom->data(), b * bottom->num(), in_c, in_h, in_w,
-                  kernel_size_, stride_, pad_, out_h, out_w,
+    Image::Im2Col(bottom->shape(), bottom->data(), b * bottom->num(),
+                  kernel_size_, stride_, pad_, top->shape(),
                   col_image_->mutable_data());
     Blas::BlasSGemm(0, 0, out_c, out_map_size_, kernel_num_, 1,
                     filters_->data(), kernel_num_, col_image_->data(),

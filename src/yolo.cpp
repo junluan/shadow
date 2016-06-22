@@ -64,7 +64,7 @@ void Yolo::Test(string image_file) {
 }
 
 void Yolo::BatchTest(string list_file, bool image_write) {
-  vector<string> image_list = LoadList(list_file);
+  vector<string> image_list = load_list(list_file);
   size_t num_im = image_list.size();
 
   Timer timer;

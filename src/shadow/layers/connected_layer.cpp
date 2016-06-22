@@ -10,19 +10,14 @@ void ConnectedLayer::Setup(VecBlob *blobs) {
 
   Blob *top = new Blob(layer_param_.top(0));
 
-  if (!(bottom->shape(1) && bottom->shape(2) && bottom->shape(3)))
-    Fatal("Channel, height and width must greater than zero.");
-
   num_output_ = layer_param_.connected_param().num_output();
   activate_ = layer_param_.connected_param().activate();
 
-  int in_num = bottom->shape(1) * bottom->shape(2) * bottom->shape(3);
+  int in_num = bottom->num();
   int out_num = num_output_;
 
-  *top->mutable_shape() = bottom->shape();
-  top->set_shape(1, num_output_);
-  top->set_shape(2, 1);
-  top->set_shape(3, 1);
+  top->add_shape(bottom->shape(0));
+  top->add_shape(num_output_);
 
   top->allocate_data(top->count());
 
@@ -31,14 +26,13 @@ void ConnectedLayer::Setup(VecBlob *blobs) {
 
   blobs->push_back(top);
 
-  weights_ = new Blob();
-  biases_ = new Blob();
-
-  weights_->allocate_data(in_num * out_num);
-  biases_->allocate_data(out_num);
+  weights_ = new Blob(in_num * out_num);
+  biases_ = new Blob(out_num);
 
 #if defined(VERBOSE)
-  printf("Connected Layer: %d input, %d output\n", in_num, out_num);
+  std::cout << "Connected Layer: " << format_vector(bottom->shape(), " x ")
+            << " input -> " << format_vector(top->shape(), " x ") << " output"
+            << std::endl;
 #endif
 }
 

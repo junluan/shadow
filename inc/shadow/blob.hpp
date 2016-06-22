@@ -11,11 +11,16 @@ class BaseBlob {
  public:
   BaseBlob() {}
   explicit BaseBlob(const std::string &name) : name_(name) {}
+  explicit BaseBlob(int count, float *data = nullptr) {
+    allocate_data(count);
+    if (data != nullptr) set_data(data);
+  }
 
   inline const Dtype *data() const { return data_; }
   inline Dtype *mutable_data() { return data_; }
 
   inline void set_data(const float *data) {
+    if (data == nullptr) Fatal("Set data for blob is nullptr!");
 #if !defined(USE_CUDA) & !defined(USE_CL)
     memcpy(data_, data, sizeof(float) * count());
     on_gpu_ = false;
@@ -70,10 +75,17 @@ class BaseBlob {
   }
   inline void add_shape(int value) { shape_.push_back(value); }
 
+  inline const int num_axes() const { return shape_.size(); }
   inline const int num() const { return count() / shape(0); }
-  inline const int count() const {
+  inline const int count() const { return count(0); }
+  inline const int count(int start_axis) const {
+    return count(start_axis, shape_.size());
+  }
+  inline const int count(int start_axis, int end_axis) const {
+    if (start_axis < 0 || start_axis >= end_axis)
+      Fatal("Index out of blob shape range!");
     int count = 1;
-    for (int i = 0; i < shape_.size(); ++i) count *= shape(i);
+    for (int i = start_axis; i < end_axis; ++i) count *= shape(i);
     return count;
   }
 
@@ -98,6 +110,7 @@ class BaseBlob {
   bool on_gpu_;
 };
 
+// TODO(jun): fix Blob template structure
 typedef BaseBlob<BType> Blob;
 typedef std::vector<Blob *> VecBlob;
 

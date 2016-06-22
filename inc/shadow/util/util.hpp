@@ -5,6 +5,7 @@
 #include <glog/logging.h>
 #endif
 
+#include <algorithm>
 #include <cmath>
 #include <fstream>
 #include <iomanip>
@@ -83,6 +84,18 @@ inline static std::string format_int(int n, int width, char pad = ' ') {
   return out.str();
 }
 
+inline static std::string format_vector(const std::vector<int> &shape,
+                                        const std::string &split = ", ",
+                                        const std::string &postfix = "") {
+  std::stringstream out;
+  int i = 0;
+  for (; i < shape.size() - 1; ++i) {
+    out << shape.at(i) << split;
+  }
+  out << shape.at(std::min(i, static_cast<int>(shape.size()) - 1)) << postfix;
+  return out.str();
+}
+
 inline static std::string find_replace(const std::string str,
                                        const std::string old_str,
                                        const std::string new_str) {
@@ -112,7 +125,7 @@ inline static std::string change_extension(const std::string str,
   return origin;
 }
 
-inline static std::vector<std::string> LoadList(const std::string list_file) {
+inline static std::vector<std::string> load_list(const std::string list_file) {
   std::ifstream file(list_file);
   if (!file.is_open()) Fatal("Load image list file error!");
 

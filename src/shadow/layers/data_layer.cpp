@@ -15,8 +15,6 @@ void DataLayer::Setup(VecBlob *blobs) {
   scale_ = layer_param_.data_param().scale();
   mean_value_ = layer_param_.data_param().mean_value();
 
-  int in_c = bottom->shape(1), in_h = bottom->shape(2), in_w = bottom->shape(3);
-
   *top->mutable_shape() = bottom->shape();
   top->allocate_data(top->count());
 
@@ -26,7 +24,8 @@ void DataLayer::Setup(VecBlob *blobs) {
   blobs->push_back(top);
 
 #if defined(VERBOSE)
-  printf("Data Layer: %d x %d x %d input\n", in_c, in_h, in_w);
+  std::cout << "Data Layer: " << format_vector(bottom->shape(), " x ")
+            << " input" << std::endl;
 #endif
 }
 

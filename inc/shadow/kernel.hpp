@@ -32,11 +32,14 @@ class Kernel {
   static void DataTransform(int N, const BType *in_data, float scale,
                             float mean_value, BType *out_data);
   static void Im2Col(const BType *im_data, int offset, int in_c, int in_h,
-                     int in_w, int ksize, int stride, int pad, int out_h,
+                     int in_w, int kernel_size, int stride, int pad, int out_h,
                      int out_w, BType *col_data);
   static void Pooling(const BType *in_data, int batch, int in_c, int in_h,
-                      int in_w, int ksize, int stride, int out_h, int out_w,
-                      int mode, BType *out_data);
+                      int in_w, int kernel_size, int stride, int out_h,
+                      int out_w, int mode, BType *out_data);
+  static void Permute(const BType *in_data, int batch, int in_c, int in_h,
+                      int in_w, int out_c, int out_h, int out_w,
+                      BType *out_data);
   static void ActivateArray(int N, const shadow::ActivateType &type,
                             BType *out_data);
   static void SetArray(int N, float value, BType *out_data);

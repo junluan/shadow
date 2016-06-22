@@ -16,8 +16,7 @@ void PoolingLayer::Setup(VecBlob *blobs) {
   kernel_size_ = layer_param_.pooling_param().kernel_size();
   stride_ = layer_param_.pooling_param().stride();
 
-  int in_c = bottom->shape(1), in_h = bottom->shape(2), in_w = bottom->shape(3);
-  int out_c = in_c;
+  int in_h = bottom->shape(2), in_w = bottom->shape(3);
   int out_h = (in_h - kernel_size_) / stride_ + 1;
   int out_w = (in_w - kernel_size_) / stride_ + 1;
 
@@ -33,10 +32,10 @@ void PoolingLayer::Setup(VecBlob *blobs) {
   blobs->push_back(top);
 
 #if defined(VERBOSE)
-  printf(
-      "Maxpool Layer: %d x %d x %d input -> %dx%d_s%d -> %d x %d x %d output\n",
-      in_c, in_h, in_w, kernel_size_, kernel_size_, stride_, out_c, out_h,
-      out_w);
+  std::cout << "Pooling Layer: " << format_vector(bottom->shape(), " x ")
+            << " input -> " << kernel_size_ << "x" << kernel_size_ << "_s"
+            << stride_ << " -> " << format_vector(top->shape(), " x ")
+            << " output" << std::endl;
 #endif
 }
 
@@ -44,11 +43,8 @@ void PoolingLayer::Forward() {
   const Blob *bottom = bottom_.at(0);
   Blob *top = top_.at(0);
 
-  int batch = bottom->shape(0), in_c = bottom->shape(1);
-  int in_h = bottom->shape(2), in_w = bottom->shape(3);
-  int out_h = top->shape(2), out_w = top->shape(3);
-  Image::Pooling(bottom->data(), batch, in_c, in_h, in_w, kernel_size_, stride_,
-                 out_h, out_w, pool_type_, top->mutable_data());
+  Image::Pooling(bottom->shape(), bottom->data(), kernel_size_, stride_,
+                 pool_type_, top->shape(), top->mutable_data());
 }
 
 void PoolingLayer::Release() {

@@ -24,21 +24,23 @@ inline float Im2ColGetPixel(const float *image, int in_h, int in_w, int im_row,
 }
 
 #if !defined(USE_CUDA) & !defined(USE_CL)
-void Image::Im2Col(const BType *im_data, int offset, int in_c, int in_h,
-                   int in_w, int ksize, int stride, int pad, int out_h,
-                   int out_w, BType *col_data) {
-  const BType *im_data_offset = im_data + offset;
-  int kernel_num_ = in_c * ksize * ksize;
+void Image::Im2Col(const std::vector<int> &in_shape, const BType *in_data,
+                   int offset, int kernel_size, int stride, int pad,
+                   const std::vector<int> &out_shape, BType *out_data) {
+  int in_c = in_shape[1], in_h = in_shape[2], in_w = in_shape[3];
+  int out_h = out_shape[2], out_w = out_shape[3];
+  const BType *im_data_offset = in_data + offset;
+  int kernel_num_ = in_c * kernel_size * kernel_size;
   for (int c = 0; c < kernel_num_; ++c) {
-    int w_offset = c % ksize;
-    int h_offset = (c / ksize) % ksize;
-    int c_im = c / ksize / ksize;
+    int w_offset = c % kernel_size;
+    int h_offset = (c / kernel_size) % kernel_size;
+    int c_im = c / kernel_size / kernel_size;
     for (int h = 0; h < out_h; ++h) {
       for (int w = 0; w < out_w; ++w) {
         int im_row = h_offset + h * stride;
         int im_col = w_offset + w * stride;
         int col_index = (c * out_h + h) * out_w + w;
-        col_data[col_index] = Im2ColGetPixel(im_data_offset, in_h, in_w, im_row,
+        out_data[col_index] = Im2ColGetPixel(im_data_offset, in_h, in_w, im_row,
                                              im_col, c_im, pad);
       }
     }
@@ -69,20 +71,25 @@ void Image::Im2Col(const BType *im_data, int offset, int in_c, int in_h,
 }
 
 #else
-void Image::Im2Col(const BType *im_data, int offset, int in_c, int in_h,
-                   int in_w, int ksize, int stride, int pad, int out_h,
-                   int out_w, BType *col_data) {
-  Kernel::Im2Col(im_data, offset, in_c, in_h, in_w, ksize, stride, pad, out_h,
-                 out_w, col_data);
+void Image::Im2Col(const std::vector<int> &in_shape, const BType *in_data,
+                   int offset, int kernel_size, int stride, int pad,
+                   const std::vector<int> &out_shape, BType *out_data) {
+  Kernel::Im2Col(in_data, offset, in_shape[1], in_shape[2], in_shape[3],
+                 kernel_size, stride, pad, out_shape[2], out_shape[3],
+                 out_data);
 }
 #endif
 
 #if !defined(USE_CUDA) & !defined(USE_CL)
-void Image::Pooling(const BType *in_data, int batch, int in_c, int in_h,
-                    int in_w, int ksize, int stride, int out_h, int out_w,
-                    int mode, BType *out_data) {
-  int h_offset = ((in_h - ksize) % stride) / 2;
-  int w_offset = ((in_w - ksize) % stride) / 2;
+void Image::Pooling(const std::vector<int> &in_shape, const BType *in_data,
+                    int kernel_size, int stride, int mode,
+                    const std::vector<int> &out_shape, BType *out_data) {
+  int batch = in_shape[0];
+  int in_c = in_shape[1], in_h = in_shape[2], in_w = in_shape[3];
+  int out_h = out_shape[2], out_w = out_shape[3];
+
+  int h_offset = ((in_h - kernel_size) % stride) / 2;
+  int w_offset = ((in_w - kernel_size) % stride) / 2;
 
   for (int b = 0; b < batch; ++b) {
     for (int c = 0; c < in_c; ++c) {
@@ -91,8 +98,8 @@ void Image::Pooling(const BType *in_data, int batch, int in_c, int in_h,
           int out_index = w + out_w * (h + out_h * (c + in_c * b));
           float max = -10000.0f;
           float sum = 0.f;
-          for (int ki = 0; ki < ksize; ++ki) {
-            for (int kj = 0; kj < ksize; ++kj) {
+          for (int ki = 0; ki < kernel_size; ++ki) {
+            for (int kj = 0; kj < kernel_size; ++kj) {
               int cur_h = h_offset + h * stride + ki;
               int cur_w = w_offset + w * stride + kj;
               int index = cur_w + in_w * (cur_h + in_h * (c + b * in_c));
@@ -106,7 +113,7 @@ void Image::Pooling(const BType *in_data, int batch, int in_c, int in_h,
           if (mode == 0)
             out_data[out_index] = max;
           else
-            out_data[out_index] = sum / (ksize * ksize);
+            out_data[out_index] = sum / (kernel_size * kernel_size);
         }
       }
     }
@@ -114,10 +121,34 @@ void Image::Pooling(const BType *in_data, int batch, int in_c, int in_h,
 }
 
 #else
-void Image::Pooling(const BType *in_data, int batch, int in_c, int in_h,
-                    int in_w, int ksize, int stride, int out_h, int out_w,
-                    int mode, BType *out_data) {
-  Kernel::Pooling(in_data, batch, in_c, in_h, in_w, ksize, stride, out_h, out_w,
-                  mode, out_data);
+void Image::Pooling(const std::vector<int> &in_shape, const BType *in_data,
+                    int kernel_size, int stride, int mode,
+                    const std::vector<int> &out_shape, BType *out_data) {
+  Kernel::Pooling(in_data, in_shape[0], in_shape[1], in_shape[2], in_shape[3],
+                  kernel_size, stride, out_shape[2], out_shape[3], mode,
+                  out_data);
 }
+#endif
+
+#if !defined(USE_CUDA) & !defined(USE_CL)
+void Image::Permute(const BType *in_data, int count, int num_axes,
+                    const std::vector<int> &permute_order,
+                    const std::vector<int> &old_steps,
+                    const std::vector<int> &new_steps, BType *out_data) {
+  for (int i = 0; i < count; ++i) {
+    int old_idx = 0;
+    int idx = i;
+    for (int j = 0; j < num_axes; ++j) {
+      int order = permute_order[j];
+      old_idx += (idx / new_steps[j]) * old_steps[order];
+      idx %= new_steps[j];
+    }
+    out_data[i] = in_data[old_idx];
+  }
+}
+#else
+void Image::Permute(const BType *in_data, int count, int num_axes,
+                    const std::vector<int> &permute_order,
+                    const std::vector<int> &old_steps,
+                    const std::vector<int> &new_steps, BType *out_data) {}
 #endif
