@@ -1,10 +1,6 @@
 #ifndef SHADOW_UTIL_UTIL_HPP
 #define SHADOW_UTIL_UTIL_HPP
 
-#if defined(USE_GLog)
-#include <glog/logging.h>
-#endif
-
 #include <algorithm>
 #include <cmath>
 #include <fstream>
@@ -38,6 +34,8 @@ typedef std::vector<RectF> VecRectF;
 typedef std::vector<RectI> VecRectI;
 
 #if defined(USE_GLog)
+#include <glog/logging.h>
+
 #define Info(msg) \
   { LOG(INFO) << msg; }
 
@@ -49,15 +47,23 @@ typedef std::vector<RectI> VecRectI;
 
 #define Fatal(msg) \
   { LOG(FATAL) << msg; }
-#else
-inline static void Fatal(const std::string msg) {
-  std::cerr << msg << std::endl;
-  exit(1);
-}
 
-inline static void Warning(const std::string msg) {
-  std::cout << msg << std::endl;
-}
+#else
+#define Info(msg) \
+  { std::cout << __FILE__ << ":" << __LINE__ << " Info: " << msg << std::endl; }
+
+#define Warning(msg)                                                \
+  {                                                                 \
+    std::cerr << __FILE__ << ":" << __LINE__ << " Warning: " << msg \
+              << std::endl;                                         \
+  }
+
+#define Fatal(msg)                                                \
+  {                                                               \
+    std::cerr << __FILE__ << ":" << __LINE__ << " Fatal: " << msg \
+              << std::endl;                                       \
+    exit(1);                                                      \
+  }
 #endif
 
 inline static float rand_uniform(float min, float max) {
