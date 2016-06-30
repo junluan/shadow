@@ -19,11 +19,10 @@ void Pooling(const std::vector<int> &in_shape, const T *in_data,
              int kernel_size, int stride, int mode,
              const std::vector<int> &out_shape, T *out_data);
 
-template <typename T>
+template <typename T, typename Dtype>
 void Permute(const T *in_data, int count, int num_axes,
-             const std::vector<int> &permute_order,
-             const std::vector<int> &old_steps,
-             const std::vector<int> &new_steps, T *out_data);
+             const Dtype *permute_order, const Dtype *old_steps,
+             const Dtype *new_steps, T *out_data);
 
 }  // namespace Image
 

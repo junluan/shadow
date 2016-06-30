@@ -27,11 +27,13 @@ void Pooling(const std::vector<int> &in_shape, const T *in_data,
                   out_data);
 }
 
-template <typename T>
+template <typename T, typename Dtype>
 void Permute(const T *in_data, int count, int num_axes,
-             const std::vector<int> &permute_order,
-             const std::vector<int> &old_steps,
-             const std::vector<int> &new_steps, T *out_data) {}
+             const Dtype *permute_order, const Dtype *old_steps,
+             const Dtype *new_steps, T *out_data) {
+  Kernel::Permute(in_data, count, num_axes, permute_order, old_steps, new_steps,
+                  out_data);
+}
 
 // Explicit instantiation
 template void DataTransform<float>(int N, const float *in_data, float scale,
@@ -44,11 +46,10 @@ template void Pooling<float>(const std::vector<int> &in_shape,
                              const float *in_data, int kernel_size, int stride,
                              int mode, const std::vector<int> &out_shape,
                              float *out_data);
-template void Permute<float>(const float *in_data, int count, int num_axes,
-                             const std::vector<int> &permute_order,
-                             const std::vector<int> &old_steps,
-                             const std::vector<int> &new_steps,
-                             float *out_data);
+template void Permute<float, int>(const float *in_data, int count, int num_axes,
+                                  const int *permute_order,
+                                  const int *old_steps, const int *new_steps,
+                                  float *out_data);
 
 #elif defined(USE_CL)
 template <typename T>
@@ -205,11 +206,10 @@ void Pooling(const std::vector<int> &in_shape, const T *in_data,
   }
 }
 
-template <typename T>
+template <typename T, typename Dtype>
 void Permute(const T *in_data, int count, int num_axes,
-             const std::vector<int> &permute_order,
-             const std::vector<int> &old_steps,
-             const std::vector<int> &new_steps, T *out_data) {
+             const Dtype *permute_order, const Dtype *old_steps,
+             const Dtype *new_steps, T *out_data) {
   for (int i = 0; i < count; ++i) {
     int old_idx = 0;
     int idx = i;
@@ -233,11 +233,10 @@ template void Pooling<float>(const std::vector<int> &in_shape,
                              const float *in_data, int kernel_size, int stride,
                              int mode, const std::vector<int> &out_shape,
                              float *out_data);
-template void Permute<float>(const float *in_data, int count, int num_axes,
-                             const std::vector<int> &permute_order,
-                             const std::vector<int> &old_steps,
-                             const std::vector<int> &new_steps,
-                             float *out_data);
+template void Permute<float, int>(const float *in_data, int count, int num_axes,
+                                  const int *permute_order,
+                                  const int *old_steps, const int *new_steps,
+                                  float *out_data);
 #endif
 
 }  // namespace Image

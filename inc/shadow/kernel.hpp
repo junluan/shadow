@@ -48,9 +48,10 @@ void Pooling(const T *in_data, int batch, int in_c, int in_h, int in_w,
              int kernel_size, int stride, int out_h, int out_w, int mode,
              T *out_data);
 
-template <typename T>
-void Permute(const T *in_data, int batch, int in_c, int in_h, int in_w,
-             int out_c, int out_h, int out_w, T *out_data);
+template <typename T, typename Dtype>
+void Permute(const T *in_data, int count, int num_axes,
+             const Dtype *permute_order, const Dtype *old_steps,
+             const Dtype *new_steps, T *out_data);
 
 template <typename T>
 void ActivateArray(int N, const shadow::ActivateType &type, T *out_data);

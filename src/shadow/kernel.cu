@@ -108,6 +108,32 @@ void Pooling(const T *in_data, int batch, int in_c, int in_h, int in_w,
   CheckError(cudaPeekAtLastError());
 }
 
+__global__ void PermuteKernel(const float *in_data, int count, int num_axes,
+                              const int *permute_order, const int *old_steps,
+                              const int *new_steps, float *out_data) {
+  int globalid =
+      (blockIdx.x + blockIdx.y * gridDim.x) * blockDim.x + threadIdx.x;
+  if (globalid >= count) return;
+
+  int old_idx = 0;
+  int idx = globalid;
+  for (int j = 0; j < num_axes; ++j) {
+    int order = permute_order[j];
+    old_idx += (idx / new_steps[j]) * old_steps[order];
+    idx %= new_steps[j];
+  }
+  out_data[globalid] = in_data[old_idx];
+}
+
+template <typename T, typename Dtype>
+void Permute(const T *in_data, int count, int num_axes,
+             const Dtype *permute_order, const Dtype *old_steps,
+             const Dtype *new_steps, T *out_data) {
+  PermuteKernel<<<GridDim(count), BLOCK>>>(
+      in_data, count, num_axes, permute_order, old_steps, new_steps, out_data);
+  CheckError(cudaPeekAtLastError());
+}
+
 __device__ float Activate(float x, int mode) {
   switch (mode) {
     case 0:
@@ -179,6 +205,11 @@ template void Im2Col<float>(const float *in_data, int offset, int in_c,
 template void Pooling<float>(const float *in_data, int batch, int in_c,
                              int in_h, int in_w, int kernel_size, int stride,
                              int out_h, int out_w, int mode, float *out_data);
+
+template void Permute<float, int>(const float *in_data, int count, int num_axes,
+                                  const int *permute_order,
+                                  const int *old_steps, const int *new_steps,
+                                  float *out_data);
 
 template void ActivateArray<float>(int N, const shadow::ActivateType &type,
                                    float *out_data);
