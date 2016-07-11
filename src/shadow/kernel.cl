@@ -53,13 +53,13 @@ __kernel void Pooling(__global float *in_data, int batch, int in_c, int in_h,
 
   int offset = ((b_out * in_c + c_out) * in_h + i_inp) * in_w + j_inp;
 
-  float max = -10000.0f;
+  float max = FLT_MIN;
   float sum = 0.f;
   for (int ki = 0; ki < ksize; ++ki) {
     for (int kj = 0; kj < ksize; ++kj) {
       int in = offset + ki * in_w + kj;
       bool valid = in < batch * in_c * in_h * in_w;
-      float value = valid ? in_data[in] : -10000.0f;
+      float value = valid ? in_data[in] : FLT_MIN;
       max = (value > max) ? value : max;
       sum += valid ? in_data[in] : 0.f;
     }

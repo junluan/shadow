@@ -34,6 +34,9 @@ typedef std::vector<RectF> VecRectF;
 typedef std::vector<RectI> VecRectI;
 
 #if defined(USE_GLog)
+#ifndef __linux__
+#define GOOGLE_GLOG_DLL_DECL
+#endif
 #include <glog/logging.h>
 
 #define Info(msg) \

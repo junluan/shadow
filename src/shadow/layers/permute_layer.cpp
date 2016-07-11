@@ -53,7 +53,8 @@ void PermuteLayer::Forward() {
   Blob<float> *top = top_.at(0);
 
   Image::Permute(bottom->data(), bottom->count(), bottom->num_axes(),
-                 permute_order_, old_steps_, new_steps_, top->mutable_data());
+                 permute_order_->data(), old_steps_->data(), new_steps_->data(),
+                 top->mutable_data());
 }
 
 void PermuteLayer::Release() {

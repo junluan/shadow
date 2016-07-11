@@ -1,5 +1,7 @@
 #include "shadow/util/image.hpp"
 
+#include <cfloat>
+
 namespace Image {
 
 #if defined(USE_CUDA)
@@ -182,7 +184,7 @@ void Pooling(const std::vector<int> &in_shape, const T *in_data,
       for (int h = 0; h < out_h; ++h) {
         for (int w = 0; w < out_w; ++w) {
           int out_index = w + out_w * (h + out_h * (c + in_c * b));
-          float max = -10000.0f;
+          float max = FLT_MIN;
           float sum = 0.f;
           for (int ki = 0; ki < kernel_size; ++ki) {
             for (int kj = 0; kj < kernel_size; ++kj) {
@@ -191,7 +193,7 @@ void Pooling(const std::vector<int> &in_shape, const T *in_data,
               int index = cur_w + in_w * (cur_h + in_h * (c + b * in_c));
               bool valid =
                   (cur_h >= 0 && cur_h < in_h && cur_w >= 0 && cur_w < in_w);
-              float value = valid ? in_data[index] : -10000.0f;
+              float value = valid ? in_data[index] : FLT_MIN;
               max = (value > max) ? value : max;
               sum += valid ? in_data[index] : 0.f;
             }
