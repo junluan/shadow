@@ -49,10 +49,12 @@ void ConvLayer::Setup(VecBlob *blobs) {
   col_image_ = new Blob<float>(out_map_size_ * kernel_num_);
 
 #if defined(VERBOSE)
-  std::cout << "Convolution Layer: " << format_vector(bottom->shape(), " x ")
-            << " input -> " << out_c << "_" << kernel_size_ << "x"
-            << kernel_size_ << "_s" << stride_ << "_p" << pad_ << " filters -> "
-            << format_vector(top->shape(), " x ") << " output" << std::endl;
+  std::cout << "Convolution Layer: "
+            << Util::format_vector(bottom->shape(), " x ") << " input -> "
+            << out_c << "_" << kernel_size_ << "x" << kernel_size_ << "_s"
+            << stride_ << "_p" << pad_ << " filters -> "
+            << Util::format_vector(top->shape(), " x ") << " output"
+            << std::endl;
 #endif
 }
 

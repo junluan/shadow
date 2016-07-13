@@ -2,13 +2,27 @@
 #define SHADOW_UTIL_UTIL_HPP
 
 #include <algorithm>
+#include <cfloat>
 #include <cmath>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
+#include <list>
 #include <sstream>
 #include <string>
 #include <vector>
+
+const float EPS = 0.001f;
+
+template <class Dtype>
+class Point {
+ public:
+  Point() {}
+  Point(Dtype x_t, Dtype y_t, float score_t = -1)
+      : x(x_t), y(y_t), score(score_t) {}
+  Dtype x, y;
+  float score;
+};
 
 template <class Dtype>
 class Rect {
@@ -27,11 +41,24 @@ class Size {
   Dtype w, h;
 };
 
+typedef Point<float> Point2f;
+typedef Point<int> Point2i;
 typedef Rect<float> RectF;
 typedef Rect<int> RectI;
+typedef Size<float> SizeF;
 typedef Size<int> SizeI;
+
+typedef std::vector<Point2f> VecPoint2f;
+typedef std::vector<Point2i> VecPoint2i;
 typedef std::vector<RectF> VecRectF;
 typedef std::vector<RectI> VecRectI;
+typedef std::vector<SizeF> VecSizeF;
+typedef std::vector<SizeI> VecSizeI;
+
+typedef std::vector<float> VecFloat;
+typedef std::vector<int> VecInt;
+typedef std::list<float> ListFloat;
+typedef std::list<int> ListInt;
 
 #if defined(USE_GLog)
 #ifndef __linux__
@@ -69,33 +96,35 @@ typedef std::vector<RectI> VecRectI;
   }
 #endif
 
-inline static float rand_uniform(float min, float max) {
+namespace Util {
+
+inline float rand_uniform(float min, float max) {
   return (static_cast<float>(std::rand()) / RAND_MAX) * (max - min) + min;
 }
 
 template <typename Dtype>
-inline static Dtype constrain(Dtype min, Dtype max, Dtype value) {
+inline Dtype constrain(Dtype min, Dtype max, Dtype value) {
   if (value < min) return min;
   if (value > max) return max;
   return value;
 }
 
 template <typename Dtype>
-inline static std::string to_string(Dtype val) {
+inline std::string to_string(Dtype val) {
   std::ostringstream out;
   out << val;
   return out.str();
 }
 
-inline static std::string format_int(int n, int width, char pad = ' ') {
+inline std::string format_int(int n, int width, char pad = ' ') {
   std::stringstream out;
   out << std::setw(width) << std::setfill(pad) << n;
   return out.str();
 }
 
-inline static std::string format_vector(const std::vector<int> &shape,
-                                        const std::string &split = ", ",
-                                        const std::string &postfix = "") {
+inline std::string format_vector(const std::vector<int> &shape,
+                                 const std::string &split = ", ",
+                                 const std::string &postfix = "") {
   std::stringstream out;
   int i = 0;
   for (; i < shape.size() - 1; ++i) {
@@ -105,9 +134,9 @@ inline static std::string format_vector(const std::vector<int> &shape,
   return out.str();
 }
 
-inline static std::string find_replace(const std::string str,
-                                       const std::string old_str,
-                                       const std::string new_str) {
+inline std::string find_replace(const std::string str,
+                                const std::string old_str,
+                                const std::string new_str) {
   std::string origin(str);
   size_t index = 0;
   while ((index = origin.find(old_str, index)) != std::string::npos) {
@@ -117,24 +146,24 @@ inline static std::string find_replace(const std::string str,
   return origin;
 }
 
-inline static std::string find_replace_last(const std::string str,
-                                            const std::string old_str,
-                                            const std::string new_str) {
+inline std::string find_replace_last(const std::string str,
+                                     const std::string old_str,
+                                     const std::string new_str) {
   std::string origin(str);
   size_t index = origin.find_last_of(old_str);
   origin.replace(index, old_str.length(), new_str);
   return origin;
 }
 
-inline static std::string change_extension(const std::string str,
-                                           const std::string new_ext) {
+inline std::string change_extension(const std::string str,
+                                    const std::string new_ext) {
   std::string origin(str);
   size_t index = origin.find_last_of(".");
   origin.replace(index, origin.length(), new_ext);
   return origin;
 }
 
-inline static std::vector<std::string> load_list(const std::string list_file) {
+inline std::vector<std::string> load_list(const std::string list_file) {
   std::ifstream file(list_file);
   if (!file.is_open()) Fatal("Load image list file error!");
 
@@ -147,7 +176,7 @@ inline static std::vector<std::string> load_list(const std::string list_file) {
   return image_list;
 }
 
-inline static std::string read_text_from_file(const std::string filename) {
+inline std::string read_text_from_file(const std::string filename) {
   std::ifstream file(filename);
   if (!file.is_open()) {
     Warning("Can't open text file " + filename);
@@ -160,6 +189,8 @@ inline static std::string read_text_from_file(const std::string filename) {
   file.close();
   return result.str();
 }
+
+}  // namespace Util
 
 #include <ctime>
 class Timer {

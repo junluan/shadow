@@ -30,8 +30,9 @@ void ConnectedLayer::Setup(VecBlob *blobs) {
   biases_ = new Blob<float>(out_num);
 
 #if defined(VERBOSE)
-  std::cout << "Connected Layer: " << format_vector(bottom->shape(), " x ")
-            << " input -> " << format_vector(top->shape(), " x ") << " output"
+  std::cout << "Connected Layer: "
+            << Util::format_vector(bottom->shape(), " x ") << " input -> "
+            << Util::format_vector(top->shape(), " x ") << " output"
             << std::endl;
 #endif
 }

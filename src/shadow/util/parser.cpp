@@ -14,7 +14,7 @@ using google::protobuf::TextFormat;
 
 void Parser::ParseNetworkProtoTxt(Network *net, const std::string prototxt_file,
                                   int batch) {
-  std::string proto_str = read_text_from_file(prototxt_file);
+  std::string proto_str = Util::read_text_from_file(prototxt_file);
   bool success = TextFormat::ParseFromString(proto_str, &net->net_param_);
 
   if (!proto_str.compare("") || !success) Fatal("Parse configure file error");
@@ -29,7 +29,7 @@ void Parser::ParseNetworkProtoTxt(Network *net, const std::string prototxt_file,
 
   for (int i = 0; i < net->num_layers_; ++i) {
 #if defined(VERBOSE)
-    std::cout << format_int(i, 2) << ": ";
+    std::cout << Util::format_int(i, 2) << ": ";
 #endif
 
     shadow::LayerParameter layer_param = net->net_param_.layer(i);

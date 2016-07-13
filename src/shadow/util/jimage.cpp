@@ -16,7 +16,7 @@ void JImage::Write(const std::string im_path) {
   if (data_ == nullptr) Fatal("JImage data is NULL!");
   int is_ok = -1;
   int step = w_ * c_;
-  std::string path = change_extension(im_path, ".png");
+  std::string path = Util::change_extension(im_path, ".png");
   if (order_ == kRGB) {
     is_ok = stbi_write_png(path.c_str(), w_, h_, c_, data_, step);
   } else if (order_ == kBGR) {
@@ -180,11 +180,11 @@ void JImage::Filter2D(const float *kernel, int height, int width) {
       }
       int offset = (w_ * h + w) * c_;
       data_f_[offset + 0] =
-          (unsigned char)constrain(0, 255, static_cast<int>(val_c0));
+          (unsigned char)Util::constrain(0, 255, static_cast<int>(val_c0));
       data_f_[offset + 1] =
-          (unsigned char)constrain(0, 255, static_cast<int>(val_c1));
+          (unsigned char)Util::constrain(0, 255, static_cast<int>(val_c1));
       data_f_[offset + 2] =
-          (unsigned char)constrain(0, 255, static_cast<int>(val_c2));
+          (unsigned char)Util::constrain(0, 255, static_cast<int>(val_c2));
     }
   }
   memcpy(data_, data_f_, c_ * h_ * w_);
@@ -299,13 +299,13 @@ void I4202RGB(unsigned char *src_y, unsigned char *src_u, unsigned char *src_v,
       int b = y + u + ((u * 198) >> 8);
 
       int offset = (src_w * h + w) * 3;
-      dst_rgb[offset + 1] = (unsigned char)constrain(0, 255, g);
+      dst_rgb[offset + 1] = (unsigned char)Util::constrain(0, 255, g);
       if (order == kRGB) {
-        dst_rgb[offset + 0] = (unsigned char)constrain(0, 255, r);
-        dst_rgb[offset + 2] = (unsigned char)constrain(0, 255, b);
+        dst_rgb[offset + 0] = (unsigned char)Util::constrain(0, 255, r);
+        dst_rgb[offset + 2] = (unsigned char)Util::constrain(0, 255, b);
       } else if (order == kBGR) {
-        dst_rgb[offset + 0] = (unsigned char)constrain(0, 255, b);
-        dst_rgb[offset + 2] = (unsigned char)constrain(0, 255, r);
+        dst_rgb[offset + 0] = (unsigned char)Util::constrain(0, 255, b);
+        dst_rgb[offset + 2] = (unsigned char)Util::constrain(0, 255, r);
       } else {
         Fatal("Unsupported format to convert i420 to rgb!");
       }
@@ -314,10 +314,10 @@ void I4202RGB(unsigned char *src_y, unsigned char *src_u, unsigned char *src_v,
 }
 
 void JImage::Rectangle(const Box &box, const Scalar scalar, bool console_show) {
-  int x1 = constrain(0, w_ - 1, static_cast<int>(box.x));
-  int y1 = constrain(0, h_ - 1, static_cast<int>(box.y));
-  int x2 = constrain(x1, w_ - 1, static_cast<int>(x1 + box.w));
-  int y2 = constrain(y1, h_ - 1, static_cast<int>(y1 + box.h));
+  int x1 = Util::constrain(0, w_ - 1, static_cast<int>(box.x));
+  int y1 = Util::constrain(0, h_ - 1, static_cast<int>(box.y));
+  int x2 = Util::constrain(x1, w_ - 1, static_cast<int>(x1 + box.w));
+  int y2 = Util::constrain(y1, h_ - 1, static_cast<int>(y1 + box.h));
 
   for (int i = x1; i <= x2; ++i) {
     int offset = (w_ * y1 + i) * c_;

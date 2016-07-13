@@ -24,7 +24,7 @@ void DataLayer::Setup(VecBlob *blobs) {
   blobs->push_back(top);
 
 #if defined(VERBOSE)
-  std::cout << "Data Layer: " << format_vector(bottom->shape(), " x ")
+  std::cout << "Data Layer: " << Util::format_vector(bottom->shape(), " x ")
             << " input" << std::endl;
 #endif
 }

@@ -68,12 +68,12 @@ void Yolo::Test(string image_file) {
 }
 
 void Yolo::BatchTest(string list_file, bool image_write) {
-  vector<string> image_list = load_list(list_file);
+  vector<string> image_list = Util::load_list(list_file);
   size_t num_im = image_list.size();
 
   Timer timer;
   timer.start();
-  ofstream file(find_replace_last(list_file, ".", "-result."));
+  ofstream file(Util::find_replace_last(list_file, ".", "-result."));
   for (int i = 0; i < num_im; ++i) {
     im_ini_->Read(image_list[i]);
     vector<VecBox> Bboxes;
@@ -81,7 +81,7 @@ void Yolo::BatchTest(string list_file, bool image_write) {
     Boxes::AmendBoxes(&Bboxes, im_ini_->h_, im_ini_->w_, rois_);
     VecBox boxes = Boxes::BoxesNMS(Bboxes, 0.5);
     if (image_write) {
-      string path = find_replace_last(image_list[i], ".", "-result.");
+      string path = Util::find_replace_last(image_list[i], ".", "-result.");
       for (int j = 0; j < boxes.size(); ++j) {
         Box box = boxes[j];
         Scalar scalar;
@@ -114,8 +114,8 @@ void Yolo::VideoTest(string video_file, bool video_show, bool video_write) {
   int height = static_cast<int>(capture.get(CV_CAP_PROP_FRAME_HEIGHT));
   cv::VideoWriter writer;
   if (video_write) {
-    string outfile = find_replace_last(video_file, ".", "-result.");
-    outfile = change_extension(outfile, ".avi");
+    string outfile = Util::find_replace_last(video_file, ".", "-result.");
+    outfile = Util::change_extension(outfile, ".avi");
     int format = CV_FOURCC('X', '2', '6', '4');
     writer.open(outfile, format, rate, cv::Size(width, height));
   }
@@ -226,10 +226,10 @@ void Yolo::ConvertYoloDetections(float *predictions, int classes, int width,
       x = x - w / 2;
       y = y - h / 2;
 
-      (*boxes)[index].x = constrain(0.f, width - 1.f, x * width);
-      (*boxes)[index].y = constrain(0.f, height - 1.f, y * height);
-      (*boxes)[index].w = constrain(0.f, width - 1.f, w * width);
-      (*boxes)[index].h = constrain(0.f, height - 1.f, h * height);
+      (*boxes)[index].x = Util::constrain(0.f, width - 1.f, x * width);
+      (*boxes)[index].y = Util::constrain(0.f, height - 1.f, y * height);
+      (*boxes)[index].w = Util::constrain(0.f, width - 1.f, w * width);
+      (*boxes)[index].h = Util::constrain(0.f, height - 1.f, h * height);
 
       float max_score = 0;
       int max_index = -1;

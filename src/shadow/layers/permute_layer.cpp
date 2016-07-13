@@ -42,9 +42,9 @@ void PermuteLayer::Setup(VecBlob *blobs) {
   blobs->push_back(top);
 
 #if defined(VERBOSE)
-  std::cout << "Permute Layer: " << format_vector(bottom->shape(), " x ")
-            << " input -> " << format_vector(top->shape(), " x ") << " output"
-            << std::endl;
+  std::cout << "Permute Layer: " << Util::format_vector(bottom->shape(), " x ")
+            << " input -> " << Util::format_vector(top->shape(), " x ")
+            << " output" << std::endl;
 #endif
 }
 

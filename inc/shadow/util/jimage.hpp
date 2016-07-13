@@ -14,9 +14,9 @@ class Scalar {
  public:
   Scalar() {}
   Scalar(int r_t, int g_t, int b_t) {
-    r = (unsigned char)constrain(0, 255, r_t);
-    g = (unsigned char)constrain(0, 255, g_t);
-    b = (unsigned char)constrain(0, 255, b_t);
+    r = (unsigned char)Util::constrain(0, 255, r_t);
+    g = (unsigned char)Util::constrain(0, 255, g_t);
+    b = (unsigned char)Util::constrain(0, 255, b_t);
   }
   unsigned char r, g, b;
 };

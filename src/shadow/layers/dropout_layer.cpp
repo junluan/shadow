@@ -7,8 +7,8 @@ void DropoutLayer::Setup(VecBlob *blobs) {
           layer_param_.bottom(0) + " not exist!");
 
 #if defined(VERBOSE)
-  std::cout << "Dropout Layer: " << format_vector(bottom->shape(), " x ")
-            << " input -> " << format_vector(bottom->shape(), " x ")
+  std::cout << "Dropout Layer: " << Util::format_vector(bottom->shape(), " x ")
+            << " input -> " << Util::format_vector(bottom->shape(), " x ")
             << " output" << std::endl;
 #endif
 }
