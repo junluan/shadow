@@ -21,7 +21,7 @@ class Scalar {
   unsigned char r, g, b;
 };
 
-enum Order { kRGB, kBGR };
+enum Order { kGray, kRGB, kBGR };
 
 class JImage {
  public:
@@ -32,6 +32,20 @@ class JImage {
     data_ = new unsigned char[c_ * h_ * w_];
   }
   ~JImage() { Release(); }
+
+  const unsigned char *data() const { return data_; }
+  unsigned char *data() { return data_; }
+
+  const unsigned char operator()(int c, int h, int w) const {
+    if (c >= c_ || h >= h_ || w >= w_) Fatal("Index out of range!");
+    return data_[(c * h_ + h) * w_ + w];
+  }
+  unsigned char &operator()(int c, int h, int w) {
+    if (c >= c_ || h >= h_ || w >= w_) Fatal("Index out of range!");
+    return data_[(c * h_ + h) * w_ + w];
+  }
+
+  void SetZero() { memset(data_, 0, sizeof(unsigned char) * c_ * h_ * w_); }
 
   void Read(const std::string im_path);
   void Write(const std::string im_path);

@@ -34,7 +34,10 @@ void JImage::Show(const std::string show_name, int wait_time) {
   if (data_ == nullptr) Fatal("JImage data is NULL!");
 #if defined(USE_OpenCV)
   cv::namedWindow(show_name, cv::WINDOW_NORMAL);
-  if (order_ == kRGB) {
+  if (order_ == kGray) {
+    cv::Mat im_mat(h_, w_, CV_8UC1, data_);
+    cv::imshow(show_name, im_mat);
+  } else if (order_ == kRGB) {
     unsigned char *data_inv = new unsigned char[c_ * h_ * w_];
     GetInv(data_inv);
     cv::Mat im_mat(h_, w_, CV_8UC3, data_inv);
