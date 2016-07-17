@@ -103,9 +103,9 @@ class Blob {
 
 #else
       Kernel::ReleaseBuffer(data_);
-      data_ = nullptr;
 #endif
     }
+    data_ = nullptr;
     shape_.clear();
   }
 

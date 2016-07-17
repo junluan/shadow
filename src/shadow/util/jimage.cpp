@@ -379,7 +379,10 @@ void JImage::GetBatchData(float *batch_data) {
 }
 
 void JImage::Release() {
-  if (data_ != nullptr) delete[] data_;
+  if (data_ != nullptr) {
+    delete[] data_;
+    data_ = nullptr;
+  }
 }
 
 void JImage::GetInv(unsigned char *im_inv) {
