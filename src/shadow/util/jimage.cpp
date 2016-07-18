@@ -260,26 +260,60 @@ void RGB2I420(unsigned char *src_bgr, int src_h, int src_w, int src_step,
     Fatal("Unsupported order to convert to I420!");
   }
   int r, g, b;
-  int dst_h = src_h / 2, dst_w = src_w / 2;
+  int dst_h = src_h >> 1, dst_w = src_w >> 1;
   int uv_offset = src_h * src_w, uv_step = dst_h * dst_w;
+  int s_h, s_w, y, h_off, w_off, src_offset, y_offset;
+  int cb, cb_0, cb_1, cb_2, cb_3, cr, cr_0, cr_1, cr_2, cr_3;
   for (int h = 0; h < dst_h; ++h) {
     for (int w = 0; w < dst_w; ++w) {
-      int s_h = 2 * h, s_w = 2 * w, y, cb = 0, cr = 0;
-      for (int h_off = 0; h_off < 2; ++h_off) {
-        for (int w_off = 0; w_off < 2; ++w_off) {
-          int src_offset = (s_h + h_off) * src_step + (s_w + w_off) * 3;
-          int y_offset = (s_h + h_off) * src_w + s_w + w_off;
-          r = src_bgr[src_offset + loc_r];
-          g = src_bgr[src_offset + loc_g];
-          b = src_bgr[src_offset + loc_b];
-          y = (b * yuvYb + g * yuvYg + r * yuvYr) >> 10;
-          cb += ((b - y) * yuvCb + (128 << 10)) >> 10;
-          cr += ((r - y) * yuvCr + (128 << 10)) >> 10;
-          dst_i420[y_offset] = (unsigned char)y;
-        }
-      }
-      cb = CLIP((cb >> 2));
-      cr = CLIP((cr >> 2));
+      s_h = h << 1, s_w = w << 1;
+
+      h_off = 0, w_off = 0;
+      src_offset = (s_h + h_off) * src_step + (s_w + w_off) * 3;
+      y_offset = (s_h + h_off) * src_w + s_w + w_off;
+      r = src_bgr[src_offset + loc_r];
+      g = src_bgr[src_offset + loc_g];
+      b = src_bgr[src_offset + loc_b];
+      y = (b * yuvYb + g * yuvYg + r * yuvYr) >> 10;
+      cb_0 = ((b - y) * yuvCb + (128 << 10)) >> 10;
+      cr_0 = ((r - y) * yuvCr + (128 << 10)) >> 10;
+      dst_i420[y_offset] = (unsigned char)y;
+
+      h_off = 0, w_off = 1;
+      src_offset = (s_h + h_off) * src_step + (s_w + w_off) * 3;
+      y_offset = (s_h + h_off) * src_w + s_w + w_off;
+      r = src_bgr[src_offset + loc_r];
+      g = src_bgr[src_offset + loc_g];
+      b = src_bgr[src_offset + loc_b];
+      y = (b * yuvYb + g * yuvYg + r * yuvYr) >> 10;
+      cb_1 = ((b - y) * yuvCb + (128 << 10)) >> 10;
+      cr_1 = ((r - y) * yuvCr + (128 << 10)) >> 10;
+      dst_i420[y_offset] = (unsigned char)y;
+
+      h_off = 1, w_off = 0;
+      src_offset = (s_h + h_off) * src_step + (s_w + w_off) * 3;
+      y_offset = (s_h + h_off) * src_w + s_w + w_off;
+      r = src_bgr[src_offset + loc_r];
+      g = src_bgr[src_offset + loc_g];
+      b = src_bgr[src_offset + loc_b];
+      y = (b * yuvYb + g * yuvYg + r * yuvYr) >> 10;
+      cb_2 = ((b - y) * yuvCb + (128 << 10)) >> 10;
+      cr_2 = ((r - y) * yuvCr + (128 << 10)) >> 10;
+      dst_i420[y_offset] = (unsigned char)y;
+
+      h_off = 1, w_off = 1;
+      src_offset = (s_h + h_off) * src_step + (s_w + w_off) * 3;
+      y_offset = (s_h + h_off) * src_w + s_w + w_off;
+      r = src_bgr[src_offset + loc_r];
+      g = src_bgr[src_offset + loc_g];
+      b = src_bgr[src_offset + loc_b];
+      y = (b * yuvYb + g * yuvYg + r * yuvYr) >> 10;
+      cb_3 = ((b - y) * yuvCb + (128 << 10)) >> 10;
+      cr_3 = ((r - y) * yuvCr + (128 << 10)) >> 10;
+      dst_i420[y_offset] = (unsigned char)y;
+
+      cb = CLIP(((cb_0 + cb_1 +cb_2 + cb_3) >> 2));
+      cr = CLIP(((cr_0 + cr_1 +cr_2 + cr_3) >> 2));
       int offset = uv_offset + h * dst_w + w;
       dst_i420[offset] = (unsigned char)cb;
       dst_i420[offset + uv_step] = (unsigned char)cr;
