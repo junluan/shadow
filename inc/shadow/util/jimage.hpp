@@ -66,6 +66,8 @@ class JImage {
                  bool console_show = true);
   void Rectangle(const VecBox &boxes, const Scalar scalar = Scalar(0, 255, 0),
                  bool console_show = true);
+
+  VecPoint2i GetNoneZeroPoints(int threshold = 0) const;
   void GetBatchData(float *batch_data);
 
   void Release();

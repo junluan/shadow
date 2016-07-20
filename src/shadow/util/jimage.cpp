@@ -68,7 +68,7 @@ void JImage::CopyTo(JImage *im_copy) {
   im_copy->h_ = h_;
   im_copy->w_ = w_;
   im_copy->order_ = order_;
-  memcpy(im_copy->data_, data_, c_ * h_ * w_);
+  memcpy(im_copy->data_, data_, sizeof(unsigned char) * c_ * h_ * w_);
 }
 
 void JImage::Resize(JImage *im_res, int height, int width) {
@@ -125,7 +125,7 @@ void JImage::Crop(JImage *im_crop, RectF crop) {
   for (int h = 0; h < im_crop->h_; ++h) {
     index_src = data_ + (h + h_off) * step_src + w_off * c_;
     index_crop = im_crop->data_ + h * step_crop;
-    memcpy(index_crop, index_src, step_crop);
+    memcpy(index_crop, index_src, sizeof(unsigned char) * step_crop);
   }
 }
 
@@ -190,7 +190,7 @@ void JImage::Filter2D(const float *kernel, int height, int width) {
           (unsigned char)Util::constrain(0, 255, static_cast<int>(val_c2));
     }
   }
-  memcpy(data_, data_f_, c_ * h_ * w_);
+  memcpy(data_, data_f_, sizeof(unsigned char) * c_ * h_ * w_);
 }
 
 #if defined(USE_OpenCV)
@@ -205,7 +205,7 @@ void JImage::FromMat(const cv::Mat &im_mat) {
   h_ = im_mat.rows;
   w_ = im_mat.cols;
   order_ = kBGR;
-  memcpy(data_, im_mat.data, c_ * h_ * w_);
+  memcpy(data_, im_mat.data, sizeof(unsigned char) * c_ * h_ * w_);
 }
 
 void JImage::FromMatWithCropResize(const cv::Mat &im_mat, const RectF crop,
@@ -312,8 +312,8 @@ void RGB2I420(unsigned char *src_bgr, int src_h, int src_w, int src_step,
       cr_3 = ((r - y) * yuvCr + (128 << 10)) >> 10;
       dst_i420[y_offset] = (unsigned char)y;
 
-      cb = CLIP(((cb_0 + cb_1 +cb_2 + cb_3) >> 2));
-      cr = CLIP(((cr_0 + cr_1 +cr_2 + cr_3) >> 2));
+      cb = CLIP(((cb_0 + cb_1 + cb_2 + cb_3) >> 2));
+      cr = CLIP(((cr_0 + cr_1 + cr_2 + cr_3) >> 2));
       int offset = uv_offset + h * dst_w + w;
       dst_i420[offset] = (unsigned char)cb;
       dst_i420[offset + uv_step] = (unsigned char)cr;
@@ -388,6 +388,29 @@ void JImage::Rectangle(const VecBox &boxes, const Scalar scalar,
   for (int b = 0; b < boxes.size(); ++b) {
     Rectangle(boxes[b], scalar, console_show);
   }
+}
+
+VecPoint2i JImage::GetNoneZeroPoints(int threshold) const {
+  VecPoint2i nz_points;
+  int offset, step = w_ * c_, val;
+  for (int h = 0; h < h_; ++h) {
+    for (int w = 0; w < w_; ++w) {
+      offset = h * step + w * c_;
+      val = 0;
+      if (order_ == kRGB || order_ == kBGR) {
+        val = data_[offset] + data_[offset + 1] + data_[offset + 2];
+        val /= 3;
+      } else if (order_ == kGray) {
+        val = data_[offset];
+      } else {
+        Fatal("Unsupported format to get none zero points!");
+      }
+      if (val > threshold) {
+        nz_points.push_back(Point2i(w, h, val));
+      }
+    }
+  }
+  return nz_points;
 }
 
 void JImage::GetBatchData(float *batch_data) {
