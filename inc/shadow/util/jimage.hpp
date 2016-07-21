@@ -4,8 +4,6 @@
 #include "shadow/util/boxes.hpp"
 #include "shadow/util/util.hpp"
 
-#include <string>
-
 #if defined(USE_OpenCV)
 #include <opencv2/opencv.hpp>
 #endif
@@ -30,9 +28,15 @@ enum Order { kGray, kRGB, kBGR, kArc };
 
 class JImage {
  public:
-  JImage() : data_(nullptr), arc_data_(nullptr) {}
-  explicit JImage(const std::string im_path)
-      : data_(nullptr), arc_data_(nullptr) {
+  JImage() : data_(nullptr) {
+#ifdef USE_ArcSoft
+    arc_data_ = nullptr;
+#endif
+  }
+  explicit JImage(const std::string im_path) : data_(nullptr) {
+#ifdef USE_ArcSoft
+    arc_data_ = nullptr;
+#endif
     Read(im_path);
   }
   JImage(int channel, int height, int width, Order order = kRGB)

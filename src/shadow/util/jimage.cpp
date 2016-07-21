@@ -6,7 +6,10 @@
 #include "stb/stb_image_write.h"
 
 void JImage::Read(const std::string im_path) {
-  if (data_ != nullptr) delete[] data_;
+  if (data_ != nullptr) {
+    delete[] data_;
+    data_ = nullptr;
+  }
   data_ = stbi_load(im_path.c_str(), &w_, &h_, &c_, 3);
   if (data_ == nullptr) Fatal("Failed to read image " + im_path);
   order_ = kRGB;
