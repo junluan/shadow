@@ -10,6 +10,11 @@
 #include <opencv2/opencv.hpp>
 #endif
 
+#define USE_ArcSoft
+#ifdef USE_ArcSoft
+#include "arcsoft/asvloffscreen.h"
+#endif
+
 class Scalar {
  public:
   Scalar() {}
@@ -21,12 +26,15 @@ class Scalar {
   unsigned char r, g, b;
 };
 
-enum Order { kGray, kRGB, kBGR };
+enum Order { kGray, kRGB, kBGR, kArc };
 
 class JImage {
  public:
-  JImage() : data_(nullptr) {}
-  explicit JImage(const std::string im_path) : data_(nullptr) { Read(im_path); }
+  JImage() : data_(nullptr), arc_data_(nullptr) {}
+  explicit JImage(const std::string im_path)
+      : data_(nullptr), arc_data_(nullptr) {
+    Read(im_path);
+  }
   JImage(int channel, int height, int width, Order order = kRGB)
       : c_(channel), h_(height), w_(width), order_(order) {
     data_ = new unsigned char[c_ * h_ * w_];
@@ -62,6 +70,14 @@ class JImage {
                              int resize_h, int resize_w, float *batch_data);
 #endif
 
+#ifdef USE_ArcSoft
+  void FromArcImage(const ASVLOFFSCREEN &im_arc);
+  void FromArcImageWithCropResize(const ASVLOFFSCREEN &im_arc, const RectF crop,
+                                  int resize_h, int resize_w,
+                                  float *batch_data);
+  void JImageToArcImage(int arc_format);
+#endif
+
   void Rectangle(const Box &box, const Scalar scalar = Scalar(0, 255, 0),
                  bool console_show = true);
   void Rectangle(const VecBox &boxes, const Scalar scalar = Scalar(0, 255, 0),
@@ -73,6 +89,11 @@ class JImage {
   void Release();
 
   int c_, h_, w_;
+
+#ifdef USE_ArcSoft
+  ASVLOFFSCREEN arc_image_;
+  unsigned char *arc_data_;
+#endif
 
  private:
   void GetInv(unsigned char *im_inv);
