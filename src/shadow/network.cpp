@@ -8,6 +8,13 @@ void Network::LoadModel(const std::string cfg_file,
   parser.LoadWeights(this, weight_file);
 }
 
+void Network::LoadModel(const std::string cfg_str, const float *weight_data,
+                        int batch) {
+  Parser parser;
+  parser.ParseNetworkProtoStr(this, cfg_str, batch);
+  parser.LoadWeights(this, weight_data);
+}
+
 void Network::Forward(float *in_data) {
   if (in_data != nullptr) PreFillData(in_data);
   ForwardNetwork();

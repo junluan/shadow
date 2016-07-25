@@ -1,8 +1,6 @@
 #include "yolo.hpp"
 #include "shadow/kernel.hpp"
 
-#include <ctime>
-
 using namespace std;
 
 Yolo::Yolo(string cfg_file, string weight_file, float threshold) {

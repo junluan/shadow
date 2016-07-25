@@ -7,9 +7,12 @@
 
 class Parser {
  public:
-  void ParseNetworkProtoTxt(Network *net, const std::string prototxt_file,
+  void ParseNetworkProtoTxt(Network *net, const std::string proto_txt,
+                            int batch);
+  void ParseNetworkProtoStr(Network *net, const std::string proto_str,
                             int batch);
   void LoadWeights(Network *net, const std::string weight_file);
+  void LoadWeights(Network *net, const float *weights);
 
  private:
   void ParseNet(Network *net);
@@ -18,6 +21,7 @@ class Parser {
 
   void LoadWeightsUpto(Network *net, const std::string weight_file,
                        int cut_off);
+  void LoadWeightsUpto(Network *net, const float *weights, int cut_off);
 };
 
 #endif  // SHADOW_UTIL_PARSER_HPP

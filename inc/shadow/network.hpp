@@ -10,6 +10,8 @@ class Network {
  public:
   void LoadModel(const std::string cfg_file, const std::string weight_file,
                  int batch = 1);
+  void LoadModel(const std::string cfg_str, const float *weight_data,
+                 int batch = 1);
 
   void Forward(float *in_data = nullptr);
   const Layer *GetLayerByName(const std::string layer_name);

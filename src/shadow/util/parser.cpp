@@ -12,9 +12,14 @@
 
 using google::protobuf::TextFormat;
 
-void Parser::ParseNetworkProtoTxt(Network *net, const std::string prototxt_file,
+void Parser::ParseNetworkProtoTxt(Network *net, const std::string proto_txt,
                                   int batch) {
-  std::string proto_str = Util::read_text_from_file(prototxt_file);
+  std::string proto_str = Util::read_text_from_file(proto_txt);
+  ParseNetworkProtoStr(net, proto_str, batch);
+}
+
+void Parser::ParseNetworkProtoStr(Network *net, const std::string proto_str,
+                                  int batch) {
   bool success = TextFormat::ParseFromString(proto_str, &net->net_param_);
 
   if (!proto_str.compare("") || !success) Fatal("Parse configure file error");
@@ -40,6 +45,10 @@ void Parser::ParseNetworkProtoTxt(Network *net, const std::string prototxt_file,
 
 void Parser::LoadWeights(Network *net, const std::string weight_file) {
   LoadWeightsUpto(net, weight_file, net->num_layers_);
+}
+
+void Parser::LoadWeights(Network *net, const float *weights) {
+  LoadWeightsUpto(net, weights, net->num_layers_);
 }
 
 void Parser::ParseNet(Network *net) {
@@ -85,8 +94,7 @@ void Parser::LoadWeightsUpto(Network *net, const std::string weight_file,
   std::ifstream file(weight_file, std::ios::binary);
   if (!file.is_open()) Fatal("Load weight file error!");
 
-  char garbage[16];
-  file.read(garbage, sizeof(char) * 16);
+  file.seekg(sizeof(char) * 16, std::ios::beg);
 
   for (int i = 0; i < net->num_layers_ && i < cut_off; ++i) {
     Layer *layer = net->layers_[i];
@@ -116,4 +124,28 @@ void Parser::LoadWeightsUpto(Network *net, const std::string weight_file,
   }
 
   file.close();
+}
+
+void Parser::LoadWeightsUpto(Network *net, const float *weights, int cut_off) {
+  float *index = const_cast<float *>(weights);
+  for (int i = 0; i < net->num_layers_ && i < cut_off; ++i) {
+    Layer *layer = net->layers_[i];
+    if (layer->layer_param_.type() == shadow::LayerType::Convolution) {
+      ConvLayer *l = reinterpret_cast<ConvLayer *>(layer);
+      int in_c = l->bottom_[0]->shape(1), out_c = l->top_[0]->shape(1);
+      int num = out_c * in_c * l->kernel_size() * l->kernel_size();
+      l->set_biases(index);
+      index += out_c;
+      l->set_filters(index);
+      index += num;
+    }
+    if (layer->layer_param_.type() == shadow::LayerType::Connected) {
+      ConnectedLayer *l = reinterpret_cast<ConnectedLayer *>(layer);
+      int out_num = l->top_[0]->num(), num = l->bottom_[0]->num() * out_num;
+      l->set_biases(index);
+      index += out_num;
+      l->set_weights(index);
+      index += num;
+    }
+  }
 }
