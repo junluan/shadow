@@ -41,6 +41,9 @@ class JImage {
   }
   JImage(int channel, int height, int width, Order order = kRGB)
       : c_(channel), h_(height), w_(width), order_(order) {
+#ifdef USE_ArcSoft
+    arc_data_ = nullptr;
+#endif
     data_ = new unsigned char[c_ * h_ * w_];
   }
   ~JImage() { Release(); }
