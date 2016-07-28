@@ -98,6 +98,11 @@ typedef std::list<int> ListInt;
 
 namespace Util {
 
+template <typename Dtype>
+inline int round(Dtype x) {
+  return static_cast<int>(std::floor(x + 0.5));
+}
+
 inline float rand_uniform(float min, float max) {
   return (static_cast<float>(std::rand()) / RAND_MAX) * (max - min) + min;
 }
