@@ -139,9 +139,9 @@ inline std::string format_vector(const std::vector<int> &shape,
   return out.str();
 }
 
-inline std::string find_replace(const std::string str,
-                                const std::string old_str,
-                                const std::string new_str) {
+inline std::string find_replace(const std::string &str,
+                                const std::string &old_str,
+                                const std::string &new_str) {
   std::string origin(str);
   size_t index = 0;
   while ((index = origin.find(old_str, index)) != std::string::npos) {
@@ -151,24 +151,24 @@ inline std::string find_replace(const std::string str,
   return origin;
 }
 
-inline std::string find_replace_last(const std::string str,
-                                     const std::string old_str,
-                                     const std::string new_str) {
+inline std::string find_replace_last(const std::string &str,
+                                     const std::string &old_str,
+                                     const std::string &new_str) {
   std::string origin(str);
   size_t index = origin.find_last_of(old_str);
   origin.replace(index, old_str.length(), new_str);
   return origin;
 }
 
-inline std::string change_extension(const std::string str,
-                                    const std::string new_ext) {
+inline std::string change_extension(const std::string &str,
+                                    const std::string &new_ext) {
   std::string origin(str);
   size_t index = origin.find_last_of(".");
   origin.replace(index, origin.length(), new_ext);
   return origin;
 }
 
-inline std::vector<std::string> load_list(const std::string list_file) {
+inline std::vector<std::string> load_list(const std::string &list_file) {
   std::ifstream file(list_file);
   if (!file.is_open()) Fatal("Load image list file error!");
 
@@ -181,7 +181,7 @@ inline std::vector<std::string> load_list(const std::string list_file) {
   return image_list;
 }
 
-inline std::string read_text_from_file(const std::string filename) {
+inline std::string read_text_from_file(const std::string &filename) {
   std::ifstream file(filename);
   if (!file.is_open()) {
     Warning("Can't open text file " + filename);

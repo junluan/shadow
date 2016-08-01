@@ -5,7 +5,7 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb/stb_image_write.h"
 
-void JImage::Read(const std::string im_path) {
+void JImage::Read(const std::string &im_path) {
   if (data_ != nullptr) {
     delete[] data_;
     data_ = nullptr;
@@ -15,7 +15,7 @@ void JImage::Read(const std::string im_path) {
   order_ = kRGB;
 }
 
-void JImage::Write(const std::string im_path) {
+void JImage::Write(const std::string &im_path) {
   if (data_ == nullptr) Fatal("JImage data is NULL!");
   int is_ok = -1;
   int step = w_ * c_;
@@ -33,7 +33,7 @@ void JImage::Write(const std::string im_path) {
   if (!is_ok) Fatal("Failed to write image to " + im_path);
 }
 
-void JImage::Show(const std::string show_name, int wait_time) {
+void JImage::Show(const std::string &show_name, int wait_time) {
   if (data_ == nullptr) Fatal("JImage data is NULL!");
 #if defined(USE_OpenCV)
   cv::namedWindow(show_name, cv::WINDOW_NORMAL);
@@ -103,7 +103,7 @@ void JImage::Resize(JImage *im_res, int height, int width) {
   }
 }
 
-void JImage::Crop(JImage *im_crop, RectF crop) {
+void JImage::Crop(JImage *im_crop, const RectF &crop) {
   if (data_ == nullptr) Fatal("JImage data is NULL!");
   if (order_ != kRGB && order_ != kBGR) Fatal("Unsupported format to crop!");
   if (crop.x < 0 || crop.y < 0 || crop.x + crop.w > 1 || crop.y + crop.h > 1)
@@ -132,7 +132,8 @@ void JImage::Crop(JImage *im_crop, RectF crop) {
   }
 }
 
-void JImage::CropWithResize(JImage *im_res, RectF crop, int height, int width) {
+void JImage::CropWithResize(JImage *im_res, const RectF &crop, int height,
+                            int width) {
   if (data_ == nullptr) Fatal("JImage data is NULL!");
   if (order_ != kRGB && order_ != kBGR)
     Fatal("Unsupported format to crop and resize!");
@@ -211,7 +212,7 @@ void JImage::FromMat(const cv::Mat &im_mat) {
   memcpy(data_, im_mat.data, sizeof(unsigned char) * c_ * h_ * w_);
 }
 
-void JImage::FromMatWithCropResize(const cv::Mat &im_mat, const RectF crop,
+void JImage::FromMatWithCropResize(const cv::Mat &im_mat, const RectF &crop,
                                    int resize_h, int resize_w,
                                    float *batch_data) {
   RectF crop_p;
@@ -382,7 +383,7 @@ void JImage::FromArcImage(const ASVLOFFSCREEN &im_arc) {
 }
 
 void JImage::FromArcImageWithCropResize(const ASVLOFFSCREEN &im_arc,
-                                        const RectF crop, int resize_h,
+                                        const RectF &crop, int resize_h,
                                         int resize_w, float *batch_data) {
   int src_h = static_cast<int>(im_arc.i32Height);
   int src_w = static_cast<int>(im_arc.i32Width);
@@ -459,7 +460,8 @@ void JImage::JImageToArcImage(int arc_format) {
 }
 #endif
 
-void JImage::Rectangle(const Box &box, const Scalar scalar, bool console_show) {
+void JImage::Rectangle(const Box &box, const Scalar &scalar,
+                       bool console_show) {
   int x1 = Util::constrain(0, w_ - 1, static_cast<int>(box.x));
   int y1 = Util::constrain(0, h_ - 1, static_cast<int>(box.y));
   int x2 = Util::constrain(x1, w_ - 1, static_cast<int>(x1 + box.w));
@@ -492,7 +494,7 @@ void JImage::Rectangle(const Box &box, const Scalar scalar, bool console_show) {
   }
 }
 
-void JImage::Rectangle(const VecBox &boxes, const Scalar scalar,
+void JImage::Rectangle(const VecBox &boxes, const Scalar &scalar,
                        bool console_show) {
   for (int b = 0; b < boxes.size(); ++b) {
     Rectangle(boxes[b], scalar, console_show);

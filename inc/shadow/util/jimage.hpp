@@ -62,32 +62,32 @@ class JImage {
 
   void SetZero() { memset(data_, 0, sizeof(unsigned char) * c_ * h_ * w_); }
 
-  void Read(const std::string im_path);
-  void Write(const std::string im_path);
-  void Show(const std::string show_name, int wait_time = 0);
+  void Read(const std::string &im_path);
+  void Write(const std::string &im_path);
+  void Show(const std::string &show_name, int wait_time = 0);
   void CopyTo(JImage *im_copy);
   void Resize(JImage *im_res, int height, int width);
-  void Crop(JImage *im_crop, RectF crop);
-  void CropWithResize(JImage *im_res, RectF crop, int height, int width);
+  void Crop(JImage *im_crop, const RectF &crop);
+  void CropWithResize(JImage *im_res, const RectF &crop, int height, int width);
   void Filter2D(const float *kernel, int height, int width);
 
 #if defined(USE_OpenCV)
   void FromMat(const cv::Mat &im_mat);
-  void FromMatWithCropResize(const cv::Mat &im_mat, const RectF crop,
+  void FromMatWithCropResize(const cv::Mat &im_mat, const RectF &crop,
                              int resize_h, int resize_w, float *batch_data);
 #endif
 
 #ifdef USE_ArcSoft
   void FromArcImage(const ASVLOFFSCREEN &im_arc);
-  void FromArcImageWithCropResize(const ASVLOFFSCREEN &im_arc, const RectF crop,
-                                  int resize_h, int resize_w,
+  void FromArcImageWithCropResize(const ASVLOFFSCREEN &im_arc,
+                                  const RectF &crop, int resize_h, int resize_w,
                                   float *batch_data);
   void JImageToArcImage(int arc_format);
 #endif
 
-  void Rectangle(const Box &box, const Scalar scalar = Scalar(0, 255, 0),
+  void Rectangle(const Box &box, const Scalar &scalar = Scalar(0, 255, 0),
                  bool console_show = true);
-  void Rectangle(const VecBox &boxes, const Scalar scalar = Scalar(0, 255, 0),
+  void Rectangle(const VecBox &boxes, const Scalar &scalar = Scalar(0, 255, 0),
                  bool console_show = true);
 
   VecPoint2i GetNoneZeroPoints(int threshold = 0) const;
