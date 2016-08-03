@@ -1,6 +1,10 @@
 #ifndef SHADOW_UTIL_UTIL_HPP
 #define SHADOW_UTIL_UTIL_HPP
 
+#ifndef __linux__
+#define _USE_MATH_DEFINES
+#endif
+
 #include <algorithm>
 #include <cfloat>
 #include <cmath>
