@@ -167,7 +167,7 @@ void JImage::CropWithResize(JImage *im_res, const RectF &crop, int height,
 }
 
 void JImage::Filter2D(const float *kernel, int height, int width) {
-  unsigned char *data_f_ = new unsigned char[c_ * h_ * w_];
+  unsigned char *data_f = new unsigned char[c_ * h_ * w_];
   for (int h = 0; h < h_; ++h) {
     for (int w = 0; w < w_; ++w) {
       float val_c0 = 0.f, val_c1 = 0.f, val_c2 = 0.f;
@@ -186,15 +186,16 @@ void JImage::Filter2D(const float *kernel, int height, int width) {
         }
       }
       int offset = (w_ * h + w) * c_;
-      data_f_[offset + 0] =
+      data_f[offset + 0] =
           (unsigned char)Util::constrain(0, 255, static_cast<int>(val_c0));
-      data_f_[offset + 1] =
+      data_f[offset + 1] =
           (unsigned char)Util::constrain(0, 255, static_cast<int>(val_c1));
-      data_f_[offset + 2] =
+      data_f[offset + 2] =
           (unsigned char)Util::constrain(0, 255, static_cast<int>(val_c2));
     }
   }
-  memcpy(data_, data_f_, sizeof(unsigned char) * c_ * h_ * w_);
+  memcpy(data_, data_f, sizeof(unsigned char) * c_ * h_ * w_);
+  delete[] data_f;
 }
 
 #if defined(USE_OpenCV)

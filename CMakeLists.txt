@@ -31,7 +31,7 @@ if (${USE_OpenCV} STREQUAL "ON")
   include_directories(${OpenCV_INCLUDE_DIRS})
 endif ()
 
-include_directories("inc" "src" "external")
+include_directories("inc" "external")
 file(GLOB shadow_lib_src "src/shadow/*.cpp" "src/shadow/layers/*.cpp" "src/shadow/util/*.cpp" "src/shadow/proto/*.cc")
 
 if (BUILD_TEST)
