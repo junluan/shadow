@@ -33,7 +33,7 @@ class JImage {
     arc_data_ = nullptr;
 #endif
   }
-  explicit JImage(const std::string im_path) : data_(nullptr) {
+  explicit JImage(const std::string &im_path) : data_(nullptr) {
 #ifdef USE_ArcSoft
     arc_data_ = nullptr;
 #endif
@@ -69,7 +69,12 @@ class JImage {
   void Resize(JImage *im_res, int height, int width);
   void Crop(JImage *im_crop, const RectF &crop);
   void CropWithResize(JImage *im_res, const RectF &crop, int height, int width);
+
+  void Color2Gray();
+
   void Filter2D(const float *kernel, int height, int width);
+  void GaussianBlur(int kernel_size, float sigma);
+  void Canny(float thresh_low, float thresh_high, bool L2 = false);
 
 #if defined(USE_OpenCV)
   void FromMat(const cv::Mat &im_mat);
@@ -104,6 +109,9 @@ class JImage {
 
  private:
   void GetInv(unsigned char *im_inv);
+
+  void GetGaussianKernel(float *kernel, int n, float sigma = 0);
+  void Gradient(int *grad_x, int *grad_y, int *magnitude, bool L2 = false);
 
   unsigned char *data_;
   Order order_;
