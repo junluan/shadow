@@ -27,7 +27,7 @@ enum Order { kGray, kRGB, kBGR, kArc };
 
 class JImage {
  public:
-  JImage() : data_(nullptr) {
+  JImage() : data_(nullptr), c_(0), h_(0), w_(0) {
 #if defined(USE_ArcSoft)
     arc_data_ = nullptr;
 #endif
@@ -49,6 +49,7 @@ class JImage {
 
   const unsigned char *data() const { return data_; }
   unsigned char *data() { return data_; }
+  Order order() const { return order_; }
 
   const unsigned char operator()(int c, int h, int w) const {
     if (c >= c_ || h >= h_ || w >= w_) Fatal("Index out of range!");
@@ -59,21 +60,22 @@ class JImage {
     return data_[(c * h_ + h) * w_ + w];
   }
 
+  void SetData(const unsigned char *data, int count) {
+    if (data_ == nullptr) Fatal("JImage data is NULL!");
+    if (count > c_ * h_ * w_) Fatal("Set data region overflow!");
+    memcpy(data_, data, sizeof(unsigned char) * count);
+  }
   void SetZero() { memset(data_, 0, sizeof(unsigned char) * c_ * h_ * w_); }
 
   void Read(const std::string &im_path);
   void Write(const std::string &im_path);
   void Show(const std::string &show_name, int wait_time = 0);
-  void CopyTo(JImage *im_copy);
+  void CopyTo(JImage *im_copy) const;
   void Resize(JImage *im_res, int height, int width);
   void Crop(JImage *im_crop, const RectF &crop);
   void CropWithResize(JImage *im_res, const RectF &crop, int height, int width);
 
   void Color2Gray();
-
-  void Filter2D(const float *kernel, int height, int width);
-  void GaussianBlur(int kernel_size, float sigma);
-  void Canny(float thresh_low, float thresh_high, bool L2 = false);
 
 #if defined(USE_OpenCV)
   void FromMat(const cv::Mat &im_mat);
@@ -107,9 +109,6 @@ class JImage {
 
  private:
   void GetInv(unsigned char *im_inv);
-
-  void GetGaussianKernel(float *kernel, int n, float sigma = 0);
-  void Gradient(int *grad_x, int *grad_y, int *magnitude, bool L2 = false);
 
   unsigned char *data_;
   Order order_;
