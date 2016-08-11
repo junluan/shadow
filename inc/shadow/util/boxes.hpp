@@ -12,8 +12,14 @@
 class Box : public Rect<float> {
  public:
   Box() {}
+  explicit Box(const RectI rect)
+      : Rect<float>(rect.x, rect.y, rect.w, rect.h) {}
   Box(float x_t, float y_t, float w_t, float h_t)
       : Rect<float>(x_t, y_t, w_t, h_t) {}
+
+  RectI RectInt() { return RectI(x, y, w, h); }
+  RectF RectFloat() { return RectF(x, y, w, h); }
+
   float score;
   int class_index;
 };

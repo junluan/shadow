@@ -537,7 +537,7 @@ void I4202RGB(unsigned char *src_y, unsigned char *src_u, unsigned char *src_v,
   }
 }
 
-#ifdef USE_ArcSoft
+#if defined(USE_ArcSoft)
 void JImage::FromArcImage(const ASVLOFFSCREEN &im_arc) {
   int src_h = static_cast<int>(im_arc.i32Height);
   int src_w = static_cast<int>(im_arc.i32Width);
@@ -643,12 +643,11 @@ void JImage::JImageToArcImage(int arc_format) {
 }
 #endif
 
-void JImage::Rectangle(const Box &box, const Scalar &scalar,
-                       bool console_show) {
-  int x1 = Util::constrain(0, w_ - 1, static_cast<int>(box.x));
-  int y1 = Util::constrain(0, h_ - 1, static_cast<int>(box.y));
-  int x2 = Util::constrain(x1, w_ - 1, static_cast<int>(x1 + box.w));
-  int y2 = Util::constrain(y1, h_ - 1, static_cast<int>(y1 + box.h));
+void JImage::Rectangle(const RectI &rect, const Scalar &scalar) {
+  int x1 = Util::constrain(0, w_ - 1, rect.x);
+  int y1 = Util::constrain(0, h_ - 1, rect.y);
+  int x2 = Util::constrain(x1, w_ - 1, x1 + rect.w);
+  int y2 = Util::constrain(y1, h_ - 1, y1 + rect.h);
 
   for (int i = x1; i <= x2; ++i) {
     int offset = (w_ * y1 + i) * c_;
@@ -670,17 +669,11 @@ void JImage::Rectangle(const Box &box, const Scalar &scalar,
     data_[offset + 1] = scalar.g;
     data_[offset + 2] = scalar.b;
   }
-  if (console_show) {
-    std::cout << "x = " << box.x << ", y = " << box.y << ", w = " << box.w
-              << ", h = " << box.h << ", score = " << box.score
-              << ", label = " << box.class_index << std::endl;
-  }
 }
 
-void JImage::Rectangle(const VecBox &boxes, const Scalar &scalar,
-                       bool console_show) {
-  for (int b = 0; b < boxes.size(); ++b) {
-    Rectangle(boxes[b], scalar, console_show);
+void JImage::Rectangle(const VecRectI &rects, const Scalar &scalar) {
+  for (int b = 0; b < rects.size(); ++b) {
+    Rectangle(rects[b], scalar);
   }
 }
 
@@ -735,7 +728,7 @@ void JImage::Release() {
     data_ = nullptr;
   }
 
-#ifdef USE_ArcSoft
+#if defined(USE_ArcSoft)
   if (arc_data_ != nullptr) {
     delete[] arc_data_;
     arc_data_ = nullptr;

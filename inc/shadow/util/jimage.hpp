@@ -1,7 +1,6 @@
 #ifndef SHADOW_UTIL_JIMAGE_HPP
 #define SHADOW_UTIL_JIMAGE_HPP
 
-#include "shadow/util/boxes.hpp"
 #include "shadow/util/util.hpp"
 
 #if defined(USE_OpenCV)
@@ -9,7 +8,7 @@
 #endif
 
 #define USE_ArcSoft
-#ifdef USE_ArcSoft
+#if defined(USE_ArcSoft)
 #include "arcsoft/asvloffscreen.h"
 #endif
 
@@ -29,19 +28,19 @@ enum Order { kGray, kRGB, kBGR, kArc };
 class JImage {
  public:
   JImage() : data_(nullptr) {
-#ifdef USE_ArcSoft
+#if defined(USE_ArcSoft)
     arc_data_ = nullptr;
 #endif
   }
   explicit JImage(const std::string &im_path) : data_(nullptr) {
-#ifdef USE_ArcSoft
+#if defined(USE_ArcSoft)
     arc_data_ = nullptr;
 #endif
     Read(im_path);
   }
   JImage(int channel, int height, int width, Order order = kRGB)
       : c_(channel), h_(height), w_(width), order_(order) {
-#ifdef USE_ArcSoft
+#if defined(USE_ArcSoft)
     arc_data_ = nullptr;
 #endif
     data_ = new unsigned char[c_ * h_ * w_];
@@ -82,7 +81,7 @@ class JImage {
                              int resize_h, int resize_w, float *batch_data);
 #endif
 
-#ifdef USE_ArcSoft
+#if defined(USE_ArcSoft)
   void FromArcImage(const ASVLOFFSCREEN &im_arc);
   void FromArcImageWithCropResize(const ASVLOFFSCREEN &im_arc,
                                   const RectF &crop, int resize_h, int resize_w,
@@ -90,10 +89,9 @@ class JImage {
   void JImageToArcImage(int arc_format);
 #endif
 
-  void Rectangle(const Box &box, const Scalar &scalar = Scalar(0, 255, 0),
-                 bool console_show = true);
-  void Rectangle(const VecBox &boxes, const Scalar &scalar = Scalar(0, 255, 0),
-                 bool console_show = true);
+  void Rectangle(const RectI &rect, const Scalar &scalar = Scalar(0, 255, 0));
+  void Rectangle(const VecRectI &rects,
+                 const Scalar &scalar = Scalar(0, 255, 0));
 
   VecPoint2i GetNoneZeroPoints(int threshold = 0) const;
   void GetBatchData(float *batch_data);
@@ -102,7 +100,7 @@ class JImage {
 
   int c_, h_, w_;
 
-#ifdef USE_ArcSoft
+#if defined(USE_ArcSoft)
   ASVLOFFSCREEN arc_image_;
   unsigned char *arc_data_;
 #endif
