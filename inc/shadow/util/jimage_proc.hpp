@@ -5,6 +5,8 @@
 
 namespace JImageProc {
 
+void Filter1D(const JImage &im_src, JImage *im_filter, const float *kernel,
+              int kernel_size, int direction = 0);
 void Filter2D(const JImage &im_src, JImage *im_filter, const float *kernel,
               int height, int width);
 void GaussianBlur(const JImage &im_src, JImage *im_blur, int kernel_size,

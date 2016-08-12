@@ -3,6 +3,50 @@
 
 namespace JImageProc {
 
+void Filter1D(const JImage &im_src, JImage *im_filter, const float *kernel,
+              int kernel_size, int direction) {
+  if (im_src.data() == nullptr) Fatal("JImage src data is NULL!");
+  if (im_filter == nullptr) Fatal("JImage filter is NULL!");
+
+  int c_ = im_src.c_, h_ = im_src.h_, w_ = im_src.w_;
+  Order order = im_src.order();
+
+  im_filter->Reshape(c_, h_, w_, order);
+
+  const unsigned char *data_src = im_src.data();
+  unsigned char *data_filter = im_filter->data();
+
+  float val_c0, val_c1, val_c2, val_kernel;
+  int p, p_loc, l_, im_index, center = kernel_size >> 1;
+
+  for (int h = 0; h < h_; ++h) {
+    for (int w = 0; w < w_; ++w) {
+      val_c0 = 0.f, val_c1 = 0.f, val_c2 = 0.f;
+      l_ = !direction ? w_ : h_;
+      p = !direction ? w : h;
+      for (int i = 0; i < kernel_size; ++i) {
+        p_loc = std::abs(p - center + i);
+        p_loc = p_loc < l_ ? p_loc : ((l_ << 1) - 1 - p_loc) % l_;
+        im_index = !direction ? (w_ * h + p_loc) * c_ : (w_ * p_loc + w) * c_;
+        val_kernel = kernel[i];
+        val_c0 += data_src[im_index + 0] * val_kernel;
+        if (order != kGray) {
+          val_c1 += data_src[im_index + 1] * val_kernel;
+          val_c2 += data_src[im_index + 2] * val_kernel;
+        }
+      }
+      *data_filter++ =
+          (unsigned char)Util::constrain(0, 255, static_cast<int>(val_c0));
+      if (order != kGray) {
+        *data_filter++ =
+            (unsigned char)Util::constrain(0, 255, static_cast<int>(val_c1));
+        *data_filter++ =
+            (unsigned char)Util::constrain(0, 255, static_cast<int>(val_c2));
+      }
+    }
+  }
+}
+
 void Filter2D(const JImage &im_src, JImage *im_filter, const float *kernel,
               int height, int width) {
   if (im_src.data() == nullptr) Fatal("JImage src data is NULL!");
