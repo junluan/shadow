@@ -5,14 +5,15 @@ namespace JImageProc {
 
 void Filter2D(const JImage &im_src, JImage *im_filter, const float *kernel,
               int height, int width) {
-  int c_ = im_src.c_, h_ = im_src.h_, w_ = im_src.w_;
-
   if (im_src.data() == nullptr) Fatal("JImage src data is NULL!");
   if (im_filter == nullptr) Fatal("JImage filter is NULL!");
-  if (im_filter->h_ * im_filter->w_ < h_ * w_)
-    Fatal("JImage filter data memory is not sufficient!");
 
-  unsigned char *data_src = (unsigned char *)im_src.data();
+  int c_ = im_src.c_, h_ = im_src.h_, w_ = im_src.w_;
+  Order order = im_src.order();
+
+  im_filter->Reshape(c_, h_, w_, order);
+
+  const unsigned char *data_src = im_src.data();
   unsigned char *data_filter = im_filter->data();
 
   float val_c0, val_c1, val_c2, val_kernel;
@@ -30,7 +31,7 @@ void Filter2D(const JImage &im_src, JImage *im_filter, const float *kernel,
           im_index = (w_ * im_h + im_w) * c_;
           val_kernel = kernel[k_h * width + k_w];
           val_c0 += data_src[im_index + 0] * val_kernel;
-          if (im_src.order() != kGray) {
+          if (order != kGray) {
             val_c1 += data_src[im_index + 1] * val_kernel;
             val_c2 += data_src[im_index + 2] * val_kernel;
           }
@@ -38,7 +39,7 @@ void Filter2D(const JImage &im_src, JImage *im_filter, const float *kernel,
       }
       *data_filter++ =
           (unsigned char)Util::constrain(0, 255, static_cast<int>(val_c0));
-      if (im_src.order() != kGray) {
+      if (order != kGray) {
         *data_filter++ =
             (unsigned char)Util::constrain(0, 255, static_cast<int>(val_c1));
         *data_filter++ =
@@ -50,14 +51,15 @@ void Filter2D(const JImage &im_src, JImage *im_filter, const float *kernel,
 
 void GaussianBlur(const JImage &im_src, JImage *im_blur, int kernel_size,
                   float sigma) {
-  int c_ = im_src.c_, h_ = im_src.h_, w_ = im_src.w_;
-
   if (im_src.data() == nullptr) Fatal("JImage src data is NULL!");
   if (im_blur == nullptr) Fatal("JImage blur is NULL!");
-  if (im_blur->h_ * im_blur->w_ < h_ * w_)
-    Fatal("JImage blur data memory is not sufficient!");
 
-  unsigned char *data_src = (unsigned char *)im_src.data();
+  int c_ = im_src.c_, h_ = im_src.h_, w_ = im_src.w_;
+  Order order = im_src.order();
+
+  im_blur->Reshape(c_, h_, w_, order);
+
+  const unsigned char *data_src = im_src.data();
   unsigned char *data_blur = im_blur->data();
 
   float *kernel = new float[kernel_size];
@@ -77,13 +79,13 @@ void GaussianBlur(const JImage &im_src, JImage *im_blur, int kernel_size,
         im_index = (w_ * h + im_w) * c_;
         val_kernel = kernel[k_w];
         val_c0 += data_src[im_index + 0] * val_kernel;
-        if (im_src.order() != kGray) {
+        if (order != kGray) {
           val_c1 += data_src[im_index + 1] * val_kernel;
           val_c2 += data_src[im_index + 2] * val_kernel;
         }
       }
       *data_w_index++ = val_c0;
-      if (im_src.order() != kGray) {
+      if (order != kGray) {
         *data_w_index++ = val_c1;
         *data_w_index++ = val_c2;
       }
@@ -99,14 +101,14 @@ void GaussianBlur(const JImage &im_src, JImage *im_blur, int kernel_size,
         im_index = (w_ * im_h + w) * c_;
         val_kernel = kernel[k_h];
         val_c0 += data_w[im_index + 0] * val_kernel;
-        if (im_src.order() != kGray) {
+        if (order != kGray) {
           val_c1 += data_w[im_index + 1] * val_kernel;
           val_c2 += data_w[im_index + 2] * val_kernel;
         }
       }
       *data_blur++ =
           (unsigned char)Util::constrain(0, 255, static_cast<int>(val_c0));
-      if (im_src.order() != kGray) {
+      if (order != kGray) {
         *data_blur++ =
             (unsigned char)Util::constrain(0, 255, static_cast<int>(val_c1));
         *data_blur++ =
@@ -127,7 +129,7 @@ void Canny(const JImage &im_src, JImage *im_canny, float thresh_low,
 
   if (im_canny->order() != kGray) im_canny->Color2Gray();
 
-  int c_ = im_canny->c_, h_ = im_canny->h_, w_ = im_canny->w_;
+  int h_ = im_canny->h_, w_ = im_canny->w_;
   unsigned char *data_ = im_canny->data();
 
   int *grad_x = new int[h_ * w_], *grad_y = new int[h_ * w_];
@@ -250,8 +252,15 @@ void Gradient(const JImage &im_src, int *grad_x, int *grad_y, int *magnitude,
               bool L2) {
   if (im_src.data() == nullptr) Fatal("JImage data is NULL!");
 
-  int c_ = im_src.c_, h_ = im_src.h_, w_ = im_src.w_;
-  unsigned char *data_src = (unsigned char *)im_src.data();
+  const unsigned char *data_src = im_src.data();
+  int h_ = im_src.h_, w_ = im_src.w_;
+
+  JImage *im_gray = nullptr;
+  if (im_src.order() != kGray) {
+    im_gray = new JImage();
+    im_src.CopyTo(im_gray);
+    data_src = im_gray->data();
+  }
 
   memset(grad_x, 0, sizeof(int) * h_ * w_);
   memset(grad_y, 0, sizeof(int) * h_ * w_);
@@ -276,6 +285,9 @@ void Gradient(const JImage &im_src, int *grad_x, int *grad_y, int *magnitude,
         magnitude[index] = std::abs(grad_x[index]) + std::abs(grad_y[index]);
       }
     }
+  }
+  if (im_gray != nullptr) {
+    im_gray->Release();
   }
 }
 

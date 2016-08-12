@@ -27,23 +27,24 @@ enum Order { kGray, kRGB, kBGR, kArc };
 
 class JImage {
  public:
-  JImage() : data_(nullptr), c_(0), h_(0), w_(0) {
-#if defined(USE_ArcSoft)
-    arc_data_ = nullptr;
-#endif
-  }
   explicit JImage(const std::string &im_path) : data_(nullptr) {
-#if defined(USE_ArcSoft)
-    arc_data_ = nullptr;
-#endif
     Read(im_path);
-  }
-  JImage(int channel, int height, int width, Order order = kRGB)
-      : c_(channel), h_(height), w_(width), order_(order) {
+
 #if defined(USE_ArcSoft)
     arc_data_ = nullptr;
 #endif
-    data_ = new unsigned char[c_ * h_ * w_];
+  }
+  explicit JImage(int c = 0, int h = 0, int w = 0, Order order = kRGB)
+      : c_(c), h_(h), w_(w), order_(order) {
+    if (c_ * h_ * w_ == 0) {
+      data_ = nullptr;
+    } else {
+      data_ = new unsigned char[c_ * h_ * w_];
+    }
+
+#if defined(USE_ArcSoft)
+    arc_data_ = nullptr;
+#endif
   }
   ~JImage() { Release(); }
 
@@ -60,9 +61,20 @@ class JImage {
     return data_[(c * h_ + h) * w_ + w];
   }
 
+  void Reshape(int c, int h, int w, Order order = kRGB) {
+    if (c * h * w == 0) Fatal("Reshape dimension must be greater than zero!");
+    if (data_ == nullptr) {
+      data_ = new unsigned char[c * h * w];
+    } else if (c * h * w > c_ * h_ * w_) {
+      delete[] data_;
+      data_ = new unsigned char[c * h * w];
+    }
+    c_ = c, h_ = h, w_ = w, order_ = order;
+  }
+
   void SetData(const unsigned char *data, int count) {
     if (data_ == nullptr) Fatal("JImage data is NULL!");
-    if (count > c_ * h_ * w_) Fatal("Set data region overflow!");
+    if (count != c_ * h_ * w_) Fatal("Set data dimension mismatch!");
     memcpy(data_, data, sizeof(unsigned char) * count);
   }
   void SetZero() { memset(data_, 0, sizeof(unsigned char) * c_ * h_ * w_); }
