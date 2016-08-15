@@ -5,6 +5,9 @@
 
 namespace JImageProc {
 
+VecPoint2i GetNoneZeroPoints(const JImage &im_src, int threshold = 0);
+void GetBatchData(const JImage &im_src, float *batch_data);
+
 void Filter1D(const JImage &im_src, JImage *im_filter, const float *kernel,
               int kernel_size, int direction = 0);
 void Filter2D(const JImage &im_src, JImage *im_filter, const float *kernel,

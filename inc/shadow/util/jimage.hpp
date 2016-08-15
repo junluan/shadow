@@ -107,9 +107,6 @@ class JImage {
   void Rectangle(const VecRectI &rects,
                  const Scalar &scalar = Scalar(0, 255, 0));
 
-  VecPoint2i GetNoneZeroPoints(int threshold = 0) const;
-  void GetBatchData(float *batch_data);
-
   void Release();
 
   int c_, h_, w_;

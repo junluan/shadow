@@ -488,51 +488,6 @@ void JImage::Rectangle(const VecRectI &rects, const Scalar &scalar) {
   }
 }
 
-VecPoint2i JImage::GetNoneZeroPoints(int threshold) const {
-  VecPoint2i nz_points;
-  int offset, step = w_ * c_, val;
-  for (int h = 0; h < h_; ++h) {
-    for (int w = 0; w < w_; ++w) {
-      offset = h * step + w * c_;
-      val = 0;
-      if (order_ == kRGB || order_ == kBGR) {
-        val = data_[offset] + data_[offset + 1] + data_[offset + 2];
-        val /= 3;
-      } else if (order_ == kGray) {
-        val = data_[offset];
-      } else {
-        Fatal("Unsupported format to get none zero points!");
-      }
-      if (val > threshold) {
-        nz_points.push_back(Point2i(w, h, val));
-      }
-    }
-  }
-  return nz_points;
-}
-
-void JImage::GetBatchData(float *batch_data) {
-  if (data_ == nullptr) Fatal("JImage data is NULL!");
-  bool is_rgb = false;
-  if (order_ == kRGB) {
-    is_rgb = true;
-  } else if (order_ == kBGR) {
-    is_rgb = false;
-  } else {
-    Fatal("Unsupported format to get batch data!");
-  }
-  int ch_src, offset, count = 0, step = w_ * c_;
-  for (int c = 0; c < c_; ++c) {
-    ch_src = is_rgb ? c : c_ - c - 1;
-    for (int h = 0; h < h_; ++h) {
-      for (int w = 0; w < w_; ++w) {
-        offset = h * step + w * c_;
-        batch_data[count++] = data_[offset + ch_src];
-      }
-    }
-  }
-}
-
 void JImage::Release() {
   if (data_ != nullptr) {
     delete[] data_;

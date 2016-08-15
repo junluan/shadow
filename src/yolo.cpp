@@ -1,5 +1,6 @@
 #include "yolo.hpp"
 #include "shadow/kernel.hpp"
+#include "shadow/util/jimage_proc.hpp"
 
 using namespace std;
 
@@ -183,7 +184,7 @@ void Yolo::PredictYoloDetections(JImage *image, vector<VecBox> *Bboxes) {
     for (int i = count; i < b * batch_ && i < num_im; ++i, ++c) {
       image->CropWithResize(im_res_, rois_[i], net_.in_shape_.dim(2),
                             net_.in_shape_.dim(3));
-      im_res_->GetBatchData(batch_data_ + c * in_num_);
+      JImageProc::GetBatchData(*im_res_, batch_data_);
     }
     net_.Forward(batch_data_);
     const Layer *layer = net_.GetLayerByName("yolo_output");

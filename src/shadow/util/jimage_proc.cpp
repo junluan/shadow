@@ -3,15 +3,69 @@
 
 namespace JImageProc {
 
+VecPoint2i GetNoneZeroPoints(const JImage &im_src, int threshold) {
+  int c_ = im_src.c_, h_ = im_src.h_, w_ = im_src.w_;
+  Order order_ = im_src.order();
+  const unsigned char *data_src = im_src.data();
+
+  VecPoint2i nz_points;
+  int offset, step = w_ * c_, val;
+  for (int h = 0; h < h_; ++h) {
+    for (int w = 0; w < w_; ++w) {
+      offset = h * step + w * c_;
+      val = 0;
+      if (order_ == kRGB || order_ == kBGR) {
+        val = data_src[offset] + data_src[offset + 1] + data_src[offset + 2];
+        val /= 3;
+      } else if (order_ == kGray) {
+        val = data_src[offset];
+      } else {
+        Fatal("Unsupported format to get none zero points!");
+      }
+      if (val > threshold) {
+        nz_points.push_back(Point2i(w, h, val));
+      }
+    }
+  }
+  return nz_points;
+}
+
+void GetBatchData(const JImage &im_src, float *batch_data) {
+  if (im_src.data() == nullptr) Fatal("JImage data is NULL!");
+
+  int c_ = im_src.c_, h_ = im_src.h_, w_ = im_src.w_;
+  Order order_ = im_src.order();
+  const unsigned char *data_src = im_src.data();
+
+  bool is_rgb = false;
+  if (order_ == kRGB) {
+    is_rgb = true;
+  } else if (order_ == kBGR) {
+    is_rgb = false;
+  } else {
+    Fatal("Unsupported format to get batch data!");
+  }
+  int ch_src, offset, count = 0, step = w_ * c_;
+  for (int c = 0; c < c_; ++c) {
+    ch_src = is_rgb ? c : c_ - c - 1;
+    for (int h = 0; h < h_; ++h) {
+      for (int w = 0; w < w_; ++w) {
+        offset = h * step + w * c_;
+        batch_data[count++] = data_src[offset + ch_src];
+      }
+    }
+  }
+}
+
 void Filter1D(const JImage &im_src, JImage *im_filter, const float *kernel,
               int kernel_size, int direction) {
   if (im_src.data() == nullptr) Fatal("JImage src data is NULL!");
   if (im_filter == nullptr) Fatal("JImage filter is NULL!");
 
   int c_ = im_src.c_, h_ = im_src.h_, w_ = im_src.w_;
-  Order order = im_src.order();
+  Order order_ = im_src.order();
 
-  im_filter->Reshape(c_, h_, w_, order);
+  im_filter->Reshape(c_, h_, w_, order_);
 
   const unsigned char *data_src = im_src.data();
   unsigned char *data_filter = im_filter->data();
@@ -30,14 +84,14 @@ void Filter1D(const JImage &im_src, JImage *im_filter, const float *kernel,
         im_index = !direction ? (w_ * h + p_loc) * c_ : (w_ * p_loc + w) * c_;
         val_kernel = kernel[i];
         val_c0 += data_src[im_index + 0] * val_kernel;
-        if (order != kGray) {
+        if (order_ != kGray) {
           val_c1 += data_src[im_index + 1] * val_kernel;
           val_c2 += data_src[im_index + 2] * val_kernel;
         }
       }
       *data_filter++ =
           (unsigned char)Util::constrain(0, 255, static_cast<int>(val_c0));
-      if (order != kGray) {
+      if (order_ != kGray) {
         *data_filter++ =
             (unsigned char)Util::constrain(0, 255, static_cast<int>(val_c1));
         *data_filter++ =
@@ -53,9 +107,9 @@ void Filter2D(const JImage &im_src, JImage *im_filter, const float *kernel,
   if (im_filter == nullptr) Fatal("JImage filter is NULL!");
 
   int c_ = im_src.c_, h_ = im_src.h_, w_ = im_src.w_;
-  Order order = im_src.order();
+  Order order_ = im_src.order();
 
-  im_filter->Reshape(c_, h_, w_, order);
+  im_filter->Reshape(c_, h_, w_, order_);
 
   const unsigned char *data_src = im_src.data();
   unsigned char *data_filter = im_filter->data();
@@ -75,7 +129,7 @@ void Filter2D(const JImage &im_src, JImage *im_filter, const float *kernel,
           im_index = (w_ * im_h + im_w) * c_;
           val_kernel = kernel[k_h * width + k_w];
           val_c0 += data_src[im_index + 0] * val_kernel;
-          if (order != kGray) {
+          if (order_ != kGray) {
             val_c1 += data_src[im_index + 1] * val_kernel;
             val_c2 += data_src[im_index + 2] * val_kernel;
           }
@@ -83,7 +137,7 @@ void Filter2D(const JImage &im_src, JImage *im_filter, const float *kernel,
       }
       *data_filter++ =
           (unsigned char)Util::constrain(0, 255, static_cast<int>(val_c0));
-      if (order != kGray) {
+      if (order_ != kGray) {
         *data_filter++ =
             (unsigned char)Util::constrain(0, 255, static_cast<int>(val_c1));
         *data_filter++ =
@@ -99,9 +153,9 @@ void GaussianBlur(const JImage &im_src, JImage *im_blur, int kernel_size,
   if (im_blur == nullptr) Fatal("JImage blur is NULL!");
 
   int c_ = im_src.c_, h_ = im_src.h_, w_ = im_src.w_;
-  Order order = im_src.order();
+  Order order_ = im_src.order();
 
-  im_blur->Reshape(c_, h_, w_, order);
+  im_blur->Reshape(c_, h_, w_, order_);
 
   const unsigned char *data_src = im_src.data();
   unsigned char *data_blur = im_blur->data();
@@ -123,13 +177,13 @@ void GaussianBlur(const JImage &im_src, JImage *im_blur, int kernel_size,
         im_index = (w_ * h + im_w) * c_;
         val_kernel = kernel[k_w];
         val_c0 += data_src[im_index + 0] * val_kernel;
-        if (order != kGray) {
+        if (order_ != kGray) {
           val_c1 += data_src[im_index + 1] * val_kernel;
           val_c2 += data_src[im_index + 2] * val_kernel;
         }
       }
       *data_w_index++ = val_c0;
-      if (order != kGray) {
+      if (order_ != kGray) {
         *data_w_index++ = val_c1;
         *data_w_index++ = val_c2;
       }
@@ -145,14 +199,14 @@ void GaussianBlur(const JImage &im_src, JImage *im_blur, int kernel_size,
         im_index = (w_ * im_h + w) * c_;
         val_kernel = kernel[k_h];
         val_c0 += data_w[im_index + 0] * val_kernel;
-        if (order != kGray) {
+        if (order_ != kGray) {
           val_c1 += data_w[im_index + 1] * val_kernel;
           val_c2 += data_w[im_index + 2] * val_kernel;
         }
       }
       *data_blur++ =
           (unsigned char)Util::constrain(0, 255, static_cast<int>(val_c0));
-      if (order != kGray) {
+      if (order_ != kGray) {
         *data_blur++ =
             (unsigned char)Util::constrain(0, 255, static_cast<int>(val_c1));
         *data_blur++ =
