@@ -84,15 +84,17 @@ class JImage {
   void Show(const std::string &show_name, int wait_time = 0);
   void CopyTo(JImage *im_copy) const;
   void Resize(JImage *im_res, int height, int width);
-  void Crop(JImage *im_crop, const RectF &crop);
-  void CropWithResize(JImage *im_res, const RectF &crop, int height, int width);
+  template <typename Dtype>
+  void Crop(JImage *im_crop, const Rect<Dtype> &crop) const;
+  template <typename Dtype>
+  void CropWithResize(JImage *im_res, const Rect<Dtype> &crop, int height,
+                      int width) const;
 
   void Color2Gray();
+  void Color2Gray(JImage *im_gray) const;
 
 #if defined(USE_OpenCV)
   void FromMat(const cv::Mat &im_mat);
-  void FromMatWithCropResize(const cv::Mat &im_mat, const RectF &crop,
-                             int resize_h, int resize_w, float *batch_data);
 #endif
 
 #if defined(USE_ArcSoft)
