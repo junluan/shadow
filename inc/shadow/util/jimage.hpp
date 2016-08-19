@@ -35,11 +35,9 @@ class JImage {
 #endif
   }
   explicit JImage(int c = 0, int h = 0, int w = 0, Order order = kRGB)
-      : c_(c), h_(h), w_(w), order_(order) {
-    if (c_ * h_ * w_ == 0) {
-      data_ = nullptr;
-    } else {
-      data_ = new unsigned char[c_ * h_ * w_];
+      : c_(c), h_(h), w_(w), order_(order), data_(nullptr) {
+    if (c_ * h_ * w_ != 0) {
+      this->Reshape(c_, h_, w_, order);
     }
 
 #if defined(USE_ArcSoft)
@@ -50,7 +48,7 @@ class JImage {
 
   const unsigned char *data() const { return data_; }
   unsigned char *data() { return data_; }
-  Order order() const { return order_; }
+  const Order order() const { return order_; }
 
   const unsigned char operator()(int c, int h, int w) const {
     if (c >= c_ || h >= h_ || w >= w_) Fatal("Index out of range!");
@@ -61,7 +59,7 @@ class JImage {
     return data_[(c * h_ + h) * w_ + w];
   }
 
-  void Reshape(int c, int h, int w, Order order = kRGB) {
+  inline void Reshape(int c, int h, int w, Order order) {
     if (c * h * w == 0) Fatal("Reshape dimension must be greater than zero!");
     if (data_ == nullptr) {
       data_ = new unsigned char[c * h * w];
@@ -80,21 +78,15 @@ class JImage {
   void SetZero() { memset(data_, 0, sizeof(unsigned char) * c_ * h_ * w_); }
 
   void Read(const std::string &im_path);
-  void Write(const std::string &im_path);
-  void Show(const std::string &show_name, int wait_time = 0);
+  void Write(const std::string &im_path) const;
+  void Show(const std::string &show_name, int wait_time = 0) const;
   void CopyTo(JImage *im_copy) const;
-  void Resize(JImage *im_res, int height, int width);
-  template <typename Dtype>
-  void Crop(JImage *im_crop, const Rect<Dtype> &crop) const;
-  template <typename Dtype>
-  void CropWithResize(JImage *im_res, const Rect<Dtype> &crop, int height,
-                      int width) const;
 
   void Color2Gray();
-  void Color2Gray(JImage *im_gray) const;
 
 #if defined(USE_OpenCV)
   void FromMat(const cv::Mat &im_mat);
+  cv::Mat ToMat() const;
 #endif
 
 #if defined(USE_ArcSoft)
@@ -119,7 +111,7 @@ class JImage {
 #endif
 
  private:
-  void GetInv(unsigned char *im_inv);
+  inline void GetInv(unsigned char *im_inv) const;
 
   unsigned char *data_;
   Order order_;

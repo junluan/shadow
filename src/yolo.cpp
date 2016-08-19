@@ -182,8 +182,8 @@ void Yolo::PredictYoloDetections(JImage *image, vector<VecBox> *Bboxes) {
   for (int count = 0, b = 1; b <= batch_num; ++b) {
     int c = 0;
     for (int i = count; i < b * batch_ && i < num_im; ++i, ++c) {
-      image->CropWithResize(im_res_, rois_[i], net_.in_shape_.dim(2),
-                            net_.in_shape_.dim(3));
+      JImageProc::CropResize(*image, im_res_, rois_[i], net_.in_shape_.dim(2),
+                             net_.in_shape_.dim(3));
       JImageProc::GetBatchData(*im_res_, batch_data_);
     }
     net_.Forward(batch_data_);

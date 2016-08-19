@@ -15,7 +15,7 @@ void JImage::Read(const std::string &im_path) {
   order_ = kRGB;
 }
 
-void JImage::Write(const std::string &im_path) {
+void JImage::Write(const std::string &im_path) const {
   if (data_ == nullptr) Fatal("JImage data is NULL!");
   int is_ok = -1;
   int step = w_ * c_;
@@ -33,7 +33,7 @@ void JImage::Write(const std::string &im_path) {
   if (!is_ok) Fatal("Failed to write image to " + im_path);
 }
 
-void JImage::Show(const std::string &show_name, int wait_time) {
+void JImage::Show(const std::string &show_name, int wait_time) const {
   if (data_ == nullptr) Fatal("JImage data is NULL!");
 #if defined(USE_OpenCV)
   cv::namedWindow(show_name, cv::WINDOW_NORMAL);
@@ -66,96 +66,6 @@ void JImage::CopyTo(JImage *im_copy) const {
   memcpy(im_copy->data_, data_, sizeof(unsigned char) * c_ * h_ * w_);
 }
 
-void JImage::Resize(JImage *im_res, int height, int width) {
-  if (data_ == nullptr) Fatal("JImage data is NULL!");
-  if (order_ != kRGB && order_ != kBGR) Fatal("Unsupported format to resize!");
-
-  im_res->Reshape(c_, height, width, order_);
-  float step_h = static_cast<float>(h_) / im_res->h_;
-  float step_w = static_cast<float>(w_) / im_res->w_;
-  int src_step = w_ * c_, dst_step = im_res->w_ * c_;
-  for (int c = 0; c < c_; ++c) {
-    for (int h = 0; h < im_res->h_; ++h) {
-      for (int w = 0; w < im_res->w_; ++w) {
-        int s_h = static_cast<int>(step_h * h);
-        int s_w = static_cast<int>(step_w * w);
-        int src_offset = s_h * src_step + s_w * c_;
-        int dst_offset = h * dst_step + w * c_;
-        im_res->data_[dst_offset + c] = data_[src_offset + c];
-      }
-    }
-  }
-}
-
-template <typename Dtype>
-void JImage::Crop(JImage *im_crop, const Rect<Dtype> &crop) const {
-  if (data_ == nullptr) Fatal("JImage data is NULL!");
-  if (order_ != kRGB && order_ != kBGR && order_ != kGray)
-    Fatal("Unsupported format to crop!");
-  if (crop.w <= 1 && crop.h <= 1) {
-    if (crop.x < 0 || crop.y < 0 || crop.x + crop.w > 1 || crop.y + crop.h > 1)
-      Fatal("Crop region overflow!");
-  } else if (crop.w > 1 && crop.h > 1) {
-    if (crop.x < 0 || crop.y < 0 || crop.x + crop.w > w_ ||
-        crop.y + crop.h > h_)
-      Fatal("Crop region overflow!");
-  } else {
-    Fatal("Crop scale must be the same!");
-  }
-
-  int height = crop.h <= 1 ? static_cast<int>(crop.h * h_) : crop.h;
-  int width = crop.w <= 1 ? static_cast<int>(crop.w * w_) : crop.w;
-  im_crop->Reshape(c_, height, width, order_);
-  int step_src = w_ * c_;
-  int step_crop = im_crop->w_ * c_;
-  int w_off = crop.w <= 1 ? static_cast<int>(crop.x * w_) : crop.x;
-  int h_off = crop.h <= 1 ? static_cast<int>(crop.y * h_) : crop.y;
-  unsigned char *index_src, *index_crop;
-  for (int h = 0; h < im_crop->h_; ++h) {
-    index_src = data_ + (h + h_off) * step_src + w_off * c_;
-    index_crop = im_crop->data_ + h * step_crop;
-    memcpy(index_crop, index_src, sizeof(unsigned char) * step_crop);
-  }
-}
-
-template <typename Dtype>
-void JImage::CropWithResize(JImage *im_res, const Rect<Dtype> &crop, int height,
-                            int width) const {
-  if (data_ == nullptr) Fatal("JImage data is NULL!");
-  if (order_ != kRGB && order_ != kBGR && order_ != kGray)
-    Fatal("Unsupported format to crop and resize!");
-  if (crop.w <= 1 && crop.h <= 1) {
-    if (crop.x < 0 || crop.y < 0 || crop.x + crop.w > 1 || crop.y + crop.h > 1)
-      Fatal("Crop region overflow!");
-  } else if (crop.w > 1 && crop.h > 1) {
-    if (crop.x < 0 || crop.y < 0 || crop.x + crop.w > w_ ||
-        crop.y + crop.h > h_)
-      Fatal("Crop region overflow!");
-  } else {
-    Fatal("Crop scale must be the same!");
-  }
-
-  im_res->Reshape(c_, height, width, order_);
-  float step_h =
-      (crop.h <= 1 ? crop.h * h_ : crop.h) / static_cast<float>(height);
-  float step_w =
-      (crop.w <= 1 ? crop.w * w_ : crop.w) / static_cast<float>(width);
-  float h_off = crop.h <= 1 ? crop.y * h_ : crop.y;
-  float w_off = crop.w <= 1 ? crop.x * w_ : crop.x;
-  int src_step = w_ * c_, dst_step = width * c_;
-  for (int c = 0; c < c_; ++c) {
-    for (int h = 0; h < height; ++h) {
-      for (int w = 0; w < width; ++w) {
-        int s_h = static_cast<int>(h_off + step_h * h);
-        int s_w = static_cast<int>(w_off + step_w * w);
-        int src_offset = s_h * src_step + s_w * c_;
-        int dst_offset = h * dst_step + w * c_;
-        im_res->data_[dst_offset + c] = data_[src_offset + c];
-      }
-    }
-  }
-}
-
 void JImage::Color2Gray() {
   if (data_ == nullptr) Fatal("JImage data is NULL!");
 
@@ -181,33 +91,23 @@ void JImage::Color2Gray() {
   }
 }
 
-void JImage::Color2Gray(JImage *im_gray) const {
-  if (data_ == nullptr) Fatal("JImage data is NULL!");
-
-  im_gray->Reshape(1, h_, w_, kGray);
-  if (order_ == kRGB || order_ == kBGR) {
-    unsigned char *gray_index = im_gray->data_;
-    int index;
-    for (int h = 0; h < h_; ++h) {
-      for (int w = 0; w < w_; ++w) {
-        index = (w_ * h + w) * c_;
-        float sum = data_[index + 0] + data_[index + 1] + data_[index + 2];
-        *gray_index++ = static_cast<unsigned char>(sum / 3.f);
-      }
-    }
-  } else if (order_ == kGray) {
-    memcpy(im_gray->data_, data_, sizeof(unsigned char) * h_ * w_);
-  } else {
-    Fatal("Unsupported format to convert color to gray!");
-  }
-}
-
 #if defined(USE_OpenCV)
 void JImage::FromMat(const cv::Mat &im_mat) {
   if (im_mat.empty()) Fatal("Mat data is empty!");
 
   this->Reshape(im_mat.channels(), im_mat.rows, im_mat.cols, kBGR);
   memcpy(data_, im_mat.data, sizeof(unsigned char) * c_ * h_ * w_);
+}
+
+cv::Mat JImage::ToMat() const {
+  if (order_ == kGray) {
+    return cv::Mat(h_, w_, CV_8UC1, data_);
+  } else if (order_ == kBGR) {
+    return cv::Mat(h_, w_, CV_8UC3, data_);
+  } else {
+    Fatal("Unsupported format to convert to cv mat!");
+  }
+  return cv::Mat();
 }
 #endif
 
@@ -469,7 +369,7 @@ void JImage::Release() {
 #endif
 }
 
-void JImage::GetInv(unsigned char *im_inv) {
+void JImage::GetInv(unsigned char *im_inv) const {
   bool is_rgb2bgr = false;
   if (order_ == kRGB) {
     is_rgb2bgr = true;
@@ -490,12 +390,3 @@ void JImage::GetInv(unsigned char *im_inv) {
     }
   }
 }
-
-// Explicit instantiation
-template void JImage::Crop<int>(JImage *im_crop, const RectI &crop) const;
-template void JImage::Crop<float>(JImage *im_crop, const RectF &crop) const;
-
-template void JImage::CropWithResize<int>(JImage *im_res, const RectI &crop,
-                                          int height, int width) const;
-template void JImage::CropWithResize<float>(JImage *im_res, const RectF &crop,
-                                            int height, int width) const;
