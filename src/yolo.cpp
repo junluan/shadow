@@ -4,6 +4,33 @@
 
 using namespace std;
 
+inline void GetBatchData(const JImage &im_src, float *batch_data) {
+  if (im_src.data() == nullptr) Fatal("JImage data is NULL!");
+
+  int c_ = im_src.c_, h_ = im_src.h_, w_ = im_src.w_;
+  Order order_ = im_src.order();
+  const unsigned char *data_src = im_src.data();
+
+  bool is_rgb = false;
+  if (order_ == kRGB) {
+    is_rgb = true;
+  } else if (order_ == kBGR) {
+    is_rgb = false;
+  } else {
+    Fatal("Unsupported format to get batch data!");
+  }
+  int ch_src, offset, count = 0, step = w_ * c_;
+  for (int c = 0; c < c_; ++c) {
+    ch_src = is_rgb ? c : c_ - c - 1;
+    for (int h = 0; h < h_; ++h) {
+      for (int w = 0; w < w_; ++w) {
+        offset = h * step + w * c_;
+        batch_data[count++] = data_src[offset + ch_src];
+      }
+    }
+  }
+}
+
 Yolo::Yolo(string cfg_file, string weight_file, float threshold) {
   cfg_file_ = cfg_file;
   weight_file_ = weight_file;
@@ -184,7 +211,7 @@ void Yolo::PredictYoloDetections(JImage *image, vector<VecBox> *Bboxes) {
     for (int i = count; i < b * batch_ && i < num_im; ++i, ++c) {
       JImageProc::CropResize(*image, im_res_, rois_[i], net_.in_shape_.dim(2),
                              net_.in_shape_.dim(3));
-      JImageProc::GetBatchData(*im_res_, batch_data_);
+      GetBatchData(*im_res_, batch_data_);
     }
     net_.Forward(batch_data_);
     const Layer *layer = net_.GetLayerByName("yolo_output");

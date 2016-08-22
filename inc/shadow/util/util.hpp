@@ -24,6 +24,8 @@ class Point {
   Point() {}
   Point(Dtype x_t, Dtype y_t, float score_t = -1)
       : x(x_t), y(y_t), score(score_t) {}
+  Point(const Point<int> &p) : x(p.x), y(p.y), score(p.score) {}
+  Point(const Point<float> &p) : x(p.x), y(p.y), score(p.score) {}
   Dtype x, y;
   float score;
 };
@@ -34,6 +36,8 @@ class Rect {
   Rect() {}
   Rect(Dtype x_t, Dtype y_t, Dtype w_t, Dtype h_t)
       : x(x_t), y(y_t), w(w_t), h(h_t) {}
+  Rect(const Rect<int> &rect) : x(rect.x), y(rect.y), w(rect.w), h(rect.h) {}
+  Rect(const Rect<float> &rect) : x(rect.x), y(rect.y), w(rect.w), h(rect.h) {}
   Dtype x, y, w, h;
 };
 
@@ -42,6 +46,8 @@ class Size {
  public:
   Size() {}
   Size(Dtype w_t, Dtype h_t) : w(w_t), h(h_t) {}
+  Size(const Size<int> &size) : w(size.w), h(size.h) {}
+  Size(const Size<float> &size) : w(size.w), h(size.h) {}
   Dtype w, h;
 };
 
@@ -244,6 +250,7 @@ class Timer {
 #include <cctype>
 #include <cerrno>
 #include <cstdlib>
+#include <cstring>
 class Path {
  public:
   enum PathType {

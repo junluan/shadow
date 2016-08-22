@@ -3,60 +3,6 @@
 
 namespace JImageProc {
 
-VecPoint2i GetNoneZeroPoints(const JImage &im_src, int threshold) {
-  int c_ = im_src.c_, h_ = im_src.h_, w_ = im_src.w_;
-  Order order_ = im_src.order();
-  const unsigned char *data_src = im_src.data();
-
-  VecPoint2i nz_points;
-  int offset, step = w_ * c_, val;
-  for (int h = 0; h < h_; ++h) {
-    for (int w = 0; w < w_; ++w) {
-      offset = h * step + w * c_;
-      val = 0;
-      if (order_ == kRGB || order_ == kBGR) {
-        val = data_src[offset] + data_src[offset + 1] + data_src[offset + 2];
-        val /= 3;
-      } else if (order_ == kGray) {
-        val = data_src[offset];
-      } else {
-        Fatal("Unsupported format to get none zero points!");
-      }
-      if (val > threshold) {
-        nz_points.push_back(Point2i(w, h, val));
-      }
-    }
-  }
-  return nz_points;
-}
-
-void GetBatchData(const JImage &im_src, float *batch_data) {
-  if (im_src.data() == nullptr) Fatal("JImage data is NULL!");
-
-  int c_ = im_src.c_, h_ = im_src.h_, w_ = im_src.w_;
-  Order order_ = im_src.order();
-  const unsigned char *data_src = im_src.data();
-
-  bool is_rgb = false;
-  if (order_ == kRGB) {
-    is_rgb = true;
-  } else if (order_ == kBGR) {
-    is_rgb = false;
-  } else {
-    Fatal("Unsupported format to get batch data!");
-  }
-  int ch_src, offset, count = 0, step = w_ * c_;
-  for (int c = 0; c < c_; ++c) {
-    ch_src = is_rgb ? c : c_ - c - 1;
-    for (int h = 0; h < h_; ++h) {
-      for (int w = 0; w < w_; ++w) {
-        offset = h * step + w * c_;
-        batch_data[count++] = data_src[offset + ch_src];
-      }
-    }
-  }
-}
-
 void Color2Gray(const JImage &im_src, JImage *im_gray) {
   if (im_src.data() == nullptr) Fatal("JImage data is NULL!");
   if (im_gray == nullptr) Fatal("JImage gray is NULL!");
@@ -143,18 +89,17 @@ void Crop(const JImage &im_src, JImage *im_crop, const Rect<Dtype> &crop) {
   int width = crop.w <= 1 ? static_cast<int>(crop.w * w_) : crop.w;
   im_crop->Reshape(c_, height, width, order_);
 
-  unsigned char *data_src = (unsigned char *)im_src.data();
-  unsigned char *data_gray = im_crop->data();
+  const unsigned char *data_src;
+  unsigned char *data_crop;
 
   int step_src = w_ * c_;
   int step_crop = im_crop->w_ * c_;
   int w_off = crop.w <= 1 ? static_cast<int>(crop.x * w_) : crop.x;
   int h_off = crop.h <= 1 ? static_cast<int>(crop.y * h_) : crop.y;
-  unsigned char *index_src, *index_crop;
   for (int h = 0; h < im_crop->h_; ++h) {
-    index_src = data_src + (h + h_off) * step_src + w_off * c_;
-    index_crop = data_gray + h * step_crop;
-    memcpy(index_crop, index_src, sizeof(unsigned char) * step_crop);
+    data_src = im_src.data() + (h + h_off) * step_src + w_off * c_;
+    data_crop = im_crop->data() + h * step_crop;
+    memcpy(data_crop, data_src, sizeof(unsigned char) * step_crop);
   }
 }
 
@@ -640,17 +585,14 @@ template void CropResize<float>(const JImage &im_src, JImage *im_res,
                                 const RectF &crop, int height, int width);
 
 template void CropResize2Gray<int>(const JImage &im_src, JImage *im_gray,
-                                   const Rect<int> &crop, int height,
-                                   int width);
+                                   const RectI &crop, int height, int width);
 template void CropResize2Gray<float>(const JImage &im_src, JImage *im_gray,
-                                     const Rect<float> &crop, int height,
-                                     int width);
+                                     const RectF &crop, int height, int width);
 #ifdef USE_ArcSoft
 template void CropResize2Gray<int>(const ASVLOFFSCREEN &im_arc, JImage *im_gray,
-                                   const Rect<int> &crop, int height,
-                                   int width);
+                                   const RectI &crop, int height, int width);
 template void CropResize2Gray<float>(const ASVLOFFSCREEN &im_arc,
-                                     JImage *im_gray, const Rect<float> &crop,
+                                     JImage *im_gray, const RectF &crop,
                                      int height, int width);
 #endif
 

@@ -5,9 +5,6 @@
 
 namespace JImageProc {
 
-VecPoint2i GetNoneZeroPoints(const JImage &im_src, int threshold = 0);
-void GetBatchData(const JImage &im_src, float *batch_data);
-
 void Color2Gray(const JImage &im_src, JImage *im_gray);
 
 void Resize(const JImage &im_src, JImage *im_res, int height, int width);
