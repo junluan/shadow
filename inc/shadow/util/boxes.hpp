@@ -35,8 +35,8 @@ class Boxes {
                          float iou_threshold);
   static void SmoothBoxes(const VecBox &old_boxes, VecBox *new_boxes,
                           float smooth);
-  static void AmendBoxes(std::vector<VecBox> *boxes, int height, int width,
-                         const VecRectF &crops);
+  static void AmendBoxes(std::vector<VecBox> *boxes, const VecRectF &crops,
+                         int height = 0, int width = 0);
 
 #if defined(USE_OpenCV)
   static void SelectRoI(int event, int x, int y, int flags, void *roi);

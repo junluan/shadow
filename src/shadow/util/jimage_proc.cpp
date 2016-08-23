@@ -1,5 +1,4 @@
 #include "shadow/util/jimage_proc.hpp"
-#include "shadow/util/util.hpp"
 
 namespace JImageProc {
 
@@ -50,14 +49,15 @@ void Resize(const JImage &im_src, JImage *im_res, int height, int width) {
 
   float step_h = static_cast<float>(h_) / im_res->h_;
   float step_w = static_cast<float>(w_) / im_res->w_;
+  int s_h, s_w, src_offset, dst_offset;
   int src_step = w_ * c_, dst_step = im_res->w_ * c_;
   for (int c = 0; c < c_; ++c) {
     for (int h = 0; h < im_res->h_; ++h) {
       for (int w = 0; w < im_res->w_; ++w) {
-        int s_h = static_cast<int>(step_h * h);
-        int s_w = static_cast<int>(step_w * w);
-        int src_offset = s_h * src_step + s_w * c_;
-        int dst_offset = h * dst_step + w * c_;
+        s_h = static_cast<int>(step_h * h);
+        s_w = static_cast<int>(step_w * w);
+        src_offset = s_h * src_step + s_w * c_;
+        dst_offset = h * dst_step + w * c_;
         data_gray[dst_offset + c] = data_src[src_offset + c];
       }
     }
@@ -92,14 +92,13 @@ void Crop(const JImage &im_src, JImage *im_crop, const Rect<Dtype> &crop) {
   const unsigned char *data_src;
   unsigned char *data_crop;
 
-  int step_src = w_ * c_;
-  int step_crop = im_crop->w_ * c_;
   int w_off = crop.w <= 1 ? static_cast<int>(crop.x * w_) : crop.x;
   int h_off = crop.h <= 1 ? static_cast<int>(crop.y * h_) : crop.y;
+  int src_step = w_ * c_, dst_step = width * c_;
   for (int h = 0; h < im_crop->h_; ++h) {
-    data_src = im_src.data() + (h + h_off) * step_src + w_off * c_;
-    data_crop = im_crop->data() + h * step_crop;
-    memcpy(data_crop, data_src, sizeof(unsigned char) * step_crop);
+    data_src = im_src.data() + (h + h_off) * src_step + w_off * c_;
+    data_crop = im_crop->data() + h * dst_step;
+    memcpy(data_crop, data_src, sizeof(unsigned char) * dst_step);
   }
 }
 
@@ -136,14 +135,15 @@ void CropResize(const JImage &im_src, JImage *im_res, const Rect<Dtype> &crop,
       (crop.w <= 1 ? crop.w * w_ : crop.w) / static_cast<float>(width);
   float h_off = crop.h <= 1 ? crop.y * h_ : crop.y;
   float w_off = crop.w <= 1 ? crop.x * w_ : crop.x;
+  int s_h, s_w, src_offset, dst_offset;
   int src_step = w_ * c_, dst_step = width * c_;
   for (int c = 0; c < c_; ++c) {
     for (int h = 0; h < height; ++h) {
       for (int w = 0; w < width; ++w) {
-        int s_h = static_cast<int>(h_off + step_h * h);
-        int s_w = static_cast<int>(w_off + step_w * w);
-        int src_offset = s_h * src_step + s_w * c_;
-        int dst_offset = h * dst_step + w * c_;
+        s_h = static_cast<int>(h_off + step_h * h);
+        s_w = static_cast<int>(w_off + step_w * w);
+        src_offset = s_h * src_step + s_w * c_;
+        dst_offset = h * dst_step + w * c_;
         data_gray[dst_offset + c] = data_src[src_offset + c];
       }
     }
@@ -159,7 +159,7 @@ void CropResize2Gray(const JImage &im_src, JImage *im_gray,
   int c_ = im_src.c_, h_ = im_src.h_, w_ = im_src.w_;
   Order order_ = im_src.order();
 
-  if (order_ != kRGB && order_ != kBGR)
+  if (order_ != kGray && order_ != kRGB && order_ != kBGR)
     Fatal("Unsupported format to crop and resize!");
   if (crop.w <= 1 && crop.h <= 1) {
     if (crop.x < 0 || crop.y < 0 || crop.x + crop.w > 1 || crop.y + crop.h > 1)
@@ -177,8 +177,6 @@ void CropResize2Gray(const JImage &im_src, JImage *im_gray,
   const unsigned char *data_src = im_src.data();
   unsigned char *data_gray = im_gray->data();
 
-  int s_h, s_w, src_offset, src_step = w_ * c_;
-
   float step_h =
       (crop.h <= 1 ? crop.h * h_ : crop.h) / static_cast<float>(height);
   float step_w =
@@ -186,19 +184,79 @@ void CropResize2Gray(const JImage &im_src, JImage *im_gray,
   float h_off = crop.h <= 1 ? crop.y * h_ : crop.y;
   float w_off = crop.w <= 1 ? crop.x * w_ : crop.x;
   float sum;
+  int s_h, s_w, src_offset, src_step = w_ * c_;
   for (int h = 0; h < height; ++h) {
     for (int w = 0; w < width; ++w) {
       s_h = static_cast<int>(h_off + step_h * h);
       s_w = static_cast<int>(w_off + step_w * w);
       src_offset = s_h * src_step + s_w * c_;
-      sum = data_src[src_offset + 0] + data_src[src_offset + 1] +
-            data_src[src_offset + 2];
-      *data_gray++ = static_cast<unsigned char>(sum / 3.f);
+      if (order_ == kGray) {
+        sum = data_src[src_offset];
+      } else {
+        sum = (data_src[src_offset + 0] + data_src[src_offset + 1] +
+               data_src[src_offset + 2]);
+        sum /= 3.f;
+      }
+      *data_gray++ = static_cast<unsigned char>(sum);
     }
   }
 }
 
 #ifdef USE_ArcSoft
+template <typename Dtype>
+void CropResize(const ASVLOFFSCREEN &im_arc, float *batch_data,
+                const Rect<Dtype> &crop, int height, int width) {
+  if (batch_data == nullptr) Fatal("Batch data is NULL!");
+
+  int h_ = im_arc.i32Height, w_ = im_arc.i32Width;
+
+  if (crop.w <= 1 && crop.h <= 1) {
+    if (crop.x < 0 || crop.y < 0 || crop.x + crop.w > 1 || crop.y + crop.h > 1)
+      Fatal("Crop region overflow!");
+  } else if (crop.w > 1 && crop.h > 1) {
+    if (crop.x < 0 || crop.y < 0 || crop.x + crop.w > w_ ||
+        crop.y + crop.h > h_)
+      Fatal("Crop region overflow!");
+  } else {
+    Fatal("Crop scale must be the same!");
+  }
+
+  const unsigned char *src_y = im_arc.ppu8Plane[0];
+  const unsigned char *src_u = im_arc.ppu8Plane[1];
+  const unsigned char *src_v = im_arc.ppu8Plane[2];
+  float *dst_r = batch_data;
+  float *dst_g = batch_data + height * width;
+  float *dst_b = batch_data + height * width * 2;
+
+  float step_h =
+      (crop.h <= 1 ? crop.h * h_ : crop.h) / static_cast<float>(height);
+  float step_w =
+      (crop.w <= 1 ? crop.w * w_ : crop.w) / static_cast<float>(width);
+  float h_off = crop.h <= 1 ? crop.y * h_ : crop.y;
+  float w_off = crop.w <= 1 ? crop.x * w_ : crop.x;
+  int s_h, s_w, src_step = im_arc.pi32Pitch[0];
+  int y, u, v, r, g, b;
+  for (int h = 0; h < height; ++h) {
+    for (int w = 0; w < width; ++w) {
+      s_h = static_cast<int>(h_off + step_h * h);
+      s_w = static_cast<int>(w_off + step_w * w);
+
+      y = src_y[s_h * src_step + s_w];
+      u = src_u[(s_h >> 1) * (src_step >> 1) + (s_w >> 1)];
+      v = src_v[(s_h >> 1) * (src_step >> 1) + (s_w >> 1)];
+      u -= 128;
+      v -= 128;
+      r = y + v + ((v * 103) >> 8);
+      g = y - ((u * 88) >> 8) + ((v * 183) >> 8);
+      b = y + u + ((u * 198) >> 8);
+
+      *dst_r++ = Util::constrain(0, 255, r);
+      *dst_g++ = Util::constrain(0, 255, g);
+      *dst_b++ = Util::constrain(0, 255, b);
+    }
+  }
+}
+
 template <typename Dtype>
 void CropResize2Gray(const ASVLOFFSCREEN &im_arc, JImage *im_gray,
                      const Rect<Dtype> &crop, int height, int width) {
@@ -222,14 +280,13 @@ void CropResize2Gray(const ASVLOFFSCREEN &im_arc, JImage *im_gray,
   const unsigned char *data_src = im_arc.ppu8Plane[0];
   unsigned char *data_gray = im_gray->data();
 
-  int s_h, s_w, src_step = static_cast<int>(im_arc.pi32Pitch[0]);
-
   float step_h =
       (crop.h <= 1 ? crop.h * h_ : crop.h) / static_cast<float>(height);
   float step_w =
       (crop.w <= 1 ? crop.w * w_ : crop.w) / static_cast<float>(width);
   float h_off = crop.h <= 1 ? crop.y * h_ : crop.y;
   float w_off = crop.w <= 1 ? crop.x * w_ : crop.x;
+  int s_h, s_w, src_step = im_arc.pi32Pitch[0];
   for (int h = 0; h < height; ++h) {
     for (int w = 0; w < width; ++w) {
       s_h = static_cast<int>(h_off + step_h * h);
@@ -589,6 +646,10 @@ template void CropResize2Gray<int>(const JImage &im_src, JImage *im_gray,
 template void CropResize2Gray<float>(const JImage &im_src, JImage *im_gray,
                                      const RectF &crop, int height, int width);
 #ifdef USE_ArcSoft
+template void CropResize<int>(const ASVLOFFSCREEN &im_arc, float *batch_data,
+                              const RectI &crop, int height, int width);
+template void CropResize<float>(const ASVLOFFSCREEN &im_arc, float *batch_data,
+                                const RectF &crop, int height, int width);
 template void CropResize2Gray<int>(const ASVLOFFSCREEN &im_arc, JImage *im_gray,
                                    const RectI &crop, int height, int width);
 template void CropResize2Gray<float>(const ASVLOFFSCREEN &im_arc,

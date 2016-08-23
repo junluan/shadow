@@ -6,7 +6,7 @@ option(USE_CL "Using OpenCL!" OFF)
 option(VERBOSE "Showing verbose message" ON)
 option(USE_GLog "Using GLog!" ON)
 option(USE_OpenCV "Using OpenCV to read, write and show image!" ON)
-set(OpenCV_ROOT "/usr/local" CACHE STRING "Give the root of OpenCV!")
+set(OpenCV_ROOT "/usr/local/opencv-3.1.0" CACHE STRING "Give the root of OpenCV!")
 
 option(BUILD_TEST "Build gtest to test layers!" ON)
 

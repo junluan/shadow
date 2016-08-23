@@ -91,10 +91,7 @@ class JImage {
 
 #if defined(USE_ArcSoft)
   void FromArcImage(const ASVLOFFSCREEN &im_arc);
-  void FromArcImageWithCropResize(const ASVLOFFSCREEN &im_arc,
-                                  const RectF &crop, int resize_h, int resize_w,
-                                  float *batch_data);
-  void JImageToArcImage(int arc_format);
+  void ToArcImage(int arc_format);
 #endif
 
   void Rectangle(const RectI &rect, const Scalar &scalar = Scalar(0, 255, 0));

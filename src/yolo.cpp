@@ -77,7 +77,7 @@ void Yolo::Test(string image_file) {
   im_ini_->Read(image_file);
   vector<VecBox> Bboxes;
   PredictYoloDetections(im_ini_, &Bboxes);
-  Boxes::AmendBoxes(&Bboxes, im_ini_->h_, im_ini_->w_, rois_);
+  Boxes::AmendBoxes(&Bboxes, rois_, im_ini_->h_, im_ini_->w_);
   VecBox boxes = Boxes::BoxesNMS(Bboxes, 0.5);
   cout << "Predicted in " << timer.get_second() << " seconds" << endl;
 
@@ -104,7 +104,7 @@ void Yolo::BatchTest(string list_file, bool image_write) {
     im_ini_->Read(image_list[i]);
     vector<VecBox> Bboxes;
     PredictYoloDetections(im_ini_, &Bboxes);
-    Boxes::AmendBoxes(&Bboxes, im_ini_->h_, im_ini_->w_, rois_);
+    Boxes::AmendBoxes(&Bboxes, rois_, im_ini_->h_, im_ini_->w_);
     VecBox boxes = Boxes::BoxesNMS(Bboxes, 0.5);
     if (image_write) {
       string path = Util::find_replace_last(image_list[i], ".", "-result.");
@@ -140,9 +140,8 @@ void Yolo::VideoTest(string video_file, bool video_show, bool video_write) {
   int height = static_cast<int>(capture.get(CV_CAP_PROP_FRAME_HEIGHT));
   cv::VideoWriter writer;
   if (video_write) {
-    string outfile = Util::find_replace_last(video_file, ".", "-result.");
-    outfile = Util::change_extension(outfile, ".avi");
-    int format = CV_FOURCC('X', '2', '6', '4');
+    string outfile = Util::change_extension(video_file, "-result.avi");
+    int format = CV_FOURCC('H', '2', '6', '4');
     writer.open(outfile, format, rate, cv::Size(width, height));
   }
   CaptureTest(capture, "yolo video test!-:)", video_show, writer, video_write);
@@ -158,7 +157,7 @@ void Yolo::Demo(int camera, bool video_write) {
   int height = static_cast<int>(capture.get(CV_CAP_PROP_FRAME_HEIGHT));
   cv::VideoWriter writer;
   if (video_write) {
-    int format = CV_FOURCC('X', '2', '6', '4');
+    int format = CV_FOURCC('H', '2', '6', '4');
     writer.open("./data/demo-result.avi", format, rate,
                 cv::Size(width, height));
   }
@@ -182,7 +181,7 @@ void Yolo::CaptureTest(cv::VideoCapture capture, string window_name,
     timer.start();
     im_ini_->FromMat(im_mat);
     PredictYoloDetections(im_ini_, &Bboxes);
-    Boxes::AmendBoxes(&Bboxes, im_ini_->h_, im_ini_->w_, rois_);
+    Boxes::AmendBoxes(&Bboxes, rois_, im_ini_->h_, im_ini_->w_);
     boxes = Boxes::BoxesNMS(Bboxes, 0.5);
     Boxes::SmoothBoxes(oldBoxes, &boxes, 0.3);
     oldBoxes = boxes;

@@ -19,6 +19,9 @@ void CropResize2Gray(const JImage &im_src, JImage *im_gray,
                      const Rect<Dtype> &crop, int height, int width);
 #ifdef USE_ArcSoft
 template <typename Dtype>
+void CropResize(const ASVLOFFSCREEN &im_arc, float *batch_data,
+                const Rect<Dtype> &crop, int height, int width);
+template <typename Dtype>
 void CropResize2Gray(const ASVLOFFSCREEN &im_arc, JImage *im_gray,
                      const Rect<Dtype> &crop, int height, int width);
 #endif

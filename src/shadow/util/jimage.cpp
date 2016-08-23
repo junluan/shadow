@@ -243,52 +243,7 @@ void JImage::FromArcImage(const ASVLOFFSCREEN &im_arc) {
   }
 }
 
-void JImage::FromArcImageWithCropResize(const ASVLOFFSCREEN &im_arc,
-                                        const RectF &crop, int resize_h,
-                                        int resize_w, float *batch_data) {
-  int src_h = static_cast<int>(im_arc.i32Height);
-  int src_w = static_cast<int>(im_arc.i32Width);
-  int src_step = static_cast<int>(im_arc.pi32Pitch[0]);
-  unsigned char *src_y = im_arc.ppu8Plane[0];
-  unsigned char *src_u = im_arc.ppu8Plane[1];
-  unsigned char *src_v = im_arc.ppu8Plane[2];
-
-  RectF crop_p;
-  crop_p.x = crop.x * src_w;
-  crop_p.y = crop.y * src_h;
-  crop_p.w = crop.w * src_w;
-  crop_p.h = crop.h * src_h;
-
-  float step_w = crop_p.w / resize_w;
-  float step_h = crop_p.h / resize_h;
-  int step_ch = resize_h * resize_w;
-
-  for (int h = 0; h < resize_h; ++h) {
-    for (int w = 0; w < resize_w; ++w) {
-      int s_h = static_cast<int>(crop_p.y + step_h * h);
-      int s_w = static_cast<int>(crop_p.x + step_w * w);
-
-      int y = src_y[s_h * src_step + s_w];
-      int u = src_u[(s_h >> 1) * (src_step >> 1) + (s_w >> 1)];
-      int v = src_v[(s_h >> 1) * (src_step >> 1) + (s_w >> 1)];
-      u -= 128;
-      v -= 128;
-      int r = y + v + ((v * 103) >> 8);
-      int g = y - ((u * 88) >> 8) + ((v * 183) >> 8);
-      int b = y + u + ((u * 198) >> 8);
-
-      int offset = h * resize_w + w;
-      batch_data[offset + step_ch * 0] =
-          (unsigned char)Util::constrain(0, 255, r);
-      batch_data[offset + step_ch * 1] =
-          (unsigned char)Util::constrain(0, 255, g);
-      batch_data[offset + step_ch * 2] =
-          (unsigned char)Util::constrain(0, 255, b);
-    }
-  }
-}
-
-void JImage::JImageToArcImage(int arc_format) {
+void JImage::ToArcImage(int arc_format) {
   if (data_ == nullptr) Fatal("JImage data is NULL!");
   if (order_ == kArc) return;
   if (order_ != kRGB && order_ != kBGR)
