@@ -12,17 +12,6 @@
 #include "arcsoft/asvloffscreen.h"
 #endif
 
-class Scalar {
- public:
-  Scalar() {}
-  Scalar(int r_t, int g_t, int b_t) {
-    r = (unsigned char)Util::constrain(0, 255, r_t);
-    g = (unsigned char)Util::constrain(0, 255, g_t);
-    b = (unsigned char)Util::constrain(0, 255, b_t);
-  }
-  unsigned char r, g, b;
-};
-
 enum Order { kGray, kRGB, kBGR, kArc };
 
 class JImage {
@@ -93,10 +82,6 @@ class JImage {
   void FromArcImage(const ASVLOFFSCREEN &im_arc);
   void ToArcImage(int arc_format);
 #endif
-
-  void Rectangle(const RectI &rect, const Scalar &scalar = Scalar(0, 255, 0));
-  void Rectangle(const VecRectI &rects,
-                 const Scalar &scalar = Scalar(0, 255, 0));
 
   void Release();
 

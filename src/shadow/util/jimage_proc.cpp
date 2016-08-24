@@ -2,6 +2,104 @@
 
 namespace JImageProc {
 
+inline VecPoint2i GetLinePixels(const Point2i &start, const Point2i &end) {
+  Point2i start_p(start), end_p(end);
+
+  bool steep = false;
+  if (std::abs(end_p.y - start_p.y) > std::abs(end_p.x - start_p.x)) {
+    steep = true;
+    int t = start_p.x;
+    start_p.x = start_p.y;
+    start_p.y = t;
+    t = end_p.x;
+    end_p.x = end_p.y;
+    end_p.y = t;
+  }
+
+  if (start_p.x > end_p.x) {
+    Point2i t = start_p;
+    start_p = end_p;
+    end_p = t;
+  }
+
+  float step_y = (end_p.y - start_p.y) / (end_p.x - start_p.x);
+  VecPoint2i points;
+  for (int x = start_p.x; x <= end_p.x; ++x) {
+    int y = Util::round(start_p.y + x * step_y);
+    if (steep) {
+      points.push_back(Point2i(y, x));
+    } else {
+      points.push_back(Point2i(x, y));
+    }
+  }
+
+  return points;
+}
+
+void Line(JImage *im, const Point2i &start, const Point2i &end,
+          const Scalar &scalar) {
+  if (im == nullptr) Fatal("JImage is NULL!");
+  if (im->data() == nullptr) Fatal("JImage data is NULL!");
+
+  int c_ = im->c_, h_ = im->h_, w_ = im->w_;
+  Order order_ = im->order();
+
+  if (order_ != kGray && order_ != kRGB && order_ != kBGR)
+    Fatal("Unsupported format to resize!");
+
+  unsigned char *data = im->data();
+
+  int loc_r = 0, loc_g = 1, loc_b = 2;
+  if (order_ == kRGB) {
+    loc_r = 0;
+    loc_g = 1;
+    loc_b = 2;
+  } else if (order_ == kBGR) {
+    loc_r = 2;
+    loc_g = 1;
+    loc_b = 0;
+  }
+
+  unsigned char gray = std::max(std::max(scalar.r, scalar.g), scalar.b);
+
+  VecPoint2i points = GetLinePixels(start, end);
+
+  int offset, x, y;
+  for (int i = 0; i < points.size(); ++i) {
+    x = points[i].x, y = points[i].y;
+    if (x < 0 || y < 0 || x >= w_ || y >= h_) continue;
+    offset = (w_ * y + x) * c_;
+    if (order_ == kGray) {
+      data[offset] = gray;
+    } else {
+      data[offset + loc_r] = scalar.r;
+      data[offset + loc_g] = scalar.g;
+      data[offset + loc_b] = scalar.b;
+    }
+  }
+}
+
+void Rectangle(JImage *im, const RectI &rect, const Scalar &scalar) {
+  if (im == nullptr) Fatal("JImage is NULL!");
+  if (im->data() == nullptr) Fatal("JImage data is NULL!");
+
+  int h_ = im->h_, w_ = im->w_;
+  Order order_ = im->order();
+
+  if (order_ != kGray && order_ != kRGB && order_ != kBGR)
+    Fatal("Unsupported format to resize!");
+
+  int x1 = Util::constrain(0, w_ - 1, rect.x);
+  int y1 = Util::constrain(0, h_ - 1, rect.y);
+  int x2 = Util::constrain(x1, w_ - 1, x1 + rect.w);
+  int y2 = Util::constrain(y1, h_ - 1, y1 + rect.h);
+
+  Line(im, Point2i(x1, y1), Point2i(x2, y1), scalar);
+  Line(im, Point2i(x1, y1), Point2i(x1, y2), scalar);
+  Line(im, Point2i(x1, y2), Point2i(x2, y2), scalar);
+  Line(im, Point2i(x2, y1), Point2i(x2, y2), scalar);
+}
+
 void Color2Gray(const JImage &im_src, JImage *im_gray) {
   if (im_src.data() == nullptr) Fatal("JImage data is NULL!");
   if (im_gray == nullptr) Fatal("JImage gray is NULL!");
@@ -127,7 +225,7 @@ void CropResize(const JImage &im_src, JImage *im_res, const Rect<Dtype> &crop,
   im_res->Reshape(c_, height, width, order_);
 
   const unsigned char *data_src = im_src.data();
-  unsigned char *data_gray = im_res->data();
+  unsigned char *data_res = im_res->data();
 
   float step_h =
       (crop.h <= 1 ? crop.h * h_ : crop.h) / static_cast<float>(height);
@@ -144,7 +242,7 @@ void CropResize(const JImage &im_src, JImage *im_res, const Rect<Dtype> &crop,
         s_w = static_cast<int>(w_off + step_w * w);
         src_offset = s_h * src_step + s_w * c_;
         dst_offset = h * dst_step + w * c_;
-        data_gray[dst_offset + c] = data_src[src_offset + c];
+        data_res[dst_offset + c] = data_src[src_offset + c];
       }
     }
   }

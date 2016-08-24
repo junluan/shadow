@@ -276,40 +276,6 @@ void JImage::ToArcImage(int arc_format) {
 }
 #endif
 
-void JImage::Rectangle(const RectI &rect, const Scalar &scalar) {
-  int x1 = Util::constrain(0, w_ - 1, rect.x);
-  int y1 = Util::constrain(0, h_ - 1, rect.y);
-  int x2 = Util::constrain(x1, w_ - 1, x1 + rect.w);
-  int y2 = Util::constrain(y1, h_ - 1, y1 + rect.h);
-
-  for (int i = x1; i <= x2; ++i) {
-    int offset = (w_ * y1 + i) * c_;
-    data_[offset + 0] = scalar.r;
-    data_[offset + 1] = scalar.g;
-    data_[offset + 2] = scalar.b;
-    offset = (w_ * y2 + i) * c_;
-    data_[offset + 0] = scalar.r;
-    data_[offset + 1] = scalar.g;
-    data_[offset + 2] = scalar.b;
-  }
-  for (int i = y1; i <= y2; ++i) {
-    int offset = (w_ * i + x1) * c_;
-    data_[offset + 0] = scalar.r;
-    data_[offset + 1] = scalar.g;
-    data_[offset + 2] = scalar.b;
-    offset = (w_ * i + x2) * c_;
-    data_[offset + 0] = scalar.r;
-    data_[offset + 1] = scalar.g;
-    data_[offset + 2] = scalar.b;
-  }
-}
-
-void JImage::Rectangle(const VecRectI &rects, const Scalar &scalar) {
-  for (int b = 0; b < rects.size(); ++b) {
-    Rectangle(rects[b], scalar);
-  }
-}
-
 void JImage::Release() {
   if (data_ != nullptr) {
     delete[] data_;

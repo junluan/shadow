@@ -3,7 +3,23 @@
 
 #include "shadow/util/jimage.hpp"
 
+class Scalar {
+ public:
+  Scalar() {}
+  Scalar(int r_t, int g_t, int b_t) {
+    r = (unsigned char)Util::constrain(0, 255, r_t);
+    g = (unsigned char)Util::constrain(0, 255, g_t);
+    b = (unsigned char)Util::constrain(0, 255, b_t);
+  }
+  unsigned char r, g, b;
+};
+
 namespace JImageProc {
+
+void Line(JImage *im, const Point2i &start, const Point2i &end,
+          const Scalar &scalar = Scalar(0, 255, 0));
+void Rectangle(JImage *im, const RectI &rect,
+               const Scalar &scalar = Scalar(0, 255, 0));
 
 void Color2Gray(const JImage &im_src, JImage *im_gray);
 

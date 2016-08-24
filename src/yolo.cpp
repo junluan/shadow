@@ -88,7 +88,7 @@ void Yolo::Test(string image_file) {
       scalar = Scalar(0, 255, 0);
     else
       scalar = Scalar(0, 0, 255);
-    im_ini_->Rectangle(box.RectInt(), scalar);
+    JImageProc::Rectangle(im_ini_, box.RectInt(), scalar);
   }
   im_ini_->Show("result");
 }
@@ -115,7 +115,7 @@ void Yolo::BatchTest(string list_file, bool image_write) {
           scalar = Scalar(0, 255, 0);
         else
           scalar = Scalar(0, 0, 255);
-        im_ini_->Rectangle(box.RectInt(), scalar);
+        JImageProc::Rectangle(im_ini_, box.RectInt(), scalar);
       }
       im_ini_->Write(path);
     }
