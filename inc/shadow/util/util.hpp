@@ -51,15 +51,15 @@ class Size {
   Dtype w, h;
 };
 
-typedef Point<float> Point2f;
-typedef Point<int> Point2i;
+typedef Point<float> PointF;
+typedef Point<int> PointI;
 typedef Rect<float> RectF;
 typedef Rect<int> RectI;
 typedef Size<float> SizeF;
 typedef Size<int> SizeI;
 
-typedef std::vector<Point2f> VecPoint2f;
-typedef std::vector<Point2i> VecPoint2i;
+typedef std::vector<PointF> VecPointF;
+typedef std::vector<PointI> VecPointI;
 typedef std::vector<RectF> VecRectF;
 typedef std::vector<RectI> VecRectI;
 typedef std::vector<SizeF> VecSizeF;

@@ -2,11 +2,18 @@
 
 namespace JImageProc {
 
-inline VecPoint2i GetLinePixels(const Point2i &start, const Point2i &end) {
-  Point2i start_p(start), end_p(end);
+VecPointI GetLinePoints(const PointI &start, const PointI &end, const int step,
+                        const int slice_axis) {
+  PointI start_p(start), end_p(end);
+
+  float delta_x = end_p.x - start_p.x, delta_y = end_p.y - start_p.y;
+
+  if (std::abs(delta_x) < 1 && std::abs(delta_y) < 1)
+    return VecPointI(1, start_p);
 
   bool steep = false;
-  if (std::abs(end_p.y - start_p.y) > std::abs(end_p.x - start_p.x)) {
+  if (slice_axis == 1 ||
+      (slice_axis == -1 && std::abs(delta_y) > std::abs(delta_x))) {
     steep = true;
     int t = start_p.x;
     start_p.x = start_p.y;
@@ -17,26 +24,29 @@ inline VecPoint2i GetLinePixels(const Point2i &start, const Point2i &end) {
   }
 
   if (start_p.x > end_p.x) {
-    Point2i t = start_p;
+    PointI t = start_p;
     start_p = end_p;
     end_p = t;
   }
 
-  float step_y = (end_p.y - start_p.y) / (end_p.x - start_p.x);
-  VecPoint2i points;
-  for (int x = start_p.x; x <= end_p.x; ++x) {
+  delta_x = end_p.x - start_p.x, delta_y = end_p.y - start_p.y;
+
+  float step_y = delta_y / delta_x;
+  VecPointI points;
+  for (int x = start_p.x; x <= end_p.x; x += step) {
     int y = Util::round(start_p.y + x * step_y);
     if (steep) {
-      points.push_back(Point2i(y, x));
+      points.push_back(PointI(y, x));
     } else {
-      points.push_back(Point2i(x, y));
+      points.push_back(PointI(x, y));
     }
   }
 
   return points;
 }
 
-void Line(JImage *im, const Point2i &start, const Point2i &end,
+template <typename Dtype>
+void Line(JImage *im, const Point<Dtype> &start, const Point<Dtype> &end,
           const Scalar &scalar) {
   if (im == nullptr) Fatal("JImage is NULL!");
   if (im->data() == nullptr) Fatal("JImage data is NULL!");
@@ -62,7 +72,7 @@ void Line(JImage *im, const Point2i &start, const Point2i &end,
 
   unsigned char gray = std::max(std::max(scalar.r, scalar.g), scalar.b);
 
-  VecPoint2i points = GetLinePixels(start, end);
+  VecPointI points = GetLinePoints(PointI(start), PointI(end));
 
   int offset, x, y;
   for (int i = 0; i < points.size(); ++i) {
@@ -79,7 +89,8 @@ void Line(JImage *im, const Point2i &start, const Point2i &end,
   }
 }
 
-void Rectangle(JImage *im, const RectI &rect, const Scalar &scalar) {
+template <typename Dtype>
+void Rectangle(JImage *im, const Rect<Dtype> &rect, const Scalar &scalar) {
   if (im == nullptr) Fatal("JImage is NULL!");
   if (im->data() == nullptr) Fatal("JImage data is NULL!");
 
@@ -89,15 +100,17 @@ void Rectangle(JImage *im, const RectI &rect, const Scalar &scalar) {
   if (order_ != kGray && order_ != kRGB && order_ != kBGR)
     Fatal("Unsupported format to resize!");
 
-  int x1 = Util::constrain(0, w_ - 1, rect.x);
-  int y1 = Util::constrain(0, h_ - 1, rect.y);
-  int x2 = Util::constrain(x1, w_ - 1, x1 + rect.w);
-  int y2 = Util::constrain(y1, h_ - 1, y1 + rect.h);
+  RectI rectI(rect);
 
-  Line(im, Point2i(x1, y1), Point2i(x2, y1), scalar);
-  Line(im, Point2i(x1, y1), Point2i(x1, y2), scalar);
-  Line(im, Point2i(x1, y2), Point2i(x2, y2), scalar);
-  Line(im, Point2i(x2, y1), Point2i(x2, y2), scalar);
+  int x1 = Util::constrain(0, w_ - 1, rectI.x);
+  int y1 = Util::constrain(0, h_ - 1, rectI.y);
+  int x2 = Util::constrain(x1, w_ - 1, x1 + rectI.w);
+  int y2 = Util::constrain(y1, h_ - 1, y1 + rectI.h);
+
+  Line(im, PointI(x1, y1), PointI(x2, y1), scalar);
+  Line(im, PointI(x1, y1), PointI(x1, y2), scalar);
+  Line(im, PointI(x1, y2), PointI(x2, y2), scalar);
+  Line(im, PointI(x2, y1), PointI(x2, y2), scalar);
 }
 
 void Color2Gray(const JImage &im_src, JImage *im_gray) {
@@ -729,6 +742,16 @@ void Gradient(const JImage &im_src, int *grad_x, int *grad_y, int *magnitude,
 }
 
 // Explicit instantiation
+template void Line<int>(JImage *im, const PointI &start, const PointI &end,
+                        const Scalar &scalar);
+template void Line<float>(JImage *im, const PointF &start, const PointF &end,
+                          const Scalar &scalar);
+
+template void Rectangle<int>(JImage *im, const RectI &rect,
+                             const Scalar &scalar);
+template void Rectangle<float>(JImage *im, const RectF &rect,
+                               const Scalar &scalar);
+
 template void Crop<int>(const JImage &im_src, JImage *im_crop,
                         const RectI &crop);
 template void Crop<float>(const JImage &im_src, JImage *im_crop,

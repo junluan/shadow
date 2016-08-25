@@ -16,9 +16,14 @@ class Scalar {
 
 namespace JImageProc {
 
-void Line(JImage *im, const Point2i &start, const Point2i &end,
+VecPointI GetLinePoints(const PointI &start, const PointI &end,
+                        const int step = 1, const int slice_axis = -1);
+
+template <typename Dtype>
+void Line(JImage *im, const Point<Dtype> &start, const Point<Dtype> &end,
           const Scalar &scalar = Scalar(0, 255, 0));
-void Rectangle(JImage *im, const RectI &rect,
+template <typename Dtype>
+void Rectangle(JImage *im, const Rect<Dtype> &rect,
                const Scalar &scalar = Scalar(0, 255, 0));
 
 void Color2Gray(const JImage &im_src, JImage *im_gray);
