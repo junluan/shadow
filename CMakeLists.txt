@@ -8,7 +8,7 @@ option(USE_GLog "Using GLog!" ON)
 option(USE_OpenCV "Using OpenCV to read, write and show image!" ON)
 set(OpenCV_ROOT "/usr/local/opencv-3.1.0" CACHE STRING "Give the root of OpenCV!")
 
-option(BUILD_TEST "Build gtest to test layers!" ON)
+option(BUILD_TEST "Build gtest to test shadow!" ON)
 
 set(CMAKE_CXX_COMPILER "/usr/bin/clang++-3.8")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
@@ -35,7 +35,7 @@ include_directories("inc" "external")
 file(GLOB shadow_lib_src "src/shadow/*.cpp" "src/shadow/layers/*.cpp" "src/shadow/util/*.cpp" "src/shadow/proto/*.cc")
 
 if (BUILD_TEST)
-  file(GLOB test_shadow_src "src/test/*.cpp")
+  file(GLOB test_shadow_src "src/test/*.cpp" "external/gtest/gtest-all.cc")
   add_executable(test_shadow ${test_shadow_src})
 endif ()
 
@@ -50,7 +50,7 @@ if (${USE_CUDA} STREQUAL "ON" AND ${USE_CL} STREQUAL "OFF")
   cuda_add_library(shadow "src/shadow/kernel.cu" ${shadow_lib_src})
 
   if (BUILD_TEST)
-    target_link_libraries(test_shadow shadow glog protobuf gtest ${CUDA_cublas_LIBRARY} ${OpenCV_LIBS})
+    target_link_libraries(test_shadow shadow glog protobuf ${CUDA_cublas_LIBRARY} ${OpenCV_LIBS})
   endif ()
 
   file(GLOB yolo_src "src/main.cpp" "src/yolo.cpp")
@@ -71,7 +71,7 @@ if (${USE_CUDA} STREQUAL "OFF" AND ${USE_CL} STREQUAL "ON")
   add_library(shadow ${shadow_lib_src})
 
   if (BUILD_TEST)
-    target_link_libraries(test_shadow shadow glog protobuf gtest clBLAS clew EasyCL ${OpenCL_LIBRARIES} ${OpenCV_LIBS})
+    target_link_libraries(test_shadow shadow glog protobuf pthread clBLAS clew EasyCL ${OpenCL_LIBRARIES} ${OpenCV_LIBS})
   endif ()
 
   file(GLOB yolo_src "src/main.cpp" "src/yolo.cpp")
@@ -83,7 +83,7 @@ if (${USE_CUDA} STREQUAL "OFF" AND ${USE_CL} STREQUAL "OFF")
   add_library(shadow ${shadow_lib_src})
 
   if (BUILD_TEST)
-    target_link_libraries(test_shadow shadow glog protobuf gtest ${OpenCV_LIBS})
+    target_link_libraries(test_shadow shadow glog protobuf pthread ${OpenCV_LIBS})
   endif ()
 
   file(GLOB yolo_src "src/main.cpp" "src/yolo.cpp")
