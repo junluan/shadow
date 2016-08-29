@@ -64,7 +64,10 @@ class JImage {
     if (count != c_ * h_ * w_) Fatal("Set data dimension mismatch!");
     memcpy(data_, data, sizeof(unsigned char) * count);
   }
-  void SetZero() { memset(data_, 0, sizeof(unsigned char) * c_ * h_ * w_); }
+  void SetZero() {
+    if (data_ == nullptr) Fatal("JImage data is NULL!");
+    memset(data_, 0, sizeof(unsigned char) * c_ * h_ * w_);
+  }
 
   void Read(const std::string &im_path);
   void Write(const std::string &im_path) const;

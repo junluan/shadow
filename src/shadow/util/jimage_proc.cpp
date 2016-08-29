@@ -34,7 +34,7 @@ VecPointI GetLinePoints(const PointI &start, const PointI &end, const int step,
   float step_y = delta_y / delta_x;
   VecPointI points;
   for (int x = start_p.x; x <= end_p.x; x += step) {
-    int y = Util::round(start_p.y + x * step_y);
+    int y = Util::round(start_p.y + (x - start_p.x) * step_y);
     if (steep) {
       points.push_back(PointI(y, x));
     } else {

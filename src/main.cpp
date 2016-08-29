@@ -15,5 +15,6 @@ int main(int argc, char const *argv[]) {
   //yolo.VideoTest("./data/traffic/set07V000.avi", true, false);
   //yolo.Demo(0, true);
   yolo.Release();
+
   return 0;
 }
