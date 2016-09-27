@@ -25,7 +25,7 @@ class JImage {
   }
   explicit JImage(int c = 0, int h = 0, int w = 0, Order order = kRGB)
       : c_(c), h_(h), w_(w), order_(order), data_(nullptr) {
-    if (c_ * h_ * w_ != 0) {
+    if (count() != 0) {
       this->Reshape(c_, h_, w_, order);
     }
 
@@ -38,6 +38,7 @@ class JImage {
   const unsigned char *data() const { return data_; }
   unsigned char *data() { return data_; }
   const Order order() const { return order_; }
+  const int count() const { return c_ * h_ * w_; }
 
   const unsigned char operator()(int c, int h, int w) const {
     if (c >= c_ || h >= h_ || w >= w_) Fatal("Index out of range!");
@@ -49,24 +50,25 @@ class JImage {
   }
 
   inline void Reshape(int c, int h, int w, Order order) {
-    if (c * h * w == 0) Fatal("Reshape dimension must be greater than zero!");
+    int num = c * h * w;
+    if (num == 0) Fatal("Reshape dimension must be greater than zero!");
     if (data_ == nullptr) {
-      data_ = new unsigned char[c * h * w];
-    } else if (c * h * w > c_ * h_ * w_) {
+      data_ = new unsigned char[num];
+    } else if (num > count()) {
       delete[] data_;
-      data_ = new unsigned char[c * h * w];
+      data_ = new unsigned char[num];
     }
     c_ = c, h_ = h, w_ = w, order_ = order;
   }
 
-  void SetData(const unsigned char *data, int count) {
+  void SetData(const unsigned char *data, int num) {
     if (data_ == nullptr) Fatal("JImage data is NULL!");
-    if (count != c_ * h_ * w_) Fatal("Set data dimension mismatch!");
-    memcpy(data_, data, sizeof(unsigned char) * count);
+    if (num != count()) Fatal("Set data dimension mismatch!");
+    memcpy(data_, data, sizeof(unsigned char) * num);
   }
   void SetZero() {
     if (data_ == nullptr) Fatal("JImage data is NULL!");
-    memset(data_, 0, sizeof(unsigned char) * c_ * h_ * w_);
+    memset(data_, 0, sizeof(unsigned char) * count());
   }
 
   void Read(const std::string &im_path);

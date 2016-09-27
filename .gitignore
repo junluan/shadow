@@ -1,0 +1,48 @@
+### Example user template
+build
+cfg
+data
+external
+model
+models
+src/shadow/proto/shadow.pb.cc
+inc/shadow/proto/shadow.pb.h
+src/test
+inc/test
+
+# IntelliJ project files
+.idea
+*.iml
+out
+gen
+
+### C++ template
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Fortran module files
+*.mod
+*.smod
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
