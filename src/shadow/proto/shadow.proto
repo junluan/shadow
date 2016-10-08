@@ -57,13 +57,19 @@ message PermuteParameter {
   repeated int32 order = 1;
 }
 
+message FlattenParameter {
+  optional int32 start_axis = 1 [default = 1];
+  optional int32 end_axis = 2 [default = -1];
+}
+
 enum LayerType {
   Data = 0;
   Convolution = 1;
   Pooling = 2;
   Connected = 3;
   Dropout = 4;
-  Cost = 5;
+  Permute = 5;
+  Flatten = 6;
 }
 
 message LayerParameter {
@@ -80,6 +86,7 @@ message LayerParameter {
   optional ConnectedParameter connected_param = 13;
   optional DropoutParameter dropout_param = 14;
   optional PermuteParameter permute_param = 15;
+  optional FlattenParameter flatten_param = 16;
 }
 
 message NetParameter {

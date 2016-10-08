@@ -6,6 +6,8 @@
 #include "shadow/layers/conv_layer.hpp"
 #include "shadow/layers/data_layer.hpp"
 #include "shadow/layers/dropout_layer.hpp"
+#include "shadow/layers/flatten_layer.hpp"
+#include "shadow/layers/permute_layer.hpp"
 #include "shadow/layers/pooling_layer.hpp"
 
 #include <google/protobuf/text_format.h>
@@ -76,6 +78,10 @@ Layer *Parser::LayerFactory(const shadow::LayerParameter &layer_param,
     layer = new ConnectedLayer(layer_param);
   } else if (layer_type == shadow::LayerType::Dropout) {
     layer = new DropoutLayer(layer_param);
+  } else if (layer_type == shadow::LayerType::Permute) {
+    layer = new PermuteLayer(layer_param);
+  } else if (layer_type == shadow::LayerType::Flatten) {
+    layer = new FlattenLayer(layer_param);
   } else {
     Fatal("Type not recognized!");
   }

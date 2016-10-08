@@ -86,13 +86,13 @@ class Blob {
   inline const int num() const { return count() / shape(0); }
   inline const int count() const { return count(0); }
   inline const int count(int start_axis) const {
-    return count(start_axis, shape_.size());
+    return count(start_axis, shape_.size() - 1);
   }
   inline const int count(int start_axis, int end_axis) const {
-    if (start_axis < 0 || start_axis >= end_axis)
+    if (start_axis < 0 || end_axis >= shape_.size() || start_axis > end_axis)
       Fatal("Index out of blob shape range!");
     int count = 1;
-    for (int i = start_axis; i < end_axis; ++i) count *= shape(i);
+    for (int i = start_axis; i <= end_axis; ++i) count *= shape(i);
     return count;
   }
 
