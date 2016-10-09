@@ -1,12 +1,8 @@
 #ifndef SHADOW_KERNEL_HPP
 #define SHADOW_KERNEL_HPP
 
-#include "shadow/proto/shadow.pb.h"
-
 #if defined(USE_CUDA)
 #include "cublas_v2.h"
-#include "cuda_runtime.h"
-const int BLOCK = 512;
 #endif
 
 #if defined(USE_CL)
@@ -54,7 +50,7 @@ void Permute(const T *in_data, int count, int num_axes,
              const Dtype *new_steps, T *out_data);
 
 template <typename T>
-void ActivateArray(int N, const shadow::ActivateType &type, T *out_data);
+void ActivateArray(int N, int type, T *out_data);
 
 template <typename T>
 void SetArray(int N, float value, T *out_data);
@@ -64,16 +60,15 @@ void SetArrayRepeat(int N, const T *value, int value_size, T *out_data,
                     int offset);
 
 #if defined(USE_CUDA)
-dim3 GridDim(int size);
-void CheckError(cudaError_t status);
-
 extern cublasHandle_t cublas_handle_;
 
 #elif defined(USE_CL)
 extern EasyCL *easyCL;
+
 static CLKernel *cl_datatransform_kernel_ = nullptr;
 static CLKernel *cl_im2col_kernel_ = nullptr;
 static CLKernel *cl_pooling_kernel_ = nullptr;
+static CLKernel *cl_permute_kernel_ = nullptr;
 static CLKernel *cl_activations_kernel_ = nullptr;
 static CLKernel *cl_setarray_kernel_ = nullptr;
 static CLKernel *cl_setarrayrepeat_kernel_ = nullptr;

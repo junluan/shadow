@@ -3,9 +3,6 @@
 
 #include "shadow/layers/layer.hpp"
 
-#include <string>
-#include <vector>
-
 class Network {
  public:
   void LoadModel(const std::string cfg_file, const std::string weight_file,

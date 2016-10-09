@@ -3,6 +3,8 @@
 
 #include "shadow/kernel.hpp"
 
+#include <vector>
+
 namespace Image {
 
 template <typename T>

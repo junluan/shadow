@@ -70,6 +70,22 @@ __kernel void Pooling(__global float *in_data, int batch, int in_c, int in_h,
     out_data[globalid] = sum / (ksize * ksize);
 }
 
+__kernel void Permute(__global float *in_data, int count, int num_axes,
+                      __global int *permute_order, __global int *old_steps,
+                      __global int *new_steps, __global float *out_data) {
+  const int globalid = get_global_id(0);
+  if (globalid >= count) return;
+
+  int old_idx = 0;
+  int idx = globalid;
+  for (int j = 0; j < num_axes; ++j) {
+    int order = permute_order[j];
+    old_idx += (idx / new_steps[j]) * old_steps[order];
+    idx %= new_steps[j];
+  }
+  out_data[globalid] = in_data[old_idx];
+}
+
 float linear_activate(float x) { return x; }
 float relu_activate(float x) { return x * (x > 0); }
 float leaky_activate(float x) { return (x > 0) ? x : .1f * x; }

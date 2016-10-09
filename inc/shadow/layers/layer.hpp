@@ -5,6 +5,8 @@
 #include "shadow/kernel.hpp"
 #include "shadow/util/util.hpp"
 
+#include "shadow/proto/shadow.pb.h"
+
 class Layer {
  public:
   Layer() {}

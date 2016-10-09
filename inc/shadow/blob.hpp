@@ -4,8 +4,6 @@
 #include "shadow/kernel.hpp"
 #include "shadow/util/util.hpp"
 
-#include "shadow/proto/shadow.pb.h"
-
 #if defined(USE_CL)
 #define BACKEND cl_mem
 #else
@@ -15,27 +13,15 @@
 template <typename Dtype>
 class Blob {
  public:
-  Blob() {}
-  explicit Blob(const std::string &name) : name_(name) {}
-  explicit Blob(int count, Dtype *data = nullptr) {
+  Blob() : data_(nullptr) {}
+  explicit Blob(const std::string &name) : data_(nullptr), name_(name) {}
+  explicit Blob(int count, Dtype *data = nullptr) : data_(nullptr) {
     allocate_data(count);
     if (data != nullptr) set_data(data);
   }
 
   inline const BACKEND *data() const { return data_; }
   inline BACKEND *mutable_data() { return data_; }
-
-  inline void set_data(const Dtype *data) {
-    if (data == nullptr) Fatal("Set data for blob is nullptr!");
-#if !defined(USE_CUDA) & !defined(USE_CL)
-    memcpy(data_, data, count() * sizeof(Dtype));
-    on_gpu_ = false;
-
-#else
-    Kernel::WriteBuffer(count(), data, data_);
-    on_gpu_ = true;
-#endif
-  }
 
   inline void allocate_data(int count) {
 #if !defined(USE_CUDA) & !defined(USE_CL)
@@ -49,12 +35,25 @@ class Blob {
     if (shape_.size() == 0) add_shape(count);
   }
 
-  inline void copy_data(Dtype *out_data) const {
+  inline void set_data(const Dtype *data) {
+    if (data == nullptr) Fatal("Set data for blob is nullptr!");
 #if !defined(USE_CUDA) & !defined(USE_CL)
-    memcpy(out_data, data_, count() * sizeof(Dtype));
+    memcpy(data_, data, count() * sizeof(Dtype));
+    on_gpu_ = false;
 
 #else
-    Kernel::ReadBuffer(count(), data_, out_data);
+    Kernel::WriteBuffer(count(), data, data_);
+    on_gpu_ = true;
+#endif
+  }
+
+  inline void read_data(Dtype *data) const {
+    if (data == nullptr) Fatal("Read data for blob is nullptr!");
+#if !defined(USE_CUDA) & !defined(USE_CL)
+    memcpy(data, data_, count() * sizeof(Dtype));
+
+#else
+    Kernel::ReadBuffer(count(), data_, data);
 #endif
   }
 
@@ -74,12 +73,7 @@ class Blob {
       Fatal("Index out of blob shape range!");
     shape_[index] = value;
   }
-  inline void set_shape(const shadow::BlobShape &shape) {
-    shape_.clear();
-    for (int i = 0; i < shape.dim_size(); ++i) {
-      shape_.push_back(shape.dim(i));
-    }
-  }
+  inline void set_shape(const std::vector<int> shape) { shape_ = shape; }
   inline void add_shape(int value) { shape_.push_back(value); }
 
   inline const int num_axes() const { return shape_.size(); }

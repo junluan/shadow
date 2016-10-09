@@ -215,7 +215,7 @@ void Yolo::PredictYoloDetections(JImage *image, vector<VecBox> *Bboxes) {
     net_.Forward(batch_data_);
     const Layer *layer = net_.GetLayerByName("yolo_output");
     if (layer != nullptr)
-      layer->top_[0]->copy_data(predictions_);
+      layer->top_[0]->read_data(predictions_);
     else
       Fatal("Unknown Blob name yolo_output");
     for (int i = 0; i < c; ++i) {

@@ -3,8 +3,6 @@
 
 #include "shadow/util/util.hpp"
 
-#include <vector>
-
 #if defined(USE_OpenCV)
 #include <opencv2/opencv.hpp>
 #endif

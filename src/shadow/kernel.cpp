@@ -1,93 +1,6 @@
 #include "shadow/kernel.hpp"
-#include "shadow/util/util.hpp"
 
 namespace Kernel {
-
-#if defined(USE_CUDA)
-cublasHandle_t cublas_handle_ = nullptr;
-
-void Setup(int device_id) {
-  CheckError(cudaSetDevice(device_id));
-  cublasCreate(&cublas_handle_);
-}
-
-void Release() {
-  if (cublas_handle_ != nullptr) cublasDestroy(cublas_handle_);
-}
-
-template <typename T, typename Dtype>
-T *MakeBuffer(int size, Dtype *host_ptr) {
-  T *buffer;
-  CheckError(cudaMalloc(&buffer, size * sizeof(Dtype)));
-  if (host_ptr != nullptr) {
-    WriteBuffer(size, host_ptr, buffer);
-  }
-  return buffer;
-}
-
-template <typename T, typename Dtype>
-void ReadBuffer(int size, const T *src, Dtype *des) {
-  CheckError(
-      cudaMemcpy(des, src, size * sizeof(Dtype), cudaMemcpyDeviceToHost));
-}
-
-template <typename T, typename Dtype>
-void WriteBuffer(int size, const Dtype *src, T *des) {
-  CheckError(
-      cudaMemcpy(des, src, size * sizeof(Dtype), cudaMemcpyHostToDevice));
-}
-
-template <typename T, typename Dtype>
-void CopyBuffer(int size, const T *src, T *des) {
-  CheckError(
-      cudaMemcpy(des, src, size * sizeof(Dtype), cudaMemcpyDeviceToDevice));
-}
-
-template <typename T>
-void ReleaseBuffer(T *buffer) {
-  CheckError(cudaFree(buffer));
-}
-
-dim3 GridDim(int size) {
-  unsigned int k = (unsigned int)(size - 1) / BLOCK + 1;
-  unsigned int x = k;
-  unsigned int y = 1;
-  if (x > 65535) {
-    x = (unsigned int)std::ceil(std::sqrt(k));
-    y = (size - 1) / (x * BLOCK) + 1;
-  }
-  return dim3(x, y, 1);
-}
-
-void CheckError(cudaError_t status) {
-  cudaError_t status2 = cudaGetLastError();
-  if (status != cudaSuccess) {
-    const char *s = cudaGetErrorString(status);
-    std::string message(s);
-    Fatal("CUDA Error: " + message);
-  }
-  if (status2 != cudaSuccess) {
-    std::string message(cudaGetErrorString(status));
-    Fatal("CUDA Error Prev: " + message);
-  }
-}
-
-// Explicit instantiation
-template int *MakeBuffer<int, int>(int size, int *host_ptr);
-template float *MakeBuffer<float, float>(int size, float *host_ptr);
-
-template void ReadBuffer<int, int>(int size, const int *src, int *des);
-template void ReadBuffer<float, float>(int size, const float *src, float *des);
-
-template void WriteBuffer<int, int>(int size, const int *src, int *des);
-template void WriteBuffer<float, float>(int size, const float *src, float *des);
-
-template void CopyBuffer<int, int>(int size, const int *src, int *des);
-template void CopyBuffer<float, float>(int size, const float *src, float *des);
-
-template void ReleaseBuffer<int>(int *buffer);
-template void ReleaseBuffer<float>(float *buffer);
-#endif
 
 #if defined(USE_CL)
 EasyCL *easyCL = nullptr;
@@ -98,6 +11,7 @@ void Setup(int device_id) {
   cl_datatransform_kernel_ = easyCL->buildKernel(cl_file, "DataTransform");
   cl_im2col_kernel_ = easyCL->buildKernel(cl_file, "Im2Col");
   cl_pooling_kernel_ = easyCL->buildKernel(cl_file, "Pooling");
+  cl_permute_kernel_ = easyCL->buildKernel(cl_file, "Permute");
   cl_activations_kernel_ = easyCL->buildKernel(cl_file, "ActivateArray");
   cl_setarray_kernel_ = easyCL->buildKernel(cl_file, "SetArray");
   cl_setarrayrepeat_kernel_ = easyCL->buildKernel(cl_file, "SetArrayRepeat");
@@ -208,8 +122,26 @@ void Pooling(const T *in_data, int batch, int in_c, int in_h, int in_w,
   clFinish(*easyCL->queue);
 }
 
+template <typename T, typename Dtype>
+void Permute(const T *in_data, int count, int num_axes,
+             const Dtype *permute_order, const Dtype *old_steps,
+             const Dtype *new_steps, T *out_data) {
+  cl_kernel kernel = cl_permute_kernel_->GetKernel();
+  clSetKernelArg(kernel, 0, sizeof(cl_mem), in_data);
+  clSetKernelArg(kernel, 1, sizeof(int), &count);
+  clSetKernelArg(kernel, 2, sizeof(int), &num_axes);
+  clSetKernelArg(kernel, 3, sizeof(cl_mem), permute_order);
+  clSetKernelArg(kernel, 4, sizeof(cl_mem), old_steps);
+  clSetKernelArg(kernel, 5, sizeof(cl_mem), new_steps);
+  clSetKernelArg(kernel, 6, sizeof(cl_mem), out_data);
+  size_t global = count;
+  clEnqueueNDRangeKernel(*easyCL->queue, kernel, 1, nullptr, &global, nullptr,
+                         0, nullptr, nullptr);
+  clFinish(*easyCL->queue);
+}
+
 template <typename T>
-void ActivateArray(int N, const shadow::ActivateType &type, T *out_data) {
+void ActivateArray(int N, int type, T *out_data) {
   cl_kernel kernel = cl_activations_kernel_->GetKernel();
   clSetKernelArg(kernel, 0, sizeof(int), &N);
   clSetKernelArg(kernel, 1, sizeof(int), &type);
@@ -265,6 +197,7 @@ template void ReleaseBuffer<cl_mem>(cl_mem *buffer);
 
 template void DataTransform<cl_mem>(int N, const cl_mem *in_data, float scale,
                                     float mean_value, cl_mem *out_data);
+
 template void Im2Col<cl_mem>(const cl_mem *in_data, int offset, int in_c,
                              int in_h, int in_w, int kernel_size, int stride,
                              int pad, int out_h, int out_w, cl_mem *out_data);
@@ -273,8 +206,13 @@ template void Pooling<cl_mem>(const cl_mem *in_data, int batch, int in_c,
                               int in_h, int in_w, int kernel_size, int stride,
                               int out_h, int out_w, int mode, cl_mem *out_data);
 
-template void ActivateArray<cl_mem>(int N, const shadow::ActivateType &type,
-                                    cl_mem *out_data);
+template void Permute<cl_mem, cl_mem>(const cl_mem *in_data, int count,
+                                      int num_axes, const cl_mem *permute_order,
+                                      const cl_mem *old_steps,
+                                      const cl_mem *new_steps,
+                                      cl_mem *out_data);
+
+template void ActivateArray<cl_mem>(int N, int type, cl_mem *out_data);
 
 template void SetArray<cl_mem>(int N, float value, cl_mem *out_data);
 

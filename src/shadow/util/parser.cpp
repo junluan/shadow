@@ -1,6 +1,4 @@
 #include "shadow/util/parser.hpp"
-#include "shadow/kernel.hpp"
-#include "shadow/util/util.hpp"
 
 #include "shadow/layers/connected_layer.hpp"
 #include "shadow/layers/conv_layer.hpp"
@@ -27,10 +25,14 @@ void Parser::ParseNetworkProtoStr(Network *net, const std::string proto_str,
   if (!proto_str.compare("") || !success) Fatal("Parse configure file error");
 
   ParseNet(net);
-  net->in_shape_.set_dim(0, batch);
+  std::vector<int> shape(1, batch);
+  for (int i = 1; i < net->in_shape_.dim_size(); ++i) {
+    shape.push_back(net->in_shape_.dim(i));
+  }
 
   Blob<float> *in_blob = new Blob<float>("in_blob");
-  in_blob->set_shape(net->in_shape_);
+
+  in_blob->set_shape(shape);
   in_blob->allocate_data(in_blob->count());
   net->blobs_.push_back(in_blob);
 

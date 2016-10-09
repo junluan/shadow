@@ -1,7 +1,79 @@
 #include "shadow/kernel.hpp"
-#include <cfloat>
+#include "shadow/util/util.hpp"
 
 namespace Kernel {
+
+#if defined(USE_CUDA)
+#include "cuda_runtime.h"
+
+const int BLOCK = 512;
+cublasHandle_t cublas_handle_ = nullptr;
+
+inline dim3 GridDim(int size) {
+  unsigned int k = (unsigned int)(size - 1) / BLOCK + 1;
+  unsigned int x = k;
+  unsigned int y = 1;
+  if (x > 65535) {
+    x = (unsigned int)std::ceil(std::sqrt(k));
+    y = (size - 1) / (x * BLOCK) + 1;
+  }
+  return dim3(x, y, 1);
+}
+
+inline void CheckError(cudaError_t status) {
+  cudaError_t status2 = cudaGetLastError();
+  if (status != cudaSuccess) {
+    const char *s = cudaGetErrorString(status);
+    std::string message(s);
+    Fatal("CUDA Error: " + message);
+  }
+  if (status2 != cudaSuccess) {
+    std::string message(cudaGetErrorString(status));
+    Fatal("CUDA Error Prev: " + message);
+  }
+}
+
+void Setup(int device_id) {
+  CheckError(cudaSetDevice(device_id));
+  cublasCreate(&cublas_handle_);
+}
+
+void Release() {
+  if (cublas_handle_ != nullptr) cublasDestroy(cublas_handle_);
+}
+
+template <typename T, typename Dtype>
+T *MakeBuffer(int size, Dtype *host_ptr) {
+  T *buffer;
+  CheckError(cudaMalloc(&buffer, size * sizeof(Dtype)));
+  if (host_ptr != nullptr) {
+    WriteBuffer(size, host_ptr, buffer);
+  }
+  return buffer;
+}
+
+template <typename T, typename Dtype>
+void ReadBuffer(int size, const T *src, Dtype *des) {
+  CheckError(
+      cudaMemcpy(des, src, size * sizeof(Dtype), cudaMemcpyDeviceToHost));
+}
+
+template <typename T, typename Dtype>
+void WriteBuffer(int size, const Dtype *src, T *des) {
+  CheckError(
+      cudaMemcpy(des, src, size * sizeof(Dtype), cudaMemcpyHostToDevice));
+}
+
+template <typename T, typename Dtype>
+void CopyBuffer(int size, const T *src, T *des) {
+  CheckError(
+      cudaMemcpy(des, src, size * sizeof(Dtype), cudaMemcpyDeviceToDevice));
+}
+
+template <typename T>
+void ReleaseBuffer(T *buffer) {
+  CheckError(cudaFree(buffer));
+}
 
 __global__ void DataTransformKernel(int N, const float *in_data, float scale,
                                     float mean_value, float *out_data) {
@@ -135,8 +207,8 @@ void Permute(const T *in_data, int count, int num_axes,
   CheckError(cudaPeekAtLastError());
 }
 
-__device__ float Activate(float x, int mode) {
-  switch (mode) {
+__device__ float Activate(float x, int type) {
+  switch (type) {
     case 0:
       return x; /*linear*/
     case 1:
@@ -148,16 +220,16 @@ __device__ float Activate(float x, int mode) {
   }
 }
 
-__global__ void ActivateArrayKernel(int N, int mode, float *out_data) {
+__global__ void ActivateArrayKernel(int N, int type, float *out_data) {
   int globalid =
       (blockIdx.x + blockIdx.y * gridDim.x) * blockDim.x + threadIdx.x;
   if (globalid >= N) return;
 
-  out_data[globalid] = Activate(out_data[globalid], mode);
+  out_data[globalid] = Activate(out_data[globalid], type);
 }
 
 template <typename T>
-void ActivateArray(int N, const shadow::ActivateType &type, T *out_data) {
+void ActivateArray(int N, int type, T *out_data) {
   ActivateArrayKernel<<<GridDim(N), BLOCK>>>(N, type, out_data);
   CheckError(cudaPeekAtLastError());
 }
@@ -196,6 +268,21 @@ void SetArrayRepeat(int N, const T *value, int value_size, T *out_data,
 }
 
 // Explicit instantiation
+template int *MakeBuffer<int, int>(int size, int *host_ptr);
+template float *MakeBuffer<float, float>(int size, float *host_ptr);
+
+template void ReadBuffer<int, int>(int size, const int *src, int *des);
+template void ReadBuffer<float, float>(int size, const float *src, float *des);
+
+template void WriteBuffer<int, int>(int size, const int *src, int *des);
+template void WriteBuffer<float, float>(int size, const float *src, float *des);
+
+template void CopyBuffer<int, int>(int size, const int *src, int *des);
+template void CopyBuffer<float, float>(int size, const float *src, float *des);
+
+template void ReleaseBuffer<int>(int *buffer);
+template void ReleaseBuffer<float>(float *buffer);
+
 template void DataTransform<float>(int N, const float *in_data, float scale,
                                    float mean_value, float *out_data);
 
@@ -212,12 +299,12 @@ template void Permute<float, int>(const float *in_data, int count, int num_axes,
                                   const int *old_steps, const int *new_steps,
                                   float *out_data);
 
-template void ActivateArray<float>(int N, const shadow::ActivateType &type,
-                                   float *out_data);
+template void ActivateArray<float>(int N, int type, float *out_data);
 
 template void SetArray<float>(int N, float value, float *out_data);
 
 template void SetArrayRepeat<float>(int N, const float *value, int value_size,
                                     float *out_data, int offset);
+#endif
 
 }  // namespace Kernel

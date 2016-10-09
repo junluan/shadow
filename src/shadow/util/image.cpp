@@ -78,11 +78,13 @@ void Pooling(const std::vector<int> &in_shape, const T *in_data,
                   out_data);
 }
 
-template <typename T>
+template <typename T, typename Dtype>
 void Permute(const T *in_data, int count, int num_axes,
-             const std::vector<int> &permute_order,
-             const std::vector<int> &old_steps,
-             const std::vector<int> &new_steps, T *out_data) {}
+             const Dtype *permute_order, const Dtype *old_steps,
+             const Dtype *new_steps, T *out_data) {
+  Kernel::Permute(in_data, count, num_axes, permute_order, old_steps, new_steps,
+                  out_data);
+}
 
 // Explicit instantiation
 template void DataTransform<cl_mem>(int N, const cl_mem *in_data, float scale,
@@ -97,11 +99,11 @@ template void Pooling<cl_mem>(const std::vector<int> &in_shape,
                               int stride, int mode,
                               const std::vector<int> &out_shape,
                               cl_mem *out_data);
-template void Permute<cl_mem>(const cl_mem *in_data, int count, int num_axes,
-                              const std::vector<int> &permute_order,
-                              const std::vector<int> &old_steps,
-                              const std::vector<int> &new_steps,
-                              cl_mem *out_data);
+template void Permute<cl_mem, cl_mem>(const cl_mem *in_data, int count,
+                                      int num_axes, const cl_mem *permute_order,
+                                      const cl_mem *old_steps,
+                                      const cl_mem *new_steps,
+                                      cl_mem *out_data);
 
 #else
 template <typename T>

@@ -3,8 +3,6 @@
 
 #include "shadow/network.hpp"
 
-#include <string>
-
 class Parser {
  public:
   void ParseNetworkProtoTxt(Network *net, const std::string proto_txt,

@@ -1,5 +1,7 @@
 #include "shadow/util/blas.hpp"
 
+#include <algorithm>
+
 namespace Blas {
 
 #if defined(USE_CUDA)
