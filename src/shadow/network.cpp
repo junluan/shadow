@@ -32,9 +32,7 @@ void Network::Release() {
   for (int i = 0; i < num_layers_; ++i) layers_[i]->Release();
   for (int i = 0; i < blobs_.size(); ++i) blobs_[i]->clear();
 
-#if defined(VERBOSE)
-  std::cout << "Release Network!" << std::endl;
-#endif
+  DInfo("Release Network!");
 }
 
 void Network::PreFillData(float *in_data) {

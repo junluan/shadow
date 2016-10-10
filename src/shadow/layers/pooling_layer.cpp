@@ -31,12 +31,12 @@ void PoolingLayer::Setup(VecBlob *blobs) {
 
   blobs->push_back(top);
 
-#if defined(VERBOSE)
-  std::cout << "Pooling Layer: " << Util::format_vector(bottom->shape(), " x ")
-            << " input -> " << kernel_size_ << "x" << kernel_size_ << "_s"
-            << stride_ << " -> " << Util::format_vector(top->shape(), " x ")
-            << " output" << std::endl;
-#endif
+  std::stringstream out;
+  out << layer_param_.name() << ": ("
+      << Util::format_vector(bottom->shape(), ",") << ") -> " << kernel_size_
+      << "x" << kernel_size_ << "_s" << stride_ << " -> ("
+      << Util::format_vector(top->shape(), ",") << ")";
+  DInfo(out.str());
 }
 
 void PoolingLayer::Forward() {

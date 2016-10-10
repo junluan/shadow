@@ -3,7 +3,6 @@ project(shadow)
 
 option(USE_CUDA "Using CUDA!" ON)
 option(USE_CL "Using OpenCL!" OFF)
-option(VERBOSE "Showing verbose message" ON)
 option(USE_GLog "Using GLog!" ON)
 option(USE_OpenCV "Using OpenCV to read, write and show image!" ON)
 set(OpenCV_ROOT "/usr/local/opencv-3.1.0" CACHE STRING "Give the root of OpenCV!")
@@ -13,10 +12,6 @@ option(BUILD_TEST "Build gtest to test shadow!" ON)
 set(CMAKE_CXX_COMPILER "/usr/bin/clang++-3.8")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -L${PROJECT_SOURCE_DIR}/lib")
-
-if (${VERBOSE} STREQUAL "ON")
-  add_definitions(-DVERBOSE)
-endif ()
 
 if (${USE_GLog} STREQUAL "ON")
   add_definitions(-DUSE_GLog)

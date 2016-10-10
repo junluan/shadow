@@ -6,11 +6,11 @@ void DropoutLayer::Setup(VecBlob *blobs) {
     Fatal("Layer: " + layer_param_.name() + ", bottom " +
           layer_param_.bottom(0) + " not exist!");
 
-#if defined(VERBOSE)
-  std::cout << "Dropout Layer: " << Util::format_vector(bottom->shape(), " x ")
-            << " input -> " << Util::format_vector(bottom->shape(), " x ")
-            << " output" << std::endl;
-#endif
+  std::stringstream out;
+  out << layer_param_.name() << ": ("
+      << Util::format_vector(bottom->shape(), ",") << ") -> ("
+      << Util::format_vector(bottom->shape(), ",") << ")";
+  DInfo(out.str());
 }
 
 void DropoutLayer::Forward() {}

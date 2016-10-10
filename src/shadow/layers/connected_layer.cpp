@@ -26,15 +26,15 @@ void ConnectedLayer::Setup(VecBlob *blobs) {
 
   blobs->push_back(top);
 
-  weights_ = new Blob<float>(in_num * out_num);
-  biases_ = new Blob<float>(out_num);
+  weights_ =
+      new Blob<float>(in_num * out_num, layer_param_.name() + " weights");
+  biases_ = new Blob<float>(out_num, layer_param_.name() + " biases");
 
-#if defined(VERBOSE)
-  std::cout << "Connected Layer: "
-            << Util::format_vector(bottom->shape(), " x ") << " input -> "
-            << Util::format_vector(top->shape(), " x ") << " output"
-            << std::endl;
-#endif
+  std::stringstream out;
+  out << layer_param_.name() << ": ("
+      << Util::format_vector(bottom->shape(), ",") << ") -> ("
+      << Util::format_vector(top->shape(), ",") << ")";
+  DInfo(out.str());
 }
 
 void ConnectedLayer::Forward() {

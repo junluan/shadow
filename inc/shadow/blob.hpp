@@ -13,11 +13,14 @@
 template <typename Dtype>
 class Blob {
  public:
-  Blob() : data_(nullptr) {}
-  explicit Blob(const std::string &name) : data_(nullptr), name_(name) {}
-  explicit Blob(int count, Dtype *data = nullptr) : data_(nullptr) {
+  explicit Blob(const std::string &name = "") : name_(name) {}
+  explicit Blob(int count, const std::string &name = "") : name_(name) {
     allocate_data(count);
-    if (data != nullptr) set_data(data);
+  }
+  explicit Blob(int count, const Dtype *data, const std::string &name = "")
+      : name_(name) {
+    allocate_data(count);
+    set_data(data);
   }
 
   inline const BACKEND *data() const { return data_; }
@@ -57,6 +60,18 @@ class Blob {
 #endif
   }
 
+  inline void share_data(BACKEND *data) {
+    if (data == nullptr) Fatal("Share data for blob is nullptr!");
+    data_ = data;
+    shared_ = true;
+#if !defined(USE_CUDA) & !defined(USE_CL)
+    on_gpu_ = false;
+
+#else
+    on_gpu_ = true;
+#endif
+  }
+
   inline const std::string name() const { return name_; }
   inline void set_name(const std::string &name) { name_ = name; }
 
@@ -91,7 +106,7 @@ class Blob {
   }
 
   inline void clear() {
-    if (data_ != nullptr) {
+    if (data_ != nullptr && !shared_) {
 #if !defined(USE_CUDA) & !defined(USE_CL)
       delete[] data_;
 
@@ -104,11 +119,12 @@ class Blob {
   }
 
  private:
-  BACKEND *data_;
+  BACKEND *data_ = nullptr;
 
-  std::string name_;
+  std::string name_ = "";
   std::vector<int> shape_;
-  bool on_gpu_;
+  bool on_gpu_ = false;
+  bool shared_ = false;
 };
 
 typedef std::vector<Blob<float> *> VecBlob;

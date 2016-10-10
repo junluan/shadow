@@ -23,10 +23,10 @@ void DataLayer::Setup(VecBlob *blobs) {
 
   blobs->push_back(top);
 
-#if defined(VERBOSE)
-  std::cout << "Data Layer: " << Util::format_vector(bottom->shape(), " x ")
-            << " input" << std::endl;
-#endif
+  std::stringstream out;
+  out << layer_param_.name() << ": ("
+      << Util::format_vector(bottom->shape(), ",") << ")";
+  DInfo(out.str());
 }
 
 void DataLayer::Forward() {

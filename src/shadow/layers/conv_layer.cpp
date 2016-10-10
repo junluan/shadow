@@ -44,18 +44,18 @@ void ConvLayer::Setup(VecBlob *blobs) {
   out_map_size_ = out_h * out_w;
   kernel_num_ = kernel_size_ * kernel_size_ * in_c;
 
-  filters_ = new Blob<float>(kernel_num_ * out_c);
-  biases_ = new Blob<float>(out_c);
-  col_image_ = new Blob<float>(out_map_size_ * kernel_num_);
+  filters_ =
+      new Blob<float>(kernel_num_ * out_c, layer_param_.name() + " filters");
+  biases_ = new Blob<float>(out_c, layer_param_.name() + " biases");
+  col_image_ = new Blob<float>(out_map_size_ * kernel_num_,
+                               layer_param_.name() + " col_image");
 
-#if defined(VERBOSE)
-  std::cout << "Convolution Layer: "
-            << Util::format_vector(bottom->shape(), " x ") << " input -> "
-            << out_c << "_" << kernel_size_ << "x" << kernel_size_ << "_s"
-            << stride_ << "_p" << pad_ << " filters -> "
-            << Util::format_vector(top->shape(), " x ") << " output"
-            << std::endl;
-#endif
+  std::stringstream out;
+  out << layer_param_.name() << ": ("
+      << Util::format_vector(bottom->shape(), ",") << ") -> " << out_c << "_"
+      << kernel_size_ << "x" << kernel_size_ << "_s" << stride_ << "_p" << pad_
+      << " -> (" << Util::format_vector(top->shape(), ",") << ")";
+  DInfo(out.str());
 }
 
 void ConvLayer::Forward() {

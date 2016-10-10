@@ -37,10 +37,6 @@ void Parser::ParseNetworkProtoStr(Network *net, const std::string proto_str,
   net->blobs_.push_back(in_blob);
 
   for (int i = 0; i < net->num_layers_; ++i) {
-#if defined(VERBOSE)
-    std::cout << Util::format_int(i, 2) << ": ";
-#endif
-
     shadow::LayerParameter layer_param = net->net_param_.layer(i);
     Layer *layer = LayerFactory(layer_param, &net->blobs_);
     net->layers_.push_back(layer);
@@ -96,9 +92,8 @@ Layer *Parser::LayerFactory(const shadow::LayerParameter &layer_param,
 
 void Parser::LoadWeightsUpto(Network *net, const std::string weight_file,
                              int cut_off) {
-#if defined(VERBOSE)
-  std::cout << "Load model from " << weight_file << " ... " << std::endl;
-#endif
+  DInfo("Load model from " + weight_file + " ... ");
+
   std::ifstream file(weight_file, std::ios::binary);
   if (!file.is_open()) Fatal("Load weight file error!");
 

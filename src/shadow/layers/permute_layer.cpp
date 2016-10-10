@@ -17,7 +17,7 @@ void PermuteLayer::Setup(VecBlob *blobs) {
       *new_steps = new int[order_size];
   for (int i = 0; i < order_size; ++i) {
     permute_order[i] = layer_param_.permute_param().order(i);
-    top->add_shape(permute_order[i]);
+    top->add_shape(bottom->shape(permute_order[i]));
   }
 
   for (int i = 0; i < order_size; ++i) {
@@ -41,11 +41,11 @@ void PermuteLayer::Setup(VecBlob *blobs) {
 
   blobs->push_back(top);
 
-#if defined(VERBOSE)
-  std::cout << "Permute Layer: " << Util::format_vector(bottom->shape(), " x ")
-            << " input -> " << Util::format_vector(top->shape(), " x ")
-            << " output" << std::endl;
-#endif
+  std::stringstream out;
+  out << layer_param_.name() << ": ("
+      << Util::format_vector(bottom->shape(), ",") << ") -> ("
+      << Util::format_vector(top->shape(), ",") << ")";
+  DInfo(out.str());
 }
 
 void PermuteLayer::Forward() {
