@@ -83,10 +83,12 @@ Layer *Parser::LayerFactory(const shadow::LayerParameter &layer_param,
   } else {
     Fatal("Type not recognized!");
   }
-  if (layer != nullptr)
+  if (layer != nullptr) {
     layer->Setup(blobs);
-  else
-    Fatal("Make layer error!");
+    layer->Reshape();
+  } else {
+    Fatal("Error when making layer: " + layer_param.name());
+  }
   return layer;
 }
 

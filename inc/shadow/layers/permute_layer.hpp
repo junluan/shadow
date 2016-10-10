@@ -11,10 +11,13 @@ class PermuteLayer : public Layer {
   ~PermuteLayer() { Release(); }
 
   void Setup(VecBlob *blobs);
+  void Reshape();
   void Forward();
   void Release();
 
  private:
+  int num_axes_;
+
   Blob<int> *permute_order_, *old_steps_, *new_steps_;
 };
 

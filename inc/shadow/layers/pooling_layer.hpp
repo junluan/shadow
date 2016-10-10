@@ -11,12 +11,13 @@ class PoolingLayer : public Layer {
   ~PoolingLayer() { Release(); }
 
   void Setup(VecBlob *blobs);
+  void Reshape();
   void Forward();
   void Release();
 
  private:
-  shadow::PoolType pool_type_;
   int kernel_size_, stride_;
+  shadow::PoolType pool_type_;
 };
 
 #endif  // SHADOW_LAYERS_POOLING_LAYER_HPP

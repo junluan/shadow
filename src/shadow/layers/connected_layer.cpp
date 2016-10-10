@@ -4,36 +4,45 @@
 
 void ConnectedLayer::Setup(VecBlob *blobs) {
   Blob<float> *bottom = find_blob_by_name(*blobs, layer_param_.bottom(0));
-  if (bottom == nullptr)
-    Fatal("Layer: " + layer_param_.name() + ", bottom " +
-          layer_param_.bottom(0) + " not exist!");
+  if (bottom != nullptr) {
+    if (bottom->num()) {
+      bottom_.push_back(bottom);
+    } else {
+      Fatal(layer_name_ + ": bottom blob(" + layer_param_.bottom(0) +
+            Util::format_vector(bottom->shape(), ",", "(", ")") +
+            ") dimension mismatch!");
+    }
+  } else {
+    Fatal(layer_name_ + ": bottom blob(" + layer_param_.bottom(0) +
+          ") not exist!");
+  }
 
-  Blob<float> *top = new Blob<float>(layer_param_.top(0));
+  for (int i = 0; i < layer_param_.top_size(); ++i) {
+    Blob<float> *top = new Blob<float>(layer_param_.top(i));
+    top_.push_back(top);
+    blobs->push_back(top);
+  }
 
   num_output_ = layer_param_.connected_param().num_output();
   activate_ = layer_param_.connected_param().activate();
+}
 
-  int in_num = bottom->num();
-  int out_num = num_output_;
+void ConnectedLayer::Reshape() {
+  const Blob<float> *bottom = bottom_.at(0);
+  Blob<float> *top = top_.at(0);
 
   top->add_shape(bottom->shape(0));
   top->add_shape(num_output_);
-
   top->allocate_data(top->count());
 
-  bottom_.push_back(bottom);
-  top_.push_back(top);
-
-  blobs->push_back(top);
-
   weights_ =
-      new Blob<float>(in_num * out_num, layer_param_.name() + " weights");
-  biases_ = new Blob<float>(out_num, layer_param_.name() + " biases");
+      new Blob<float>(bottom->num() * num_output_, layer_name_ + " weights");
+  biases_ = new Blob<float>(num_output_, layer_name_ + " biases");
 
   std::stringstream out;
-  out << layer_param_.name() << ": ("
-      << Util::format_vector(bottom->shape(), ",") << ") -> ("
-      << Util::format_vector(top->shape(), ",") << ")";
+  out << layer_name_ << ": "
+      << Util::format_vector(bottom->shape(), ",", "(", ")") << " -> "
+      << Util::format_vector(top->shape(), ",", "(", ")");
   DInfo(out.str());
 }
 

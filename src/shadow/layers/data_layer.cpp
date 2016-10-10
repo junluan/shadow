@@ -3,29 +3,38 @@
 
 void DataLayer::Setup(VecBlob *blobs) {
   Blob<float> *bottom = find_blob_by_name(*blobs, "in_blob");
-  if (bottom == nullptr)
-    Fatal("Layer: " + layer_param_.name() + ", bottom " +
-          layer_param_.bottom(0) + " not exist!");
+  if (bottom != nullptr) {
+    if (bottom->num() && bottom->num_axes() == 4) {
+      bottom_.push_back(bottom);
+    } else {
+      Fatal(layer_name_ + ": bottom blob(" + "in_blob" +
+            Util::format_vector(bottom->shape(), ",", "(", ")") +
+            ") dimension mismatch!");
+    }
+  } else {
+    Fatal(layer_name_ + ": bottom blob(" + "in_blob" + ") not exist!");
+  }
 
-  Blob<float> *top = new Blob<float>(layer_param_.top(0));
-
-  if (!(bottom->shape(1) && bottom->shape(2) && bottom->shape(3)))
-    Fatal("Channel, height and width must greater than zero.");
+  for (int i = 0; i < layer_param_.top_size(); ++i) {
+    Blob<float> *top = new Blob<float>(layer_param_.top(i));
+    top_.push_back(top);
+    blobs->push_back(top);
+  }
 
   scale_ = layer_param_.data_param().scale();
   mean_value_ = layer_param_.data_param().mean_value();
+}
+
+void DataLayer::Reshape() {
+  const Blob<float> *bottom = bottom_.at(0);
+  Blob<float> *top = top_.at(0);
 
   *top->mutable_shape() = bottom->shape();
   top->allocate_data(top->count());
 
-  bottom_.push_back(bottom);
-  top_.push_back(top);
-
-  blobs->push_back(top);
-
   std::stringstream out;
-  out << layer_param_.name() << ": ("
-      << Util::format_vector(bottom->shape(), ",") << ")";
+  out << layer_name_ << ": "
+      << Util::format_vector(bottom->shape(), ",", "(", ")");
   DInfo(out.str());
 }
 

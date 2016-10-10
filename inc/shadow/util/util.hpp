@@ -428,14 +428,18 @@ inline std::string format_int(int n, int width, char pad = ' ') {
 }
 
 inline std::string format_vector(const std::vector<int> &shape,
-                                 const std::string &split = ", ",
+                                 const std::string &split = ",",
+                                 const std::string &prefix = "",
                                  const std::string &postfix = "") {
   std::stringstream out;
-  int i = 0;
-  for (; i < shape.size() - 1; ++i) {
+  out << prefix;
+  for (int i = 0; i < shape.size() - 1; ++i) {
     out << shape.at(i) << split;
   }
-  out << shape.at(std::min(i, static_cast<int>(shape.size()) - 1)) << postfix;
+  if (shape.size() > 1) {
+    out << shape.at(shape.size() - 1);
+  }
+  out << postfix;
   return out.str();
 }
 

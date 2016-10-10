@@ -11,15 +11,18 @@ class Layer {
  public:
   Layer() {}
   explicit Layer(const shadow::LayerParameter &layer_param)
-      : layer_param_(layer_param) {}
+      : layer_param_(layer_param),
+        layer_name_(layer_param.name()),
+        layer_type_(layer_param.type()) {}
 
-  virtual void Setup(VecBlob *blobs) {
-    std::cout << "Setup Layer!" << std::endl;
-  }
-  virtual void Forward() { std::cout << "Forward Layer!" << std::endl; }
-  virtual void Release() { std::cout << "Release Layer!" << std::endl; }
+  virtual void Setup(VecBlob *blobs) { Info("Setup Layer!"); }
+  virtual void Reshape() { Info("Reshape Layer!"); }
+  virtual void Forward() { Info("Forward Layer!"); }
+  virtual void Release() { Info("Release Layer!"); }
 
   shadow::LayerParameter layer_param_;
+  std::string layer_name_;
+  shadow::LayerType layer_type_;
 
   VecBlob bottom_, top_;
 };

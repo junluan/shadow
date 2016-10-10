@@ -11,6 +11,7 @@ class ConvLayer : public Layer {
   ~ConvLayer() { Release(); }
 
   void Setup(VecBlob *blobs);
+  void Reshape();
   void Forward();
   void Release();
 

@@ -5,10 +5,11 @@ data
 external
 model
 models
-src/shadow/proto/shadow.pb.cc
-inc/shadow/proto/shadow.pb.h
-src/test
+inc/shadow/proto/*.h
+src/shadow/proto/*.cc
+src/shadow/proto/*.h
 inc/test
+src/test
 
 # IntelliJ project files
 .idea

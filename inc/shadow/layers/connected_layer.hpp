@@ -11,6 +11,7 @@ class ConnectedLayer : public Layer {
   ~ConnectedLayer() { Release(); }
 
   void Setup(VecBlob *blobs);
+  void Reshape();
   void Forward();
   void Release();
 
