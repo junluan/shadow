@@ -20,7 +20,7 @@ void ConvLayer::Reshape() {
   int out_h = convolutional_out_size(in_h, kernel_size_, pad_, stride_);
   int out_w = convolutional_out_size(in_w, kernel_size_, pad_, stride_);
 
-  *top_[0]->mutable_shape() = bottom_[0]->shape();
+  top_[0]->set_shape(bottom_[0]->shape());
   top_[0]->set_shape(1, out_c);
   top_[0]->set_shape(2, out_h);
   top_[0]->set_shape(3, out_w);

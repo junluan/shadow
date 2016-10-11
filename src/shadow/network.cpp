@@ -1,5 +1,6 @@
 #include "shadow/network.hpp"
 
+#include "shadow/layers/concat_layer.hpp"
 #include "shadow/layers/connected_layer.hpp"
 #include "shadow/layers/conv_layer.hpp"
 #include "shadow/layers/data_layer.hpp"
@@ -45,11 +46,7 @@ const Layer *Network::GetLayerByName(const std::string &layer_name) {
 }
 
 const Blob<float> *Network::GetBlobByName(const std::string &blob_name) {
-  for (int i = 0; i < blobs_.size(); ++i) {
-    if (!blob_name.compare(blobs_[i]->name()))
-      return (const Blob<float> *)blobs_[i];
-  }
-  return nullptr;
+  return get_blob_by_name(blobs_, blob_name);
 }
 
 void Network::LoadProtoStr(const std::string &proto_str, int batch) {
@@ -153,6 +150,8 @@ Layer *Network::LayerFactory(const shadow::LayerParameter &layer_param,
     layer = new ConnectedLayer(layer_param);
   } else if (layer_param.type() == shadow::LayerType::Dropout) {
     layer = new DropoutLayer(layer_param);
+  } else if (layer_param.type() == shadow::LayerType::Concat) {
+    layer = new ConcatLayer(layer_param);
   } else if (layer_param.type() == shadow::LayerType::Permute) {
     layer = new PermuteLayer(layer_param);
   } else if (layer_param.type() == shadow::LayerType::Flatten) {

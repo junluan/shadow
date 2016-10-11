@@ -44,6 +44,11 @@ void Pooling(const T *in_data, int batch, int in_c, int in_h, int in_w,
              int kernel_size, int stride, int out_h, int out_w, int mode,
              T *out_data);
 
+template <typename T>
+void Concat(const T *in_data, int count, int num_concats, int concat_size,
+            int top_concat_axis, int bottom_concat_axis, int offset_concat_axis,
+            T *out_data);
+
 template <typename T, typename Dtype>
 void Permute(const T *in_data, int count, int num_axes,
              const Dtype *permute_order, const Dtype *old_steps,
@@ -68,6 +73,7 @@ extern EasyCL *easyCL;
 static CLKernel *cl_datatransform_kernel_ = nullptr;
 static CLKernel *cl_im2col_kernel_ = nullptr;
 static CLKernel *cl_pooling_kernel_ = nullptr;
+static CLKernel *cl_concat_kernel_ = nullptr;
 static CLKernel *cl_permute_kernel_ = nullptr;
 static CLKernel *cl_activations_kernel_ = nullptr;
 static CLKernel *cl_setarray_kernel_ = nullptr;

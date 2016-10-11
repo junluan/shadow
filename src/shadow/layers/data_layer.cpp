@@ -2,7 +2,7 @@
 #include "shadow/util/image.hpp"
 
 void DataLayer::Setup(VecBlob *blobs) {
-  Blob<float> *bottom = find_blob_by_name(*blobs, "in_blob");
+  Blob<float> *bottom = get_blob_by_name(*blobs, "in_blob");
   if (bottom != nullptr) {
     if (bottom->num() && bottom->num_axes() == 4) {
       bottom_.push_back(bottom);
@@ -26,7 +26,7 @@ void DataLayer::Reshape() {
   scale_ = layer_param_.data_param().scale();
   mean_value_ = layer_param_.data_param().mean_value();
 
-  *top_[0]->mutable_shape() = bottom_[0]->shape();
+  top_[0]->set_shape(bottom_[0]->shape());
   top_[0]->allocate_data(top_[0]->count());
 
   std::stringstream out;

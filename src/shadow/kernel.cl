@@ -64,10 +64,27 @@ __kernel void Pooling(__global float *in_data, int batch, int in_c, int in_h,
       sum += valid ? in_data[in] : 0.f;
     }
   }
-  if (mode == 0)
+  if (mode == 0) {
     out_data[globalid] = max;
-  else
+  } else {
     out_data[globalid] = sum / (ksize * ksize);
+  }
+}
+
+__kernel void Concat(__global float *in_data, int count, int num_concats,
+                     int concat_size, int top_concat_axis,
+                     int bottom_concat_axis, int offset_concat_axis,
+                     __global float *out_data) {
+  const int globalid = get_global_id(0);
+  if (globalid >= count) return;
+
+  int total_concat_size = concat_size * bottom_concat_axis;
+  int concat_num = globalid / total_concat_size;
+  int concat_index = globalid % total_concat_size;
+  int top_index =
+      concat_index +
+      (concat_num * top_concat_axis + offset_concat_axis) * concat_size;
+  out_data[top_index] = in_data[globalid];
 }
 
 __kernel void Permute(__global float *in_data, int count, int num_axes,

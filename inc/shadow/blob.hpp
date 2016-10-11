@@ -75,8 +75,8 @@ class Blob {
   inline const std::string name() const { return name_; }
   inline void set_name(const std::string &name) { name_ = name; }
 
-  inline const std::vector<int> shape() const { return shape_; }
-  inline std::vector<int> *mutable_shape() { return &shape_; }
+  inline const VecInt shape() const { return shape_; }
+  inline VecInt *mutable_shape() { return &shape_; }
 
   inline const int shape(int index) const {
     if (index < 0 || index >= shape_.size())
@@ -88,7 +88,7 @@ class Blob {
       Fatal("Index out of blob shape range!");
     shape_[index] = value;
   }
-  inline void set_shape(const std::vector<int> shape) { shape_ = shape; }
+  inline void set_shape(const VecInt shape) { shape_ = shape; }
   inline void add_shape(int value) { shape_.push_back(value); }
 
   inline const int num_axes() const { return shape_.size(); }
@@ -98,7 +98,7 @@ class Blob {
     return count(start_axis, shape_.size() - 1);
   }
   inline const int count(int start_axis, int end_axis) const {
-    if (start_axis < 0 || end_axis >= shape_.size() || start_axis > end_axis)
+    if (start_axis < 0 || end_axis >= shape_.size())
       Fatal("Index out of blob shape range!");
     int count = 1;
     for (int i = start_axis; i <= end_axis; ++i) count *= shape(i);
@@ -122,15 +122,15 @@ class Blob {
   BACKEND *data_ = nullptr;
 
   std::string name_ = "";
-  std::vector<int> shape_;
+  VecInt shape_;
   bool on_gpu_ = false;
   bool shared_ = false;
 };
 
 typedef std::vector<Blob<float> *> VecBlob;
 
-inline static Blob<float> *find_blob_by_name(const VecBlob &blobs,
-                                             const std::string &name) {
+inline static Blob<float> *get_blob_by_name(const VecBlob &blobs,
+                                            const std::string &name) {
   for (int i = 0; i < blobs.size(); ++i) {
     if (!name.compare(blobs.at(i)->name())) return blobs.at(i);
   }

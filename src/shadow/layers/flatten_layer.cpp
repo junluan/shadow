@@ -1,12 +1,12 @@
 #include "shadow/layers/flatten_layer.hpp"
 
 void FlattenLayer::Reshape() {
+  int num_axes = bottom_[0]->num_axes();
   start_axis_ = layer_param_.flatten_param().start_axis();
   end_axis_ = layer_param_.flatten_param().end_axis();
-  if (end_axis_ == -1) end_axis_ = bottom_[0]->num_axes() - 1;
+  if (end_axis_ == -1) end_axis_ = num_axes - 1;
 
-  if (start_axis_ < 0 || end_axis_ >= bottom_[0]->num_axes() ||
-      start_axis_ > end_axis_) {
+  if (start_axis_ < 0 || end_axis_ >= num_axes || start_axis_ > end_axis_) {
     Fatal("Axes period out of range!");
   }
 
@@ -14,7 +14,7 @@ void FlattenLayer::Reshape() {
     top_[0]->add_shape(bottom_[0]->shape(i));
   }
   top_[0]->add_shape(bottom_[0]->count(start_axis_, end_axis_));
-  for (int i = end_axis_ + 1; i < bottom_[0]->num_axes(); ++i) {
+  for (int i = end_axis_ + 1; i < num_axes; ++i) {
     top_[0]->add_shape(bottom_[0]->shape(i));
   }
 

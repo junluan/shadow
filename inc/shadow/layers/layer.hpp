@@ -17,7 +17,7 @@ class Layer {
 
   virtual void Setup(VecBlob *blobs) {
     for (int i = 0; i < layer_param_.bottom_size(); ++i) {
-      Blob<float> *bottom = find_blob_by_name(*blobs, layer_param_.bottom(i));
+      Blob<float> *bottom = get_blob_by_name(*blobs, layer_param_.bottom(i));
       if (bottom != nullptr) {
         if (bottom->num()) {
           bottom_.push_back(bottom);
@@ -32,7 +32,7 @@ class Layer {
       }
     }
     for (int i = 0; i < layer_param_.top_size(); ++i) {
-      Blob<float> *top = find_blob_by_name(*blobs, layer_param_.top(i));
+      Blob<float> *top = get_blob_by_name(*blobs, layer_param_.top(i));
       if (top == nullptr) {
         top = new Blob<float>(layer_param_.top(i));
         blobs->push_back(top);

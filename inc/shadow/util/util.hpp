@@ -67,13 +67,14 @@ typedef std::vector<SizeI> VecSizeI;
 
 typedef std::vector<float> VecFloat;
 typedef std::vector<int> VecInt;
+typedef std::vector<std::string> VecString;
 typedef std::list<float> ListFloat;
 typedef std::list<int> ListInt;
+typedef std::list<std::string> ListString;
 
 namespace Util {
 
-std::vector<std::string> tokenize(const std::string &str,
-                                  const std::string &split);
+VecString tokenize(const std::string &str, const std::string &split);
 
 }  // namespace Util
 
@@ -332,7 +333,7 @@ class Path {
 
  private:
   PathType type_;
-  std::vector<std::string> path_;
+  VecString path_;
   bool absolute_;
 };
 
@@ -427,17 +428,18 @@ inline std::string format_int(int n, int width, char pad = ' ') {
   return out.str();
 }
 
-inline std::string format_vector(const std::vector<int> &shape,
+template <typename Dtype>
+inline std::string format_vector(const std::vector<Dtype> &vector,
                                  const std::string &split = ",",
                                  const std::string &prefix = "",
                                  const std::string &postfix = "") {
   std::stringstream out;
   out << prefix;
-  for (int i = 0; i < shape.size() - 1; ++i) {
-    out << shape.at(i) << split;
+  for (int i = 0; i < vector.size() - 1; ++i) {
+    out << vector.at(i) << split;
   }
-  if (shape.size() > 1) {
-    out << shape.at(shape.size() - 1);
+  if (vector.size() > 1) {
+    out << vector.at(vector.size() - 1);
   }
   out << postfix;
   return out.str();
@@ -472,11 +474,10 @@ inline std::string change_extension(const std::string &str,
   return origin;
 }
 
-inline std::vector<std::string> tokenize(const std::string &str,
-                                         const std::string &split) {
+inline VecString tokenize(const std::string &str, const std::string &split) {
   std::string::size_type last_pos = 0;
   std::string::size_type pos = str.find_first_of(split, last_pos);
-  std::vector<std::string> tokens;
+  VecString tokens;
   while (last_pos != std::string::npos) {
     if (pos != last_pos) tokens.push_back(str.substr(last_pos, pos - last_pos));
     last_pos = pos;
@@ -486,11 +487,11 @@ inline std::vector<std::string> tokenize(const std::string &str,
   return tokens;
 }
 
-inline std::vector<std::string> load_list(const std::string &list_file) {
+inline VecString load_list(const std::string &list_file) {
   std::ifstream file(list_file);
   if (!file.is_open()) Fatal("Load image list file error!");
 
-  std::vector<std::string> image_list;
+  VecString image_list;
   std::string dir;
   while (std::getline(file, dir)) {
     if (dir.length()) image_list.push_back(dir);

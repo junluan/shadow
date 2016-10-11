@@ -53,6 +53,10 @@ message DropoutParameter {
   optional float probability = 1 [default = 0.5];
 }
 
+message ConcatParameter {
+  optional int32 axis = 1 [default = 1];
+}
+
 message PermuteParameter {
   repeated int32 order = 1;
 }
@@ -68,12 +72,13 @@ enum LayerType {
   Pooling = 2;
   Connected = 3;
   Dropout = 4;
-  Permute = 5;
-  Flatten = 6;
+  Concat = 5;
+  Permute = 6;
+  Flatten = 7;
 }
 
 message LayerParameter {
-  optional string name = 1;
+  optional string name = 1 [default = ""];
   optional LayerType type = 2;
   repeated string bottom = 3;
   repeated string top = 4;
@@ -85,8 +90,9 @@ message LayerParameter {
   optional PoolingParameter pooling_param = 12;
   optional ConnectedParameter connected_param = 13;
   optional DropoutParameter dropout_param = 14;
-  optional PermuteParameter permute_param = 15;
-  optional FlattenParameter flatten_param = 16;
+  optional ConcatParameter concat_param = 15;
+  optional PermuteParameter permute_param = 16;
+  optional FlattenParameter flatten_param = 17;
 }
 
 message NetParameter {

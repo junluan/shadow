@@ -11,6 +11,7 @@ void Setup(int device_id) {
   cl_datatransform_kernel_ = easyCL->buildKernel(cl_file, "DataTransform");
   cl_im2col_kernel_ = easyCL->buildKernel(cl_file, "Im2Col");
   cl_pooling_kernel_ = easyCL->buildKernel(cl_file, "Pooling");
+  cl_concat_kernel_ = easyCL->buildKernel(cl_file, "Concat");
   cl_permute_kernel_ = easyCL->buildKernel(cl_file, "Permute");
   cl_activations_kernel_ = easyCL->buildKernel(cl_file, "ActivateArray");
   cl_setarray_kernel_ = easyCL->buildKernel(cl_file, "SetArray");
@@ -122,6 +123,25 @@ void Pooling(const T *in_data, int batch, int in_c, int in_h, int in_w,
   clFinish(*easyCL->queue);
 }
 
+template <typename T>
+void Concat(const T *in_data, int count, int num_concats, int concat_size,
+            int top_concat_axis, int bottom_concat_axis, int offset_concat_axis,
+            T *out_data) {
+  cl_kernel kernel = cl_concat_kernel_->GetKernel();
+  clSetKernelArg(kernel, 0, sizeof(cl_mem), in_data);
+  clSetKernelArg(kernel, 1, sizeof(int), &count);
+  clSetKernelArg(kernel, 2, sizeof(int), &num_concats);
+  clSetKernelArg(kernel, 3, sizeof(int), &concat_size);
+  clSetKernelArg(kernel, 4, sizeof(int), &top_concat_axis);
+  clSetKernelArg(kernel, 5, sizeof(int), &bottom_concat_axis);
+  clSetKernelArg(kernel, 6, sizeof(int), &offset_concat_axis);
+  clSetKernelArg(kernel, 7, sizeof(cl_mem), out_data);
+  size_t global = count;
+  clEnqueueNDRangeKernel(*easyCL->queue, kernel, 1, nullptr, &global, nullptr,
+                         0, nullptr, nullptr);
+  clFinish(*easyCL->queue);
+}
+
 template <typename T, typename Dtype>
 void Permute(const T *in_data, int count, int num_axes,
              const Dtype *permute_order, const Dtype *old_steps,
@@ -205,6 +225,11 @@ template void Im2Col<cl_mem>(const cl_mem *in_data, int offset, int in_c,
 template void Pooling<cl_mem>(const cl_mem *in_data, int batch, int in_c,
                               int in_h, int in_w, int kernel_size, int stride,
                               int out_h, int out_w, int mode, cl_mem *out_data);
+
+template void Concat<cl_mem>(const cl_mem *in_data, int count, int num_concats,
+                             int concat_size, int top_concat_axis,
+                             int bottom_concat_axis, int offset_concat_axis,
+                             cl_mem *out_data);
 
 template void Permute<cl_mem, cl_mem>(const cl_mem *in_data, int count,
                                       int num_axes, const cl_mem *permute_order,

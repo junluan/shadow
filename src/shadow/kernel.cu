@@ -164,10 +164,11 @@ __global__ void PoolingKernel(const float *in_data, int batch, int in_c,
       sum += valid ? in_data[in] : 0.f;
     }
   }
-  if (mode == 0)
+  if (mode == 0) {
     out_data[globalid] = max;
-  else
+  } else {
     out_data[globalid] = sum / (kernel_size * kernel_size);
+  }
 }
 
 template <typename T>
@@ -178,6 +179,33 @@ void Pooling(const T *in_data, int batch, int in_c, int in_h, int in_w,
   PoolingKernel<<<GridDim(N), BLOCK>>>(in_data, batch, in_c, in_h, in_w,
                                        kernel_size, stride, out_h, out_w, mode,
                                        out_data);
+  CheckError(cudaPeekAtLastError());
+}
+
+__global__ void ConcatKernel(const float *in_data, int count, int num_concats,
+                             int concat_size, int top_concat_axis,
+                             int bottom_concat_axis, int offset_concat_axis,
+                             float *out_data) {
+  int globalid =
+      (blockIdx.x + blockIdx.y * gridDim.x) * blockDim.x + threadIdx.x;
+  if (globalid >= count) return;
+
+  int total_concat_size = concat_size * bottom_concat_axis;
+  int concat_num = globalid / total_concat_size;
+  int concat_index = globalid % total_concat_size;
+  int top_index =
+      concat_index +
+      (concat_num * top_concat_axis + offset_concat_axis) * concat_size;
+  out_data[top_index] = in_data[globalid];
+}
+
+template <typename T>
+void Concat(const T *in_data, int count, int num_concats, int concat_size,
+            int top_concat_axis, int bottom_concat_axis, int offset_concat_axis,
+            T *out_data) {
+  ConcatKernel<<<GridDim(count), BLOCK>>>(
+      in_data, count, num_concats, concat_size, top_concat_axis,
+      bottom_concat_axis, offset_concat_axis, out_data);
   CheckError(cudaPeekAtLastError());
 }
 
@@ -293,6 +321,11 @@ template void Im2Col<float>(const float *in_data, int offset, int in_c,
 template void Pooling<float>(const float *in_data, int batch, int in_c,
                              int in_h, int in_w, int kernel_size, int stride,
                              int out_h, int out_w, int mode, float *out_data);
+
+template void Concat<float>(const float *in_data, int count, int num_concats,
+                            int concat_size, int top_concat_axis,
+                            int bottom_concat_axis, int offset_concat_axis,
+                            float *out_data);
 
 template void Permute<float, int>(const float *in_data, int count, int num_axes,
                                   const int *permute_order,

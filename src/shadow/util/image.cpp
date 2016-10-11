@@ -1,111 +1,11 @@
 #include "shadow/util/image.hpp"
 
 #include <cfloat>
+#include <cstring>
 
 namespace Image {
 
-#if defined(USE_CUDA)
-template <typename T>
-void DataTransform(int N, const T *in_data, float scale, float mean_value,
-                   T *out_data) {
-  Kernel::DataTransform(N, in_data, scale, mean_value, out_data);
-}
-
-template <typename T>
-void Im2Col(const std::vector<int> &in_shape, const T *in_data, int offset,
-            int kernel_size, int stride, int pad,
-            const std::vector<int> &out_shape, T *out_data) {
-  Kernel::Im2Col(in_data, offset, in_shape[1], in_shape[2], in_shape[3],
-                 kernel_size, stride, pad, out_shape[2], out_shape[3],
-                 out_data);
-}
-
-template <typename T>
-void Pooling(const std::vector<int> &in_shape, const T *in_data,
-             int kernel_size, int stride, int mode,
-             const std::vector<int> &out_shape, T *out_data) {
-  Kernel::Pooling(in_data, in_shape[0], in_shape[1], in_shape[2], in_shape[3],
-                  kernel_size, stride, out_shape[2], out_shape[3], mode,
-                  out_data);
-}
-
-template <typename T, typename Dtype>
-void Permute(const T *in_data, int count, int num_axes,
-             const Dtype *permute_order, const Dtype *old_steps,
-             const Dtype *new_steps, T *out_data) {
-  Kernel::Permute(in_data, count, num_axes, permute_order, old_steps, new_steps,
-                  out_data);
-}
-
-// Explicit instantiation
-template void DataTransform<float>(int N, const float *in_data, float scale,
-                                   float mean_value, float *out_data);
-template void Im2Col<float>(const std::vector<int> &in_shape,
-                            const float *in_data, int offset, int kernel_size,
-                            int stride, int pad,
-                            const std::vector<int> &out_shape, float *out_data);
-template void Pooling<float>(const std::vector<int> &in_shape,
-                             const float *in_data, int kernel_size, int stride,
-                             int mode, const std::vector<int> &out_shape,
-                             float *out_data);
-template void Permute<float, int>(const float *in_data, int count, int num_axes,
-                                  const int *permute_order,
-                                  const int *old_steps, const int *new_steps,
-                                  float *out_data);
-
-#elif defined(USE_CL)
-template <typename T>
-void DataTransform(int N, const T *in_data, float scale, float mean_value,
-                   T *out_data) {
-  Kernel::DataTransform(N, in_data, scale, mean_value, out_data);
-}
-
-template <typename T>
-void Im2Col(const std::vector<int> &in_shape, const T *in_data, int offset,
-            int kernel_size, int stride, int pad,
-            const std::vector<int> &out_shape, T *out_data) {
-  Kernel::Im2Col(in_data, offset, in_shape[1], in_shape[2], in_shape[3],
-                 kernel_size, stride, pad, out_shape[2], out_shape[3],
-                 out_data);
-}
-
-template <typename T>
-void Pooling(const std::vector<int> &in_shape, const T *in_data,
-             int kernel_size, int stride, int mode,
-             const std::vector<int> &out_shape, T *out_data) {
-  Kernel::Pooling(in_data, in_shape[0], in_shape[1], in_shape[2], in_shape[3],
-                  kernel_size, stride, out_shape[2], out_shape[3], mode,
-                  out_data);
-}
-
-template <typename T, typename Dtype>
-void Permute(const T *in_data, int count, int num_axes,
-             const Dtype *permute_order, const Dtype *old_steps,
-             const Dtype *new_steps, T *out_data) {
-  Kernel::Permute(in_data, count, num_axes, permute_order, old_steps, new_steps,
-                  out_data);
-}
-
-// Explicit instantiation
-template void DataTransform<cl_mem>(int N, const cl_mem *in_data, float scale,
-                                    float mean_value, cl_mem *out_data);
-template void Im2Col<cl_mem>(const std::vector<int> &in_shape,
-                             const cl_mem *in_data, int offset, int kernel_size,
-                             int stride, int pad,
-                             const std::vector<int> &out_shape,
-                             cl_mem *out_data);
-template void Pooling<cl_mem>(const std::vector<int> &in_shape,
-                              const cl_mem *in_data, int kernel_size,
-                              int stride, int mode,
-                              const std::vector<int> &out_shape,
-                              cl_mem *out_data);
-template void Permute<cl_mem, cl_mem>(const cl_mem *in_data, int count,
-                                      int num_axes, const cl_mem *permute_order,
-                                      const cl_mem *old_steps,
-                                      const cl_mem *new_steps,
-                                      cl_mem *out_data);
-
-#else
+#if !defined(USE_CUDA) & !defined(USE_CL)
 template <typename T>
 void DataTransform(int N, const T *in_data, float scale, float mean_value,
                    T *out_data) {
@@ -124,9 +24,9 @@ inline T Im2ColGetPixel(const T *image, int in_h, int in_w, int im_row,
 }
 
 template <typename T>
-void Im2Col(const std::vector<int> &in_shape, const T *in_data, int offset,
-            int kernel_size, int stride, int pad,
-            const std::vector<int> &out_shape, T *out_data) {
+void Im2Col(const VecInt &in_shape, const T *in_data, int offset,
+            int kernel_size, int stride, int pad, const VecInt &out_shape,
+            T *out_data) {
   int in_c = in_shape[1], in_h = in_shape[2], in_w = in_shape[3];
   int out_h = out_shape[2], out_w = out_shape[3];
   const T *im_data_offset = in_data + offset;
@@ -171,9 +71,8 @@ void Im2Col(const std::vector<int> &in_shape, const T *in_data, int offset,
 }
 
 template <typename T>
-void Pooling(const std::vector<int> &in_shape, const T *in_data,
-             int kernel_size, int stride, int mode,
-             const std::vector<int> &out_shape, T *out_data) {
+void Pooling(const VecInt &in_shape, const T *in_data, int kernel_size,
+             int stride, int mode, const VecInt &out_shape, T *out_data) {
   int batch = in_shape[0];
   int in_c = in_shape[1], in_h = in_shape[2], in_w = in_shape[3];
   int out_h = out_shape[2], out_w = out_shape[3];
@@ -200,13 +99,25 @@ void Pooling(const std::vector<int> &in_shape, const T *in_data,
               sum += valid ? in_data[index] : 0.f;
             }
           }
-          if (mode == 0)
+          if (mode == 0) {
             out_data[out_index] = max;
-          else
+          } else {
             out_data[out_index] = sum / (kernel_size * kernel_size);
+          }
         }
       }
     }
+  }
+}
+
+template <typename T>
+void Concat(const T *in_data, int count, int num_concats, int concat_size,
+            int top_concat_axis, int bottom_concat_axis, int offset_concat_axis,
+            T *out_data) {
+  for (int n = 0; n < num_concats; ++n) {
+    memcpy(out_data + (n * top_concat_axis + offset_concat_axis) * concat_size,
+           in_data + n * bottom_concat_axis * concat_size,
+           bottom_concat_axis * concat_size * sizeof(T));
   }
 }
 
@@ -229,18 +140,100 @@ void Permute(const T *in_data, int count, int num_axes,
 // Explicit instantiation
 template void DataTransform<float>(int N, const float *in_data, float scale,
                                    float mean_value, float *out_data);
-template void Im2Col<float>(const std::vector<int> &in_shape,
-                            const float *in_data, int offset, int kernel_size,
-                            int stride, int pad,
-                            const std::vector<int> &out_shape, float *out_data);
-template void Pooling<float>(const std::vector<int> &in_shape,
-                             const float *in_data, int kernel_size, int stride,
-                             int mode, const std::vector<int> &out_shape,
-                             float *out_data);
+template void Im2Col<float>(const VecInt &in_shape, const float *in_data,
+                            int offset, int kernel_size, int stride, int pad,
+                            const VecInt &out_shape, float *out_data);
+template void Pooling<float>(const VecInt &in_shape, const float *in_data,
+                             int kernel_size, int stride, int mode,
+                             const VecInt &out_shape, float *out_data);
+template void Concat<float>(const float *in_data, int count, int num_concats,
+                            int concat_size, int top_concat_axis,
+                            int bottom_concat_axis, int offset_concat_axis,
+                            float *out_data);
 template void Permute<float, int>(const float *in_data, int count, int num_axes,
                                   const int *permute_order,
                                   const int *old_steps, const int *new_steps,
                                   float *out_data);
+
+#else
+template <typename T>
+void DataTransform(int N, const T *in_data, float scale, float mean_value,
+                   T *out_data) {
+  Kernel::DataTransform(N, in_data, scale, mean_value, out_data);
+}
+
+template <typename T>
+void Im2Col(const VecInt &in_shape, const T *in_data, int offset,
+            int kernel_size, int stride, int pad, const VecInt &out_shape,
+            T *out_data) {
+  Kernel::Im2Col(in_data, offset, in_shape[1], in_shape[2], in_shape[3],
+                 kernel_size, stride, pad, out_shape[2], out_shape[3],
+                 out_data);
+}
+
+template <typename T>
+void Pooling(const VecInt &in_shape, const T *in_data, int kernel_size,
+             int stride, int mode, const VecInt &out_shape, T *out_data) {
+  Kernel::Pooling(in_data, in_shape[0], in_shape[1], in_shape[2], in_shape[3],
+                  kernel_size, stride, out_shape[2], out_shape[3], mode,
+                  out_data);
+}
+
+template <typename T>
+void Concat(const T *in_data, int count, int num_concats, int concat_size,
+            int top_concat_axis, int bottom_concat_axis, int offset_concat_axis,
+            T *out_data) {
+  Kernel::Concat(in_data, count, num_concats, concat_size, top_concat_axis,
+                 bottom_concat_axis, offset_concat_axis, out_data);
+}
+
+template <typename T, typename Dtype>
+void Permute(const T *in_data, int count, int num_axes,
+             const Dtype *permute_order, const Dtype *old_steps,
+             const Dtype *new_steps, T *out_data) {
+  Kernel::Permute(in_data, count, num_axes, permute_order, old_steps, new_steps,
+                  out_data);
+}
+
+#if defined(USE_CUDA)
+// Explicit instantiation
+template void DataTransform<float>(int N, const float *in_data, float scale,
+                                   float mean_value, float *out_data);
+template void Im2Col<float>(const VecInt &in_shape, const float *in_data,
+                            int offset, int kernel_size, int stride, int pad,
+                            const VecInt &out_shape, float *out_data);
+template void Pooling<float>(const VecInt &in_shape, const float *in_data,
+                             int kernel_size, int stride, int mode,
+                             const VecInt &out_shape, float *out_data);
+template void Concat<float>(const float *in_data, int count, int num_concats,
+                            int concat_size, int top_concat_axis,
+                            int bottom_concat_axis, int offset_concat_axis,
+                            float *out_data);
+template void Permute<float, int>(const float *in_data, int count, int num_axes,
+                                  const int *permute_order,
+                                  const int *old_steps, const int *new_steps,
+                                  float *out_data);
+
+#else
+// Explicit instantiation
+template void DataTransform<cl_mem>(int N, const cl_mem *in_data, float scale,
+                                    float mean_value, cl_mem *out_data);
+template void Im2Col<cl_mem>(const VecInt &in_shape, const cl_mem *in_data,
+                             int offset, int kernel_size, int stride, int pad,
+                             const VecInt &out_shape, cl_mem *out_data);
+template void Pooling<cl_mem>(const VecInt &in_shape, const cl_mem *in_data,
+                              int kernel_size, int stride, int mode,
+                              const VecInt &out_shape, cl_mem *out_data);
+template void Concat<cl_mem>(const cl_mem *in_data, int count, int num_concats,
+                             int concat_size, int top_concat_axis,
+                             int bottom_concat_axis, int offset_concat_axis,
+                             cl_mem *out_data);
+template void Permute<cl_mem, cl_mem>(const cl_mem *in_data, int count,
+                                      int num_axes, const cl_mem *permute_order,
+                                      const cl_mem *old_steps,
+                                      const cl_mem *new_steps,
+                                      cl_mem *out_data);
+#endif
 #endif
 
 }  // namespace Image

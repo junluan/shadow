@@ -2,8 +2,7 @@
 #define SHADOW_UTIL_IMAGE_HPP
 
 #include "shadow/kernel.hpp"
-
-#include <vector>
+#include "shadow/util/util.hpp"
 
 namespace Image {
 
@@ -12,14 +11,18 @@ void DataTransform(int N, const T *in_data, float scale, float mean_value,
                    T *out_data);
 
 template <typename T>
-void Im2Col(const std::vector<int> &in_shape, const T *in_data, int offset,
-            int kernel_size, int stride, int pad,
-            const std::vector<int> &out_shape, T *out_data);
+void Im2Col(const VecInt &in_shape, const T *in_data, int offset,
+            int kernel_size, int stride, int pad, const VecInt &out_shape,
+            T *out_data);
 
 template <typename T>
-void Pooling(const std::vector<int> &in_shape, const T *in_data,
-             int kernel_size, int stride, int mode,
-             const std::vector<int> &out_shape, T *out_data);
+void Pooling(const VecInt &in_shape, const T *in_data, int kernel_size,
+             int stride, int mode, const VecInt &out_shape, T *out_data);
+
+template <typename T>
+void Concat(const T *in_data, int count, int num_concats, int concat_size,
+            int top_concat_axis, int bottom_concat_axis, int offset_concat_axis,
+            T *out_data);
 
 template <typename T, typename Dtype>
 void Permute(const T *in_data, int count, int num_axes,
