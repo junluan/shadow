@@ -20,30 +20,24 @@ void DataLayer::Setup(VecBlob *blobs) {
     top_.push_back(top);
     blobs->push_back(top);
   }
-
-  scale_ = layer_param_.data_param().scale();
-  mean_value_ = layer_param_.data_param().mean_value();
 }
 
 void DataLayer::Reshape() {
-  const Blob<float> *bottom = bottom_.at(0);
-  Blob<float> *top = top_.at(0);
+  scale_ = layer_param_.data_param().scale();
+  mean_value_ = layer_param_.data_param().mean_value();
 
-  *top->mutable_shape() = bottom->shape();
-  top->allocate_data(top->count());
+  *top_[0]->mutable_shape() = bottom_[0]->shape();
+  top_[0]->allocate_data(top_[0]->count());
 
   std::stringstream out;
   out << layer_name_ << ": "
-      << Util::format_vector(bottom->shape(), ",", "(", ")");
+      << Util::format_vector(bottom_[0]->shape(), ",", "(", ")");
   DInfo(out.str());
 }
 
 void DataLayer::Forward() {
-  const Blob<float> *bottom = bottom_.at(0);
-  Blob<float> *top = top_.at(0);
-
-  Image::DataTransform(top->count(), bottom->data(), scale_, mean_value_,
-                       top->mutable_data());
+  Image::DataTransform(top_[0]->count(), bottom_[0]->data(), scale_,
+                       mean_value_, top_[0]->mutable_data());
 }
 
 void DataLayer::Release() {

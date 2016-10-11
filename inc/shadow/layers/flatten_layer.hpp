@@ -10,7 +10,6 @@ class FlattenLayer : public Layer {
       : Layer(layer_param) {}
   ~FlattenLayer() { Release(); }
 
-  void Setup(VecBlob *blobs);
   void Reshape();
   void Forward();
   void Release();

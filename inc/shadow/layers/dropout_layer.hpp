@@ -10,7 +10,6 @@ class DropoutLayer : public Layer {
       : Layer(layer_param) {}
   ~DropoutLayer() { Release(); }
 
-  void Setup(VecBlob *blobs);
   void Reshape();
   void Forward();
   void Release();
