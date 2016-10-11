@@ -20,6 +20,12 @@ class Layer {
   virtual void Forward() { Info("Forward Layer!"); }
   virtual void Release() { Info("Release Layer!"); }
 
+  virtual const std::string name() { return layer_name_; }
+  virtual const shadow::LayerType type() { return layer_type_; }
+  virtual Blob<float> *bottom(int i) { return bottom_[i]; }
+  virtual Blob<float> *top(int i) { return top_[i]; }
+
+ protected:
   shadow::LayerParameter layer_param_;
   std::string layer_name_;
   shadow::LayerType layer_type_;

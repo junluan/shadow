@@ -36,6 +36,7 @@ class Yolo {
   std::string cfg_file_, weight_file_;
   float threshold_;
   Network net_;
+  const Blob<float> *out_blob_;
   int batch_, in_num_, out_num_, class_num_;
   float *batch_data_, *predictions_;
   JImage *im_ini_, *im_res_;

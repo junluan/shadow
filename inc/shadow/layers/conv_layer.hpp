@@ -17,8 +17,8 @@ class ConvLayer : public Layer {
 
   int kernel_size() { return kernel_size_; }
 
-  void set_filters(float *filters) { filters_->set_data(filters); }
-  void set_biases(float *biases) { biases_->set_data(biases); }
+  void set_filters(const float *filters) { filters_->set_data(filters); }
+  void set_biases(const float *biases) { biases_->set_data(biases); }
 
  private:
   int num_output_, kernel_size_, stride_, pad_, out_map_size_, kernel_num_;

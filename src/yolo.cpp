@@ -46,17 +46,19 @@ void Yolo::Setup(int batch, VecRectF *rois) {
 
   net_.LoadModel(cfg_file_, weight_file_, batch);
 
-  batch_ = net_.in_shape_.dim(0);
-  in_num_ =
-      net_.in_shape_.dim(1) * net_.in_shape_.dim(2) * net_.in_shape_.dim(3);
-  const Layer *layer = net_.GetLayerByName("yolo_output");
-  out_num_ = layer->layer_param_.connected_param().num_output();
+  batch_ = net_.in_shape_[0];
+  in_num_ = net_.in_shape_[1] * net_.in_shape_[2] * net_.in_shape_[3];
+  out_blob_ = net_.GetBlobByName("yolo_output");
+  if (out_blob_ == nullptr) {
+    Fatal("Unknown Blob name yolo_output");
+  }
+  out_num_ = out_blob_->num();
 
   class_num_ = 2;
   batch_data_ = new float[batch_ * in_num_];
   predictions_ = new float[batch_ * out_num_];
   im_ini_ = new JImage();
-  im_res_ = new JImage(3, net_.in_shape_.dim(2), net_.in_shape_.dim(3));
+  im_res_ = new JImage(3, net_.in_shape_[2], net_.in_shape_[3]);
   if (rois == nullptr) {
     rois_.push_back(RectF(0.f, 0.f, 1.f, 1.f));
   } else {
@@ -208,16 +210,12 @@ void Yolo::PredictYoloDetections(JImage *image, vector<VecBox> *Bboxes) {
   for (int count = 0, b = 1; b <= batch_num; ++b) {
     int c = 0;
     for (int i = count; i < b * batch_ && i < num_im; ++i, ++c) {
-      JImageProc::CropResize(*image, im_res_, rois_[i], net_.in_shape_.dim(2),
-                             net_.in_shape_.dim(3));
+      JImageProc::CropResize(*image, im_res_, rois_[i], net_.in_shape_[2],
+                             net_.in_shape_[3]);
       GetBatchData(*im_res_, batch_data_);
     }
     net_.Forward(batch_data_);
-    const Layer *layer = net_.GetLayerByName("yolo_output");
-    if (layer != nullptr)
-      layer->top_[0]->read_data(predictions_);
-    else
-      Fatal("Unknown Blob name yolo_output");
+    out_blob_->read_data(predictions_);
     for (int i = 0; i < c; ++i) {
       VecBox boxes(98);
       int height = static_cast<int>(rois_[count + i].h * image->h_);

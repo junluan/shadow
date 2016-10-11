@@ -12,7 +12,7 @@ int main(int argc, char const *argv[]) {
   yolo.Setup(1, nullptr);
   yolo.Test("./data/demo_6.png");
   //yolo.BatchTest("./data/testlist.txt", true);
-  //yolo.VideoTest("./data/traffic/set07V000.avi", true, false);
+  //yolo.VideoTest("./data/traffic/QA_test/audi_Q3_6.mp4", true, false);
   //yolo.Demo(0, true);
   yolo.Release();
 
