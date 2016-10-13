@@ -21,7 +21,6 @@ class ConvLayer : public Layer {
 
  private:
   int num_output_, kernel_size_, stride_, pad_, out_map_size_, kernel_num_;
-  shadow::ActivateType activate_;
 
   Blob<float> *filters_, *biases_, *col_image_;
 };

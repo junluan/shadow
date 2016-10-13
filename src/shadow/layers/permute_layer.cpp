@@ -54,5 +54,5 @@ void PermuteLayer::Release() {
   old_steps_->clear();
   new_steps_->clear();
 
-  // std::cout << "Free DropoutLayer!" << std::endl;
+  // DInfo("Free PermuteLayer!");
 }

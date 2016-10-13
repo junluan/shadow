@@ -24,7 +24,7 @@ void PoolingLayer::Reshape() {
 }
 
 void PoolingLayer::Forward() {
-  Image::Pooling(bottom_[0]->shape(), bottom_[0]->data(), kernel_size_, stride_,
+  Image::Pooling(bottom_[0]->data(), bottom_[0]->shape(), kernel_size_, stride_,
                  pool_type_, top_[0]->shape(), top_[0]->mutable_data());
 }
 
@@ -32,5 +32,5 @@ void PoolingLayer::Release() {
   bottom_.clear();
   top_.clear();
 
-  // std::cout << "Free PoolingLayer!" << std::endl;
+  // DInfo("Free PoolingLayer!");
 }

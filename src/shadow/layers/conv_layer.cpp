@@ -1,5 +1,4 @@
 #include "shadow/layers/conv_layer.hpp"
-#include "shadow/util/activations.hpp"
 #include "shadow/util/blas.hpp"
 #include "shadow/util/image.hpp"
 
@@ -12,7 +11,6 @@ void ConvLayer::Reshape() {
   kernel_size_ = layer_param_.convolution_param().kernel_size();
   stride_ = layer_param_.convolution_param().stride();
   pad_ = layer_param_.convolution_param().pad();
-  activate_ = layer_param_.convolution_param().activate();
 
   int in_c = bottom_[0]->shape(1), in_h = bottom_[0]->shape(2),
       in_w = bottom_[0]->shape(3);
@@ -48,11 +46,11 @@ void ConvLayer::Forward() {
   int out_c = top_[0]->shape(1);
   int top_num = top_[0]->num(), bottom_num = bottom_[0]->num();
   for (int b = 0; b < batch; ++b) {
-    Blas::SetArrayRepeat(out_map_size_, biases_->data(), out_c,
-                         top_[0]->mutable_data(), b * top_num);
+    Blas::SetArrayRepeat(top_[0]->mutable_data(), b * top_num, out_map_size_,
+                         out_c, biases_->data());
   }
   for (int b = 0; b < batch; ++b) {
-    Image::Im2Col(bottom_[0]->shape(), bottom_[0]->data(), b * bottom_num,
+    Image::Im2Col(bottom_[0]->data(), bottom_[0]->shape(), b * bottom_num,
                   kernel_size_, stride_, pad_, top_[0]->shape(),
                   col_image_->mutable_data());
     Blas::BlasSGemm(0, 0, out_c, out_map_size_, kernel_num_, 1,
@@ -60,8 +58,6 @@ void ConvLayer::Forward() {
                     out_map_size_, 1, top_[0]->mutable_data(), b * top_num,
                     out_map_size_);
   }
-  Activations::ActivateArray(top_[0]->count(), activate_,
-                             top_[0]->mutable_data());
 }
 
 void ConvLayer::Release() {
@@ -72,5 +68,5 @@ void ConvLayer::Release() {
   biases_->clear();
   col_image_->clear();
 
-  // std::cout << "Free ConvLayer!" << std::endl;
+  // DInfo("Free ConvLayer!");
 }

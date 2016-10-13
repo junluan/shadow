@@ -19,7 +19,6 @@ class ConnectedLayer : public Layer {
 
  private:
   int num_output_;
-  shadow::ActivateType activate_;
 
   Blob<float> *weights_, *biases_;
 };

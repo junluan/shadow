@@ -7,16 +7,16 @@
 namespace Image {
 
 template <typename T>
-void DataTransform(int N, const T *in_data, float scale, float mean_value,
+void DataTransform(const T *in_data, int count, float scale, float mean_value,
                    T *out_data);
 
 template <typename T>
-void Im2Col(const VecInt &in_shape, const T *in_data, int offset,
+void Im2Col(const T *in_data, const VecInt &in_shape, int offset,
             int kernel_size, int stride, int pad, const VecInt &out_shape,
             T *out_data);
 
 template <typename T>
-void Pooling(const VecInt &in_shape, const T *in_data, int kernel_size,
+void Pooling(const T *in_data, const VecInt &in_shape, int kernel_size,
              int stride, int mode, const VecInt &out_shape, T *out_data);
 
 template <typename T>
@@ -28,6 +28,9 @@ template <typename T, typename Dtype>
 void Permute(const T *in_data, int count, int num_axes,
              const Dtype *permute_order, const Dtype *old_steps,
              const Dtype *new_steps, T *out_data);
+
+template <typename T>
+void Activate(T *data, int count, int type);
 
 }  // namespace Image
 

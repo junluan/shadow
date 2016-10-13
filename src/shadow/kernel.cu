@@ -75,20 +75,21 @@ void ReleaseBuffer(T *buffer) {
   CheckError(cudaFree(buffer));
 }
 
-__global__ void DataTransformKernel(int N, const float *in_data, float scale,
-                                    float mean_value, float *out_data) {
+__global__ void DataTransformKernel(const float *in_data, int count,
+                                    float scale, float mean_value,
+                                    float *out_data) {
   int globalid =
       (blockIdx.x + blockIdx.y * gridDim.x) * blockDim.x + threadIdx.x;
-  if (globalid > N) return;
+  if (globalid > count) return;
 
   out_data[globalid] = (in_data[globalid] - mean_value) * scale;
 }
 
 template <typename T>
-void DataTransform(int N, const T *in_data, float scale, float mean_value,
+void DataTransform(const T *in_data, int count, float scale, float mean_value,
                    T *out_data) {
-  DataTransformKernel<<<GridDim(N), BLOCK>>>(N, in_data, scale, mean_value,
-                                             out_data);
+  DataTransformKernel<<<GridDim(count), BLOCK>>>(in_data, count, scale,
+                                                 mean_value, out_data);
   CheckError(cudaPeekAtLastError());
 }
 
@@ -235,7 +236,7 @@ void Permute(const T *in_data, int count, int num_axes,
   CheckError(cudaPeekAtLastError());
 }
 
-__device__ float Activate(float x, int type) {
+__device__ float ActivateValue(float x, int type) {
   switch (type) {
     case 0:
       return x; /*linear*/
@@ -248,50 +249,50 @@ __device__ float Activate(float x, int type) {
   }
 }
 
-__global__ void ActivateArrayKernel(int N, int type, float *out_data) {
+__global__ void ActivateKernel(float *data, int count, int type) {
   int globalid =
       (blockIdx.x + blockIdx.y * gridDim.x) * blockDim.x + threadIdx.x;
-  if (globalid >= N) return;
+  if (globalid >= count) return;
 
-  out_data[globalid] = Activate(out_data[globalid], type);
+  data[globalid] = ActivateValue(data[globalid], type);
 }
 
 template <typename T>
-void ActivateArray(int N, int type, T *out_data) {
-  ActivateArrayKernel<<<GridDim(N), BLOCK>>>(N, type, out_data);
+void Activate(T *data, int count, int type) {
+  ActivateKernel<<<GridDim(count), BLOCK>>>(data, count, type);
   CheckError(cudaPeekAtLastError());
 }
 
-__global__ void SetArrayKernel(int N, float value, float *out_data) {
+// Blas Kernel Function
+__global__ void SetArrayKernel(float *data, int count, float value) {
   int globalid =
       (blockIdx.x + blockIdx.y * gridDim.x) * blockDim.x + threadIdx.x;
-  if (globalid >= N) return;
+  if (globalid >= count) return;
 
-  out_data[globalid] = value;
+  data[globalid] = value;
 }
 
 template <typename T>
-void SetArray(int N, float value, T *out_data) {
-  float val = {value};
-  SetArrayKernel<<<GridDim(N), BLOCK>>>(N, val, out_data);
+void SetArray(T *data, int count, float value) {
+  SetArrayKernel<<<GridDim(count), BLOCK>>>(data, count, value);
   CheckError(cudaPeekAtLastError());
 }
 
-__global__ void SetArrayRepeatKernel(int N, const float *value, int value_size,
-                                     float *out_data, int offset) {
+__global__ void SetArrayRepeatKernel(float *data, int offset, int N,
+                                     int value_size, const float *value) {
   int globalid =
       (blockIdx.x + blockIdx.y * gridDim.x) * blockDim.x + threadIdx.x;
   if (globalid >= N * value_size) return;
 
   int value_index = globalid / N;
-  out_data[offset + globalid] = value[value_index];
+  data[offset + globalid] = value[value_index];
 }
 
 template <typename T>
-void SetArrayRepeat(int N, const T *value, int value_size, T *out_data,
-                    int offset) {
-  SetArrayRepeatKernel<<<GridDim(N * value_size), BLOCK>>>(N, value, value_size,
-                                                           out_data, offset);
+void SetArrayRepeat(T *data, int offset, int N, int value_size,
+                    const T *value) {
+  SetArrayRepeatKernel<<<GridDim(N * value_size), BLOCK>>>(data, offset, N,
+                                                           value_size, value);
   CheckError(cudaPeekAtLastError());
 }
 
@@ -311,33 +312,29 @@ template void CopyBuffer<float, float>(int size, const float *src, float *des);
 template void ReleaseBuffer<int>(int *buffer);
 template void ReleaseBuffer<float>(float *buffer);
 
-template void DataTransform<float>(int N, const float *in_data, float scale,
+template void DataTransform<float>(const float *in_data, int count, float scale,
                                    float mean_value, float *out_data);
-
 template void Im2Col<float>(const float *in_data, int offset, int in_c,
                             int in_h, int in_w, int kernel_size, int stride,
                             int pad, int out_h, int out_w, float *out_data);
-
 template void Pooling<float>(const float *in_data, int batch, int in_c,
                              int in_h, int in_w, int kernel_size, int stride,
                              int out_h, int out_w, int mode, float *out_data);
-
 template void Concat<float>(const float *in_data, int count, int num_concats,
                             int concat_size, int top_concat_axis,
                             int bottom_concat_axis, int offset_concat_axis,
                             float *out_data);
-
 template void Permute<float, int>(const float *in_data, int count, int num_axes,
                                   const int *permute_order,
                                   const int *old_steps, const int *new_steps,
                                   float *out_data);
+template void Activate<float>(float *data, int count, int type);
 
-template void ActivateArray<float>(int N, int type, float *out_data);
+// Blas Kernel Function
+template void SetArray<float>(float *data, int count, float value);
 
-template void SetArray<float>(int N, float value, float *out_data);
-
-template void SetArrayRepeat<float>(int N, const float *value, int value_size,
-                                    float *out_data, int offset);
+template void SetArrayRepeat<float>(float *data, int offset, int N,
+                                    int value_size, const float *value);
 #endif
 
 }  // namespace Kernel

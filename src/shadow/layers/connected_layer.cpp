@@ -1,10 +1,8 @@
 #include "shadow/layers/connected_layer.hpp"
-#include "shadow/util/activations.hpp"
 #include "shadow/util/blas.hpp"
 
 void ConnectedLayer::Reshape() {
   num_output_ = layer_param_.connected_param().num_output();
-  activate_ = layer_param_.connected_param().activate();
 
   top_[0]->add_shape(bottom_[0]->shape(0));
   top_[0]->add_shape(num_output_);
@@ -31,8 +29,6 @@ void ConnectedLayer::Forward() {
   Blas::BlasSGemm(0, 0, batch, top_num, bottom_num, 1, bottom_[0]->data(),
                   bottom_num, weights_->data(), top_num, 1,
                   top_[0]->mutable_data(), 0, top_num);
-  Activations::ActivateArray(top_[0]->count(), activate_,
-                             top_[0]->mutable_data());
 }
 
 void ConnectedLayer::Release() {
@@ -42,5 +38,5 @@ void ConnectedLayer::Release() {
   weights_->clear();
   biases_->clear();
 
-  // std::cout << "Free ConnectedLayer!" << std::endl;
+  // DInfo("Free ConnectedLayer!");
 }

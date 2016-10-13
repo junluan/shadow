@@ -6,14 +6,14 @@ namespace Blas {
 
 #if defined(USE_CUDA)
 template <typename T>
-void SetArray(int N, float value, T *out_data) {
-  Kernel::SetArray(N, value, out_data);
+void SetArray(T *data, int count, float value) {
+  Kernel::SetArray(data, count, value);
 }
 
 template <typename T>
-void SetArrayRepeat(int N, const T *value, int value_size, T *out_data,
-                    int offset) {
-  Kernel::SetArrayRepeat(N, value, value_size, out_data, offset);
+void SetArrayRepeat(T *data, int offset, int N, int value_size,
+                    const T *value) {
+  Kernel::SetArrayRepeat(data, offset, N, value_size, value);
 }
 
 template <typename T>
@@ -32,9 +32,9 @@ void BlasSGemm(int TA, int TB, int M, int N, int K, float ALPHA, const T *bufA,
 }
 
 // Explicit instantiation
-template void SetArray<float>(int N, float value, float *out_data);
-template void SetArrayRepeat<float>(int N, const float *value, int value_size,
-                                    float *out_data, int offset);
+template void SetArray<float>(float *data, int count, float value);
+template void SetArrayRepeat<float>(float *data, int offset, int N,
+                                    int value_size, const float *value);
 template void BlasCopy<float>(int N, const float *X, int incx, float *Y,
                               int offset, int incy);
 template void BlasSGemm<float>(int TA, int TB, int M, int N, int K, float ALPHA,
@@ -43,14 +43,14 @@ template void BlasSGemm<float>(int TA, int TB, int M, int N, int K, float ALPHA,
 
 #elif defined(USE_CL)
 template <typename T>
-void SetArray(int N, float value, T *out_data) {
-  Kernel::SetArray(N, value, out_data);
+void SetArray(T *data, int count, float value) {
+  Kernel::SetArray(data, count, value);
 }
 
 template <typename T>
-void SetArrayRepeat(int N, const T *value, int value_size, T *out_data,
-                    int offset) {
-  Kernel::SetArrayRepeat(N, value, value_size, out_data, offset);
+void SetArrayRepeat(T *data, int offset, int N, int value_size,
+                    const T *value) {
+  Kernel::SetArrayRepeat(data, offset, N, value_size, value);
 }
 
 template <typename T>
@@ -71,9 +71,9 @@ void BlasSGemm(int TA, int TB, int M, int N, int K, float ALPHA, const T *bufA,
 }
 
 // Explicit instantiation
-template void SetArray<cl_mem>(int N, float value, cl_mem *out_data);
-template void SetArrayRepeat<cl_mem>(int N, const cl_mem *value, int value_size,
-                                     cl_mem *out_data, int offset);
+template void SetArray<cl_mem>(cl_mem *data, int count, float value);
+template void SetArrayRepeat<cl_mem>(cl_mem *data, int offset, int N,
+                                     int value_size, const cl_mem *value);
 template void BlasCopy<cl_mem>(int N, const cl_mem *X, int incx, cl_mem *Y,
                                int offset, int incy);
 template void BlasSGemm<cl_mem>(int TA, int TB, int M, int N, int K,
@@ -83,15 +83,15 @@ template void BlasSGemm<cl_mem>(int TA, int TB, int M, int N, int K,
 
 #else
 template <typename T>
-void SetArray(int N, float value, T *out_data) {
-  std::fill(out_data, out_data + N, value);
+void SetArray(T *data, int count, float value) {
+  std::fill(data, data + count, value);
 }
 
 template <typename T>
-void SetArrayRepeat(int N, const T *value, int value_size, T *out_data,
-                    int offset) {
+void SetArrayRepeat(T *data, int offset, int N, int value_size,
+                    const T *value) {
   for (int i = 0; i < value_size; ++i) {
-    T *out_data_offset = out_data + offset + i * N;
+    T *out_data_offset = data + offset + i * N;
     std::fill(out_data_offset, out_data_offset + N, value[i]);
   }
 }
@@ -174,9 +174,9 @@ void BlasSGemm(int TA, int TB, int M, int N, int K, float ALPHA, const T *A,
 }
 
 // Explicit instantiation
-template void SetArray<float>(int N, float value, float *out_data);
-template void SetArrayRepeat<float>(int N, const float *value, int value_size,
-                                    float *out_data, int offset);
+template void SetArray<float>(float *data, int count, float value);
+template void SetArrayRepeat<float>(float *data, int offset, int N,
+                                    int value_size, const float *value);
 template void BlasCopy<float>(int N, const float *X, int incx, float *Y,
                               int offset, int incy);
 template void BlasSGemm<float>(int TA, int TB, int M, int N, int K, float ALPHA,

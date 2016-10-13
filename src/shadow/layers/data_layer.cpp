@@ -36,7 +36,7 @@ void DataLayer::Reshape() {
 }
 
 void DataLayer::Forward() {
-  Image::DataTransform(top_[0]->count(), bottom_[0]->data(), scale_,
+  Image::DataTransform(bottom_[0]->data(), top_[0]->count(), scale_,
                        mean_value_, top_[0]->mutable_data());
 }
 
@@ -44,5 +44,5 @@ void DataLayer::Release() {
   bottom_.clear();
   top_.clear();
 
-  // std::cout << "Free DataLayer!" << std::endl;
+  // DInfo("Free DataLayer!");
 }

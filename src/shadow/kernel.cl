@@ -1,7 +1,7 @@
-__kernel void DataTransform(int N, __global float *in_data, float scale,
+__kernel void DataTransform(__global float *in_data, int count, float scale,
                             float mean_value, __global float *out_data) {
   const int globalid = get_global_id(0);
-  if (globalid >= N) return;
+  if (globalid >= count) return;
 
   out_data[globalid] = (in_data[globalid] - mean_value) * scale;
 }
@@ -103,42 +103,39 @@ __kernel void Permute(__global float *in_data, int count, int num_axes,
   out_data[globalid] = in_data[old_idx];
 }
 
-float linear_activate(float x) { return x; }
-float relu_activate(float x) { return x * (x > 0); }
-float leaky_activate(float x) { return (x > 0) ? x : .1f * x; }
-
-float Activate(float x, int type) {
+float ActivateValue(float x, int type) {
   switch (type) {
     case 0:
-      return linear_activate(x);
+      return x; /*linear*/
     case 1:
-      return relu_activate(x);
+      return x * (x > 0); /*relu*/
     case 2:
-      return leaky_activate(x);
+      return (x > 0) ? x : .1f * x; /*leaky*/
     default:
       return x;
   }
 }
 
-__kernel void ActivateArray(int N, int type, __global float *out_data) {
+__kernel void Activate(__global float *data, int count, int type) {
   const int globalid = get_global_id(0);
-  if (globalid >= N) return;
+  if (globalid >= count) return;
 
-  out_data[globalid] = Activate(out_data[globalid], type);
+  data[globalid] = ActivateValue(data[globalid], type);
 }
 
-__kernel void SetArray(int N, float value, __global float *out_data) {
+// Blas Kernel Function
+__kernel void SetArray(__global float *data, int count, float value) {
   const int globalid = get_global_id(0);
-  if (globalid >= N) return;
+  if (globalid >= count) return;
 
-  out_data[globalid] = value;
+  data[globalid] = value;
 }
 
-__kernel void SetArrayRepeat(int N, __global float *value, int value_size,
-                             __global float *out_data, int offset) {
+__kernel void SetArrayRepeat(__global float *data, int offset, int N,
+                             int value_size, __global float *value) {
   const int globalid = get_global_id(0);
   if (globalid >= N * value_size) return;
 
   int value_index = globalid / N;
-  out_data[offset + globalid] = value[value_index];
+  data[offset + globalid] = value[value_index];
 }

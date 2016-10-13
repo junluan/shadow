@@ -1,5 +1,6 @@
 #include "shadow/network.hpp"
 
+#include "shadow/layers/activate_layer.hpp"
 #include "shadow/layers/concat_layer.hpp"
 #include "shadow/layers/connected_layer.hpp"
 #include "shadow/layers/conv_layer.hpp"
@@ -156,6 +157,8 @@ Layer *Network::LayerFactory(const shadow::LayerParameter &layer_param,
     layer = new PermuteLayer(layer_param);
   } else if (layer_param.type() == shadow::LayerType::Flatten) {
     layer = new FlattenLayer(layer_param);
+  } else if (layer_param.type() == shadow::LayerType::Activate) {
+    layer = new ActivateLayer(layer_param);
   } else {
     Fatal("Layer type is not recognized!");
   }

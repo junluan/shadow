@@ -56,5 +56,5 @@ void ConcatLayer::Release() {
   bottom_.clear();
   top_.clear();
 
-  // std::cout << "Free DropoutLayer!" << std::endl;
+  // DInfo("Free ConcatLayer!");
 }

@@ -31,7 +31,7 @@ template <typename T>
 void ReleaseBuffer(T *buffer);
 
 template <typename T>
-void DataTransform(int N, const T *in_data, float scale, float mean_value,
+void DataTransform(const T *in_data, int count, float scale, float mean_value,
                    T *out_data);
 
 template <typename T>
@@ -55,14 +55,14 @@ void Permute(const T *in_data, int count, int num_axes,
              const Dtype *new_steps, T *out_data);
 
 template <typename T>
-void ActivateArray(int N, int type, T *out_data);
+void Activate(T *data, int count, int type);
+
+// Blas Kernel Function
+template <typename T>
+void SetArray(T *data, int count, float value);
 
 template <typename T>
-void SetArray(int N, float value, T *out_data);
-
-template <typename T>
-void SetArrayRepeat(int N, const T *value, int value_size, T *out_data,
-                    int offset);
+void SetArrayRepeat(T *data, int offset, int N, int value_size, const T *value);
 
 #if defined(USE_CUDA)
 extern cublasHandle_t cublas_handle_;
@@ -75,7 +75,7 @@ static CLKernel *cl_im2col_kernel_ = nullptr;
 static CLKernel *cl_pooling_kernel_ = nullptr;
 static CLKernel *cl_concat_kernel_ = nullptr;
 static CLKernel *cl_permute_kernel_ = nullptr;
-static CLKernel *cl_activations_kernel_ = nullptr;
+static CLKernel *cl_activate_kernel_ = nullptr;
 static CLKernel *cl_setarray_kernel_ = nullptr;
 static CLKernel *cl_setarrayrepeat_kernel_ = nullptr;
 #endif

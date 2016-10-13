@@ -6,11 +6,10 @@
 namespace Blas {
 
 template <typename T>
-void SetArray(int N, float value, T *out_data);
+void SetArray(T *data, int count, float value);
 
 template <typename T>
-void SetArrayRepeat(int N, const T *value, int value_size, T *out_data,
-                    int offset);
+void SetArrayRepeat(T *data, int offset, int N, int value_size, const T *value);
 
 template <typename T>
 void BlasCopy(int N, const T *X, int incx, T *Y, int offset, int incy);
