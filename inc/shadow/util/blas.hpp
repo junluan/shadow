@@ -5,6 +5,9 @@
 
 namespace Blas {
 
+void Setup();
+void Release();
+
 template <typename T>
 void SetArray(T *data, int count, float value);
 

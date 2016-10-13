@@ -4,6 +4,12 @@ namespace Kernel {
 
 #if defined(USE_CL)
 EasyCL *easyCL = nullptr;
+static CLKernel *cl_datatransform_kernel_ = nullptr;
+static CLKernel *cl_im2col_kernel_ = nullptr;
+static CLKernel *cl_pooling_kernel_ = nullptr;
+static CLKernel *cl_concat_kernel_ = nullptr;
+static CLKernel *cl_permute_kernel_ = nullptr;
+static CLKernel *cl_activate_kernel_ = nullptr;
 
 void Setup(int device_id) {
   easyCL = EasyCL::createForFirstGpuOtherwiseCpu(true);
@@ -14,9 +20,6 @@ void Setup(int device_id) {
   cl_concat_kernel_ = easyCL->buildKernel(cl_file, "Concat");
   cl_permute_kernel_ = easyCL->buildKernel(cl_file, "Permute");
   cl_activate_kernel_ = easyCL->buildKernel(cl_file, "Activate");
-  cl_setarray_kernel_ = easyCL->buildKernel(cl_file, "SetArray");
-  cl_setarrayrepeat_kernel_ = easyCL->buildKernel(cl_file, "SetArrayRepeat");
-  clblasSetup();
 }
 
 void Release() {
@@ -26,10 +29,7 @@ void Release() {
   cl_concat_kernel_->~CLKernel();
   cl_permute_kernel_->~CLKernel();
   cl_activate_kernel_->~CLKernel();
-  cl_setarray_kernel_->~CLKernel();
-  cl_setarrayrepeat_kernel_->~CLKernel();
   easyCL->~EasyCL();
-  clblasTeardown();
 }
 
 template <typename T, typename Dtype>
@@ -174,34 +174,6 @@ void Activate(T *data, int count, int type) {
   clFinish(*easyCL->queue);
 }
 
-// Blas Kernel Function
-template <typename T>
-void SetArray(T *data, int count, float value) {
-  cl_kernel kernel = cl_setarray_kernel_->GetKernel();
-  clSetKernelArg(kernel, 0, sizeof(cl_mem), data);
-  clSetKernelArg(kernel, 1, sizeof(int), &count);
-  clSetKernelArg(kernel, 2, sizeof(float), &value);
-  size_t global = count;
-  clEnqueueNDRangeKernel(*easyCL->queue, kernel, 1, nullptr, &global, nullptr,
-                         0, nullptr, nullptr);
-  clFinish(*easyCL->queue);
-}
-
-template <typename T>
-void SetArrayRepeat(T *data, int offset, int N, int value_size,
-                    const T *value) {
-  cl_kernel kernel = cl_setarrayrepeat_kernel_->GetKernel();
-  clSetKernelArg(kernel, 0, sizeof(cl_mem), data);
-  clSetKernelArg(kernel, 1, sizeof(int), &offset);
-  clSetKernelArg(kernel, 2, sizeof(int), &N);
-  clSetKernelArg(kernel, 3, sizeof(int), &value_size);
-  clSetKernelArg(kernel, 4, sizeof(cl_mem), value);
-  size_t global = N * value_size;
-  clEnqueueNDRangeKernel(*easyCL->queue, kernel, 1, nullptr, &global, nullptr,
-                         0, nullptr, nullptr);
-  clFinish(*easyCL->queue);
-}
-
 // Explicit instantiation
 template cl_mem *MakeBuffer<cl_mem, int>(int size, int *host_ptr);
 template cl_mem *MakeBuffer<cl_mem, float>(int size, float *host_ptr);
@@ -237,12 +209,6 @@ template void Permute<cl_mem, cl_mem>(const cl_mem *in_data, int count,
                                       const cl_mem *new_steps,
                                       cl_mem *out_data);
 template void Activate<cl_mem>(cl_mem *data, int count, int type);
-
-// Blas Kernel Function
-template void SetArray<cl_mem>(cl_mem *data, int count, float value);
-
-template void SetArrayRepeat<cl_mem>(cl_mem *data, int offset, int N,
-                                     int value_size, const cl_mem *value);
 #endif
 
 }  // namespace Kernel

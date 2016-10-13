@@ -2,12 +2,11 @@
 #define SHADOW_KERNEL_HPP
 
 #if defined(USE_CUDA)
-#include "cublas_v2.h"
-#endif
+#include "cuda_runtime.h"
+const int BLOCK = 512;
 
-#if defined(USE_CL)
+#elif defined(USE_CL)
 #include <EasyCL.h>
-#include <clBLAS.h>
 #endif
 
 namespace Kernel {
@@ -57,27 +56,12 @@ void Permute(const T *in_data, int count, int num_axes,
 template <typename T>
 void Activate(T *data, int count, int type);
 
-// Blas Kernel Function
-template <typename T>
-void SetArray(T *data, int count, float value);
-
-template <typename T>
-void SetArrayRepeat(T *data, int offset, int N, int value_size, const T *value);
-
 #if defined(USE_CUDA)
-extern cublasHandle_t cublas_handle_;
+dim3 GridDim(int size);
+void CheckError(cudaError_t status);
 
 #elif defined(USE_CL)
 extern EasyCL *easyCL;
-
-static CLKernel *cl_datatransform_kernel_ = nullptr;
-static CLKernel *cl_im2col_kernel_ = nullptr;
-static CLKernel *cl_pooling_kernel_ = nullptr;
-static CLKernel *cl_concat_kernel_ = nullptr;
-static CLKernel *cl_permute_kernel_ = nullptr;
-static CLKernel *cl_activate_kernel_ = nullptr;
-static CLKernel *cl_setarray_kernel_ = nullptr;
-static CLKernel *cl_setarrayrepeat_kernel_ = nullptr;
 #endif
 
 }  // namespace Kernel

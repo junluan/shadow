@@ -27,7 +27,7 @@ if (${USE_OpenCV} STREQUAL "ON")
 endif ()
 
 include_directories("inc" "inc/shadow/proto" "external")
-file(GLOB shadow_lib_src "src/shadow/*.cpp" "src/shadow/layers/*.cpp" "src/shadow/util/*.cpp" "src/shadow/proto/*.cc")
+file(GLOB_RECURSE shadow_lib_src "src/shadow/*.cpp" "src/shadow/*.cc")
 
 if (BUILD_TEST)
   file(GLOB test_shadow_src "src/test/*.cpp" "external/gtest/gtest-all.cc")
@@ -42,7 +42,8 @@ if (${USE_CUDA} STREQUAL "ON" AND ${USE_CL} STREQUAL "OFF")
   add_definitions(-DUSE_CUDA)
   set(CUDA_NVCC_FLAGS "-gencode arch=compute_20,code=\"compute_20,sm_20\"")
 
-  cuda_add_library(shadow "src/shadow/kernel.cu" ${shadow_lib_src})
+  file(GLOB_RECURSE shadow_cu_src "src/shadow/*.cu")
+  cuda_add_library(shadow ${shadow_cu_src} ${shadow_lib_src})
 
   if (BUILD_TEST)
     target_link_libraries(test_shadow shadow glog protobuf ${CUDA_cublas_LIBRARY} ${OpenCV_LIBS})

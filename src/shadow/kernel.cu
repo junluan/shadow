@@ -4,43 +4,9 @@
 namespace Kernel {
 
 #if defined(USE_CUDA)
-#include "cuda_runtime.h"
+void Setup(int device_id) { CheckError(cudaSetDevice(device_id)); }
 
-const int BLOCK = 512;
-cublasHandle_t cublas_handle_ = nullptr;
-
-inline dim3 GridDim(int size) {
-  unsigned int k = (unsigned int)(size - 1) / BLOCK + 1;
-  unsigned int x = k;
-  unsigned int y = 1;
-  if (x > 65535) {
-    x = (unsigned int)std::ceil(std::sqrt(k));
-    y = (size - 1) / (x * BLOCK) + 1;
-  }
-  return dim3(x, y, 1);
-}
-
-inline void CheckError(cudaError_t status) {
-  cudaError_t status2 = cudaGetLastError();
-  if (status != cudaSuccess) {
-    const char *s = cudaGetErrorString(status);
-    std::string message(s);
-    Fatal("CUDA Error: " + message);
-  }
-  if (status2 != cudaSuccess) {
-    std::string message(cudaGetErrorString(status));
-    Fatal("CUDA Error Prev: " + message);
-  }
-}
-
-void Setup(int device_id) {
-  CheckError(cudaSetDevice(device_id));
-  cublasCreate(&cublas_handle_);
-}
-
-void Release() {
-  if (cublas_handle_ != nullptr) cublasDestroy(cublas_handle_);
-}
+void Release() {}
 
 template <typename T, typename Dtype>
 T *MakeBuffer(int size, Dtype *host_ptr) {
@@ -263,39 +229,6 @@ void Activate(T *data, int count, int type) {
   CheckError(cudaPeekAtLastError());
 }
 
-// Blas Kernel Function
-__global__ void SetArrayKernel(float *data, int count, float value) {
-  int globalid =
-      (blockIdx.x + blockIdx.y * gridDim.x) * blockDim.x + threadIdx.x;
-  if (globalid >= count) return;
-
-  data[globalid] = value;
-}
-
-template <typename T>
-void SetArray(T *data, int count, float value) {
-  SetArrayKernel<<<GridDim(count), BLOCK>>>(data, count, value);
-  CheckError(cudaPeekAtLastError());
-}
-
-__global__ void SetArrayRepeatKernel(float *data, int offset, int N,
-                                     int value_size, const float *value) {
-  int globalid =
-      (blockIdx.x + blockIdx.y * gridDim.x) * blockDim.x + threadIdx.x;
-  if (globalid >= N * value_size) return;
-
-  int value_index = globalid / N;
-  data[offset + globalid] = value[value_index];
-}
-
-template <typename T>
-void SetArrayRepeat(T *data, int offset, int N, int value_size,
-                    const T *value) {
-  SetArrayRepeatKernel<<<GridDim(N * value_size), BLOCK>>>(data, offset, N,
-                                                           value_size, value);
-  CheckError(cudaPeekAtLastError());
-}
-
 // Explicit instantiation
 template int *MakeBuffer<int, int>(int size, int *host_ptr);
 template float *MakeBuffer<float, float>(int size, float *host_ptr);
@@ -330,11 +263,28 @@ template void Permute<float, int>(const float *in_data, int count, int num_axes,
                                   float *out_data);
 template void Activate<float>(float *data, int count, int type);
 
-// Blas Kernel Function
-template void SetArray<float>(float *data, int count, float value);
+dim3 GridDim(int size) {
+  unsigned int k = (unsigned int)(size - 1) / BLOCK + 1;
+  unsigned int x = k;
+  unsigned int y = 1;
+  if (x > 65535) {
+    x = (unsigned int)std::ceil(std::sqrt(k));
+    y = (size - 1) / (x * BLOCK) + 1;
+  }
+  return dim3(x, y, 1);
+}
 
-template void SetArrayRepeat<float>(float *data, int offset, int N,
-                                    int value_size, const float *value);
+void CheckError(cudaError_t status) {
+  cudaError_t status2 = cudaGetLastError();
+  if (status != cudaSuccess) {
+    std::string message(cudaGetErrorString(status));
+    Fatal("CUDA Error: " + message);
+  }
+  if (status2 != cudaSuccess) {
+    std::string message(cudaGetErrorString(status));
+    Fatal("CUDA Error Prev: " + message);
+  }
+}
 #endif
 
 }  // namespace Kernel

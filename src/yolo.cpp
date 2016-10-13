@@ -1,5 +1,6 @@
 #include "yolo.hpp"
 #include "shadow/kernel.hpp"
+#include "shadow/util/blas.hpp"
 #include "shadow/util/jimage_proc.hpp"
 
 using namespace std;
@@ -42,6 +43,7 @@ Yolo::~Yolo() {}
 void Yolo::Setup(int batch, VecRectF *rois) {
 #if defined(USE_CUDA) | defined(USE_CL)
   Kernel::Setup();
+  Blas::Setup();
 #endif
 
   net_.LoadModel(cfg_file_, weight_file_, batch);
@@ -70,6 +72,7 @@ void Yolo::Release() {
   net_.Release();
 #if defined(USE_CUDA) | defined(USE_CL)
   Kernel::Release();
+  Blas::Release();
 #endif
 }
 
