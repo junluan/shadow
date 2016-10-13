@@ -340,6 +340,7 @@ class Path {
 #if defined(USE_GLog)
 #if !defined(__linux)
 #define GOOGLE_GLOG_DLL_DECL
+#define GLOG_NO_ABBREVIATED_SEVERITIES
 #endif
 #include <glog/logging.h>
 
