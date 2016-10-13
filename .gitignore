@@ -17,6 +17,13 @@ src/test
 out
 gen
 
+# Visual Studio files
+*.user
+*.suo
+*.sdf
+*.opensdf
+*.pdb
+
 ### C++ template
 # Compiled Object files
 *.slo
