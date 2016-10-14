@@ -72,6 +72,18 @@ class Blob {
 #endif
   }
 
+  inline void reshape(const VecInt &shape) {
+    if (shape.size() == 0) return;
+    int new_count = 1;
+    for (int i = 0; i < shape.size(); ++i) new_count *= shape[i];
+    if (new_count <= 0) Fatal("Shape is valid!");
+    if (data_ == nullptr || new_count > count()) {
+      clear();
+      allocate_data(new_count);
+    }
+    set_shape(shape);
+  }
+
   inline const std::string name() const { return name_; }
   inline void set_name(const std::string &name) { name_ = name; }
 
@@ -79,16 +91,18 @@ class Blob {
   inline VecInt *mutable_shape() { return &shape_; }
 
   inline const int shape(int index) const {
-    if (index < 0 || index >= shape_.size())
+    if (index < 0 || index >= shape_.size()) {
       Fatal("Index out of blob shape range!");
+    }
     return shape_[index];
   }
   inline void set_shape(int index, int value) {
-    if (index < 0 || index >= shape_.size())
+    if (index < 0 || index >= shape_.size()) {
       Fatal("Index out of blob shape range!");
+    }
     shape_[index] = value;
   }
-  inline void set_shape(const VecInt shape) { shape_ = shape; }
+  inline void set_shape(const VecInt &shape) { shape_ = shape; }
   inline void add_shape(int value) { shape_.push_back(value); }
 
   inline const int num_axes() const { return shape_.size(); }
@@ -98,8 +112,10 @@ class Blob {
     return count(start_axis, shape_.size() - 1);
   }
   inline const int count(int start_axis, int end_axis) const {
-    if (start_axis < 0 || end_axis >= shape_.size())
+    if (start_axis < 0 || end_axis >= shape_.size()) {
       Fatal("Index out of blob shape range!");
+    }
+    if (start_axis > end_axis) return 0;
     int count = 1;
     for (int i = start_axis; i <= end_axis; ++i) count *= shape(i);
     return count;

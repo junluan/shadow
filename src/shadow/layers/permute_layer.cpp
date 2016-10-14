@@ -7,13 +7,13 @@ void PermuteLayer::Reshape() {
     Fatal("Number of axes mismatch!");
   }
 
-  VecInt permute_order(num_axes_), old_steps(num_axes_), new_steps(num_axes_);
+  VecInt top_shape, permute_order, old_steps(num_axes_), new_steps(num_axes_);
 
   for (int i = 0; i < num_axes_; ++i) {
-    permute_order[i] = layer_param_.permute_param().order(i);
-    top_[0]->add_shape(bottom_[0]->shape(permute_order[i]));
+    permute_order.push_back(layer_param_.permute_param().order(i));
+    top_shape.push_back(bottom_[0]->shape(permute_order[i]));
   }
-  top_[0]->allocate_data(top_[0]->count());
+  top_[0]->reshape(top_shape);
 
   for (int i = 0; i < num_axes_; ++i) {
     if (i == num_axes_ - 1) {

@@ -18,11 +18,11 @@ void ConvLayer::Reshape() {
   int out_h = convolutional_out_size(in_h, kernel_size_, pad_, stride_);
   int out_w = convolutional_out_size(in_w, kernel_size_, pad_, stride_);
 
-  top_[0]->set_shape(bottom_[0]->shape());
-  top_[0]->set_shape(1, out_c);
-  top_[0]->set_shape(2, out_h);
-  top_[0]->set_shape(3, out_w);
-  top_[0]->allocate_data(top_[0]->count());
+  VecInt top_shape = bottom_[0]->shape();
+  top_shape[1] = out_c;
+  top_shape[2] = out_h;
+  top_shape[3] = out_w;
+  top_[0]->reshape(top_shape);
 
   out_map_size_ = out_h * out_w;
   kernel_num_ = kernel_size_ * kernel_size_ * in_c;
@@ -53,10 +53,9 @@ void ConvLayer::Forward() {
     Image::Im2Col(bottom_[0]->data(), bottom_[0]->shape(), b * bottom_num,
                   kernel_size_, stride_, pad_, top_[0]->shape(),
                   col_image_->mutable_data());
-    Blas::BlasSGemm(0, 0, out_c, out_map_size_, kernel_num_, 1,
-                    filters_->data(), kernel_num_, col_image_->data(),
-                    out_map_size_, 1, top_[0]->mutable_data(), b * top_num,
-                    out_map_size_);
+    Blas::BlasSgemm(0, 0, out_c, out_map_size_, kernel_num_, 1,
+                    filters_->data(), col_image_->data(), 1,
+                    top_[0]->mutable_data(), b * top_num);
   }
 }
 

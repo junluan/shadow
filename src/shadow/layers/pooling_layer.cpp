@@ -10,10 +10,10 @@ void PoolingLayer::Reshape() {
   int out_h = (in_h - kernel_size_) / stride_ + 1;
   int out_w = (in_w - kernel_size_) / stride_ + 1;
 
-  top_[0]->set_shape(bottom_[0]->shape());
-  top_[0]->set_shape(2, out_h);
-  top_[0]->set_shape(3, out_w);
-  top_[0]->allocate_data(top_[0]->count());
+  VecInt top_shape = bottom_[0]->shape();
+  top_shape[2] = out_h;
+  top_shape[3] = out_w;
+  top_[0]->reshape(top_shape);
 
   std::stringstream out;
   out << layer_name_ << ": "

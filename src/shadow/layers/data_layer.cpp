@@ -26,8 +26,7 @@ void DataLayer::Reshape() {
   scale_ = layer_param_.data_param().scale();
   mean_value_ = layer_param_.data_param().mean_value();
 
-  top_[0]->set_shape(bottom_[0]->shape());
-  top_[0]->allocate_data(top_[0]->count());
+  top_[0]->reshape(bottom_[0]->shape());
 
   std::stringstream out;
   out << layer_name_ << ": "

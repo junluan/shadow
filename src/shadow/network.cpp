@@ -59,8 +59,7 @@ void Network::LoadProtoStr(const std::string &proto_str, int batch) {
 
   Blob<float> *in_blob = new Blob<float>("in_blob");
 
-  in_blob->set_shape(in_shape_);
-  in_blob->allocate_data(in_blob->count());
+  in_blob->reshape(in_shape_);
   blobs_.push_back(in_blob);
 
   for (int i = 0; i < net_param_.layer_size(); ++i) {

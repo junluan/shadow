@@ -23,7 +23,7 @@ void ConcatLayer::Reshape() {
   }
   top_[0]->set_shape(top_shape);
   if (bottom_.size() > 1) {
-    top_[0]->allocate_data(top_[0]->count());
+    top_[0]->reshape(top_shape);
   }
 
   std::stringstream out;
