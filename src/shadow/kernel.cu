@@ -273,18 +273,6 @@ dim3 GridDim(int size) {
   }
   return dim3(x, y, 1);
 }
-
-void CheckError(cudaError_t status) {
-  cudaError_t status2 = cudaGetLastError();
-  if (status != cudaSuccess) {
-    std::string message(cudaGetErrorString(status));
-    Fatal("CUDA Error: " + message);
-  }
-  if (status2 != cudaSuccess) {
-    std::string message(cudaGetErrorString(status));
-    Fatal("CUDA Error Prev: " + message);
-  }
-}
 #endif
 
 }  // namespace Kernel

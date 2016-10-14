@@ -5,6 +5,13 @@
 #include "cuda_runtime.h"
 const int BLOCK = 512;
 
+#define CheckError(status)                                        \
+  {                                                               \
+    if (status != cudaSuccess) {                                  \
+      Fatal("Error: " + std::string(cudaGetErrorString(status))); \
+    }                                                             \
+  }
+
 #elif defined(USE_CL)
 #include <EasyCL.h>
 #endif
@@ -58,7 +65,6 @@ void Activate(T *data, int count, int type);
 
 #if defined(USE_CUDA)
 dim3 GridDim(int size);
-void CheckError(cudaError_t status);
 
 #elif defined(USE_CL)
 extern EasyCL *easyCL;
