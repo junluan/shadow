@@ -9,18 +9,36 @@ void Setup();
 void Release();
 
 template <typename T>
-void SetArray(T *data, int count, float value);
+void SetArray(T *y, int n, float value);
 
 template <typename T>
-void SetArrayRepeat(T *data, int offset, int N, int value_size, const T *value);
+void SetArrayRepeat(T *y, int offy, int n, int value_size, const T *value);
 
 template <typename T>
-void BlasCopy(int N, const T *X, int incx, T *Y, int offset, int incy);
+void PowArray(const T *x, int n, float alpha, T *y);
 
 template <typename T>
-void BlasSGemm(int TA, int TB, int M, int N, int K, float ALPHA, const T *A,
-               int lda, const T *B, int ldb, float BETA, T *C, int offset,
-               int ldc);
+void ScaleArray(const T *x, int n, float alpha, T *y);
+
+// Level 1
+template <typename T>
+void BlasSscal(int n, float alpha, T *x);
+
+template <typename T>
+void BlasScopy(int n, const T *x, int incx, T *y, int offy, int incy);
+
+template <typename T>
+void BlasSasum(int n, const T *x, float *y);
+
+// Level 2
+template <typename T>
+void BlasSgemv(int TA, int M, int N, float alpha, const T *A, const T *x,
+               float beta, T *y);
+
+// Level 3
+template <typename T>
+void BlasSgemm(int TA, int TB, int M, int N, int K, float alpha, const T *A,
+               const T *B, float beta, T *C, int offc);
 
 }  // namespace Blas
 
