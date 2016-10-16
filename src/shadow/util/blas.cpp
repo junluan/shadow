@@ -18,7 +18,28 @@ void SetArrayRepeat(T *y, int offy, int n, int value_size, const T *value) {
   }
 }
 
+template <typename T>
+void PowArray(const T *x, int n, float alpha, T *y) {
+  for (int i = 0; i < n; ++i) {
+    y[i] = std::pow(x[i], alpha);
+  }
+}
+
+template <typename T>
+void ScaleArray(const T *x, int n, float alpha, T *y) {
+  for (int i = 0; i < n; ++i) {
+    y[i] = alpha * x[i];
+  }
+}
+
 // Level 1
+template <typename T>
+void BlasSscal(int n, float alpha, T *x) {
+  for (int i = 0; i < n; ++i) {
+    x[i] *= alpha;
+  }
+}
+
 template <typename T>
 void BlasScopy(int n, const T *x, int incx, T *y, int offy, int incy) {
   for (int i = 0; i < n; ++i) {
@@ -26,53 +47,97 @@ void BlasScopy(int n, const T *x, int incx, T *y, int offy, int incy) {
   }
 }
 
+template <typename T>
+void BlasSasum(int n, const T *x, float *y) {
+  T asum = T(0);
+  for (int i = 0; i < n; ++i) {
+    asum += std::abs(x[i]);
+  }
+  *y = asum;
+}
+
 // Level 3
-inline void SgemmNN(int M, int N, int K, float alpha, const float *A, int lda,
-                    const float *B, int ldb, float *C, int ldc) {
+inline void SgemvN(int M, int N, float alpha, const float *A, const float *x,
+                   float *y) {
+  for (int i = 0; i < M; ++i) {
+    float sum = 0.f;
+    for (int j = 0; j < N; ++j) {
+      sum += alpha * A[i * N + j] * x[j];
+    }
+    y[i] += sum;
+  }
+}
+
+inline void SgemvT(int M, int N, float alpha, const float *A, const float *x,
+                   float *y) {
+  for (int i = 0; i < M; ++i) {
+    float sum = 0.f;
+    for (int j = 0; j < N; ++j) {
+      sum += alpha * A[j * M + i] * x[j];
+    }
+    y[i] += sum;
+  }
+}
+
+template <typename T>
+void BlasSgemv(int TA, int M, int N, float alpha, const T *A, const T *x,
+               float beta, T *y) {
+  for (int i = 0; i < M; ++i) {
+    y[i] *= beta;
+  }
+  if (!TA) {
+    SgemvN(M, N, alpha, A, x, y);
+  } else {
+    SgemvT(M, N, alpha, A, x, y);
+  }
+}
+
+inline void SgemmNN(int M, int N, int K, float alpha, const float *A,
+                    const float *B, float *C) {
   for (int i = 0; i < M; ++i) {
     for (int k = 0; k < K; ++k) {
-      float A_PART = alpha * A[i * lda + k];
+      float A_part = alpha * A[i * K + k];
       for (int j = 0; j < N; ++j) {
-        C[i * ldc + j] += A_PART * B[k * ldb + j];
+        C[i * N + j] += A_part * B[k * N + j];
       }
     }
   }
 }
 
-inline void SgemmTN(int M, int N, int K, float alpha, const float *A, int lda,
-                    const float *B, int ldb, float *C, int ldc) {
+inline void SgemmTN(int M, int N, int K, float alpha, const float *A,
+                    const float *B, float *C) {
   for (int i = 0; i < M; ++i) {
     for (int k = 0; k < K; ++k) {
-      float A_PART = alpha * A[k * lda + i];
+      float A_part = alpha * A[k * M + i];
       for (int j = 0; j < N; ++j) {
-        C[i * ldc + j] += A_PART * B[k * ldb + j];
+        C[i * N + j] += A_part * B[k * N + j];
       }
     }
   }
 }
 
-inline void SgemmNT(int M, int N, int K, float alpha, const float *A, int lda,
-                    const float *B, int ldb, float *C, int ldc) {
+inline void SgemmNT(int M, int N, int K, float alpha, const float *A,
+                    const float *B, float *C) {
   for (int i = 0; i < M; ++i) {
     for (int j = 0; j < N; ++j) {
       float sum = 0;
       for (int k = 0; k < K; ++k) {
-        sum += alpha * A[i * lda + k] * B[j * ldb + k];
+        sum += alpha * A[i * K + k] * B[j * K + k];
       }
-      C[i * ldc + j] += sum;
+      C[i * N + j] += sum;
     }
   }
 }
 
-inline void SgemmTT(int M, int N, int K, float alpha, const float *A, int lda,
-                    const float *B, int ldb, float *C, int ldc) {
+inline void SgemmTT(int M, int N, int K, float alpha, const float *A,
+                    const float *B, float *C) {
   for (int i = 0; i < M; ++i) {
     for (int j = 0; j < N; ++j) {
       float sum = 0;
       for (int k = 0; k < K; ++k) {
-        sum += alpha * A[i + k * lda] * B[k + j * ldb];
+        sum += alpha * A[k * M + i] * B[j * K + k];
       }
-      C[i * ldc + j] += sum;
+      C[i * N + j] += sum;
     }
   }
 }
@@ -80,7 +145,6 @@ inline void SgemmTT(int M, int N, int K, float alpha, const float *A, int lda,
 template <typename T>
 void BlasSgemm(int TA, int TB, int M, int N, int K, float alpha, const T *A,
                const T *B, float beta, T *C, int offc) {
-  int lda = TA ? M : K, ldb = TB ? K : N;
   float *C_off = C + offc;
   for (int i = 0; i < M; ++i) {
     for (int j = 0; j < N; ++j) {
@@ -88,13 +152,13 @@ void BlasSgemm(int TA, int TB, int M, int N, int K, float alpha, const T *A,
     }
   }
   if (!TA && !TB) {
-    SgemmNN(M, N, K, alpha, A, lda, B, ldb, C_off, N);
+    SgemmNN(M, N, K, alpha, A, B, C_off);
   } else if (TA && !TB) {
-    SgemmTN(M, N, K, alpha, A, lda, B, ldb, C_off, N);
+    SgemmTN(M, N, K, alpha, A, B, C_off);
   } else if (!TA && TB) {
-    SgemmNT(M, N, K, alpha, A, lda, B, ldb, C_off, N);
+    SgemmNT(M, N, K, alpha, A, B, C_off);
   } else {
-    SgemmTT(M, N, K, alpha, A, lda, B, ldb, C_off, N);
+    SgemmTT(M, N, K, alpha, A, B, C_off);
   }
 }
 
@@ -102,12 +166,19 @@ void BlasSgemm(int TA, int TB, int M, int N, int K, float alpha, const T *A,
 template void SetArray<float>(float *y, int n, float value);
 template void SetArrayRepeat<float>(float *y, int offy, int n, int value_size,
                                     const float *value);
+template void PowArray<float>(const float *x, int n, float alpha, float *y);
+template void ScaleArray<float>(const float *x, int n, float alpha, float *y);
 
 // Level 1
+template void BlasSscal<float>(int n, float alpha, float *x);
 template void BlasScopy<float>(int n, const float *x, int incx, float *y,
                                int offy, int incy);
+template void BlasSasum(int n, const float *x, float *y);
 
 // Level 3
+template void BlasSgemv<float>(int TA, int M, int N, float alpha,
+                               const float *A, const float *x, float beta,
+                               float *y);
 template void BlasSgemm<float>(int TA, int TB, int M, int N, int K, float alpha,
                                const float *A, const float *B, float beta,
                                float *C, int offc);
