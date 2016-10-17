@@ -30,8 +30,8 @@ include_directories("inc" "inc/shadow/proto" "external")
 file(GLOB_RECURSE shadow_lib_src "src/shadow/*.cpp" "src/shadow/*.cc")
 
 if (BUILD_TEST)
-  file(GLOB test_shadow_src "src/test/*.cpp" "external/gtest/gtest-all.cc")
-  add_executable(test_shadow ${test_shadow_src})
+  file(GLOB_RECURSE shadow_test_src "src/test/*.cpp" "external/gtest/gtest-all.cc")
+  add_executable(test_shadow ${shadow_test_src})
 endif ()
 
 if (${USE_CUDA} STREQUAL "ON" AND ${USE_CL} STREQUAL "OFF")

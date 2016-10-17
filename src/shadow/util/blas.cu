@@ -14,53 +14,89 @@ void Release() {
   if (cublas_handle_ != nullptr) cublasDestroy(cublas_handle_);
 }
 
-__global__ void SetArrayKernel(float *y, int n, float value) {
+__global__ void KernelSet(int n, float val, float *y) {
   int globalid =
       (blockIdx.x + blockIdx.y * gridDim.x) * blockDim.x + threadIdx.x;
   if (globalid >= n) return;
 
-  y[globalid] = value;
+  y[globalid] = val;
 }
 
 template <typename T>
-void SetArray(T *y, int n, float value) {
-  SetArrayKernel<<<Kernel::GridDim(n), BLOCK>>>(y, n, value);
+void Set(int n, float val, T *y) {
+  KernelSet<<<Kernel::GridDim(n), BLOCK>>>(n, val, y);
   CheckError(cudaPeekAtLastError());
 }
 
-__global__ void SetArrayRepeatKernel(float *y, int offy, int n, int value_size,
-                                     const float *value) {
-  int globalid =
-      (blockIdx.x + blockIdx.y * gridDim.x) * blockDim.x + threadIdx.x;
-  if (globalid >= n * value_size) return;
-
-  int value_index = globalid / n;
-  y[offy + globalid] = value[value_index];
-}
-
-template <typename T>
-void SetArrayRepeat(T *y, int offy, int n, int value_size, const T *value) {
-  SetArrayRepeatKernel<<<Kernel::GridDim(n * value_size), BLOCK>>>(
-      y, offy, n, value_size, value);
-  CheckError(cudaPeekAtLastError());
-}
-
-__global__ void PowArrayKernel(const float *x, int n, float alpha, float *y) {
+__global__ void KernelSetRepeat(int n, const float *val, int val_size, float *y,
+                                int offy) {
   int globalid =
       (blockIdx.x + blockIdx.y * gridDim.x) * blockDim.x + threadIdx.x;
   if (globalid >= n) return;
 
-  y[globalid] = std::pow(x[globalid], alpha);
+  int val_index = globalid / (n / val_size);
+  y[offy + globalid] = val[val_index];
 }
 
 template <typename T>
-void PowArray(const T *x, int n, float alpha, T *y) {
-  PowArrayKernel<<<Kernel::GridDim(n), BLOCK>>>(x, n, alpha, y);
+void SetRepeat(int n, const T *val, int val_size, T *y, int offy) {
+  KernelSetRepeat<<<Kernel::GridDim(n), BLOCK>>>(n, val, val_size, y, offy);
+  CheckError(cudaPeekAtLastError());
+}
+
+#define BINARY_FUNC(name, operation)                                          \
+  __global__ void Kernel##name(int n, const float *a, const float *b,         \
+                               float *y) {                                    \
+    int i = (blockIdx.x + blockIdx.y * gridDim.x) * blockDim.x + threadIdx.x; \
+    if (i >= n) return;                                                       \
+    operation;                                                                \
+  }
+
+BINARY_FUNC(Add, y[i] = a[i] + b[i]);
+BINARY_FUNC(Sub, y[i] = a[i] - b[i]);
+BINARY_FUNC(Mul, y[i] = a[i] * b[i]);
+BINARY_FUNC(Div, y[i] = a[i] / b[i]);
+
+template <typename T>
+void Add(int n, const T *a, const T *b, T *y) {
+  KernelAdd<<<Kernel::GridDim(n), BLOCK>>>(n, a, b, y);
   CheckError(cudaPeekAtLastError());
 }
 
 template <typename T>
-void ScaleArray(const T *x, int n, float alpha, T *y) {
+void Sub(int n, const T *a, const T *b, T *y) {
+  KernelSub<<<Kernel::GridDim(n), BLOCK>>>(n, a, b, y);
+  CheckError(cudaPeekAtLastError());
+}
+
+template <typename T>
+void Mul(int n, const T *a, const T *b, T *y) {
+  KernelMul<<<Kernel::GridDim(n), BLOCK>>>(n, a, b, y);
+  CheckError(cudaPeekAtLastError());
+}
+
+template <typename T>
+void Div(int n, const T *a, const T *b, T *y) {
+  KernelDiv<<<Kernel::GridDim(n), BLOCK>>>(n, a, b, y);
+  CheckError(cudaPeekAtLastError());
+}
+
+__global__ void KernelPow(int n, const float *a, float alpha, float *y) {
+  int globalid =
+      (blockIdx.x + blockIdx.y * gridDim.x) * blockDim.x + threadIdx.x;
+  if (globalid >= n) return;
+
+  y[globalid] = std::pow(a[globalid], alpha);
+}
+
+template <typename T>
+void Pow(int n, const T *a, float alpha, T *y) {
+  KernelPow<<<Kernel::GridDim(n), BLOCK>>>(n, a, alpha, y);
+  CheckError(cudaPeekAtLastError());
+}
+
+template <typename T>
+void Scale(int n, float alpha, const T *x, T *y) {
   BlasScopy(n, x, 1, y, 0, 1);
   BlasSscal(n, alpha, y);
 }
@@ -101,11 +137,15 @@ void BlasSgemm(int TA, int TB, int M, int N, int K, float alpha, const T *A,
 }
 
 // Explicit instantiation
-template void SetArray<float>(float *y, int n, float value);
-template void SetArrayRepeat<float>(float *y, int offy, int n, int value_size,
-                                    const float *value);
-template void PowArray(const float *x, int n, float alpha, float *y);
-template void ScaleArray<float>(const float *x, int n, float alpha, float *y);
+template void Set<float>(int n, float val, float *y);
+template void SetRepeat<float>(int n, const float *val, int val_size, float *y,
+                               int offy);
+template void Add<float>(int n, const float *a, const float *b, float *y);
+template void Sub<float>(int n, const float *a, const float *b, float *y);
+template void Mul<float>(int n, const float *a, const float *b, float *y);
+template void Div<float>(int n, const float *a, const float *b, float *y);
+template void Pow<float>(int n, const float *a, float alpha, float *y);
+template void Scale<float>(int n, float alpha, const float *x, float *y);
 
 // Level 1
 template void BlasSscal<float>(int n, float alpha, float *x);

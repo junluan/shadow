@@ -46,8 +46,8 @@ void ConvLayer::Forward() {
   int out_c = top_[0]->shape(1);
   int top_num = top_[0]->num(), bottom_num = bottom_[0]->num();
   for (int b = 0; b < batch; ++b) {
-    Blas::SetArrayRepeat(top_[0]->mutable_data(), b * top_num, out_map_size_,
-                         out_c, biases_->data());
+    Blas::SetRepeat(out_map_size_ * out_c, biases_->data(), out_c,
+                    top_[0]->mutable_data(), b * top_num);
   }
   for (int b = 0; b < batch; ++b) {
     Image::Im2Col(bottom_[0]->data(), bottom_[0]->shape(), b * bottom_num,

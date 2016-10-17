@@ -6,27 +6,61 @@ namespace Blas {
 
 #if !defined(USE_CUDA) & !defined(USE_CL)
 template <typename T>
-void SetArray(T *y, int n, float value) {
-  std::fill(y, y + n, value);
+void Set(int n, float val, T *y) {
+  std::fill(y, y + n, val);
 }
 
 template <typename T>
-void SetArrayRepeat(T *y, int offy, int n, int value_size, const T *value) {
-  for (int i = 0; i < value_size; ++i) {
-    T *out_data_offset = y + offy + i * n;
-    std::fill(out_data_offset, out_data_offset + n, value[i]);
+void SetRepeat(int n, const T *val, int val_size, T *y, int offy) {
+  int size = n / val_size;
+  for (int i = 0; i < val_size; ++i) {
+    T *off_y = y + offy + i * size;
+    std::fill(off_y, off_y + size, val[i]);
   }
 }
 
+#define BINARY_FUNC(name, operation)                         \
+  template <typename T>                                      \
+  inline void v##name(int n, const T *a, const T *b, T *y) { \
+    for (int i = 0; i < n; ++i) {                            \
+      operation;                                             \
+    }                                                        \
+  }
+
+BINARY_FUNC(Add, y[i] = a[i] + b[i]);
+BINARY_FUNC(Sub, y[i] = a[i] - b[i]);
+BINARY_FUNC(Mul, y[i] = a[i] * b[i]);
+BINARY_FUNC(Div, y[i] = a[i] / b[i]);
+
 template <typename T>
-void PowArray(const T *x, int n, float alpha, T *y) {
+void Add(int n, const T *a, const T *b, T *y) {
+  vAdd<T>(n, a, b, y);
+}
+
+template <typename T>
+void Sub(int n, const T *a, const T *b, T *y) {
+  vSub<T>(n, a, b, y);
+}
+
+template <typename T>
+void Mul(int n, const T *a, const T *b, T *y) {
+  vMul<T>(n, a, b, y);
+}
+
+template <typename T>
+void Div(int n, const T *a, const T *b, T *y) {
+  vDiv<T>(n, a, b, y);
+}
+
+template <typename T>
+void Pow(int n, const T *a, float alpha, T *y) {
   for (int i = 0; i < n; ++i) {
-    y[i] = std::pow(x[i], alpha);
+    y[i] = std::pow(a[i], alpha);
   }
 }
 
 template <typename T>
-void ScaleArray(const T *x, int n, float alpha, T *y) {
+void Scale(int n, float alpha, const T *x, T *y) {
   for (int i = 0; i < n; ++i) {
     y[i] = alpha * x[i];
   }
@@ -164,17 +198,21 @@ void BlasSgemm(int TA, int TB, int M, int N, int K, float alpha, const T *A,
 }
 
 // Explicit instantiation
-template void SetArray<float>(float *y, int n, float value);
-template void SetArrayRepeat<float>(float *y, int offy, int n, int value_size,
-                                    const float *value);
-template void PowArray<float>(const float *x, int n, float alpha, float *y);
-template void ScaleArray<float>(const float *x, int n, float alpha, float *y);
+template void Set<float>(int n, float val, float *y);
+template void SetRepeat<float>(int n, const float *val, int val_size, float *y,
+                               int offy);
+template void Add<float>(int n, const float *a, const float *b, float *y);
+template void Sub<float>(int n, const float *a, const float *b, float *y);
+template void Mul<float>(int n, const float *a, const float *b, float *y);
+template void Div<float>(int n, const float *a, const float *b, float *y);
+template void Pow<float>(int n, const float *a, float alpha, float *y);
+template void Scale<float>(int n, float alpha, const float *x, float *y);
 
 // Level 1
 template void BlasSscal<float>(int n, float alpha, float *x);
 template void BlasScopy<float>(int n, const float *x, int incx, float *y,
                                int offy, int incy);
-template void BlasSasum(int n, const float *x, float *y);
+template void BlasSasum<float>(int n, const float *x, float *y);
 
 // Level 2
 template void BlasSgemv<float>(int TA, int M, int N, float alpha,
@@ -189,31 +227,42 @@ template void BlasSgemm<float>(int TA, int TB, int M, int N, int K, float alpha,
 #elif defined(USE_CL)
 #include <clBLAS.h>
 
-static CLKernel *cl_setarray_kernel_ = nullptr;
-static CLKernel *cl_setarrayrepeat_kernel_ = nullptr;
-static CLKernel *cl_powarray_kernel_ = nullptr;
+static CLKernel *cl_set_kernel_ = nullptr;
+static CLKernel *cl_setrepeat_kernel_ = nullptr;
+static CLKernel *cl_add_kernel_ = nullptr;
+static CLKernel *cl_sub_kernel_ = nullptr;
+static CLKernel *cl_mul_kernel_ = nullptr;
+static CLKernel *cl_div_kernel_ = nullptr;
+static CLKernel *cl_pow_kernel_ = nullptr;
 
 void Setup() {
   std::string cl_file = "./src/shadow/util/blas.cl";
-  cl_setarray_kernel_ = Kernel::easyCL->buildKernel(cl_file, "SetArray");
-  cl_setarrayrepeat_kernel_ =
-      Kernel::easyCL->buildKernel(cl_file, "SetArrayRepeat");
-  cl_powarray_kernel_ = Kernel::easyCL->buildKernel(cl_file, "PowArray");
+  cl_set_kernel_ = Kernel::easyCL->buildKernel(cl_file, "Set");
+  cl_setrepeat_kernel_ = Kernel::easyCL->buildKernel(cl_file, "SetRepeat");
+  cl_add_kernel_ = Kernel::easyCL->buildKernel(cl_file, "Add");
+  cl_sub_kernel_ = Kernel::easyCL->buildKernel(cl_file, "Sub");
+  cl_mul_kernel_ = Kernel::easyCL->buildKernel(cl_file, "Mul");
+  cl_div_kernel_ = Kernel::easyCL->buildKernel(cl_file, "Div");
+  cl_pow_kernel_ = Kernel::easyCL->buildKernel(cl_file, "Pow");
   clblasSetup();
 }
 void Release() {
-  cl_setarray_kernel_->~CLKernel();
-  cl_setarrayrepeat_kernel_->~CLKernel();
-  cl_powarray_kernel_->~CLKernel();
+  cl_set_kernel_->~CLKernel();
+  cl_setrepeat_kernel_->~CLKernel();
+  cl_add_kernel_->~CLKernel();
+  cl_sub_kernel_->~CLKernel();
+  cl_mul_kernel_->~CLKernel();
+  cl_div_kernel_->~CLKernel();
+  cl_pow_kernel_->~CLKernel();
   clblasTeardown();
 }
 
 template <typename T>
-void SetArray(T *y, int n, float value) {
-  cl_kernel kernel = cl_setarray_kernel_->GetKernel();
-  clSetKernelArg(kernel, 0, sizeof(cl_mem), y);
-  clSetKernelArg(kernel, 1, sizeof(int), &n);
-  clSetKernelArg(kernel, 2, sizeof(float), &value);
+void Set(int n, float val, T *y) {
+  cl_kernel kernel = cl_set_kernel_->GetKernel();
+  clSetKernelArg(kernel, 0, sizeof(int), &n);
+  clSetKernelArg(kernel, 1, sizeof(float), &val);
+  clSetKernelArg(kernel, 2, sizeof(cl_mem), y);
   size_t global = n;
   clEnqueueNDRangeKernel(*Kernel::easyCL->queue, kernel, 1, nullptr, &global,
                          nullptr, 0, nullptr, nullptr);
@@ -221,24 +270,63 @@ void SetArray(T *y, int n, float value) {
 }
 
 template <typename T>
-void SetArrayRepeat(T *y, int offy, int n, int value_size, const T *value) {
-  cl_kernel kernel = cl_setarrayrepeat_kernel_->GetKernel();
-  clSetKernelArg(kernel, 0, sizeof(cl_mem), y);
-  clSetKernelArg(kernel, 1, sizeof(int), &offy);
-  clSetKernelArg(kernel, 2, sizeof(int), &n);
-  clSetKernelArg(kernel, 3, sizeof(int), &value_size);
-  clSetKernelArg(kernel, 4, sizeof(cl_mem), value);
-  size_t global = n * value_size;
+void SetRepeat(int n, const T *val, int val_size, T *y, int offy) {
+  cl_kernel kernel = cl_setrepeat_kernel_->GetKernel();
+  clSetKernelArg(kernel, 0, sizeof(int), &n);
+  clSetKernelArg(kernel, 1, sizeof(cl_mem), val);
+  clSetKernelArg(kernel, 2, sizeof(int), &val_size);
+  clSetKernelArg(kernel, 3, sizeof(cl_mem), y);
+  clSetKernelArg(kernel, 4, sizeof(int), &offy);
+  size_t global = n;
   clEnqueueNDRangeKernel(*Kernel::easyCL->queue, kernel, 1, nullptr, &global,
                          nullptr, 0, nullptr, nullptr);
   clFinish(*Kernel::easyCL->queue);
 }
 
+#define BINARY_FUNC(name, kname)                                       \
+  template <typename T>                                                \
+  inline void v##name(int n, const T *a, const T *b, T *y) {           \
+    cl_kernel kernel = cl_##kname->GetKernel();                        \
+    clSetKernelArg(kernel, 0, sizeof(int), &n);                        \
+    clSetKernelArg(kernel, 1, sizeof(cl_mem), a);                      \
+    clSetKernelArg(kernel, 2, sizeof(cl_mem), b);                      \
+    clSetKernelArg(kernel, 3, sizeof(cl_mem), y);                      \
+    size_t global = n;                                                 \
+    clEnqueueNDRangeKernel(*Kernel::easyCL->queue, kernel, 1, nullptr, \
+                           &global, nullptr, 0, nullptr, nullptr);     \
+    clFinish(*Kernel::easyCL->queue);                                  \
+  }
+
+BINARY_FUNC(Add, add_kernel_);
+BINARY_FUNC(Sub, sub_kernel_);
+BINARY_FUNC(Mul, mul_kernel_);
+BINARY_FUNC(Div, div_kernel_);
+
 template <typename T>
-void PowArray(const T *x, int n, float alpha, T *y) {
-  cl_kernel kernel = cl_powarray_kernel_->GetKernel();
-  clSetKernelArg(kernel, 0, sizeof(cl_mem), x);
-  clSetKernelArg(kernel, 1, sizeof(int), &n);
+void Add(int n, const T *a, const T *b, T *y) {
+  vAdd<T>(n, a, b, y);
+}
+
+template <typename T>
+void Sub(int n, const T *a, const T *b, T *y) {
+  vSub<T>(n, a, b, y);
+}
+
+template <typename T>
+void Mul(int n, const T *a, const T *b, T *y) {
+  vMul<T>(n, a, b, y);
+}
+
+template <typename T>
+void Div(int n, const T *a, const T *b, T *y) {
+  vDiv<T>(n, a, b, y);
+}
+
+template <typename T>
+void Pow(int n, const T *a, float alpha, T *y) {
+  cl_kernel kernel = cl_pow_kernel_->GetKernel();
+  clSetKernelArg(kernel, 0, sizeof(int), &n);
+  clSetKernelArg(kernel, 1, sizeof(cl_mem), a);
   clSetKernelArg(kernel, 2, sizeof(float), &alpha);
   clSetKernelArg(kernel, 3, sizeof(cl_mem), y);
   size_t global = n;
@@ -248,7 +336,7 @@ void PowArray(const T *x, int n, float alpha, T *y) {
 }
 
 template <typename T>
-void ScaleArray(const T *x, int n, float alpha, T *y) {
+void Scale(int n, float alpha, const T *x, T *y) {
   BlasScopy(n, x, 1, y, 0, 1);
   BlasSscal(n, alpha, y);
 }
@@ -305,12 +393,15 @@ void BlasSgemm(int TA, int TB, int M, int N, int K, float alpha, const T *A,
 }
 
 // Explicit instantiation
-template void SetArray<cl_mem>(cl_mem *data, int count, float value);
-template void SetArrayRepeat<cl_mem>(cl_mem *data, int offset, int N,
-                                     int value_size, const cl_mem *value);
-template void PowArray<cl_mem>(const cl_mem *x, int n, float alpha, cl_mem *y);
-template void ScaleArray<cl_mem>(const cl_mem *x, int count, float alpha,
-                                 cl_mem *y);
+template void Set<cl_mem>(int n, float val, cl_mem *y);
+template void SetRepeat<cl_mem>(int n, const cl_mem *val, int val_size,
+                                cl_mem *y, int offy);
+template void Add<cl_mem>(int n, const cl_mem *a, const cl_mem *b, cl_mem *y);
+template void Sub<cl_mem>(int n, const cl_mem *a, const cl_mem *b, cl_mem *y);
+template void Mul<cl_mem>(int n, const cl_mem *a, const cl_mem *b, cl_mem *y);
+template void Div<cl_mem>(int n, const cl_mem *a, const cl_mem *b, cl_mem *y);
+template void Pow<cl_mem>(int n, const cl_mem *a, float alpha, cl_mem *y);
+template void Scale<cl_mem>(int n, float alpha, const cl_mem *x, cl_mem *y);
 
 // Level 1
 template void BlasSscal<cl_mem>(int n, float alpha, cl_mem *x);

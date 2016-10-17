@@ -9,16 +9,28 @@ void Setup();
 void Release();
 
 template <typename T>
-void SetArray(T *y, int n, float value);
+void Set(int n, float val, T *y);
 
 template <typename T>
-void SetArrayRepeat(T *y, int offy, int n, int value_size, const T *value);
+void SetRepeat(int n, const T *val, int val_size, T *y, int offy);
 
 template <typename T>
-void PowArray(const T *x, int n, float alpha, T *y);
+void Add(int n, const T *a, const T *b, T *y);
 
 template <typename T>
-void ScaleArray(const T *x, int n, float alpha, T *y);
+void Sub(int n, const T *a, const T *b, T *y);
+
+template <typename T>
+void Mul(int n, const T *a, const T *b, T *y);
+
+template <typename T>
+void Div(int n, const T *a, const T *b, T *y);
+
+template <typename T>
+void Pow(int n, const T *a, float alpha, T *y);
+
+template <typename T>
+void Scale(int n, float alpha, const T *x, T *y);
 
 // Level 1
 template <typename T>

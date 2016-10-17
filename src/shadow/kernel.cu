@@ -41,7 +41,7 @@ void ReleaseBuffer(T *buffer) {
   CheckError(cudaFree(buffer));
 }
 
-__global__ void DataTransformKernel(const float *in_data, int count,
+__global__ void KernelDataTransform(const float *in_data, int count,
                                     float scale, float mean_value,
                                     float *out_data) {
   int globalid =
@@ -54,12 +54,12 @@ __global__ void DataTransformKernel(const float *in_data, int count,
 template <typename T>
 void DataTransform(const T *in_data, int count, float scale, float mean_value,
                    T *out_data) {
-  DataTransformKernel<<<GridDim(count), BLOCK>>>(in_data, count, scale,
+  KernelDataTransform<<<GridDim(count), BLOCK>>>(in_data, count, scale,
                                                  mean_value, out_data);
   CheckError(cudaPeekAtLastError());
 }
 
-__global__ void Im2ColKernel(const float *im_data, int offset, int in_c,
+__global__ void KernelIm2Col(const float *im_data, int offset, int in_c,
                              int in_h, int in_w, int kernel_size, int stride,
                              int pad, int out_h, int out_w, float *col_data) {
   int globalid =
@@ -94,13 +94,13 @@ void Im2Col(const T *in_data, int offset, int in_c, int in_h, int in_w,
             int kernel_size, int stride, int pad, int out_h, int out_w,
             T *out_data) {
   int N = in_c * out_h * out_w;
-  Im2ColKernel<<<GridDim(N), BLOCK>>>(in_data, offset, in_c, in_h, in_w,
+  KernelIm2Col<<<GridDim(N), BLOCK>>>(in_data, offset, in_c, in_h, in_w,
                                       kernel_size, stride, pad, out_h, out_w,
                                       out_data);
   CheckError(cudaPeekAtLastError());
 }
 
-__global__ void PoolingKernel(const float *in_data, int batch, int in_c,
+__global__ void KernelPooling(const float *in_data, int batch, int in_c,
                               int in_h, int in_w, int kernel_size, int stride,
                               int out_h, int out_w, int mode, float *out_data) {
   int globalid =
@@ -143,13 +143,13 @@ void Pooling(const T *in_data, int batch, int in_c, int in_h, int in_w,
              int kernel_size, int stride, int out_h, int out_w, int mode,
              T *out_data) {
   int N = batch * in_c * out_h * out_w;
-  PoolingKernel<<<GridDim(N), BLOCK>>>(in_data, batch, in_c, in_h, in_w,
+  KernelPooling<<<GridDim(N), BLOCK>>>(in_data, batch, in_c, in_h, in_w,
                                        kernel_size, stride, out_h, out_w, mode,
                                        out_data);
   CheckError(cudaPeekAtLastError());
 }
 
-__global__ void ConcatKernel(const float *in_data, int count, int num_concats,
+__global__ void KernelConcat(const float *in_data, int count, int num_concats,
                              int concat_size, int top_concat_axis,
                              int bottom_concat_axis, int offset_concat_axis,
                              float *out_data) {
@@ -170,13 +170,13 @@ template <typename T>
 void Concat(const T *in_data, int count, int num_concats, int concat_size,
             int top_concat_axis, int bottom_concat_axis, int offset_concat_axis,
             T *out_data) {
-  ConcatKernel<<<GridDim(count), BLOCK>>>(
+  KernelConcat<<<GridDim(count), BLOCK>>>(
       in_data, count, num_concats, concat_size, top_concat_axis,
       bottom_concat_axis, offset_concat_axis, out_data);
   CheckError(cudaPeekAtLastError());
 }
 
-__global__ void PermuteKernel(const float *in_data, int count, int num_axes,
+__global__ void KernelPermute(const float *in_data, int count, int num_axes,
                               const int *permute_order, const int *old_steps,
                               const int *new_steps, float *out_data) {
   int globalid =
@@ -197,7 +197,7 @@ template <typename T, typename Dtype>
 void Permute(const T *in_data, int count, int num_axes,
              const Dtype *permute_order, const Dtype *old_steps,
              const Dtype *new_steps, T *out_data) {
-  PermuteKernel<<<GridDim(count), BLOCK>>>(
+  KernelPermute<<<GridDim(count), BLOCK>>>(
       in_data, count, num_axes, permute_order, old_steps, new_steps, out_data);
   CheckError(cudaPeekAtLastError());
 }
@@ -215,7 +215,7 @@ __device__ float ActivateValue(float x, int type) {
   }
 }
 
-__global__ void ActivateKernel(float *data, int count, int type) {
+__global__ void KernelActivate(float *data, int count, int type) {
   int globalid =
       (blockIdx.x + blockIdx.y * gridDim.x) * blockDim.x + threadIdx.x;
   if (globalid >= count) return;
@@ -225,7 +225,7 @@ __global__ void ActivateKernel(float *data, int count, int type) {
 
 template <typename T>
 void Activate(T *data, int count, int type) {
-  ActivateKernel<<<GridDim(count), BLOCK>>>(data, count, type);
+  KernelActivate<<<GridDim(count), BLOCK>>>(data, count, type);
   CheckError(cudaPeekAtLastError());
 }
 
