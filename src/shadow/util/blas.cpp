@@ -56,7 +56,7 @@ void BlasSasum(int n, const T *x, float *y) {
   *y = asum;
 }
 
-// Level 3
+// Level 2
 inline void SgemvN(int M, int N, float alpha, const float *A, const float *x,
                    float *y) {
   for (int i = 0; i < M; ++i) {
@@ -92,6 +92,7 @@ void BlasSgemv(int TA, int M, int N, float alpha, const T *A, const T *x,
   }
 }
 
+// Level 3
 inline void SgemmNN(int M, int N, int K, float alpha, const float *A,
                     const float *B, float *C) {
   for (int i = 0; i < M; ++i) {
@@ -175,10 +176,12 @@ template void BlasScopy<float>(int n, const float *x, int incx, float *y,
                                int offy, int incy);
 template void BlasSasum(int n, const float *x, float *y);
 
-// Level 3
+// Level 2
 template void BlasSgemv<float>(int TA, int M, int N, float alpha,
                                const float *A, const float *x, float beta,
                                float *y);
+
+// Level 3
 template void BlasSgemm<float>(int TA, int TB, int M, int N, int K, float alpha,
                                const float *A, const float *B, float beta,
                                float *C, int offc);
@@ -188,17 +191,20 @@ template void BlasSgemm<float>(int TA, int TB, int M, int N, int K, float alpha,
 
 static CLKernel *cl_setarray_kernel_ = nullptr;
 static CLKernel *cl_setarrayrepeat_kernel_ = nullptr;
+static CLKernel *cl_powarray_kernel_ = nullptr;
 
 void Setup() {
   std::string cl_file = "./src/shadow/util/blas.cl";
   cl_setarray_kernel_ = Kernel::easyCL->buildKernel(cl_file, "SetArray");
   cl_setarrayrepeat_kernel_ =
       Kernel::easyCL->buildKernel(cl_file, "SetArrayRepeat");
+  cl_powarray_kernel_ = Kernel::easyCL->buildKernel(cl_file, "PowArray");
   clblasSetup();
 }
 void Release() {
   cl_setarray_kernel_->~CLKernel();
   cl_setarrayrepeat_kernel_->~CLKernel();
+  cl_powarray_kernel_->~CLKernel();
   clblasTeardown();
 }
 
@@ -229,6 +235,19 @@ void SetArrayRepeat(T *y, int offy, int n, int value_size, const T *value) {
 }
 
 template <typename T>
+void PowArray(const T *x, int n, float alpha, T *y) {
+  cl_kernel kernel = cl_powarray_kernel_->GetKernel();
+  clSetKernelArg(kernel, 0, sizeof(cl_mem), x);
+  clSetKernelArg(kernel, 1, sizeof(int), &n);
+  clSetKernelArg(kernel, 2, sizeof(float), &alpha);
+  clSetKernelArg(kernel, 3, sizeof(cl_mem), y);
+  size_t global = n;
+  clEnqueueNDRangeKernel(*Kernel::easyCL->queue, kernel, 1, nullptr, &global,
+                         nullptr, 0, nullptr, nullptr);
+  clFinish(*Kernel::easyCL->queue);
+}
+
+template <typename T>
 void ScaleArray(const T *x, int n, float alpha, T *y) {
   BlasScopy(n, x, 1, y, 0, 1);
   BlasSscal(n, alpha, y);
@@ -251,7 +270,24 @@ void BlasScopy(int n, const T *x, int incx, T *y, int offy, int incy) {
 
 template <typename T>
 void BlasSasum(int n, const T *x, float *y) {
-  // TODO(jun) finish cl BlasSasum
+  cl_mem *y_ = Kernel::MakeBuffer<cl_mem>(1, static_cast<float *>(nullptr));
+  cl_mem *temp_ = Kernel::MakeBuffer<cl_mem>(n, static_cast<float *>(nullptr));
+  clblasSasum(n, *y_, 0, *x, 0, 1, *temp_, 1, Kernel::easyCL->queue, 0, nullptr,
+              nullptr);
+  clFinish(*Kernel::easyCL->queue);
+  Kernel::ReadBuffer(1, y_, y);
+  Kernel::ReleaseBuffer(y_);
+  Kernel::ReleaseBuffer(temp_);
+}
+
+// Level 2
+template <typename T>
+void BlasSgemv(int TA, int M, int N, float alpha, const T *A, const T *x,
+               float beta, T *y) {
+  int lda = TA ? M : N;
+  clblasTranspose transA = TA ? clblasTrans : clblasNoTrans;
+  clblasSgemv(clblasRowMajor, transA, M, N, alpha, *A, 0, lda, *x, 0, 1, beta,
+              *y, 0, 1, 1, Kernel::easyCL->queue, 0, nullptr, nullptr);
   clFinish(*Kernel::easyCL->queue);
 }
 
@@ -272,6 +308,7 @@ void BlasSgemm(int TA, int TB, int M, int N, int K, float alpha, const T *A,
 template void SetArray<cl_mem>(cl_mem *data, int count, float value);
 template void SetArrayRepeat<cl_mem>(cl_mem *data, int offset, int N,
                                      int value_size, const cl_mem *value);
+template void PowArray<cl_mem>(const cl_mem *x, int n, float alpha, cl_mem *y);
 template void ScaleArray<cl_mem>(const cl_mem *x, int count, float alpha,
                                  cl_mem *y);
 
@@ -280,6 +317,11 @@ template void BlasSscal<cl_mem>(int n, float alpha, cl_mem *x);
 template void BlasScopy<cl_mem>(int n, const cl_mem *x, int incx, cl_mem *y,
                                 int offy, int incy);
 template void BlasSasum<cl_mem>(int n, const cl_mem *x, float *y);
+
+// Level 2
+template void BlasSgemv<cl_mem>(int TA, int M, int N, float alpha,
+                                const cl_mem *A, const cl_mem *x, float beta,
+                                cl_mem *y);
 
 // Level 3
 template void BlasSgemm<cl_mem>(int TA, int TB, int M, int N, int K,

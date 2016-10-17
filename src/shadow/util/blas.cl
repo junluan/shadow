@@ -13,3 +13,11 @@ __kernel void SetArrayRepeat(__global float *y, int offy, int n, int value_size,
   int value_index = globalid / n;
   y[offy + globalid] = value[value_index];
 }
+
+__kernel void PowArray(__global float *x, int n, float alpha,
+                       __global float *y) {
+  const int globalid = get_global_id(0);
+  if (globalid >= n) return;
+
+  y[globalid] = pow(x[globalid], alpha);
+}
