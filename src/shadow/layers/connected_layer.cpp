@@ -9,9 +9,8 @@ void ConnectedLayer::Reshape() {
   top_shape.push_back(num_output_);
   top_[0]->reshape(top_shape);
 
-  weights_ = new Blob<float>(bottom_[0]->num() * num_output_,
-                             layer_name_ + " weights");
-  biases_ = new Blob<float>(num_output_, layer_name_ + " biases");
+  weights_.reshape(num_output_, bottom_[0]->num());
+  biases_.reshape(num_output_);
 
   std::stringstream out;
   out << layer_name_ << ": "
@@ -24,19 +23,19 @@ void ConnectedLayer::Forward() {
   int batch = bottom_[0]->shape(0);
   int top_num = top_[0]->num(), bottom_num = bottom_[0]->num();
   for (int b = 0; b < batch; ++b) {
-    Blas::BlasScopy(top_num, biases_->data(), 1, top_[0]->mutable_data(),
-                    b * top_num, 1);
+    Blas::BlasScopy(top_num, biases_.data(), 0, top_[0]->mutable_data(),
+                    b * top_num);
   }
-  Blas::BlasSgemm(0, 0, batch, top_num, bottom_num, 1, bottom_[0]->data(),
-                  weights_->data(), 1, top_[0]->mutable_data(), 0);
+  Blas::BlasSgemm(0, 0, batch, top_num, bottom_num, 1, bottom_[0]->data(), 0,
+                  weights_.data(), 0, 1, top_[0]->mutable_data(), 0);
 }
 
 void ConnectedLayer::Release() {
   bottom_.clear();
   top_.clear();
 
-  weights_->clear();
-  biases_->clear();
+  weights_.clear();
+  biases_.clear();
 
   // DInfo("Free ConnectedLayer!");
 }

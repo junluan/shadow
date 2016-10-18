@@ -17,7 +17,7 @@ class PermuteLayer : public Layer {
  private:
   int num_axes_;
 
-  Blob<int> *permute_order_, *old_steps_, *new_steps_;
+  Blob<int> permute_order_, old_steps_, new_steps_;
 };
 
 #endif  // SHADOW_LAYERS_PERMUTE_LAYER_HPP

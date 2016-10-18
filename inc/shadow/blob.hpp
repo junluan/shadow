@@ -83,6 +83,15 @@ class Blob {
     }
     set_shape(shape);
   }
+  inline void reshape(int num = 1, int channels = 1, int height = 1,
+                      int width = 1) {
+    VecInt shape(4);
+    shape[0] = num;
+    shape[1] = channels;
+    shape[2] = height;
+    shape[3] = width;
+    reshape(shape);
+  }
 
   inline const std::string name() const { return name_; }
   inline void set_name(const std::string &name) { name_ = name; }

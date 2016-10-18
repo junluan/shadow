@@ -27,10 +27,9 @@ void ConvLayer::Reshape() {
   out_map_size_ = out_h * out_w;
   kernel_num_ = kernel_size_ * kernel_size_ * in_c;
 
-  filters_ = new Blob<float>(kernel_num_ * out_c, layer_name_ + " filters");
-  biases_ = new Blob<float>(out_c, layer_name_ + " biases");
-  col_image_ =
-      new Blob<float>(out_map_size_ * kernel_num_, layer_name_ + " col_image");
+  filters_.reshape(out_c, kernel_num_);
+  biases_.reshape(out_c);
+  col_image_.reshape(kernel_num_, out_map_size_);
 
   std::stringstream out;
   out << layer_name_ << ": "
@@ -46,16 +45,16 @@ void ConvLayer::Forward() {
   int out_c = top_[0]->shape(1);
   int top_num = top_[0]->num(), bottom_num = bottom_[0]->num();
   for (int b = 0; b < batch; ++b) {
-    Blas::SetRepeat(out_map_size_ * out_c, biases_->data(), out_c,
+    Blas::SetRepeat(out_map_size_ * out_c, biases_.data(), out_c,
                     top_[0]->mutable_data(), b * top_num);
   }
   for (int b = 0; b < batch; ++b) {
     Image::Im2Col(bottom_[0]->data(), bottom_[0]->shape(), b * bottom_num,
                   kernel_size_, stride_, pad_, top_[0]->shape(),
-                  col_image_->mutable_data());
-    Blas::BlasSgemm(0, 0, out_c, out_map_size_, kernel_num_, 1,
-                    filters_->data(), col_image_->data(), 1,
-                    top_[0]->mutable_data(), b * top_num);
+                  col_image_.mutable_data());
+    Blas::BlasSgemm(0, 0, out_c, out_map_size_, kernel_num_, 1, filters_.data(),
+                    0, col_image_.data(), 0, 1, top_[0]->mutable_data(),
+                    b * top_num);
   }
 }
 
@@ -63,9 +62,9 @@ void ConvLayer::Release() {
   bottom_.clear();
   top_.clear();
 
-  filters_->clear();
-  biases_->clear();
-  col_image_->clear();
+  filters_.clear();
+  biases_.clear();
+  col_image_.clear();
 
   // DInfo("Free ConvLayer!");
 }

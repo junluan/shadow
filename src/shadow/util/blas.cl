@@ -1,8 +1,8 @@
-__kernel void Set(int n, float val, __global float *y) {
+__kernel void Set(int n, float val, __global float *y, int offy) {
   const int globalid = get_global_id(0);
   if (globalid >= n) return;
 
-  y[globalid] = val;
+  y[offy + globalid] = val;
 }
 
 __kernel void SetRepeat(int n, __global float *val, int val_size,
@@ -14,41 +14,50 @@ __kernel void SetRepeat(int n, __global float *val, int val_size,
   y[offy + globalid] = val[val_index];
 }
 
-__kernel void Add(int n, __global float *a, __global float *b,
-                  __global float *y) {
+__kernel void Add(int n, __global float *a, int offa, __global float *b,
+                  int offb, __global float *y, int offy) {
   const int globalid = get_global_id(0);
   if (globalid >= n) return;
 
-  y[globalid] = a[globalid] + b[globalid];
+  y[offy + globalid] = a[offa + globalid] + b[offb + globalid];
 }
 
-__kernel void Sub(int n, __global float *a, __global float *b,
-                  __global float *y) {
+__kernel void Sub(int n, __global float *a, int offa, __global float *b,
+                  int offb, __global float *y, int offy) {
   const int globalid = get_global_id(0);
   if (globalid >= n) return;
 
-  y[globalid] = a[globalid] - b[globalid];
+  y[offy + globalid] = a[offa + globalid] - b[offb + globalid];
 }
 
-__kernel void Mul(int n, __global float *a, __global float *b,
-                  __global float *y) {
+__kernel void Mul(int n, __global float *a, int offa, __global float *b,
+                  int offb, __global float *y, int offy) {
   const int globalid = get_global_id(0);
   if (globalid >= n) return;
 
-  y[globalid] = a[globalid] * b[globalid];
+  y[offy + globalid] = a[offa + globalid] * b[offb + globalid];
 }
 
-__kernel void Div(int n, __global float *a, __global float *b,
-                  __global float *y) {
+__kernel void Div(int n, __global float *a, int offa, __global float *b,
+                  int offb, __global float *y, int offy) {
   const int globalid = get_global_id(0);
   if (globalid >= n) return;
 
-  y[globalid] = a[globalid] / b[globalid];
+  y[offy + globalid] = a[offa + globalid] / b[offb + globalid];
 }
 
-__kernel void Pow(int n, __global float *a, float alpha, __global float *y) {
+__kernel void Square(int n, __global float *a, int offa, __global float *y,
+                     int offy) {
   const int globalid = get_global_id(0);
   if (globalid >= n) return;
 
-  y[globalid] = pow(a[globalid], alpha);
+  y[offy + globalid] = a[offa + globalid] * a[offa + globalid];
+}
+
+__kernel void Pow(int n, __global float *a, int offa, float alpha,
+                  __global float *y, int offy) {
+  const int globalid = get_global_id(0);
+  if (globalid >= n) return;
+
+  y[offy + globalid] = pow(a[offa + globalid], alpha);
 }

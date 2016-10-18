@@ -25,12 +25,13 @@ void PermuteLayer::Reshape() {
     }
   }
 
-  permute_order_ = new Blob<int>(num_axes_, permute_order.data(),
-                                 layer_name_ + " permute_order");
-  old_steps_ =
-      new Blob<int>(num_axes_, old_steps.data(), layer_name_ + " old_steps");
-  new_steps_ =
-      new Blob<int>(num_axes_, new_steps.data(), layer_name_ + " new_steps");
+  permute_order_.reshape(num_axes_);
+  old_steps_.reshape(num_axes_);
+  new_steps_.reshape(num_axes_);
+
+  permute_order_.set_data(permute_order.data());
+  old_steps_.set_data(old_steps.data());
+  new_steps_.set_data(new_steps.data());
 
   std::stringstream out;
   out << layer_name_ << ": "
@@ -41,18 +42,17 @@ void PermuteLayer::Reshape() {
 
 void PermuteLayer::Forward() {
   Image::Permute(bottom_[0]->data(), bottom_[0]->count(),
-                 bottom_[0]->num_axes(), permute_order_->data(),
-                 old_steps_->data(), new_steps_->data(),
-                 top_[0]->mutable_data());
+                 bottom_[0]->num_axes(), permute_order_.data(),
+                 old_steps_.data(), new_steps_.data(), top_[0]->mutable_data());
 }
 
 void PermuteLayer::Release() {
   bottom_.clear();
   top_.clear();
 
-  permute_order_->clear();
-  old_steps_->clear();
-  new_steps_->clear();
+  permute_order_.clear();
+  old_steps_.clear();
+  new_steps_.clear();
 
   // DInfo("Free PermuteLayer!");
 }
