@@ -3,6 +3,7 @@ build
 cfg
 data
 external
+lib
 model
 models
 inc/shadow/proto/*.h
