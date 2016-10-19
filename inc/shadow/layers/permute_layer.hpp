@@ -5,7 +5,7 @@
 
 class PermuteLayer : public Layer {
  public:
-  PermuteLayer();
+  PermuteLayer() {}
   explicit PermuteLayer(const shadow::LayerParameter &layer_param)
       : Layer(layer_param) {}
   ~PermuteLayer() { Release(); }

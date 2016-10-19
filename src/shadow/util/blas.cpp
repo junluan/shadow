@@ -91,40 +91,40 @@ void BlasScopy(int n, const T *x, int offx, T *y, int offy) {
 
 template <typename T>
 void BlasSasum(int n, const T *x, int offx, float *y) {
-  T asum = T(0);
+  double asum = 0;
   for (int i = 0; i < n; ++i) {
     asum += std::abs(x[offx + i]);
   }
-  *y = asum;
+  *y = static_cast<T>(asum);
 }
 
 // Level 2
 inline void SgemvN(int M, int N, float alpha, const float *A, const float *x,
                    float *y) {
   for (int i = 0; i < M; ++i) {
-    float sum = 0.f;
+    double sum = 0;
     for (int j = 0; j < N; ++j) {
       sum += alpha * A[i * N + j] * x[j];
     }
-    y[i] += sum;
+    y[i] += static_cast<float>(sum);
   }
 }
 
 inline void SgemvT(int M, int N, float alpha, const float *A, const float *x,
                    float *y) {
-  for (int i = 0; i < M; ++i) {
-    float sum = 0.f;
-    for (int j = 0; j < N; ++j) {
-      sum += alpha * A[j * M + i] * x[j];
+  for (int i = 0; i < N; ++i) {
+    double sum = 0;
+    for (int j = 0; j < M; ++j) {
+      sum += alpha * A[j * N + i] * x[j];
     }
-    y[i] += sum;
+    y[i] += static_cast<float>(sum);
   }
 }
 
 template <typename T>
 void BlasSgemv(int TA, int M, int N, float alpha, const T *A, int offA,
                const T *x, int offx, float beta, T *y, int offy) {
-  for (int i = 0; i < M; ++i) {
+  for (int i = 0; i < (TA ? N : M); ++i) {
     y[offy + i] *= beta;
   }
   if (!TA) {
@@ -410,9 +410,8 @@ void BlasSasum(int n, const T *x, int offx, float *y) {
 template <typename T>
 void BlasSgemv(int TA, int M, int N, float alpha, const T *A, int offA,
                const T *x, int offx, float beta, T *y, int offy) {
-  int lda = TA ? M : N;
   clblasTranspose transA = TA ? clblasTrans : clblasNoTrans;
-  clblasSgemv(clblasRowMajor, transA, M, N, alpha, *A, offA, lda, *x, offx, 1,
+  clblasSgemv(clblasRowMajor, transA, M, N, alpha, *A, offA, N, *x, offx, 1,
               beta, *y, offy, 1, 1, Kernel::easyCL->queue, 0, nullptr, nullptr);
   clFinish(*Kernel::easyCL->queue);
 }

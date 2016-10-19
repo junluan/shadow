@@ -5,7 +5,7 @@
 
 class ConcatLayer : public Layer {
  public:
-  ConcatLayer();
+  ConcatLayer() {}
   explicit ConcatLayer(const shadow::LayerParameter &layer_param)
       : Layer(layer_param) {}
   ~ConcatLayer() { Release(); }

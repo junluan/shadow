@@ -16,7 +16,7 @@ class PoolingLayer : public Layer {
 
  private:
   int kernel_size_, stride_;
-  shadow::PoolType pool_type_;
+  shadow::PoolingParameter::PoolType pool_type_;
 };
 
 #endif  // SHADOW_LAYERS_POOLING_LAYER_HPP

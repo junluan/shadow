@@ -16,7 +16,7 @@
 #include <string>
 #include <vector>
 
-const float EPS = 0.001f;
+const float EPS = 0.000001f;
 
 template <class Dtype>
 class Point {
@@ -51,25 +51,27 @@ class Size {
   Dtype w, h;
 };
 
-typedef Point<float> PointF;
 typedef Point<int> PointI;
-typedef Rect<float> RectF;
+typedef Point<float> PointF;
 typedef Rect<int> RectI;
-typedef Size<float> SizeF;
+typedef Rect<float> RectF;
 typedef Size<int> SizeI;
+typedef Size<float> SizeF;
 
-typedef std::vector<PointF> VecPointF;
 typedef std::vector<PointI> VecPointI;
-typedef std::vector<RectF> VecRectF;
+typedef std::vector<PointF> VecPointF;
 typedef std::vector<RectI> VecRectI;
-typedef std::vector<SizeF> VecSizeF;
+typedef std::vector<RectF> VecRectF;
 typedef std::vector<SizeI> VecSizeI;
+typedef std::vector<SizeF> VecSizeF;
 
-typedef std::vector<float> VecFloat;
 typedef std::vector<int> VecInt;
+typedef std::vector<float> VecFloat;
+typedef std::vector<double> VecDouble;
 typedef std::vector<std::string> VecString;
-typedef std::list<float> ListFloat;
 typedef std::list<int> ListInt;
+typedef std::list<float> ListFloat;
+typedef std::list<double> ListDouble;
 typedef std::list<std::string> ListString;
 
 namespace Util {

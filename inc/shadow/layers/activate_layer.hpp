@@ -5,7 +5,7 @@
 
 class ActivateLayer : public Layer {
  public:
-  ActivateLayer();
+  ActivateLayer() {}
   explicit ActivateLayer(const shadow::LayerParameter &layer_param)
       : Layer(layer_param) {}
   ~ActivateLayer() { Release(); }
@@ -15,7 +15,7 @@ class ActivateLayer : public Layer {
   void Release();
 
  private:
-  shadow::ActivateType type_;
+  shadow::ActivateParameter::ActivateType activate_type_;
 };
 
 #endif  // SHADOW_ACTIVATE_LAYER_HPP

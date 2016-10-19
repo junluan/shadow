@@ -94,10 +94,10 @@ class Blob {
   }
 
   inline const std::string name() const { return name_; }
-  inline void set_name(const std::string &name) { name_ = name; }
+  inline std::string &name() { return name_; }
 
   inline const VecInt shape() const { return shape_; }
-  inline VecInt *mutable_shape() { return &shape_; }
+  inline VecInt &shape() { return shape_; }
 
   inline const int shape(int index) const {
     if (index < 0 || index >= shape_.size()) {

@@ -44,15 +44,24 @@ class Layer {
   virtual void Forward() { Info("Forward Layer!"); }
   virtual void Release() { Info("Release Layer!"); }
 
-  virtual inline const std::string name() { return layer_name_; }
-  virtual inline const shadow::LayerType type() { return layer_type_; }
+  virtual inline const shadow::LayerParameter param() const {
+    return layer_param_;
+  }
+  virtual inline shadow::LayerParameter &param() { return layer_param_; }
+
+  virtual inline const std::string name() const { return layer_name_; }
+  virtual inline const std::string type() const { return layer_type_; }
+
+  virtual inline const Blob<float> *bottom(int i) const { return bottom_[i]; }
+  virtual inline const Blob<float> *top(int i) const { return top_[i]; }
+
   virtual inline Blob<float> *bottom(int i) { return bottom_[i]; }
   virtual inline Blob<float> *top(int i) { return top_[i]; }
 
  protected:
   shadow::LayerParameter layer_param_;
-  std::string layer_name_;
-  shadow::LayerType layer_type_;
+
+  std::string layer_name_, layer_type_;
 
   VecBlob bottom_, top_;
 };

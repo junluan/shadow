@@ -13,44 +13,37 @@ message Blob {
   repeated float data = 4 [packed = true];
 }
 
-message DataParameter {
-  optional float scale = 1 [default = 1];
-  optional float mean_value = 2 [default = 0];
-}
-
-message ConvolutionParameter {
-  optional int32 num_output = 1;
-  optional int32 kernel_size = 2;
-  optional int32 stride = 3 [default = 1];
-  optional int32 pad = 4 [default = 0];
-}
-
-enum PoolType {
-  Max = 0;
-  Ave = 1;
-}
-
-message PoolingParameter {
-  optional PoolType pool = 1 [default = Max];
-  optional int32 kernel_size = 2;
-  optional int32 stride = 3 [default = 1];
-  optional int32 pad = 4 [default = 0];
-}
-
-message ConnectedParameter {
-  optional int32 num_output = 1;
-}
-
-message DropoutParameter {
-  optional float probability = 1 [default = 0.5];
+message ActivateParameter {
+  enum ActivateType {
+    Linear = 0;
+    Relu = 1;
+    Leaky = 2;
+  }
+  optional ActivateType type = 1 [default = Relu];
 }
 
 message ConcatParameter {
   optional int32 axis = 1 [default = 1];
 }
 
-message PermuteParameter {
-  repeated int32 order = 1;
+message ConnectedParameter {
+  optional int32 num_output = 1;
+}
+
+message ConvolutionParameter {
+  optional int32 num_output = 1;
+  optional int32 kernel_size = 2 [default = 3];
+  optional int32 stride = 3 [default = 1];
+  optional int32 pad = 4 [default = 0];
+}
+
+message DataParameter {
+  optional float scale = 1 [default = 1];
+  optional float mean_value = 2 [default = 0];
+}
+
+message DropoutParameter {
+  optional float probability = 1 [default = 0.5];
 }
 
 message FlattenParameter {
@@ -58,50 +51,50 @@ message FlattenParameter {
   optional int32 end_axis = 2 [default = -1];
 }
 
-enum ActivateType {
-  Linear = 0;
-  Relu = 1;
-  Leaky = 2;
+message NormalizeParameter {
+  optional bool across_spatial = 1 [default = true];
+  optional bool channel_shared = 2 [default = true];
+  repeated float scale = 3;
 }
 
-message ActivateParameter {
-  optional ActivateType type = 1 [default = Relu];
+message PermuteParameter {
+  repeated int32 order = 1;
 }
 
-enum LayerType {
-  Data = 0;
-  Convolution = 1;
-  Pooling = 2;
-  Connected = 3;
-  Dropout = 4;
-  Concat = 5;
-  Permute = 6;
-  Flatten = 7;
-  Activate = 8;
+message PoolingParameter {
+  enum PoolType {
+    Max = 0;
+    Ave = 1;
+  }
+  optional PoolType pool = 1 [default = Max];
+  optional int32 kernel_size = 2 [default = 2];
+  optional int32 stride = 3 [default = 1];
+  optional int32 pad = 4 [default = 0];
 }
 
 message LayerParameter {
   optional string name = 1 [default = ""];
-  optional LayerType type = 2;
+  optional string type = 2;
   repeated string bottom = 3;
   repeated string top = 4;
 
   repeated Blob blobs = 5;
 
-  optional DataParameter data_param = 10;
-  optional ConvolutionParameter convolution_param = 11;
-  optional PoolingParameter pooling_param = 12;
+  optional ActivateParameter activate_param = 11;
+  optional ConcatParameter concat_param = 12;
   optional ConnectedParameter connected_param = 13;
-  optional DropoutParameter dropout_param = 14;
-  optional ConcatParameter concat_param = 15;
-  optional PermuteParameter permute_param = 16;
+  optional ConvolutionParameter convolution_param = 14;
+  optional DataParameter data_param = 15;
+  optional DropoutParameter dropout_param = 16;
   optional FlattenParameter flatten_param = 17;
-  optional ActivateParameter activate_param = 18;
+  optional NormalizeParameter normalize_param = 18;
+  optional PermuteParameter permute_param = 19;
+  optional PoolingParameter pooling_param = 20;
 }
 
 message NetParameter {
   optional string name = 1;
   optional BlobShape input_shape = 2;
 
-  repeated LayerParameter layer = 10;
+  repeated LayerParameter layer = 11;
 }

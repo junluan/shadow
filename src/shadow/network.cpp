@@ -7,6 +7,7 @@
 #include "shadow/layers/data_layer.hpp"
 #include "shadow/layers/dropout_layer.hpp"
 #include "shadow/layers/flatten_layer.hpp"
+#include "shadow/layers/normalize_layer.hpp"
 #include "shadow/layers/permute_layer.hpp"
 #include "shadow/layers/pooling_layer.hpp"
 
@@ -77,7 +78,7 @@ void Network::LoadWeights(const std::string &weight_file) {
 
   for (int i = 0; i < layers_.size(); ++i) {
     Layer *layer = layers_[i];
-    if (layer->type() == shadow::LayerType::Convolution) {
+    if (!layer->type().compare("Convolution")) {
       ConvLayer *l = reinterpret_cast<ConvLayer *>(layer);
       int in_c = l->bottom(0)->shape(1), out_c = l->top(0)->shape(1);
       int num = out_c * in_c * l->kernel_size() * l->kernel_size();
@@ -89,7 +90,7 @@ void Network::LoadWeights(const std::string &weight_file) {
       delete[] biases;
       delete[] filters;
     }
-    if (layer->type() == shadow::LayerType::Connected) {
+    if (!layer->type().compare("Connected")) {
       ConnectedLayer *l = reinterpret_cast<ConnectedLayer *>(layer);
       int out_num = l->top(0)->num(), num = l->bottom(0)->num() * out_num;
       float *biases = new float[out_num], *weights = new float[num];
@@ -109,7 +110,7 @@ void Network::LoadWeights(const float *weight_data) {
   const float *index = weight_data;
   for (int i = 0; i < layers_.size(); ++i) {
     Layer *layer = layers_[i];
-    if (layer->type() == shadow::LayerType::Convolution) {
+    if (!layer->type().compare("Convolution")) {
       ConvLayer *l = reinterpret_cast<ConvLayer *>(layer);
       int in_c = l->bottom(0)->shape(1), out_c = l->top(0)->shape(1);
       int num = out_c * in_c * l->kernel_size() * l->kernel_size();
@@ -118,7 +119,7 @@ void Network::LoadWeights(const float *weight_data) {
       l->set_filters(index);
       index += num;
     }
-    if (layer->type() == shadow::LayerType::Connected) {
+    if (!layer->type().compare("Connected")) {
       ConnectedLayer *l = reinterpret_cast<ConnectedLayer *>(layer);
       int out_num = l->top(0)->num(), num = l->bottom(0)->num() * out_num;
       l->set_biases(index);
@@ -140,24 +141,26 @@ void Network::Reshape(int batch) {
 Layer *Network::LayerFactory(const shadow::LayerParameter &layer_param,
                              VecBlob *blobs) {
   Layer *layer = nullptr;
-  if (layer_param.type() == shadow::LayerType::Data) {
-    layer = new DataLayer(layer_param);
-  } else if (layer_param.type() == shadow::LayerType::Convolution) {
-    layer = new ConvLayer(layer_param);
-  } else if (layer_param.type() == shadow::LayerType::Pooling) {
-    layer = new PoolingLayer(layer_param);
-  } else if (layer_param.type() == shadow::LayerType::Connected) {
-    layer = new ConnectedLayer(layer_param);
-  } else if (layer_param.type() == shadow::LayerType::Dropout) {
-    layer = new DropoutLayer(layer_param);
-  } else if (layer_param.type() == shadow::LayerType::Concat) {
-    layer = new ConcatLayer(layer_param);
-  } else if (layer_param.type() == shadow::LayerType::Permute) {
-    layer = new PermuteLayer(layer_param);
-  } else if (layer_param.type() == shadow::LayerType::Flatten) {
-    layer = new FlattenLayer(layer_param);
-  } else if (layer_param.type() == shadow::LayerType::Activate) {
+  if (!layer_param.type().compare("Activate")) {
     layer = new ActivateLayer(layer_param);
+  } else if (!layer_param.type().compare("Concat")) {
+    layer = new ConcatLayer(layer_param);
+  } else if (!layer_param.type().compare("Connected")) {
+    layer = new ConnectedLayer(layer_param);
+  } else if (!layer_param.type().compare("Convolution")) {
+    layer = new ConvLayer(layer_param);
+  } else if (!layer_param.type().compare("Data")) {
+    layer = new DataLayer(layer_param);
+  } else if (!layer_param.type().compare("Dropout")) {
+    layer = new DropoutLayer(layer_param);
+  } else if (!layer_param.type().compare("Flatten")) {
+    layer = new FlattenLayer(layer_param);
+  } else if (!layer_param.type().compare("Normalize")) {
+    layer = new NormalizeLayer(layer_param);
+  } else if (!layer_param.type().compare("Permute")) {
+    layer = new PermuteLayer(layer_param);
+  } else if (!layer_param.type().compare("Pooling")) {
+    layer = new PoolingLayer(layer_param);
   } else {
     Fatal("Layer type is not recognized!");
   }
@@ -172,7 +175,7 @@ Layer *Network::LayerFactory(const shadow::LayerParameter &layer_param,
 
 void Network::PreFillData(float *in_data) {
   for (int i = 0; i < layers_.size(); ++i) {
-    if (layers_[i]->type() == shadow::LayerType::Data) {
+    if (!layers_[i]->type().compare("Data")) {
       layers_[i]->bottom(0)->set_data(in_data);
       break;
     }

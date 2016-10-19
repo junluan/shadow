@@ -5,7 +5,7 @@
 
 class FlattenLayer : public Layer {
  public:
-  FlattenLayer();
+  FlattenLayer() {}
   explicit FlattenLayer(const shadow::LayerParameter &layer_param)
       : Layer(layer_param) {}
   ~FlattenLayer() { Release(); }
