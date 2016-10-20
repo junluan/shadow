@@ -41,13 +41,14 @@ void ConcatLayer::Forward() {
     top_[0]->share_data(bottom_[0]->mutable_data());
     return;
   }
+  int offset_concat_axis = 0;
   int top_concat_axis = top_[0]->shape(concat_axis_);
   for (int i = 0; i < bottom_.size(); ++i) {
     int bottom_concat_axis = bottom_[i]->shape(concat_axis_);
-    int offset_concat_axis = i * bottom_concat_axis;
     Image::Concat(bottom_[i]->data(), bottom_[i]->count(), num_concats_,
                   concat_input_size_, top_concat_axis, bottom_concat_axis,
                   offset_concat_axis, top_[0]->mutable_data());
+    offset_concat_axis += bottom_concat_axis;
   }
 }
 

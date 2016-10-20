@@ -52,6 +52,9 @@ class Layer {
   virtual inline const std::string name() const { return layer_name_; }
   virtual inline const std::string type() const { return layer_type_; }
 
+  virtual inline int num_bottoms() { return bottom_.size(); }
+  virtual inline int num_tops() { return top_.size(); }
+
   virtual inline const Blob<float> *bottom(int i) const { return bottom_[i]; }
   virtual inline const Blob<float> *top(int i) const { return top_[i]; }
 
