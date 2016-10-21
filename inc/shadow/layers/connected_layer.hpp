@@ -20,7 +20,7 @@ class ConnectedLayer : public Layer {
  private:
   int num_output_;
 
-  Blob<float> weights_, biases_;
+  Blob<float> weights_, biases_, biases_multiplier_;
 };
 
 #endif  // SHADOW_LAYERS_CONNECTED_LAYER_HPP

@@ -11,6 +11,8 @@ void ConnectedLayer::Reshape() {
 
   weights_.reshape(num_output_, bottom_[0]->num());
   biases_.reshape(num_output_);
+  biases_multiplier_.reshape(top_shape[0]);
+  Blas::Set(top_shape[0], 1, biases_multiplier_.mutable_data(), 0);
 
   std::stringstream out;
   out << layer_name_ << ": "
@@ -22,12 +24,17 @@ void ConnectedLayer::Reshape() {
 void ConnectedLayer::Forward() {
   int batch = bottom_[0]->shape(0);
   int top_num = top_[0]->num(), bottom_num = bottom_[0]->num();
-  for (int b = 0; b < batch; ++b) {
-    Blas::BlasScopy(top_num, biases_.data(), 0, top_[0]->mutable_data(),
-                    b * top_num);
+  if (batch == 1) {
+    Blas::BlasSgemv(1, bottom_num, num_output_, 1, weights_.data(), 0,
+                    bottom_[0]->data(), 0, 0, top_[0]->mutable_data(), 0);
+    Blas::BlasSaxpy(num_output_, 1, biases_.data(), 0, top_[0]->mutable_data(),
+                    0);
+  } else {
+    Blas::BlasSgemm(0, 0, batch, top_num, bottom_num, 1, bottom_[0]->data(), 0,
+                    weights_.data(), 0, 0, top_[0]->mutable_data(), 0);
+    Blas::BlasSgemm(0, 0, batch, num_output_, 1, 1, biases_multiplier_.data(),
+                    0, biases_.data(), 0, 1, top_[0]->mutable_data(), 0);
   }
-  Blas::BlasSgemm(0, 0, batch, top_num, bottom_num, 1, bottom_[0]->data(), 0,
-                  weights_.data(), 0, 1, top_[0]->mutable_data(), 0);
 }
 
 void ConnectedLayer::Release() {
@@ -36,6 +43,7 @@ void ConnectedLayer::Release() {
 
   weights_.clear();
   biases_.clear();
+  biases_multiplier_.clear();
 
   // DInfo("Free ConnectedLayer!");
 }

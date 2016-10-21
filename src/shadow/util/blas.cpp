@@ -10,15 +10,6 @@ void Set(int n, float val, T *y, int offy) {
   std::fill(y + offy, y + offy + n, val);
 }
 
-template <typename T>
-void SetRepeat(int n, const T *val, int val_size, T *y, int offy) {
-  int size = n / val_size;
-  for (int i = 0; i < val_size; ++i) {
-    T *off_y = y + offy + i * size;
-    std::fill(off_y, off_y + size, val[i]);
-  }
-}
-
 #define BINARY_FUNC(name, operation)                                           \
   template <typename T>                                                        \
   inline void v##name(int n, const T *a, int offa, const T *b, int offb, T *y, \
@@ -86,6 +77,13 @@ template <typename T>
 void BlasScopy(int n, const T *x, int offx, T *y, int offy) {
   for (int i = 0; i < n; ++i) {
     y[offy + i] = x[offx + i];
+  }
+}
+
+template <typename T>
+void BlasSaxpy(int n, float alpha, const T *x, int offx, T *y, int offy) {
+  for (int i = 0; i < n; ++i) {
+    y[offy + i] += alpha * x[offx + i];
   }
 }
 
@@ -206,8 +204,6 @@ void BlasSgemm(int TA, int TB, int M, int N, int K, float alpha, const T *A,
 
 // Explicit instantiation
 template void Set<float>(int n, float val, float *y, int offy);
-template void SetRepeat<float>(int n, const float *val, int val_size, float *y,
-                               int offy);
 template void Add<float>(int n, const float *a, int offa, const float *b,
                          int offb, float *y, int offy);
 template void Sub<float>(int n, const float *a, int offa, const float *b,
@@ -226,6 +222,8 @@ template void Scale<float>(int n, float alpha, const float *x, int offx,
 template void BlasSscal<float>(int n, float alpha, float *x, int offx);
 template void BlasScopy<float>(int n, const float *x, int offx, float *y,
                                int offy);
+template void BlasSaxpy<float>(int n, float alpha, const float *x, int offx,
+                               float *y, int offy);
 template void BlasSasum<float>(int n, const float *x, int offx, float *y);
 
 // Level 2
@@ -242,7 +240,6 @@ template void BlasSgemm<float>(int TA, int TB, int M, int N, int K, float alpha,
 #include <clBLAS.h>
 
 static CLKernel *cl_set_kernel_ = nullptr;
-static CLKernel *cl_setrepeat_kernel_ = nullptr;
 static CLKernel *cl_add_kernel_ = nullptr;
 static CLKernel *cl_sub_kernel_ = nullptr;
 static CLKernel *cl_mul_kernel_ = nullptr;
@@ -253,7 +250,6 @@ static CLKernel *cl_pow_kernel_ = nullptr;
 void Setup() {
   std::string cl_file = "./src/shadow/util/blas.cl";
   cl_set_kernel_ = Kernel::easyCL->buildKernel(cl_file, "Set");
-  cl_setrepeat_kernel_ = Kernel::easyCL->buildKernel(cl_file, "SetRepeat");
   cl_add_kernel_ = Kernel::easyCL->buildKernel(cl_file, "Add");
   cl_sub_kernel_ = Kernel::easyCL->buildKernel(cl_file, "Sub");
   cl_mul_kernel_ = Kernel::easyCL->buildKernel(cl_file, "Mul");
@@ -264,7 +260,6 @@ void Setup() {
 }
 void Release() {
   cl_set_kernel_->~CLKernel();
-  cl_setrepeat_kernel_->~CLKernel();
   cl_add_kernel_->~CLKernel();
   cl_sub_kernel_->~CLKernel();
   cl_mul_kernel_->~CLKernel();
@@ -281,20 +276,6 @@ void Set(int n, float val, T *y, int offy) {
   clSetKernelArg(kernel, 1, sizeof(float), &val);
   clSetKernelArg(kernel, 2, sizeof(cl_mem), y);
   clSetKernelArg(kernel, 3, sizeof(int), &offy);
-  size_t global = n;
-  clEnqueueNDRangeKernel(*Kernel::easyCL->queue, kernel, 1, nullptr, &global,
-                         nullptr, 0, nullptr, nullptr);
-  clFinish(*Kernel::easyCL->queue);
-}
-
-template <typename T>
-void SetRepeat(int n, const T *val, int val_size, T *y, int offy) {
-  cl_kernel kernel = cl_setrepeat_kernel_->GetKernel();
-  clSetKernelArg(kernel, 0, sizeof(int), &n);
-  clSetKernelArg(kernel, 1, sizeof(cl_mem), val);
-  clSetKernelArg(kernel, 2, sizeof(int), &val_size);
-  clSetKernelArg(kernel, 3, sizeof(cl_mem), y);
-  clSetKernelArg(kernel, 4, sizeof(int), &offy);
   size_t global = n;
   clEnqueueNDRangeKernel(*Kernel::easyCL->queue, kernel, 1, nullptr, &global,
                          nullptr, 0, nullptr, nullptr);
@@ -395,6 +376,13 @@ void BlasScopy(int n, const T *x, int offx, T *y, int offy) {
 }
 
 template <typename T>
+void BlasSaxpy(int n, float alpha, const T *x, int offx, T *y, int offy) {
+  clblasSaxpy(n, alpha, *x, offx, 1, *y, offy, 1, 1, Kernel::easyCL->queue, 0,
+              nullptr, nullptr);
+  clFinish(*Kernel::easyCL->queue);
+}
+
+template <typename T>
 void BlasSasum(int n, const T *x, int offx, float *y) {
   cl_mem *y_ = Kernel::MakeBuffer<cl_mem>(1, static_cast<float *>(nullptr));
   cl_mem *temp_ = Kernel::MakeBuffer<cl_mem>(n, static_cast<float *>(nullptr));
@@ -431,8 +419,6 @@ void BlasSgemm(int TA, int TB, int M, int N, int K, float alpha, const T *A,
 
 // Explicit instantiation
 template void Set<cl_mem>(int n, float val, cl_mem *y, int offy);
-template void SetRepeat<cl_mem>(int n, const cl_mem *val, int val_size,
-                                cl_mem *y, int offy);
 template void Add<cl_mem>(int n, const cl_mem *a, int offa, const cl_mem *b,
                           int offb, cl_mem *y, int offy);
 template void Sub<cl_mem>(int n, const cl_mem *a, int offa, const cl_mem *b,
@@ -452,6 +438,8 @@ template void Scale<cl_mem>(int n, float alpha, const cl_mem *x, int offx,
 template void BlasSscal<cl_mem>(int n, float alpha, cl_mem *x, int offx);
 template void BlasScopy<cl_mem>(int n, const cl_mem *x, int offx, cl_mem *y,
                                 int offy);
+template void BlasSaxpy<cl_mem>(int n, float alpha, const cl_mem *x, int offx,
+                                cl_mem *y, int offy);
 template void BlasSasum<cl_mem>(int n, const cl_mem *x, int offx, float *y);
 
 // Level 2

@@ -28,22 +28,6 @@ void Set(int n, float val, T *y, int offy) {
   CheckError(cudaPeekAtLastError());
 }
 
-__global__ void KernelSetRepeat(int n, const float *val, int val_size, float *y,
-                                int offy) {
-  int globalid =
-      (blockIdx.x + blockIdx.y * gridDim.x) * blockDim.x + threadIdx.x;
-  if (globalid >= n) return;
-
-  int val_index = globalid / (n / val_size);
-  y[offy + globalid] = val[val_index];
-}
-
-template <typename T>
-void SetRepeat(int n, const T *val, int val_size, T *y, int offy) {
-  KernelSetRepeat<<<Kernel::GridDim(n), BLOCK>>>(n, val, val_size, y, offy);
-  CheckError(cudaPeekAtLastError());
-}
-
 #define BINARY_FUNC(name, operation)                                           \
   __global__ void Kernel##name(int n, const float *a, int offa,                \
                                const float *b, int offb, float *y, int offy) { \
@@ -129,6 +113,11 @@ void BlasScopy(int n, const T *x, int offx, T *y, int offy) {
 }
 
 template <typename T>
+void BlasSaxpy(int n, float alpha, const T *x, int offx, T *y, int offy) {
+  cublasSaxpy(cublas_handle_, n, &alpha, x + offx, 1, y + offy, 1);
+}
+
+template <typename T>
 void BlasSasum(int n, const T *x, int offx, float *y) {
   cublasSasum(cublas_handle_, n, x + offx, 1, y);
 }
@@ -155,8 +144,6 @@ void BlasSgemm(int TA, int TB, int M, int N, int K, float alpha, const T *A,
 
 // Explicit instantiation
 template void Set<float>(int n, float val, float *y, int offy);
-template void SetRepeat<float>(int n, const float *val, int val_size, float *y,
-                               int offy);
 template void Add<float>(int n, const float *a, int offa, const float *b,
                          int offb, float *y, int offy);
 template void Sub<float>(int n, const float *a, int offa, const float *b,
@@ -176,6 +163,8 @@ template void Scale<float>(int n, float alpha, const float *x, int offx,
 template void BlasSscal<float>(int n, float alpha, float *x, int offx);
 template void BlasScopy<float>(int n, const float *x, int offx, float *y,
                                int offy);
+template void BlasSaxpy<float>(int n, float alpha, const float *x, int offx,
+                               float *y, int offy);
 template void BlasSasum<float>(int n, const float *x, int offx, float *y);
 
 // Level 2

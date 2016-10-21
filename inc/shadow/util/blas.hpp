@@ -12,9 +12,6 @@ template <typename T>
 void Set(int n, float val, T *y, int offy);
 
 template <typename T>
-void SetRepeat(int n, const T *val, int val_size, T *y, int offy);
-
-template <typename T>
 void Add(int n, const T *a, int offa, const T *b, int offb, T *y, int offy);
 
 template <typename T>
@@ -41,6 +38,9 @@ void BlasSscal(int n, float alpha, T *x, int offx);
 
 template <typename T>
 void BlasScopy(int n, const T *x, int offx, T *y, int offy);
+
+template <typename T>
+void BlasSaxpy(int n, float alpha, const T *x, int offx, T *y, int offy);
 
 template <typename T>
 void BlasSasum(int n, const T *x, int offx, float *y);
