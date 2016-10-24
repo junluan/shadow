@@ -1,3 +1,4 @@
+#include <cstdlib>
 #include "shadow/kernel.hpp"
 #include "shadow/util/util.hpp"
 
@@ -102,50 +103,49 @@ void Im2Col(const T *in_data, int offset, int in_c, int in_h, int in_w,
 
 __global__ void KernelPooling(const float *in_data, int batch, int in_c,
                               int in_h, int in_w, int kernel_size, int stride,
-                              int out_h, int out_w, int mode, float *out_data) {
+                              int pad, int mode, int out_h, int out_w,
+                              float *out_data) {
   int globalid =
       (blockIdx.x + blockIdx.y * gridDim.x) * blockDim.x + threadIdx.x;
   if (globalid >= batch * in_c * out_h * out_w) return;
-
-  int h_offset = ((in_h - kernel_size) % stride) / 2;
-  int w_offset = ((in_w - kernel_size) % stride) / 2;
 
   int b_out = (globalid / (out_w * out_h * in_c)) % batch;
   int c_out = (globalid / (out_w * out_h)) % in_c;
   int i_out = (globalid / out_w) % out_h;
   int j_out = globalid % out_w;
 
-  int i_inp = h_offset + i_out * stride;
-  int j_inp = w_offset + j_out * stride;
+  int kistart = i_out * stride - pad, kjstart = j_out * stride - pad;
+  int kiend = min(kistart + kernel_size, in_h);
+  int kjend = min(kjstart + kernel_size, in_w);
+  int pool_size = (kiend - kistart) * (kjend - kjstart);
+  kistart = max(kistart, 0), kjstart = max(kjstart, 0);
+  kiend = min(kiend, in_h), kjend = min(kjend, in_w);
 
-  int offset = ((b_out * in_c + c_out) * in_h + i_inp) * in_w + j_inp;
-
-  float max = FLT_MIN;
+  float max = -FLT_MAX;
   float sum = 0.f;
-  for (int ki = 0; ki < kernel_size; ++ki) {
-    for (int kj = 0; kj < kernel_size; ++kj) {
-      int in = offset + ki * in_w + kj;
-      bool valid = in < batch * in_c * in_h * in_w;
-      float value = valid ? in_data[in] : FLT_MIN;
+  for (int ki = kistart; ki < kiend; ++ki) {
+    for (int kj = kjstart; kj < kjend; ++kj) {
+      int index = kj + in_w * (ki + in_h * (c_out + in_c * b_out));
+      float value = in_data[index];
       max = (value > max) ? value : max;
-      sum += valid ? in_data[in] : 0.f;
+      sum += value;
     }
   }
   if (mode == 0) {
     out_data[globalid] = max;
   } else {
-    out_data[globalid] = sum / (kernel_size * kernel_size);
+    out_data[globalid] = sum / pool_size;
   }
 }
 
 template <typename T>
 void Pooling(const T *in_data, int batch, int in_c, int in_h, int in_w,
-             int kernel_size, int stride, int out_h, int out_w, int mode,
-             T *out_data) {
+             int kernel_size, int stride, int pad, int mode, int out_h,
+             int out_w, T *out_data) {
   int N = batch * in_c * out_h * out_w;
   KernelPooling<<<GridDim(N), BLOCK>>>(in_data, batch, in_c, in_h, in_w,
-                                       kernel_size, stride, out_h, out_w, mode,
-                                       out_data);
+                                       kernel_size, stride, pad, mode, out_h,
+                                       out_w, out_data);
   CheckError(cudaPeekAtLastError());
 }
 
@@ -252,7 +252,8 @@ template void Im2Col<float>(const float *in_data, int offset, int in_c,
                             int pad, int out_h, int out_w, float *out_data);
 template void Pooling<float>(const float *in_data, int batch, int in_c,
                              int in_h, int in_w, int kernel_size, int stride,
-                             int out_h, int out_w, int mode, float *out_data);
+                             int pad, int mode, int out_h, int out_w,
+                             float *out_data);
 template void Concat<float>(const float *in_data, int count, int num_concats,
                             int concat_size, int top_concat_axis,
                             int bottom_concat_axis, int offset_concat_axis,

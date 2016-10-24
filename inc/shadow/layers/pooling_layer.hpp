@@ -15,7 +15,7 @@ class PoolingLayer : public Layer {
   void Release();
 
  private:
-  int kernel_size_, stride_;
+  int kernel_size_, stride_, pad_;
   shadow::PoolingParameter::PoolType pool_type_;
 };
 

@@ -28,12 +28,12 @@ void ConnectedLayer::Forward() {
   int batch = bottoms_[0]->shape(0);
   int top_num = tops_[0]->num(), bottom_num = bottoms_[0]->num();
   if (batch == 1) {
-    Blas::BlasSgemv(1, bottom_num, num_output_, 1, blobs_[0]->data(), 0,
+    Blas::BlasSgemv(0, num_output_, bottom_num, 1, blobs_[0]->data(), 0,
                     bottoms_[0]->data(), 0, 0, tops_[0]->mutable_data(), 0);
     Blas::BlasSaxpy(num_output_, 1, blobs_[1]->data(), 0,
                     tops_[0]->mutable_data(), 0);
   } else {
-    Blas::BlasSgemm(0, 0, batch, top_num, bottom_num, 1, bottoms_[0]->data(), 0,
+    Blas::BlasSgemm(0, 1, batch, top_num, bottom_num, 1, bottoms_[0]->data(), 0,
                     blobs_[0]->data(), 0, 0, tops_[0]->mutable_data(), 0);
     Blas::BlasSgemm(0, 0, batch, num_output_, 1, 1, biases_multiplier_.data(),
                     0, blobs_[1]->data(), 0, 1, tops_[0]->mutable_data(), 0);

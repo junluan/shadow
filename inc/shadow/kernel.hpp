@@ -47,8 +47,8 @@ void Im2Col(const T *in_data, int offset, int in_c, int in_h, int in_w,
 
 template <typename T>
 void Pooling(const T *in_data, int batch, int in_c, int in_h, int in_w,
-             int kernel_size, int stride, int out_h, int out_w, int mode,
-             T *out_data);
+             int kernel_size, int stride, int pad, int mode, int out_h,
+             int out_w, T *out_data);
 
 template <typename T>
 void Concat(const T *in_data, int count, int num_concats, int concat_size,

@@ -7,7 +7,7 @@ __kernel void DataTransform(__global float *in_data, int count, float scale,
 }
 
 __kernel void Im2Col(__global float *im_data, int offset, int in_c, int in_h,
-                     int in_w, int ksize, int stride, int pad, int out_h,
+                     int in_w, int kernel_size, int stride, int pad, int out_h,
                      int out_w, __global float *col_data) {
   const int globalid = get_global_id(0);
   if (globalid >= in_c * out_h * out_w) return;
@@ -20,10 +20,11 @@ __kernel void Im2Col(__global float *im_data, int offset, int in_c, int in_h,
   int j_inp = -pad + j_out * stride;
 
   im_data += offset + c_out * in_h * in_w;
-  col_data += (c_out * ksize * ksize * out_h + i_out) * out_w + j_out;
+  col_data +=
+      (c_out * kernel_size * kernel_size * out_h + i_out) * out_w + j_out;
 
-  for (int ki = 0; ki < ksize; ++ki) {
-    for (int kj = 0; kj < ksize; ++kj) {
+  for (int ki = 0; ki < kernel_size; ++ki) {
+    for (int kj = 0; kj < kernel_size; ++kj) {
       int i = i_inp + ki;
       int j = j_inp + kj;
       *col_data = (i >= 0 && j >= 0 && i < in_h && j < in_w)
@@ -35,39 +36,37 @@ __kernel void Im2Col(__global float *im_data, int offset, int in_c, int in_h,
 }
 
 __kernel void Pooling(__global float *in_data, int batch, int in_c, int in_h,
-                      int in_w, int ksize, int stride, int out_h, int out_w,
-                      int mode, __global float *out_data) {
+                      int in_w, int kernel_size, int stride, int pad, int mode,
+                      int out_h, int out_w, __global float *out_data) {
   const int globalid = get_global_id(0);
   if (globalid >= batch * in_c * out_h * out_w) return;
-
-  int h_offset = ((in_h - ksize) % stride) / 2;
-  int w_offset = ((in_w - ksize) % stride) / 2;
 
   int b_out = (globalid / (out_w * out_h * in_c)) % batch;
   int c_out = (globalid / (out_w * out_h)) % in_c;
   int i_out = (globalid / out_w) % out_h;
   int j_out = globalid % out_w;
 
-  int i_inp = h_offset + i_out * stride;
-  int j_inp = w_offset + j_out * stride;
+  int kistart = i_out * stride - pad, kjstart = j_out * stride - pad;
+  int kiend = min(kistart + kernel_size, in_h);
+  int kjend = min(kjstart + kernel_size, in_w);
+  int pool_size = (kiend - kistart) * (kjend - kjstart);
+  kistart = max(kistart, 0), kjstart = max(kjstart, 0);
+  kiend = min(kiend, in_h), kjend = min(kjend, in_w);
 
-  int offset = ((b_out * in_c + c_out) * in_h + i_inp) * in_w + j_inp;
-
-  float max = FLT_MIN;
+  float max = -FLT_MAX;
   float sum = 0.f;
-  for (int ki = 0; ki < ksize; ++ki) {
-    for (int kj = 0; kj < ksize; ++kj) {
-      int in = offset + ki * in_w + kj;
-      bool valid = in < batch * in_c * in_h * in_w;
-      float value = valid ? in_data[in] : FLT_MIN;
+  for (int ki = kistart; ki < kiend; ++ki) {
+    for (int kj = kjstart; kj < kjend; ++kj) {
+      int index = kj + in_w * (ki + in_h * (c_out + in_c * b_out));
+      float value = in_data[index];
       max = (value > max) ? value : max;
-      sum += valid ? in_data[in] : 0.f;
+      sum += value;
     }
   }
   if (mode == 0) {
     out_data[globalid] = max;
   } else {
-    out_data[globalid] = sum / (ksize * ksize);
+    out_data[globalid] = sum / pool_size;
   }
 }
 

@@ -17,7 +17,8 @@ void Im2Col(const T *in_data, const VecInt &in_shape, int offset,
 
 template <typename T>
 void Pooling(const T *in_data, const VecInt &in_shape, int kernel_size,
-             int stride, int mode, const VecInt &out_shape, T *out_data);
+             int stride, int pad, int mode, const VecInt &out_shape,
+             T *out_data);
 
 template <typename T>
 void Concat(const T *in_data, int count, int num_concats, int concat_size,

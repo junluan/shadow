@@ -105,8 +105,8 @@ void Im2Col(const T *in_data, int offset, int in_c, int in_h, int in_w,
 
 template <typename T>
 void Pooling(const T *in_data, int batch, int in_c, int in_h, int in_w,
-             int kernel_size, int stride, int out_h, int out_w, int mode,
-             T *out_data) {
+             int kernel_size, int stride, int pad, int mode, int out_h,
+             int out_w, T *out_data) {
   cl_kernel kernel = cl_pooling_kernel_->GetKernel();
   clSetKernelArg(kernel, 0, sizeof(cl_mem), in_data);
   clSetKernelArg(kernel, 1, sizeof(int), &batch);
@@ -115,10 +115,11 @@ void Pooling(const T *in_data, int batch, int in_c, int in_h, int in_w,
   clSetKernelArg(kernel, 4, sizeof(int), &in_w);
   clSetKernelArg(kernel, 5, sizeof(int), &kernel_size);
   clSetKernelArg(kernel, 6, sizeof(int), &stride);
-  clSetKernelArg(kernel, 7, sizeof(int), &out_h);
-  clSetKernelArg(kernel, 8, sizeof(int), &out_w);
-  clSetKernelArg(kernel, 9, sizeof(int), &mode);
-  clSetKernelArg(kernel, 10, sizeof(cl_mem), out_data);
+  clSetKernelArg(kernel, 7, sizeof(int), &pad);
+  clSetKernelArg(kernel, 8, sizeof(int), &mode);
+  clSetKernelArg(kernel, 9, sizeof(int), &out_h);
+  clSetKernelArg(kernel, 10, sizeof(int), &out_w);
+  clSetKernelArg(kernel, 11, sizeof(cl_mem), out_data);
   size_t global = batch * in_c * out_h * out_w;
   clEnqueueNDRangeKernel(*easyCL->queue, kernel, 1, nullptr, &global, nullptr,
                          0, nullptr, nullptr);
@@ -198,7 +199,8 @@ template void Im2Col<cl_mem>(const cl_mem *in_data, int offset, int in_c,
                              int pad, int out_h, int out_w, cl_mem *out_data);
 template void Pooling<cl_mem>(const cl_mem *in_data, int batch, int in_c,
                               int in_h, int in_w, int kernel_size, int stride,
-                              int out_h, int out_w, int mode, cl_mem *out_data);
+                              int pad, int mode, int out_h, int out_w,
+                              cl_mem *out_data);
 template void Concat<cl_mem>(const cl_mem *in_data, int count, int num_concats,
                              int concat_size, int top_concat_axis,
                              int bottom_concat_axis, int offset_concat_axis,

@@ -45,64 +45,41 @@ void Im2Col(const T *in_data, const VecInt &in_shape, int offset,
       }
     }
   }
-
-  //#pragma omp parallel for
-  //  for (int p = 0; p < in_c * out_h * out_w; ++p) {
-  //    int c_out = (p / out_h / out_w) % in_c;
-  //    int i_out = (p / out_w) % out_h;
-  //    int j_out = p % out_w;
-  //    int i_inp = -pad + i_out * stride;
-  //    int j_inp = -pad + j_out * stride;
-  //
-  //    int im_offset = c_out * in_h * in_w;
-  //    int col_offset = (c_out * ksize * ksize * out_h + i_out) * out_w +
-  //    j_out;
-  //    for (int ki = 0; ki < ksize; ++ki) {
-  //      for (int kj = 0; kj < ksize; ++kj) {
-  //        int i = i_inp + ki;
-  //        int j = j_inp + kj;
-  //        int col_index = col_offset + (ki * ksize + kj) * out_h * out_w;
-  //        col_data[col_index] = (i >= 0 && j >= 0 && i < in_h && j < in_w)
-  //                                  ? im_data[im_offset + i * in_w + j]
-  //                                  : 0;
-  //      }
-  //    }
-  //  }
 }
 
 template <typename T>
 void Pooling(const T *in_data, const VecInt &in_shape, int kernel_size,
-             int stride, int mode, const VecInt &out_shape, T *out_data) {
+             int stride, int pad, int mode, const VecInt &out_shape,
+             T *out_data) {
   int batch = in_shape[0];
   int in_c = in_shape[1], in_h = in_shape[2], in_w = in_shape[3];
   int out_h = out_shape[2], out_w = out_shape[3];
-
-  int h_offset = ((in_h - kernel_size) % stride) / 2;
-  int w_offset = ((in_w - kernel_size) % stride) / 2;
 
   for (int b = 0; b < batch; ++b) {
     for (int c = 0; c < in_c; ++c) {
       for (int h = 0; h < out_h; ++h) {
         for (int w = 0; w < out_w; ++w) {
-          int out_index = w + out_w * (h + out_h * (c + in_c * b));
-          float max = FLT_MIN;
+          int kistart = h * stride - pad, kjstart = w * stride - pad;
+          int kiend = std::min(kistart + kernel_size, in_h);
+          int kjend = std::min(kjstart + kernel_size, in_w);
+          int pool_size = (kiend - kistart) * (kjend - kjstart);
+          kistart = std::max(kistart, 0), kjstart = std::max(kjstart, 0);
+          kiend = std::min(kiend, in_h), kjend = std::min(kjend, in_w);
+          float max = -FLT_MAX;
           float sum = 0.f;
-          for (int ki = 0; ki < kernel_size; ++ki) {
-            for (int kj = 0; kj < kernel_size; ++kj) {
-              int cur_h = h_offset + h * stride + ki;
-              int cur_w = w_offset + w * stride + kj;
-              int index = cur_w + in_w * (cur_h + in_h * (c + b * in_c));
-              bool valid =
-                  (cur_h >= 0 && cur_h < in_h && cur_w >= 0 && cur_w < in_w);
-              float value = valid ? in_data[index] : FLT_MIN;
+          for (int ki = kistart; ki < kiend; ++ki) {
+            for (int kj = kjstart; kj < kjend; ++kj) {
+              int index = kj + in_w * (ki + in_h * (c + in_c * b));
+              float value = in_data[index];
               max = (value > max) ? value : max;
-              sum += valid ? in_data[index] : 0.f;
+              sum += value;
             }
           }
+          int out_index = w + out_w * (h + out_h * (c + in_c * b));
           if (mode == 0) {
             out_data[out_index] = max;
           } else {
-            out_data[out_index] = sum / (kernel_size * kernel_size);
+            out_data[out_index] = sum / pool_size;
           }
         }
       }
@@ -165,7 +142,7 @@ template void Im2Col<float>(const float *in_data, const VecInt &in_shape,
                             int offset, int kernel_size, int stride, int pad,
                             const VecInt &out_shape, float *out_data);
 template void Pooling<float>(const float *in_data, const VecInt &in_shape,
-                             int kernel_size, int stride, int mode,
+                             int kernel_size, int stride, int pad, int mode,
                              const VecInt &out_shape, float *out_data);
 template void Concat<float>(const float *in_data, int count, int num_concats,
                             int concat_size, int top_concat_axis,
@@ -195,9 +172,10 @@ void Im2Col(const T *in_data, const VecInt &in_shape, int offset,
 
 template <typename T>
 void Pooling(const T *in_data, const VecInt &in_shape, int kernel_size,
-             int stride, int mode, const VecInt &out_shape, T *out_data) {
+             int stride, int pad, int mode, const VecInt &out_shape,
+             T *out_data) {
   Kernel::Pooling(in_data, in_shape[0], in_shape[1], in_shape[2], in_shape[3],
-                  kernel_size, stride, out_shape[2], out_shape[3], mode,
+                  kernel_size, stride, pad, mode, out_shape[2], out_shape[3],
                   out_data);
 }
 
@@ -230,7 +208,7 @@ template void Im2Col<float>(const float *in_data, const VecInt &in_shape,
                             int offset, int kernel_size, int stride, int pad,
                             const VecInt &out_shape, float *out_data);
 template void Pooling<float>(const float *in_data, const VecInt &in_shape,
-                             int kernel_size, int stride, int mode,
+                             int kernel_size, int stride, int pad, int mode,
                              const VecInt &out_shape, float *out_data);
 template void Concat<float>(const float *in_data, int count, int num_concats,
                             int concat_size, int top_concat_axis,
@@ -251,7 +229,7 @@ template void Im2Col<cl_mem>(const cl_mem *in_data, const VecInt &in_shape,
                              int offset, int kernel_size, int stride, int pad,
                              const VecInt &out_shape, cl_mem *out_data);
 template void Pooling<cl_mem>(const cl_mem *in_data, const VecInt &in_shape,
-                              int kernel_size, int stride, int mode,
+                              int kernel_size, int stride, int pad, int mode,
                               const VecInt &out_shape, cl_mem *out_data);
 template void Concat<cl_mem>(const cl_mem *in_data, int count, int num_concats,
                              int concat_size, int top_concat_axis,
