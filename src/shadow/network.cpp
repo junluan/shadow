@@ -85,8 +85,8 @@ void Network::LoadWeights(const std::string &weight_file) {
       float *biases = new float[out_c], *filters = new float[num];
       file.read(reinterpret_cast<char *>(biases), sizeof(float) * out_c);
       file.read(reinterpret_cast<char *>(filters), sizeof(float) * num);
-      l->set_biases(biases);
-      l->set_filters(filters);
+      l->set_blob(1, biases);
+      l->set_blob(0, filters);
       delete[] biases;
       delete[] filters;
     }
@@ -96,8 +96,8 @@ void Network::LoadWeights(const std::string &weight_file) {
       float *biases = new float[out_num], *weights = new float[num];
       file.read(reinterpret_cast<char *>(biases), sizeof(float) * out_num);
       file.read(reinterpret_cast<char *>(weights), sizeof(float) * num);
-      l->set_biases(biases);
-      l->set_weights(weights);
+      l->set_blob(1, biases);
+      l->set_blob(0, weights);
       delete[] biases;
       delete[] weights;
     }
@@ -114,18 +114,18 @@ void Network::LoadWeights(const float *weight_data) {
       ConvLayer *l = reinterpret_cast<ConvLayer *>(layer);
       int in_c = l->bottom(0)->shape(1), out_c = l->top(0)->shape(1);
       int num = out_c * in_c * l->kernel_size() * l->kernel_size();
-      l->set_biases(index);
-      index += out_c;
-      l->set_filters(index);
+      l->set_blob(0, index);
       index += num;
+      l->set_blob(1, index);
+      index += out_c;
     }
     if (!layer->type().compare("Connected")) {
       ConnectedLayer *l = reinterpret_cast<ConnectedLayer *>(layer);
       int out_num = l->top(0)->num(), num = l->bottom(0)->num() * out_num;
-      l->set_biases(index);
-      index += out_num;
-      l->set_weights(index);
+      l->set_blob(0, index);
       index += num;
+      l->set_blob(1, index);
+      index += out_num;
     }
   }
 }

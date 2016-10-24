@@ -3,16 +3,16 @@
 void DropoutLayer::Reshape() {
   std::stringstream out;
   out << layer_name_ << ": "
-      << Util::format_vector(bottom_[0]->shape(), ",", "(", ")") << " -> "
-      << Util::format_vector(top_[0]->shape(), ",", "(", ")");
+      << Util::format_vector(bottoms_[0]->shape(), ",", "(", ")") << " -> "
+      << Util::format_vector(tops_[0]->shape(), ",", "(", ")");
   DInfo(out.str());
 }
 
 void DropoutLayer::Forward() {}
 
 void DropoutLayer::Release() {
-  bottom_.clear();
-  top_.clear();
+  bottoms_.clear();
+  tops_.clear();
 
   // DInfo("Free DropoutLayer!");
 }

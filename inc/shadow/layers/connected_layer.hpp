@@ -14,13 +14,12 @@ class ConnectedLayer : public Layer {
   void Forward();
   void Release();
 
-  void set_weights(const float *weights) { weights_.set_data(weights); }
-  void set_biases(const float *biases) { biases_.set_data(biases); }
+  void set_blob(int i, const float *data) { blobs_[i]->set_data(data); }
 
  private:
   int num_output_;
 
-  Blob<float> weights_, biases_, biases_multiplier_;
+  Blob<float> biases_multiplier_;
 };
 
 #endif  // SHADOW_LAYERS_CONNECTED_LAYER_HPP

@@ -20,7 +20,7 @@ class Layer {
       Blob<float> *bottom = get_blob_by_name(*blobs, layer_param_.bottom(i));
       if (bottom != nullptr) {
         if (bottom->num()) {
-          bottom_.push_back(bottom);
+          bottoms_.push_back(bottom);
         } else {
           Fatal(layer_name_ + ": bottom blob(" + layer_param_.bottom(i) +
                 Util::format_vector(bottom->shape(), ",", "(", ")") +
@@ -37,7 +37,7 @@ class Layer {
         top = new Blob<float>(layer_param_.top(i));
         blobs->push_back(top);
       }
-      top_.push_back(top);
+      tops_.push_back(top);
     }
   }
   virtual void Reshape() { Info("Reshape Layer!"); }
@@ -52,21 +52,21 @@ class Layer {
   virtual inline const std::string name() const { return layer_name_; }
   virtual inline const std::string type() const { return layer_type_; }
 
-  virtual inline int num_bottoms() { return bottom_.size(); }
-  virtual inline int num_tops() { return top_.size(); }
+  virtual inline int num_bottoms() { return bottoms_.size(); }
+  virtual inline int num_tops() { return tops_.size(); }
 
-  virtual inline const Blob<float> *bottom(int i) const { return bottom_[i]; }
-  virtual inline const Blob<float> *top(int i) const { return top_[i]; }
+  virtual inline const Blob<float> *bottom(int i) const { return bottoms_[i]; }
+  virtual inline const Blob<float> *top(int i) const { return tops_[i]; }
 
-  virtual inline Blob<float> *bottom(int i) { return bottom_[i]; }
-  virtual inline Blob<float> *top(int i) { return top_[i]; }
+  virtual inline Blob<float> *bottom(int i) { return bottoms_[i]; }
+  virtual inline Blob<float> *top(int i) { return tops_[i]; }
 
  protected:
   shadow::LayerParameter layer_param_;
 
   std::string layer_name_, layer_type_;
 
-  VecBlob bottom_, top_;
+  VecBlob bottoms_, tops_, blobs_;
 };
 
 typedef std::vector<Layer *> VecLayer;

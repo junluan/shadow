@@ -16,13 +16,12 @@ class ConvLayer : public Layer {
 
   int kernel_size() { return kernel_size_; }
 
-  void set_filters(const float *filters) { filters_.set_data(filters); }
-  void set_biases(const float *biases) { biases_.set_data(biases); }
+  void set_blob(int i, const float *data) { blobs_[i]->set_data(data); }
 
  private:
   int num_output_, kernel_size_, stride_, pad_, out_spatial_dim_, kernel_dim_;
 
-  Blob<float> filters_, biases_, biases_multiplier_, col_image_;
+  Blob<float> biases_multiplier_, col_image_;
 };
 
 #endif  // SHADOW_LAYERS_CONV_LAYER_HPP
