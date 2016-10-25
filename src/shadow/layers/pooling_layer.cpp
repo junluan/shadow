@@ -12,6 +12,13 @@ void PoolingLayer::Reshape() {
   kernel_size_ = layer_param_.pooling_param().kernel_size();
   stride_ = layer_param_.pooling_param().stride();
   pad_ = layer_param_.pooling_param().pad();
+  global_pooling_ = layer_param_.pooling_param().global_pooling();
+
+  if (global_pooling_) {
+    kernel_size_ = bottoms_[0]->shape(2);
+    stride_ = 1;
+    pad_ = 0;
+  }
 
   int in_h = bottoms_[0]->shape(2), in_w = bottoms_[0]->shape(3);
   int out_h = pooling_out_size(in_h, kernel_size_, pad_, stride_);

@@ -24,11 +24,6 @@ void ConvLayer::Reshape() {
   out_spatial_dim_ = tops_[0]->count(2);
   kernel_dim_ = kernel_size_ * kernel_size_ * in_c;
 
-  if (blobs_.size() == 0) {
-    blobs_.push_back(new Blob<float>(num_output_ * kernel_dim_));
-    blobs_.push_back(new Blob<float>(num_output_));
-  }
-
   biases_multiplier_.reshape(out_spatial_dim_);
   Blas::Set(out_spatial_dim_, 1, biases_multiplier_.mutable_data(), 0);
   col_image_.reshape(kernel_dim_, out_spatial_dim_);

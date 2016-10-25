@@ -1,4 +1,5 @@
 #include "shadow/network.hpp"
+#include "shadow/util/io.hpp"
 
 #include "shadow/layers/activate_layer.hpp"
 #include "shadow/layers/concat_layer.hpp"
@@ -11,38 +12,75 @@
 #include "shadow/layers/permute_layer.hpp"
 #include "shadow/layers/pooling_layer.hpp"
 
-#include <google/protobuf/text_format.h>
-
-using google::protobuf::TextFormat;
-
-void Network::LoadModel(const std::string &proto_file,
-                        const std::string &weight_file, int batch) {
-  LoadProtoStr(Util::read_text_from_file(proto_file), batch);
-  LoadWeights(weight_file);
+void Network::LoadModel(const std::string &proto_bin, int batch) {
+  LoadProtoBin(proto_bin, &net_param_);
+  Reshape(batch);
 }
 
-void Network::LoadModel(const std::string &proto_str, const float *weight_data,
+void Network::LoadModel(const std::string &proto_str, const float *weights_data,
                         int batch) {
-  LoadProtoStr(proto_str, batch);
-  LoadWeights(weight_data);
+  LoadProtoStrOrText(proto_str, &net_param_);
+  Reshape(batch);
+  CopyWeights(weights_data);
 }
 
-void Network::Forward(float *in_data) {
-  if (in_data != nullptr) PreFillData(in_data);
-  for (int i = 0; i < layers_.size(); ++i) layers_[i]->Forward();
+void Network::LoadModel(const std::string &proto_text,
+                        const std::string &weights_file, int batch) {
+  LoadProtoStrOrText(proto_text, &net_param_);
+  Reshape(batch);
+  CopyWeights(weights_file);
+}
+
+void Network::SaveModel(const std::string &proto_bin) {
+  for (int l = 0; l < layers_.size(); ++l) {
+    net_param_.mutable_layer(l)->clear_blobs();
+    const Layer *layer = layers_[l];
+    for (int n = 0; n < layer->num_blobs(); ++n) {
+      int data_size = layer->blob(n)->count();
+      float *blob_data = new float[data_size];
+      layer->blob(n)->read_data(blob_data);
+      shadow::Blob *layer_blob = net_param_.mutable_layer(l)->add_blobs();
+      layer_blob->set_count(data_size);
+      for (int i = 0; i < data_size; ++i) {
+        layer_blob->add_data(blob_data[i]);
+      }
+      delete[] blob_data;
+    }
+  }
+  IO::WriteProtoToBinaryFile(net_param_, proto_bin);
+}
+
+void Network::Forward(float *data) {
+  if (data == nullptr) Fatal("Must provide input data!");
+  if (layers_.size() == 0) return;
+  if (!layers_[0]->type().compare("Data")) {
+    layers_[0]->bottom(0)->set_data(data);
+  } else {
+    Fatal("The first layer must be Data layer!");
+  }
+  for (int l = 0; l < layers_.size(); ++l) layers_[l]->Forward();
 }
 
 void Network::Release() {
-  for (int i = 0; i < layers_.size(); ++i) layers_[i]->Release();
-  for (int i = 0; i < blobs_.size(); ++i) blobs_[i]->clear();
+  for (int l = 0; l < layers_.size(); ++l) {
+    layers_[l]->Release();
+    layers_[l] = nullptr;
+  }
+  for (int n = 0; n < blobs_.size(); ++n) {
+    blobs_[n]->clear();
+    blobs_[n] = nullptr;
+  }
+
+  layers_.clear();
+  blobs_.clear();
 
   DInfo("Release Network!");
 }
 
 const Layer *Network::GetLayerByName(const std::string &layer_name) {
-  for (int i = 0; i < layers_.size(); ++i) {
-    if (!layer_name.compare(layers_[i]->name()))
-      return (const Layer *)layers_[i];
+  for (int l = 0; l < layers_.size(); ++l) {
+    if (!layer_name.compare(layers_[l]->name()))
+      return (const Layer *)layers_[l];
   }
   return nullptr;
 }
@@ -51,82 +89,24 @@ const Blob<float> *Network::GetBlobByName(const std::string &blob_name) {
   return get_blob_by_name(blobs_, blob_name);
 }
 
-void Network::LoadProtoStr(const std::string &proto_str, int batch) {
-  bool success = TextFormat::ParseFromString(proto_str, &net_param_);
-
-  if (!proto_str.compare("") || !success) Fatal("Parse configure file error!");
-
-  Reshape(batch);
-
-  Blob<float> *in_blob = new Blob<float>("in_blob");
-
-  in_blob->reshape(in_shape_);
-  blobs_.push_back(in_blob);
-
-  for (int i = 0; i < net_param_.layer_size(); ++i) {
-    layers_.push_back(LayerFactory(net_param_.layer(i), &blobs_));
+void Network::LoadProtoBin(const std::string &proto_bin,
+                           shadow::NetParameter *net_param) {
+  if (!IO::ReadProtoFromBinaryFile(proto_bin, net_param)) {
+    Fatal("Error when loading proto binary file: " + proto_bin);
   }
 }
 
-void Network::LoadWeights(const std::string &weight_file) {
-  DInfo("Load model from " + weight_file + " ... ");
-
-  std::ifstream file(weight_file, std::ios::binary);
-  if (!file.is_open()) Fatal("Load weight file error!");
-
-  file.seekg(sizeof(char) * 16, std::ios::beg);
-
-  for (int i = 0; i < layers_.size(); ++i) {
-    Layer *layer = layers_[i];
-    if (!layer->type().compare("Convolution")) {
-      ConvLayer *l = reinterpret_cast<ConvLayer *>(layer);
-      int in_c = l->bottom(0)->shape(1), out_c = l->top(0)->shape(1);
-      int num = out_c * in_c * l->kernel_size() * l->kernel_size();
-      float *biases = new float[out_c], *filters = new float[num];
-      file.read(reinterpret_cast<char *>(biases), sizeof(float) * out_c);
-      file.read(reinterpret_cast<char *>(filters), sizeof(float) * num);
-      l->set_blob(1, biases);
-      l->set_blob(0, filters);
-      delete[] biases;
-      delete[] filters;
-    }
-    if (!layer->type().compare("Connected")) {
-      ConnectedLayer *l = reinterpret_cast<ConnectedLayer *>(layer);
-      int out_num = l->top(0)->num(), num = l->bottom(0)->num() * out_num;
-      float *biases = new float[out_num], *weights = new float[num];
-      file.read(reinterpret_cast<char *>(biases), sizeof(float) * out_num);
-      file.read(reinterpret_cast<char *>(weights), sizeof(float) * num);
-      l->set_blob(1, biases);
-      l->set_blob(0, weights);
-      delete[] biases;
-      delete[] weights;
-    }
+void Network::LoadProtoStrOrText(const std::string &proto_str_or_text,
+                                 shadow::NetParameter *net_param) {
+  bool success;
+  Path path(proto_str_or_text);
+  if (path.is_file()) {
+    success = IO::ReadProtoFromTextFile(proto_str_or_text, net_param);
+  } else {
+    success = IO::ReadProtoFromText(proto_str_or_text, net_param);
   }
-
-  file.close();
-}
-
-void Network::LoadWeights(const float *weight_data) {
-  const float *index = weight_data;
-  for (int i = 0; i < layers_.size(); ++i) {
-    Layer *layer = layers_[i];
-    if (!layer->type().compare("Convolution")) {
-      ConvLayer *l = reinterpret_cast<ConvLayer *>(layer);
-      int in_c = l->bottom(0)->shape(1), out_c = l->top(0)->shape(1);
-      int num = out_c * in_c * l->kernel_size() * l->kernel_size();
-      l->set_blob(0, index);
-      index += num;
-      l->set_blob(1, index);
-      index += out_c;
-    }
-    if (!layer->type().compare("Connected")) {
-      ConnectedLayer *l = reinterpret_cast<ConnectedLayer *>(layer);
-      int out_num = l->top(0)->num(), num = l->bottom(0)->num() * out_num;
-      l->set_blob(0, index);
-      index += num;
-      l->set_blob(1, index);
-      index += out_num;
-    }
+  if (!proto_str_or_text.compare("") || !success) {
+    Fatal("Error when loading proto: " + proto_str_or_text);
   }
 }
 
@@ -135,7 +115,53 @@ void Network::Reshape(int batch) {
     in_shape_.push_back(net_param_.input_shape().dim(i));
   }
   if (in_shape_.size() != 4) Fatal("input_shape dimension mismatch!");
-  if (batch != 0) in_shape_[0] = batch;
+  if (batch > 0) in_shape_[0] = batch;
+
+  Blob<float> *in_blob = new Blob<float>("in_blob");
+  in_blob->reshape(in_shape_);
+  blobs_.push_back(in_blob);
+
+  for (int l = 0; l < net_param_.layer_size(); ++l) {
+    layers_.push_back(LayerFactory(net_param_.layer(l), &blobs_));
+  }
+}
+
+void Network::CopyWeights(const float *weights_data) {
+  for (int l = 0; l < layers_.size(); ++l) {
+    Layer *layer = layers_[l];
+    std::string layer_type = layer->type();
+    if (!layer_type.compare("Connected") | !layer_type.compare("Convolution")) {
+      for (int n = 0; n < layer->num_blobs(); ++n) {
+        layer->set_blob(n, weights_data);
+        weights_data += layer->blob(n)->count();
+      }
+    }
+  }
+}
+
+void Network::CopyWeights(const std::string &weights_file) {
+  DInfo("Load model from " + weights_file + " ... ");
+
+  std::ifstream file(weights_file, std::ios::binary);
+  if (!file.is_open()) Fatal("Load weight file error!");
+
+  file.seekg(sizeof(char) * 16, std::ios::beg);
+
+  for (int l = 0; l < layers_.size(); ++l) {
+    Layer *layer = layers_[l];
+    std::string layer_type = layer->type();
+    if (!layer_type.compare("Connected") | !layer_type.compare("Convolution")) {
+      for (int n = layer->num_blobs() - 1; n >= 0; --n) {
+        int count = layer->blob(n)->count();
+        float *weights = new float[count];
+        file.read(reinterpret_cast<char *>(weights), count * sizeof(float));
+        layer->set_blob(n, weights);
+        delete[] weights;
+      }
+    }
+  }
+
+  file.close();
 }
 
 Layer *Network::LayerFactory(const shadow::LayerParameter &layer_param,
@@ -171,13 +197,4 @@ Layer *Network::LayerFactory(const shadow::LayerParameter &layer_param,
     Fatal("Error when making layer: " + layer_param.name());
   }
   return layer;
-}
-
-void Network::PreFillData(float *in_data) {
-  for (int i = 0; i < layers_.size(); ++i) {
-    if (!layers_[i]->type().compare("Data")) {
-      layers_[i]->bottom(0)->set_data(in_data);
-      break;
-    }
-  }
 }

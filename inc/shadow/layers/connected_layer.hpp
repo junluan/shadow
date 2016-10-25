@@ -14,8 +14,6 @@ class ConnectedLayer : public Layer {
   void Forward();
   void Release();
 
-  void set_blob(int i, const float *data) { blobs_[i]->set_data(data); }
-
  private:
   int num_output_;
 

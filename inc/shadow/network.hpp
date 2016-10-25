@@ -5,32 +5,39 @@
 
 class Network {
  public:
-  void LoadModel(const std::string &proto_file, const std::string &weight_file,
-                 int batch = 1);
-  void LoadModel(const std::string &proto_str, const float *weight_data,
-                 int batch = 1);
+  void LoadModel(const std::string &proto_bin, int batch = 0);
+  void LoadModel(const std::string &proto_str, const float *weights_data,
+                 int batch = 0);
+  void LoadModel(const std::string &proto_text, const std::string &weights_file,
+                 int batch = 0);
 
-  void Forward(float *in_data = nullptr);
+  void SaveModel(const std::string &proto_bin);
+
+  void Forward(float *data = nullptr);
   void Release();
 
   const Layer *GetLayerByName(const std::string &layer_name);
   const Blob<float> *GetBlobByName(const std::string &blob_name);
 
-  VecInt in_shape_;
+  const VecInt in_shape() { return in_shape_; }
 
  private:
-  void LoadProtoStr(const std::string &proto_str, int batch);
-  void LoadWeights(const std::string &weight_file);
-  void LoadWeights(const float *weight_data);
+  void LoadProtoBin(const std::string &proto_bin,
+                    shadow::NetParameter *net_param);
+  void LoadProtoStrOrText(const std::string &proto_str_or_text,
+                          shadow::NetParameter *net_param);
 
-  void Reshape(int batch = 0);
+  void Reshape(int batch);
+
+  void CopyWeights(const float *weights_data);
+  void CopyWeights(const std::string &weights_file);
+
   Layer *LayerFactory(const shadow::LayerParameter &layer_param,
                       VecBlob *blobs);
 
-  void PreFillData(float *in_data);
-
   shadow::NetParameter net_param_;
 
+  VecInt in_shape_;
   VecLayer layers_;
   VecBlob blobs_;
 };

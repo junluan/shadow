@@ -9,11 +9,6 @@ void ConnectedLayer::Reshape() {
   top_shape.push_back(num_output_);
   tops_[0]->reshape(top_shape);
 
-  if (blobs_.size() == 0) {
-    blobs_.push_back(new Blob<float>(num_output_ * bottoms_[0]->num()));
-    blobs_.push_back(new Blob<float>(num_output_));
-  }
-
   biases_multiplier_.reshape(top_shape[0]);
   Blas::Set(top_shape[0], 1, biases_multiplier_.mutable_data(), 0);
 

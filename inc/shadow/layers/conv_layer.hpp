@@ -14,10 +14,6 @@ class ConvLayer : public Layer {
   void Forward();
   void Release();
 
-  int kernel_size() { return kernel_size_; }
-
-  void set_blob(int i, const float *data) { blobs_[i]->set_data(data); }
-
  private:
   int num_output_, kernel_size_, stride_, pad_, out_spatial_dim_, kernel_dim_;
 

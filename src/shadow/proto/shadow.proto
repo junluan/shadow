@@ -7,10 +7,9 @@ message BlobShape {
 }
 
 message Blob {
-  optional BlobShape shape = 1;
-  optional int32 num = 2;
-  optional int32 count = 3;
-  repeated float data = 4 [packed = true];
+  repeated float data = 1 [packed = true];
+  optional BlobShape shape = 2;
+  optional int32 count = 3 [default = 0];
 }
 
 message ActivateParameter {
@@ -70,6 +69,20 @@ message PoolingParameter {
   optional int32 kernel_size = 2 [default = 2];
   optional int32 stride = 3 [default = 1];
   optional int32 pad = 4 [default = 0];
+  optional bool global_pooling = 5 [default = false];
+}
+
+message PriorBoxParameter {
+  enum CodeType {
+    Corner = 1;
+    Center = 2;
+  }
+  optional float min_size = 1;
+  optional float max_size = 2;
+  repeated float aspect_ratio = 3;
+  optional bool flip = 4 [default = true];
+  optional bool clip = 5 [default = true];
+  repeated float variance = 6;
 }
 
 message LayerParameter {
@@ -90,6 +103,7 @@ message LayerParameter {
   optional NormalizeParameter normalize_param = 18;
   optional PermuteParameter permute_param = 19;
   optional PoolingParameter pooling_param = 20;
+  optional PriorBoxParameter prior_box_param = 21;
 }
 
 message NetParameter {

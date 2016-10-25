@@ -16,6 +16,7 @@ class Layer {
         layer_type_(layer_param.type()) {}
 
   virtual void Setup(VecBlob *blobs) {
+    bottoms_.clear(), tops_.clear(), blobs_.clear();
     for (int i = 0; i < layer_param_.bottom_size(); ++i) {
       Blob<float> *bottom = get_blob_by_name(*blobs, layer_param_.bottom(i));
       if (bottom != nullptr) {
@@ -39,6 +40,21 @@ class Layer {
       }
       tops_.push_back(top);
     }
+    for (int i = 0; i < layer_param_.blobs_size(); ++i) {
+      const shadow::Blob &proto_blob = layer_param_.blobs(i);
+      int data_size = proto_blob.data_size(), count = proto_blob.count();
+      Blob<float> *blob;
+      if (data_size > 0) {
+        blob = new Blob<float>(data_size, proto_blob.data().data());
+      } else {
+        if (count > 0) {
+          blob = new Blob<float>(count);
+        } else {
+          Fatal(layer_name_ + ": blob count must be greater than 0!");
+        }
+      }
+      blobs_.push_back(blob);
+    }
   }
   virtual void Reshape() { Info("Reshape Layer!"); }
   virtual void Forward() { Info("Forward Layer!"); }
@@ -52,14 +68,36 @@ class Layer {
   virtual inline const std::string name() const { return layer_name_; }
   virtual inline const std::string type() const { return layer_type_; }
 
-  virtual inline int num_bottoms() { return bottoms_.size(); }
-  virtual inline int num_tops() { return tops_.size(); }
+  virtual inline int num_bottoms() const { return bottoms_.size(); }
+  virtual inline int num_tops() const { return tops_.size(); }
+  virtual inline int num_blobs() const { return blobs_.size(); }
 
-  virtual inline const Blob<float> *bottom(int i) const { return bottoms_[i]; }
-  virtual inline const Blob<float> *top(int i) const { return tops_[i]; }
+  virtual inline Blob<float> *bottom(int i) const {
+    if (i < bottoms_.size()) {
+      return bottoms_[i];
+    }
+    return nullptr;
+  }
+  virtual inline Blob<float> *top(int i) const {
+    if (i < bottoms_.size()) {
+      return tops_[i];
+    }
+    return nullptr;
+  }
+  virtual inline Blob<float> *blob(int i) const {
+    if (i < blobs_.size()) {
+      return blobs_[i];
+    }
+    return nullptr;
+  }
 
-  virtual inline Blob<float> *bottom(int i) { return bottoms_[i]; }
-  virtual inline Blob<float> *top(int i) { return tops_[i]; }
+  virtual inline void set_blob(int i, const float *data) {
+    if (i < blobs_.size()) {
+      blobs_[i]->set_data(data);
+    } else {
+      Fatal("Blob " + Util::str(i) + " is not initialized!");
+    }
+  }
 
  protected:
   shadow::LayerParameter layer_param_;
