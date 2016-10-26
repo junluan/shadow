@@ -10,12 +10,14 @@ class ConnectedLayer : public Layer {
       : Layer(layer_param) {}
   ~ConnectedLayer() { Release(); }
 
+  void Setup(VecBlob *blobs);
   void Reshape();
   void Forward();
   void Release();
 
  private:
   int num_output_;
+  bool bias_term_, transpose_;
 
   Blob<float> biases_multiplier_;
 };

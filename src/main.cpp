@@ -1,8 +1,7 @@
 #include "yolo.hpp"
 
 int main(int argc, char const *argv[]) {
-  Yolo yolo("./cfg/yolo-refine.conv_adas.prototxt",
-            "./models/df/ex2/yolo-refine_80000.weights", 0.2);
+  Yolo yolo("model/yolo-refine_80000.shadowmodel", 0.2);
 
   VecBox roi(1);
   roi[0].x = 0.5;

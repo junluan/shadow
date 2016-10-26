@@ -6,12 +6,21 @@ inline int convolutional_out_size(int s, int size, int pad, int stride) {
   return (s + 2 * pad - size) / stride + 1;
 }
 
-void ConvLayer::Reshape() {
-  num_output_ = layer_param_.convolution_param().num_output();
-  kernel_size_ = layer_param_.convolution_param().kernel_size();
-  stride_ = layer_param_.convolution_param().stride();
-  pad_ = layer_param_.convolution_param().pad();
+void ConvLayer::Setup(VecBlob *blobs) {
+  Layer::Setup(blobs);
 
+  const shadow::ConvolutionParameter &conv_param =
+      layer_param_.convolution_param();
+
+  num_output_ = conv_param.num_output();
+  CHECK(conv_param.has_kernel_size());
+  kernel_size_ = conv_param.kernel_size();
+  stride_ = conv_param.stride();
+  pad_ = conv_param.pad();
+  bias_term_ = conv_param.bias_term();
+}
+
+void ConvLayer::Reshape() {
   int in_c = bottoms_[0]->shape(1), in_h = bottoms_[0]->shape(2),
       in_w = bottoms_[0]->shape(3);
 
@@ -47,9 +56,11 @@ void ConvLayer::Forward() {
     Blas::BlasSgemm(0, 0, num_output_, out_spatial_dim_, kernel_dim_, 1,
                     blobs_[0]->data(), 0, col_image_.data(), 0, 0,
                     tops_[0]->mutable_data(), b * top_num);
-    Blas::BlasSgemm(0, 0, num_output_, out_spatial_dim_, 1, 1,
-                    blobs_[1]->data(), 0, biases_multiplier_.data(), 0, 1,
-                    tops_[0]->mutable_data(), b * top_num);
+    if (bias_term_) {
+      Blas::BlasSgemm(0, 0, num_output_, out_spatial_dim_, 1, 1,
+                      blobs_[1]->data(), 0, biases_multiplier_.data(), 0, 1,
+                      tops_[0]->mutable_data(), b * top_num);
+    }
   }
 }
 

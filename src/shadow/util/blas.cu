@@ -33,13 +33,13 @@ void Set(int n, float val, T *y, int offy) {
                                const float *b, int offb, float *y, int offy) { \
     int i = (blockIdx.x + blockIdx.y * gridDim.x) * blockDim.x + threadIdx.x;  \
     if (i >= n) return;                                                        \
-    operation;                                                                 \
+    y[offy + i] = a[offa + i] operation b[offb + i];                           \
   }
 
-BINARY_FUNC(Add, y[offy + i] = a[offa + i] + b[offb + i]);
-BINARY_FUNC(Sub, y[offy + i] = a[offa + i] - b[offb + i]);
-BINARY_FUNC(Mul, y[offy + i] = a[offa + i] * b[offb + i]);
-BINARY_FUNC(Div, y[offy + i] = a[offa + i] / b[offb + i]);
+BINARY_FUNC(Add, +);
+BINARY_FUNC(Sub, -);
+BINARY_FUNC(Mul, *);
+BINARY_FUNC(Div, /);
 
 template <typename T>
 void Add(int n, const T *a, int offa, const T *b, int offb, T *y, int offy) {

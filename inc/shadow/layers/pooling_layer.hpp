@@ -10,6 +10,7 @@ class PoolingLayer : public Layer {
       : Layer(layer_param) {}
   ~PoolingLayer() { Release(); }
 
+  void Setup(VecBlob *blobs);
   void Reshape();
   void Forward();
   void Release();

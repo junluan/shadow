@@ -32,13 +32,10 @@ inline void GetBatchData(const JImage &im_src, float *batch_data) {
   }
 }
 
-Yolo::Yolo(string cfg_file, string weight_file, float threshold) {
-  cfg_file_ = cfg_file;
-  weight_file_ = weight_file;
+Yolo::Yolo(string model_file, float threshold) {
+  model_file_ = model_file;
   threshold_ = threshold;
 }
-
-Yolo::~Yolo() {}
 
 void Yolo::Setup(int batch, VecRectF *rois) {
 #if defined(USE_CUDA) | defined(USE_CL)
@@ -46,7 +43,7 @@ void Yolo::Setup(int batch, VecRectF *rois) {
   Blas::Setup();
 #endif
 
-  net_.LoadModel(cfg_file_, weight_file_, batch);
+  net_.LoadModel(model_file_, batch);
 
   batch_ = net_.in_shape()[0];
   in_num_ = net_.in_shape()[1] * net_.in_shape()[2] * net_.in_shape()[3];

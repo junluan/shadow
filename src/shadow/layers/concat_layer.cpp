@@ -1,14 +1,21 @@
 #include "shadow/layers/concat_layer.hpp"
 #include "shadow/util/image.hpp"
 
-void ConcatLayer::Reshape() {
-  int num_axes = bottoms_[0]->num_axes();
-  concat_axis_ = layer_param_.concat_param().axis();
-  if (concat_axis_ < 0 || concat_axis_ >= num_axes) Fatal("Axis out of range!");
+void ConcatLayer::Setup(VecBlob *blobs) {
+  Layer::Setup(blobs);
 
-  VecInt top_shape = bottoms_[0]->shape();
+  const shadow::ConcatParameter &concat_param = layer_param_.concat_param();
+
+  concat_axis_ = concat_param.axis();
+  CHECK_GE(concat_axis_, 0);
+  CHECK_LT(concat_axis_, bottoms_[0]->num_axes());
   num_concats_ = bottoms_[0]->count(0, concat_axis_ - 1);
   concat_input_size_ = bottoms_[0]->count(concat_axis_ + 1);
+}
+
+void ConcatLayer::Reshape() {
+  int num_axes = bottoms_[0]->num_axes();
+  VecInt top_shape = bottoms_[0]->shape();
   for (int i = 1; i < bottoms_.size(); ++i) {
     if (num_axes != bottoms_[i]->num_axes()) {
       Fatal("Bottoms must have the same axes!");

@@ -8,8 +8,7 @@
 
 class Yolo {
  public:
-  Yolo(std::string cfg_file, std::string weight_file, float threshold);
-  ~Yolo();
+  Yolo(std::string model_file, float threshold = 0.2);
 
   void Setup(int batch = 1, VecRectF *rois = nullptr);
   void Test(std::string image_file);
@@ -33,7 +32,7 @@ class Yolo {
 #endif
   void PrintYoloDetections(const VecBox &boxes, int count, std::ofstream *file);
 
-  std::string cfg_file_, weight_file_;
+  std::string model_file_;
   float threshold_;
   Network net_;
   const Blob<float> *out_blob_;

@@ -27,13 +27,16 @@ message ConcatParameter {
 
 message ConnectedParameter {
   optional int32 num_output = 1;
+  optional bool bias_term = 2 [default = true];
+  optional bool transpose = 3 [default = false];
 }
 
 message ConvolutionParameter {
   optional int32 num_output = 1;
-  optional int32 kernel_size = 2 [default = 3];
+  optional int32 kernel_size = 2;
   optional int32 stride = 3 [default = 1];
   optional int32 pad = 4 [default = 0];
+  optional bool bias_term = 5 [default = true];
 }
 
 message DataParameter {
@@ -66,7 +69,7 @@ message PoolingParameter {
     Ave = 1;
   }
   optional PoolType pool = 1 [default = Max];
-  optional int32 kernel_size = 2 [default = 2];
+  optional int32 kernel_size = 2;
   optional int32 stride = 3 [default = 1];
   optional int32 pad = 4 [default = 0];
   optional bool global_pooling = 5 [default = false];

@@ -7,19 +7,25 @@ inline int pooling_out_size(int s, int size, int pad, int stride) {
          1;
 }
 
-void PoolingLayer::Reshape() {
-  pool_type_ = layer_param_.pooling_param().pool();
-  kernel_size_ = layer_param_.pooling_param().kernel_size();
-  stride_ = layer_param_.pooling_param().stride();
-  pad_ = layer_param_.pooling_param().pad();
-  global_pooling_ = layer_param_.pooling_param().global_pooling();
+void PoolingLayer::Setup(VecBlob *blobs) {
+  Layer::Setup(blobs);
 
+  const shadow::PoolingParameter &pooling_param = layer_param_.pooling_param();
+
+  pool_type_ = pooling_param.pool();
+  CHECK(pooling_param.has_kernel_size());
+  kernel_size_ = pooling_param.kernel_size();
+  stride_ = pooling_param.stride();
+  pad_ = pooling_param.pad();
+  global_pooling_ = pooling_param.global_pooling();
   if (global_pooling_) {
     kernel_size_ = bottoms_[0]->shape(2);
     stride_ = 1;
     pad_ = 0;
   }
+}
 
+void PoolingLayer::Reshape() {
   int in_h = bottoms_[0]->shape(2), in_w = bottoms_[0]->shape(3);
   int out_h = pooling_out_size(in_h, kernel_size_, pad_, stride_);
   int out_w = pooling_out_size(in_w, kernel_size_, pad_, stride_);

@@ -1,15 +1,20 @@
 #include "shadow/layers/normalize_layer.hpp"
 #include "shadow/util/blas.hpp"
 
-void NormalizeLayer::Reshape() {
-  across_spatial_ = layer_param_.normalize_param().across_spatial();
-  channel_shared_ = layer_param_.normalize_param().channel_shared();
+void NormalizeLayer::Setup(VecBlob *blobs) {
+  Layer::Setup(blobs);
 
-  int num_scale = layer_param_.normalize_param().scale_size();
-  for (int i = 0; i < num_scale; ++i) {
+  const shadow::NormalizeParameter &normalize_param =
+      layer_param_.normalize_param();
+
+  across_spatial_ = normalize_param.across_spatial();
+  channel_shared_ = normalize_param.channel_shared();
+  for (int i = 0; i < layer_param_.normalize_param().scale_size(); ++i) {
     scale_val_.push_back(layer_param_.normalize_param().scale(i));
   }
+}
 
+void NormalizeLayer::Reshape() {
   int in_c = bottoms_[0]->shape(1), in_h = bottoms_[0]->shape(2),
       in_w = bottoms_[0]->shape(3);
 
@@ -21,7 +26,7 @@ void NormalizeLayer::Reshape() {
     norm_.reshape(1, 1, in_h, in_w);
   }
   if (!channel_shared_) {
-    for (int i = num_scale; i < in_c; ++i) {
+    for (int i = scale_val_.size(); i < in_c; ++i) {
       scale_val_.push_back(1.f);
     }
     scale_.reshape(in_c);

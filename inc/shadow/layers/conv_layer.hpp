@@ -10,12 +10,14 @@ class ConvLayer : public Layer {
       : Layer(layer_param) {}
   ~ConvLayer() { Release(); }
 
+  void Setup(VecBlob *blobs);
   void Reshape();
   void Forward();
   void Release();
 
  private:
   int num_output_, kernel_size_, stride_, pad_, out_spatial_dim_, kernel_dim_;
+  bool bias_term_;
 
   Blob<float> biases_multiplier_, col_image_;
 };

@@ -2,9 +2,16 @@
 #include "shadow/util/blas.hpp"
 #include "shadow/util/image.hpp"
 
-void ActivateLayer::Reshape() {
-  activate_type_ = layer_param_.activate_param().type();
+void ActivateLayer::Setup(VecBlob *blobs) {
+  Layer::Setup(blobs);
 
+  const shadow::ActivateParameter &activate_param =
+      layer_param_.activate_param();
+
+  activate_type_ = layer_param_.activate_param().type();
+}
+
+void ActivateLayer::Reshape() {
   if (bottoms_[0] != tops_[0]) {
     tops_[0]->reshape(bottoms_[0]->shape());
   }

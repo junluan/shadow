@@ -20,12 +20,14 @@ void DataLayer::Setup(VecBlob *blobs) {
     tops_.push_back(top);
     blobs->push_back(top);
   }
+
+  const shadow::DataParameter &data_param = layer_param_.data_param();
+
+  scale_ = data_param.scale();
+  mean_value_ = data_param.mean_value();
 }
 
 void DataLayer::Reshape() {
-  scale_ = layer_param_.data_param().scale();
-  mean_value_ = layer_param_.data_param().mean_value();
-
   tops_[0]->reshape(bottoms_[0]->shape());
 
   std::stringstream out;

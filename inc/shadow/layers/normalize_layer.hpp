@@ -10,6 +10,7 @@ class NormalizeLayer : public Layer {
       : Layer(layer_param) {}
   ~NormalizeLayer() { Release(); }
 
+  void Setup(VecBlob *blobs);
   void Reshape();
   void Forward();
   void Release();

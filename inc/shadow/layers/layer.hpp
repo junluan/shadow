@@ -50,7 +50,7 @@ class Layer {
         if (count > 0) {
           blob = new Blob<float>(count);
         } else {
-          Fatal(layer_name_ + ": blob count must be greater than 0!");
+          blob = new Blob<float>();
         }
       }
       blobs_.push_back(blob);
