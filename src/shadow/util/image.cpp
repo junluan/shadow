@@ -7,10 +7,26 @@ namespace Image {
 
 #if !defined(USE_CUDA) & !defined(USE_CL)
 template <typename T>
-void DataTransform(const T *in_data, int count, float scale, float mean_value,
-                   T *out_data) {
-  for (int i = 0; i < count; ++i) {
-    out_data[i] = (in_data[i] - mean_value) * scale;
+void DataTransform(const T *in_data, const VecInt &in_shape, float scale,
+                   int num_mean, const T *mean_value, T *out_data) {
+  int in_c = in_shape[1], spatial_dim = in_shape[2] * in_shape[3];
+  int count = in_shape[0] * in_c * spatial_dim;
+  if (num_mean == 1) {
+    for (int i = 0; i < count; ++i) {
+      out_data[i] = (in_data[i] - mean_value[0]) * scale;
+    }
+  } else if (num_mean == in_c) {
+    for (int i = 0; i < count; ++i) {
+      int c_out = (i / spatial_dim) % in_c;
+      out_data[i] = (in_data[i] - mean_value[c_out]) * scale;
+    }
+  } else if (num_mean == in_c * spatial_dim) {
+    for (int i = 0; i < count; ++i) {
+      int c_out = (i / spatial_dim) % in_c;
+      int s_out = i % spatial_dim;
+      out_data[i] =
+          (in_data[i] - mean_value[c_out * spatial_dim + s_out]) * scale;
+    }
   }
 }
 
@@ -136,8 +152,9 @@ void Activate(T *data, int count, int type) {
 }
 
 // Explicit instantiation
-template void DataTransform<float>(const float *in_data, int count, float scale,
-                                   float mean_value, float *out_data);
+template void DataTransform<float>(const float *in_data, const VecInt &in_shape,
+                                   float scale, int num_mean,
+                                   const float *mean_value, float *out_data);
 template void Im2Col<float>(const float *in_data, const VecInt &in_shape,
                             int offset, int kernel_size, int stride, int pad,
                             const VecInt &out_shape, float *out_data);
@@ -156,9 +173,12 @@ template void Activate<float>(float *data, int count, int type);
 
 #else
 template <typename T>
-void DataTransform(const T *in_data, int count, float scale, float mean_value,
-                   T *out_data) {
-  Kernel::DataTransform(in_data, count, scale, mean_value, out_data);
+void DataTransform(const T *in_data, const VecInt &in_shape, float scale,
+                   int num_mean, const T *mean_value, T *out_data) {
+  int in_c = in_shape[1], spatial_dim = in_shape[2] * in_shape[3];
+  int count = in_shape[0] * in_c * spatial_dim;
+  Kernel::DataTransform(in_data, count, in_c, spatial_dim, scale, num_mean,
+                        mean_value, out_data);
 }
 
 template <typename T>
@@ -202,8 +222,9 @@ void Activate(T *data, int count, int type) {
 
 #if defined(USE_CUDA)
 // Explicit instantiation
-template void DataTransform<float>(const float *in_data, int count, float scale,
-                                   float mean_value, float *out_data);
+template void DataTransform<float>(const float *in_data, const VecInt &in_shape,
+                                   float scale, int num_mean,
+                                   const float *mean_value, float *out_data);
 template void Im2Col<float>(const float *in_data, const VecInt &in_shape,
                             int offset, int kernel_size, int stride, int pad,
                             const VecInt &out_shape, float *out_data);
@@ -222,8 +243,9 @@ template void Activate<float>(float *data, int count, int type);
 
 #else
 // Explicit instantiation
-template void DataTransform<cl_mem>(const cl_mem *in_data, int count,
-                                    float scale, float mean_value,
+template void DataTransform<cl_mem>(const cl_mem *in_data,
+                                    const VecInt &in_shape, float scale,
+                                    int num_mean, const cl_mem *mean_value,
                                     cl_mem *out_data);
 template void Im2Col<cl_mem>(const cl_mem *in_data, const VecInt &in_shape,
                              int offset, int kernel_size, int stride, int pad,

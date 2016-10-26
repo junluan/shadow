@@ -24,7 +24,21 @@ void DataLayer::Setup(VecBlob *blobs) {
   const shadow::DataParameter &data_param = layer_param_.data_param();
 
   scale_ = data_param.scale();
-  mean_value_ = data_param.mean_value();
+  num_mean_ = 1;
+  VecFloat mean_value;
+  if (data_param.mean_value_size() > 1) {
+    CHECK_EQ(data_param.mean_value_size(), bottoms_[0]->shape(1));
+    for (int i = 0; i < data_param.mean_value_size(); ++i) {
+      mean_value.push_back(data_param.mean_value(i));
+    }
+    num_mean_ = mean_value.size();
+  } else if (data_param.mean_value_size() == 1) {
+    mean_value.push_back(data_param.mean_value(0));
+  } else {
+    mean_value.push_back(0);
+  }
+  mean_value_.reshape(num_mean_);
+  mean_value_.set_data(mean_value.data());
 }
 
 void DataLayer::Reshape() {
@@ -37,8 +51,8 @@ void DataLayer::Reshape() {
 }
 
 void DataLayer::Forward() {
-  Image::DataTransform(bottoms_[0]->data(), tops_[0]->count(), scale_,
-                       mean_value_, tops_[0]->mutable_data());
+  Image::DataTransform(bottoms_[0]->data(), bottoms_[0]->shape(), scale_,
+                       num_mean_, mean_value_.data(), tops_[0]->mutable_data());
 }
 
 void DataLayer::Release() {

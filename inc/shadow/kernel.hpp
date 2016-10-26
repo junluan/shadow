@@ -37,8 +37,8 @@ template <typename T>
 void ReleaseBuffer(T *buffer);
 
 template <typename T>
-void DataTransform(const T *in_data, int count, float scale, float mean_value,
-                   T *out_data);
+void DataTransform(const T *in_data, int count, int in_c, int spatial_dim,
+                   float scale, int num_mean, const T *mean_value, T *out_data);
 
 template <typename T>
 void Im2Col(const T *in_data, int offset, int in_c, int in_h, int in_w,

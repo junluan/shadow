@@ -16,7 +16,10 @@ class DataLayer : public Layer {
   void Release();
 
  private:
-  float scale_, mean_value_;
+  float scale_;
+  int num_mean_;
+
+  Blob<float> mean_value_;
 };
 
 #endif  // SHADOW_LAYERS_DATA_LAYER_HPP

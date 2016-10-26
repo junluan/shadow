@@ -1,9 +1,21 @@
-__kernel void DataTransform(__global float *in_data, int count, float scale,
-                            float mean_value, __global float *out_data) {
+__kernel void DataTransform(__global float *in_data, int count, int in_c,
+                            int spatial_dim, float scale, int num_mean,
+                            __global float *mean_value,
+                            __global float *out_data) {
   const int globalid = get_global_id(0);
   if (globalid >= count) return;
 
-  out_data[globalid] = (in_data[globalid] - mean_value) * scale;
+  int c_out = (globalid / spatial_dim) % in_c;
+  int s_out = globalid % spatial_dim;
+
+  if (num_mean == 1) {
+    out_data[globalid] = (in_data[globalid] - mean_value[0]) * scale;
+  } else if (num_mean == in_c) {
+    out_data[globalid] = (in_data[globalid] - mean_value[c_out]) * scale;
+  } else if (num_mean == in_c * spatial_dim) {
+    out_data[globalid] =
+        (in_data[globalid] - mean_value[c_out * spatial_dim + s_out]) * scale;
+  }
 }
 
 __kernel void Im2Col(__global float *im_data, int offset, int in_c, int in_h,

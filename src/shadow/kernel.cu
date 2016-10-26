@@ -42,21 +42,32 @@ void ReleaseBuffer(T *buffer) {
   CheckError(cudaFree(buffer));
 }
 
-__global__ void KernelDataTransform(const float *in_data, int count,
-                                    float scale, float mean_value,
-                                    float *out_data) {
+__global__ void KernelDataTransform(const float *in_data, int count, int in_c,
+                                    int spatial_dim, float scale, int num_mean,
+                                    const float *mean_value, float *out_data) {
   int globalid =
       (blockIdx.x + blockIdx.y * gridDim.x) * blockDim.x + threadIdx.x;
-  if (globalid > count) return;
+  if (globalid >= count) return;
 
-  out_data[globalid] = (in_data[globalid] - mean_value) * scale;
+  int c_out = (globalid / spatial_dim) % in_c;
+  int s_out = globalid % spatial_dim;
+
+  if (num_mean == 1) {
+    out_data[globalid] = (in_data[globalid] - mean_value[0]) * scale;
+  } else if (num_mean == in_c) {
+    out_data[globalid] = (in_data[globalid] - mean_value[c_out]) * scale;
+  } else if (num_mean == in_c * spatial_dim) {
+    out_data[globalid] =
+        (in_data[globalid] - mean_value[c_out * spatial_dim + s_out]) * scale;
+  }
 }
 
 template <typename T>
-void DataTransform(const T *in_data, int count, float scale, float mean_value,
+void DataTransform(const T *in_data, int count, int in_c, int spatial_dim,
+                   float scale, int num_mean, const T *mean_value,
                    T *out_data) {
-  KernelDataTransform<<<GridDim(count), BLOCK>>>(in_data, count, scale,
-                                                 mean_value, out_data);
+  KernelDataTransform<<<GridDim(count), BLOCK>>>(
+      in_data, count, in_c, spatial_dim, scale, num_mean, mean_value, out_data);
   CheckError(cudaPeekAtLastError());
 }
 
@@ -245,8 +256,9 @@ template void CopyBuffer<float, float>(int size, const float *src, float *des);
 template void ReleaseBuffer<int>(int *buffer);
 template void ReleaseBuffer<float>(float *buffer);
 
-template void DataTransform<float>(const float *in_data, int count, float scale,
-                                   float mean_value, float *out_data);
+template void DataTransform<float>(const float *in_data, int count, int in_c,
+                                   int spatial_dim, float scale, int num_mean,
+                                   const float *mean_value, float *out_data);
 template void Im2Col<float>(const float *in_data, int offset, int in_c,
                             int in_h, int in_w, int kernel_size, int stride,
                             int pad, int out_h, int out_w, float *out_data);

@@ -41,7 +41,7 @@ message ConvolutionParameter {
 
 message DataParameter {
   optional float scale = 1 [default = 1];
-  optional float mean_value = 2 [default = 0];
+  repeated float mean_value = 2;
 }
 
 message DropoutParameter {
