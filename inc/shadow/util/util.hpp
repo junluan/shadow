@@ -1,6 +1,8 @@
 #ifndef SHADOW_UTIL_UTIL_HPP
 #define SHADOW_UTIL_UTIL_HPP
 
+#include "shadow/util/log.hpp"
+
 #if !defined(__linux)
 #define _USE_MATH_DEFINES
 #endif
@@ -76,7 +78,120 @@ typedef std::list<std::string> ListString;
 
 namespace Util {
 
-VecString tokenize(const std::string &str, const std::string &split);
+template <typename Dtype>
+inline int round(Dtype x) {
+  return static_cast<int>(std::floor(x + 0.5));
+}
+
+inline float rand_uniform(float min, float max) {
+  return (static_cast<float>(std::rand()) / RAND_MAX) * (max - min) + min;
+}
+
+template <typename Dtype>
+inline Dtype constrain(Dtype min, Dtype max, Dtype value) {
+  if (value < min) return min;
+  if (value > max) return max;
+  return value;
+}
+
+template <typename Dtype>
+inline std::string str(Dtype val) {
+  std::stringstream out;
+  out << val;
+  return out.str();
+}
+
+inline std::string format_int(int n, int width, char pad = ' ') {
+  std::stringstream out;
+  out << std::setw(width) << std::setfill(pad) << n;
+  return out.str();
+}
+
+template <typename Dtype>
+inline std::string format_vector(const std::vector<Dtype> &vector,
+                                 const std::string &split = ",",
+                                 const std::string &prefix = "",
+                                 const std::string &postfix = "") {
+  std::stringstream out;
+  out << prefix;
+  for (int i = 0; i < vector.size() - 1; ++i) {
+    out << vector.at(i) << split;
+  }
+  if (vector.size() > 1) {
+    out << vector.at(vector.size() - 1);
+  }
+  out << postfix;
+  return out.str();
+}
+
+inline std::string find_replace(const std::string &str,
+                                const std::string &old_str,
+                                const std::string &new_str) {
+  std::string origin(str);
+  size_t index = 0;
+  while ((index = origin.find(old_str, index)) != std::string::npos) {
+    origin.replace(index, old_str.length(), new_str);
+    index += new_str.length();
+  }
+  return origin;
+}
+
+inline std::string find_replace_last(const std::string &str,
+                                     const std::string &old_str,
+                                     const std::string &new_str) {
+  std::string origin(str);
+  size_t index = origin.find_last_of(old_str);
+  origin.replace(index, old_str.length(), new_str);
+  return origin;
+}
+
+inline std::string change_extension(const std::string &str,
+                                    const std::string &new_ext) {
+  std::string origin(str);
+  size_t index = origin.find_last_of(".");
+  origin.replace(index, origin.length(), new_ext);
+  return origin;
+}
+
+inline VecString tokenize(const std::string &str, const std::string &split) {
+  std::string::size_type last_pos = 0;
+  std::string::size_type pos = str.find_first_of(split, last_pos);
+  VecString tokens;
+  while (last_pos != std::string::npos) {
+    if (pos != last_pos) tokens.push_back(str.substr(last_pos, pos - last_pos));
+    last_pos = pos;
+    if (last_pos == std::string::npos || last_pos + 1 == str.length()) break;
+    pos = str.find_first_of(split, ++last_pos);
+  }
+  return tokens;
+}
+
+inline VecString load_list(const std::string &list_file) {
+  std::ifstream file(list_file);
+  if (!file.is_open()) Fatal("Load image list file error!");
+
+  VecString image_list;
+  std::string dir;
+  while (std::getline(file, dir)) {
+    if (dir.length()) image_list.push_back(dir);
+  }
+  file.close();
+  return image_list;
+}
+
+inline std::string read_text_from_file(const std::string &filename) {
+  std::ifstream file(filename);
+  if (!file.is_open()) {
+    Warning("Can't open text file " + filename);
+    return std::string();
+  }
+
+  std::stringstream result;
+  std::string tmp;
+  while (std::getline(file, tmp)) result << tmp << std::endl;
+  file.close();
+  return result.str();
+}
 
 }  // namespace Util
 
@@ -339,183 +454,7 @@ class Path {
   bool absolute_;
 };
 
-#if defined(USE_GLog)
-#if !defined(__linux)
-#define GOOGLE_GLOG_DLL_DECL
-#define GLOG_NO_ABBREVIATED_SEVERITIES
-#endif
-#include <glog/logging.h>
-
-#define Info(msg) \
-  { LOG(INFO) << msg; }
-
-#define Warning(msg) \
-  { LOG(WARNING) << msg; }
-
-#define Error(msg) \
-  { LOG(ERROR) << msg; }
-
-#define Fatal(msg) \
-  { LOG(FATAL) << msg; }
-
-#else
-#define __FILE_NAME__ Path(__FILE__).file_name()
-#define Info(msg)                                                            \
-  {                                                                          \
-    std::cerr << "Info: " << __FILE_NAME__ << ":" << __LINE__ << "] " << msg \
-              << std::endl;                                                  \
-  }
-
-#define Warning(msg)                                                     \
-  {                                                                      \
-    std::cerr << "Warning: " << __FILE_NAME__ << ":" << __LINE__ << "] " \
-              << msg << std::endl;                                       \
-  }
-
-#define Error(msg)                                                            \
-  {                                                                           \
-    std::cerr << "Error: " << __FILE_NAME__ << ":" << __LINE__ << "] " << msg \
-              << std::endl;                                                   \
-    exit(1);                                                                  \
-  }
-
-#define Fatal(msg)                                                            \
-  {                                                                           \
-    std::cerr << "Fatal: " << __FILE_NAME__ << ":" << __LINE__ << "] " << msg \
-              << std::endl;                                                   \
-    exit(1);                                                                  \
-  }
-#endif
-
-#if defined(NDEBUG)
-#define DInfo(msg)
-#define DWarning(msg)
-#define DError(msg)
-#define DFatal(msg)
-
-#else
-#define DInfo(msg) Info(msg)
-#define DWarning(msg) Warning(msg)
-#define DError(msg) Error(msg)
-#define DFatal(msg) Fatal(msg)
-#endif
-
 namespace Util {
-
-template <typename Dtype>
-inline int round(Dtype x) {
-  return static_cast<int>(std::floor(x + 0.5));
-}
-
-inline float rand_uniform(float min, float max) {
-  return (static_cast<float>(std::rand()) / RAND_MAX) * (max - min) + min;
-}
-
-template <typename Dtype>
-inline Dtype constrain(Dtype min, Dtype max, Dtype value) {
-  if (value < min) return min;
-  if (value > max) return max;
-  return value;
-}
-
-template <typename Dtype>
-inline std::string str(Dtype val) {
-  std::stringstream out;
-  out << val;
-  return out.str();
-}
-
-inline std::string format_int(int n, int width, char pad = ' ') {
-  std::stringstream out;
-  out << std::setw(width) << std::setfill(pad) << n;
-  return out.str();
-}
-
-template <typename Dtype>
-inline std::string format_vector(const std::vector<Dtype> &vector,
-                                 const std::string &split = ",",
-                                 const std::string &prefix = "",
-                                 const std::string &postfix = "") {
-  std::stringstream out;
-  out << prefix;
-  for (int i = 0; i < vector.size() - 1; ++i) {
-    out << vector.at(i) << split;
-  }
-  if (vector.size() > 1) {
-    out << vector.at(vector.size() - 1);
-  }
-  out << postfix;
-  return out.str();
-}
-
-inline std::string find_replace(const std::string &str,
-                                const std::string &old_str,
-                                const std::string &new_str) {
-  std::string origin(str);
-  size_t index = 0;
-  while ((index = origin.find(old_str, index)) != std::string::npos) {
-    origin.replace(index, old_str.length(), new_str);
-    index += new_str.length();
-  }
-  return origin;
-}
-
-inline std::string find_replace_last(const std::string &str,
-                                     const std::string &old_str,
-                                     const std::string &new_str) {
-  std::string origin(str);
-  size_t index = origin.find_last_of(old_str);
-  origin.replace(index, old_str.length(), new_str);
-  return origin;
-}
-
-inline std::string change_extension(const std::string &str,
-                                    const std::string &new_ext) {
-  std::string origin(str);
-  size_t index = origin.find_last_of(".");
-  origin.replace(index, origin.length(), new_ext);
-  return origin;
-}
-
-inline VecString tokenize(const std::string &str, const std::string &split) {
-  std::string::size_type last_pos = 0;
-  std::string::size_type pos = str.find_first_of(split, last_pos);
-  VecString tokens;
-  while (last_pos != std::string::npos) {
-    if (pos != last_pos) tokens.push_back(str.substr(last_pos, pos - last_pos));
-    last_pos = pos;
-    if (last_pos == std::string::npos || last_pos + 1 == str.length()) break;
-    pos = str.find_first_of(split, ++last_pos);
-  }
-  return tokens;
-}
-
-inline VecString load_list(const std::string &list_file) {
-  std::ifstream file(list_file);
-  if (!file.is_open()) Fatal("Load image list file error!");
-
-  VecString image_list;
-  std::string dir;
-  while (std::getline(file, dir)) {
-    if (dir.length()) image_list.push_back(dir);
-  }
-  file.close();
-  return image_list;
-}
-
-inline std::string read_text_from_file(const std::string &filename) {
-  std::ifstream file(filename);
-  if (!file.is_open()) {
-    Warning("Can't open text file " + filename);
-    return std::string();
-  }
-
-  std::stringstream result;
-  std::string tmp;
-  while (std::getline(file, tmp)) result << tmp << std::endl;
-  file.close();
-  return result.str();
-}
 
 inline bool make_directory(const Path &path) {
 #if defined(_WIN32)
