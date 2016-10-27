@@ -1,9 +1,12 @@
+#define CL_KERNEL_LOOP(globalid, count)  \
+  const int globalid = get_global_id(0); \
+  if (globalid >= count) return;
+
 __kernel void DataTransform(__global float *in_data, int count, int in_c,
                             int spatial_dim, float scale, int num_mean,
                             __global float *mean_value,
                             __global float *out_data) {
-  const int globalid = get_global_id(0);
-  if (globalid >= count) return;
+  CL_KERNEL_LOOP(globalid, count)
 
   int c_out = (globalid / spatial_dim) % in_c;
   int s_out = globalid % spatial_dim;
@@ -21,8 +24,7 @@ __kernel void DataTransform(__global float *in_data, int count, int in_c,
 __kernel void Im2Col(__global float *im_data, int offset, int in_c, int in_h,
                      int in_w, int kernel_size, int stride, int pad, int out_h,
                      int out_w, __global float *col_data) {
-  const int globalid = get_global_id(0);
-  if (globalid >= in_c * out_h * out_w) return;
+  CL_KERNEL_LOOP(globalid, in_c * out_h * out_w)
 
   int c_out = (globalid / (out_w * out_h)) % in_c;
   int i_out = (globalid / out_w) % out_h;
@@ -50,8 +52,7 @@ __kernel void Im2Col(__global float *im_data, int offset, int in_c, int in_h,
 __kernel void Pooling(__global float *in_data, int batch, int in_c, int in_h,
                       int in_w, int kernel_size, int stride, int pad, int mode,
                       int out_h, int out_w, __global float *out_data) {
-  const int globalid = get_global_id(0);
-  if (globalid >= batch * in_c * out_h * out_w) return;
+  CL_KERNEL_LOOP(globalid, batch * in_c * out_h * out_w)
 
   int b_out = (globalid / (out_w * out_h * in_c)) % batch;
   int c_out = (globalid / (out_w * out_h)) % in_c;
@@ -86,8 +87,7 @@ __kernel void Concat(__global float *in_data, int count, int num_concats,
                      int concat_size, int top_concat_axis,
                      int bottom_concat_axis, int offset_concat_axis,
                      __global float *out_data) {
-  const int globalid = get_global_id(0);
-  if (globalid >= count) return;
+  CL_KERNEL_LOOP(globalid, count)
 
   int total_concat_size = concat_size * bottom_concat_axis;
   int concat_num = globalid / total_concat_size;
@@ -101,8 +101,7 @@ __kernel void Concat(__global float *in_data, int count, int num_concats,
 __kernel void Permute(__global float *in_data, int count, int num_axes,
                       __global int *permute_order, __global int *old_steps,
                       __global int *new_steps, __global float *out_data) {
-  const int globalid = get_global_id(0);
-  if (globalid >= count) return;
+  CL_KERNEL_LOOP(globalid, count)
 
   int old_idx = 0;
   int idx = globalid;
@@ -114,7 +113,7 @@ __kernel void Permute(__global float *in_data, int count, int num_axes,
   out_data[globalid] = in_data[old_idx];
 }
 
-float ActivateValue(float x, int type) {
+inline float ActivateValue(float x, int type) {
   switch (type) {
     case 0:
       return x; /*linear*/
@@ -128,8 +127,7 @@ float ActivateValue(float x, int type) {
 }
 
 __kernel void Activate(__global float *data, int count, int type) {
-  const int globalid = get_global_id(0);
-  if (globalid >= count) return;
+  CL_KERNEL_LOOP(globalid, count)
 
   data[globalid] = ActivateValue(data[globalid], type);
 }

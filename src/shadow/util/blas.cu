@@ -14,10 +14,91 @@ void Release() {
   if (cublas_handle_ != nullptr) cublasDestroy(cublas_handle_);
 }
 
+#define CUDA_KERNEL_LOOP(globalid, count)                               \
+  const int globalid =                                                  \
+      (blockIdx.x + blockIdx.y * gridDim.x) * blockDim.x + threadIdx.x; \
+  if (globalid >= count) return;
+
+__global__ void KernelChannelMax(int num, int channels, int spatial_dim,
+                                 const float *data, float *val_max) {
+  CUDA_KERNEL_LOOP(globalid, num * spatial_dim);
+
+  int n = globalid / spatial_dim;
+  int s = globalid % spatial_dim;
+  float maxval = -FLT_MAX;
+  for (int c = 0; c < channels; ++c) {
+    maxval = max(data[(n * channels + c) * spatial_dim + s], maxval);
+  }
+  val_max[globalid] = maxval;
+}
+
+template <typename T>
+void ChannelMax(int num, int channels, int spatial_dim, const T *data,
+                T *val_max) {
+  KernelChannelMax<<<Kernel::GridDim(num * spatial_dim), BLOCK>>>(
+      num, channels, spatial_dim, data, val_max);
+  CheckError(cudaPeekAtLastError());
+}
+
+__global__ void KernelChannelSub(int count, int num, int channels,
+                                 int spatial_dim, const float *val_sub,
+                                 float *data) {
+  CUDA_KERNEL_LOOP(globalid, count);
+
+  int n = globalid / channels / spatial_dim;
+  int s = globalid % spatial_dim;
+  data[globalid] -= val_sub[n * spatial_dim + s];
+}
+
+template <typename T>
+void ChannelSub(int count, int num, int channels, int spatial_dim,
+                const T *val_sub, T *data) {
+  KernelChannelSub<<<Kernel::GridDim(count), BLOCK>>>(
+      count, num, channels, spatial_dim, val_sub, data);
+  CheckError(cudaPeekAtLastError());
+}
+
+__global__ void KernelChannelSum(int num, int channels, int spatial_dim,
+                                 const float *data, float *val_sum) {
+  CUDA_KERNEL_LOOP(globalid, num * spatial_dim);
+
+  int n = globalid / spatial_dim;
+  int s = globalid % spatial_dim;
+  float sum = 0;
+  for (int c = 0; c < channels; ++c) {
+    sum += data[(n * channels + c) * spatial_dim + s];
+  }
+  val_sum[globalid] = sum;
+}
+
+template <typename T>
+void ChannelSum(int num, int channels, int spatial_dim, const T *data,
+                T *val_sum) {
+  KernelChannelSum<<<Kernel::GridDim(num * spatial_dim), BLOCK>>>(
+      num, channels, spatial_dim, data, val_sum);
+  CheckError(cudaPeekAtLastError());
+}
+
+__global__ void KernelChannelDiv(int count, int num, int channels,
+                                 int spatial_dim, const float *val_div,
+                                 float *data) {
+  CUDA_KERNEL_LOOP(globalid, count);
+
+  int n = globalid / channels / spatial_dim;
+  int s = globalid % spatial_dim;
+  data[globalid] /= val_div[n * spatial_dim + s];
+}
+
+template <typename T>
+void ChannelDiv(int count, int num, int channels, int spatial_dim,
+                const T *val_div, T *data) {
+  KernelChannelDiv<<<Kernel::GridDim(count), BLOCK>>>(
+      count, num, channels, spatial_dim, val_div, data);
+  CheckError(cudaPeekAtLastError());
+}
+
 __global__ void KernelSet(int n, float val, float *y, int offy) {
-  int globalid =
-      (blockIdx.x + blockIdx.y * gridDim.x) * blockDim.x + threadIdx.x;
-  if (globalid >= n) return;
+  CUDA_KERNEL_LOOP(globalid, n);
 
   y[offy + globalid] = val;
 }
@@ -28,63 +109,50 @@ void Set(int n, float val, T *y, int offy) {
   CheckError(cudaPeekAtLastError());
 }
 
-#define BINARY_FUNC(name, operation)                                           \
+#define BLAS_BINARY_FUNC(name, operation)                                      \
   __global__ void Kernel##name(int n, const float *a, int offa,                \
                                const float *b, int offb, float *y, int offy) { \
-    int i = (blockIdx.x + blockIdx.y * gridDim.x) * blockDim.x + threadIdx.x;  \
-    if (i >= n) return;                                                        \
-    y[offy + i] = a[offa + i] operation b[offb + i];                           \
-  }
+    CUDA_KERNEL_LOOP(i, n);                                                    \
+    a += offa, b += offb, y += offy;                                           \
+    operation;                                                                 \
+  }                                                                            \
+  template <typename T>                                                        \
+  void name(int n, const T *a, int offa, const T *b, int offb, T *y,           \
+            int offy) {                                                        \
+    Kernel##name<<<Kernel::GridDim(n), BLOCK>>>(n, a, offa, b, offb, y, offy); \
+    CheckError(cudaPeekAtLastError());                                         \
+  }                                                                            \
+  template void name<float>(int n, const float *a, int offa, const float *b,   \
+                            int offb, float *y, int offy);
 
-BINARY_FUNC(Add, +);
-BINARY_FUNC(Sub, -);
-BINARY_FUNC(Mul, *);
-BINARY_FUNC(Div, /);
+BLAS_BINARY_FUNC(Add, y[i] = a[i] + b[i]);
+BLAS_BINARY_FUNC(Sub, y[i] = a[i] - b[i]);
+BLAS_BINARY_FUNC(Mul, y[i] = a[i] * b[i]);
+BLAS_BINARY_FUNC(Div, y[i] = a[i] / b[i]);
 
-template <typename T>
-void Add(int n, const T *a, int offa, const T *b, int offb, T *y, int offy) {
-  KernelAdd<<<Kernel::GridDim(n), BLOCK>>>(n, a, offa, b, offb, y, offy);
-  CheckError(cudaPeekAtLastError());
-}
+#define BLAS_UNARY_FUNC(name, operation)                                  \
+  __global__ void Kernel##name(int n, const float *a, int offa, float *y, \
+                               int offy) {                                \
+    CUDA_KERNEL_LOOP(i, n);                                               \
+    a += offa, y += offy;                                                 \
+    operation;                                                            \
+  }                                                                       \
+  template <typename T>                                                   \
+  void name(int n, const T *a, int offa, T *y, int offy) {                \
+    Kernel##name<<<Kernel::GridDim(n), BLOCK>>>(n, a, offa, y, offy);     \
+    CheckError(cudaPeekAtLastError());                                    \
+  }                                                                       \
+  template void name<float>(int n, const float *a, int offa, float *y,    \
+                            int offy);
 
-template <typename T>
-void Sub(int n, const T *a, int offa, const T *b, int offb, T *y, int offy) {
-  KernelSub<<<Kernel::GridDim(n), BLOCK>>>(n, a, offa, b, offb, y, offy);
-  CheckError(cudaPeekAtLastError());
-}
-
-template <typename T>
-void Mul(int n, const T *a, int offa, const T *b, int offb, T *y, int offy) {
-  KernelMul<<<Kernel::GridDim(n), BLOCK>>>(n, a, offa, b, offb, y, offy);
-  CheckError(cudaPeekAtLastError());
-}
-
-template <typename T>
-void Div(int n, const T *a, int offa, const T *b, int offb, T *y, int offy) {
-  KernelDiv<<<Kernel::GridDim(n), BLOCK>>>(n, a, offa, b, offb, y, offy);
-  CheckError(cudaPeekAtLastError());
-}
-
-__global__ void KernelSquare(int n, const float *a, int offa, float *y,
-                             int offy) {
-  int globalid =
-      (blockIdx.x + blockIdx.y * gridDim.x) * blockDim.x + threadIdx.x;
-  if (globalid >= n) return;
-
-  y[offy + globalid] = a[offa + globalid] * a[offa + globalid];
-}
-
-template <typename T>
-void Square(int n, const T *a, int offa, T *y, int offy) {
-  KernelSquare<<<Kernel::GridDim(n), BLOCK>>>(n, a, offa, y, offy);
-  CheckError(cudaPeekAtLastError());
-}
+BLAS_UNARY_FUNC(Sqr, y[i] = a[i] * a[i]);
+BLAS_UNARY_FUNC(Exp, y[i] = std::exp(a[i]));
+BLAS_UNARY_FUNC(Log, y[i] = std::log(a[i]));
+BLAS_UNARY_FUNC(Abs, y[i] = std::abs(a[i]));
 
 __global__ void KernelPow(int n, const float *a, int offa, float alpha,
                           float *y, int offy) {
-  int globalid =
-      (blockIdx.x + blockIdx.y * gridDim.x) * blockDim.x + threadIdx.x;
-  if (globalid >= n) return;
+  CUDA_KERNEL_LOOP(globalid, n);
 
   y[offy + globalid] = std::pow(a[offa + globalid], alpha);
 }
@@ -143,17 +211,18 @@ void BlasSgemm(int TA, int TB, int M, int N, int K, float alpha, const T *A,
 }
 
 // Explicit instantiation
+template void ChannelMax<float>(int num, int channels, int spatial_dim,
+                                const float *data, float *val_max);
+template void ChannelSub<float>(int count, int num, int channels,
+                                int spatial_dim, const float *val_sub,
+                                float *data);
+template void ChannelSum<float>(int num, int channels, int spatial_dim,
+                                const float *data, float *val_sum);
+template void ChannelDiv<float>(int count, int num, int channels,
+                                int spatial_dim, const float *val_div,
+                                float *data);
+
 template void Set<float>(int n, float val, float *y, int offy);
-template void Add<float>(int n, const float *a, int offa, const float *b,
-                         int offb, float *y, int offy);
-template void Sub<float>(int n, const float *a, int offa, const float *b,
-                         int offb, float *y, int offy);
-template void Mul<float>(int n, const float *a, int offa, const float *b,
-                         int offb, float *y, int offy);
-template void Div<float>(int n, const float *a, int offa, const float *b,
-                         int offb, float *y, int offy);
-template void Square<float>(int n, const float *a, int offa, float *y,
-                            int offy);
 template void Pow<float>(int n, const float *a, int offa, float alpha, float *y,
                          int offy);
 template void Scale<float>(int n, float alpha, const float *x, int offx,

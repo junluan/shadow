@@ -76,7 +76,7 @@ class Blob {
     if (shape.size() == 0) return;
     int new_count = 1;
     for (int i = 0; i < shape.size(); ++i) new_count *= shape[i];
-    if (new_count <= 0) Fatal("Shape is valid!");
+    CHECK_GT(new_count, 0);
     if (data_ == nullptr || new_count > count()) {
       clear();
       allocate_data(new_count);
@@ -93,23 +93,17 @@ class Blob {
     reshape(shape);
   }
 
-  inline const std::string name() const { return name_; }
+  inline const std::string &name() const { return name_; }
   inline std::string &name() { return name_; }
 
-  inline const VecInt shape() const { return shape_; }
+  inline const VecInt &shape() const { return shape_; }
   inline VecInt &shape() { return shape_; }
 
   inline const int shape(int index) const {
-    if (index < 0 || index >= shape_.size()) {
-      Fatal("Index out of blob shape range!");
-    }
-    return shape_[index];
+    return shape_[CanonicalIndex(index)];
   }
   inline void set_shape(int index, int value) {
-    if (index < 0 || index >= shape_.size()) {
-      Fatal("Index out of blob shape range!");
-    }
-    shape_[index] = value;
+    shape_[CanonicalIndex(index)] = value;
   }
   inline void set_shape(const VecInt &shape) { shape_ = shape; }
   inline void add_shape(int value) { shape_.push_back(value); }
@@ -118,16 +112,26 @@ class Blob {
   inline const int num() const { return count() / shape(0); }
   inline const int count() const { return count(0); }
   inline const int count(int start_axis) const {
-    return count(start_axis, shape_.size() - 1);
+    return count(start_axis, num_axes());
   }
   inline const int count(int start_axis, int end_axis) const {
-    if (start_axis < 0 || end_axis >= shape_.size()) {
-      Fatal("Index out of blob shape range!");
-    }
-    if (start_axis > end_axis) return 0;
+    CHECK_LE(start_axis, end_axis);
+    CHECK_GE(start_axis, 0);
+    CHECK_GE(end_axis, 0);
+    CHECK_LE(start_axis, num_axes());
+    CHECK_LE(end_axis, num_axes());
     int count = 1;
-    for (int i = start_axis; i <= end_axis; ++i) count *= shape(i);
+    for (int i = start_axis; i < end_axis; ++i) count *= shape(i);
     return count;
+  }
+
+  inline const int CanonicalIndex(int index) const {
+    CHECK_GE(index, -num_axes());
+    CHECK_LT(index, num_axes());
+    if (index < 0) {
+      return index + num_axes();
+    }
+    return index;
   }
 
   inline void clear() {

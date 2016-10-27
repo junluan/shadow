@@ -9,7 +9,7 @@ void ConcatLayer::Setup(VecBlob *blobs) {
   concat_axis_ = concat_param.axis();
   CHECK_GE(concat_axis_, 0);
   CHECK_LT(concat_axis_, bottoms_[0]->num_axes());
-  num_concats_ = bottoms_[0]->count(0, concat_axis_ - 1);
+  num_concats_ = bottoms_[0]->count(0, concat_axis_);
   concat_input_size_ = bottoms_[0]->count(concat_axis_ + 1);
 }
 

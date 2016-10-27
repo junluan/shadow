@@ -49,7 +49,7 @@ message DropoutParameter {
 }
 
 message FlattenParameter {
-  optional int32 start_axis = 1 [default = 1];
+  optional int32 axis = 1 [default = 1];
   optional int32 end_axis = 2 [default = -1];
 }
 
@@ -88,6 +88,16 @@ message PriorBoxParameter {
   repeated float variance = 6;
 }
 
+message ReshapeParameter {
+  optional BlobShape shape = 1;
+  optional int32 axis = 2 [default = 0];
+  optional int32 num_axes = 3 [default = -1];
+}
+
+message SoftmaxParameter {
+  optional int32 axis = 1 [default = 1];
+}
+
 message LayerParameter {
   optional string name = 1 [default = ""];
   optional string type = 2;
@@ -107,6 +117,8 @@ message LayerParameter {
   optional PermuteParameter permute_param = 19;
   optional PoolingParameter pooling_param = 20;
   optional PriorBoxParameter prior_box_param = 21;
+  optional ReshapeParameter reshape_param = 22;
+  optional SoftmaxParameter softmax_param = 23;
 }
 
 message NetParameter {

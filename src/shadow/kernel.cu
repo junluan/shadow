@@ -42,12 +42,15 @@ void ReleaseBuffer(T *buffer) {
   CheckError(cudaFree(buffer));
 }
 
+#define CUDA_KERNEL_LOOP(globalid, count)                               \
+  const int globalid =                                                  \
+      (blockIdx.x + blockIdx.y * gridDim.x) * blockDim.x + threadIdx.x; \
+  if (globalid >= count) return;
+
 __global__ void KernelDataTransform(const float *in_data, int count, int in_c,
                                     int spatial_dim, float scale, int num_mean,
                                     const float *mean_value, float *out_data) {
-  int globalid =
-      (blockIdx.x + blockIdx.y * gridDim.x) * blockDim.x + threadIdx.x;
-  if (globalid >= count) return;
+  CUDA_KERNEL_LOOP(globalid, count);
 
   int c_out = (globalid / spatial_dim) % in_c;
   int s_out = globalid % spatial_dim;
@@ -74,9 +77,7 @@ void DataTransform(const T *in_data, int count, int in_c, int spatial_dim,
 __global__ void KernelIm2Col(const float *im_data, int offset, int in_c,
                              int in_h, int in_w, int kernel_size, int stride,
                              int pad, int out_h, int out_w, float *col_data) {
-  int globalid =
-      (blockIdx.x + blockIdx.y * gridDim.x) * blockDim.x + threadIdx.x;
-  if (globalid >= in_c * out_h * out_w) return;
+  CUDA_KERNEL_LOOP(globalid, in_c * out_h * out_w);
 
   int c_out = (globalid / (out_w * out_h)) % in_c;
   int i_out = (globalid / out_w) % out_h;
@@ -116,9 +117,7 @@ __global__ void KernelPooling(const float *in_data, int batch, int in_c,
                               int in_h, int in_w, int kernel_size, int stride,
                               int pad, int mode, int out_h, int out_w,
                               float *out_data) {
-  int globalid =
-      (blockIdx.x + blockIdx.y * gridDim.x) * blockDim.x + threadIdx.x;
-  if (globalid >= batch * in_c * out_h * out_w) return;
+  CUDA_KERNEL_LOOP(globalid, batch * in_c * out_h * out_w);
 
   int b_out = (globalid / (out_w * out_h * in_c)) % batch;
   int c_out = (globalid / (out_w * out_h)) % in_c;
@@ -164,9 +163,7 @@ __global__ void KernelConcat(const float *in_data, int count, int num_concats,
                              int concat_size, int top_concat_axis,
                              int bottom_concat_axis, int offset_concat_axis,
                              float *out_data) {
-  int globalid =
-      (blockIdx.x + blockIdx.y * gridDim.x) * blockDim.x + threadIdx.x;
-  if (globalid >= count) return;
+  CUDA_KERNEL_LOOP(globalid, count);
 
   int total_concat_size = concat_size * bottom_concat_axis;
   int concat_num = globalid / total_concat_size;
@@ -190,9 +187,7 @@ void Concat(const T *in_data, int count, int num_concats, int concat_size,
 __global__ void KernelPermute(const float *in_data, int count, int num_axes,
                               const int *permute_order, const int *old_steps,
                               const int *new_steps, float *out_data) {
-  int globalid =
-      (blockIdx.x + blockIdx.y * gridDim.x) * blockDim.x + threadIdx.x;
-  if (globalid >= count) return;
+  CUDA_KERNEL_LOOP(globalid, count);
 
   int old_idx = 0;
   int idx = globalid;
@@ -227,9 +222,7 @@ __device__ float ActivateValue(float x, int type) {
 }
 
 __global__ void KernelActivate(float *data, int count, int type) {
-  int globalid =
-      (blockIdx.x + blockIdx.y * gridDim.x) * blockDim.x + threadIdx.x;
-  if (globalid >= count) return;
+  CUDA_KERNEL_LOOP(globalid, count);
 
   data[globalid] = ActivateValue(data[globalid], type);
 }

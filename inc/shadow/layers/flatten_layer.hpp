@@ -16,7 +16,7 @@ class FlattenLayer : public Layer {
   void Release();
 
  private:
-  int start_axis_, end_axis_;
+  int axis_, end_axis_;
 };
 
 #endif  // SHADOW_LAYERS_FLATTEN_LAYER_HPP

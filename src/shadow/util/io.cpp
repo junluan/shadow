@@ -25,7 +25,13 @@ bool ReadProtoFromText(const std::string& proto_text, Message* proto) {
 }
 
 bool ReadProtoFromTextFile(const std::string& proto_file, Message* proto) {
-  return ReadProtoFromText(Util::read_text_from_file(proto_file), proto);
+  int fd = open(proto_file.c_str(), O_RDONLY);
+  if (fd == -1) Fatal("File not found: " + proto_file);
+  FileInputStream* input = new FileInputStream(fd);
+  bool success = TextFormat::Parse(input, proto);
+  delete input;
+  close(fd);
+  return success;
 }
 
 bool ReadProtoFromBinaryFile(const std::string& proto_file, Message* proto) {

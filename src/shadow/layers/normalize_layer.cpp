@@ -53,8 +53,7 @@ void NormalizeLayer::Forward() {
   int num = bottoms_[0]->num();
   for (int b = 0; b < batch; ++b) {
     int data_offset = b * num;
-    Blas::Square(num, bottoms_[0]->data(), data_offset, buffer_.mutable_data(),
-                 0);
+    Blas::Sqr(num, bottoms_[0]->data(), data_offset, buffer_.mutable_data(), 0);
     if (across_spatial_) {
       float sum = 0;
       Blas::BlasSasum(num, buffer_.data(), 0, &sum);

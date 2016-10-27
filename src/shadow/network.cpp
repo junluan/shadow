@@ -11,6 +11,8 @@
 #include "shadow/layers/normalize_layer.hpp"
 #include "shadow/layers/permute_layer.hpp"
 #include "shadow/layers/pooling_layer.hpp"
+#include "shadow/layers/reshape_layer.hpp"
+#include "shadow/layers/softmax_layer.hpp"
 
 void Network::LoadModel(const std::string &proto_bin, int batch) {
   LoadProtoBin(proto_bin, &net_param_);
@@ -187,6 +189,10 @@ Layer *Network::LayerFactory(const shadow::LayerParameter &layer_param,
     layer = new PermuteLayer(layer_param);
   } else if (!layer_param.type().compare("Pooling")) {
     layer = new PoolingLayer(layer_param);
+  } else if (!layer_param.type().compare("Reshape")) {
+    layer = new ReshapeLayer(layer_param);
+  } else if (!layer_param.type().compare("Softmax")) {
+    layer = new SoftmaxLayer(layer_param);
   } else {
     Fatal("Layer type is not recognized!");
   }

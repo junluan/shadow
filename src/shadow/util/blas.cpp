@@ -1,55 +1,99 @@
 #include "shadow/util/blas.hpp"
 
 #include <algorithm>
+#include <cfloat>
 
 namespace Blas {
 
 #if !defined(USE_CUDA) & !defined(USE_CL)
 template <typename T>
+void ChannelMax(int num, int channels, int spatial_dim, const T *data,
+                T *val_max) {
+  for (int n = 0; n < num; ++n) {
+    for (int s = 0; s < spatial_dim; ++s) {
+      float max_val = -FLT_MAX;
+      for (int c = 0; c < channels; ++c) {
+        max_val = std::max(data[(n * channels + c) * spatial_dim + s], max_val);
+      }
+      val_max[n * spatial_dim + s] = max_val;
+    }
+  }
+}
+template <typename T>
+void ChannelSub(int count, int num, int channels, int spatial_dim,
+                const T *val_sub, T *data) {
+  for (int n = 0; n < num; ++n) {
+    int offset = n * spatial_dim;
+    for (int c = 0; c < channels; ++c) {
+      for (int s = 0; s < spatial_dim; ++s) {
+        data[(n * channels + c) * spatial_dim + s] -= val_sub[offset + s];
+      }
+    }
+  }
+}
+template <typename T>
+void ChannelSum(int num, int channels, int spatial_dim, const T *data,
+                T *val_sum) {
+  for (int n = 0; n < num; ++n) {
+    for (int s = 0; s < spatial_dim; ++s) {
+      float sum = 0;
+      for (int c = 0; c < channels; ++c) {
+        sum += data[(n * channels + c) * spatial_dim + s];
+      }
+      val_sum[n * spatial_dim + s] = sum;
+    }
+  }
+}
+template <typename T>
+void ChannelDiv(int count, int num, int channels, int spatial_dim,
+                const T *val_div, T *data) {
+  for (int n = 0; n < num; ++n) {
+    int offset = n * spatial_dim;
+    for (int c = 0; c < channels; ++c) {
+      for (int s = 0; s < spatial_dim; ++s) {
+        data[(n * channels + c) * spatial_dim + s] /= val_div[offset + s];
+      }
+    }
+  }
+}
+
+template <typename T>
 void Set(int n, float val, T *y, int offy) {
   std::fill(y + offy, y + offy + n, val);
 }
 
-#define BINARY_FUNC(name, operation)                                           \
-  template <typename T>                                                        \
-  inline void v##name(int n, const T *a, int offa, const T *b, int offb, T *y, \
-                      int offy) {                                              \
-    for (int i = 0; i < n; ++i) {                                              \
-      y[offy + i] = a[offa + i] operation b[offb + i];                         \
-    }                                                                          \
-  }
+#define BLAS_BINARY_FUNC(name, operation)                                    \
+  template <typename T>                                                      \
+  void name(int n, const T *a, int offa, const T *b, int offb, T *y,         \
+            int offy) {                                                      \
+    a += offa, b += offb, y += offy;                                         \
+    for (int i = 0; i < n; ++i) {                                            \
+      operation;                                                             \
+    }                                                                        \
+  }                                                                          \
+  template void name<float>(int n, const float *a, int offa, const float *b, \
+                            int offb, float *y, int offy);
 
-BINARY_FUNC(Add, +);
-BINARY_FUNC(Sub, -);
-BINARY_FUNC(Mul, *);
-BINARY_FUNC(Div, /);
+BLAS_BINARY_FUNC(Add, y[i] = a[i] + b[i]);
+BLAS_BINARY_FUNC(Sub, y[i] = a[i] - b[i]);
+BLAS_BINARY_FUNC(Mul, y[i] = a[i] * b[i]);
+BLAS_BINARY_FUNC(Div, y[i] = a[i] / b[i]);
 
-template <typename T>
-void Add(int n, const T *a, int offa, const T *b, int offb, T *y, int offy) {
-  vAdd<T>(n, a, offa, b, offb, y, offy);
-}
+#define BLAS_UNARY_FUNC(name, operation)                               \
+  template <typename T>                                                \
+  void name(int n, const T *a, int offa, T *y, int offy) {             \
+    a += offa, y += offy;                                              \
+    for (int i = 0; i < n; ++i) {                                      \
+      operation;                                                       \
+    }                                                                  \
+  }                                                                    \
+  template void name<float>(int n, const float *a, int offa, float *y, \
+                            int offy);
 
-template <typename T>
-void Sub(int n, const T *a, int offa, const T *b, int offb, T *y, int offy) {
-  vSub<T>(n, a, offa, b, offb, y, offy);
-}
-
-template <typename T>
-void Mul(int n, const T *a, int offa, const T *b, int offb, T *y, int offy) {
-  vMul<T>(n, a, offa, b, offb, y, offy);
-}
-
-template <typename T>
-void Div(int n, const T *a, int offa, const T *b, int offb, T *y, int offy) {
-  vDiv<T>(n, a, offa, b, offb, y, offy);
-}
-
-template <typename T>
-void Square(int n, const T *a, int offa, T *y, int offy) {
-  for (int i = 0; i < n; ++i) {
-    y[offy + i] = a[offa + i] * a[offa + i];
-  }
-}
+BLAS_UNARY_FUNC(Sqr, y[i] = a[i] * a[i]);
+BLAS_UNARY_FUNC(Exp, y[i] = std::exp(a[i]));
+BLAS_UNARY_FUNC(Log, y[i] = std::log(a[i]));
+BLAS_UNARY_FUNC(Abs, y[i] = std::abs(a[i]));
 
 template <typename T>
 void Pow(int n, const T *a, int offa, float alpha, T *y, int offy) {
@@ -203,16 +247,18 @@ void BlasSgemm(int TA, int TB, int M, int N, int K, float alpha, const T *A,
 }
 
 // Explicit instantiation
+template void ChannelMax<float>(int num, int channels, int spatial_dim,
+                                const float *data, float *val_max);
+template void ChannelSub<float>(int count, int num, int channels,
+                                int spatial_dim, const float *val_sub,
+                                float *data);
+template void ChannelSum<float>(int num, int channels, int spatial_dim,
+                                const float *data, float *val_sum);
+template void ChannelDiv<float>(int count, int num, int channels,
+                                int spatial_dim, const float *val_div,
+                                float *data);
+
 template void Set<float>(int n, float val, float *y, int offy);
-template void Add<float>(int n, const float *a, int offa, const float *b,
-                         int offb, float *y, int offy);
-template void Sub<float>(int n, const float *a, int offa, const float *b,
-                         int offb, float *y, int offy);
-template void Mul<float>(int n, const float *a, int offa, const float *b,
-                         int offb, float *y, int offy);
-template void Div<float>(int n, const float *a, int offa, const float *b,
-                         int offb, float *y, int offy);
-template void Square(int n, const float *a, int offa, float *y, int offy);
 template void Pow<float>(int n, const float *a, int offa, float alpha, float *y,
                          int offy);
 template void Scale<float>(int n, float alpha, const float *x, int offx,
@@ -239,34 +285,114 @@ template void BlasSgemm<float>(int TA, int TB, int M, int N, int K, float alpha,
 #elif defined(USE_CL)
 #include <clBLAS.h>
 
+static CLKernel *cl_channelmax_kernel_ = nullptr;
+static CLKernel *cl_channelsub_kernel_ = nullptr;
+static CLKernel *cl_channelsum_kernel_ = nullptr;
+static CLKernel *cl_channeldiv_kernel_ = nullptr;
 static CLKernel *cl_set_kernel_ = nullptr;
 static CLKernel *cl_add_kernel_ = nullptr;
 static CLKernel *cl_sub_kernel_ = nullptr;
 static CLKernel *cl_mul_kernel_ = nullptr;
 static CLKernel *cl_div_kernel_ = nullptr;
-static CLKernel *cl_square_kernel_ = nullptr;
+static CLKernel *cl_sqr_kernel_ = nullptr;
+static CLKernel *cl_exp_kernel_ = nullptr;
+static CLKernel *cl_log_kernel_ = nullptr;
+static CLKernel *cl_abs_kernel_ = nullptr;
 static CLKernel *cl_pow_kernel_ = nullptr;
 
 void Setup() {
   std::string cl_file = "./src/shadow/util/blas.cl";
+  cl_channelmax_kernel_ = Kernel::easyCL->buildKernel(cl_file, "ChannelMax");
+  cl_channelsub_kernel_ = Kernel::easyCL->buildKernel(cl_file, "ChannelSub");
+  cl_channelsum_kernel_ = Kernel::easyCL->buildKernel(cl_file, "ChannelSum");
+  cl_channeldiv_kernel_ = Kernel::easyCL->buildKernel(cl_file, "ChannelDiv");
   cl_set_kernel_ = Kernel::easyCL->buildKernel(cl_file, "Set");
   cl_add_kernel_ = Kernel::easyCL->buildKernel(cl_file, "Add");
   cl_sub_kernel_ = Kernel::easyCL->buildKernel(cl_file, "Sub");
   cl_mul_kernel_ = Kernel::easyCL->buildKernel(cl_file, "Mul");
   cl_div_kernel_ = Kernel::easyCL->buildKernel(cl_file, "Div");
-  cl_square_kernel_ = Kernel::easyCL->buildKernel(cl_file, "Square");
+  cl_sqr_kernel_ = Kernel::easyCL->buildKernel(cl_file, "Sqr");
+  cl_exp_kernel_ = Kernel::easyCL->buildKernel(cl_file, "Exp");
+  cl_log_kernel_ = Kernel::easyCL->buildKernel(cl_file, "Log");
+  cl_abs_kernel_ = Kernel::easyCL->buildKernel(cl_file, "Abs");
   cl_pow_kernel_ = Kernel::easyCL->buildKernel(cl_file, "Pow");
   clblasSetup();
 }
 void Release() {
+  cl_channelmax_kernel_->~CLKernel();
+  cl_channelsub_kernel_->~CLKernel();
+  cl_channelsum_kernel_->~CLKernel();
+  cl_channeldiv_kernel_->~CLKernel();
   cl_set_kernel_->~CLKernel();
   cl_add_kernel_->~CLKernel();
   cl_sub_kernel_->~CLKernel();
   cl_mul_kernel_->~CLKernel();
   cl_div_kernel_->~CLKernel();
-  cl_square_kernel_->~CLKernel();
+  cl_sqr_kernel_->~CLKernel();
+  cl_exp_kernel_->~CLKernel();
+  cl_log_kernel_->~CLKernel();
+  cl_abs_kernel_->~CLKernel();
   cl_pow_kernel_->~CLKernel();
   clblasTeardown();
+}
+
+template <typename T>
+void ChannelMax(int num, int channels, int spatial_dim, const T *data,
+                T *val_max) {
+  cl_kernel kernel = cl_channelmax_kernel_->GetKernel();
+  clSetKernelArg(kernel, 0, sizeof(int), &num);
+  clSetKernelArg(kernel, 1, sizeof(int), &channels);
+  clSetKernelArg(kernel, 2, sizeof(int), &spatial_dim);
+  clSetKernelArg(kernel, 3, sizeof(cl_mem), data);
+  clSetKernelArg(kernel, 4, sizeof(cl_mem), val_max);
+  size_t global = num * spatial_dim;
+  clEnqueueNDRangeKernel(*Kernel::easyCL->queue, kernel, 1, nullptr, &global,
+                         nullptr, 0, nullptr, nullptr);
+  clFinish(*Kernel::easyCL->queue);
+}
+template <typename T>
+void ChannelSub(int count, int num, int channels, int spatial_dim,
+                const T *val_sub, T *data) {
+  cl_kernel kernel = cl_channelsub_kernel_->GetKernel();
+  clSetKernelArg(kernel, 0, sizeof(int), &count);
+  clSetKernelArg(kernel, 1, sizeof(int), &num);
+  clSetKernelArg(kernel, 2, sizeof(int), &channels);
+  clSetKernelArg(kernel, 3, sizeof(int), &spatial_dim);
+  clSetKernelArg(kernel, 4, sizeof(cl_mem), val_sub);
+  clSetKernelArg(kernel, 5, sizeof(cl_mem), data);
+  size_t global = count;
+  clEnqueueNDRangeKernel(*Kernel::easyCL->queue, kernel, 1, nullptr, &global,
+                         nullptr, 0, nullptr, nullptr);
+  clFinish(*Kernel::easyCL->queue);
+}
+template <typename T>
+void ChannelSum(int num, int channels, int spatial_dim, const T *data,
+                T *val_sum) {
+  cl_kernel kernel = cl_channelsum_kernel_->GetKernel();
+  clSetKernelArg(kernel, 0, sizeof(int), &num);
+  clSetKernelArg(kernel, 1, sizeof(int), &channels);
+  clSetKernelArg(kernel, 2, sizeof(int), &spatial_dim);
+  clSetKernelArg(kernel, 3, sizeof(cl_mem), data);
+  clSetKernelArg(kernel, 4, sizeof(cl_mem), val_sum);
+  size_t global = num * spatial_dim;
+  clEnqueueNDRangeKernel(*Kernel::easyCL->queue, kernel, 1, nullptr, &global,
+                         nullptr, 0, nullptr, nullptr);
+  clFinish(*Kernel::easyCL->queue);
+}
+template <typename T>
+void ChannelDiv(int count, int num, int channels, int spatial_dim,
+                const T *val_div, T *data) {
+  cl_kernel kernel = cl_channeldiv_kernel_->GetKernel();
+  clSetKernelArg(kernel, 0, sizeof(int), &count);
+  clSetKernelArg(kernel, 1, sizeof(int), &num);
+  clSetKernelArg(kernel, 2, sizeof(int), &channels);
+  clSetKernelArg(kernel, 3, sizeof(int), &spatial_dim);
+  clSetKernelArg(kernel, 4, sizeof(cl_mem), val_div);
+  clSetKernelArg(kernel, 5, sizeof(cl_mem), data);
+  size_t global = count;
+  clEnqueueNDRangeKernel(*Kernel::easyCL->queue, kernel, 1, nullptr, &global,
+                         nullptr, 0, nullptr, nullptr);
+  clFinish(*Kernel::easyCL->queue);
 }
 
 template <typename T>
@@ -282,62 +408,52 @@ void Set(int n, float val, T *y, int offy) {
   clFinish(*Kernel::easyCL->queue);
 }
 
-#define BINARY_FUNC(name, kname)                                               \
-  template <typename T>                                                        \
-  inline void v##name(int n, const T *a, int offa, const T *b, int offb, T *y, \
-                      int offy) {                                              \
-    cl_kernel kernel = cl_##kname->GetKernel();                                \
-    clSetKernelArg(kernel, 0, sizeof(int), &n);                                \
-    clSetKernelArg(kernel, 1, sizeof(cl_mem), a);                              \
-    clSetKernelArg(kernel, 2, sizeof(int), &offa);                             \
-    clSetKernelArg(kernel, 3, sizeof(cl_mem), b);                              \
-    clSetKernelArg(kernel, 4, sizeof(int), &offb);                             \
-    clSetKernelArg(kernel, 5, sizeof(cl_mem), y);                              \
-    clSetKernelArg(kernel, 6, sizeof(int), &offy);                             \
-    size_t global = n;                                                         \
-    clEnqueueNDRangeKernel(*Kernel::easyCL->queue, kernel, 1, nullptr,         \
-                           &global, nullptr, 0, nullptr, nullptr);             \
-    clFinish(*Kernel::easyCL->queue);                                          \
-  }
+#define BLAS_BINARY_FUNC(name, kname)                                       \
+  template <typename T>                                                     \
+  inline void name(int n, const T *a, int offa, const T *b, int offb, T *y, \
+                   int offy) {                                              \
+    cl_kernel kernel = cl_##kname->GetKernel();                             \
+    clSetKernelArg(kernel, 0, sizeof(int), &n);                             \
+    clSetKernelArg(kernel, 1, sizeof(cl_mem), a);                           \
+    clSetKernelArg(kernel, 2, sizeof(int), &offa);                          \
+    clSetKernelArg(kernel, 3, sizeof(cl_mem), b);                           \
+    clSetKernelArg(kernel, 4, sizeof(int), &offb);                          \
+    clSetKernelArg(kernel, 5, sizeof(cl_mem), y);                           \
+    clSetKernelArg(kernel, 6, sizeof(int), &offy);                          \
+    size_t global = n;                                                      \
+    clEnqueueNDRangeKernel(*Kernel::easyCL->queue, kernel, 1, nullptr,      \
+                           &global, nullptr, 0, nullptr, nullptr);          \
+    clFinish(*Kernel::easyCL->queue);                                       \
+  }                                                                         \
+  template void name<cl_mem>(int n, const cl_mem *a, int offa,              \
+                             const cl_mem *b, int offb, cl_mem *y, int offy);
 
-BINARY_FUNC(Add, add_kernel_);
-BINARY_FUNC(Sub, sub_kernel_);
-BINARY_FUNC(Mul, mul_kernel_);
-BINARY_FUNC(Div, div_kernel_);
+BLAS_BINARY_FUNC(Add, add_kernel_);
+BLAS_BINARY_FUNC(Sub, sub_kernel_);
+BLAS_BINARY_FUNC(Mul, mul_kernel_);
+BLAS_BINARY_FUNC(Div, div_kernel_);
 
-template <typename T>
-void Add(int n, const T *a, int offa, const T *b, int offb, T *y, int offy) {
-  vAdd<T>(n, a, offa, b, offb, y, offy);
-}
+#define BLAS_UNARY_FUNC(name, kname)                                      \
+  template <typename T>                                                   \
+  inline void name(int n, const T *a, int offa, T *y, int offy) {         \
+    cl_kernel kernel = cl_##kname->GetKernel();                           \
+    clSetKernelArg(kernel, 0, sizeof(int), &n);                           \
+    clSetKernelArg(kernel, 1, sizeof(cl_mem), a);                         \
+    clSetKernelArg(kernel, 2, sizeof(int), &offa);                        \
+    clSetKernelArg(kernel, 3, sizeof(cl_mem), y);                         \
+    clSetKernelArg(kernel, 4, sizeof(int), &offy);                        \
+    size_t global = n;                                                    \
+    clEnqueueNDRangeKernel(*Kernel::easyCL->queue, kernel, 1, nullptr,    \
+                           &global, nullptr, 0, nullptr, nullptr);        \
+    clFinish(*Kernel::easyCL->queue);                                     \
+  }                                                                       \
+  template void name<cl_mem>(int n, const cl_mem *a, int offa, cl_mem *y, \
+                             int offy);
 
-template <typename T>
-void Sub(int n, const T *a, int offa, const T *b, int offb, T *y, int offy) {
-  vSub<T>(n, a, offa, b, offb, y, offy);
-}
-
-template <typename T>
-void Mul(int n, const T *a, int offa, const T *b, int offb, T *y, int offy) {
-  vMul<T>(n, a, offa, b, offb, y, offy);
-}
-
-template <typename T>
-void Div(int n, const T *a, int offa, const T *b, int offb, T *y, int offy) {
-  vDiv<T>(n, a, offa, b, offb, y, offy);
-}
-
-template <typename T>
-void Square(int n, const T *a, int offa, T *y, int offy) {
-  cl_kernel kernel = cl_square_kernel_->GetKernel();
-  clSetKernelArg(kernel, 0, sizeof(int), &n);
-  clSetKernelArg(kernel, 1, sizeof(cl_mem), a);
-  clSetKernelArg(kernel, 2, sizeof(int), &offa);
-  clSetKernelArg(kernel, 3, sizeof(cl_mem), y);
-  clSetKernelArg(kernel, 4, sizeof(int), &offy);
-  size_t global = n;
-  clEnqueueNDRangeKernel(*Kernel::easyCL->queue, kernel, 1, nullptr, &global,
-                         nullptr, 0, nullptr, nullptr);
-  clFinish(*Kernel::easyCL->queue);
-}
+BLAS_UNARY_FUNC(Sqr, square_kernel_);
+BLAS_UNARY_FUNC(Exp, exp_kernel_);
+BLAS_UNARY_FUNC(Log, log_kernel_);
+BLAS_UNARY_FUNC(Abs, abs_kernel_);
 
 template <typename T>
 void Pow(int n, const T *a, int offa, float alpha, T *y, int offy) {
@@ -418,17 +534,18 @@ void BlasSgemm(int TA, int TB, int M, int N, int K, float alpha, const T *A,
 }
 
 // Explicit instantiation
+template void ChannelMax<cl_mem>(int num, int channels, int spatial_dim,
+                                 const cl_mem *data, cl_mem *val_max);
+template void ChannelSub<cl_mem>(int count, int num, int channels,
+                                 int spatial_dim, const cl_mem *val_sub,
+                                 cl_mem *data);
+template void ChannelSum<cl_mem>(int num, int channels, int spatial_dim,
+                                 const cl_mem *data, cl_mem *val_sum);
+template void ChannelDiv<cl_mem>(int count, int num, int channels,
+                                 int spatial_dim, const cl_mem *val_div,
+                                 cl_mem *data);
+
 template void Set<cl_mem>(int n, float val, cl_mem *y, int offy);
-template void Add<cl_mem>(int n, const cl_mem *a, int offa, const cl_mem *b,
-                          int offb, cl_mem *y, int offy);
-template void Sub<cl_mem>(int n, const cl_mem *a, int offa, const cl_mem *b,
-                          int offb, cl_mem *y, int offy);
-template void Mul<cl_mem>(int n, const cl_mem *a, int offa, const cl_mem *b,
-                          int offb, cl_mem *y, int offy);
-template void Div<cl_mem>(int n, const cl_mem *a, int offa, const cl_mem *b,
-                          int offb, cl_mem *y, int offy);
-template void Square<cl_mem>(int n, const cl_mem *a, int offa, cl_mem *y,
-                             int offy);
 template void Pow<cl_mem>(int n, const cl_mem *a, int offa, float alpha,
                           cl_mem *y, int offy);
 template void Scale<cl_mem>(int n, float alpha, const cl_mem *x, int offx,
