@@ -450,7 +450,7 @@ BLAS_BINARY_FUNC(Div, div_kernel_);
   template void name<cl_mem>(int n, const cl_mem *a, int offa, cl_mem *y, \
                              int offy);
 
-BLAS_UNARY_FUNC(Sqr, square_kernel_);
+BLAS_UNARY_FUNC(Sqr, sqr_kernel_);
 BLAS_UNARY_FUNC(Exp, exp_kernel_);
 BLAS_UNARY_FUNC(Log, log_kernel_);
 BLAS_UNARY_FUNC(Abs, abs_kernel_);

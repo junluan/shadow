@@ -9,8 +9,25 @@ void NormalizeLayer::Setup(VecBlob *blobs) {
 
   across_spatial_ = normalize_param.across_spatial();
   channel_shared_ = normalize_param.channel_shared();
-  for (int i = 0; i < layer_param_.normalize_param().scale_size(); ++i) {
-    scale_val_.push_back(layer_param_.normalize_param().scale(i));
+
+  if (blobs_.size() == 0) {
+    if (channel_shared_) {
+      scale_.reshape(1);
+    } else {
+      scale_.reshape(bottoms_[0]->shape(1));
+    }
+    Blas::Set(scale_.count(), 1, scale_.mutable_data(), 0);
+  } else {
+    scale_.set_shape(blobs_[0]->shape());
+    scale_.share_data(blobs_[0]->mutable_data());
+  }
+
+  if (channel_shared_) {
+    CHECK_EQ(scale_.count(), 1);
+    scale_val_.resize(1);
+    scale_.read_data(scale_val_.data());
+  } else {
+    CHECK_EQ(scale_.count(), bottoms_[0]->shape(1));
   }
 }
 
@@ -24,13 +41,6 @@ void NormalizeLayer::Reshape() {
 
   if (!across_spatial_) {
     norm_.reshape(1, 1, in_h, in_w);
-  }
-  if (!channel_shared_) {
-    for (int i = scale_val_.size(); i < in_c; ++i) {
-      scale_val_.push_back(1.f);
-    }
-    scale_.reshape(in_c);
-    scale_.set_data(scale_val_.data());
   }
 
   buffer_.reshape(1, in_c, in_h, in_w);

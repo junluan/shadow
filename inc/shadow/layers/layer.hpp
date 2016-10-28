@@ -79,7 +79,7 @@ class Layer {
     return nullptr;
   }
   virtual inline Blob<float> *top(int i) const {
-    if (i < bottoms_.size()) {
+    if (i < tops_.size()) {
       return tops_[i];
     }
     return nullptr;
