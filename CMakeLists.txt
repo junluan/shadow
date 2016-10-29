@@ -1,7 +1,9 @@
 cmake_minimum_required(VERSION 3.2)
 project(shadow)
 
-option(USE_CUDA "Using CUDA!" ON)
+add_subdirectory(tools)
+
+option(USE_CUDA "Using CUDA!" OFF)
 option(USE_CL "Using OpenCL!" OFF)
 option(USE_GLog "Using GLog!" ON)
 option(USE_OpenCV "Using OpenCV to read, write and show image!" ON)

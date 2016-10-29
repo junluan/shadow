@@ -4,13 +4,14 @@
 #include "shadow/layers/activate_layer.hpp"
 #include "shadow/layers/concat_layer.hpp"
 #include "shadow/layers/connected_layer.hpp"
-#include "shadow/layers/conv_layer.hpp"
+#include "shadow/layers/convolution_layer.hpp"
 #include "shadow/layers/data_layer.hpp"
 #include "shadow/layers/dropout_layer.hpp"
 #include "shadow/layers/flatten_layer.hpp"
 #include "shadow/layers/normalize_layer.hpp"
 #include "shadow/layers/permute_layer.hpp"
 #include "shadow/layers/pooling_layer.hpp"
+#include "shadow/layers/prior_box_layer.hpp"
 #include "shadow/layers/reshape_layer.hpp"
 #include "shadow/layers/softmax_layer.hpp"
 
@@ -176,7 +177,7 @@ Layer *Network::LayerFactory(const shadow::LayerParameter &layer_param,
   } else if (!layer_param.type().compare("Connected")) {
     layer = new ConnectedLayer(layer_param);
   } else if (!layer_param.type().compare("Convolution")) {
-    layer = new ConvLayer(layer_param);
+    layer = new ConvolutionLayer(layer_param);
   } else if (!layer_param.type().compare("Data")) {
     layer = new DataLayer(layer_param);
   } else if (!layer_param.type().compare("Dropout")) {
@@ -189,12 +190,14 @@ Layer *Network::LayerFactory(const shadow::LayerParameter &layer_param,
     layer = new PermuteLayer(layer_param);
   } else if (!layer_param.type().compare("Pooling")) {
     layer = new PoolingLayer(layer_param);
+  } else if (!layer_param.type().compare("PriorBox")) {
+    layer = new PriorBoxLayer(layer_param);
   } else if (!layer_param.type().compare("Reshape")) {
     layer = new ReshapeLayer(layer_param);
   } else if (!layer_param.type().compare("Softmax")) {
     layer = new SoftmaxLayer(layer_param);
   } else {
-    Fatal("Layer type is not recognized!");
+    Fatal("Layer type: " + layer_param.type() + " is not recognized!");
   }
   if (layer != nullptr) {
     layer->Setup(blobs);

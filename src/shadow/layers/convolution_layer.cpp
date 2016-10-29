@@ -1,12 +1,14 @@
-#include "shadow/layers/conv_layer.hpp"
+#include "shadow/layers/convolution_layer.hpp"
 #include "shadow/util/blas.hpp"
 #include "shadow/util/image.hpp"
 
-inline int convolutional_out_size(int s, int size, int pad, int stride) {
-  return (s + 2 * pad - size) / stride + 1;
+inline int convolution_out_size(int dim, int kernel_size, int stride, int pad,
+                                int dilation) {
+  int kernel_extent = dilation * (kernel_size - 1) + 1;
+  return (dim + 2 * pad - kernel_extent) / stride + 1;
 }
 
-void ConvLayer::Setup(VecBlob *blobs) {
+void ConvolutionLayer::Setup(VecBlob *blobs) {
   Layer::Setup(blobs);
 
   const shadow::ConvolutionParameter &conv_param =
@@ -17,17 +19,20 @@ void ConvLayer::Setup(VecBlob *blobs) {
   kernel_size_ = conv_param.kernel_size();
   stride_ = conv_param.stride();
   pad_ = conv_param.pad();
+  dilation_ = conv_param.dilation();
   bias_term_ = conv_param.bias_term();
 }
 
-void ConvLayer::Reshape() {
+void ConvolutionLayer::Reshape() {
   int in_c = bottoms_[0]->shape(1), in_h = bottoms_[0]->shape(2),
       in_w = bottoms_[0]->shape(3);
 
   VecInt top_shape = bottoms_[0]->shape();
   top_shape[1] = num_output_;
-  top_shape[2] = convolutional_out_size(in_h, kernel_size_, pad_, stride_);
-  top_shape[3] = convolutional_out_size(in_w, kernel_size_, pad_, stride_);
+  top_shape[2] =
+      convolution_out_size(in_h, kernel_size_, stride_, pad_, dilation_);
+  top_shape[3] =
+      convolution_out_size(in_w, kernel_size_, stride_, pad_, dilation_);
   tops_[0]->reshape(top_shape);
 
   out_spatial_dim_ = tops_[0]->count(2);
@@ -46,12 +51,12 @@ void ConvLayer::Reshape() {
   DInfo(out.str());
 }
 
-void ConvLayer::Forward() {
+void ConvolutionLayer::Forward() {
   int batch = bottoms_[0]->shape(0);
   int top_num = tops_[0]->num(), bottom_num = bottoms_[0]->num();
   for (int b = 0; b < batch; ++b) {
     Image::Im2Col(bottoms_[0]->data(), bottoms_[0]->shape(), b * bottom_num,
-                  kernel_size_, stride_, pad_, tops_[0]->shape(),
+                  kernel_size_, stride_, pad_, dilation_, tops_[0]->shape(),
                   col_image_.mutable_data());
     Blas::BlasSgemm(0, 0, num_output_, out_spatial_dim_, kernel_dim_, 1,
                     blobs_[0]->data(), 0, col_image_.data(), 0, 0,
@@ -64,7 +69,7 @@ void ConvLayer::Forward() {
   }
 }
 
-void ConvLayer::Release() {
+void ConvolutionLayer::Release() {
   bottoms_.clear();
   tops_.clear();
   for (int i = 0; i < blobs_.size(); ++i) {
@@ -75,5 +80,5 @@ void ConvLayer::Release() {
   biases_multiplier_.clear();
   col_image_.clear();
 
-  // DInfo("Free ConvLayer!");
+  // DInfo("Free ConvolutionLayer!");
 }

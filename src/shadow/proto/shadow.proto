@@ -3,7 +3,7 @@ syntax = "proto2";
 package shadow;
 
 message BlobShape {
-  repeated int32 dim = 1;
+  repeated int64 dim = 1;
 }
 
 message Blob {
@@ -36,7 +36,8 @@ message ConvolutionParameter {
   optional int32 kernel_size = 2;
   optional int32 stride = 3 [default = 1];
   optional int32 pad = 4 [default = 0];
-  optional bool bias_term = 5 [default = true];
+  optional int32 dilation = 5 [default = 1];
+  optional bool bias_term = 6 [default = true];
 }
 
 message DataParameter {

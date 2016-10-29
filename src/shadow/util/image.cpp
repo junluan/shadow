@@ -30,34 +30,39 @@ void DataTransform(const T *in_data, const VecInt &in_shape, float scale,
   }
 }
 
-template <typename T>
-inline T Im2ColGetPixel(const T *image, int in_h, int in_w, int im_row,
-                        int im_col, int channel, int pad) {
-  im_row -= pad;
-  im_col -= pad;
-  if (im_row < 0 || im_col < 0 || im_row >= in_h || im_col >= in_w) return (T)0;
-  return image[im_col + in_w * (im_row + in_h * channel)];
+// check for 0 <= a < b
+inline bool check_border(int a, int b) {
+  return static_cast<unsigned>(a) < static_cast<unsigned>(b);
 }
 
 template <typename T>
 void Im2Col(const T *in_data, const VecInt &in_shape, int offset,
-            int kernel_size, int stride, int pad, const VecInt &out_shape,
-            T *out_data) {
+            int kernel_size, int stride, int pad, int dilation,
+            const VecInt &out_shape, T *out_data) {
+  in_data += offset;
   int in_c = in_shape[1], in_h = in_shape[2], in_w = in_shape[3];
   int out_h = out_shape[2], out_w = out_shape[3];
-  const T *im_data_offset = in_data + offset;
-  int kernel_num_ = in_c * kernel_size * kernel_size;
-  for (int c = 0; c < kernel_num_; ++c) {
-    int w_offset = c % kernel_size;
-    int h_offset = (c / kernel_size) % kernel_size;
-    int c_im = c / kernel_size / kernel_size;
-    for (int h = 0; h < out_h; ++h) {
-      for (int w = 0; w < out_w; ++w) {
-        int im_row = h_offset + h * stride;
-        int im_col = w_offset + w * stride;
-        int col_index = (c * out_h + h) * out_w + w;
-        out_data[col_index] = Im2ColGetPixel(im_data_offset, in_h, in_w, im_row,
-                                             im_col, c_im, pad);
+  int spatial_dim = in_h * in_w;
+  for (int k_c = 0; k_c < in_c; ++k_c, in_data += spatial_dim) {
+    for (int k_s = 0; k_s < kernel_size * kernel_size; ++k_s) {
+      int k_h = k_s / kernel_size;
+      int k_w = k_s % kernel_size;
+      int im_row = -pad + k_h * dilation;
+      for (int h = 0; h < out_h; ++h, im_row += stride) {
+        if (check_border(im_row, in_h)) {
+          int im_col = -pad + k_w * dilation;
+          for (int w = 0; w < out_w; ++w, im_col += stride) {
+            if (check_border(im_col, in_w)) {
+              *(out_data++) = in_data[im_row * in_w + im_col];
+            } else {
+              *(out_data++) = 0;
+            }
+          }
+        } else {
+          for (int w = 0; w < out_w; ++w) {
+            *(out_data++) = 0;
+          }
+        }
       }
     }
   }
@@ -157,7 +162,8 @@ template void DataTransform<float>(const float *in_data, const VecInt &in_shape,
                                    const float *mean_value, float *out_data);
 template void Im2Col<float>(const float *in_data, const VecInt &in_shape,
                             int offset, int kernel_size, int stride, int pad,
-                            const VecInt &out_shape, float *out_data);
+                            int dilation, const VecInt &out_shape,
+                            float *out_data);
 template void Pooling<float>(const float *in_data, const VecInt &in_shape,
                              int kernel_size, int stride, int pad, int mode,
                              const VecInt &out_shape, float *out_data);
