@@ -76,27 +76,26 @@ void DataTransform(const T *in_data, int count, int in_c, int spatial_dim,
 
 __global__ void KernelIm2Col(const float *im_data, int offset, int in_c,
                              int in_h, int in_w, int kernel_size, int stride,
-                             int pad, int out_h, int out_w, float *col_data) {
+                             int pad, int dilation, int out_h, int out_w,
+                             float *col_data) {
   CUDA_KERNEL_LOOP(globalid, in_c * out_h * out_w);
 
-  int c_out = (globalid / (out_w * out_h)) % in_c;
-  int i_out = (globalid / out_w) % out_h;
-  int j_out = globalid % out_w;
-
-  int i_inp = -pad + i_out * stride;
-  int j_inp = -pad + j_out * stride;
-
-  im_data += offset + c_out * in_h * in_w;
-  col_data +=
-      (c_out * kernel_size * kernel_size * out_h + i_out) * out_w + j_out;
-
-  for (int ki = 0; ki < kernel_size; ++ki) {
-    for (int kj = 0; kj < kernel_size; ++kj) {
-      int i = i_inp + ki;
-      int j = j_inp + kj;
-      *col_data = (i >= 0 && j >= 0 && i < in_h && j < in_w)
-                      ? im_data[i * in_w + j]
-                      : 0.f;
+  const int h_index = globalid / out_w;
+  const int h_col = h_index % out_h;
+  const int w_col = globalid % out_w;
+  const int c_im = h_index / out_h;
+  const int c_col = c_im * kernel_size * kernel_size;
+  const int h_offset = h_col * stride - pad;
+  const int w_offset = w_col * stride - pad;
+  col_data += (c_col * out_h + h_col) * out_w + w_col;
+  im_data += offset + (c_im * in_h + h_offset) * in_w + w_offset;
+  for (int i = 0; i < kernel_size; ++i) {
+    for (int j = 0; j < kernel_size; ++j) {
+      int h_im = h_offset + i * dilation;
+      int w_im = w_offset + j * dilation;
+      *col_data = (h_im >= 0 && w_im >= 0 && h_im < in_h && w_im < in_w)
+                      ? im_data[i * dilation * in_w + j * dilation]
+                      : 0;
       col_data += out_h * out_w;
     }
   }
@@ -104,12 +103,12 @@ __global__ void KernelIm2Col(const float *im_data, int offset, int in_c,
 
 template <typename T>
 void Im2Col(const T *in_data, int offset, int in_c, int in_h, int in_w,
-            int kernel_size, int stride, int pad, int out_h, int out_w,
-            T *out_data) {
+            int kernel_size, int stride, int pad, int dilation, int out_h,
+            int out_w, T *out_data) {
   int N = in_c * out_h * out_w;
   KernelIm2Col<<<GridDim(N), BLOCK>>>(in_data, offset, in_c, in_h, in_w,
-                                      kernel_size, stride, pad, out_h, out_w,
-                                      out_data);
+                                      kernel_size, stride, pad, dilation, out_h,
+                                      out_w, out_data);
   CheckError(cudaPeekAtLastError());
 }
 
@@ -254,7 +253,8 @@ template void DataTransform<float>(const float *in_data, int count, int in_c,
                                    const float *mean_value, float *out_data);
 template void Im2Col<float>(const float *in_data, int offset, int in_c,
                             int in_h, int in_w, int kernel_size, int stride,
-                            int pad, int out_h, int out_w, float *out_data);
+                            int pad, int dilation, int out_h, int out_w,
+                            float *out_data);
 template void Pooling<float>(const float *in_data, int batch, int in_c,
                              int in_h, int in_w, int kernel_size, int stride,
                              int pad, int mode, int out_h, int out_w,

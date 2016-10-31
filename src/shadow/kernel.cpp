@@ -87,8 +87,8 @@ void DataTransform(const T *in_data, int count, int in_c, int spatial_dim,
 
 template <typename T>
 void Im2Col(const T *in_data, int offset, int in_c, int in_h, int in_w,
-            int kernel_size, int stride, int pad, int out_h, int out_w,
-            T *out_data) {
+            int kernel_size, int stride, int pad, int dilation, int out_h,
+            int out_w, T *out_data) {
   cl_kernel kernel = cl_im2col_kernel_->GetKernel();
   clSetKernelArg(kernel, 0, sizeof(cl_mem), in_data);
   clSetKernelArg(kernel, 1, sizeof(int), &offset);
@@ -98,9 +98,10 @@ void Im2Col(const T *in_data, int offset, int in_c, int in_h, int in_w,
   clSetKernelArg(kernel, 5, sizeof(int), &kernel_size);
   clSetKernelArg(kernel, 6, sizeof(int), &stride);
   clSetKernelArg(kernel, 7, sizeof(int), &pad);
-  clSetKernelArg(kernel, 8, sizeof(int), &out_h);
-  clSetKernelArg(kernel, 9, sizeof(int), &out_w);
-  clSetKernelArg(kernel, 10, sizeof(cl_mem), out_data);
+  clSetKernelArg(kernel, 8, sizeof(int), &dilation);
+  clSetKernelArg(kernel, 9, sizeof(int), &out_h);
+  clSetKernelArg(kernel, 10, sizeof(int), &out_w);
+  clSetKernelArg(kernel, 11, sizeof(cl_mem), out_data);
   size_t global = in_c * out_h * out_w;
   clEnqueueNDRangeKernel(*easyCL->queue, kernel, 1, nullptr, &global, nullptr,
                          0, nullptr, nullptr);
@@ -200,7 +201,8 @@ template void DataTransform<cl_mem>(const cl_mem *in_data, int count, int in_c,
                                     const cl_mem *mean_value, cl_mem *out_data);
 template void Im2Col<cl_mem>(const cl_mem *in_data, int offset, int in_c,
                              int in_h, int in_w, int kernel_size, int stride,
-                             int pad, int out_h, int out_w, cl_mem *out_data);
+                             int pad, int dilation, int out_h, int out_w,
+                             cl_mem *out_data);
 template void Pooling<cl_mem>(const cl_mem *in_data, int batch, int in_c,
                               int in_h, int in_w, int kernel_size, int stride,
                               int pad, int mode, int out_h, int out_w,

@@ -189,10 +189,10 @@ void DataTransform(const T *in_data, const VecInt &in_shape, float scale,
 
 template <typename T>
 void Im2Col(const T *in_data, const VecInt &in_shape, int offset,
-            int kernel_size, int stride, int pad, const VecInt &out_shape,
-            T *out_data) {
+            int kernel_size, int stride, int pad, int dilation,
+            const VecInt &out_shape, T *out_data) {
   Kernel::Im2Col(in_data, offset, in_shape[1], in_shape[2], in_shape[3],
-                 kernel_size, stride, pad, out_shape[2], out_shape[3],
+                 kernel_size, stride, pad, dilation, out_shape[2], out_shape[3],
                  out_data);
 }
 
@@ -233,7 +233,8 @@ template void DataTransform<float>(const float *in_data, const VecInt &in_shape,
                                    const float *mean_value, float *out_data);
 template void Im2Col<float>(const float *in_data, const VecInt &in_shape,
                             int offset, int kernel_size, int stride, int pad,
-                            const VecInt &out_shape, float *out_data);
+                            int dilation, const VecInt &out_shape,
+                            float *out_data);
 template void Pooling<float>(const float *in_data, const VecInt &in_shape,
                              int kernel_size, int stride, int pad, int mode,
                              const VecInt &out_shape, float *out_data);
@@ -255,7 +256,8 @@ template void DataTransform<cl_mem>(const cl_mem *in_data,
                                     cl_mem *out_data);
 template void Im2Col<cl_mem>(const cl_mem *in_data, const VecInt &in_shape,
                              int offset, int kernel_size, int stride, int pad,
-                             const VecInt &out_shape, cl_mem *out_data);
+                             int dilation, const VecInt &out_shape,
+                             cl_mem *out_data);
 template void Pooling<cl_mem>(const cl_mem *in_data, const VecInt &in_shape,
                               int kernel_size, int stride, int pad, int mode,
                               const VecInt &out_shape, cl_mem *out_data);

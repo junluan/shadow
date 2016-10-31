@@ -42,8 +42,8 @@ void DataTransform(const T *in_data, int count, int in_c, int spatial_dim,
 
 template <typename T>
 void Im2Col(const T *in_data, int offset, int in_c, int in_h, int in_w,
-            int kernel_size, int stride, int pad, int out_h, int out_w,
-            T *out_data);
+            int kernel_size, int stride, int pad, int dilation, int out_h,
+            int out_w, T *out_data);
 
 template <typename T>
 void Pooling(const T *in_data, int batch, int in_c, int in_h, int in_w,
