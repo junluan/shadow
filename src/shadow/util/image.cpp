@@ -1,7 +1,5 @@
 #include "shadow/util/image.hpp"
-
-#include <cfloat>
-#include <cstring>
+#include "shadow/kernel.hpp"
 
 namespace Image {
 
@@ -177,78 +175,130 @@ template void Permute<float, int>(const float *in_data, int count, int num_axes,
                                   float *out_data);
 template void Activate<float>(float *data, int count, int type);
 
-#else
+#elif defined(USE_CL)
 template <typename T>
 void DataTransform(const T *in_data, const VecInt &in_shape, float scale,
                    int num_mean, const T *mean_value, T *out_data) {
   int in_c = in_shape[1], spatial_dim = in_shape[2] * in_shape[3];
   int count = in_shape[0] * in_c * spatial_dim;
-  Kernel::DataTransform(in_data, count, in_c, spatial_dim, scale, num_mean,
-                        mean_value, out_data);
+
+  cl_kernel kernel = Kernel::cl_datatransform_kernel_->GetKernel();
+  clSetKernelArg(kernel, 0, sizeof(cl_mem), in_data);
+  clSetKernelArg(kernel, 1, sizeof(int), &count);
+  clSetKernelArg(kernel, 2, sizeof(int), &in_c);
+  clSetKernelArg(kernel, 3, sizeof(int), &spatial_dim);
+  clSetKernelArg(kernel, 4, sizeof(float), &scale);
+  clSetKernelArg(kernel, 5, sizeof(int), &num_mean);
+  clSetKernelArg(kernel, 6, sizeof(cl_mem), mean_value);
+  clSetKernelArg(kernel, 7, sizeof(cl_mem), out_data);
+  size_t global = count;
+  clEnqueueNDRangeKernel(*Kernel::easyCL->queue, kernel, 1, nullptr, &global,
+                         nullptr, 0, nullptr, nullptr);
+  clFinish(*Kernel::easyCL->queue);
 }
 
 template <typename T>
 void Im2Col(const T *in_data, const VecInt &in_shape, int offset,
             int kernel_size, int stride, int pad, int dilation,
             const VecInt &out_shape, T *out_data) {
-  Kernel::Im2Col(in_data, offset, in_shape[1], in_shape[2], in_shape[3],
-                 kernel_size, stride, pad, dilation, out_shape[2], out_shape[3],
-                 out_data);
+  int in_c = in_shape[1], in_h = in_shape[2], in_w = in_shape[3];
+  int out_h = out_shape[2], out_w = out_shape[3];
+
+  cl_kernel kernel = Kernel::cl_im2col_kernel_->GetKernel();
+  clSetKernelArg(kernel, 0, sizeof(cl_mem), in_data);
+  clSetKernelArg(kernel, 1, sizeof(int), &offset);
+  clSetKernelArg(kernel, 2, sizeof(int), &in_c);
+  clSetKernelArg(kernel, 3, sizeof(int), &in_h);
+  clSetKernelArg(kernel, 4, sizeof(int), &in_w);
+  clSetKernelArg(kernel, 5, sizeof(int), &kernel_size);
+  clSetKernelArg(kernel, 6, sizeof(int), &stride);
+  clSetKernelArg(kernel, 7, sizeof(int), &pad);
+  clSetKernelArg(kernel, 8, sizeof(int), &dilation);
+  clSetKernelArg(kernel, 9, sizeof(int), &out_h);
+  clSetKernelArg(kernel, 10, sizeof(int), &out_w);
+  clSetKernelArg(kernel, 11, sizeof(cl_mem), out_data);
+  size_t global = in_c * out_h * out_w;
+  clEnqueueNDRangeKernel(*Kernel::easyCL->queue, kernel, 1, nullptr, &global,
+                         nullptr, 0, nullptr, nullptr);
+  clFinish(*Kernel::easyCL->queue);
 }
 
 template <typename T>
 void Pooling(const T *in_data, const VecInt &in_shape, int kernel_size,
              int stride, int pad, int mode, const VecInt &out_shape,
              T *out_data) {
-  Kernel::Pooling(in_data, in_shape[0], in_shape[1], in_shape[2], in_shape[3],
-                  kernel_size, stride, pad, mode, out_shape[2], out_shape[3],
-                  out_data);
+  int batch = in_shape[0];
+  int in_c = in_shape[1], in_h = in_shape[2], in_w = in_shape[3];
+  int out_h = out_shape[2], out_w = out_shape[3];
+
+  cl_kernel kernel = Kernel::cl_pooling_kernel_->GetKernel();
+  clSetKernelArg(kernel, 0, sizeof(cl_mem), in_data);
+  clSetKernelArg(kernel, 1, sizeof(int), &batch);
+  clSetKernelArg(kernel, 2, sizeof(int), &in_c);
+  clSetKernelArg(kernel, 3, sizeof(int), &in_h);
+  clSetKernelArg(kernel, 4, sizeof(int), &in_w);
+  clSetKernelArg(kernel, 5, sizeof(int), &kernel_size);
+  clSetKernelArg(kernel, 6, sizeof(int), &stride);
+  clSetKernelArg(kernel, 7, sizeof(int), &pad);
+  clSetKernelArg(kernel, 8, sizeof(int), &mode);
+  clSetKernelArg(kernel, 9, sizeof(int), &out_h);
+  clSetKernelArg(kernel, 10, sizeof(int), &out_w);
+  clSetKernelArg(kernel, 11, sizeof(cl_mem), out_data);
+  size_t global = batch * in_c * out_h * out_w;
+  clEnqueueNDRangeKernel(*Kernel::easyCL->queue, kernel, 1, nullptr, &global,
+                         nullptr, 0, nullptr, nullptr);
+  clFinish(*Kernel::easyCL->queue);
 }
 
 template <typename T>
 void Concat(const T *in_data, int count, int num_concats, int concat_size,
             int top_concat_axis, int bottom_concat_axis, int offset_concat_axis,
             T *out_data) {
-  Kernel::Concat(in_data, count, num_concats, concat_size, top_concat_axis,
-                 bottom_concat_axis, offset_concat_axis, out_data);
+  cl_kernel kernel = Kernel::cl_concat_kernel_->GetKernel();
+  clSetKernelArg(kernel, 0, sizeof(cl_mem), in_data);
+  clSetKernelArg(kernel, 1, sizeof(int), &count);
+  clSetKernelArg(kernel, 2, sizeof(int), &num_concats);
+  clSetKernelArg(kernel, 3, sizeof(int), &concat_size);
+  clSetKernelArg(kernel, 4, sizeof(int), &top_concat_axis);
+  clSetKernelArg(kernel, 5, sizeof(int), &bottom_concat_axis);
+  clSetKernelArg(kernel, 6, sizeof(int), &offset_concat_axis);
+  clSetKernelArg(kernel, 7, sizeof(cl_mem), out_data);
+  size_t global = count;
+  clEnqueueNDRangeKernel(*Kernel::easyCL->queue, kernel, 1, nullptr, &global,
+                         nullptr, 0, nullptr, nullptr);
+  clFinish(*Kernel::easyCL->queue);
 }
 
 template <typename T, typename Dtype>
 void Permute(const T *in_data, int count, int num_axes,
              const Dtype *permute_order, const Dtype *old_steps,
              const Dtype *new_steps, T *out_data) {
-  Kernel::Permute(in_data, count, num_axes, permute_order, old_steps, new_steps,
-                  out_data);
+  cl_kernel kernel = Kernel::cl_permute_kernel_->GetKernel();
+  clSetKernelArg(kernel, 0, sizeof(cl_mem), in_data);
+  clSetKernelArg(kernel, 1, sizeof(int), &count);
+  clSetKernelArg(kernel, 2, sizeof(int), &num_axes);
+  clSetKernelArg(kernel, 3, sizeof(cl_mem), permute_order);
+  clSetKernelArg(kernel, 4, sizeof(cl_mem), old_steps);
+  clSetKernelArg(kernel, 5, sizeof(cl_mem), new_steps);
+  clSetKernelArg(kernel, 6, sizeof(cl_mem), out_data);
+  size_t global = count;
+  clEnqueueNDRangeKernel(*Kernel::easyCL->queue, kernel, 1, nullptr, &global,
+                         nullptr, 0, nullptr, nullptr);
+  clFinish(*Kernel::easyCL->queue);
 }
 
 template <typename T>
 void Activate(T *data, int count, int type) {
-  Kernel::Activate(data, count, type);
+  cl_kernel kernel = Kernel::cl_activate_kernel_->GetKernel();
+  clSetKernelArg(kernel, 0, sizeof(cl_mem), data);
+  clSetKernelArg(kernel, 1, sizeof(int), &count);
+  clSetKernelArg(kernel, 2, sizeof(int), &type);
+  size_t global = count;
+  clEnqueueNDRangeKernel(*Kernel::easyCL->queue, kernel, 1, nullptr, &global,
+                         nullptr, 0, nullptr, nullptr);
+  clFinish(*Kernel::easyCL->queue);
 }
 
-#if defined(USE_CUDA)
-// Explicit instantiation
-template void DataTransform<float>(const float *in_data, const VecInt &in_shape,
-                                   float scale, int num_mean,
-                                   const float *mean_value, float *out_data);
-template void Im2Col<float>(const float *in_data, const VecInt &in_shape,
-                            int offset, int kernel_size, int stride, int pad,
-                            int dilation, const VecInt &out_shape,
-                            float *out_data);
-template void Pooling<float>(const float *in_data, const VecInt &in_shape,
-                             int kernel_size, int stride, int pad, int mode,
-                             const VecInt &out_shape, float *out_data);
-template void Concat<float>(const float *in_data, int count, int num_concats,
-                            int concat_size, int top_concat_axis,
-                            int bottom_concat_axis, int offset_concat_axis,
-                            float *out_data);
-template void Permute<float, int>(const float *in_data, int count, int num_axes,
-                                  const int *permute_order,
-                                  const int *old_steps, const int *new_steps,
-                                  float *out_data);
-template void Activate<float>(float *data, int count, int type);
-
-#else
 // Explicit instantiation
 template void DataTransform<cl_mem>(const cl_mem *in_data,
                                     const VecInt &in_shape, float scale,
@@ -271,7 +321,6 @@ template void Permute<cl_mem, cl_mem>(const cl_mem *in_data, int count,
                                       const cl_mem *new_steps,
                                       cl_mem *out_data);
 template void Activate<cl_mem>(cl_mem *data, int count, int type);
-#endif
 #endif
 
 }  // namespace Image

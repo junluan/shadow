@@ -1,24 +1,12 @@
+#include "shadow/kernel.hpp"
 #include "shadow/util/blas.hpp"
-#include "shadow/util/util.hpp"
+#include "shadow/util/log.hpp"
+
+#include <cfloat>
 
 namespace Blas {
 
 #if defined(USE_CUDA)
-#include "cublas_v2.h"
-
-static cublasHandle_t cublas_handle_ = nullptr;
-
-void Setup() { cublasCreate(&cublas_handle_); }
-
-void Release() {
-  if (cublas_handle_ != nullptr) cublasDestroy(cublas_handle_);
-}
-
-#define CUDA_KERNEL_LOOP(globalid, count)                               \
-  const int globalid =                                                  \
-      (blockIdx.x + blockIdx.y * gridDim.x) * blockDim.x + threadIdx.x; \
-  if (globalid >= count) return;
-
 __global__ void KernelChannelMax(int num, int channels, int spatial_dim,
                                  const float *data, float *val_max) {
   CUDA_KERNEL_LOOP(globalid, num * spatial_dim);
@@ -27,7 +15,7 @@ __global__ void KernelChannelMax(int num, int channels, int spatial_dim,
   int s = globalid % spatial_dim;
   float maxval = -FLT_MAX;
   for (int c = 0; c < channels; ++c) {
-    maxval = max(data[(n * channels + c) * spatial_dim + s], maxval);
+    maxval = fmaxf(data[(n * channels + c) * spatial_dim + s], maxval);
   }
   val_max[globalid] = maxval;
 }
@@ -146,15 +134,15 @@ BLAS_BINARY_FUNC(Div, y[i] = a[i] / b[i]);
                             int offy);
 
 BLAS_UNARY_FUNC(Sqr, y[i] = a[i] * a[i]);
-BLAS_UNARY_FUNC(Exp, y[i] = std::exp(a[i]));
-BLAS_UNARY_FUNC(Log, y[i] = std::log(a[i]));
-BLAS_UNARY_FUNC(Abs, y[i] = std::abs(a[i]));
+BLAS_UNARY_FUNC(Exp, y[i] = expf(a[i]));
+BLAS_UNARY_FUNC(Log, y[i] = logf(a[i]));
+BLAS_UNARY_FUNC(Abs, y[i] = fabsf(a[i]));
 
 __global__ void KernelPow(int n, const float *a, int offa, float alpha,
                           float *y, int offy) {
   CUDA_KERNEL_LOOP(globalid, n);
 
-  y[offy + globalid] = std::pow(a[offa + globalid], alpha);
+  y[offy + globalid] = powf(a[offa + globalid], alpha);
 }
 
 template <typename T>
@@ -172,22 +160,22 @@ void Scale(int n, float alpha, const T *x, int offx, T *y, int offy) {
 // Level 1
 template <typename T>
 void BlasSscal(int n, float alpha, T *x, int offx) {
-  cublasSscal(cublas_handle_, n, &alpha, x + offx, 1);
+  cublasSscal(Kernel::cublas_handle_, n, &alpha, x + offx, 1);
 }
 
 template <typename T>
 void BlasScopy(int n, const T *x, int offx, T *y, int offy) {
-  cublasScopy(cublas_handle_, n, x + offx, 1, y + offy, 1);
+  cublasScopy(Kernel::cublas_handle_, n, x + offx, 1, y + offy, 1);
 }
 
 template <typename T>
 void BlasSaxpy(int n, float alpha, const T *x, int offx, T *y, int offy) {
-  cublasSaxpy(cublas_handle_, n, &alpha, x + offx, 1, y + offy, 1);
+  cublasSaxpy(Kernel::cublas_handle_, n, &alpha, x + offx, 1, y + offy, 1);
 }
 
 template <typename T>
 void BlasSasum(int n, const T *x, int offx, float *y) {
-  cublasSasum(cublas_handle_, n, x + offx, 1, y);
+  cublasSasum(Kernel::cublas_handle_, n, x + offx, 1, y);
 }
 
 // Level 2
@@ -195,8 +183,8 @@ template <typename T>
 void BlasSgemv(int TA, int M, int N, float alpha, const T *A, int offA,
                const T *x, int offx, float beta, T *y, int offy) {
   cublasOperation_t transA = TA ? CUBLAS_OP_N : CUBLAS_OP_T;
-  cublasSgemv(cublas_handle_, transA, N, M, &alpha, A + offA, N, x + offx, 1,
-              &beta, y + offy, 1);
+  cublasSgemv(Kernel::cublas_handle_, transA, N, M, &alpha, A + offA, N,
+              x + offx, 1, &beta, y + offy, 1);
 }
 
 // Level 3
@@ -206,8 +194,8 @@ void BlasSgemm(int TA, int TB, int M, int N, int K, float alpha, const T *A,
   int lda = TA ? M : K, ldb = TB ? K : N;
   cublasOperation_t transA = TA ? CUBLAS_OP_T : CUBLAS_OP_N;
   cublasOperation_t transB = TB ? CUBLAS_OP_T : CUBLAS_OP_N;
-  cublasSgemm(cublas_handle_, transB, transA, N, M, K, &alpha, B + offB, ldb,
-              A + offA, lda, &beta, C + offC, N);
+  cublasSgemm(Kernel::cublas_handle_, transB, transA, N, M, K, &alpha, B + offB,
+              ldb, A + offA, lda, &beta, C + offC, N);
 }
 
 // Explicit instantiation
@@ -245,7 +233,6 @@ template void BlasSgemv<float>(int TA, int M, int N, float alpha,
 template void BlasSgemm<float>(int TA, int TB, int M, int N, int K, float alpha,
                                const float *A, int offA, const float *B,
                                int offB, float beta, float *C, int offC);
-
 #endif
 
 }  // namespace Blas

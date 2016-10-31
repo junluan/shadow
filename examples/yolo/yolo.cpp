@@ -40,7 +40,6 @@ Yolo::Yolo(string model_file, float threshold) {
 void Yolo::Setup(int batch, VecRectF *rois) {
 #if defined(USE_CUDA) | defined(USE_CL)
   Kernel::Setup();
-  Blas::Setup();
 #endif
 
   net_.LoadModel(model_file_, batch);
@@ -69,7 +68,6 @@ void Yolo::Release() {
   net_.Release();
 #if defined(USE_CUDA) | defined(USE_CL)
   Kernel::Release();
-  Blas::Release();
 #endif
 }
 

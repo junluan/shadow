@@ -3,9 +3,9 @@ project(shadow)
 
 add_subdirectory(tools)
 
-option(USE_CUDA "Using CUDA!" OFF)
+option(USE_CUDA "Using CUDA!" ON)
 option(USE_CL "Using OpenCL!" OFF)
-option(USE_GLog "Using GLog!" ON)
+option(USE_GLog "Using GLog!" OFF)
 option(USE_OpenCV "Using OpenCV to read, write and show image!" ON)
 set(OpenCV_ROOT "/usr/local/opencv-3.1.0" CACHE STRING "Give the root of OpenCV!")
 
@@ -49,7 +49,7 @@ if (CUDA_FOUND)
 
   file(GLOB_RECURSE shadow_cu_src "src/shadow/*.cu")
   cuda_add_library(shadow SHARED ${shadow_cu_src} ${shadow_lib_src})
-  target_link_libraries(shadow glog protobuf ${CUDA_CUDART_LIBRARY} ${CUDA_cublas_LIBRARY})
+  target_link_libraries(shadow protobuf ${CUDA_CUDART_LIBRARY} ${CUDA_cublas_LIBRARY})
 endif ()
 
 if (OpenCL_FOUND)
@@ -59,12 +59,16 @@ if (OpenCL_FOUND)
   include_directories(${OpenCL_INCLUDE_DIRS})
 
   add_library(shadow SHARED ${shadow_lib_src})
-  target_link_libraries(shadow glog protobuf clBLAS ${OpenCL_LIBRARIES})
+  target_link_libraries(shadow protobuf clBLAS ${OpenCL_LIBRARIES})
 endif ()
 
 if ((NOT CUDA_FOUND) AND (NOT OpenCL_FOUND))
   add_library(shadow SHARED ${shadow_lib_src})
-  target_link_libraries(shadow glog protobuf)
+  target_link_libraries(shadow protobuf)
+endif ()
+
+if (USE_GLog)
+  target_link_libraries(shadow glog)
 endif ()
 
 if (BUILD_TEST)
@@ -76,9 +80,16 @@ if (BUILD_TEST)
   endif ()
 endif ()
 
-file(GLOB yolo_src "src/main.cpp" "src/yolo.cpp")
+file(GLOB yolo_src "examples/yolo/*.cpp")
 add_executable(yolo ${yolo_src})
 target_link_libraries(yolo shadow ${OpenCV_LIBS})
 if (OpenCL_FOUND)
   target_link_libraries(yolo clew EasyCL)
+endif ()
+
+file(GLOB ssd_src "examples/ssd/*.cpp")
+add_executable(ssd ${ssd_src})
+target_link_libraries(ssd shadow ${OpenCV_LIBS})
+if (OpenCL_FOUND)
+  target_link_libraries(ssd clew EasyCL)
 endif ()

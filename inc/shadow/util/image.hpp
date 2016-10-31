@@ -1,7 +1,6 @@
 #ifndef SHADOW_UTIL_IMAGE_HPP
 #define SHADOW_UTIL_IMAGE_HPP
 
-#include "shadow/kernel.hpp"
 #include "shadow/util/util.hpp"
 
 namespace Image {

@@ -2,8 +2,15 @@
 #define SHADOW_KERNEL_HPP
 
 #if defined(USE_CUDA)
+#include "cublas_v2.h"
 #include "cuda_runtime.h"
+
 const int BLOCK = 512;
+
+#define CUDA_KERNEL_LOOP(globalid, count)                               \
+  const int globalid =                                                  \
+      (blockIdx.x + blockIdx.y * gridDim.x) * blockDim.x + threadIdx.x; \
+  if (globalid >= count) return;
 
 #define CheckError(status)                                        \
   {                                                               \
@@ -36,38 +43,35 @@ void CopyBuffer(int size, const T *src, T *des);
 template <typename T>
 void ReleaseBuffer(T *buffer);
 
-template <typename T>
-void DataTransform(const T *in_data, int count, int in_c, int spatial_dim,
-                   float scale, int num_mean, const T *mean_value, T *out_data);
-
-template <typename T>
-void Im2Col(const T *in_data, int offset, int in_c, int in_h, int in_w,
-            int kernel_size, int stride, int pad, int dilation, int out_h,
-            int out_w, T *out_data);
-
-template <typename T>
-void Pooling(const T *in_data, int batch, int in_c, int in_h, int in_w,
-             int kernel_size, int stride, int pad, int mode, int out_h,
-             int out_w, T *out_data);
-
-template <typename T>
-void Concat(const T *in_data, int count, int num_concats, int concat_size,
-            int top_concat_axis, int bottom_concat_axis, int offset_concat_axis,
-            T *out_data);
-
-template <typename T, typename Dtype>
-void Permute(const T *in_data, int count, int num_axes,
-             const Dtype *permute_order, const Dtype *old_steps,
-             const Dtype *new_steps, T *out_data);
-
-template <typename T>
-void Activate(T *data, int count, int type);
-
 #if defined(USE_CUDA)
 dim3 GridDim(int size);
 
+extern cublasHandle_t cublas_handle_;
+
 #elif defined(USE_CL)
 extern EasyCL *easyCL;
+
+extern CLKernel *cl_channelmax_kernel_;
+extern CLKernel *cl_channelsub_kernel_;
+extern CLKernel *cl_channelsum_kernel_;
+extern CLKernel *cl_channeldiv_kernel_;
+extern CLKernel *cl_set_kernel_;
+extern CLKernel *cl_add_kernel_;
+extern CLKernel *cl_sub_kernel_;
+extern CLKernel *cl_mul_kernel_;
+extern CLKernel *cl_div_kernel_;
+extern CLKernel *cl_sqr_kernel_;
+extern CLKernel *cl_exp_kernel_;
+extern CLKernel *cl_log_kernel_;
+extern CLKernel *cl_abs_kernel_;
+extern CLKernel *cl_pow_kernel_;
+
+extern CLKernel *cl_datatransform_kernel_;
+extern CLKernel *cl_im2col_kernel_;
+extern CLKernel *cl_pooling_kernel_;
+extern CLKernel *cl_concat_kernel_;
+extern CLKernel *cl_permute_kernel_;
+extern CLKernel *cl_activate_kernel_;
 #endif
 
 }  // namespace Kernel

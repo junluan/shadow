@@ -21,6 +21,7 @@
   { LOG(FATAL) << msg; }
 
 #else
+#include <iostream>
 #include <string>
 #define __FILE_NAME__ \
   std::string(__FILE__).substr(std::string(__FILE__).find_last_of("/\\") + 1)

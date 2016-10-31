@@ -1,4 +1,5 @@
 #include "shadow/util/blas.hpp"
+#include "shadow/kernel.hpp"
 
 #include <algorithm>
 #include <cfloat>
@@ -285,61 +286,10 @@ template void BlasSgemm<float>(int TA, int TB, int M, int N, int K, float alpha,
 #elif defined(USE_CL)
 #include <clBLAS.h>
 
-static CLKernel *cl_channelmax_kernel_ = nullptr;
-static CLKernel *cl_channelsub_kernel_ = nullptr;
-static CLKernel *cl_channelsum_kernel_ = nullptr;
-static CLKernel *cl_channeldiv_kernel_ = nullptr;
-static CLKernel *cl_set_kernel_ = nullptr;
-static CLKernel *cl_add_kernel_ = nullptr;
-static CLKernel *cl_sub_kernel_ = nullptr;
-static CLKernel *cl_mul_kernel_ = nullptr;
-static CLKernel *cl_div_kernel_ = nullptr;
-static CLKernel *cl_sqr_kernel_ = nullptr;
-static CLKernel *cl_exp_kernel_ = nullptr;
-static CLKernel *cl_log_kernel_ = nullptr;
-static CLKernel *cl_abs_kernel_ = nullptr;
-static CLKernel *cl_pow_kernel_ = nullptr;
-
-void Setup() {
-  std::string cl_file = "./src/shadow/util/blas.cl";
-  cl_channelmax_kernel_ = Kernel::easyCL->buildKernel(cl_file, "ChannelMax");
-  cl_channelsub_kernel_ = Kernel::easyCL->buildKernel(cl_file, "ChannelSub");
-  cl_channelsum_kernel_ = Kernel::easyCL->buildKernel(cl_file, "ChannelSum");
-  cl_channeldiv_kernel_ = Kernel::easyCL->buildKernel(cl_file, "ChannelDiv");
-  cl_set_kernel_ = Kernel::easyCL->buildKernel(cl_file, "Set");
-  cl_add_kernel_ = Kernel::easyCL->buildKernel(cl_file, "Add");
-  cl_sub_kernel_ = Kernel::easyCL->buildKernel(cl_file, "Sub");
-  cl_mul_kernel_ = Kernel::easyCL->buildKernel(cl_file, "Mul");
-  cl_div_kernel_ = Kernel::easyCL->buildKernel(cl_file, "Div");
-  cl_sqr_kernel_ = Kernel::easyCL->buildKernel(cl_file, "Sqr");
-  cl_exp_kernel_ = Kernel::easyCL->buildKernel(cl_file, "Exp");
-  cl_log_kernel_ = Kernel::easyCL->buildKernel(cl_file, "Log");
-  cl_abs_kernel_ = Kernel::easyCL->buildKernel(cl_file, "Abs");
-  cl_pow_kernel_ = Kernel::easyCL->buildKernel(cl_file, "Pow");
-  clblasSetup();
-}
-void Release() {
-  cl_channelmax_kernel_->~CLKernel();
-  cl_channelsub_kernel_->~CLKernel();
-  cl_channelsum_kernel_->~CLKernel();
-  cl_channeldiv_kernel_->~CLKernel();
-  cl_set_kernel_->~CLKernel();
-  cl_add_kernel_->~CLKernel();
-  cl_sub_kernel_->~CLKernel();
-  cl_mul_kernel_->~CLKernel();
-  cl_div_kernel_->~CLKernel();
-  cl_sqr_kernel_->~CLKernel();
-  cl_exp_kernel_->~CLKernel();
-  cl_log_kernel_->~CLKernel();
-  cl_abs_kernel_->~CLKernel();
-  cl_pow_kernel_->~CLKernel();
-  clblasTeardown();
-}
-
 template <typename T>
 void ChannelMax(int num, int channels, int spatial_dim, const T *data,
                 T *val_max) {
-  cl_kernel kernel = cl_channelmax_kernel_->GetKernel();
+  cl_kernel kernel = Kernel::cl_channelmax_kernel_->GetKernel();
   clSetKernelArg(kernel, 0, sizeof(int), &num);
   clSetKernelArg(kernel, 1, sizeof(int), &channels);
   clSetKernelArg(kernel, 2, sizeof(int), &spatial_dim);
@@ -353,7 +303,7 @@ void ChannelMax(int num, int channels, int spatial_dim, const T *data,
 template <typename T>
 void ChannelSub(int count, int num, int channels, int spatial_dim,
                 const T *val_sub, T *data) {
-  cl_kernel kernel = cl_channelsub_kernel_->GetKernel();
+  cl_kernel kernel = Kernel::cl_channelsub_kernel_->GetKernel();
   clSetKernelArg(kernel, 0, sizeof(int), &count);
   clSetKernelArg(kernel, 1, sizeof(int), &num);
   clSetKernelArg(kernel, 2, sizeof(int), &channels);
@@ -368,7 +318,7 @@ void ChannelSub(int count, int num, int channels, int spatial_dim,
 template <typename T>
 void ChannelSum(int num, int channels, int spatial_dim, const T *data,
                 T *val_sum) {
-  cl_kernel kernel = cl_channelsum_kernel_->GetKernel();
+  cl_kernel kernel = Kernel::cl_channelsum_kernel_->GetKernel();
   clSetKernelArg(kernel, 0, sizeof(int), &num);
   clSetKernelArg(kernel, 1, sizeof(int), &channels);
   clSetKernelArg(kernel, 2, sizeof(int), &spatial_dim);
@@ -382,7 +332,7 @@ void ChannelSum(int num, int channels, int spatial_dim, const T *data,
 template <typename T>
 void ChannelDiv(int count, int num, int channels, int spatial_dim,
                 const T *val_div, T *data) {
-  cl_kernel kernel = cl_channeldiv_kernel_->GetKernel();
+  cl_kernel kernel = Kernel::cl_channeldiv_kernel_->GetKernel();
   clSetKernelArg(kernel, 0, sizeof(int), &count);
   clSetKernelArg(kernel, 1, sizeof(int), &num);
   clSetKernelArg(kernel, 2, sizeof(int), &channels);
@@ -397,7 +347,7 @@ void ChannelDiv(int count, int num, int channels, int spatial_dim,
 
 template <typename T>
 void Set(int n, float val, T *y, int offy) {
-  cl_kernel kernel = cl_set_kernel_->GetKernel();
+  cl_kernel kernel = Kernel::cl_set_kernel_->GetKernel();
   clSetKernelArg(kernel, 0, sizeof(int), &n);
   clSetKernelArg(kernel, 1, sizeof(float), &val);
   clSetKernelArg(kernel, 2, sizeof(cl_mem), y);
@@ -412,7 +362,7 @@ void Set(int n, float val, T *y, int offy) {
   template <typename T>                                                     \
   inline void name(int n, const T *a, int offa, const T *b, int offb, T *y, \
                    int offy) {                                              \
-    cl_kernel kernel = cl_##kname->GetKernel();                             \
+    cl_kernel kernel = Kernel::cl_##kname->GetKernel();                     \
     clSetKernelArg(kernel, 0, sizeof(int), &n);                             \
     clSetKernelArg(kernel, 1, sizeof(cl_mem), a);                           \
     clSetKernelArg(kernel, 2, sizeof(int), &offa);                          \
@@ -436,7 +386,7 @@ BLAS_BINARY_FUNC(Div, div_kernel_);
 #define BLAS_UNARY_FUNC(name, kname)                                      \
   template <typename T>                                                   \
   inline void name(int n, const T *a, int offa, T *y, int offy) {         \
-    cl_kernel kernel = cl_##kname->GetKernel();                           \
+    cl_kernel kernel = Kernel::cl_##kname->GetKernel();                   \
     clSetKernelArg(kernel, 0, sizeof(int), &n);                           \
     clSetKernelArg(kernel, 1, sizeof(cl_mem), a);                         \
     clSetKernelArg(kernel, 2, sizeof(int), &offa);                        \
@@ -457,7 +407,7 @@ BLAS_UNARY_FUNC(Abs, abs_kernel_);
 
 template <typename T>
 void Pow(int n, const T *a, int offa, float alpha, T *y, int offy) {
-  cl_kernel kernel = cl_pow_kernel_->GetKernel();
+  cl_kernel kernel = Kernel::cl_pow_kernel_->GetKernel();
   clSetKernelArg(kernel, 0, sizeof(int), &n);
   clSetKernelArg(kernel, 1, sizeof(cl_mem), a);
   clSetKernelArg(kernel, 2, sizeof(int), &offa);

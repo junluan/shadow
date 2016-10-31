@@ -1,12 +1,7 @@
 #ifndef SHADOW_UTIL_BLAS_HPP
 #define SHADOW_UTIL_BLAS_HPP
 
-#include "shadow/kernel.hpp"
-
 namespace Blas {
-
-void Setup();
-void Release();
 
 template <typename T>
 void ChannelMax(int num, int channels, int spatial_dim, const T *data,
