@@ -1,12 +1,10 @@
 ### Example user template
 build
-cfg
 data
 external
-lib
-model
 models
-inc/shadow/proto/*.h
+tools/*.cc
+tools/*.h
 src/shadow/proto/*.cc
 src/shadow/proto/*.h
 inc/test

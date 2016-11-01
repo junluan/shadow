@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.2)
 project(shadow)
 
+include(cmake/ProtoBuf.cmake)
+
 add_subdirectory(tools)
 
 option(USE_CUDA "Using CUDA!" ON)
@@ -13,7 +15,7 @@ option(BUILD_TEST "Build gtest to test shadow!" ON)
 
 set(CMAKE_CXX_COMPILER "/usr/bin/clang++-3.8")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -L${PROJECT_SOURCE_DIR}/lib")
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -L${PROJECT_SOURCE_DIR}/external/libs")
 
 if (${USE_GLog} STREQUAL "ON")
   add_definitions(-DUSE_GLog)
@@ -28,8 +30,8 @@ if (${USE_OpenCV} STREQUAL "ON")
   include_directories(${OpenCV_INCLUDE_DIRS})
 endif ()
 
-include_directories("inc" "inc/shadow/proto" "external")
-file(GLOB_RECURSE shadow_lib_src "src/shadow/*.cpp" "src/shadow/*.cc")
+include_directories("inc" "src/shadow/proto" "external")
+file(GLOB_RECURSE shadow_lib_src "src/shadow/*.cpp")
 
 if (${USE_CUDA} STREQUAL "ON")
   find_package(CUDA QUIET)
@@ -49,22 +51,21 @@ if (CUDA_FOUND)
 
   file(GLOB_RECURSE shadow_cu_src "src/shadow/*.cu")
   cuda_add_library(shadow SHARED ${shadow_cu_src} ${shadow_lib_src})
-  target_link_libraries(shadow protobuf ${CUDA_CUDART_LIBRARY} ${CUDA_cublas_LIBRARY})
+  target_link_libraries(shadow proto ${CUDA_CUDART_LIBRARY} ${CUDA_cublas_LIBRARY})
 endif ()
 
 if (OpenCL_FOUND)
   add_definitions(-DUSE_CL)
-  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -L${PROJECT_SOURCE_DIR}/lib")
   include_directories("external/EasyCL/dist/include/easycl")
   include_directories(${OpenCL_INCLUDE_DIRS})
 
   add_library(shadow SHARED ${shadow_lib_src})
-  target_link_libraries(shadow protobuf clBLAS ${OpenCL_LIBRARIES})
+  target_link_libraries(shadow proto clBLAS ${OpenCL_LIBRARIES})
 endif ()
 
 if ((NOT CUDA_FOUND) AND (NOT OpenCL_FOUND))
   add_library(shadow SHARED ${shadow_lib_src})
-  target_link_libraries(shadow protobuf)
+  target_link_libraries(shadow proto)
 endif ()
 
 if (USE_GLog)
