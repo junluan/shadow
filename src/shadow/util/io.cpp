@@ -35,7 +35,11 @@ bool ReadProtoFromTextFile(const std::string& proto_file, Message* proto) {
 }
 
 bool ReadProtoFromBinaryFile(const std::string& proto_file, Message* proto) {
+#if !defined(__linux)
+  int fd = open(proto_file.c_str(), O_RDONLY | O_BINARY);
+#else
   int fd = open(proto_file.c_str(), O_RDONLY);
+#endif
   if (fd == -1) Fatal("File not found: " + proto_file);
   ZeroCopyInputStream* raw_input = new FileInputStream(fd);
   CodedInputStream* coded_input = new CodedInputStream(raw_input);

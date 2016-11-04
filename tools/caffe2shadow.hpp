@@ -1,11 +1,11 @@
 #ifndef SHADOW_TOOLS_CAFFE2SHADOW_HPP
 #define SHADOW_TOOLS_CAFFE2SHADOW_HPP
 
-#include "shadow/util/io.hpp"
-#include "shadow/util/util.hpp"
-
 #include "caffe.pb.h"
 #include "shadow.pb.h"
+
+#include "shadow/util/io.hpp"
+#include "shadow/util/util.hpp"
 
 namespace Caffe2Shadow {
 
