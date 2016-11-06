@@ -1,0 +1,182 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="src">
+      <UniqueIdentifier>{1f710e11-5b55-4287-80e0-6974e94a76b8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="inc">
+      <UniqueIdentifier>{4fa0d101-bfa8-43a0-8887-f8175ac6c570}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="inc\shadow">
+      <UniqueIdentifier>{5cfe965a-f21f-4320-8fc4-9b9eb8379b6d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\shadow">
+      <UniqueIdentifier>{9e0a3f27-6a13-4c56-a11e-8ef61e417273}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="inc\shadow\layers">
+      <UniqueIdentifier>{3d09143b-e937-48d4-93a3-3bf960e35f65}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="inc\shadow\util">
+      <UniqueIdentifier>{b2591d89-5844-44c8-ac05-cb5df7db0c98}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\shadow\layers">
+      <UniqueIdentifier>{a12cd019-9339-4e88-b3c9-78e196c565d7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\shadow\util">
+      <UniqueIdentifier>{c237465f-adf6-4b4b-b4ed-7b8a31b74142}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\inc\shadow\layers\activate_layer.hpp">
+      <Filter>inc\shadow\layers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\inc\shadow\layers\concat_layer.hpp">
+      <Filter>inc\shadow\layers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\inc\shadow\layers\connected_layer.hpp">
+      <Filter>inc\shadow\layers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\inc\shadow\layers\convolution_layer.hpp">
+      <Filter>inc\shadow\layers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\inc\shadow\layers\data_layer.hpp">
+      <Filter>inc\shadow\layers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\inc\shadow\layers\dropout_layer.hpp">
+      <Filter>inc\shadow\layers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\inc\shadow\layers\flatten_layer.hpp">
+      <Filter>inc\shadow\layers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\inc\shadow\layers\layer.hpp">
+      <Filter>inc\shadow\layers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\inc\shadow\layers\normalize_layer.hpp">
+      <Filter>inc\shadow\layers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\inc\shadow\layers\permute_layer.hpp">
+      <Filter>inc\shadow\layers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\inc\shadow\layers\pooling_layer.hpp">
+      <Filter>inc\shadow\layers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\inc\shadow\layers\prior_box_layer.hpp">
+      <Filter>inc\shadow\layers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\inc\shadow\layers\reshape_layer.hpp">
+      <Filter>inc\shadow\layers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\inc\shadow\layers\softmax_layer.hpp">
+      <Filter>inc\shadow\layers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\inc\shadow\util\blas.hpp">
+      <Filter>inc\shadow\util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\inc\shadow\util\boxes.hpp">
+      <Filter>inc\shadow\util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\inc\shadow\util\image.hpp">
+      <Filter>inc\shadow\util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\inc\shadow\util\io.hpp">
+      <Filter>inc\shadow\util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\inc\shadow\util\jimage.hpp">
+      <Filter>inc\shadow\util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\inc\shadow\util\jimage_proc.hpp">
+      <Filter>inc\shadow\util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\inc\shadow\util\log.hpp">
+      <Filter>inc\shadow\util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\inc\shadow\util\util.hpp">
+      <Filter>inc\shadow\util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\inc\shadow\blob.hpp">
+      <Filter>inc\shadow</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\inc\shadow\kernel.hpp">
+      <Filter>inc\shadow</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\inc\shadow\network.hpp">
+      <Filter>inc\shadow</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\src\shadow\layers\activate_layer.cpp">
+      <Filter>src\shadow\layers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\shadow\layers\concat_layer.cpp">
+      <Filter>src\shadow\layers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\shadow\layers\connected_layer.cpp">
+      <Filter>src\shadow\layers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\shadow\layers\convolution_layer.cpp">
+      <Filter>src\shadow\layers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\shadow\layers\data_layer.cpp">
+      <Filter>src\shadow\layers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\shadow\layers\dropout_layer.cpp">
+      <Filter>src\shadow\layers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\shadow\layers\flatten_layer.cpp">
+      <Filter>src\shadow\layers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\shadow\layers\normalize_layer.cpp">
+      <Filter>src\shadow\layers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\shadow\layers\permute_layer.cpp">
+      <Filter>src\shadow\layers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\shadow\layers\pooling_layer.cpp">
+      <Filter>src\shadow\layers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\shadow\layers\prior_box_layer.cpp">
+      <Filter>src\shadow\layers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\shadow\layers\reshape_layer.cpp">
+      <Filter>src\shadow\layers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\shadow\layers\softmax_layer.cpp">
+      <Filter>src\shadow\layers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\shadow\util\blas.cpp">
+      <Filter>src\shadow\util</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\shadow\util\boxes.cpp">
+      <Filter>src\shadow\util</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\shadow\util\image.cpp">
+      <Filter>src\shadow\util</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\shadow\util\io.cpp">
+      <Filter>src\shadow\util</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\shadow\util\jimage.cpp">
+      <Filter>src\shadow\util</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\shadow\util\jimage_proc.cpp">
+      <Filter>src\shadow\util</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\shadow\kernel.cpp">
+      <Filter>src\shadow</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\shadow\network.cpp">
+      <Filter>src\shadow</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <CudaCompile Include="..\..\src\shadow\kernel.cu">
+      <Filter>src\shadow</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\..\src\shadow\util\blas.cu">
+      <Filter>src\shadow\util</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\..\src\shadow\util\image.cu">
+      <Filter>src\shadow\util</Filter>
+    </CudaCompile>
+  </ItemGroup>
+</Project>

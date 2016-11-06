@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup Label="UserMacros">
+        <OpenCVRoot>C:\Softwares\OpenCV-2.4.13</OpenCVRoot>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <OpenCVIncPath>$(OpenCVRoot)\build\include</OpenCVIncPath>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Platform)'=='Win32'">
+        <OpenCVLibPath>$(OpenCVRoot)\build\x86\vc12\lib</OpenCVLibPath>
+        <OpenCVDLLPath>$(OpenCVRoot)\build\x86\vc12\bin</OpenCVDLLPath>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Platform)'=='x64'">
+        <OpenCVLibPath>$(OpenCVRoot)\build\x64\vc12\lib</OpenCVLibPath>
+        <OpenCVDLLPath>$(OpenCVRoot)\build\x64\vc12\bin</OpenCVDLLPath>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(Configuration)'=='Debug'">
+        <OpenCVLibs>opencv_core2413d.lib;opencv_highgui2413d.lib;opencv_imgproc2413d.lib</OpenCVLibs>
+        <OpenCVDLLs>opencv_core2413d.dll opencv_highgui2413d.dll opencv_imgproc2413d.dll opencv_ffmpeg*.dll</OpenCVDLLs>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Configuration)'=='Release'">
+        <OpenCVLibs>opencv_core2413.lib;opencv_highgui2413.lib;opencv_imgproc2413.lib</OpenCVLibs>
+        <OpenCVDLLs>opencv_core2413.dll opencv_highgui2413.dll opencv_imgproc2413.dll opencv_ffmpeg*.dll</OpenCVDLLs>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <IncludePath>$(OpenCVIncPath);$(IncludePath)</IncludePath>
+        <LibraryPath>$(OpenCVLibPath);$(LibraryPath)</LibraryPath>
+    </PropertyGroup>
+</Project>

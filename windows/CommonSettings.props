@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup Label="UserMacros">
+        <BuildDir>$(SolutionDir)..\build</BuildDir>
+        <USE_CUDA>true</USE_CUDA>
+        <USE_OpenCV>true</USE_OpenCV>
+        <External>D:\Workspace\external</External>
+    </PropertyGroup>
+
+    <ImportGroup Label="PropertySheets">
+        <Import Condition="'$(USE_CUDA)'=='true'" Project="CUDA.props" />
+        <Import Condition="'$(USE_OpenCV)'=='true'" Project="OpenCV.props" />
+    </ImportGroup>
+
+    <PropertyGroup>
+        <OutDir>$(BuildDir)\$(Platform)\$(Configuration)\</OutDir>
+        <IntDir>$(BuildDir)\Int\$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
+
+        <IncludePath>$(SolutionDir)\..\inc;$(SolutionDir)\..\src\shadow\proto;$(External);$(External)\arcsoft;$(External)\OpenBLAS;$(IncludePath)</IncludePath>
+        <LibraryPath>$(OutDir);$(External)\libs;$(LibraryPath)</LibraryPath>
+    </PropertyGroup>
+
+    <ItemDefinitionGroup Condition="'$(USE_CUDA)'=='true'">
+        <ClCompile>
+            <PreprocessorDefinitions>USE_CUDA;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+        </ClCompile>
+    </ItemDefinitionGroup>
+    <ItemDefinitionGroup Condition="'$(USE_OpenCV)'=='true'">
+        <ClCompile>
+            <PreprocessorDefinitions>USE_OpenCV;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+        </ClCompile>
+    </ItemDefinitionGroup>
+
+    <ItemDefinitionGroup>
+        <ClCompile>
+            <DisableSpecificWarnings>4005;4018;4221;4244;4267;4305;4316;4996</DisableSpecificWarnings>
+            <MinimalRebuild>false</MinimalRebuild>
+            <MultiProcessorCompilation>true</MultiProcessorCompilation>
+            <PreprocessorDefinitions>_SCL_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+            <TreatWarningAsError>true</TreatWarningAsError>
+        </ClCompile>
+    </ItemDefinitionGroup>
+    <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+        <ClCompile>
+            <Optimization>Full</Optimization>
+            <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+            <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+            <FunctionLevelLinking>true</FunctionLevelLinking>
+        </ClCompile>
+        <Link>
+            <EnableCOMDATFolding>true</EnableCOMDATFolding>
+            <GenerateDebugInformation>true</GenerateDebugInformation>
+            <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
+            <OptimizeReferences>true</OptimizeReferences>
+        </Link>
+    </ItemDefinitionGroup>
+    <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+        <ClCompile>
+            <Optimization>Disabled</Optimization>
+            <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+            <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+        </ClCompile>
+        <Link>
+            <GenerateDebugInformation>true</GenerateDebugInformation>
+        </Link>
+    </ItemDefinitionGroup>
+
+    <ItemDefinitionGroup Condition="'$(ProjectName)'=='shadow'">
+        <PostBuildEvent>
+            <Command Condition="'$(USE_CUDA)'=='true'">
+                echo copy CUDA dlls to "$(OutDir)"
+                robocopy /NS /NC /NFL /NDL /NP /NJH /NJS "$(CUDADLLPath)" $(OutDir) $(CUDADLLs)
+                if %ERRORLEVEL% EQU 1 exit 0
+            </Command>
+        </PostBuildEvent>
+    </ItemDefinitionGroup>
+    <ItemDefinitionGroup Condition="'$(ProjectName)'=='ssd'">
+        <Link>
+            <AdditionalDependencies>$(OpenCVLibs);$(CUDALibs);$(AdditionalDependencies)</AdditionalDependencies>
+        </Link>
+        <PostBuildEvent>
+            <Command Condition="'$(USE_OpenCV)'=='true'">
+                echo copy OpenCV dlls to "$(OutDir)"
+                robocopy /NS /NC /NFL /NDL /NP /NJH /NJS "$(OpenCVDLLPath)" $(OutDir) $(OpenCVDLLs)
+                if %ERRORLEVEL% EQU 1 exit 0
+            </Command>
+        </PostBuildEvent>
+    </ItemDefinitionGroup>
+</Project>
