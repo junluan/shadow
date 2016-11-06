@@ -3,7 +3,7 @@ find_package(Protobuf REQUIRED)
 if(EXISTS ${PROTOBUF_PROTOC_EXECUTABLE})
   message(STATUS "Found Protobuf Compiler: ${PROTOBUF_PROTOC_EXECUTABLE}")
 else()
-  message(FATAL_ERROR "Could not find Protobuf Compiler!")
+  message(FATAL_ERROR "Could not find Protobuf Compiler")
 endif()
 
 set(copy_dir "${PROJECT_SOURCE_DIR}/tools")
@@ -23,7 +23,6 @@ foreach (fil ${proto_files})
     OUTPUT "${fil_dir}/${fil_we}.pb.cc"
            "${fil_dir}/${fil_we}.pb.h"
     COMMAND ${PROTOBUF_PROTOC_EXECUTABLE} --proto_path=${fil_dir} --cpp_out=${fil_dir} ${abs_fil}
-    COMMAND ${CMAKE_COMMAND} -E copy "${fil_dir}/${fil_we}.pb.h" "${copy_dir}/${fil_we}.pb.h"
     DEPENDS ${abs_fil}
     COMMENT "Running C++ protocol buffer compiler on ${fil}" VERBATIM )
 endforeach ()
@@ -32,4 +31,3 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
 
 add_library(proto STATIC ${proto_srcs} ${proto_hdrs})
 target_link_libraries(proto protobuf)
-

@@ -1,6 +1,10 @@
 #include "shadow/util/blas.hpp"
 #include "shadow/kernel.hpp"
 
+#if defined(USE_OpenBLAS)
+#include "cblas.h"
+#endif
+
 #include <algorithm>
 #include <cfloat>
 
@@ -113,32 +117,48 @@ void Scale(int n, float alpha, const T *x, int offx, T *y, int offy) {
 // Level 1
 template <typename T>
 void BlasSscal(int n, float alpha, T *x, int offx) {
+#if defined(USE_OpenBLAS)
+  cblas_sscal(n, alpha, x + offx, 1);
+#else
   for (int i = 0; i < n; ++i) {
     x[offx + i] *= alpha;
   }
+#endif
 }
 
 template <typename T>
 void BlasScopy(int n, const T *x, int offx, T *y, int offy) {
+#if defined(USE_OpenBLAS)
+  cblas_scopy(n, x + offx, 1, y + offy, 1);
+#else
   for (int i = 0; i < n; ++i) {
     y[offy + i] = x[offx + i];
   }
+#endif
 }
 
 template <typename T>
 void BlasSaxpy(int n, float alpha, const T *x, int offx, T *y, int offy) {
+#if defined(USE_OpenBLAS)
+  cblas_saxpy(n, alpha, x + offx, 1, y + offy, 1);
+#else
   for (int i = 0; i < n; ++i) {
     y[offy + i] += alpha * x[offx + i];
   }
+#endif
 }
 
 template <typename T>
 void BlasSasum(int n, const T *x, int offx, float *y) {
+#if defined(USE_OpenBLAS)
+  *y = cblas_sasum(n, x + offx, 1);
+#else
   double asum = 0;
   for (int i = 0; i < n; ++i) {
     asum += std::abs(x[offx + i]);
   }
   *y = static_cast<T>(asum);
+#endif
 }
 
 // Level 2
@@ -167,6 +187,11 @@ inline void SgemvT(int M, int N, float alpha, const float *A, const float *x,
 template <typename T>
 void BlasSgemv(int TA, int M, int N, float alpha, const T *A, int offA,
                const T *x, int offx, float beta, T *y, int offy) {
+#if defined(USE_OpenBLAS)
+  CBLAS_TRANSPOSE transA = TA ? CblasTrans : CblasNoTrans;
+  cblas_sgemv(CblasRowMajor, transA, M, N, alpha, A + offA, N, x + offx, 1,
+              beta, y + offy, 1);
+#else
   for (int i = 0; i < (TA ? N : M); ++i) {
     y[offy + i] *= beta;
   }
@@ -175,6 +200,7 @@ void BlasSgemv(int TA, int M, int N, float alpha, const T *A, int offA,
   } else {
     SgemvT(M, N, alpha, A + offA, x + offx, y + offy);
   }
+#endif
 }
 
 // Level 3
@@ -231,6 +257,13 @@ inline void SgemmTT(int M, int N, int K, float alpha, const float *A,
 template <typename T>
 void BlasSgemm(int TA, int TB, int M, int N, int K, float alpha, const T *A,
                int offA, const T *B, int offB, float beta, T *C, int offC) {
+#if defined(USE_OpenBLAS)
+  int lda = TA ? M : K, ldb = TB ? K : N;
+  CBLAS_TRANSPOSE transA = TA ? CblasTrans : CblasNoTrans;
+  CBLAS_TRANSPOSE transB = TB ? CblasTrans : CblasNoTrans;
+  cblas_sgemm(CblasRowMajor, transA, transB, M, N, K, alpha, A + offA, lda,
+              B + offB, ldb, beta, C + offC, N);
+#else
   for (int i = 0; i < M; ++i) {
     for (int j = 0; j < N; ++j) {
       C[offC + i * N + j] *= beta;
@@ -245,6 +278,7 @@ void BlasSgemm(int TA, int TB, int M, int N, int K, float alpha, const T *A,
   } else {
     SgemmTT(M, N, K, alpha, A + offA, B + offB, C + offC);
   }
+#endif
 }
 
 // Explicit instantiation
