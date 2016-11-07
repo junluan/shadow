@@ -2,6 +2,7 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
     <PropertyGroup Label="UserMacros">
         <BuildDir>$(SolutionDir)..\build</BuildDir>
+        <ScriptsDir>$(SolutionDir)\scripts</ScriptsDir>
         <USE_CUDA>true</USE_CUDA>
         <USE_OpenCV>true</USE_OpenCV>
         <External>D:\Workspace\external</External>
@@ -16,7 +17,7 @@
         <OutDir>$(BuildDir)\$(Platform)\$(Configuration)\</OutDir>
         <IntDir>$(BuildDir)\Int\$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
 
-        <IncludePath>$(SolutionDir)\..\inc;$(SolutionDir)\..\src\shadow\proto;$(External);$(External)\arcsoft;$(External)\OpenBLAS;$(IncludePath)</IncludePath>
+        <IncludePath>$(External);$(External)\arcsoft;$(External)\OpenBLAS;$(IncludePath)</IncludePath>
         <LibraryPath>$(OutDir);$(External)\libs;$(LibraryPath)</LibraryPath>
     </PropertyGroup>
 
@@ -24,11 +25,17 @@
         <ClCompile>
             <PreprocessorDefinitions>USE_CUDA;%(PreprocessorDefinitions)</PreprocessorDefinitions>
         </ClCompile>
+        <Link>
+            <AdditionalDependencies>$(CUDALibs);%(AdditionalDependencies)</AdditionalDependencies>
+        </Link>
     </ItemDefinitionGroup>
     <ItemDefinitionGroup Condition="'$(USE_OpenCV)'=='true'">
         <ClCompile>
             <PreprocessorDefinitions>USE_OpenCV;%(PreprocessorDefinitions)</PreprocessorDefinitions>
         </ClCompile>
+        <Link>
+            <AdditionalDependencies>$(OpenCVLibs);%(AdditionalDependencies)</AdditionalDependencies>
+        </Link>
     </ItemDefinitionGroup>
 
     <ItemDefinitionGroup>
@@ -65,25 +72,19 @@
         </Link>
     </ItemDefinitionGroup>
 
+    <ItemDefinitionGroup Condition="'$(ProjectName)'=='proto'">
+        <PreBuildEvent>
+            <Command>"$(ScriptsDir)\ProtoCompile.cmd" "$(SolutionDir)" "$(ScriptsDir)"</Command>
+        </PreBuildEvent>
+    </ItemDefinitionGroup>
     <ItemDefinitionGroup Condition="'$(ProjectName)'=='shadow'">
-        <PostBuildEvent>
-            <Command Condition="'$(USE_CUDA)'=='true'">
-                echo copy CUDA dlls to "$(OutDir)"
-                robocopy /NS /NC /NFL /NDL /NP /NJH /NJS "$(CUDADLLPath)" $(OutDir) $(CUDADLLs)
-                if %ERRORLEVEL% EQU 1 exit 0
-            </Command>
+        <PostBuildEvent Condition="'$(USE_CUDA)'=='true'">
+            <Command>"$(ScriptsDir)\CopyDependencies.cmd" "$(CUDADLLPath)" "$(OutDir)" "$(CUDADLLs)"</Command>
         </PostBuildEvent>
     </ItemDefinitionGroup>
     <ItemDefinitionGroup Condition="'$(ProjectName)'=='ssd'">
-        <Link>
-            <AdditionalDependencies>$(OpenCVLibs);$(CUDALibs);$(AdditionalDependencies)</AdditionalDependencies>
-        </Link>
-        <PostBuildEvent>
-            <Command Condition="'$(USE_OpenCV)'=='true'">
-                echo copy OpenCV dlls to "$(OutDir)"
-                robocopy /NS /NC /NFL /NDL /NP /NJH /NJS "$(OpenCVDLLPath)" $(OutDir) $(OpenCVDLLs)
-                if %ERRORLEVEL% EQU 1 exit 0
-            </Command>
+        <PostBuildEvent  Condition="'$(USE_OpenCV)'=='true'">
+            <Command>"$(ScriptsDir)\CopyDependencies.cmd" "$(OpenCVDLLPath)" "$(OutDir)" "$(OpenCVDLLs)"</Command>
         </PostBuildEvent>
     </ItemDefinitionGroup>
 </Project>
