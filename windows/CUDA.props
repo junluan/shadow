@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
     <PropertyGroup Label="UserMacros">
-        <CudaVersion>7.5</CudaVersion>
-        <CudaRoot>$(CUDA_PATH_V7_5)</CudaRoot>
+        <CudaRoot Condition="'$(CudaVersion)'=='7.5'">$(CUDA_PATH_V7_5)</CudaRoot>
+        <CudaRoot Condition="'$(CudaVersion)'=='8.0'">$(CUDA_PATH_V8_0)</CudaRoot>
     </PropertyGroup>
 
     <PropertyGroup>
@@ -15,9 +15,6 @@
 
     <PropertyGroup>
         <CUDALibs>cudart.lib;cublas.lib</CUDALibs>
-    </PropertyGroup>
-    <PropertyGroup Condition="'$(Platform)'=='Win32'">
-        <CUDADLLs>cudart32*.dll cublas32*.dll</CUDADLLs>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Platform)'=='x64'">
         <CUDADLLs>cudart64*.dll cublas64*.dll</CUDADLLs>

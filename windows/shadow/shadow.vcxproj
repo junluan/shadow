@@ -57,7 +57,7 @@
     </Link>
     <CudaCompile>
       <TargetMachinePlatform>64</TargetMachinePlatform>
-      <CodeGeneration>compute_30,sm_30</CodeGeneration>
+      <CodeGeneration>$(CudaArchitecture)</CodeGeneration>
       <Warning>W0</Warning>
     </CudaCompile>
     <Lib>
@@ -75,7 +75,7 @@
     </Link>
     <CudaCompile>
       <TargetMachinePlatform>64</TargetMachinePlatform>
-      <CodeGeneration>compute_30,sm_30</CodeGeneration>
+      <CodeGeneration>$(CudaArchitecture)</CodeGeneration>
       <Warning>W0</Warning>
     </CudaCompile>
     <Lib>

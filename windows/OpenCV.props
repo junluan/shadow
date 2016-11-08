@@ -1,9 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-    <PropertyGroup Label="UserMacros">
-        <OpenCVRoot>C:\Softwares\OpenCV-2.4.13</OpenCVRoot>
-    </PropertyGroup>
-
     <PropertyGroup>
         <OpenCVIncPath>$(OpenCVRoot)\build\include</OpenCVIncPath>
     </PropertyGroup>
@@ -17,12 +13,12 @@
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)'=='Debug'">
-        <OpenCVLibs>opencv_core2413d.lib;opencv_highgui2413d.lib;opencv_imgproc2413d.lib</OpenCVLibs>
-        <OpenCVDLLs>opencv_core2413d.dll opencv_highgui2413d.dll opencv_imgproc2413d.dll opencv_ffmpeg*.dll</OpenCVDLLs>
+        <OpenCVLibs>opencv_core$(OpenCVVersion)d.lib;opencv_highgui$(OpenCVVersion)d.lib;opencv_imgproc$(OpenCVVersion)d.lib</OpenCVLibs>
+        <OpenCVDLLs>opencv_core$(OpenCVVersion)d.dll opencv_highgui$(OpenCVVersion)d.dll opencv_imgproc$(OpenCVVersion)d.dll opencv_ffmpeg*.dll</OpenCVDLLs>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Configuration)'=='Release'">
-        <OpenCVLibs>opencv_core2413.lib;opencv_highgui2413.lib;opencv_imgproc2413.lib</OpenCVLibs>
-        <OpenCVDLLs>opencv_core2413.dll opencv_highgui2413.dll opencv_imgproc2413.dll opencv_ffmpeg*.dll</OpenCVDLLs>
+        <OpenCVLibs>opencv_core$(OpenCVVersion).lib;opencv_highgui$(OpenCVVersion).lib;opencv_imgproc$(OpenCVVersion).lib</OpenCVLibs>
+        <OpenCVDLLs>opencv_core$(OpenCVVersion).dll opencv_highgui$(OpenCVVersion).dll opencv_imgproc$(OpenCVVersion).dll opencv_ffmpeg*.dll</OpenCVDLLs>
     </PropertyGroup>
 
     <PropertyGroup>

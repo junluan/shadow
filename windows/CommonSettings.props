@@ -3,9 +3,15 @@
     <PropertyGroup Label="UserMacros">
         <BuildDir>$(SolutionDir)..\build</BuildDir>
         <ScriptsDir>$(SolutionDir)\scripts</ScriptsDir>
-        <USE_CUDA>true</USE_CUDA>
-        <USE_OpenCV>true</USE_OpenCV>
         <External>D:\Workspace\external</External>
+
+        <USE_CUDA>true</USE_CUDA>
+        <CudaVersion>7.5</CudaVersion>
+        <CudaArchitecture>compute_30,sm_30</CudaArchitecture>
+
+        <USE_OpenCV>true</USE_OpenCV>
+        <OpenCVVersion>2413</OpenCVVersion>
+        <OpenCVRoot>C:\Softwares\OpenCV-2.4.13</OpenCVRoot>
     </PropertyGroup>
 
     <ImportGroup Label="PropertySheets">
