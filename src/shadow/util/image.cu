@@ -196,25 +196,23 @@ void Activate(T *data, int count, int type) {
 }
 
 // Explicit instantiation
-template void DataTransform<float>(const float *in_data, const VecInt &in_shape,
-                                   float scale, int num_mean,
-                                   const float *mean_value, float *out_data);
-template void Im2Col<float>(const float *in_data, const VecInt &in_shape,
-                            int offset, int kernel_size, int stride, int pad,
-                            int dilation, const VecInt &out_shape,
+template void DataTransform(const float *in_data, const VecInt &in_shape,
+                            float scale, int num_mean, const float *mean_value,
                             float *out_data);
-template void Pooling<float>(const float *in_data, const VecInt &in_shape,
-                             int kernel_size, int stride, int pad, int mode,
-                             const VecInt &out_shape, float *out_data);
-template void Concat<float>(const float *in_data, int count, int num_concats,
-                            int concat_size, int top_concat_axis,
-                            int bottom_concat_axis, int offset_concat_axis,
-                            float *out_data);
-template void Permute<float, int>(const float *in_data, int count, int num_axes,
-                                  const int *permute_order,
-                                  const int *old_steps, const int *new_steps,
-                                  float *out_data);
-template void Activate<float>(float *data, int count, int type);
+template void Im2Col(const float *in_data, const VecInt &in_shape, int offset,
+                     int kernel_size, int stride, int pad, int dilation,
+                     const VecInt &out_shape, float *out_data);
+template void Pooling(const float *in_data, const VecInt &in_shape,
+                      int kernel_size, int stride, int pad, int mode,
+                      const VecInt &out_shape, float *out_data);
+template void Concat(const float *in_data, int count, int num_concats,
+                     int concat_size, int top_concat_axis,
+                     int bottom_concat_axis, int offset_concat_axis,
+                     float *out_data);
+template void Permute(const float *in_data, int count, int num_axes,
+                      const int *permute_order, const int *old_steps,
+                      const int *new_steps, float *out_data);
+template void Activate(float *data, int count, int type);
 #endif
 
 }  // namespace Image

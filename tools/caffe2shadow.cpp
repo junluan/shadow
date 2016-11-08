@@ -3,11 +3,11 @@
 using namespace Caffe2Shadow;
 
 int main(int argc, char const* argv[]) {
-  std::string deploy_file = "models/ssd/face_deploy.prototxt";
-  std::string model_file = "models/ssd/face_model.caffemodel";
+  std::string deploy_file = "models/ssd/adas_deploy.prototxt";
+  std::string model_file = "models/ssd/adas_model.caffemodel";
 
-  std::string root = "models/ssd/face";
-  std::string model_name = "face";
+  std::string root = "models/ssd/adas";
+  std::string model_name = "adas";
 
   caffe::NetParameter caffe_deploy, caffe_model;
   shadow::NetParameter shadow_net;

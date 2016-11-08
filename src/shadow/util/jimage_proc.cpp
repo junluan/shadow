@@ -742,40 +742,35 @@ void Gradient(const JImage &im_src, int *grad_x, int *grad_y, int *magnitude,
 }
 
 // Explicit instantiation
-template void Line<int>(JImage *im, const PointI &start, const PointI &end,
-                        const Scalar &scalar);
-template void Line<float>(JImage *im, const PointF &start, const PointF &end,
-                          const Scalar &scalar);
+template void Line(JImage *im, const PointI &start, const PointI &end,
+                   const Scalar &scalar);
+template void Line(JImage *im, const PointF &start, const PointF &end,
+                   const Scalar &scalar);
 
-template void Rectangle<int>(JImage *im, const RectI &rect,
-                             const Scalar &scalar);
-template void Rectangle<float>(JImage *im, const RectF &rect,
-                               const Scalar &scalar);
+template void Rectangle(JImage *im, const RectI &rect, const Scalar &scalar);
+template void Rectangle(JImage *im, const RectF &rect, const Scalar &scalar);
 
-template void Crop<int>(const JImage &im_src, JImage *im_crop,
-                        const RectI &crop);
-template void Crop<float>(const JImage &im_src, JImage *im_crop,
-                          const RectF &crop);
+template void Crop(const JImage &im_src, JImage *im_crop, const RectI &crop);
+template void Crop(const JImage &im_src, JImage *im_crop, const RectF &crop);
 
-template void CropResize<int>(const JImage &im_src, JImage *im_res,
+template void CropResize(const JImage &im_src, JImage *im_res,
+                         const RectI &crop, int height, int width);
+template void CropResize(const JImage &im_src, JImage *im_res,
+                         const RectF &crop, int height, int width);
+
+template void CropResize2Gray(const JImage &im_src, JImage *im_gray,
                               const RectI &crop, int height, int width);
-template void CropResize<float>(const JImage &im_src, JImage *im_res,
-                                const RectF &crop, int height, int width);
-
-template void CropResize2Gray<int>(const JImage &im_src, JImage *im_gray,
-                                   const RectI &crop, int height, int width);
-template void CropResize2Gray<float>(const JImage &im_src, JImage *im_gray,
-                                     const RectF &crop, int height, int width);
+template void CropResize2Gray(const JImage &im_src, JImage *im_gray,
+                              const RectF &crop, int height, int width);
 #ifdef USE_ArcSoft
-template void CropResize<int>(const ASVLOFFSCREEN &im_arc, float *batch_data,
+template void CropResize(const ASVLOFFSCREEN &im_arc, float *batch_data,
+                         const RectI &crop, int height, int width);
+template void CropResize(const ASVLOFFSCREEN &im_arc, float *batch_data,
+                         const RectF &crop, int height, int width);
+template void CropResize2Gray(const ASVLOFFSCREEN &im_arc, JImage *im_gray,
                               const RectI &crop, int height, int width);
-template void CropResize<float>(const ASVLOFFSCREEN &im_arc, float *batch_data,
-                                const RectF &crop, int height, int width);
-template void CropResize2Gray<int>(const ASVLOFFSCREEN &im_arc, JImage *im_gray,
-                                   const RectI &crop, int height, int width);
-template void CropResize2Gray<float>(const ASVLOFFSCREEN &im_arc,
-                                     JImage *im_gray, const RectF &crop,
-                                     int height, int width);
+template void CropResize2Gray(const ASVLOFFSCREEN &im_arc, JImage *im_gray,
+                              const RectF &crop, int height, int width);
 #endif
 
 }  // namespace JImageProc

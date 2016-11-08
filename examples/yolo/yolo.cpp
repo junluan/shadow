@@ -75,14 +75,14 @@ void Yolo::Test(string image_file) {
   Timer timer;
   timer.start();
   im_ini_->Read(image_file);
-  vector<VecBox> Bboxes;
+  vector<VecBoxF> Bboxes;
   PredictYoloDetections(im_ini_, &Bboxes);
-  Boxes::AmendBoxes(&Bboxes, rois_, im_ini_->h_, im_ini_->w_);
-  VecBox boxes = Boxes::BoxesNMS(Bboxes, 0.5);
+  Boxes::Amend(&Bboxes, rois_, im_ini_->h_, im_ini_->w_);
+  VecBoxF boxes = Boxes::NMS(Bboxes, 0.5);
   cout << "Predicted in " << timer.get_second() << " seconds" << endl;
 
   for (int i = 0; i < boxes.size(); ++i) {
-    Box box = boxes[i];
+    BoxF box = boxes[i];
     Scalar scalar;
     if (box.class_index == 0)
       scalar = Scalar(0, 255, 0);
@@ -102,14 +102,14 @@ void Yolo::BatchTest(string list_file, bool image_write) {
   ofstream file(Util::find_replace_last(list_file, ".", "-result."));
   for (int i = 0; i < num_im; ++i) {
     im_ini_->Read(image_list[i]);
-    vector<VecBox> Bboxes;
+    vector<VecBoxF> Bboxes;
     PredictYoloDetections(im_ini_, &Bboxes);
-    Boxes::AmendBoxes(&Bboxes, rois_, im_ini_->h_, im_ini_->w_);
-    VecBox boxes = Boxes::BoxesNMS(Bboxes, 0.5);
+    Boxes::Amend(&Bboxes, rois_, im_ini_->h_, im_ini_->w_);
+    VecBoxF boxes = Boxes::NMS(Bboxes, 0.5);
     if (image_write) {
       string path = Util::find_replace_last(image_list[i], ".", "-result.");
       for (int j = 0; j < boxes.size(); ++j) {
-        Box box = boxes[j];
+        BoxF box = boxes[j];
         Scalar scalar;
         if (box.class_index == 0)
           scalar = Scalar(0, 255, 0);
@@ -173,17 +173,17 @@ void Yolo::CaptureTest(cv::VideoCapture capture, string window_name,
   if (video_show) cv::namedWindow(window_name, cv::WINDOW_NORMAL);
   cv::Mat im_mat;
 
-  vector<VecBox> Bboxes;
-  VecBox boxes, oldBoxes;
+  vector<VecBoxF> Bboxes;
+  VecBoxF boxes, oldBoxes;
   Timer timer;
   while (capture.read(im_mat)) {
     if (im_mat.empty()) break;
     timer.start();
     im_ini_->FromMat(im_mat);
     PredictYoloDetections(im_ini_, &Bboxes);
-    Boxes::AmendBoxes(&Bboxes, rois_, im_ini_->h_, im_ini_->w_);
-    boxes = Boxes::BoxesNMS(Bboxes, 0.5);
-    Boxes::SmoothBoxes(oldBoxes, &boxes, 0.3);
+    Boxes::Amend(&Bboxes, rois_, im_ini_->h_, im_ini_->w_);
+    boxes = Boxes::NMS(Bboxes, 0.5);
+    Boxes::Smooth(oldBoxes, &boxes, 0.3);
     oldBoxes = boxes;
     DrawYoloDetections(boxes, &im_mat, true);
     if (video_write) writer.write(im_mat);
@@ -199,7 +199,7 @@ void Yolo::CaptureTest(cv::VideoCapture capture, string window_name,
 }
 #endif
 
-void Yolo::PredictYoloDetections(JImage *image, vector<VecBox> *Bboxes) {
+void Yolo::PredictYoloDetections(JImage *image, vector<VecBoxF> *Bboxes) {
   Bboxes->clear();
   size_t num_im = rois_.size();
   size_t batch_off = num_im % batch_;
@@ -215,7 +215,7 @@ void Yolo::PredictYoloDetections(JImage *image, vector<VecBox> *Bboxes) {
     net_.Forward(batch_data_);
     out_blob_->read_data(predictions_);
     for (int i = 0; i < c; ++i) {
-      VecBox boxes(98);
+      VecBoxF boxes(98);
       int height = static_cast<int>(rois_[count + i].h * image->h_);
       int width = static_cast<int>(rois_[count + i].w * image->w_);
       ConvertYoloDetections(predictions_ + i * out_num_, class_num_, width,
@@ -227,7 +227,7 @@ void Yolo::PredictYoloDetections(JImage *image, vector<VecBox> *Bboxes) {
 }
 
 void Yolo::ConvertYoloDetections(float *predictions, int classes, int width,
-                                 int height, VecBox *boxes) {
+                                 int height, VecBoxF *boxes) {
   int side = 7, box_num = 2;
   for (int i = 0; i < side * side; ++i) {
     int row = i / side;
@@ -268,7 +268,7 @@ void Yolo::ConvertYoloDetections(float *predictions, int classes, int width,
 }
 
 #if defined(USE_OpenCV)
-void Yolo::DrawYoloDetections(const VecBox &boxes, cv::Mat *im_mat,
+void Yolo::DrawYoloDetections(const VecBoxF &boxes, cv::Mat *im_mat,
                               bool console_show) {
   for (int b = 0; b < boxes.size(); ++b) {
     int classindex = boxes[b].class_index;
@@ -280,7 +280,7 @@ void Yolo::DrawYoloDetections(const VecBox &boxes, cv::Mat *im_mat,
     else
       scalar = cv::Scalar(255, 0, 0);
 
-    Box box = boxes[b];
+    BoxF box = boxes[b];
     cv::rectangle(*im_mat,
                   cv::Point(static_cast<int>(box.x), static_cast<int>(box.y)),
                   cv::Point(static_cast<int>(box.x + box.w),
@@ -295,9 +295,10 @@ void Yolo::DrawYoloDetections(const VecBox &boxes, cv::Mat *im_mat,
 }
 #endif
 
-void Yolo::PrintYoloDetections(const VecBox &boxes, int count, ofstream *file) {
+void Yolo::PrintYoloDetections(const VecBoxF &boxes, int count,
+                               ofstream *file) {
   for (int b = 0; b < boxes.size(); ++b) {
-    Box box = boxes[b];
+    BoxF box = boxes[b];
     if (box.class_index == -1) continue;
     *file << count << ", " << box.x << ", " << box.y << ", " << box.w << ", "
           << box.h << ", " << box.score << endl;

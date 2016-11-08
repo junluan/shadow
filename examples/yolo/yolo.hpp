@@ -21,16 +21,17 @@ class Yolo {
   void Release();
 
  private:
-  void PredictYoloDetections(JImage *image, std::vector<VecBox> *Bboxes);
+  void PredictYoloDetections(JImage *image, std::vector<VecBoxF> *Bboxes);
   void ConvertYoloDetections(float *predictions, int classes, int width,
-                             int height, VecBox *boxes);
+                             int height, VecBoxF *boxes);
 #if defined(USE_OpenCV)
   void CaptureTest(cv::VideoCapture capture, std::string window_name,
                    bool video_show, cv::VideoWriter writer, bool video_write);
-  void DrawYoloDetections(const VecBox &boxes, cv::Mat *im_mat,
+  void DrawYoloDetections(const VecBoxF &boxes, cv::Mat *im_mat,
                           bool console_show = true);
 #endif
-  void PrintYoloDetections(const VecBox &boxes, int count, std::ofstream *file);
+  void PrintYoloDetections(const VecBoxF &boxes, int count,
+                           std::ofstream *file);
 
   std::string model_file_;
   float threshold_;

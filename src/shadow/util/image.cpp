@@ -155,25 +155,23 @@ void Activate(T *data, int count, int type) {
 }
 
 // Explicit instantiation
-template void DataTransform<float>(const float *in_data, const VecInt &in_shape,
-                                   float scale, int num_mean,
-                                   const float *mean_value, float *out_data);
-template void Im2Col<float>(const float *in_data, const VecInt &in_shape,
-                            int offset, int kernel_size, int stride, int pad,
-                            int dilation, const VecInt &out_shape,
+template void DataTransform(const float *in_data, const VecInt &in_shape,
+                            float scale, int num_mean, const float *mean_value,
                             float *out_data);
-template void Pooling<float>(const float *in_data, const VecInt &in_shape,
-                             int kernel_size, int stride, int pad, int mode,
-                             const VecInt &out_shape, float *out_data);
-template void Concat<float>(const float *in_data, int count, int num_concats,
-                            int concat_size, int top_concat_axis,
-                            int bottom_concat_axis, int offset_concat_axis,
-                            float *out_data);
-template void Permute<float, int>(const float *in_data, int count, int num_axes,
-                                  const int *permute_order,
-                                  const int *old_steps, const int *new_steps,
-                                  float *out_data);
-template void Activate<float>(float *data, int count, int type);
+template void Im2Col(const float *in_data, const VecInt &in_shape, int offset,
+                     int kernel_size, int stride, int pad, int dilation,
+                     const VecInt &out_shape, float *out_data);
+template void Pooling(const float *in_data, const VecInt &in_shape,
+                      int kernel_size, int stride, int pad, int mode,
+                      const VecInt &out_shape, float *out_data);
+template void Concat(const float *in_data, int count, int num_concats,
+                     int concat_size, int top_concat_axis,
+                     int bottom_concat_axis, int offset_concat_axis,
+                     float *out_data);
+template void Permute(const float *in_data, int count, int num_axes,
+                      const int *permute_order, const int *old_steps,
+                      const int *new_steps, float *out_data);
+template void Activate(float *data, int count, int type);
 
 #elif defined(USE_CL)
 template <typename T>
@@ -300,27 +298,23 @@ void Activate(T *data, int count, int type) {
 }
 
 // Explicit instantiation
-template void DataTransform<cl_mem>(const cl_mem *in_data,
-                                    const VecInt &in_shape, float scale,
-                                    int num_mean, const cl_mem *mean_value,
-                                    cl_mem *out_data);
-template void Im2Col<cl_mem>(const cl_mem *in_data, const VecInt &in_shape,
-                             int offset, int kernel_size, int stride, int pad,
-                             int dilation, const VecInt &out_shape,
-                             cl_mem *out_data);
-template void Pooling<cl_mem>(const cl_mem *in_data, const VecInt &in_shape,
-                              int kernel_size, int stride, int pad, int mode,
-                              const VecInt &out_shape, cl_mem *out_data);
-template void Concat<cl_mem>(const cl_mem *in_data, int count, int num_concats,
-                             int concat_size, int top_concat_axis,
-                             int bottom_concat_axis, int offset_concat_axis,
-                             cl_mem *out_data);
-template void Permute<cl_mem, cl_mem>(const cl_mem *in_data, int count,
-                                      int num_axes, const cl_mem *permute_order,
-                                      const cl_mem *old_steps,
-                                      const cl_mem *new_steps,
-                                      cl_mem *out_data);
-template void Activate<cl_mem>(cl_mem *data, int count, int type);
+template void DataTransform(const cl_mem *in_data, const VecInt &in_shape,
+                            float scale, int num_mean, const cl_mem *mean_value,
+                            cl_mem *out_data);
+template void Im2Col(const cl_mem *in_data, const VecInt &in_shape, int offset,
+                     int kernel_size, int stride, int pad, int dilation,
+                     const VecInt &out_shape, cl_mem *out_data);
+template void Pooling(const cl_mem *in_data, const VecInt &in_shape,
+                      int kernel_size, int stride, int pad, int mode,
+                      const VecInt &out_shape, cl_mem *out_data);
+template void Concat(const cl_mem *in_data, int count, int num_concats,
+                     int concat_size, int top_concat_axis,
+                     int bottom_concat_axis, int offset_concat_axis,
+                     cl_mem *out_data);
+template void Permute(const cl_mem *in_data, int count, int num_axes,
+                      const cl_mem *permute_order, const cl_mem *old_steps,
+                      const cl_mem *new_steps, cl_mem *out_data);
+template void Activate(cl_mem *data, int count, int type);
 #endif
 
 }  // namespace Image

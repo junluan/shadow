@@ -67,33 +67,32 @@ void Set(int n, float val, T *y, int offy) {
   std::fill(y + offy, y + offy + n, val);
 }
 
-#define BLAS_BINARY_FUNC(name, operation)                                    \
-  template <typename T>                                                      \
-  void name(int n, const T *a, int offa, const T *b, int offb, T *y,         \
-            int offy) {                                                      \
-    a += offa, b += offb, y += offy;                                         \
-    for (int i = 0; i < n; ++i) {                                            \
-      operation;                                                             \
-    }                                                                        \
-  }                                                                          \
-  template void name<float>(int n, const float *a, int offa, const float *b, \
-                            int offb, float *y, int offy);
+#define BLAS_BINARY_FUNC(name, operation)                             \
+  template <typename T>                                               \
+  void name(int n, const T *a, int offa, const T *b, int offb, T *y,  \
+            int offy) {                                               \
+    a += offa, b += offb, y += offy;                                  \
+    for (int i = 0; i < n; ++i) {                                     \
+      operation;                                                      \
+    }                                                                 \
+  }                                                                   \
+  template void name(int n, const float *a, int offa, const float *b, \
+                     int offb, float *y, int offy);
 
 BLAS_BINARY_FUNC(Add, y[i] = a[i] + b[i]);
 BLAS_BINARY_FUNC(Sub, y[i] = a[i] - b[i]);
 BLAS_BINARY_FUNC(Mul, y[i] = a[i] * b[i]);
 BLAS_BINARY_FUNC(Div, y[i] = a[i] / b[i]);
 
-#define BLAS_UNARY_FUNC(name, operation)                               \
-  template <typename T>                                                \
-  void name(int n, const T *a, int offa, T *y, int offy) {             \
-    a += offa, y += offy;                                              \
-    for (int i = 0; i < n; ++i) {                                      \
-      operation;                                                       \
-    }                                                                  \
-  }                                                                    \
-  template void name<float>(int n, const float *a, int offa, float *y, \
-                            int offy);
+#define BLAS_UNARY_FUNC(name, operation)                   \
+  template <typename T>                                    \
+  void name(int n, const T *a, int offa, T *y, int offy) { \
+    a += offa, y += offy;                                  \
+    for (int i = 0; i < n; ++i) {                          \
+      operation;                                           \
+    }                                                      \
+  }                                                        \
+  template void name(int n, const float *a, int offa, float *y, int offy);
 
 BLAS_UNARY_FUNC(Sqr, y[i] = a[i] * a[i]);
 BLAS_UNARY_FUNC(Exp, y[i] = std::exp(a[i]));
@@ -282,40 +281,37 @@ void BlasSgemm(int TA, int TB, int M, int N, int K, float alpha, const T *A,
 }
 
 // Explicit instantiation
-template void ChannelMax<float>(int num, int channels, int spatial_dim,
-                                const float *data, float *val_max);
-template void ChannelSub<float>(int count, int num, int channels,
-                                int spatial_dim, const float *val_sub,
-                                float *data);
-template void ChannelSum<float>(int num, int channels, int spatial_dim,
-                                const float *data, float *val_sum);
-template void ChannelDiv<float>(int count, int num, int channels,
-                                int spatial_dim, const float *val_div,
-                                float *data);
+template void ChannelMax(int num, int channels, int spatial_dim,
+                         const float *data, float *val_max);
+template void ChannelSub(int count, int num, int channels, int spatial_dim,
+                         const float *val_sub, float *data);
+template void ChannelSum(int num, int channels, int spatial_dim,
+                         const float *data, float *val_sum);
+template void ChannelDiv(int count, int num, int channels, int spatial_dim,
+                         const float *val_div, float *data);
 
-template void Set<float>(int n, float val, float *y, int offy);
-template void Pow<float>(int n, const float *a, int offa, float alpha, float *y,
-                         int offy);
-template void Scale<float>(int n, float alpha, const float *x, int offx,
-                           float *y, int offy);
+template void Set(int n, float val, float *y, int offy);
+template void Pow(int n, const float *a, int offa, float alpha, float *y,
+                  int offy);
+template void Scale(int n, float alpha, const float *x, int offx, float *y,
+                    int offy);
 
 // Level 1
-template void BlasSscal<float>(int n, float alpha, float *x, int offx);
-template void BlasScopy<float>(int n, const float *x, int offx, float *y,
-                               int offy);
-template void BlasSaxpy<float>(int n, float alpha, const float *x, int offx,
-                               float *y, int offy);
-template void BlasSasum<float>(int n, const float *x, int offx, float *y);
+template void BlasSscal(int n, float alpha, float *x, int offx);
+template void BlasScopy(int n, const float *x, int offx, float *y, int offy);
+template void BlasSaxpy(int n, float alpha, const float *x, int offx, float *y,
+                        int offy);
+template void BlasSasum(int n, const float *x, int offx, float *y);
 
 // Level 2
-template void BlasSgemv<float>(int TA, int M, int N, float alpha,
-                               const float *A, int offA, const float *x,
-                               int offx, float beta, float *y, int offy);
+template void BlasSgemv(int TA, int M, int N, float alpha, const float *A,
+                        int offA, const float *x, int offx, float beta,
+                        float *y, int offy);
 
 // Level 3
-template void BlasSgemm<float>(int TA, int TB, int M, int N, int K, float alpha,
-                               const float *A, int offA, const float *B,
-                               int offB, float beta, float *C, int offC);
+template void BlasSgemm(int TA, int TB, int M, int N, int K, float alpha,
+                        const float *A, int offA, const float *B, int offB,
+                        float beta, float *C, int offC);
 
 #elif defined(USE_CL)
 #include <clBLAS.h>
@@ -409,30 +405,29 @@ void Set(int n, float val, T *y, int offy) {
                            &global, nullptr, 0, nullptr, nullptr);          \
     clFinish(*Kernel::easyCL->queue);                                       \
   }                                                                         \
-  template void name<cl_mem>(int n, const cl_mem *a, int offa,              \
-                             const cl_mem *b, int offb, cl_mem *y, int offy);
+  template void name(int n, const cl_mem *a, int offa, const cl_mem *b,     \
+                     int offb, cl_mem *y, int offy);
 
 BLAS_BINARY_FUNC(Add, add_kernel_);
 BLAS_BINARY_FUNC(Sub, sub_kernel_);
 BLAS_BINARY_FUNC(Mul, mul_kernel_);
 BLAS_BINARY_FUNC(Div, div_kernel_);
 
-#define BLAS_UNARY_FUNC(name, kname)                                      \
-  template <typename T>                                                   \
-  inline void name(int n, const T *a, int offa, T *y, int offy) {         \
-    cl_kernel kernel = Kernel::cl_##kname->GetKernel();                   \
-    clSetKernelArg(kernel, 0, sizeof(int), &n);                           \
-    clSetKernelArg(kernel, 1, sizeof(cl_mem), a);                         \
-    clSetKernelArg(kernel, 2, sizeof(int), &offa);                        \
-    clSetKernelArg(kernel, 3, sizeof(cl_mem), y);                         \
-    clSetKernelArg(kernel, 4, sizeof(int), &offy);                        \
-    size_t global = n;                                                    \
-    clEnqueueNDRangeKernel(*Kernel::easyCL->queue, kernel, 1, nullptr,    \
-                           &global, nullptr, 0, nullptr, nullptr);        \
-    clFinish(*Kernel::easyCL->queue);                                     \
-  }                                                                       \
-  template void name<cl_mem>(int n, const cl_mem *a, int offa, cl_mem *y, \
-                             int offy);
+#define BLAS_UNARY_FUNC(name, kname)                                   \
+  template <typename T>                                                \
+  inline void name(int n, const T *a, int offa, T *y, int offy) {      \
+    cl_kernel kernel = Kernel::cl_##kname->GetKernel();                \
+    clSetKernelArg(kernel, 0, sizeof(int), &n);                        \
+    clSetKernelArg(kernel, 1, sizeof(cl_mem), a);                      \
+    clSetKernelArg(kernel, 2, sizeof(int), &offa);                     \
+    clSetKernelArg(kernel, 3, sizeof(cl_mem), y);                      \
+    clSetKernelArg(kernel, 4, sizeof(int), &offy);                     \
+    size_t global = n;                                                 \
+    clEnqueueNDRangeKernel(*Kernel::easyCL->queue, kernel, 1, nullptr, \
+                           &global, nullptr, 0, nullptr, nullptr);     \
+    clFinish(*Kernel::easyCL->queue);                                  \
+  }                                                                    \
+  template void name(int n, const cl_mem *a, int offa, cl_mem *y, int offy);
 
 BLAS_UNARY_FUNC(Sqr, sqr_kernel_);
 BLAS_UNARY_FUNC(Exp, exp_kernel_);
@@ -518,41 +513,37 @@ void BlasSgemm(int TA, int TB, int M, int N, int K, float alpha, const T *A,
 }
 
 // Explicit instantiation
-template void ChannelMax<cl_mem>(int num, int channels, int spatial_dim,
-                                 const cl_mem *data, cl_mem *val_max);
-template void ChannelSub<cl_mem>(int count, int num, int channels,
-                                 int spatial_dim, const cl_mem *val_sub,
-                                 cl_mem *data);
-template void ChannelSum<cl_mem>(int num, int channels, int spatial_dim,
-                                 const cl_mem *data, cl_mem *val_sum);
-template void ChannelDiv<cl_mem>(int count, int num, int channels,
-                                 int spatial_dim, const cl_mem *val_div,
-                                 cl_mem *data);
+template void ChannelMax(int num, int channels, int spatial_dim,
+                         const cl_mem *data, cl_mem *val_max);
+template void ChannelSub(int count, int num, int channels, int spatial_dim,
+                         const cl_mem *val_sub, cl_mem *data);
+template void ChannelSum(int num, int channels, int spatial_dim,
+                         const cl_mem *data, cl_mem *val_sum);
+template void ChannelDiv(int count, int num, int channels, int spatial_dim,
+                         const cl_mem *val_div, cl_mem *data);
 
-template void Set<cl_mem>(int n, float val, cl_mem *y, int offy);
-template void Pow<cl_mem>(int n, const cl_mem *a, int offa, float alpha,
-                          cl_mem *y, int offy);
-template void Scale<cl_mem>(int n, float alpha, const cl_mem *x, int offx,
-                            cl_mem *y, int offy);
+template void Set(int n, float val, cl_mem *y, int offy);
+template void Pow(int n, const cl_mem *a, int offa, float alpha, cl_mem *y,
+                  int offy);
+template void Scale(int n, float alpha, const cl_mem *x, int offx, cl_mem *y,
+                    int offy);
 
 // Level 1
-template void BlasSscal<cl_mem>(int n, float alpha, cl_mem *x, int offx);
-template void BlasScopy<cl_mem>(int n, const cl_mem *x, int offx, cl_mem *y,
-                                int offy);
-template void BlasSaxpy<cl_mem>(int n, float alpha, const cl_mem *x, int offx,
-                                cl_mem *y, int offy);
-template void BlasSasum<cl_mem>(int n, const cl_mem *x, int offx, float *y);
+template void BlasSscal(int n, float alpha, cl_mem *x, int offx);
+template void BlasScopy(int n, const cl_mem *x, int offx, cl_mem *y, int offy);
+template void BlasSaxpy(int n, float alpha, const cl_mem *x, int offx,
+                        cl_mem *y, int offy);
+template void BlasSasum(int n, const cl_mem *x, int offx, float *y);
 
 // Level 2
-template void BlasSgemv<cl_mem>(int TA, int M, int N, float alpha,
-                                const cl_mem *A, int offA, const cl_mem *x,
-                                int offx, float beta, cl_mem *y, int offy);
+template void BlasSgemv(int TA, int M, int N, float alpha, const cl_mem *A,
+                        int offA, const cl_mem *x, int offx, float beta,
+                        cl_mem *y, int offy);
 
 // Level 3
-template void BlasSgemm<cl_mem>(int TA, int TB, int M, int N, int K,
-                                float alpha, const cl_mem *A, int offA,
-                                const cl_mem *B, int offB, float beta,
-                                cl_mem *C, int offC);
+template void BlasSgemm(int TA, int TB, int M, int N, int K, float alpha,
+                        const cl_mem *A, int offA, const cl_mem *B, int offB,
+                        float beta, cl_mem *C, int offC);
 #endif
 
 }  // namespace Blas

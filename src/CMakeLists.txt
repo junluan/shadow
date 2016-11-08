@@ -3,7 +3,7 @@ file(GLOB_RECURSE shadow_cu_src "shadow/*.cu")
 file(GLOB_RECURSE shadow_test_src "test/*.cpp" "../external/gtest/gtest-all.cc")
 
 if (CUDA_FOUND)
-  cuda_add_library(shadow STATIC ${shadow_lib_src} ${shadow_cu_src})
+  cuda_add_library(shadow SHARED ${shadow_lib_src} ${shadow_cu_src})
   target_link_libraries(shadow ${Shadow_LINKER_LIBS})
 else ()
   add_library(shadow STATIC ${shadow_lib_src})

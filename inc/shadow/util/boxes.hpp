@@ -3,42 +3,52 @@
 
 #include "shadow/util/util.hpp"
 
-#if defined(USE_OpenCV)
-#include <opencv2/opencv.hpp>
-#endif
-
-class Box : public Rect<float> {
+template <class Dtype>
+class Box {
  public:
   Box() {}
-  explicit Box(const RectI rect)
-      : Rect<float>(rect.x, rect.y, rect.w, rect.h) {}
-  Box(float x_t, float y_t, float w_t, float h_t)
-      : Rect<float>(x_t, y_t, w_t, h_t) {}
+  Box(Dtype x_t, Dtype y_t, Dtype w_t, Dtype h_t)
+      : x(x_t), y(y_t), w(w_t), h(h_t) {}
+  Box(const Box<int> &box) : x(box.x), y(box.y), w(box.w), h(box.h) {}
+  Box(const Box<float> &box) : x(box.x), y(box.y), w(box.w), h(box.h) {}
 
   RectI RectInt() { return RectI(x, y, w, h); }
   RectF RectFloat() { return RectF(x, y, w, h); }
 
   float score;
   int class_index;
+  Dtype x, y, w, h;
 };
 
-typedef std::vector<Box> VecBox;
+typedef Box<int> BoxI;
+typedef Box<float> BoxF;
 
-class Boxes {
- public:
-  static float BoxesIntersection(const Box &boxA, const Box &boxB);
-  static float BoxesUnion(const Box &box_a, const Box &box_b);
-  static float BoxesIoU(const Box &boxA, const Box &boxB);
-  static VecBox BoxesNMS(const std::vector<VecBox> &Bboxes,
-                         float iou_threshold);
-  static void SmoothBoxes(const VecBox &old_boxes, VecBox *new_boxes,
-                          float smooth);
-  static void AmendBoxes(std::vector<VecBox> *boxes, const VecRectF &crops,
-                         int height = 0, int width = 0);
+typedef std::vector<BoxI> VecBoxI;
+typedef std::vector<BoxF> VecBoxF;
 
-#if defined(USE_OpenCV)
-  static void SelectRoI(int event, int x, int y, int flags, void *roi);
-#endif
-};
+namespace Boxes {
+
+template <typename Dtype>
+float Intersection(const Box<Dtype> &box_a, const Box<Dtype> &box_b);
+
+template <typename Dtype>
+float Union(const Box<Dtype> &box_a, const Box<Dtype> &box_b);
+
+template <typename Dtype>
+float IoU(const Box<Dtype> &box_a, const Box<Dtype> &box_b);
+
+template <typename Dtype>
+std::vector<Box<Dtype>> NMS(const std::vector<std::vector<Box<Dtype>>> &Bboxes,
+                            float iou_threshold);
+
+template <typename Dtype>
+void Smooth(const std::vector<Box<Dtype>> &old_boxes,
+            std::vector<Box<Dtype>> *new_boxes, float smooth);
+
+template <typename Dtype>
+void Amend(std::vector<std::vector<Box<Dtype>>> *boxes, const VecRectF &crops,
+           int height = 0, int width = 0);
+
+}  // namespace Boxes
 
 #endif  // SHADOW_UTIL_BOXES_HPP

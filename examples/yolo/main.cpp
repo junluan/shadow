@@ -1,9 +1,9 @@
 #include "yolo.hpp"
 
 int main(int argc, char const *argv[]) {
-  Yolo yolo("model/yolo/yolo-refine_80000.shadowmodel", 0.2);
+  Yolo yolo("models/yolo/yolo-refine_80000.shadowmodel", 0.2);
 
-  VecBox roi(1);
+  VecBoxF roi(1);
   roi[0].x = 0.5;
   roi[0].y = 0.2;
   roi[0].w = 0.45;
