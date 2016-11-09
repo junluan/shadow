@@ -65,17 +65,6 @@ template void CopyBuffer<float, float>(int size, const float *src, float *des);
 
 template void ReleaseBuffer<int>(int *buffer);
 template void ReleaseBuffer<float>(float *buffer);
-
-dim3 GridDim(int size) {
-  unsigned int k = (unsigned int)(size - 1) / BLOCK + 1;
-  unsigned int x = k;
-  unsigned int y = 1;
-  if (x > 65535) {
-    x = (unsigned int)std::ceil(std::sqrt(k));
-    y = (size - 1) / (x * BLOCK) + 1;
-  }
-  return dim3(x, y, 1);
-}
 #endif
 
 }  // namespace Kernel

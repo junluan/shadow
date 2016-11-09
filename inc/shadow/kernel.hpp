@@ -5,12 +5,16 @@
 #include "cublas_v2.h"
 #include "cuda_runtime.h"
 
-const int BLOCK = 512;
+// CUDA: use 512 threads per block
+const int NumThreads = 512;
 
-#define CUDA_KERNEL_LOOP(globalid, count)                               \
-  const int globalid =                                                  \
-      (blockIdx.x + blockIdx.y * gridDim.x) * blockDim.x + threadIdx.x; \
-  if (globalid >= count) return;
+// CUDA: number of blocks for threads
+inline int GetBlocks(const int N) { return (N + NumThreads - 1) / NumThreads; }
+
+// CUDA: grid stride looping
+#define CUDA_KERNEL_LOOP(i, n)                                 \
+  for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < (n); \
+       i += blockDim.x * gridDim.x)
 
 #define CheckError(status)                                        \
   {                                                               \
@@ -44,8 +48,6 @@ template <typename T>
 void ReleaseBuffer(T *buffer);
 
 #if defined(USE_CUDA)
-dim3 GridDim(int size);
-
 extern cublasHandle_t cublas_handle_;
 
 #elif defined(USE_CL)
