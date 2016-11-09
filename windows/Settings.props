@@ -2,29 +2,29 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
     <PropertyGroup Label="UserMacros">
         <BuildDir>$(SolutionDir)..\build</BuildDir>
+        <ExternalDir>$(SolutionDir)..\external</ExternalDir>
         <ScriptsDir>$(SolutionDir)\scripts</ScriptsDir>
-        <External>D:\Workspace\external</External>
 
-        <USE_CUDA>true</USE_CUDA>
+        <USE_CUDA>false</USE_CUDA>
         <CudaVersion>7.5</CudaVersion>
         <CudaArchitecture>compute_30,sm_30</CudaArchitecture>
 
         <USE_OpenCV>true</USE_OpenCV>
         <OpenCVVersion>2413</OpenCVVersion>
         <OpenCVRoot>C:\Softwares\OpenCV-2.4.13</OpenCVRoot>
+
+        <USE_OpenBLAS>true</USE_OpenBLAS>
     </PropertyGroup>
 
     <ImportGroup Label="PropertySheets">
+        <Import Project="Common.props" />
         <Import Condition="'$(USE_CUDA)'=='true'" Project="CUDA.props" />
         <Import Condition="'$(USE_OpenCV)'=='true'" Project="OpenCV.props" />
     </ImportGroup>
 
     <PropertyGroup>
-        <OutDir>$(BuildDir)\$(Platform)\$(Configuration)\</OutDir>
-        <IntDir>$(BuildDir)\Int\$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
-
-        <IncludePath>$(External);$(External)\arcsoft;$(External)\OpenBLAS;$(IncludePath)</IncludePath>
-        <LibraryPath>$(OutDir);$(External)\libs;$(LibraryPath)</LibraryPath>
+        <IncludePath>$(ExternalDir)\inc;$(ExternalDir)\inc\OpenBLAS;$(IncludePath)</IncludePath>
+        <LibraryPath>$(ExternalDir)\lib\x64;$(LibraryPath)</LibraryPath>
     </PropertyGroup>
 
     <ItemDefinitionGroup Condition="'$(USE_CUDA)'=='true'">
@@ -43,38 +43,12 @@
             <AdditionalDependencies>$(OpenCVLibs);%(AdditionalDependencies)</AdditionalDependencies>
         </Link>
     </ItemDefinitionGroup>
-
-    <ItemDefinitionGroup>
+    <ItemDefinitionGroup Condition="'$(USE_CUDA)|$(USE_OpenBLAS)'=='false|true'">
         <ClCompile>
-            <DisableSpecificWarnings>4005;4018;4221;4244;4267;4305;4316;4996</DisableSpecificWarnings>
-            <MinimalRebuild>false</MinimalRebuild>
-            <MultiProcessorCompilation>true</MultiProcessorCompilation>
-            <PreprocessorDefinitions>_SCL_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-            <TreatWarningAsError>true</TreatWarningAsError>
-        </ClCompile>
-    </ItemDefinitionGroup>
-    <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-        <ClCompile>
-            <Optimization>Full</Optimization>
-            <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-            <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
-            <FunctionLevelLinking>true</FunctionLevelLinking>
+            <PreprocessorDefinitions>USE_OpenBLAS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
         </ClCompile>
         <Link>
-            <EnableCOMDATFolding>true</EnableCOMDATFolding>
-            <GenerateDebugInformation>true</GenerateDebugInformation>
-            <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
-            <OptimizeReferences>true</OptimizeReferences>
-        </Link>
-    </ItemDefinitionGroup>
-    <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-        <ClCompile>
-            <Optimization>Disabled</Optimization>
-            <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-            <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
-        </ClCompile>
-        <Link>
-            <GenerateDebugInformation>true</GenerateDebugInformation>
+            <AdditionalDependencies>libopenblas.dll.a;%(AdditionalDependencies)</AdditionalDependencies>
         </Link>
     </ItemDefinitionGroup>
 
