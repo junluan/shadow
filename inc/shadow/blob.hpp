@@ -22,6 +22,7 @@ class Blob {
     allocate_data(count);
     set_data(data);
   }
+  ~Blob() { clear(); }
 
   inline const BACKEND *data() const { return data_; }
   inline BACKEND *mutable_data() { return data_; }

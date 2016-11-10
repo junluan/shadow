@@ -14,6 +14,7 @@ class Layer {
       : layer_param_(layer_param),
         layer_name_(layer_param.name()),
         layer_type_(layer_param.type()) {}
+  virtual ~Layer() {}
 
   virtual void Setup(VecBlob *blobs) {
     bottoms_.clear(), tops_.clear(), blobs_.clear();
@@ -60,39 +61,43 @@ class Layer {
   virtual void Forward() { Info("Forward Layer!"); }
   virtual void Release() { Info("Release Layer!"); }
 
-  virtual inline const shadow::LayerParameter param() const {
-    return layer_param_;
-  }
-  virtual inline shadow::LayerParameter &param() { return layer_param_; }
+  inline const shadow::LayerParameter &param() const { return layer_param_; }
+  inline shadow::LayerParameter &param() { return layer_param_; }
 
-  virtual inline const std::string name() const { return layer_name_; }
-  virtual inline const std::string type() const { return layer_type_; }
+  inline const std::string &name() const { return layer_name_; }
+  inline const std::string &type() const { return layer_type_; }
 
-  virtual inline int num_bottoms() const { return bottoms_.size(); }
-  virtual inline int num_tops() const { return tops_.size(); }
-  virtual inline int num_blobs() const { return blobs_.size(); }
+  inline int num_bottoms() const { return bottoms_.size(); }
+  inline int num_tops() const { return tops_.size(); }
+  inline int num_blobs() const { return blobs_.size(); }
 
-  virtual inline Blob<float> *bottom(int i) const {
-    if (i < bottoms_.size()) {
+  inline Blob<float> *bottom(int i) const {
+    if (i >= 0 && i < bottoms_.size()) {
       return bottoms_[i];
+    } else {
+      Fatal("Bottom " + Util::str(i) + " is not initialized!");
     }
     return nullptr;
   }
-  virtual inline Blob<float> *top(int i) const {
-    if (i < tops_.size()) {
+  inline Blob<float> *top(int i) const {
+    if (i >= 0 && i < tops_.size()) {
       return tops_[i];
+    } else {
+      Fatal("Top " + Util::str(i) + " is not initialized!");
     }
     return nullptr;
   }
-  virtual inline Blob<float> *blob(int i) const {
-    if (i < blobs_.size()) {
+  inline Blob<float> *blob(int i) const {
+    if (i >= 0 && i < blobs_.size()) {
       return blobs_[i];
+    } else {
+      Fatal("Blob " + Util::str(i) + " is not initialized!");
     }
     return nullptr;
   }
 
-  virtual inline void set_blob(int i, const float *data) {
-    if (i < blobs_.size()) {
+  inline void set_blob(int i, const float *data) {
+    if (i >= 0 && i < blobs_.size()) {
       blobs_[i]->set_data(data);
     } else {
       Fatal("Blob " + Util::str(i) + " is not initialized!");

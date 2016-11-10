@@ -32,8 +32,7 @@ class Network {
   void CopyWeights(const float *weights_data);
   void CopyWeights(const std::string &weights_file);
 
-  Layer *LayerFactory(const shadow::LayerParameter &layer_param,
-                      VecBlob *blobs);
+  Layer *LayerFactory(const shadow::LayerParameter &layer_param);
 
   shadow::NetParameter net_param_;
 

@@ -54,7 +54,8 @@ void ConnectedLayer::Release() {
   bottoms_.clear();
   tops_.clear();
   for (int i = 0; i < blobs_.size(); ++i) {
-    blobs_[i]->clear();
+    delete blobs_[i];
+    blobs_[i] = nullptr;
   }
   blobs_.clear();
 

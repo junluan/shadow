@@ -66,14 +66,16 @@ void Network::Forward(float *data) {
 
 void Network::Release() {
   for (int l = 0; l < layers_.size(); ++l) {
-    layers_[l]->Release();
+    delete layers_[l];
     layers_[l] = nullptr;
   }
   for (int n = 0; n < blobs_.size(); ++n) {
-    blobs_[n]->clear();
+    delete blobs_[n];
     blobs_[n] = nullptr;
   }
 
+  net_param_.Clear();
+  in_shape_.clear();
   layers_.clear();
   blobs_.clear();
 
@@ -114,6 +116,7 @@ void Network::LoadProtoStrOrText(const std::string &proto_str_or_text,
 }
 
 void Network::Reshape(int batch) {
+  in_shape_.clear();
   for (int i = 0; i < net_param_.input_shape().dim_size(); ++i) {
     in_shape_.push_back(net_param_.input_shape().dim(i));
   }
@@ -122,17 +125,22 @@ void Network::Reshape(int batch) {
 
   Blob<float> *in_blob = new Blob<float>("in_blob");
   in_blob->reshape(in_shape_);
+  blobs_.clear();
   blobs_.push_back(in_blob);
 
+  layers_.clear();
   for (int l = 0; l < net_param_.layer_size(); ++l) {
-    layers_.push_back(LayerFactory(net_param_.layer(l), &blobs_));
+    Layer *layer = LayerFactory(net_param_.layer(l));
+    layer->Setup(&blobs_);
+    layer->Reshape();
+    layers_.push_back(layer);
   }
 }
 
 void Network::CopyWeights(const float *weights_data) {
   for (int l = 0; l < layers_.size(); ++l) {
     Layer *layer = layers_[l];
-    std::string layer_type = layer->type();
+    const std::string &layer_type = layer->type();
     if (!layer_type.compare("Connected") | !layer_type.compare("Convolution")) {
       for (int n = 0; n < layer->num_blobs(); ++n) {
         layer->set_blob(n, weights_data);
@@ -152,7 +160,7 @@ void Network::CopyWeights(const std::string &weights_file) {
 
   for (int l = 0; l < layers_.size(); ++l) {
     Layer *layer = layers_[l];
-    std::string layer_type = layer->type();
+    const std::string &layer_type = layer->type();
     if (!layer_type.compare("Connected") | !layer_type.compare("Convolution")) {
       for (int n = layer->num_blobs() - 1; n >= 0; --n) {
         int count = layer->blob(n)->count();
@@ -167,43 +175,38 @@ void Network::CopyWeights(const std::string &weights_file) {
   file.close();
 }
 
-Layer *Network::LayerFactory(const shadow::LayerParameter &layer_param,
-                             VecBlob *blobs) {
+Layer *Network::LayerFactory(const shadow::LayerParameter &layer_param) {
   Layer *layer = nullptr;
-  if (!layer_param.type().compare("Activate")) {
+  const std::string &layer_type = layer_param.type();
+  if (!layer_type.compare("Activate")) {
     layer = new ActivateLayer(layer_param);
-  } else if (!layer_param.type().compare("Concat")) {
+  } else if (!layer_type.compare("Concat")) {
     layer = new ConcatLayer(layer_param);
-  } else if (!layer_param.type().compare("Connected")) {
+  } else if (!layer_type.compare("Connected")) {
     layer = new ConnectedLayer(layer_param);
-  } else if (!layer_param.type().compare("Convolution")) {
+  } else if (!layer_type.compare("Convolution")) {
     layer = new ConvolutionLayer(layer_param);
-  } else if (!layer_param.type().compare("Data")) {
+  } else if (!layer_type.compare("Data")) {
     layer = new DataLayer(layer_param);
-  } else if (!layer_param.type().compare("Dropout")) {
+  } else if (!layer_type.compare("Dropout")) {
     layer = new DropoutLayer(layer_param);
-  } else if (!layer_param.type().compare("Flatten")) {
+  } else if (!layer_type.compare("Flatten")) {
     layer = new FlattenLayer(layer_param);
-  } else if (!layer_param.type().compare("Normalize")) {
+  } else if (!layer_type.compare("Normalize")) {
     layer = new NormalizeLayer(layer_param);
-  } else if (!layer_param.type().compare("Permute")) {
+  } else if (!layer_type.compare("Permute")) {
     layer = new PermuteLayer(layer_param);
-  } else if (!layer_param.type().compare("Pooling")) {
+  } else if (!layer_type.compare("Pooling")) {
     layer = new PoolingLayer(layer_param);
-  } else if (!layer_param.type().compare("PriorBox")) {
+  } else if (!layer_type.compare("PriorBox")) {
     layer = new PriorBoxLayer(layer_param);
-  } else if (!layer_param.type().compare("Reshape")) {
+  } else if (!layer_type.compare("Reshape")) {
     layer = new ReshapeLayer(layer_param);
-  } else if (!layer_param.type().compare("Softmax")) {
+  } else if (!layer_type.compare("Softmax")) {
     layer = new SoftmaxLayer(layer_param);
   } else {
-    Fatal("Layer type: " + layer_param.type() + " is not recognized!");
-  }
-  if (layer != nullptr) {
-    layer->Setup(blobs);
-    layer->Reshape();
-  } else {
-    Fatal("Error when making layer: " + layer_param.name());
+    Fatal("Error when making layer: " + layer_param.name() + ", layer type: " +
+          layer_type + " is not recognized!");
   }
   return layer;
 }

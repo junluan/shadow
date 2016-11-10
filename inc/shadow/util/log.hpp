@@ -54,7 +54,7 @@
 
 #define CHECK(condition)                      \
   {                                           \
-    if (!condition) {                         \
+    if (!(condition)) {                       \
       std::stringstream out;                  \
       out << "Check Failed: " #condition " "; \
       Fatal(out.str());                       \
@@ -62,7 +62,7 @@
   }
 #define CHECK_OP(condition, val1, val2)                                   \
   {                                                                       \
-    if (!(val1 condition val2)) {                                         \
+    if (!((val1)condition(val2))) {                                       \
       std::stringstream out;                                              \
       out << "Check Failed: " #val1 " " #condition " " #val2 " (" << val1 \
           << " vs " << val2 << ") ";                                      \
