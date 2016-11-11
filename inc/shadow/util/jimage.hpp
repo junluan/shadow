@@ -16,29 +16,71 @@ enum Order { kGray, kRGB, kBGR, kArc };
 
 class JImage {
  public:
-  explicit JImage(const std::string &im_path) : data_(nullptr) {
-    Read(im_path);
-
-#if defined(USE_ArcSoft)
-    arc_data_ = nullptr;
-#endif
-  }
+  explicit JImage(const std::string &im_path) { Read(im_path); }
   explicit JImage(int c = 0, int h = 0, int w = 0, Order order = kRGB)
-      : c_(c), h_(h), w_(w), order_(order), data_(nullptr) {
+      : c_(c), h_(h), w_(w), order_(order) {
     if (count() != 0) {
-      this->Reshape(c_, h_, w_, order);
+      Reshape(c_, h_, w_, order);
     }
-
-#if defined(USE_ArcSoft)
-    arc_data_ = nullptr;
-#endif
   }
   ~JImage() { Release(); }
 
-  const unsigned char *data() const { return data_; }
-  unsigned char *data() { return data_; }
-  const Order order() const { return order_; }
-  const int count() const { return c_ * h_ * w_; }
+  void Read(const std::string &im_path);
+  void Write(const std::string &im_path) const;
+  void Show(const std::string &show_name, int wait_time = 0) const;
+  void CopyTo(JImage *im_copy) const;
+
+#if defined(USE_OpenCV)
+  void FromMat(const cv::Mat &im_mat, bool shared = false);
+  cv::Mat ToMat() const;
+#endif
+
+#if defined(USE_ArcSoft)
+  void FromArcImage(const ASVLOFFSCREEN &im_arc);
+  void ToArcImage(int arc_format);
+#endif
+
+  void Color2Gray();
+  void ColorInv();
+
+  void Release();
+
+  inline const unsigned char *data() const { return data_; }
+  inline unsigned char *data() { return data_; }
+
+  inline void SetData(const unsigned char *data, int num) {
+    if (data == nullptr) Fatal("Set data is NULL!");
+    if (data_ == nullptr) Fatal("JImage data is NULL!");
+    if (num != count()) Fatal("Set data dimension mismatch!");
+    memcpy(data_, data, num * sizeof(unsigned char));
+  }
+
+  inline void SetZero() {
+    if (data_ == nullptr) Fatal("JImage data is NULL!");
+    memset(data_, 0, count() * sizeof(unsigned char));
+  }
+
+  inline void ShareData(unsigned char *data) {
+    if (data == nullptr) Fatal("Set data is NULL!");
+    data_ = data;
+  }
+
+  inline void Reshape(int c, int h, int w, Order order = kRGB) {
+    int num = c * h * w;
+    if (num <= 0) Fatal("Reshape dimension must be greater than zero!");
+    if (data_ == nullptr) {
+      data_ = new unsigned char[num];
+    } else if (num > count()) {
+      delete[] data_;
+      data_ = new unsigned char[num];
+    }
+    c_ = c, h_ = h, w_ = w, order_ = order;
+  }
+
+  inline const Order &order() const { return order_; }
+  inline Order &order() { return order_; }
+
+  inline const int count() const { return c_ * h_ * w_; }
 
   const unsigned char operator()(int c, int h, int w) const {
     if (c >= c_ || h >= h_ || w >= w_) Fatal("Index out of range!");
@@ -49,58 +91,17 @@ class JImage {
     return data_[(c * h_ + h) * w_ + w];
   }
 
-  inline void Reshape(int c, int h, int w, Order order) {
-    int num = c * h * w;
-    if (num == 0) Fatal("Reshape dimension must be greater than zero!");
-    if (data_ == nullptr) {
-      data_ = new unsigned char[num];
-    } else if (num > count()) {
-      delete[] data_;
-      data_ = new unsigned char[num];
-    }
-    c_ = c, h_ = h, w_ = w, order_ = order;
-  }
-
-  void SetData(const unsigned char *data, int num) {
-    if (data_ == nullptr) Fatal("JImage data is NULL!");
-    if (num != count()) Fatal("Set data dimension mismatch!");
-    memcpy(data_, data, sizeof(unsigned char) * num);
-  }
-  void SetZero() {
-    if (data_ == nullptr) Fatal("JImage data is NULL!");
-    memset(data_, 0, sizeof(unsigned char) * count());
-  }
-
-  void Read(const std::string &im_path);
-  void Write(const std::string &im_path) const;
-  void Show(const std::string &show_name, int wait_time = 0) const;
-  void CopyTo(JImage *im_copy) const;
-
-  void Color2Gray();
-
-#if defined(USE_OpenCV)
-  void FromMat(const cv::Mat &im_mat);
-  cv::Mat ToMat() const;
-#endif
-
-#if defined(USE_ArcSoft)
-  void FromArcImage(const ASVLOFFSCREEN &im_arc);
-  void ToArcImage(int arc_format);
-#endif
-
-  void Release();
-
   int c_, h_, w_;
 
 #if defined(USE_ArcSoft)
   ASVLOFFSCREEN arc_image_;
-  unsigned char *arc_data_;
+  unsigned char *arc_data_ = nullptr;
 #endif
 
  private:
   inline void GetInv(unsigned char *im_inv) const;
 
-  unsigned char *data_;
+  unsigned char *data_ = nullptr;
   Order order_;
 };
 

@@ -11,7 +11,7 @@ void JImage::Read(const std::string &im_path) {
     data_ = nullptr;
   }
   data_ = stbi_load(im_path.c_str(), &w_, &h_, &c_, 3);
-  if (data_ == nullptr) Fatal("Failed to read image " + im_path);
+  if (data_ == nullptr) Fatal("Failed to read image: " + im_path);
   order_ = kRGB;
 }
 
@@ -66,37 +66,16 @@ void JImage::CopyTo(JImage *im_copy) const {
   memcpy(im_copy->data_, data_, sizeof(unsigned char) * c_ * h_ * w_);
 }
 
-void JImage::Color2Gray() {
-  if (data_ == nullptr) Fatal("JImage data is NULL!");
-
-  if (order_ == kRGB || order_ == kBGR) {
-    unsigned char *gray_data = new unsigned char[h_ * w_];
-    unsigned char *gray_index = gray_data;
-    int index;
-    for (int h = 0; h < h_; ++h) {
-      for (int w = 0; w < w_; ++w) {
-        index = (w_ * h + w) * c_;
-        float sum = data_[index + 0] + data_[index + 1] + data_[index + 2];
-        *gray_index++ = static_cast<unsigned char>(sum / 3.f);
-      }
-    }
-    memcpy(data_, gray_data, sizeof(unsigned char) * h_ * w_);
-    delete[] gray_data;
-    c_ = 1;
-    order_ = kGray;
-  } else if (order_ == kGray) {
-    return;
-  } else {
-    Fatal("Unsupported format to convert color to gray!");
-  }
-}
-
 #if defined(USE_OpenCV)
-void JImage::FromMat(const cv::Mat &im_mat) {
+void JImage::FromMat(const cv::Mat &im_mat, bool shared) {
   if (im_mat.empty()) Fatal("Mat data is empty!");
 
   this->Reshape(im_mat.channels(), im_mat.rows, im_mat.cols, kBGR);
-  memcpy(data_, im_mat.data, sizeof(unsigned char) * c_ * h_ * w_);
+  if (shared) {
+    data_ = im_mat.data;
+  } else {
+    memcpy(data_, im_mat.data, sizeof(unsigned char) * c_ * h_ * w_);
+  }
 }
 
 cv::Mat JImage::ToMat() const {
@@ -111,6 +90,7 @@ cv::Mat JImage::ToMat() const {
 }
 #endif
 
+#if defined(USE_ArcSoft)
 #define CLIP(x) (unsigned char)((x) & (~255) ? ((-x) >> 31) : (x))
 #define fix(x, n) static_cast<int>((x) * (1 << (n)) + 0.5)
 #define yuvYr fix(0.299, 10)
@@ -119,8 +99,8 @@ cv::Mat JImage::ToMat() const {
 #define yuvCr fix(0.713, 10)
 #define yuvCb fix(0.564, 10)
 
-void RGB2I420(unsigned char *src_bgr, int src_h, int src_w, int src_step,
-              Order order, unsigned char *dst_i420) {
+inline void RGB2I420(unsigned char *src_bgr, int src_h, int src_w, int src_step,
+                     Order order, unsigned char *dst_i420) {
   int loc_r = 0, loc_g = 1, loc_b = 2;
   if (order == kRGB) {
     loc_r = 0;
@@ -195,9 +175,9 @@ void RGB2I420(unsigned char *src_bgr, int src_h, int src_w, int src_step,
   }
 }
 
-void I4202RGB(unsigned char *src_y, unsigned char *src_u, unsigned char *src_v,
-              int src_h, int src_w, int src_step, unsigned char *dst_rgb,
-              Order order) {
+inline void I4202RGB(unsigned char *src_y, unsigned char *src_u,
+                     unsigned char *src_v, int src_h, int src_w, int src_step,
+                     unsigned char *dst_rgb, Order order) {
   for (int h = 0; h < src_h; ++h) {
     for (int w = 0; w < src_w; ++w) {
       int y = src_y[h * src_step + w];
@@ -224,7 +204,6 @@ void I4202RGB(unsigned char *src_y, unsigned char *src_u, unsigned char *src_v,
   }
 }
 
-#if defined(USE_ArcSoft)
 void JImage::FromArcImage(const ASVLOFFSCREEN &im_arc) {
   int src_h = static_cast<int>(im_arc.i32Height);
   int src_w = static_cast<int>(im_arc.i32Width);
@@ -245,6 +224,7 @@ void JImage::FromArcImage(const ASVLOFFSCREEN &im_arc) {
 
 void JImage::ToArcImage(int arc_format) {
   if (data_ == nullptr) Fatal("JImage data is NULL!");
+
   if (order_ == kArc) return;
   if (order_ != kRGB && order_ != kBGR)
     Fatal("Unsupported format to convert JImage to ArcImage!");
@@ -276,6 +256,52 @@ void JImage::ToArcImage(int arc_format) {
 }
 #endif
 
+void JImage::Color2Gray() {
+  if (data_ == nullptr) Fatal("JImage data is NULL!");
+
+  if (order_ == kRGB || order_ == kBGR) {
+    unsigned char *gray_data = new unsigned char[h_ * w_];
+    unsigned char *gray_index = gray_data;
+    int index;
+    for (int h = 0; h < h_; ++h) {
+      for (int w = 0; w < w_; ++w) {
+        index = (w_ * h + w) * c_;
+        float sum = data_[index + 0] + data_[index + 1] + data_[index + 2];
+        *gray_index++ = static_cast<unsigned char>(sum / 3.f);
+      }
+    }
+    memcpy(data_, gray_data, h_ * w_ * sizeof(unsigned char));
+    delete[] gray_data;
+    c_ = 1;
+    order_ = kGray;
+  } else if (order_ == kGray) {
+    return;
+  } else {
+    Fatal("Unsupported format to convert color to gray!");
+  }
+}
+
+void JImage::ColorInv() {
+  if (data_ == nullptr) Fatal("JImage data is NULL!");
+
+  if (order_ == kRGB) {
+    order_ = kBGR;
+  } else if (order_ == kBGR) {
+    order_ = kRGB;
+  } else {
+    Fatal("Unsupported format to do inverse!");
+  }
+
+  int spatial_dim = h_ * w_;
+  unsigned char *data_index = data_, temp;
+  for (int i = 0; i < spatial_dim; ++i) {
+    temp = *(data_index + c_ - 1);
+    *(data_index + c_ - 1) = *data_index;
+    *data_index = temp;
+    data_index += c_;
+  }
+}
+
 void JImage::Release() {
   if (data_ != nullptr) {
     delete[] data_;
@@ -291,23 +317,18 @@ void JImage::Release() {
 }
 
 void JImage::GetInv(unsigned char *im_inv) const {
-  bool is_rgb2bgr = false;
-  if (order_ == kRGB) {
-    is_rgb2bgr = true;
-  } else if (order_ == kBGR) {
-    is_rgb2bgr = false;
-  } else {
-    Fatal("Unsupported format to inverse!");
-  }
-  int ch_src, ch_inv, offset, step = w_ * c_;
-  for (int c = 0; c < c_; ++c) {
-    for (int h = 0; h < h_; ++h) {
-      for (int w = 0; w < w_; ++w) {
-        ch_src = is_rgb2bgr ? c : c_ - c - 1;
-        ch_inv = c_ - 1 - ch_src;
-        offset = h * step + w * c_;
-        im_inv[offset + ch_inv] = data_[offset + ch_src];
-      }
+  if (data_ == nullptr) Fatal("JImage data is NULL!");
+
+  if (order_ == kRGB || order_ == kBGR) {
+    int spatial_dim = h_ * w_;
+    unsigned char *data_index = data_;
+    for (int i = 0; i < spatial_dim; ++i) {
+      *(im_inv++) = *(data_index + c_ - 1);
+      *(im_inv++) = *(data_index + 1);
+      *(im_inv++) = *data_index;
+      data_index += c_;
     }
+  } else {
+    Fatal("Unsupported format to get inverse!");
   }
 }
