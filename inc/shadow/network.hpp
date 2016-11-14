@@ -13,7 +13,7 @@ class Network {
 
   void SaveModel(const std::string &proto_bin);
 
-  void Forward(float *data = nullptr);
+  void Forward(const float *data = nullptr);
   void Release();
 
   const Layer *GetLayerByName(const std::string &layer_name);

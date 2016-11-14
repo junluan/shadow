@@ -7,17 +7,36 @@ template <class Dtype>
 class Box {
  public:
   Box() {}
-  Box(Dtype x_t, Dtype y_t, Dtype w_t, Dtype h_t)
-      : x(x_t), y(y_t), w(w_t), h(h_t) {}
-  Box(const Box<int> &box) : x(box.x), y(box.y), w(box.w), h(box.h) {}
-  Box(const Box<float> &box) : x(box.x), y(box.y), w(box.w), h(box.h) {}
+  Box(Dtype xmin_t, Dtype ymin_t, Dtype xmax_t, Dtype ymax_t)
+      : xmin(xmin_t), ymin(ymin_t), xmax(xmax_t), ymax(ymax_t) {}
+  Box(const Box<int> &box) { *this = box; }
+  Box(const Box<float> &box) { *this = box; }
 
-  RectI RectInt() { return RectI(x, y, w, h); }
-  RectF RectFloat() { return RectF(x, y, w, h); }
+  Box &operator=(const Box<int> &box) {
+    xmin = static_cast<Dtype>(box.xmin);
+    ymin = static_cast<Dtype>(box.ymin);
+    xmax = static_cast<Dtype>(box.xmax);
+    ymax = static_cast<Dtype>(box.ymax);
+    score = box.score;
+    label = box.label;
+    return *this;
+  }
+  Box &operator=(const Box<float> &box) {
+    xmin = static_cast<Dtype>(box.xmin);
+    ymin = static_cast<Dtype>(box.ymin);
+    xmax = static_cast<Dtype>(box.xmax);
+    ymax = static_cast<Dtype>(box.ymax);
+    score = box.score;
+    label = box.label;
+    return *this;
+  }
+
+  RectI RectInt() { return RectI(xmin, ymin, xmax - xmin, ymax - ymin); }
+  RectF RectFloat() { return RectF(xmin, ymin, xmax - xmin, ymax - ymin); }
 
   float score;
-  int class_index;
-  Dtype x, y, w, h;
+  int label;
+  Dtype xmin, ymin, xmax, ymax;
 };
 
 typedef Box<int> BoxI;
@@ -46,7 +65,7 @@ void Smooth(const std::vector<Box<Dtype>> &old_boxes,
             std::vector<Box<Dtype>> *new_boxes, float smooth);
 
 template <typename Dtype>
-void Amend(std::vector<std::vector<Box<Dtype>>> *boxes, const VecRectF &crops,
+void Amend(std::vector<std::vector<Box<Dtype>>> *Bboxes, const VecRectF &crops,
            int height = 0, int width = 0);
 
 }  // namespace Boxes

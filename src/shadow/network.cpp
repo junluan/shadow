@@ -53,7 +53,7 @@ void Network::SaveModel(const std::string &proto_bin) {
   IO::WriteProtoToBinaryFile(net_param_, proto_bin);
 }
 
-void Network::Forward(float *data) {
+void Network::Forward(const float *data) {
   if (data == nullptr) Fatal("Must provide input data!");
   if (layers_.size() == 0) return;
   if (!layers_[0]->type().compare("Data")) {
