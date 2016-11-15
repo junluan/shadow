@@ -48,6 +48,12 @@ typedef std::vector<BoxF> VecBoxF;
 namespace Boxes {
 
 template <typename Dtype>
+void Clip(const Box<Dtype> &box, Box<Dtype> *clip_box, Dtype min, Dtype max);
+
+template <typename Dtype>
+Dtype Size(const Box<Dtype> &box);
+
+template <typename Dtype>
 float Intersection(const Box<Dtype> &box_a, const Box<Dtype> &box_b);
 
 template <typename Dtype>

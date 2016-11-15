@@ -3,7 +3,15 @@
 namespace Boxes {
 
 template <typename Dtype>
-inline Dtype BoxArea(const Box<Dtype> &box) {
+void Clip(const Box<Dtype> &box, Box<Dtype> *clip_box, Dtype min, Dtype max) {
+  clip_box->xmin = std::max(std::min(box.xmin, max), min);
+  clip_box->ymin = std::max(std::min(box.ymin, max), min);
+  clip_box->xmax = std::max(std::min(box.xmax, max), min);
+  clip_box->ymax = std::max(std::min(box.ymax, max), min);
+}
+
+template <typename Dtype>
+Dtype Size(const Box<Dtype> &box) {
   return (box.xmax - box.xmin) * (box.ymax - box.ymin);
 }
 
@@ -24,7 +32,7 @@ float Intersection(const Box<Dtype> &box_a, const Box<Dtype> &box_b) {
 
 template <typename Dtype>
 float Union(const Box<Dtype> &box_a, const Box<Dtype> &box_b) {
-  return BoxArea(box_a) + BoxArea(box_b) - Intersection(box_a, box_b);
+  return Size(box_a) + Size(box_b) - Intersection(box_a, box_b);
 }
 
 template <typename Dtype>
@@ -61,8 +69,8 @@ std::vector<Box<Dtype>> NMS(const std::vector<std::vector<Box<Dtype>>> &Bboxes,
         continue;
       }
       float in = Intersection(boxes[i], boxes[j]);
-      float cover_i = in / BoxArea(boxes[i]);
-      float cover_j = in / BoxArea(boxes[j]);
+      float cover_i = in / Size(boxes[i]);
+      float cover_j = in / Size(boxes[j]);
       if (cover_i > cover_j && cover_i > 0.7) boxes[i].label = -1;
       if (cover_i < cover_j && cover_j > 0.7) boxes[j].label = -1;
     }
@@ -110,6 +118,12 @@ void Amend(std::vector<std::vector<Box<Dtype>>> *Bboxes, const VecRectF &crops,
 }
 
 // Explicit instantiation
+template void Clip(const BoxI &box, BoxI *clip_box, int min, int max);
+template void Clip(const BoxF &box, BoxF *clip_box, float min, float max);
+
+template int Size(const BoxI &box);
+template float Size(const BoxF &box);
+
 template float Intersection(const BoxI &box_a, const BoxI &box_b);
 template float Intersection(const BoxF &box_a, const BoxF &box_b);
 
@@ -119,13 +133,13 @@ template float Union(const BoxF &box_a, const BoxF &box_b);
 template float IoU(const BoxI &box_a, const BoxI &box_b);
 template float IoU(const BoxF &box_a, const BoxF &box_b);
 
+template VecBoxI NMS(const std::vector<VecBoxI> &Bboxes, float iou_threshold);
+template VecBoxF NMS(const std::vector<VecBoxF> &Bboxes, float iou_threshold);
+
 template void Smooth(const VecBoxI &old_boxes, VecBoxI *new_boxes,
                      float smooth);
 template void Smooth(const VecBoxF &old_boxes, VecBoxF *new_boxes,
                      float smooth);
-
-template VecBoxI NMS(const std::vector<VecBoxI> &Bboxes, float iou_threshold);
-template VecBoxF NMS(const std::vector<VecBoxF> &Bboxes, float iou_threshold);
 
 template void Amend(std::vector<VecBoxI> *Bboxes, const VecRectF &crops,
                     int height, int width);
