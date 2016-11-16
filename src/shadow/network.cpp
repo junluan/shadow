@@ -140,12 +140,9 @@ void Network::Reshape(int batch) {
 void Network::CopyWeights(const float *weights_data) {
   for (int l = 0; l < layers_.size(); ++l) {
     Layer *layer = layers_[l];
-    const std::string &layer_type = layer->type();
-    if (!layer_type.compare("Connected") | !layer_type.compare("Convolution")) {
-      for (int n = 0; n < layer->num_blobs(); ++n) {
-        layer->set_blob(n, weights_data);
-        weights_data += layer->blob(n)->count();
-      }
+    for (int n = 0; n < layer->num_blobs(); ++n) {
+      layer->set_blob(n, weights_data);
+      weights_data += layer->blob(n)->count();
     }
   }
 }

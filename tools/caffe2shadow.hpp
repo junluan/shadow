@@ -352,33 +352,38 @@ namespace Caffe2Shadow {
 
 using google::protobuf::Message;
 
-void WriteProtoToCPP(const shadow::NetParameter& shadow_net,
-                     const std::string& root, const std::string& model_name) {
+void WriteDefines(const shadow::NetParameter& shadow_net,
+                  const std::string& root, const std::string& model_name) {
+  // write network proto definition to cpp
   shadow::NetParameter net(shadow_net);
   for (int l = 0; l < net.layer_size(); ++l) {
     shadow::LayerParameter* layer_param = net.mutable_layer(l);
-    if (layer_param->blobs_size() == 0) continue;
     for (int n = 0; n < layer_param->blobs_size(); ++n) {
       layer_param->mutable_blobs(n)->clear_data();
     }
   }
 
-  std::string filename = root + "/" + model_name + ".cpp";
-  std::ofstream file(filename);
+  std::ofstream cpp_file(root + "/" + model_name + ".cpp");
   std::string proto_str;
   IO::WriteProtoToText(net, &proto_str);
 
-  file << "#include \"" << model_name << ".hpp\"\n\n";
+  size_t split_count = 10000, str_count = proto_str.size();
+  size_t split_off = str_count % split_count;
+  size_t split_num = str_count / split_count + (split_off > 0 ? 1 : 0);
 
-  file << "const std::string Model::model_ = \nR\"(\n";
-  file << proto_str;
-  file << ")\";\n";
+  cpp_file << "#include \"" << model_name << ".hpp\"\n\n";
 
-  file.close();
-}
+  size_t offset = 0;
+  for (int n = 0; n < split_num; ++n) {
+    cpp_file << "const std::string Model::model_" << n << "_ = \nR\"(";
+    cpp_file << proto_str.substr(offset, split_count);
+    cpp_file << ")\";\n\n";
+    offset += split_count;
+  }
 
-void WriteDefinesToHPP(const shadow::NetParameter& shadow_net,
-                       const std::string& root, const std::string& model_name) {
+  cpp_file.close();
+
+  // write all definitions to hpp
   VecInt weight_counts;
   VecString weight_names;
   for (int l = 0; l < shadow_net.layer_size(); ++l) {
@@ -400,12 +405,17 @@ void WriteDefinesToHPP(const shadow::NetParameter& shadow_net,
   file << "#include <cstring>\n"
        << "#include <string>\n\n";
 
-  file << "static constexpr int counts_[] = "
+  file << "static int counts_[] = "
        << Util::format_vector(weight_counts, ", ", "{", "}") << ";\n\n";
 
   file << "class Model {\n"
           " public:\n"
-          "  static const std::string model() { return model_; }\n\n";
+          "  static const std::string model() { return";
+
+  for (int i = 0; i < split_num - 1; ++i) {
+    file << " model_" << i << "_ +";
+  }
+  file << " model_" << split_num - 1 << "_; }\n\n";
 
   file << "  static const float *weights(int n) {\n"
           "    switch (n) {\n";
@@ -434,9 +444,12 @@ void WriteDefinesToHPP(const shadow::NetParameter& shadow_net,
   file << "  static const int num() { return " << weight_names.size()
        << "; }\n\n";
 
-  file << " private:\n"
-          "  static const std::string model_;\n\n";
+  file << " private:\n";
 
+  for (int i = 0; i < split_num; ++i) {
+    file << "  static const std::string model_" << i << "_;\n";
+  }
+  file << "\n";
   for (int i = 0; i < weight_names.size(); ++i) {
     file << "  static const float *" << weight_names[i] << "_;\n";
   }
@@ -447,15 +460,14 @@ void WriteDefinesToHPP(const shadow::NetParameter& shadow_net,
   file.close();
 }
 
-void WriteWeightsToCPP(const shadow::NetParameter& shadow_net,
-                       const std::string& root, const std::string& model_name) {
+void WriteWeights(const shadow::NetParameter& shadow_net,
+                  const std::string& root, const std::string& model_name) {
   for (int l = 0; l < shadow_net.layer_size(); ++l) {
     const shadow::LayerParameter& layer_param = shadow_net.layer(l);
     if (layer_param.blobs_size() == 0) continue;
 
     std::string weight_name = model_name + "_" + layer_param.name();
-    std::string filename = root + "/" + weight_name + ".cpp";
-    std::ofstream file(filename);
+    std::ofstream file(root + "/" + weight_name + ".cpp");
 
     file << "#include \"" << model_name << ".hpp\"\n\n";
     file << "const float " << weight_name << "_weights[] = {\n";
@@ -485,9 +497,8 @@ void WriteWeightsToCPP(const shadow::NetParameter& shadow_net,
 
 void WriteProtoToFiles(const shadow::NetParameter& shadow_net,
                        const std::string& root, const std::string& model_name) {
-  WriteDefinesToHPP(shadow_net, root, model_name);
-  WriteWeightsToCPP(shadow_net, root, model_name);
-  WriteProtoToCPP(shadow_net, root, model_name);
+  WriteDefines(shadow_net, root, model_name);
+  WriteWeights(shadow_net, root, model_name);
 }
 
 void WriteProtoToBinary(const Message& proto, const std::string& root,
