@@ -403,7 +403,8 @@ void WriteDefines(const shadow::NetParameter& shadow_net,
           "#define SHADOW_MODEL_HPP\n\n";
 
   file << "#include <cstring>\n"
-       << "#include <string>\n\n";
+       << "#include <string>\n"
+       << "#include <vector>\n\n";
 
   file << "static int counts_[] = "
        << Util::format_vector(weight_counts, ", ", "{", "}") << ";\n\n";
@@ -417,7 +418,7 @@ void WriteDefines(const shadow::NetParameter& shadow_net,
   }
   file << " model_" << split_num - 1 << "_; }\n\n";
 
-  file << "  static const float *weights(int n) {\n"
+  file << "  static const float *weight(int n) {\n"
           "    switch (n) {\n";
   for (int i = 0; i < weight_names.size(); ++i) {
     file << "      case " << i << ":\n"
@@ -426,10 +427,17 @@ void WriteDefines(const shadow::NetParameter& shadow_net,
   file << "      default:\n"
           "        return nullptr;\n"
           "    }\n"
+          "  }\n";
+  file << "  static std::vector<const float *> get_weights() {\n"
+          "    std::vector<const float *> weights;\n"
+          "    for (int n = 0; n < num(); ++n) {\n"
+          "      weights.push_back(weight(n));\n"
+          "    }\n"
+          "    return weights;\n"
           "  }\n"
           "  static void get_weights(float *weights_data) {\n"
           "    for (int n = 0; n < num(); ++n) {\n"
-          "      memcpy(weights_data, weights(n), count(n) * sizeof(float));\n"
+          "      memcpy(weights_data, weight(n), count(n) * sizeof(float));\n"
           "      weights_data += count(n);\n"
           "    }\n"
           "  }\n\n";

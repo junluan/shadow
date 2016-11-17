@@ -27,6 +27,13 @@ void Network::LoadModel(const std::string &proto_str, const float *weights_data,
   CopyWeights(weights_data);
 }
 
+void Network::LoadModel(const std::string &proto_str,
+                        const std::vector<const float *> &weights, int batch) {
+  LoadProtoStrOrText(proto_str, &net_param_);
+  Reshape(batch);
+  CopyWeights(weights);
+}
+
 void Network::LoadModel(const std::string &proto_text,
                         const std::string &weights_file, int batch) {
   LoadProtoStrOrText(proto_text, &net_param_);
@@ -134,6 +141,21 @@ void Network::Reshape(int batch) {
     layer->Setup(&blobs_);
     layer->Reshape();
     layers_.push_back(layer);
+  }
+}
+
+void Network::CopyWeights(const std::vector<const float *> &weights) {
+  int count = 0;
+  for (int l = 0; l < layers_.size(); ++l) {
+    Layer *layer = layers_[l];
+    if (layer->num_blobs() > 0) {
+      CHECK_LT(count, weights.size());
+      const float *weights_data = weights[count++];
+      for (int n = 0; n < layer->num_blobs(); ++n) {
+        layer->set_blob(n, weights_data);
+        weights_data += layer->blob(n)->count();
+      }
+    }
   }
 }
 
