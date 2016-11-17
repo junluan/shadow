@@ -12,7 +12,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "proto", "proto\proto.vcxpro
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shadow", "shadow\shadow.vcxproj", "{40355AFF-EBDF-4C40-8800-05B4D7DDC473}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ssd", "ssd\ssd.vcxproj", "{BB25E1D6-C2B4-47AF-80A1-3EFA237C6DC6}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "demo", "demo\demo.vcxproj", "{BB25E1D6-C2B4-47AF-80A1-3EFA237C6DC6}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "caffe2shadow", "caffe2shadow\caffe2shadow.vcxproj", "{D77656F6-3C2C-4515-9855-BF684333D812}"
 EndProject

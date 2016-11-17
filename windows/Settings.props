@@ -5,7 +5,7 @@
         <ExternalDir>$(SolutionDir)..\external</ExternalDir>
         <ScriptsDir>$(SolutionDir)\scripts</ScriptsDir>
 
-        <USE_CUDA>false</USE_CUDA>
+        <USE_CUDA>true</USE_CUDA>
         <CudaVersion>7.5</CudaVersion>
         <CudaArchitecture>compute_30,sm_30</CudaArchitecture>
 
@@ -62,7 +62,7 @@
             <Command>"$(ScriptsDir)\CopyDependencies.cmd" "$(CUDADLLPath)" "$(OutDir)" "$(CUDADLLs)"</Command>
         </PostBuildEvent>
     </ItemDefinitionGroup>
-    <ItemDefinitionGroup Condition="'$(ProjectName)'=='ssd'">
+    <ItemDefinitionGroup Condition="'$(ProjectName)'=='demo'">
         <PostBuildEvent  Condition="'$(USE_OpenCV)'=='true'">
             <Command>"$(ScriptsDir)\CopyDependencies.cmd" "$(OpenCVDLLPath)" "$(OutDir)" "$(OpenCVDLLs)"</Command>
         </PostBuildEvent>

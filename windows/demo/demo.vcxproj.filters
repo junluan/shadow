@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <Filter Include="inc">
@@ -7,18 +7,27 @@
     <Filter Include="src">
       <UniqueIdentifier>{a4ed0e6e-0d0a-4396-9631-17b5cb50cc57}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ssd">
+      <UniqueIdentifier>{e9cf8a0e-0ca8-4331-9abc-a751e06928d1}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\examples\ssd\ssd.hpp">
+    <ClInclude Include="..\..\examples\demo.hpp">
       <Filter>inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\examples\ssd\ssd.hpp">
+      <Filter>ssd</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\examples\ssd\main.cpp">
+    <ClCompile Include="..\..\examples\demo.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\examples\main.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="..\..\examples\ssd\ssd.cpp">
-      <Filter>src</Filter>
+      <Filter>ssd</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

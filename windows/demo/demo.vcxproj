@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|x64">
@@ -68,10 +68,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\examples\demo.hpp" />
     <ClInclude Include="..\..\examples\ssd\ssd.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\examples\ssd\main.cpp" />
+    <ClCompile Include="..\..\examples\demo.cpp" />
+    <ClCompile Include="..\..\examples\main.cpp" />
     <ClCompile Include="..\..\examples\ssd\ssd.cpp" />
   </ItemGroup>
   <ItemGroup>
