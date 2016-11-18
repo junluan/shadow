@@ -17,6 +17,7 @@ class PermuteLayer : public Layer {
 
  private:
   int num_axes_;
+  VecInt permute_order_data_;
 
   Blob<int> permute_order_, old_steps_, new_steps_;
 };

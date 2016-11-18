@@ -5,7 +5,7 @@ void FlattenLayer::Setup(VecBlob *blobs) {
 
   CHECK_NE(tops_[0], bottoms_[0]);
 
-  const shadow::FlattenParameter &flatten_param = layer_param_.flatten_param();
+  const auto &flatten_param = layer_param_.flatten_param();
 
   axis_ = flatten_param.axis();
   end_axis_ = flatten_param.end_axis();

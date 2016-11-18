@@ -10,8 +10,6 @@ class Network {
                  const std::vector<const float *> &weights, int batch = 0);
   void LoadModel(const std::string &proto_str, const float *weights_data,
                  int batch = 0);
-  void LoadModel(const std::string &proto_text, const std::string &weights_file,
-                 int batch = 0);
 
   void SaveModel(const std::string &proto_bin);
 
@@ -33,7 +31,6 @@ class Network {
 
   void CopyWeights(const std::vector<const float *> &weights);
   void CopyWeights(const float *weights_data);
-  void CopyWeights(const std::string &weights_file);
 
   Layer *LayerFactory(const shadow::LayerParameter &layer_param);
 

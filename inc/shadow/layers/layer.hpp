@@ -18,31 +18,29 @@ class Layer {
 
   virtual void Setup(VecBlob *blobs) {
     bottoms_.clear(), tops_.clear(), blobs_.clear();
-    for (int i = 0; i < layer_param_.bottom_size(); ++i) {
-      Blob<float> *bottom = get_blob_by_name(*blobs, layer_param_.bottom(i));
+    for (const auto &bottom_name : layer_param_.bottom()) {
+      Blob<float> *bottom = get_blob_by_name(*blobs, bottom_name);
       if (bottom != nullptr) {
         if (bottom->num()) {
           bottoms_.push_back(bottom);
         } else {
-          Fatal(layer_name_ + ": bottom blob(" + layer_param_.bottom(i) +
+          Fatal(layer_name_ + ": bottom blob(" + bottom_name +
                 Util::format_vector(bottom->shape(), ",", "(", ")") +
                 ") dimension mismatch!");
         }
       } else {
-        Fatal(layer_name_ + ": bottom blob(" + layer_param_.bottom(0) +
-              ") not exist!");
+        Fatal(layer_name_ + ": bottom blob(" + bottom_name + ") not exist!");
       }
     }
-    for (int i = 0; i < layer_param_.top_size(); ++i) {
-      Blob<float> *top = get_blob_by_name(*blobs, layer_param_.top(i));
+    for (const auto &top_name : layer_param_.top()) {
+      Blob<float> *top = get_blob_by_name(*blobs, top_name);
       if (top == nullptr) {
-        top = new Blob<float>(layer_param_.top(i));
+        top = new Blob<float>(top_name);
         blobs->push_back(top);
       }
       tops_.push_back(top);
     }
-    for (int i = 0; i < layer_param_.blobs_size(); ++i) {
-      const shadow::Blob &proto_blob = layer_param_.blobs(i);
+    for (const auto &proto_blob : layer_param_.blobs()) {
       int data_size = proto_blob.data_size(), count = proto_blob.count();
       Blob<float> *blob;
       if (data_size > 0) {
@@ -65,13 +63,24 @@ class Layer {
   inline shadow::LayerParameter &param() { return layer_param_; }
 
   inline const std::string &name() const { return layer_name_; }
+  inline std::string &name() { return layer_name_; }
+
   inline const std::string &type() const { return layer_type_; }
+  inline std::string &type() { return layer_type_; }
 
   inline int num_bottoms() const { return bottoms_.size(); }
   inline int num_tops() const { return tops_.size(); }
   inline int num_blobs() const { return blobs_.size(); }
 
-  inline Blob<float> *bottom(int i) const {
+  inline const VecBlob &bottoms() const { return bottoms_; }
+  inline const VecBlob &tops() const { return tops_; }
+  inline const VecBlob &blobs() const { return blobs_; }
+
+  inline VecBlob &bottoms() { return bottoms_; }
+  inline VecBlob &tops() { return tops_; }
+  inline VecBlob &blobs() { return blobs_; }
+
+  inline const Blob<float> *bottom(int i) const {
     if (i >= 0 && i < bottoms_.size()) {
       return bottoms_[i];
     } else {
@@ -79,7 +88,7 @@ class Layer {
     }
     return nullptr;
   }
-  inline Blob<float> *top(int i) const {
+  inline const Blob<float> *top(int i) const {
     if (i >= 0 && i < tops_.size()) {
       return tops_[i];
     } else {
@@ -87,7 +96,32 @@ class Layer {
     }
     return nullptr;
   }
-  inline Blob<float> *blob(int i) const {
+  inline const Blob<float> *blob(int i) const {
+    if (i >= 0 && i < blobs_.size()) {
+      return blobs_[i];
+    } else {
+      Fatal("Blob " + Util::str(i) + " is not initialized!");
+    }
+    return nullptr;
+  }
+
+  inline Blob<float> *bottom(int i) {
+    if (i >= 0 && i < bottoms_.size()) {
+      return bottoms_[i];
+    } else {
+      Fatal("Bottom " + Util::str(i) + " is not initialized!");
+    }
+    return nullptr;
+  }
+  inline Blob<float> *top(int i) {
+    if (i >= 0 && i < tops_.size()) {
+      return tops_[i];
+    } else {
+      Fatal("Top " + Util::str(i) + " is not initialized!");
+    }
+    return nullptr;
+  }
+  inline Blob<float> *blob(int i) {
     if (i >= 0 && i < blobs_.size()) {
       return blobs_[i];
     } else {

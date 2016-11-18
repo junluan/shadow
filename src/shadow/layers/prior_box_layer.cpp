@@ -3,27 +3,25 @@
 void PriorBoxLayer::Setup(VecBlob *blobs) {
   Layer::Setup(blobs);
 
-  const shadow::PriorBoxParameter &prior_box_param =
-      layer_param_.prior_box_param();
+  const auto &prior_box_param = layer_param_.prior_box_param();
 
   CHECK(prior_box_param.has_min_size());
   min_size_ = prior_box_param.min_size();
   flip_ = prior_box_param.flip();
   aspect_ratios_.clear();
   aspect_ratios_.push_back(1.f);
-  for (int i = 0; i < prior_box_param.aspect_ratio_size(); ++i) {
-    float ar = prior_box_param.aspect_ratio(i);
+  for (const auto &ratio : prior_box_param.aspect_ratio()) {
     bool already_exist = false;
-    for (int j = 0; j < aspect_ratios_.size(); ++j) {
-      if (std::abs(ar - aspect_ratios_[j]) < EPS) {
+    for (const auto &ar : aspect_ratios_) {
+      if (std::abs(ratio - ar) < EPS) {
         already_exist = true;
         break;
       }
     }
     if (!already_exist) {
-      aspect_ratios_.push_back(ar);
+      aspect_ratios_.push_back(ratio);
       if (flip_) {
-        aspect_ratios_.push_back(1.f / ar);
+        aspect_ratios_.push_back(1.f / ratio);
       }
     }
   }
@@ -36,8 +34,8 @@ void PriorBoxLayer::Setup(VecBlob *blobs) {
   clip_ = layer_param_.prior_box_param().clip();
   if (prior_box_param.variance_size() > 1) {
     CHECK_EQ(prior_box_param.variance_size(), 4);
-    for (int i = 0; i < prior_box_param.variance_size(); ++i) {
-      variance_.push_back(prior_box_param.variance(i));
+    for (const auto &variance : prior_box_param.variance()) {
+      variance_.push_back(variance);
     }
   } else if (prior_box_param.variance_size() == 1) {
     variance_.push_back(prior_box_param.variance(0));
@@ -94,8 +92,7 @@ void PriorBoxLayer::Forward() {
       }
 
       // rest of priors
-      for (int r = 0; r < aspect_ratios_.size(); ++r) {
-        float ar = aspect_ratios_[r];
+      for (const auto &ar : aspect_ratios_) {
         if (std::abs(ar - 1.f) < EPS) {
           continue;
         }

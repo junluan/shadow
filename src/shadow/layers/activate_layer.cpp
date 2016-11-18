@@ -5,10 +5,9 @@
 void ActivateLayer::Setup(VecBlob *blobs) {
   Layer::Setup(blobs);
 
-  const shadow::ActivateParameter &activate_param =
-      layer_param_.activate_param();
+  const auto &activate_param = layer_param_.activate_param();
 
-  activate_type_ = layer_param_.activate_param().type();
+  activate_type_ = activate_param.type();
 }
 
 void ActivateLayer::Reshape() {

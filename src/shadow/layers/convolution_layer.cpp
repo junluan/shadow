@@ -11,8 +11,7 @@ inline int convolution_out_size(int dim, int kernel_size, int stride, int pad,
 void ConvolutionLayer::Setup(VecBlob *blobs) {
   Layer::Setup(blobs);
 
-  const shadow::ConvolutionParameter &conv_param =
-      layer_param_.convolution_param();
+  const auto &conv_param = layer_param_.convolution_param();
 
   num_output_ = conv_param.num_output();
   CHECK(conv_param.has_kernel_size());
@@ -72,9 +71,9 @@ void ConvolutionLayer::Forward() {
 void ConvolutionLayer::Release() {
   bottoms_.clear();
   tops_.clear();
-  for (int i = 0; i < blobs_.size(); ++i) {
-    delete blobs_[i];
-    blobs_[i] = nullptr;
+  for (auto &blob : blobs_) {
+    delete blob;
+    blob = nullptr;
   }
   blobs_.clear();
 

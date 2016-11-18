@@ -5,7 +5,7 @@ void ReshapeLayer::Setup(VecBlob *blobs) {
 
   CHECK_NE(tops_[0], bottoms_[0]);
 
-  const shadow::ReshapeParameter &reshape_param = layer_param_.reshape_param();
+  const auto &reshape_param = layer_param_.reshape_param();
 
   axis_ = reshape_param.axis();
   num_axes_ = reshape_param.num_axes();
@@ -36,30 +36,30 @@ void ReshapeLayer::Reshape() {
   CHECK_LE(end_axis, bottoms_[0]->num_axes());
   int num_axes_replaced = end_axis - start_axis;
   int num_axes_retained = bottoms_[0]->num_axes() - num_axes_replaced;
-  const shadow::BlobShape &shape = layer_param_.reshape_param().shape();
+  const auto &shape = layer_param_.reshape_param().shape();
   VecInt top_shape(num_axes_retained + shape.dim_size());
   int top_shape_index = 0;
   for (int i = 0; i < start_axis; ++i) {
     top_shape[top_shape_index++] = bottoms_[0]->shape(i);
   }
-  for (int i = 0; i < shape.dim_size(); ++i) {
-    top_shape[top_shape_index++] = shape.dim(i);
+  for (const auto &shape_dim : shape.dim()) {
+    top_shape[top_shape_index++] = shape_dim;
   }
   for (int i = end_axis; i < bottoms_[0]->num_axes(); ++i) {
     top_shape[top_shape_index++] = bottoms_[0]->shape(i);
   }
   CHECK_EQ(top_shape_index, top_shape.size());
-  for (int i = 0; i < copy_axes_.size(); ++i) {
-    CHECK_GT(bottoms_[0]->num_axes(), start_axis + copy_axes_[i]);
-    top_shape[start_axis + copy_axes_[i]] =
-        bottoms_[0]->shape(start_axis + copy_axes_[i]);
+  for (const auto &copy_axis : copy_axes_) {
+    CHECK_GT(bottoms_[0]->num_axes(), start_axis + copy_axis);
+    top_shape[start_axis + copy_axis] =
+        bottoms_[0]->shape(start_axis + copy_axis);
   }
   if (inferred_axis_ >= 0) {
     int explicit_count = constant_count_;
     explicit_count *= bottoms_[0]->count(0, start_axis);
     explicit_count *= bottoms_[0]->count(end_axis);
-    for (int i = 0; i < copy_axes_.size(); ++i) {
-      explicit_count *= top_shape[start_axis + copy_axes_[i]];
+    for (const auto &copy_axis : copy_axes_) {
+      explicit_count *= top_shape[start_axis + copy_axis];
     }
     CHECK_EQ(0, (bottoms_[0]->count() % explicit_count));
     top_shape[start_axis + inferred_axis_] =

@@ -4,7 +4,7 @@
 void ConcatLayer::Setup(VecBlob *blobs) {
   Layer::Setup(blobs);
 
-  const shadow::ConcatParameter &concat_param = layer_param_.concat_param();
+  const auto &concat_param = layer_param_.concat_param();
 
   concat_axis_ = concat_param.axis();
   CHECK_GE(concat_axis_, 0);
@@ -35,8 +35,8 @@ void ConcatLayer::Reshape() {
 
   std::stringstream out;
   VecString str;
-  for (int i = 0; i < bottoms_.size(); ++i) {
-    str.push_back(Util::format_vector(bottoms_[i]->shape(), ",", "(", ")"));
+  for (const auto &bottom : bottoms_) {
+    str.push_back(Util::format_vector(bottom->shape(), ",", "(", ")"));
   }
   out << layer_name_ << ": " << Util::format_vector(str, " + ") << " -> "
       << Util::format_vector(tops_[0]->shape(), ",", "(", ")");
@@ -50,9 +50,9 @@ void ConcatLayer::Forward() {
   }
   int offset_concat_axis = 0;
   int top_concat_axis = tops_[0]->shape(concat_axis_);
-  for (int i = 0; i < bottoms_.size(); ++i) {
-    int bottom_concat_axis = bottoms_[i]->shape(concat_axis_);
-    Image::Concat(bottoms_[i]->data(), bottoms_[i]->count(), num_concats_,
+  for (const auto &bottom : bottoms_) {
+    int bottom_concat_axis = bottom->shape(concat_axis_);
+    Image::Concat(bottom->data(), bottom->count(), num_concats_,
                   concat_input_size_, top_concat_axis, bottom_concat_axis,
                   offset_concat_axis, tops_[0]->mutable_data());
     offset_concat_axis += bottom_concat_axis;

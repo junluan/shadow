@@ -327,8 +327,9 @@ class Path {
     if (path_.empty()) {
       if (!absolute_) result.path_.push_back("..");
     } else {
-      for (size_t i = 0; i < path_.size() - 1; ++i)
+      for (size_t i = 0; i < path_.size() - 1; ++i) {
         result.path_.push_back(path_[i]);
+      }
     }
     return result;
   }
@@ -417,8 +418,9 @@ class Path {
       throw std::runtime_error(
           "Error in operator/: expected a path of the same type!");
     Path result(*this);
-    for (size_t i = 0; i < other.path_.size(); ++i)
-      result.path_.push_back(other.path_[i]);
+    for (const auto &path : other.path_) {
+      result.path_.push_back(path);
+    }
     return result;
   }
   Path operator+(const Path &other) const {
@@ -428,8 +430,9 @@ class Path {
       throw std::runtime_error(
           "Error in operator/: expected a path of the same type!");
     Path result(*this);
-    for (size_t i = 0; i < other.path_.size(); ++i)
-      result.path_.push_back(other.path_[i]);
+    for (const auto &path : other.path_) {
+      result.path_.push_back(path);
+    }
     return result;
   }
 

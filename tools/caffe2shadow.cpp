@@ -4,7 +4,7 @@ using namespace Caffe2Shadow;
 
 int main(int argc, char const* argv[]) {
   std::string deploy_file = "models/ssd/adas_deploy.prototxt";
-  std::string model_file = "models/ssd/adas_model.caffemodel";
+  std::string model_file = "models/ssd/adas_model_finetune.caffemodel";
 
   std::string root = "models/ssd/adas";
   std::string model_name = "adas";
@@ -22,7 +22,7 @@ int main(int argc, char const* argv[]) {
 
   Convert(caffe_deploy, caffe_model, &shadow_net);
 
-  WriteProtoToBinary(shadow_net, root, model_name + "_model");
+  WriteProtoToBinary(shadow_net, root, model_name + "_finetune_model");
 
   //WriteProtoToFiles(shadow_net, root, model_name);
 

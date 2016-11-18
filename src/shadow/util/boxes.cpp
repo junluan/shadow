@@ -52,46 +52,46 @@ inline void MergeBoxes(const Box<Dtype> &old_box, Box<Dtype> *new_box,
 template <typename Dtype>
 std::vector<Box<Dtype>> NMS(const std::vector<std::vector<Box<Dtype>>> &Bboxes,
                             float iou_threshold) {
-  std::vector<Box<Dtype>> boxes;
-  for (int i = 0; i < Bboxes.size(); ++i) {
-    for (int j = 0; j < Bboxes[i].size(); ++j) {
-      if (Bboxes[i][j].label != -1) boxes.push_back(Bboxes[i][j]);
+  std::vector<Box<Dtype>> all_boxes;
+  for (const auto &boxes : Bboxes) {
+    for (const auto &box : boxes) {
+      if (box.label != -1) all_boxes.push_back(box);
     }
   }
-  for (int i = 0; i < boxes.size(); ++i) {
-    if (boxes[i].label == -1) continue;
-    for (int j = i + 1; j < boxes.size(); ++j) {
-      if (boxes[j].label == -1 || boxes[i].label != boxes[j].label) continue;
-      if (IoU(boxes[i], boxes[j]) > iou_threshold) {
-        float smooth = boxes[i].score / (boxes[i].score + boxes[j].score);
-        MergeBoxes(boxes[j], &boxes[i], smooth);
-        boxes[j].label = -1;
+  for (int i = 0; i < all_boxes.size(); ++i) {
+    Box<Dtype> &box_i = all_boxes[i];
+    if (box_i.label == -1) continue;
+    for (int j = i + 1; j < all_boxes.size(); ++j) {
+      Box<Dtype> &box_j = all_boxes[j];
+      if (box_j.label == -1 || box_i.label != box_j.label) continue;
+      if (IoU(box_i, box_j) > iou_threshold) {
+        float smooth = box_i.score / (box_i.score + box_j.score);
+        MergeBoxes(box_j, &box_i, smooth);
+        box_j.label = -1;
         continue;
       }
-      float in = Intersection(boxes[i], boxes[j]);
-      float cover_i = in / Size(boxes[i]);
-      float cover_j = in / Size(boxes[j]);
-      if (cover_i > cover_j && cover_i > 0.7) boxes[i].label = -1;
-      if (cover_i < cover_j && cover_j > 0.7) boxes[j].label = -1;
+      float in = Intersection(box_i, box_j);
+      float cover_i = in / Size(box_i);
+      float cover_j = in / Size(box_j);
+      if (cover_i > cover_j && cover_i > 0.7) box_i.label = -1;
+      if (cover_i < cover_j && cover_j > 0.7) box_j.label = -1;
     }
   }
   std::vector<Box<Dtype>> out_boxes;
-  for (int i = 0; i < boxes.size(); ++i) {
-    if (boxes[i].label != -1) out_boxes.push_back(boxes[i]);
+  for (const auto &box : all_boxes) {
+    if (box.label != -1) out_boxes.push_back(box);
   }
-  boxes.clear();
+  all_boxes.clear();
   return out_boxes;
 }
 
 template <typename Dtype>
 void Smooth(const std::vector<Box<Dtype>> &old_boxes,
             std::vector<Box<Dtype>> *new_boxes, float smooth) {
-  for (int i = 0; i < new_boxes->size(); ++i) {
-    Box<Dtype> &newBox = new_boxes->at(i);
-    for (int j = 0; j < old_boxes.size(); ++j) {
-      const Box<Dtype> &oldBox = old_boxes[j];
-      if (IoU(oldBox, newBox) > 0.7) {
-        MergeBoxes(oldBox, &newBox, smooth);
+  for (auto &new_box : *new_boxes) {
+    for (auto &old_box : old_boxes) {
+      if (IoU(old_box, new_box) > 0.7) {
+        MergeBoxes(old_box, &new_box, smooth);
         break;
       }
     }
@@ -107,8 +107,7 @@ void Amend(std::vector<std::vector<Box<Dtype>>> *Bboxes, const VecRectF &crops,
     const RectF &crop = crops[i];
     float x_off = crop.x <= 1 ? crop.x * width : crop.x;
     float y_off = crop.y <= 1 ? crop.y * height : crop.y;
-    for (int b = 0; b < boxes.size(); ++b) {
-      Box<Dtype> &box = boxes.at(b);
+    for (auto &box : boxes) {
       box.xmin += x_off;
       box.xmax += x_off;
       box.ymin += y_off;

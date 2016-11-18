@@ -4,8 +4,7 @@
 void NormalizeLayer::Setup(VecBlob *blobs) {
   Layer::Setup(blobs);
 
-  const shadow::NormalizeParameter &normalize_param =
-      layer_param_.normalize_param();
+  const auto &normalize_param = layer_param_.normalize_param();
 
   across_spatial_ = normalize_param.across_spatial();
   channel_shared_ = normalize_param.channel_shared();
@@ -98,6 +97,11 @@ void NormalizeLayer::Forward() {
 void NormalizeLayer::Release() {
   bottoms_.clear();
   tops_.clear();
+  for (auto &blob : blobs_) {
+    delete blob;
+    blob = nullptr;
+  }
+  blobs_.clear();
 
   scale_.clear();
   norm_.clear();

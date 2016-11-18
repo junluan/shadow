@@ -52,10 +52,11 @@ void Line(JImage *im, const Point<Dtype> &start, const Point<Dtype> &end,
   if (im->data() == nullptr) Fatal("JImage data is NULL!");
 
   int c_ = im->c_, h_ = im->h_, w_ = im->w_;
-  Order order_ = im->order();
+  const auto &order_ = im->order();
 
-  if (order_ != kGray && order_ != kRGB && order_ != kBGR)
+  if (order_ != kGray && order_ != kRGB && order_ != kBGR) {
     Fatal("Unsupported format to resize!");
+  }
 
   unsigned char *data = im->data();
 
@@ -72,7 +73,7 @@ void Line(JImage *im, const Point<Dtype> &start, const Point<Dtype> &end,
 
   unsigned char gray = std::max(std::max(scalar.r, scalar.g), scalar.b);
 
-  VecPointI points = GetLinePoints(PointI(start), PointI(end));
+  const auto &points = GetLinePoints(PointI(start), PointI(end));
 
   int offset, x, y;
   for (int i = 0; i < points.size(); ++i) {
@@ -95,10 +96,11 @@ void Rectangle(JImage *im, const Rect<Dtype> &rect, const Scalar &scalar) {
   if (im->data() == nullptr) Fatal("JImage data is NULL!");
 
   int h_ = im->h_, w_ = im->w_;
-  Order order_ = im->order();
+  const auto &order_ = im->order();
 
-  if (order_ != kGray && order_ != kRGB && order_ != kBGR)
+  if (order_ != kGray && order_ != kRGB && order_ != kBGR) {
     Fatal("Unsupported format to resize!");
+  }
 
   RectI rectI(rect);
 
@@ -118,7 +120,7 @@ void Color2Gray(const JImage &im_src, JImage *im_gray) {
   if (im_gray == nullptr) Fatal("JImage gray is NULL!");
 
   int c_ = im_src.c_, h_ = im_src.h_, w_ = im_src.w_;
-  Order order_ = im_src.order();
+  const auto &order_ = im_src.order();
 
   im_gray->Reshape(1, h_, w_, kGray);
 
@@ -148,10 +150,11 @@ void Resize(const JImage &im_src, JImage *im_res, int height, int width) {
   if (im_res == nullptr) Fatal("JImage resize is NULL!");
 
   int c_ = im_src.c_, h_ = im_src.h_, w_ = im_src.w_;
-  Order order_ = im_src.order();
+  const auto &order_ = im_src.order();
 
-  if (order_ != kGray && order_ != kRGB && order_ != kBGR)
+  if (order_ != kGray && order_ != kRGB && order_ != kBGR) {
     Fatal("Unsupported format to resize!");
+  }
 
   im_res->Reshape(c_, height, width, order_);
 
@@ -181,17 +184,21 @@ void Crop(const JImage &im_src, JImage *im_crop, const Rect<Dtype> &crop) {
   if (im_crop == nullptr) Fatal("JImage crop is NULL!");
 
   int c_ = im_src.c_, h_ = im_src.h_, w_ = im_src.w_;
-  Order order_ = im_src.order();
+  const auto &order_ = im_src.order();
 
-  if (order_ != kGray && order_ != kRGB && order_ != kBGR)
+  if (order_ != kGray && order_ != kRGB && order_ != kBGR) {
     Fatal("Unsupported format to crop!");
+  }
   if (crop.w <= 1 && crop.h <= 1) {
-    if (crop.x < 0 || crop.y < 0 || crop.x + crop.w > 1 || crop.y + crop.h > 1)
+    if (crop.x < 0 || crop.y < 0 || crop.x + crop.w > 1 ||
+        crop.y + crop.h > 1) {
       Fatal("Crop region overflow!");
+    }
   } else if (crop.w > 1 && crop.h > 1) {
     if (crop.x < 0 || crop.y < 0 || crop.x + crop.w > w_ ||
-        crop.y + crop.h > h_)
+        crop.y + crop.h > h_) {
       Fatal("Crop region overflow!");
+    }
   } else {
     Fatal("Crop scale must be the same!");
   }
@@ -220,17 +227,21 @@ void CropResize(const JImage &im_src, JImage *im_res, const Rect<Dtype> &crop,
   if (im_res == nullptr) Fatal("JImage resize is NULL!");
 
   int c_ = im_src.c_, h_ = im_src.h_, w_ = im_src.w_;
-  Order order_ = im_src.order();
+  const auto &order_ = im_src.order();
 
-  if (order_ != kGray && order_ != kRGB && order_ != kBGR)
+  if (order_ != kGray && order_ != kRGB && order_ != kBGR) {
     Fatal("Unsupported format to crop and resize!");
+  }
   if (crop.w <= 1 && crop.h <= 1) {
-    if (crop.x < 0 || crop.y < 0 || crop.x + crop.w > 1 || crop.y + crop.h > 1)
+    if (crop.x < 0 || crop.y < 0 || crop.x + crop.w > 1 ||
+        crop.y + crop.h > 1) {
       Fatal("Crop region overflow!");
+    }
   } else if (crop.w > 1 && crop.h > 1) {
     if (crop.x < 0 || crop.y < 0 || crop.x + crop.w > w_ ||
-        crop.y + crop.h > h_)
+        crop.y + crop.h > h_) {
       Fatal("Crop region overflow!");
+    }
   } else {
     Fatal("Crop scale must be the same!");
   }
@@ -268,17 +279,21 @@ void CropResize2Gray(const JImage &im_src, JImage *im_gray,
   if (im_gray == nullptr) Fatal("JImage gray is NULL!");
 
   int c_ = im_src.c_, h_ = im_src.h_, w_ = im_src.w_;
-  Order order_ = im_src.order();
+  const auto &order_ = im_src.order();
 
-  if (order_ != kGray && order_ != kRGB && order_ != kBGR)
+  if (order_ != kGray && order_ != kRGB && order_ != kBGR) {
     Fatal("Unsupported format to crop and resize!");
+  }
   if (crop.w <= 1 && crop.h <= 1) {
-    if (crop.x < 0 || crop.y < 0 || crop.x + crop.w > 1 || crop.y + crop.h > 1)
+    if (crop.x < 0 || crop.y < 0 || crop.x + crop.w > 1 ||
+        crop.y + crop.h > 1) {
       Fatal("Crop region overflow!");
+    }
   } else if (crop.w > 1 && crop.h > 1) {
     if (crop.x < 0 || crop.y < 0 || crop.x + crop.w > w_ ||
-        crop.y + crop.h > h_)
+        crop.y + crop.h > h_) {
       Fatal("Crop region overflow!");
+    }
   } else {
     Fatal("Crop scale must be the same!");
   }
@@ -322,12 +337,15 @@ void CropResize(const ASVLOFFSCREEN &im_arc, float *batch_data,
   int h_ = im_arc.i32Height, w_ = im_arc.i32Width;
 
   if (crop.w <= 1 && crop.h <= 1) {
-    if (crop.x < 0 || crop.y < 0 || crop.x + crop.w > 1 || crop.y + crop.h > 1)
+    if (crop.x < 0 || crop.y < 0 || crop.x + crop.w > 1 ||
+        crop.y + crop.h > 1) {
       Fatal("Crop region overflow!");
+    }
   } else if (crop.w > 1 && crop.h > 1) {
     if (crop.x < 0 || crop.y < 0 || crop.x + crop.w > w_ ||
-        crop.y + crop.h > h_)
+        crop.y + crop.h > h_) {
       Fatal("Crop region overflow!");
+    }
   } else {
     Fatal("Crop scale must be the same!");
   }
@@ -376,12 +394,15 @@ void CropResize2Gray(const ASVLOFFSCREEN &im_arc, JImage *im_gray,
   int h_ = im_arc.i32Height, w_ = im_arc.i32Width;
 
   if (crop.w <= 1 && crop.h <= 1) {
-    if (crop.x < 0 || crop.y < 0 || crop.x + crop.w > 1 || crop.y + crop.h > 1)
+    if (crop.x < 0 || crop.y < 0 || crop.x + crop.w > 1 ||
+        crop.y + crop.h > 1) {
       Fatal("Crop region overflow!");
+    }
   } else if (crop.w > 1 && crop.h > 1) {
     if (crop.x < 0 || crop.y < 0 || crop.x + crop.w > w_ ||
-        crop.y + crop.h > h_)
+        crop.y + crop.h > h_) {
       Fatal("Crop region overflow!");
+    }
   } else {
     Fatal("Crop scale must be the same!");
   }
@@ -415,7 +436,7 @@ void Filter1D(const JImage &im_src, JImage *im_filter, const float *kernel,
   if (im_filter == nullptr) Fatal("JImage filter is NULL!");
 
   int c_ = im_src.c_, h_ = im_src.h_, w_ = im_src.w_;
-  Order order_ = im_src.order();
+  const auto &order_ = im_src.order();
 
   im_filter->Reshape(c_, h_, w_, order_);
 
@@ -459,7 +480,7 @@ void Filter2D(const JImage &im_src, JImage *im_filter, const float *kernel,
   if (im_filter == nullptr) Fatal("JImage filter is NULL!");
 
   int c_ = im_src.c_, h_ = im_src.h_, w_ = im_src.w_;
-  Order order_ = im_src.order();
+  const auto &order_ = im_src.order();
 
   im_filter->Reshape(c_, h_, w_, order_);
 
@@ -505,7 +526,7 @@ void GaussianBlur(const JImage &im_src, JImage *im_blur, int kernel_size,
   if (im_blur == nullptr) Fatal("JImage blur is NULL!");
 
   int c_ = im_src.c_, h_ = im_src.h_, w_ = im_src.w_;
-  Order order_ = im_src.order();
+  const auto &order_ = im_src.order();
 
   im_blur->Reshape(c_, h_, w_, order_);
 

@@ -76,7 +76,7 @@ class Blob {
   inline void reshape(const VecInt &shape) {
     if (shape.size() == 0) return;
     int new_count = 1;
-    for (int i = 0; i < shape.size(); ++i) new_count *= shape[i];
+    for (const auto &dim : shape) new_count *= dim;
     CHECK_GT(new_count, 0);
     if (data_ == nullptr || new_count > count()) {
       clear();
@@ -161,8 +161,8 @@ typedef std::vector<Blob<float> *> VecBlob;
 
 inline static Blob<float> *get_blob_by_name(const VecBlob &blobs,
                                             const std::string &name) {
-  for (int i = 0; i < blobs.size(); ++i) {
-    if (!name.compare(blobs.at(i)->name())) return blobs.at(i);
+  for (const auto &blob : blobs) {
+    if (!name.compare(blob->name())) return blob;
   }
   return nullptr;
 }

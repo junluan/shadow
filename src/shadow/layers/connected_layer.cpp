@@ -4,7 +4,7 @@
 void ConnectedLayer::Setup(VecBlob *blobs) {
   Layer::Setup(blobs);
 
-  const shadow::ConnectedParameter &conn_param = layer_param_.connected_param();
+  const auto &conn_param = layer_param_.connected_param();
 
   CHECK(conn_param.has_num_output());
   num_output_ = conn_param.num_output();
@@ -53,9 +53,9 @@ void ConnectedLayer::Forward() {
 void ConnectedLayer::Release() {
   bottoms_.clear();
   tops_.clear();
-  for (int i = 0; i < blobs_.size(); ++i) {
-    delete blobs_[i];
-    blobs_[i] = nullptr;
+  for (auto &blob : blobs_) {
+    delete blob;
+    blob = nullptr;
   }
   blobs_.clear();
 

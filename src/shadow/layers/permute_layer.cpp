@@ -4,17 +4,21 @@
 void PermuteLayer::Setup(VecBlob *blobs) {
   Layer::Setup(blobs);
 
-  const shadow::PermuteParameter &permute_param = layer_param_.permute_param();
+  const auto &permute_param = layer_param_.permute_param();
 
   num_axes_ = permute_param.order_size();
   CHECK_EQ(num_axes_, bottoms_[0]->num_axes());
+
+  permute_order_data_.clear();
+  for (const auto &order : permute_param.order()) {
+    permute_order_data_.push_back(order);
+  }
 }
 
 void PermuteLayer::Reshape() {
-  VecInt top_shape, permute_order, old_steps(num_axes_), new_steps(num_axes_);
-  for (int i = 0; i < num_axes_; ++i) {
-    permute_order.push_back(layer_param_.permute_param().order(i));
-    top_shape.push_back(bottoms_[0]->shape(permute_order[i]));
+  VecInt top_shape, old_steps(num_axes_), new_steps(num_axes_);
+  for (const auto &order : permute_order_data_) {
+    top_shape.push_back(bottoms_[0]->shape(order));
   }
   tops_[0]->reshape(top_shape);
 
@@ -32,7 +36,7 @@ void PermuteLayer::Reshape() {
   old_steps_.reshape(num_axes_);
   new_steps_.reshape(num_axes_);
 
-  permute_order_.set_data(permute_order.data());
+  permute_order_.set_data(permute_order_data_.data());
   old_steps_.set_data(old_steps.data());
   new_steps_.set_data(new_steps.data());
 

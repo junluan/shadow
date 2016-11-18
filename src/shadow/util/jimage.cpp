@@ -19,7 +19,7 @@ void JImage::Write(const std::string &im_path) const {
   if (data_ == nullptr) Fatal("JImage data is NULL!");
   int is_ok = -1;
   int step = w_ * c_;
-  std::string path = Util::change_extension(im_path, ".png");
+  const auto &path = Util::change_extension(im_path, ".png");
   if (order_ == kRGB) {
     is_ok = stbi_write_png(path.c_str(), w_, h_, c_, data_, step);
   } else if (order_ == kBGR) {
@@ -226,8 +226,9 @@ void JImage::ToArcImage(int arc_format) {
   if (data_ == nullptr) Fatal("JImage data is NULL!");
 
   if (order_ == kArc) return;
-  if (order_ != kRGB && order_ != kBGR)
+  if (order_ != kRGB && order_ != kBGR) {
     Fatal("Unsupported format to convert JImage to ArcImage!");
+  }
   switch (arc_format) {
     case ASVL_PAF_I420: {
       int src_h = (h_ >> 1) << 1;

@@ -15,21 +15,21 @@ void DataLayer::Setup(VecBlob *blobs) {
     Fatal(layer_name_ + ": bottom blob(" + "in_blob" + ") not exist!");
   }
 
-  for (int i = 0; i < layer_param_.top_size(); ++i) {
-    Blob<float> *top = new Blob<float>(layer_param_.top(i));
+  for (const auto &top_name : layer_param_.top()) {
+    Blob<float> *top = new Blob<float>(top_name);
     tops_.push_back(top);
     blobs->push_back(top);
   }
 
-  const shadow::DataParameter &data_param = layer_param_.data_param();
+  const auto &data_param = layer_param_.data_param();
 
   scale_ = data_param.scale();
   num_mean_ = 1;
   VecFloat mean_value;
   if (data_param.mean_value_size() > 1) {
     CHECK_EQ(data_param.mean_value_size(), bottoms_[0]->shape(1));
-    for (int i = 0; i < data_param.mean_value_size(); ++i) {
-      mean_value.push_back(data_param.mean_value(i));
+    for (const auto &val : data_param.mean_value()) {
+      mean_value.push_back(val);
     }
     num_mean_ = mean_value.size();
   } else if (data_param.mean_value_size() == 1) {
