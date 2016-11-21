@@ -40,11 +40,9 @@ void PermuteLayer::Reshape() {
   old_steps_.set_data(old_steps.data());
   new_steps_.set_data(new_steps.data());
 
-  std::stringstream out;
-  out << layer_name_ << ": "
-      << Util::format_vector(bottoms_[0]->shape(), ",", "(", ")") << " -> "
-      << Util::format_vector(tops_[0]->shape(), ",", "(", ")");
-  DInfo(out.str());
+  DLOG(INFO) << layer_name_ << ": "
+             << Util::format_vector(bottoms_[0]->shape(), ",", "(", ")")
+             << " -> " << Util::format_vector(tops_[0]->shape(), ",", "(", ")");
 }
 
 void PermuteLayer::Forward() {
@@ -62,5 +60,5 @@ void PermuteLayer::Release() {
   old_steps_.clear();
   new_steps_.clear();
 
-  // DInfo("Free PermuteLayer!");
+  // DLOG(INFO) << "Free PermuteLayer!";
 }

@@ -53,14 +53,12 @@ void Network::SaveModel(const std::string &proto_bin) {
 }
 
 void Network::Forward(const float *data) {
-  if (data == nullptr) Fatal("Must provide input data!");
+  CHECK_NOTNULL(data);
   if (layers_.size() == 0) return;
-  if (!layers_[0]->type().compare("Data")) {
-    layers_[0]->bottom(0)->set_data(data);
-  } else {
-    Fatal("The first layer must be Data layer!");
-  }
-  for (int l = 0; l < layers_.size(); ++l) layers_[l]->Forward();
+  CHECK(!layers_[0]->type().compare("Data"))
+      << "The first layer must be Data layer!";
+  layers_[0]->bottom(0)->set_data(data);
+  for (auto &layer : layers_) layer->Forward();
 }
 
 void Network::Release() {
@@ -78,7 +76,7 @@ void Network::Release() {
   layers_.clear();
   blobs_.clear();
 
-  DInfo("Release Network!");
+  DLOG(INFO) << "Release Network!";
 }
 
 const Layer *Network::GetLayerByName(const std::string &layer_name) {
@@ -94,9 +92,8 @@ const Blob<float> *Network::GetBlobByName(const std::string &blob_name) {
 
 void Network::LoadProtoBin(const std::string &proto_bin,
                            shadow::NetParameter *net_param) {
-  if (!IO::ReadProtoFromBinaryFile(proto_bin, net_param)) {
-    Fatal("Error when loading proto binary file: " + proto_bin);
-  }
+  CHECK(IO::ReadProtoFromBinaryFile(proto_bin, net_param))
+      << "Error when loading proto binary file: " << proto_bin;
 }
 
 void Network::LoadProtoStrOrText(const std::string &proto_str_or_text,
@@ -108,9 +105,8 @@ void Network::LoadProtoStrOrText(const std::string &proto_str_or_text,
   } else {
     success = IO::ReadProtoFromText(proto_str_or_text, net_param);
   }
-  if (!proto_str_or_text.compare("") || !success) {
-    Fatal("Error when loading proto: " + proto_str_or_text);
-  }
+  CHECK(proto_str_or_text.compare("") && success)
+      << "Error when loading proto: " << proto_str_or_text;
 }
 
 void Network::Reshape(int batch) {
@@ -118,7 +114,7 @@ void Network::Reshape(int batch) {
   for (const auto &dim : net_param_.input_shape().dim()) {
     in_shape_.push_back(dim);
   }
-  if (in_shape_.size() != 4) Fatal("input_shape dimension mismatch!");
+  CHECK_EQ(in_shape_.size(), 4) << "input_shape dimension mismatch!";
   if (batch > 0) in_shape_[0] = batch;
 
   Blob<float> *in_blob = new Blob<float>("in_blob");
@@ -186,8 +182,8 @@ Layer *Network::LayerFactory(const shadow::LayerParameter &layer_param) {
   } else if (!layer_type.compare("Softmax")) {
     layer = new SoftmaxLayer(layer_param);
   } else {
-    Fatal("Error when making layer: " + layer_param.name() + ", layer type: " +
-          layer_type + " is not recognized!");
+    LOG(FATAL) << "Error when making layer: " << layer_param.name()
+               << ", layer type: " << layer_type << " is not recognized!";
   }
   return layer;
 }

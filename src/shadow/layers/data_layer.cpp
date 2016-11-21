@@ -7,12 +7,15 @@ void DataLayer::Setup(VecBlob *blobs) {
     if (bottom->num() && bottom->num_axes() == 4) {
       bottoms_.push_back(bottom);
     } else {
-      Fatal(layer_name_ + ": bottom blob(" + "in_blob" +
-            Util::format_vector(bottom->shape(), ",", "(", ")") +
-            ") dimension mismatch!");
+      LOG(FATAL) << layer_name_ << ": bottom blob("
+                 << "in_blob"
+                 << Util::format_vector(bottom->shape(), ",", "(", ")")
+                 << ") dimension mismatch!";
     }
   } else {
-    Fatal(layer_name_ + ": bottom blob(" + "in_blob" + ") not exist!");
+    LOG(FATAL) << layer_name_ << ": bottom blob("
+               << "in_blob"
+               << ") not exist!";
   }
 
   for (const auto &top_name : layer_param_.top()) {
@@ -44,10 +47,8 @@ void DataLayer::Setup(VecBlob *blobs) {
 void DataLayer::Reshape() {
   tops_[0]->reshape(bottoms_[0]->shape());
 
-  std::stringstream out;
-  out << layer_name_ << ": "
-      << Util::format_vector(bottoms_[0]->shape(), ",", "(", ")");
-  DInfo(out.str());
+  DLOG(INFO) << layer_name_ << ": "
+             << Util::format_vector(bottoms_[0]->shape(), ",", "(", ")");
 }
 
 void DataLayer::Forward() {
@@ -59,5 +60,5 @@ void DataLayer::Release() {
   bottoms_.clear();
   tops_.clear();
 
-  // DInfo("Free DataLayer!");
+  // DLOG(INFO) << "Free DataLayer!";
 }

@@ -19,11 +19,9 @@ void SoftmaxLayer::Reshape() {
   scale_dims[axis_] = 1;
   scale_.reshape(scale_dims);
 
-  std::stringstream out;
-  out << layer_name_ << ": "
-      << Util::format_vector(bottoms_[0]->shape(), ",", "(", ")") << " -> "
-      << Util::format_vector(tops_[0]->shape(), ",", "(", ")");
-  DInfo(out.str());
+  DLOG(INFO) << layer_name_ << ": "
+             << Util::format_vector(bottoms_[0]->shape(), ",", "(", ")")
+             << " -> " << Util::format_vector(tops_[0]->shape(), ",", "(", ")");
 }
 
 void SoftmaxLayer::Forward() {
@@ -46,5 +44,5 @@ void SoftmaxLayer::Release() {
 
   scale_.clear();
 
-  // DInfo("Free SoftmaxLayer!");
+  // DLOG(INFO) << "Free SoftmaxLayer!";
 }

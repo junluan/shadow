@@ -41,13 +41,11 @@ void ConvolutionLayer::Reshape() {
   Blas::Set(out_spatial_dim_, 1, biases_multiplier_.mutable_data(), 0);
   col_image_.reshape(kernel_dim_, out_spatial_dim_);
 
-  std::stringstream out;
-  out << layer_name_ << ": "
-      << Util::format_vector(bottoms_[0]->shape(), ",", "(", ")") << " -> "
-      << num_output_ << "_" << kernel_size_ << "x" << kernel_size_ << "_s"
-      << stride_ << "_p" << pad_ << " -> "
-      << Util::format_vector(tops_[0]->shape(), ",", "(", ")");
-  DInfo(out.str());
+  DLOG(INFO) << layer_name_ << ": "
+             << Util::format_vector(bottoms_[0]->shape(), ",", "(", ")")
+             << " -> " << num_output_ << "_" << kernel_size_ << "x"
+             << kernel_size_ << "_s" << stride_ << "_p" << pad_ << " -> "
+             << Util::format_vector(tops_[0]->shape(), ",", "(", ")");
 }
 
 void ConvolutionLayer::Forward() {
@@ -80,5 +78,5 @@ void ConvolutionLayer::Release() {
   biases_multiplier_.clear();
   col_image_.clear();
 
-  // DInfo("Free ConvolutionLayer!");
+  // DLOG(INFO) << "Free ConvolutionLayer!";
 }

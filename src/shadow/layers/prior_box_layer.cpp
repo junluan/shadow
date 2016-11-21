@@ -55,11 +55,9 @@ void PriorBoxLayer::Reshape() {
 
   is_initial_ = false;
 
-  std::stringstream out;
-  out << layer_name_ << ": "
-      << Util::format_vector(bottoms_[0]->shape(), ",", "(", ")") << " -> "
-      << Util::format_vector(tops_[0]->shape(), ",", "(", ")");
-  DInfo(out.str());
+  DLOG(INFO) << layer_name_ << ": "
+             << Util::format_vector(bottoms_[0]->shape(), ",", "(", ")")
+             << " -> " << Util::format_vector(tops_[0]->shape(), ",", "(", ")");
 }
 
 void PriorBoxLayer::Forward() {
@@ -135,5 +133,5 @@ void PriorBoxLayer::Release() {
   bottoms_.clear();
   tops_.clear();
 
-  // DInfo("Free PriorBoxLayer!");
+  // DLOG(INFO) << "Free PriorBoxLayer!";
 }

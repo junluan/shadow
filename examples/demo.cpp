@@ -9,11 +9,11 @@ void Demo::Test(const std::string &image_file) {
   timer_.start();
   Predict(im_ini_, rois, &Bboxes_);
   Boxes::Amend(&Bboxes_, rois);
-  auto boxes = Boxes::NMS(Bboxes_, 0.5);
+  const auto &boxes = Boxes::NMS(Bboxes_, 0.5);
   std::cout << "Predicted in " << timer_.get_millisecond() << " ms"
             << std::endl;
 
-  for (auto &boxF : boxes) {
+  for (const auto &boxF : boxes) {
     BoxI box(boxF);
     Scalar scalar(0, 255, 255);
     if (box.label == 1) {
@@ -35,19 +35,20 @@ void Demo::BatchTest(const std::string &list_file, bool image_write) {
   double time_cost = 0;
   std::ofstream file(Util::find_replace_last(list_file, ".", "-result."));
   int count = 0;
-  for (auto &im_path : image_list) {
+  for (const auto &im_path : image_list) {
     im_ini_.Read(im_path);
     VecRectF rois;
     rois.push_back(RectF(0, 0, im_ini_.w_, im_ini_.h_));
     timer_.start();
     Predict(im_ini_, rois, &Bboxes_);
     Boxes::Amend(&Bboxes_, rois, im_ini_.h_, im_ini_.w_);
-    auto boxes = Boxes::NMS(Bboxes_, 0.5);
+    const auto &boxes = Boxes::NMS(Bboxes_, 0.5);
     time_cost += timer_.get_millisecond();
     if (image_write) {
       const std::string &path =
           Util::find_replace_last(im_path, ".", "-result.");
-      for (auto &box : boxes) {
+      for (const auto &boxF : boxes) {
+        BoxI box(boxF);
         Scalar scalar(0, 255, 255);
         if (box.label == 1) {
           scalar = Scalar(0, 255, 0);
@@ -74,9 +75,8 @@ void Demo::BatchTest(const std::string &list_file, bool image_write) {
 void Demo::VideoTest(const std::string &video_file, bool video_show,
                      bool video_write) {
   cv::VideoCapture capture;
-  if (!capture.open(video_file)) {
-    Fatal("error when opening video file " + video_file);
-  }
+  CHECK(capture.open(video_file)) << "Error when opening video file "
+                                  << video_file;
   float rate = static_cast<float>(capture.get(CV_CAP_PROP_FPS));
   int width = static_cast<int>(capture.get(CV_CAP_PROP_FRAME_WIDTH));
   int height = static_cast<int>(capture.get(CV_CAP_PROP_FRAME_HEIGHT));
@@ -93,9 +93,7 @@ void Demo::VideoTest(const std::string &video_file, bool video_show,
 
 void Demo::CameraTest(int camera, bool video_write) {
   cv::VideoCapture capture;
-  if (!capture.open(camera)) {
-    Fatal("error when opening camera!");
-  }
+  CHECK(capture.open(camera)) << "Error when opening camera!";
   float rate = static_cast<float>(capture.get(CV_CAP_PROP_FPS));
   int width = static_cast<int>(capture.get(CV_CAP_PROP_FRAME_WIDTH));
   int height = static_cast<int>(capture.get(CV_CAP_PROP_FRAME_HEIGHT));
@@ -151,7 +149,7 @@ void Demo::CaptureTest(cv::VideoCapture *capture,
 
 void Demo::DrawDetections(const VecBoxF &boxes, cv::Mat *im_mat,
                           bool console_show) {
-  for (auto &boxF : boxes) {
+  for (const auto &boxF : boxes) {
     const BoxI box(boxF);
     cv::Scalar scalar(0, 255, 255);
     if (box.label == 1) {
@@ -175,7 +173,7 @@ void Demo::DrawDetections(const VecBoxF &boxes, cv::Mat *im_mat,
 
 void Demo::PrintDetections(const std::string &im_name, const VecBoxF &boxes,
                            std::ofstream *file) {
-  for (auto &boxF : boxes) {
+  for (const auto &boxF : boxes) {
     const BoxI box(boxF);
     *file << im_name << " " << box.xmin << ", " << box.ymin << ", " << box.xmax
           << ", " << box.ymax << ", " << box.label << ", " << box.score

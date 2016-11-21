@@ -40,7 +40,7 @@ class Blob {
   }
 
   inline void set_data(const Dtype *data) {
-    if (data == nullptr) Fatal("Set data for blob is nullptr!");
+    CHECK_NOTNULL(data);
 #if !defined(USE_CUDA) & !defined(USE_CL)
     memcpy(data_, data, count() * sizeof(Dtype));
     on_gpu_ = false;
@@ -52,7 +52,7 @@ class Blob {
   }
 
   inline void read_data(Dtype *data) const {
-    if (data == nullptr) Fatal("Read data for blob is nullptr!");
+    CHECK_NOTNULL(data);
 #if !defined(USE_CUDA) & !defined(USE_CL)
     memcpy(data, data_, count() * sizeof(Dtype));
 
@@ -62,7 +62,7 @@ class Blob {
   }
 
   inline void share_data(BACKEND *data) {
-    if (data == nullptr) Fatal("Share data for blob is nullptr!");
+    CHECK_NOTNULL(data);
     data_ = data;
     shared_ = true;
 #if !defined(USE_CUDA) & !defined(USE_CL)

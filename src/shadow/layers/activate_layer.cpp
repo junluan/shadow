@@ -15,11 +15,9 @@ void ActivateLayer::Reshape() {
     tops_[0]->reshape(bottoms_[0]->shape());
   }
 
-  std::stringstream out;
-  out << layer_name_ << ": "
-      << Util::format_vector(bottoms_[0]->shape(), ",", "(", ")") << " -> "
-      << Util::format_vector(tops_[0]->shape(), ",", "(", ")");
-  DInfo(out.str());
+  DLOG(INFO) << layer_name_ << ": "
+             << Util::format_vector(bottoms_[0]->shape(), ",", "(", ")")
+             << " -> " << Util::format_vector(tops_[0]->shape(), ",", "(", ")");
 }
 
 void ActivateLayer::Forward() {
@@ -34,5 +32,5 @@ void ActivateLayer::Release() {
   bottoms_.clear();
   tops_.clear();
 
-  // DInfo("Free ActivateLayer!");
+  // DLOG(INFO) << "Free ActivateLayer!";
 }

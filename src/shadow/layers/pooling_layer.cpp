@@ -40,12 +40,10 @@ void PoolingLayer::Reshape() {
   top_shape[3] = out_w;
   tops_[0]->reshape(top_shape);
 
-  std::stringstream out;
-  out << layer_name_ << ": "
-      << Util::format_vector(bottoms_[0]->shape(), ",", "(", ")") << " -> "
-      << kernel_size_ << "x" << kernel_size_ << "_s" << stride_ << " -> "
-      << Util::format_vector(tops_[0]->shape(), ",", "(", ")");
-  DInfo(out.str());
+  DLOG(INFO) << layer_name_ << ": "
+             << Util::format_vector(bottoms_[0]->shape(), ",", "(", ")")
+             << " -> " << kernel_size_ << "x" << kernel_size_ << "_s" << stride_
+             << " -> " << Util::format_vector(tops_[0]->shape(), ",", "(", ")");
 }
 
 void PoolingLayer::Forward() {
@@ -58,5 +56,5 @@ void PoolingLayer::Release() {
   bottoms_.clear();
   tops_.clear();
 
-  // DInfo("Free PoolingLayer!");
+  // DLOG(INFO) << "Free PoolingLayer!";
 }

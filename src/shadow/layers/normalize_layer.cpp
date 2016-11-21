@@ -50,11 +50,9 @@ void NormalizeLayer::Reshape() {
   sum_spatial_multiplier_.reshape(1, 1, in_h, in_w);
   Blas::Set(spatial_dim_, 1, sum_spatial_multiplier_.mutable_data(), 0);
 
-  std::stringstream out;
-  out << layer_name_ << ": "
-      << Util::format_vector(bottoms_[0]->shape(), ",", "(", ")") << " -> "
-      << Util::format_vector(tops_[0]->shape(), ",", "(", ")");
-  DInfo(out.str());
+  DLOG(INFO) << layer_name_ << ": "
+             << Util::format_vector(bottoms_[0]->shape(), ",", "(", ")")
+             << " -> " << Util::format_vector(tops_[0]->shape(), ",", "(", ")");
 }
 
 void NormalizeLayer::Forward() {
@@ -109,5 +107,5 @@ void NormalizeLayer::Release() {
   sum_channel_multiplier_.clear();
   sum_spatial_multiplier_.clear();
 
-  // DInfo("Free NormalizeLayer!");
+  // DLOG(INFO) << "Free NormalizeLayer!";
 }

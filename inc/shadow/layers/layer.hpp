@@ -24,12 +24,13 @@ class Layer {
         if (bottom->num()) {
           bottoms_.push_back(bottom);
         } else {
-          Fatal(layer_name_ + ": bottom blob(" + bottom_name +
-                Util::format_vector(bottom->shape(), ",", "(", ")") +
-                ") dimension mismatch!");
+          LOG(FATAL) << layer_name_ << ": bottom blob(" << bottom_name
+                     << Util::format_vector(bottom->shape(), ",", "(", ")")
+                     << ") dimension mismatch!";
         }
       } else {
-        Fatal(layer_name_ + ": bottom blob(" + bottom_name + ") not exist!");
+        LOG(FATAL) << layer_name_ << ": bottom blob(" << bottom_name
+                   << ") not exist!";
       }
     }
     for (const auto &top_name : layer_param_.top()) {
@@ -55,9 +56,9 @@ class Layer {
       blobs_.push_back(blob);
     }
   }
-  virtual void Reshape() { Info("Reshape Layer!"); }
-  virtual void Forward() { Info("Forward Layer!"); }
-  virtual void Release() { Info("Release Layer!"); }
+  virtual void Reshape() { LOG(INFO) << "Reshape Layer!"; }
+  virtual void Forward() { LOG(INFO) << "Forward Layer!"; }
+  virtual void Release() { LOG(INFO) << "Release Layer!"; }
 
   inline const shadow::LayerParameter &param() const { return layer_param_; }
   inline shadow::LayerParameter &param() { return layer_param_; }
@@ -81,61 +82,41 @@ class Layer {
   inline VecBlob &blobs() { return blobs_; }
 
   inline const Blob<float> *bottom(int i) const {
-    if (i >= 0 && i < bottoms_.size()) {
-      return bottoms_[i];
-    } else {
-      Fatal("Bottom " + Util::str(i) + " is not initialized!");
-    }
-    return nullptr;
+    CHECK_GE(i, 0);
+    CHECK_LT(i, bottoms_.size());
+    return bottoms_[i];
   }
   inline const Blob<float> *top(int i) const {
-    if (i >= 0 && i < tops_.size()) {
-      return tops_[i];
-    } else {
-      Fatal("Top " + Util::str(i) + " is not initialized!");
-    }
-    return nullptr;
+    CHECK_GE(i, 0);
+    CHECK_LT(i, tops_.size());
+    return tops_[i];
   }
   inline const Blob<float> *blob(int i) const {
-    if (i >= 0 && i < blobs_.size()) {
-      return blobs_[i];
-    } else {
-      Fatal("Blob " + Util::str(i) + " is not initialized!");
-    }
-    return nullptr;
+    CHECK_GE(i, 0);
+    CHECK_LT(i, blobs_.size());
+    return blobs_[i];
   }
 
   inline Blob<float> *bottom(int i) {
-    if (i >= 0 && i < bottoms_.size()) {
-      return bottoms_[i];
-    } else {
-      Fatal("Bottom " + Util::str(i) + " is not initialized!");
-    }
-    return nullptr;
+    CHECK_GE(i, 0);
+    CHECK_LT(i, bottoms_.size());
+    return bottoms_[i];
   }
   inline Blob<float> *top(int i) {
-    if (i >= 0 && i < tops_.size()) {
-      return tops_[i];
-    } else {
-      Fatal("Top " + Util::str(i) + " is not initialized!");
-    }
-    return nullptr;
+    CHECK_GE(i, 0);
+    CHECK_LT(i, tops_.size());
+    return tops_[i];
   }
   inline Blob<float> *blob(int i) {
-    if (i >= 0 && i < blobs_.size()) {
-      return blobs_[i];
-    } else {
-      Fatal("Blob " + Util::str(i) + " is not initialized!");
-    }
-    return nullptr;
+    CHECK_GE(i, 0);
+    CHECK_LT(i, blobs_.size());
+    return blobs_[i];
   }
 
   inline void set_blob(int i, const float *data) {
-    if (i >= 0 && i < blobs_.size()) {
-      blobs_[i]->set_data(data);
-    } else {
-      Fatal("Blob " + Util::str(i) + " is not initialized!");
-    }
+    CHECK_GE(i, 0);
+    CHECK_LT(i, blobs_.size());
+    blobs_[i]->set_data(data);
   }
 
  protected:

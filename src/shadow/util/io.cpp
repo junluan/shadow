@@ -26,7 +26,7 @@ bool ReadProtoFromText(const std::string& proto_text, Message* proto) {
 
 bool ReadProtoFromTextFile(const std::string& proto_file, Message* proto) {
   int fd = open(proto_file.c_str(), O_RDONLY);
-  if (fd == -1) Fatal("File not found: " + proto_file);
+  CHECK_NE(fd, -1) << "File not found: " << proto_file;
   FileInputStream* input = new FileInputStream(fd);
   bool success = TextFormat::Parse(input, proto);
   delete input;
@@ -40,7 +40,7 @@ bool ReadProtoFromBinaryFile(const std::string& proto_file, Message* proto) {
 #else
   int fd = open(proto_file.c_str(), O_RDONLY);
 #endif
-  if (fd == -1) Fatal("File not found: " + proto_file);
+  CHECK_NE(fd, -1) << "File not found: " << proto_file;
   ZeroCopyInputStream* raw_input = new FileInputStream(fd);
   CodedInputStream* coded_input = new CodedInputStream(raw_input);
   coded_input->SetTotalBytesLimit(INT_MAX, 536870912);
@@ -52,17 +52,14 @@ bool ReadProtoFromBinaryFile(const std::string& proto_file, Message* proto) {
 }
 
 void WriteProtoToText(const Message& proto, std::string* proto_text) {
-  if (!TextFormat::PrintToString(proto, proto_text)) {
-    Fatal("Write proto to text error!");
-  }
+  CHECK(TextFormat::PrintToString(proto, proto_text))
+      << "Write proto to text error!";
 }
 
 void WriteProtoToTextFile(const Message& proto, const std::string& proto_file) {
   int fd = open(proto_file.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
   FileOutputStream* file = new FileOutputStream(fd);
-  if (!TextFormat::Print(proto, file)) {
-    Fatal("Write proto to text file error!");
-  }
+  CHECK(TextFormat::Print(proto, file)) << "Write proto to text file error!";
   delete file;
   close(fd);
 }
@@ -71,9 +68,7 @@ void WriteProtoToBinaryFile(const Message& proto,
                             const std::string& proto_file) {
   std::ofstream file(proto_file,
                      std::ios::out | std::ios::trunc | std::ios::binary);
-  if (!proto.SerializeToOstream(&file)) {
-    Fatal("Write proto to binary file error!");
-  }
+  CHECK(proto.SerializeToOstream(&file)) << "Write proto to binary file error!";
 }
 
 }  // namespace IO

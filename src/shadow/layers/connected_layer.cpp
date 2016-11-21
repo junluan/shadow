@@ -23,11 +23,9 @@ void ConnectedLayer::Reshape() {
     Blas::Set(top_shape[0], 1, biases_multiplier_.mutable_data(), 0);
   }
 
-  std::stringstream out;
-  out << layer_name_ << ": "
-      << Util::format_vector(bottoms_[0]->shape(), ",", "(", ")") << " -> "
-      << Util::format_vector(tops_[0]->shape(), ",", "(", ")");
-  DInfo(out.str());
+  DLOG(INFO) << layer_name_ << ": "
+             << Util::format_vector(bottoms_[0]->shape(), ",", "(", ")")
+             << " -> " << Util::format_vector(tops_[0]->shape(), ",", "(", ")");
 }
 
 void ConnectedLayer::Forward() {
@@ -61,5 +59,5 @@ void ConnectedLayer::Release() {
 
   biases_multiplier_.clear();
 
-  // DInfo("Free ConnectedLayer!");
+  // DLOG(INFO) << "Free ConnectedLayer!";
 }

@@ -49,25 +49,25 @@ class JImage {
   inline unsigned char *data() { return data_; }
 
   inline void SetData(const unsigned char *data, int num) {
-    if (data == nullptr) Fatal("Set data is NULL!");
-    if (data_ == nullptr) Fatal("JImage data is NULL!");
-    if (num != count()) Fatal("Set data dimension mismatch!");
+    CHECK_NOTNULL(data);
+    CHECK_NOTNULL(data_);
+    CHECK_EQ(num, count()) << "Set data dimension mismatch!";
     memcpy(data_, data, num * sizeof(unsigned char));
   }
 
   inline void SetZero() {
-    if (data_ == nullptr) Fatal("JImage data is NULL!");
+    CHECK_NOTNULL(data_);
     memset(data_, 0, count() * sizeof(unsigned char));
   }
 
   inline void ShareData(unsigned char *data) {
-    if (data == nullptr) Fatal("Set data is NULL!");
+    CHECK_NOTNULL(data);
     data_ = data;
   }
 
   inline void Reshape(int c, int h, int w, Order order = kRGB) {
     int num = c * h * w;
-    if (num <= 0) Fatal("Reshape dimension must be greater than zero!");
+    CHECK_GT(num, 0) << "Reshape dimension must be greater than zero!";
     if (data_ == nullptr) {
       data_ = new unsigned char[num];
     } else if (num > count()) {
@@ -83,11 +83,11 @@ class JImage {
   inline const int count() const { return c_ * h_ * w_; }
 
   const unsigned char operator()(int c, int h, int w) const {
-    if (c >= c_ || h >= h_ || w >= w_) Fatal("Index out of range!");
+    if (c >= c_ || h >= h_ || w >= w_) LOG(FATAL) << "Index out of range!";
     return data_[(c * h_ + h) * w_ + w];
   }
   unsigned char &operator()(int c, int h, int w) {
-    if (c >= c_ || h >= h_ || w >= w_) Fatal("Index out of range!");
+    if (c >= c_ || h >= h_ || w >= w_) LOG(FATAL) << "Index out of range!";
     return data_[(c * h_ + h) * w_ + w];
   }
 

@@ -2,11 +2,11 @@
 #include "shadow/util/jimage_proc.hpp"
 
 inline void ConvertData(const JImage &im_src, float *data, int flag = 1) {
-  if (im_src.data() == nullptr) Fatal("JImage data is NULL!");
-  if (data == nullptr) Fatal("Data is NULL!");
+  CHECK_NOTNULL(im_src.data());
+  CHECK_NOTNULL(data);
 
   int h = im_src.h_, w = im_src.w_, spatial_dim = h * w;
-  Order order = im_src.order();
+  const Order &order = im_src.order();
   const unsigned char *data_src = im_src.data();
 
   float *data_r, *data_g, *data_b;
@@ -15,7 +15,7 @@ inline void ConvertData(const JImage &im_src, float *data, int flag = 1) {
     data_r = data;
     data_g = data + spatial_dim;
     data_b = data + (spatial_dim << 1);
-  } else if (flag == 1) {
+  } else {
     // Convert to BBBGGGRRR
     data_r = data + (spatial_dim << 1);
     data_g = data + spatial_dim;
@@ -37,7 +37,7 @@ inline void ConvertData(const JImage &im_src, float *data, int flag = 1) {
       data_src += 3;
     }
   } else {
-    Fatal("Unsupported format to get batch data!");
+    LOG(FATAL) << "Unsupported format to get batch data!";
   }
 }
 
@@ -120,7 +120,7 @@ void SSD::Setup(const std::string &model_file, int batch) {
 
   in_data_ = new float[batch_ * in_num_];
 
-  threshold_ = 0.2;
+  threshold_ = 0.6;
   num_classes_ = 3;
   num_priors_ = GetBlobByName("mbox_priorbox")->shape(2) / 4;
   num_loc_classes_ = 1;
@@ -146,11 +146,11 @@ void SSD::Predict(const JImage &image, const VecRectF &rois,
   for (int b = 0; b < Bboxes->size(); ++b) {
     float height = rois[b].h, width = rois[b].w;
     VecBoxF &boxes = Bboxes->at(b);
-    for (int i = 0; i < boxes.size(); ++i) {
-      boxes[i].xmin *= width;
-      boxes[i].xmax *= width;
-      boxes[i].ymin *= height;
-      boxes[i].ymax *= height;
+    for (auto &box : boxes) {
+      box.xmin *= width;
+      box.xmax *= width;
+      box.ymin *= height;
+      box.ymax *= height;
     }
   }
 }
@@ -160,13 +160,13 @@ void SSD::Predict(const JImage &image, const VecRectF &rois,
 void SSD::Predict(const ASVLOFFSCREEN &im_arc, const VecRectF &rois,
                   std::vector<VecBoxF> *Bboxes) {
   CHECK_LE(rois.size(), batch_);
-  for (int b = 0; b < batch_; ++b) {
+  for (int b = 0; b < rois.size(); ++b) {
     const RectF &roi = rois[b];
-    int left = static_cast<int>(roi.x);
-    int top = static_cast<int>(roi.y);
-    int right = static_cast<int>(roi.x + roi.w);
-    int bottom = static_cast<int>(roi.y + roi.h);
-    MRECT rect = {left, top, right, bottom};
+    MRECT rect;
+    rect.left = static_cast<int>(roi.x);
+    rect.top = static_cast<int>(roi.y);
+    rect.right = static_cast<int>(roi.x + roi.w);
+    rect.bottom = static_cast<int>(roi.y + roi.h);
     Convert::CropResize2BGR(im_arc, in_data_ + b * in_num_, rect, in_h_, in_w_);
   }
 
@@ -176,11 +176,11 @@ void SSD::Predict(const ASVLOFFSCREEN &im_arc, const VecRectF &rois,
   for (int b = 0; b < Bboxes->size(); ++b) {
     float height = rois[b].h, width = rois[b].w;
     VecBoxF &boxes = Bboxes->at(b);
-    for (int i = 0; i < boxes.size(); ++i) {
-      boxes[i].xmin *= width;
-      boxes[i].xmax *= width;
-      boxes[i].ymin *= height;
-      boxes[i].ymax *= height;
+    for (auto &box : boxes) {
+      box.xmin *= width;
+      box.xmax *= width;
+      box.ymin *= height;
+      box.ymax *= height;
     }
   }
 }
@@ -233,8 +233,8 @@ void SSD::Process(const float *data, std::vector<VecBoxF> *Bboxes) {
   int num_kept = 0;
   std::vector<std::map<int, VecInt>> all_indices;
   for (int b = 0; b < batch_; ++b) {
-    const LabelBBox &decode_bboxes = all_decode_bboxes[b];
     const auto &conf_scores = all_conf_scores[b];
+    const auto &decode_bboxes = all_decode_bboxes[b];
     std::map<int, VecInt> indices;
     int num_det = 0;
     for (int c = 0; c < num_classes_; ++c) {
@@ -242,12 +242,12 @@ void SSD::Process(const float *data, std::vector<VecBoxF> *Bboxes) {
         continue;
       }
       if (conf_scores.find(c) == conf_scores.end()) {
-        Fatal("Could not find confidence predictions");
+        LOG(FATAL) << "Could not find confidence predictions";
       }
       const VecFloat &scores = conf_scores.find(c)->second;
       int label = share_location_ ? -1 : c;
       if (decode_bboxes.find(label) == decode_bboxes.end()) {
-        Fatal("Could not find confidence predictions");
+        LOG(FATAL) << "Could not find confidence predictions";
       }
       const VecBoxF &bboxes = decode_bboxes.find(label)->second;
       ApplyNMSFast(bboxes, scores, confidence_threshold_, nms_threshold_,
@@ -256,15 +256,13 @@ void SSD::Process(const float *data, std::vector<VecBoxF> *Bboxes) {
     }
     if (keep_top_k_ > -1 && num_det > keep_top_k_) {
       std::vector<std::pair<float, std::pair<int, int>>> score_index_pairs;
-      for (auto it = indices.begin(); it != indices.end(); ++it) {
-        int label = it->first;
-        const VecInt &label_indices = it->second;
+      for (const auto &it : indices) {
+        int label = it.first;
         if (conf_scores.find(label) == conf_scores.end()) {
-          Fatal("Could not find confidence predictions");
+          LOG(FATAL) << "Could not find confidence predictions";
         }
         const VecFloat &scores = conf_scores.find(label)->second;
-        for (int j = 0; j < label_indices.size(); ++j) {
-          int idx = label_indices[j];
+        for (const auto &idx : it.second) {
           CHECK_LT(idx, scores.size());
           score_index_pairs.push_back(
               std::make_pair(scores[idx], std::make_pair(label, idx)));
@@ -293,34 +291,27 @@ void SSD::Process(const float *data, std::vector<VecBoxF> *Bboxes) {
   for (int b = 0; b < batch_; ++b) {
     VecBoxF boxes;
     const auto &conf_scores = all_conf_scores[b];
-    const LabelBBox &decode_bboxes = all_decode_bboxes[b];
-    for (auto it = all_indices[b].begin(); it != all_indices[b].end(); ++it) {
-      int label = it->first;
+    const auto &decode_bboxes = all_decode_bboxes[b];
+    for (const auto &it : all_indices[b]) {
+      int label = it.first;
       if (conf_scores.find(label) == conf_scores.end()) {
-        Fatal("Could not find confidence predictions");
+        LOG(FATAL) << "Could not find confidence predictions";
       }
       const VecFloat &scores = conf_scores.find(label)->second;
       int loc_label = share_location_ ? -1 : label;
       if (decode_bboxes.find(loc_label) == decode_bboxes.end()) {
-        Fatal("Could not find confidence predictions");
+        LOG(FATAL) << "Could not find confidence predictions";
       }
       const VecBoxF &bboxes = decode_bboxes.find(loc_label)->second;
-      VecInt &indices = it->second;
-      for (int j = 0; j < indices.size(); ++j) {
-        int idx = indices[j];
+      for (const auto &idx : it.second) {
         float score = scores[idx];
-        BoxF clip_bbox;
-        ClipBBox(bboxes[idx], &clip_bbox);
-
         if (score > threshold_) {
-          BoxF box;
-          box.score = score;
-          box.label = label;
-          box.xmin = clip_bbox.xmin;
-          box.ymin = clip_bbox.ymin;
-          box.xmax = clip_bbox.xmax;
-          box.ymax = clip_bbox.ymax;
-          boxes.push_back(box);
+          BoxF clip_bbox;
+          ClipBBox(bboxes[idx], &clip_bbox);
+
+          clip_bbox.score = score;
+          clip_bbox.label = label;
+          boxes.push_back(clip_bbox);
         }
       }
     }
@@ -330,7 +321,7 @@ void SSD::Process(const float *data, std::vector<VecBoxF> *Bboxes) {
 
 const float *SSD::GetBlobDataByName(const std::string &name) {
   const Blob<float> *blob = net_.GetBlobByName(name);
-  if (blob == nullptr) Fatal("Unknown blob: " + name);
+  if (blob == nullptr) LOG(FATAL) << "Unknown blob: " + name;
 
   if (blobs_data_.find(name) == blobs_data_.end()) {
     blobs_data_[name] = new float[blob->count()];
@@ -348,8 +339,7 @@ void SSD::GetLocPredictions(const float *loc_data, int num,
                             int num_preds_per_class, int num_loc_classes,
                             bool share_location, VecLabelBBox *loc_preds) {
   loc_preds->resize(num);
-  for (int i = 0; i < num; ++i) {
-    LabelBBox &label_bbox = (*loc_preds)[i];
+  for (auto &label_bbox : *loc_preds) {
     for (int p = 0; p < num_preds_per_class; ++p) {
       int start_idx = p * num_loc_classes * 4;
       for (int c = 0; c < num_loc_classes; ++c) {
@@ -372,8 +362,7 @@ void SSD::GetConfidenceScores(
     std::vector<std::map<int, VecFloat>> *conf_preds) {
   conf_preds->clear();
   conf_preds->resize(num);
-  for (int i = 0; i < num; ++i) {
-    auto &label_scores = (*conf_preds)[i];
+  for (auto &label_scores : *conf_preds) {
     for (int p = 0; p < num_preds_per_class; ++p) {
       int start_idx = p * num_classes;
       for (int c = 0; c < num_classes; ++c) {
@@ -426,7 +415,7 @@ void SSD::DecodeBBoxesAll(const VecLabelBBox &all_loc_preds,
         continue;
       }
       if (all_loc_preds[i].find(label) == all_loc_preds[i].end()) {
-        Fatal("Could not find location predictions");
+        LOG(FATAL) << "Could not find location predictions";
       }
       const VecBoxF &label_loc_preds = all_loc_preds[i].find(label)->second;
       DecodeBBoxes(prior_bboxes, prior_variances, label_loc_preds,

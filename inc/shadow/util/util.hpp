@@ -168,7 +168,7 @@ inline VecString tokenize(const std::string &str, const std::string &split) {
 
 inline VecString load_list(const std::string &list_file) {
   std::ifstream file(list_file);
-  if (!file.is_open()) Fatal("Load image list file error!");
+  if (!file.is_open()) LOG(FATAL) << "Load image list file error!";
 
   VecString image_list;
   std::string dir;
@@ -182,7 +182,7 @@ inline VecString load_list(const std::string &list_file) {
 inline std::string read_text_from_file(const std::string &filename) {
   std::ifstream file(filename);
   if (!file.is_open()) {
-    Warning("Can't open text file " + filename);
+    LOG(WARNING) << "Can't open text file " << filename;
     return std::string();
   }
 

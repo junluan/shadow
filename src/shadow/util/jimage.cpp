@@ -11,12 +11,12 @@ void JImage::Read(const std::string &im_path) {
     data_ = nullptr;
   }
   data_ = stbi_load(im_path.c_str(), &w_, &h_, &c_, 3);
-  if (data_ == nullptr) Fatal("Failed to read image: " + im_path);
+  CHECK_NOTNULL(data_);
   order_ = kRGB;
 }
 
 void JImage::Write(const std::string &im_path) const {
-  if (data_ == nullptr) Fatal("JImage data is NULL!");
+  CHECK_NOTNULL(data_);
   int is_ok = -1;
   int step = w_ * c_;
   const auto &path = Util::change_extension(im_path, ".png");
@@ -28,13 +28,13 @@ void JImage::Write(const std::string &im_path) const {
     is_ok = stbi_write_png(path.c_str(), w_, h_, c_, data_inv, step);
     delete[] data_inv;
   } else {
-    Fatal("Unsupported format to disk!");
+    LOG(FATAL) << "Unsupported format to disk!";
   }
-  if (!is_ok) Fatal("Failed to write image to " + im_path);
+  CHECK(is_ok) << "Failed to write image to " + im_path;
 }
 
 void JImage::Show(const std::string &show_name, int wait_time) const {
-  if (data_ == nullptr) Fatal("JImage data is NULL!");
+  CHECK_NOTNULL(data_);
 #if defined(USE_OpenCV)
   cv::namedWindow(show_name, cv::WINDOW_NORMAL);
   if (order_ == kGray) {
@@ -50,7 +50,7 @@ void JImage::Show(const std::string &show_name, int wait_time) const {
     cv::Mat im_mat(h_, w_, CV_8UC3, data_);
     cv::imshow(show_name, im_mat);
   } else {
-    Fatal("Unsupported format to show!");
+    LOG(FATAL) << "Unsupported format to show!";
   }
   cv::waitKey(wait_time);
 #else
@@ -60,21 +60,21 @@ void JImage::Show(const std::string &show_name, int wait_time) const {
 }
 
 void JImage::CopyTo(JImage *im_copy) const {
-  if (data_ == nullptr) Fatal("JImage data is NULL!");
+  CHECK_NOTNULL(data_);
 
   im_copy->Reshape(c_, h_, w_, order_);
-  memcpy(im_copy->data_, data_, sizeof(unsigned char) * c_ * h_ * w_);
+  memcpy(im_copy->data_, data_, c_ * h_ * w_ * sizeof(unsigned char));
 }
 
 #if defined(USE_OpenCV)
 void JImage::FromMat(const cv::Mat &im_mat, bool shared) {
-  if (im_mat.empty()) Fatal("Mat data is empty!");
+  CHECK(!im_mat.empty()) << "Mat data is empty!";
 
   this->Reshape(im_mat.channels(), im_mat.rows, im_mat.cols, kBGR);
   if (shared) {
     data_ = im_mat.data;
   } else {
-    memcpy(data_, im_mat.data, sizeof(unsigned char) * c_ * h_ * w_);
+    memcpy(data_, im_mat.data, c_ * h_ * w_ * sizeof(unsigned char));
   }
 }
 
@@ -84,7 +84,7 @@ cv::Mat JImage::ToMat() const {
   } else if (order_ == kBGR) {
     return cv::Mat(h_, w_, CV_8UC3, data_);
   } else {
-    Fatal("Unsupported format to convert to cv mat!");
+    LOG(FATAL) << "Unsupported format to convert to cv mat!";
   }
   return cv::Mat();
 }
@@ -111,7 +111,7 @@ inline void RGB2I420(unsigned char *src_bgr, int src_h, int src_w, int src_step,
     loc_g = 1;
     loc_b = 0;
   } else {
-    Fatal("Unsupported order to convert to I420!");
+    LOG(FATAL) << "Unsupported order to convert to I420!";
   }
   int r, g, b;
   int dst_h = src_h >> 1, dst_w = src_w >> 1;
@@ -198,7 +198,7 @@ inline void I4202RGB(unsigned char *src_y, unsigned char *src_u,
         dst_rgb[offset + 0] = (unsigned char)Util::constrain(0, 255, b);
         dst_rgb[offset + 2] = (unsigned char)Util::constrain(0, 255, r);
       } else {
-        Fatal("Unsupported format to convert i420 to rgb!");
+        LOG(FATAL) << "Unsupported format to convert i420 to rgb!";
       }
     }
   }
@@ -216,18 +216,18 @@ void JImage::FromArcImage(const ASVLOFFSCREEN &im_arc) {
       break;
     }
     default: {
-      Fatal("Unsupported format to convert ArcImage to JImage!");
+      LOG(FATAL) << "Unsupported format to convert ArcImage to JImage!";
       break;
     }
   }
 }
 
 void JImage::ToArcImage(int arc_format) {
-  if (data_ == nullptr) Fatal("JImage data is NULL!");
+  CHECK_NOTNULL(data_);
 
   if (order_ == kArc) return;
   if (order_ != kRGB && order_ != kBGR) {
-    Fatal("Unsupported format to convert JImage to ArcImage!");
+    LOG(FATAL) << "Unsupported format to convert JImage to ArcImage!";
   }
   switch (arc_format) {
     case ASVL_PAF_I420: {
@@ -250,7 +250,7 @@ void JImage::ToArcImage(int arc_format) {
       break;
     }
     default: {
-      Fatal("Unsupported ArcImage format!");
+      LOG(FATAL) << "Unsupported ArcImage format!";
       break;
     }
   }
@@ -258,7 +258,7 @@ void JImage::ToArcImage(int arc_format) {
 #endif
 
 void JImage::Color2Gray() {
-  if (data_ == nullptr) Fatal("JImage data is NULL!");
+  CHECK_NOTNULL(data_);
 
   if (order_ == kRGB || order_ == kBGR) {
     unsigned char *gray_data = new unsigned char[h_ * w_];
@@ -278,19 +278,19 @@ void JImage::Color2Gray() {
   } else if (order_ == kGray) {
     return;
   } else {
-    Fatal("Unsupported format to convert color to gray!");
+    LOG(FATAL) << "Unsupported format to convert color to gray!";
   }
 }
 
 void JImage::ColorInv() {
-  if (data_ == nullptr) Fatal("JImage data is NULL!");
+  CHECK_NOTNULL(data_);
 
   if (order_ == kRGB) {
     order_ = kBGR;
   } else if (order_ == kBGR) {
     order_ = kRGB;
   } else {
-    Fatal("Unsupported format to do inverse!");
+    LOG(FATAL) << "Unsupported format to do inverse!";
   }
 
   int spatial_dim = h_ * w_;
@@ -318,7 +318,7 @@ void JImage::Release() {
 }
 
 void JImage::GetInv(unsigned char *im_inv) const {
-  if (data_ == nullptr) Fatal("JImage data is NULL!");
+  CHECK_NOTNULL(data_);
 
   if (order_ == kRGB || order_ == kBGR) {
     int spatial_dim = h_ * w_;
@@ -330,6 +330,6 @@ void JImage::GetInv(unsigned char *im_inv) const {
       data_index += c_;
     }
   } else {
-    Fatal("Unsupported format to get inverse!");
+    LOG(FATAL) << "Unsupported format to get inverse!";
   }
 }

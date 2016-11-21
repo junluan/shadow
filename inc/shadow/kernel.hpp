@@ -16,11 +16,11 @@ inline int GetBlocks(const int N) { return (N + NumThreads - 1) / NumThreads; }
   for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < (n); \
        i += blockDim.x * gridDim.x)
 
-#define CheckError(status)                                        \
-  {                                                               \
-    if (status != cudaSuccess) {                                  \
-      Fatal("Error: " + std::string(cudaGetErrorString(status))); \
-    }                                                             \
+#define CheckError(status)                                                \
+  {                                                                       \
+    if (status != cudaSuccess) {                                          \
+      LOG(FATAL) << "Error: " << std::string(cudaGetErrorString(status)); \
+    }                                                                     \
   }
 
 #elif defined(USE_CL)

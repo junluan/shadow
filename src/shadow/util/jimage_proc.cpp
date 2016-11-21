@@ -48,14 +48,14 @@ VecPointI GetLinePoints(const PointI &start, const PointI &end, const int step,
 template <typename Dtype>
 void Line(JImage *im, const Point<Dtype> &start, const Point<Dtype> &end,
           const Scalar &scalar) {
-  if (im == nullptr) Fatal("JImage is NULL!");
-  if (im->data() == nullptr) Fatal("JImage data is NULL!");
+  CHECK_NOTNULL(im);
+  CHECK_NOTNULL(im->data());
 
   int c_ = im->c_, h_ = im->h_, w_ = im->w_;
   const auto &order_ = im->order();
 
   if (order_ != kGray && order_ != kRGB && order_ != kBGR) {
-    Fatal("Unsupported format to resize!");
+    LOG(FATAL) << "Unsupported format to resize!";
   }
 
   unsigned char *data = im->data();
@@ -76,8 +76,8 @@ void Line(JImage *im, const Point<Dtype> &start, const Point<Dtype> &end,
   const auto &points = GetLinePoints(PointI(start), PointI(end));
 
   int offset, x, y;
-  for (int i = 0; i < points.size(); ++i) {
-    x = points[i].x, y = points[i].y;
+  for (const auto &point : points) {
+    x = point.x, y = point.y;
     if (x < 0 || y < 0 || x >= w_ || y >= h_) continue;
     offset = (w_ * y + x) * c_;
     if (order_ == kGray) {
@@ -92,14 +92,14 @@ void Line(JImage *im, const Point<Dtype> &start, const Point<Dtype> &end,
 
 template <typename Dtype>
 void Rectangle(JImage *im, const Rect<Dtype> &rect, const Scalar &scalar) {
-  if (im == nullptr) Fatal("JImage is NULL!");
-  if (im->data() == nullptr) Fatal("JImage data is NULL!");
+  CHECK_NOTNULL(im);
+  CHECK_NOTNULL(im->data());
 
   int h_ = im->h_, w_ = im->w_;
   const auto &order_ = im->order();
 
   if (order_ != kGray && order_ != kRGB && order_ != kBGR) {
-    Fatal("Unsupported format to resize!");
+    LOG(FATAL) << "Unsupported format to resize!";
   }
 
   RectI rectI(rect);
@@ -116,8 +116,8 @@ void Rectangle(JImage *im, const Rect<Dtype> &rect, const Scalar &scalar) {
 }
 
 void Color2Gray(const JImage &im_src, JImage *im_gray) {
-  if (im_src.data() == nullptr) Fatal("JImage data is NULL!");
-  if (im_gray == nullptr) Fatal("JImage gray is NULL!");
+  CHECK_NOTNULL(im_src.data());
+  CHECK_NOTNULL(im_gray);
 
   int c_ = im_src.c_, h_ = im_src.h_, w_ = im_src.w_;
   const auto &order_ = im_src.order();
@@ -138,22 +138,22 @@ void Color2Gray(const JImage &im_src, JImage *im_gray) {
       }
     }
   } else if (order_ == kGray) {
-    memcpy(data_gray, data_src, sizeof(unsigned char) * h_ * w_);
+    memcpy(data_gray, data_src, h_ * w_ * sizeof(unsigned char));
   } else {
-    Fatal("Unsupported format to convert color to gray!");
+    LOG(FATAL) << "Unsupported format to convert color to gray!";
   }
 }
 
 // Resize and Crop.
 void Resize(const JImage &im_src, JImage *im_res, int height, int width) {
-  if (im_src.data() == nullptr) Fatal("JImage data is NULL!");
-  if (im_res == nullptr) Fatal("JImage resize is NULL!");
+  CHECK_NOTNULL(im_src.data());
+  CHECK_NOTNULL(im_res);
 
   int c_ = im_src.c_, h_ = im_src.h_, w_ = im_src.w_;
   const auto &order_ = im_src.order();
 
   if (order_ != kGray && order_ != kRGB && order_ != kBGR) {
-    Fatal("Unsupported format to resize!");
+    LOG(FATAL) << "Unsupported format to resize!";
   }
 
   im_res->Reshape(c_, height, width, order_);
@@ -180,27 +180,27 @@ void Resize(const JImage &im_src, JImage *im_res, int height, int width) {
 
 template <typename Dtype>
 void Crop(const JImage &im_src, JImage *im_crop, const Rect<Dtype> &crop) {
-  if (im_src.data() == nullptr) Fatal("JImage data is NULL!");
-  if (im_crop == nullptr) Fatal("JImage crop is NULL!");
+  CHECK_NOTNULL(im_src.data());
+  CHECK_NOTNULL(im_crop);
 
   int c_ = im_src.c_, h_ = im_src.h_, w_ = im_src.w_;
   const auto &order_ = im_src.order();
 
   if (order_ != kGray && order_ != kRGB && order_ != kBGR) {
-    Fatal("Unsupported format to crop!");
+    LOG(FATAL) << "Unsupported format to crop!";
   }
   if (crop.w <= 1 && crop.h <= 1) {
     if (crop.x < 0 || crop.y < 0 || crop.x + crop.w > 1 ||
         crop.y + crop.h > 1) {
-      Fatal("Crop region overflow!");
+      LOG(FATAL) << "Crop region overflow!";
     }
   } else if (crop.w > 1 && crop.h > 1) {
     if (crop.x < 0 || crop.y < 0 || crop.x + crop.w > w_ ||
         crop.y + crop.h > h_) {
-      Fatal("Crop region overflow!");
+      LOG(FATAL) << "Crop region overflow!";
     }
   } else {
-    Fatal("Crop scale must be the same!");
+    LOG(FATAL) << "Crop scale must be the same!";
   }
 
   int height = crop.h <= 1 ? static_cast<int>(crop.h * h_) : crop.h;
@@ -216,34 +216,34 @@ void Crop(const JImage &im_src, JImage *im_crop, const Rect<Dtype> &crop) {
   for (int h = 0; h < im_crop->h_; ++h) {
     data_src = im_src.data() + (h + h_off) * src_step + w_off * c_;
     data_crop = im_crop->data() + h * dst_step;
-    memcpy(data_crop, data_src, sizeof(unsigned char) * dst_step);
+    memcpy(data_crop, data_src, dst_step * sizeof(unsigned char));
   }
 }
 
 template <typename Dtype>
 void CropResize(const JImage &im_src, JImage *im_res, const Rect<Dtype> &crop,
                 int height, int width) {
-  if (im_src.data() == nullptr) Fatal("JImage data is NULL!");
-  if (im_res == nullptr) Fatal("JImage resize is NULL!");
+  CHECK_NOTNULL(im_src.data());
+  CHECK_NOTNULL(im_res);
 
   int c_ = im_src.c_, h_ = im_src.h_, w_ = im_src.w_;
   const auto &order_ = im_src.order();
 
   if (order_ != kGray && order_ != kRGB && order_ != kBGR) {
-    Fatal("Unsupported format to crop and resize!");
+    LOG(FATAL) << "Unsupported format to crop and resize!";
   }
   if (crop.w <= 1 && crop.h <= 1) {
     if (crop.x < 0 || crop.y < 0 || crop.x + crop.w > 1 ||
         crop.y + crop.h > 1) {
-      Fatal("Crop region overflow!");
+      LOG(FATAL) << "Crop region overflow!";
     }
   } else if (crop.w > 1 && crop.h > 1) {
     if (crop.x < 0 || crop.y < 0 || crop.x + crop.w > w_ ||
         crop.y + crop.h > h_) {
-      Fatal("Crop region overflow!");
+      LOG(FATAL) << "Crop region overflow!";
     }
   } else {
-    Fatal("Crop scale must be the same!");
+    LOG(FATAL) << "Crop scale must be the same!";
   }
 
   im_res->Reshape(c_, height, width, order_);
@@ -275,27 +275,27 @@ void CropResize(const JImage &im_src, JImage *im_res, const Rect<Dtype> &crop,
 template <typename Dtype>
 void CropResize2Gray(const JImage &im_src, JImage *im_gray,
                      const Rect<Dtype> &crop, int height, int width) {
-  if (im_src.data() == nullptr) Fatal("JImage data is NULL!");
-  if (im_gray == nullptr) Fatal("JImage gray is NULL!");
+  CHECK_NOTNULL(im_src.data());
+  CHECK_NOTNULL(im_gray);
 
   int c_ = im_src.c_, h_ = im_src.h_, w_ = im_src.w_;
   const auto &order_ = im_src.order();
 
   if (order_ != kGray && order_ != kRGB && order_ != kBGR) {
-    Fatal("Unsupported format to crop and resize!");
+    LOG(FATAL) << "Unsupported format to crop and resize!";
   }
   if (crop.w <= 1 && crop.h <= 1) {
     if (crop.x < 0 || crop.y < 0 || crop.x + crop.w > 1 ||
         crop.y + crop.h > 1) {
-      Fatal("Crop region overflow!");
+      LOG(FATAL) << "Crop region overflow!";
     }
   } else if (crop.w > 1 && crop.h > 1) {
     if (crop.x < 0 || crop.y < 0 || crop.x + crop.w > w_ ||
         crop.y + crop.h > h_) {
-      Fatal("Crop region overflow!");
+      LOG(FATAL) << "Crop region overflow!";
     }
   } else {
-    Fatal("Crop scale must be the same!");
+    LOG(FATAL) << "Crop scale must be the same!";
   }
 
   im_gray->Reshape(1, height, width, kGray);
@@ -311,19 +311,26 @@ void CropResize2Gray(const JImage &im_src, JImage *im_gray,
   float w_off = crop.w <= 1 ? crop.x * w_ : crop.x;
   float sum;
   int s_h, s_w, src_offset, src_step = w_ * c_;
-  for (int h = 0; h < height; ++h) {
-    for (int w = 0; w < width; ++w) {
-      s_h = static_cast<int>(h_off + step_h * h);
-      s_w = static_cast<int>(w_off + step_w * w);
-      src_offset = s_h * src_step + s_w * c_;
-      if (order_ == kGray) {
+  if (order_ == kGray) {
+    for (int h = 0; h < height; ++h) {
+      for (int w = 0; w < width; ++w) {
+        s_h = static_cast<int>(h_off + step_h * h);
+        s_w = static_cast<int>(w_off + step_w * w);
+        src_offset = s_h * src_step + s_w * c_;
         sum = data_src[src_offset];
-      } else {
+        *data_gray++ = static_cast<unsigned char>(sum);
+      }
+    }
+  } else {
+    for (int h = 0; h < height; ++h) {
+      for (int w = 0; w < width; ++w) {
+        s_h = static_cast<int>(h_off + step_h * h);
+        s_w = static_cast<int>(w_off + step_w * w);
+        src_offset = s_h * src_step + s_w * c_;
         sum = (data_src[src_offset + 0] + data_src[src_offset + 1] +
                data_src[src_offset + 2]);
-        sum /= 3.f;
+        *data_gray++ = static_cast<unsigned char>(sum);
       }
-      *data_gray++ = static_cast<unsigned char>(sum);
     }
   }
 }
@@ -332,22 +339,22 @@ void CropResize2Gray(const JImage &im_src, JImage *im_gray,
 template <typename Dtype>
 void CropResize(const ASVLOFFSCREEN &im_arc, float *batch_data,
                 const Rect<Dtype> &crop, int height, int width) {
-  if (batch_data == nullptr) Fatal("Batch data is NULL!");
+  CHECK_NOTNULL(batch_data);
 
   int h_ = im_arc.i32Height, w_ = im_arc.i32Width;
 
   if (crop.w <= 1 && crop.h <= 1) {
     if (crop.x < 0 || crop.y < 0 || crop.x + crop.w > 1 ||
         crop.y + crop.h > 1) {
-      Fatal("Crop region overflow!");
+      LOG(FATAL) << "Crop region overflow!";
     }
   } else if (crop.w > 1 && crop.h > 1) {
     if (crop.x < 0 || crop.y < 0 || crop.x + crop.w > w_ ||
         crop.y + crop.h > h_) {
-      Fatal("Crop region overflow!");
+      LOG(FATAL) << "Crop region overflow!";
     }
   } else {
-    Fatal("Crop scale must be the same!");
+    LOG(FATAL) << "Crop scale must be the same!";
   }
 
   const unsigned char *src_y = im_arc.ppu8Plane[0];
@@ -389,22 +396,22 @@ void CropResize(const ASVLOFFSCREEN &im_arc, float *batch_data,
 template <typename Dtype>
 void CropResize2Gray(const ASVLOFFSCREEN &im_arc, JImage *im_gray,
                      const Rect<Dtype> &crop, int height, int width) {
-  if (im_gray == nullptr) Fatal("JImage is NULL!");
+  CHECK_NOTNULL(im_gray);
 
   int h_ = im_arc.i32Height, w_ = im_arc.i32Width;
 
   if (crop.w <= 1 && crop.h <= 1) {
     if (crop.x < 0 || crop.y < 0 || crop.x + crop.w > 1 ||
         crop.y + crop.h > 1) {
-      Fatal("Crop region overflow!");
+      LOG(FATAL) << "Crop region overflow!";
     }
   } else if (crop.w > 1 && crop.h > 1) {
     if (crop.x < 0 || crop.y < 0 || crop.x + crop.w > w_ ||
         crop.y + crop.h > h_) {
-      Fatal("Crop region overflow!");
+      LOG(FATAL) << "Crop region overflow!";
     }
   } else {
-    Fatal("Crop scale must be the same!");
+    LOG(FATAL) << "Crop scale must be the same!";
   }
 
   im_gray->Reshape(1, height, width, kGray);
@@ -432,8 +439,8 @@ void CropResize2Gray(const ASVLOFFSCREEN &im_arc, JImage *im_gray,
 // Filter, Gaussian Blur and Canny.
 void Filter1D(const JImage &im_src, JImage *im_filter, const float *kernel,
               int kernel_size, int direction) {
-  if (im_src.data() == nullptr) Fatal("JImage src data is NULL!");
-  if (im_filter == nullptr) Fatal("JImage filter is NULL!");
+  CHECK_NOTNULL(im_src.data());
+  CHECK_NOTNULL(im_filter);
 
   int c_ = im_src.c_, h_ = im_src.h_, w_ = im_src.w_;
   const auto &order_ = im_src.order();
@@ -476,8 +483,8 @@ void Filter1D(const JImage &im_src, JImage *im_filter, const float *kernel,
 
 void Filter2D(const JImage &im_src, JImage *im_filter, const float *kernel,
               int height, int width) {
-  if (im_src.data() == nullptr) Fatal("JImage src data is NULL!");
-  if (im_filter == nullptr) Fatal("JImage filter is NULL!");
+  CHECK_NOTNULL(im_src.data());
+  CHECK_NOTNULL(im_filter);
 
   int c_ = im_src.c_, h_ = im_src.h_, w_ = im_src.w_;
   const auto &order_ = im_src.order();
@@ -522,8 +529,8 @@ void Filter2D(const JImage &im_src, JImage *im_filter, const float *kernel,
 
 void GaussianBlur(const JImage &im_src, JImage *im_blur, int kernel_size,
                   float sigma) {
-  if (im_src.data() == nullptr) Fatal("JImage src data is NULL!");
-  if (im_blur == nullptr) Fatal("JImage blur is NULL!");
+  CHECK_NOTNULL(im_src.data());
+  CHECK_NOTNULL(im_blur);
 
   int c_ = im_src.c_, h_ = im_src.h_, w_ = im_src.w_;
   const auto &order_ = im_src.order();
@@ -594,7 +601,7 @@ void GaussianBlur(const JImage &im_src, JImage *im_blur, int kernel_size,
 
 void Canny(const JImage &im_src, JImage *im_canny, float thresh_low,
            float thresh_high, bool L2) {
-  if (im_src.data() == nullptr) Fatal("JImage data is NULL!");
+  CHECK_NOTNULL(im_src.data());
 
   im_src.CopyTo(im_canny);
 
@@ -620,7 +627,7 @@ void Canny(const JImage &im_src, JImage *im_canny, float thresh_low,
   const int TG22 = static_cast<int>(
       0.4142135623730950488016887242097 * (1 << CANNY_SHIFT) + 0.5);
 
-  memset(im_canny->data(), 0, sizeof(unsigned char) * h_ * w_);
+  memset(im_canny->data(), 0, h_ * w_ * sizeof(unsigned char));
   int index, val, g_x, g_y, x, y, prev_flag, tg22x, tg67x;
   for (int h = 1; h < h_ - 1; ++h) {
     prev_flag = 0;
@@ -721,7 +728,7 @@ void GetGaussianKernel(float *kernel, int n, float sigma) {
 
 void Gradient(const JImage &im_src, int *grad_x, int *grad_y, int *magnitude,
               bool L2) {
-  if (im_src.data() == nullptr) Fatal("JImage data is NULL!");
+  CHECK_NOTNULL(im_src.data());
 
   const unsigned char *data_src = im_src.data();
   int h_ = im_src.h_, w_ = im_src.w_;
@@ -733,9 +740,9 @@ void Gradient(const JImage &im_src, int *grad_x, int *grad_y, int *magnitude,
     data_src = im_gray->data();
   }
 
-  memset(grad_x, 0, sizeof(int) * h_ * w_);
-  memset(grad_y, 0, sizeof(int) * h_ * w_);
-  memset(magnitude, 0, sizeof(int) * h_ * w_);
+  memset(grad_x, 0, h_ * w_ * sizeof(int));
+  memset(grad_y, 0, h_ * w_ * sizeof(int));
+  memset(magnitude, 0, h_ * w_ * sizeof(int));
 
   int index;
   for (int h = 1; h < h_ - 1; ++h) {

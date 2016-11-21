@@ -8,25 +8,13 @@
 #endif
 #include <glog/logging.h>
 
-#define Info(msg) \
-  { LOG(INFO) << msg; }
-
-#define Warning(msg) \
-  { LOG(WARNING) << msg; }
-
-#define Error(msg) \
-  { LOG(ERROR) << msg; }
-
-#define Fatal(msg) \
-  { LOG(FATAL) << msg; }
-
 #else
 #include <iostream>
 #include <string>
-#define LOG_INFO LogMessage("Info", __FILE__, __LINE__)
-#define LOG_WARNING LOG_INFO
-#define LOG_ERROR LOG_INFO
-#define LOG_FATAL LogMessage("Fatal", __FILE__, __LINE__)
+#define LOG_INFO LogMessage("INFO", __FILE__, __LINE__)
+#define LOG_WARNING LogMessage("WARNING", __FILE__, __LINE__)
+#define LOG_ERROR LogMessage("ERROR", __FILE__, __LINE__)
+#define LOG_FATAL LogMessage("FATAL", __FILE__, __LINE__)
 
 #define LOG(severity) LOG_##severity.stream()
 #define LOG_IF(severity, condition) \
@@ -46,6 +34,11 @@
 #define CHECK_LT(val1, val2) CHECK_OP(<, val1, val2)
 #define CHECK_GE(val1, val2) CHECK_OP(>=, val1, val2)
 #define CHECK_GT(val1, val2) CHECK_OP(>, val1, val2)
+
+#define CHECK_NOTNULL(condition)                                          \
+  ((condition) == nullptr                                                 \
+   ? LOG(FATAL) << "Check failed: '" #condition << "' Must be non NULL ", \
+   (condition) : (condition))
 
 #if defined(NDEBUG)
 #define DLOG(severity) true ? (void)0 : LogMessageVoidify() & LOG(severity)
@@ -89,7 +82,7 @@ class LogMessage {
     log_stream_ << severity << ": " << file_name << ":" << line << "] ";
   }
   ~LogMessage() {
-    if (!severity_.compare("Fatal")) {
+    if (!severity_.compare("FATAL")) {
       abort();
     }
     log_stream_ << '\n';
@@ -109,24 +102,6 @@ class LogMessageVoidify {
   LogMessageVoidify() {}
   void operator&(std::ostream&) {}
 };
-
-#define Info(msg) LOG(INFO) << msg;
-#define Warning(msg) LOG(WARNING) << msg;
-#define Error(msg) LOG(ERROR) << msg;
-#define Fatal(msg) LOG(FATAL) << msg;
-#endif
-
-#if defined(NDEBUG)
-#define DInfo(msg)
-#define DWarning(msg)
-#define DError(msg)
-#define DFatal(msg)
-
-#else
-#define DInfo(msg) Info(msg)
-#define DWarning(msg) Warning(msg)
-#define DError(msg) Error(msg)
-#define DFatal(msg) Fatal(msg)
 #endif
 
 #endif  // SHADOW_UTIL_LOG_HPP

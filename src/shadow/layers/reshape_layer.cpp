@@ -68,11 +68,9 @@ void ReshapeLayer::Reshape() {
   tops_[0]->reshape(top_shape);
   CHECK_EQ(tops_[0]->count(), bottoms_[0]->count());
 
-  std::stringstream out;
-  out << layer_name_ << ": "
-      << Util::format_vector(bottoms_[0]->shape(), ",", "(", ")") << " -> "
-      << Util::format_vector(tops_[0]->shape(), ",", "(", ")");
-  DInfo(out.str());
+  DLOG(INFO) << layer_name_ << ": "
+             << Util::format_vector(bottoms_[0]->shape(), ",", "(", ")")
+             << " -> " << Util::format_vector(tops_[0]->shape(), ",", "(", ")");
 }
 
 void ReshapeLayer::Forward() {
@@ -83,5 +81,5 @@ void ReshapeLayer::Release() {
   bottoms_.clear();
   tops_.clear();
 
-  // DInfo("Free ReshapeLayer!");
+  // DLOG(INFO) << "Free ReshapeLayer!";
 }

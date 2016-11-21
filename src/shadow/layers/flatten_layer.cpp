@@ -25,11 +25,9 @@ void FlattenLayer::Reshape() {
     tops_[0]->add_shape(bottoms_[0]->shape(i));
   }
 
-  std::stringstream out;
-  out << layer_name_ << ": "
-      << Util::format_vector(bottoms_[0]->shape(), ",", "(", ")") << " -> "
-      << Util::format_vector(tops_[0]->shape(), ",", "(", ")");
-  DInfo(out.str());
+  DLOG(INFO) << layer_name_ << ": "
+             << Util::format_vector(bottoms_[0]->shape(), ",", "(", ")")
+             << " -> " << Util::format_vector(tops_[0]->shape(), ",", "(", ")");
 }
 
 void FlattenLayer::Forward() {
@@ -40,5 +38,5 @@ void FlattenLayer::Release() {
   bottoms_.clear();
   tops_.clear();
 
-  // DInfo("Free FlattenLayer!");
+  // DLOG(INFO) << "Free FlattenLayer!";
 }
