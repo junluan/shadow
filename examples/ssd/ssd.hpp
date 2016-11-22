@@ -59,4 +59,6 @@ class SSD {
   JImage im_res_;
 };
 
+typedef SSD METHOD;
+
 #endif  // SHADOW_SSD_HPP

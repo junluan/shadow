@@ -43,15 +43,12 @@ class Layer {
     }
     for (const auto &proto_blob : layer_param_.blobs()) {
       int data_size = proto_blob.data_size(), count = proto_blob.count();
-      Blob<float> *blob;
+      Blob<float> *blob = new Blob<float>();
       if (data_size > 0) {
-        blob = new Blob<float>(data_size, proto_blob.data().data());
-      } else {
-        if (count > 0) {
-          blob = new Blob<float>(count);
-        } else {
-          blob = new Blob<float>();
-        }
+        blob->reshape(data_size, 1, 1, 1, true);
+        blob->set_data(proto_blob.data().data(), true);
+      } else if (count > 0) {
+        blob->reshape(count);
       }
       blobs_.push_back(blob);
     }

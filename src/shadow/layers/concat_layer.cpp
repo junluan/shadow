@@ -41,7 +41,7 @@ void ConcatLayer::Reshape() {
 
 void ConcatLayer::Forward() {
   if (bottoms_.size() == 1) {
-    tops_[0]->share_data(bottoms_[0]->mutable_data());
+    tops_[0]->share_data(bottoms_[0]->data());
     return;
   }
   int offset_concat_axis = 0;

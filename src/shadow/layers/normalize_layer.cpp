@@ -18,7 +18,7 @@ void NormalizeLayer::Setup(VecBlob *blobs) {
     Blas::Set(scale_.count(), 1, scale_.mutable_data(), 0);
   } else {
     scale_.set_shape(blobs_[0]->shape());
-    scale_.share_data(blobs_[0]->mutable_data());
+    scale_.share_data(blobs_[0]->data());
   }
 
   if (channel_shared_) {

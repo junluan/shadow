@@ -22,8 +22,10 @@ void Demo::Test(const std::string &image_file) {
       scalar = Scalar(0, 0, 255);
     }
     JImageProc::Rectangle(&im_ini_, box.RectInt(), scalar);
-    std::cout << box.score << ", " << box.xmin << ", " << box.ymin << ", "
-              << box.xmax << ", " << box.ymax << std::endl;
+    std::cout << "xmin = " << box.xmin << ", ymin = " << box.ymin
+              << ", xmax = " << box.xmax << ", ymax = " << box.ymax
+              << ", label = " << box.label << ", score = " << box.score
+              << std::endl;
   }
   im_ini_.Show("result");
 }
@@ -107,9 +109,7 @@ void Demo::CameraTest(int camera, bool video_write) {
   capture.release();
   writer.release();
 }
-#endif
 
-#if defined(USE_OpenCV)
 void Demo::CaptureTest(cv::VideoCapture *capture,
                        const std::string &window_name, bool video_show,
                        cv::VideoWriter *writer) {
@@ -119,6 +119,10 @@ void Demo::CaptureTest(cv::VideoCapture *capture,
   }
   cv::Mat im_mat;
   VecBoxF boxes, oldBoxes;
+  double time_sum = 0, time_cost;
+  int count = 0;
+  std::ostringstream oss;
+  oss.precision(5);
   while (capture->read(im_mat)) {
     if (im_mat.empty()) break;
     im_ini_.FromMat(im_mat);
@@ -129,20 +133,27 @@ void Demo::CaptureTest(cv::VideoCapture *capture,
     Boxes::Amend(&Bboxes_, rois, im_ini_.h_, im_ini_.w_);
     boxes = Boxes::NMS(Bboxes_, 0.5);
     Boxes::Smooth(oldBoxes, &boxes, 0.3);
-    double time_cost = timer_.get_millisecond();
+    time_cost = timer_.get_millisecond();
     oldBoxes = boxes;
     DrawDetections(boxes, &im_mat, true);
     if (writer->isOpened()) {
       writer->write(im_mat);
     }
-    int wait_time = static_cast<int>(1000.0f / rate - time_cost) - 1;
-    wait_time = wait_time > 1 ? wait_time : 1;
     if (video_show) {
+      time_sum += time_cost;
+      if ((++count % 20) == 0) {
+        oss.str("");
+        oss << "FPS: " << 1000 * count / time_sum;
+        count = 0, time_sum = 0;
+      }
+      cv::putText(im_mat, oss.str(), cv::Point(10, 30), cv::FONT_ITALIC, 0.7,
+                  cv::Scalar(0, 255, 0), 2);
       cv::imshow(window_name, im_mat);
+      int wait_time = static_cast<int>(1000.0f / rate - time_cost) - 1;
+      wait_time = wait_time > 1 ? wait_time : 1;
       if (cv::waitKey(wait_time) % 256 == 32) {
         if ((cv::waitKey(0) % 256) == 27) break;
       }
-      std::cout << "FPS:" << 1000.0f / time_cost << std::endl;
     }
   }
 }

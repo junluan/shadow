@@ -30,9 +30,7 @@ void FlattenLayer::Reshape() {
              << " -> " << Util::format_vector(tops_[0]->shape(), ",", "(", ")");
 }
 
-void FlattenLayer::Forward() {
-  tops_[0]->share_data(bottoms_[0]->mutable_data());
-}
+void FlattenLayer::Forward() { tops_[0]->share_data(bottoms_[0]->data()); }
 
 void FlattenLayer::Release() {
   bottoms_.clear();
