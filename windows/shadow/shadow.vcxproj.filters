@@ -42,9 +42,6 @@
     <ClInclude Include="..\..\inc\shadow\layers\data_layer.hpp">
       <Filter>inc\shadow\layers</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\inc\shadow\layers\dropout_layer.hpp">
-      <Filter>inc\shadow\layers</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\inc\shadow\layers\flatten_layer.hpp">
       <Filter>inc\shadow\layers</Filter>
     </ClInclude>
@@ -117,9 +114,6 @@
       <Filter>src\shadow\layers</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\shadow\layers\data_layer.cpp">
-      <Filter>src\shadow\layers</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\shadow\layers\dropout_layer.cpp">
       <Filter>src\shadow\layers</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\shadow\layers\flatten_layer.cpp">

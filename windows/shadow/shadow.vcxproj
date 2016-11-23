@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|x64">
@@ -90,7 +90,6 @@
     <ClInclude Include="..\..\inc\shadow\layers\connected_layer.hpp" />
     <ClInclude Include="..\..\inc\shadow\layers\convolution_layer.hpp" />
     <ClInclude Include="..\..\inc\shadow\layers\data_layer.hpp" />
-    <ClInclude Include="..\..\inc\shadow\layers\dropout_layer.hpp" />
     <ClInclude Include="..\..\inc\shadow\layers\flatten_layer.hpp" />
     <ClInclude Include="..\..\inc\shadow\layers\layer.hpp" />
     <ClInclude Include="..\..\inc\shadow\layers\normalize_layer.hpp" />
@@ -116,7 +115,6 @@
     <ClCompile Include="..\..\src\shadow\layers\connected_layer.cpp" />
     <ClCompile Include="..\..\src\shadow\layers\convolution_layer.cpp" />
     <ClCompile Include="..\..\src\shadow\layers\data_layer.cpp" />
-    <ClCompile Include="..\..\src\shadow\layers\dropout_layer.cpp" />
     <ClCompile Include="..\..\src\shadow\layers\flatten_layer.cpp" />
     <ClCompile Include="..\..\src\shadow\layers\normalize_layer.cpp" />
     <ClCompile Include="..\..\src\shadow\layers\permute_layer.cpp" />
