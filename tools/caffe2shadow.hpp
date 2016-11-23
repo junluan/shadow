@@ -326,7 +326,7 @@ void Convert(const caffe::NetParameter& caffe_deploy,
     } else if (!layer_type.compare("Softmax")) {
       ConvertSoftmax(caffe_model, caffe_layer, shadow_net);
     } else {
-      Warning("Layer type: " + layer_type + " is not recognized!");
+      LOG(WARNING) << "Layer type: " << layer_type << " is not recognized!";
     }
   }
 }

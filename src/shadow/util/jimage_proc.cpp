@@ -327,9 +327,9 @@ void CropResize2Gray(const JImage &im_src, JImage *im_gray,
         s_h = static_cast<int>(h_off + step_h * h);
         s_w = static_cast<int>(w_off + step_w * w);
         src_offset = s_h * src_step + s_w * c_;
-        sum = (data_src[src_offset + 0] + data_src[src_offset + 1] +
-               data_src[src_offset + 2]);
-        *data_gray++ = static_cast<unsigned char>(sum);
+        sum = data_src[src_offset + 0] + data_src[src_offset + 1] +
+              data_src[src_offset + 2];
+        *data_gray++ = static_cast<unsigned char>(sum / 3);
       }
     }
   }
@@ -360,9 +360,9 @@ void CropResize(const ASVLOFFSCREEN &im_arc, float *batch_data,
   const unsigned char *src_y = im_arc.ppu8Plane[0];
   const unsigned char *src_u = im_arc.ppu8Plane[1];
   const unsigned char *src_v = im_arc.ppu8Plane[2];
-  float *dst_r = batch_data;
+  float *dst_b = batch_data;
   float *dst_g = batch_data + height * width;
-  float *dst_b = batch_data + height * width * 2;
+  float *dst_r = batch_data + height * width * 2;
 
   float step_h =
       (crop.h <= 1 ? crop.h * h_ : crop.h) / static_cast<float>(height);
