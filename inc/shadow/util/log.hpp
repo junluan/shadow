@@ -73,6 +73,7 @@
 #define DCHECK_GT(val1, val2) CHECK_GT(val1, val2)
 #endif
 
+#include <cstdlib>
 class LogMessage {
  public:
   LogMessage(const std::string& severity, const char* file, int line)

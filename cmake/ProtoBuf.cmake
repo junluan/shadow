@@ -1,10 +1,14 @@
-find_package(Protobuf REQUIRED)
+find_package(Protobuf REQUIRED QUIET)
+if (PROTOBUF_FOUND)
+  include_directories(SYSTEM ${PROTOBUF_INCLUDE_DIRS})
+  message(STATUS "Found Protobuf: ${PROTOBUF_LIBRARY} (found version ${Protobuf_VERSION})")
+endif ()
 
-if(EXISTS ${PROTOBUF_PROTOC_EXECUTABLE})
+if (EXISTS ${PROTOBUF_PROTOC_EXECUTABLE})
   message(STATUS "Found Protobuf Compiler: ${PROTOBUF_PROTOC_EXECUTABLE}")
-else()
+else ()
   message(FATAL_ERROR "Could not find Protobuf Compiler")
-endif()
+endif ()
 
 set(copy_dir "${PROJECT_SOURCE_DIR}/tools")
 
@@ -27,7 +31,5 @@ foreach (fil ${proto_files})
     COMMENT "Running C++ protocol buffer compiler on ${fil}" VERBATIM )
 endforeach ()
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
-
 add_library(proto STATIC ${proto_srcs} ${proto_hdrs})
-target_link_libraries(proto protobuf)
+target_link_libraries(proto ${PROTOBUF_LIBRARIES})

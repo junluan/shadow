@@ -4,7 +4,7 @@ project(shadow)
 option(USE_CUDA "Use CUDA" ON)
 option(USE_CL "Use OpenCL" OFF)
 option(USE_BLAS "Use BLAS library in CPU mode" ON)
-option(USE_GLog "Use GLog" ON)
+option(USE_GLog "Use GLog" OFF)
 option(USE_OpenCV "Use OpenCV to read, write and show image" ON)
 option(BUILD_TEST "Build gtest to test shadow!" ON)
 
@@ -14,8 +14,7 @@ set(OpenCV_ROOT "/usr/local/opencv-3.1.0" CACHE STRING "Give the root of OpenCV"
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake/modules)
 include(cmake/Dependencies.cmake)
 
-set(CMAKE_CXX_COMPILER "/usr/bin/clang++-3.8")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -std=c++11")
 
 include_directories("inc" "src/shadow/proto" "external")
 link_directories("external/libs")
