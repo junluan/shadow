@@ -33,8 +33,5 @@ void FlattenLayer::Reshape() {
 void FlattenLayer::Forward() { tops_[0]->share_data(bottoms_[0]->data()); }
 
 void FlattenLayer::Release() {
-  bottoms_.clear();
-  tops_.clear();
-
   // DLOG(INFO) << "Free FlattenLayer!";
 }

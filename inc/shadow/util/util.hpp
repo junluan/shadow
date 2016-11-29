@@ -469,22 +469,45 @@ inline bool make_directory(const Path &path) {
 
 }  // namespace Util
 
+#if defined(__linux)
 #include <ctime>
 class Timer {
  public:
   Timer() : ts(clock()) {}
 
   void start() { ts = clock(); }
-  double get_second() const {
+  double get_second() {
     return static_cast<double>(clock() - ts) / CLOCKS_PER_SEC;
   }
-  double get_millisecond() const {
+  double get_millisecond() {
     return 1000.0 * static_cast<double>(clock() - ts) / CLOCKS_PER_SEC;
   }
-  double get_microsecond() const { return static_cast<double>(clock() - ts); }
 
  private:
   clock_t ts;
 };
+
+#else
+#include <Windows.h>
+class Timer {
+ public:
+  Timer() { QueryPerformanceFrequency(&tfrequency_); }
+
+  void start() { QueryPerformanceCounter(&tstart_); }
+  double get_second() {
+    QueryPerformanceCounter(&tend_);
+    return static_cast<double>(tend_.QuadPart - tstart_.QuadPart) /
+           tfrequency_.QuadPart;
+  }
+  double get_millisecond() {
+    QueryPerformanceCounter(&tend_);
+    return 1000.0 * static_cast<double>(tend_.QuadPart - tstart_.QuadPart) /
+           tfrequency_.QuadPart;
+  }
+
+ private:
+  LARGE_INTEGER tstart_, tend_, tfrequency_;
+};
+#endif
 
 #endif  // SHADOW_UTIL_UTIL_HPP

@@ -49,14 +49,6 @@ void ConnectedLayer::Forward() {
 }
 
 void ConnectedLayer::Release() {
-  bottoms_.clear();
-  tops_.clear();
-  for (auto &blob : blobs_) {
-    delete blob;
-    blob = nullptr;
-  }
-  blobs_.clear();
-
   biases_multiplier_.clear();
 
   // DLOG(INFO) << "Free ConnectedLayer!";

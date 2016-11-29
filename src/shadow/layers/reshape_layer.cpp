@@ -76,8 +76,5 @@ void ReshapeLayer::Reshape() {
 void ReshapeLayer::Forward() { tops_[0]->share_data(bottoms_[0]->data()); }
 
 void ReshapeLayer::Release() {
-  bottoms_.clear();
-  tops_.clear();
-
   // DLOG(INFO) << "Free ReshapeLayer!";
 }

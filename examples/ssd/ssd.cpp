@@ -6,7 +6,7 @@ inline void ConvertData(const JImage &im_src, float *data, int flag = 1) {
   CHECK_NOTNULL(data);
 
   int h = im_src.h_, w = im_src.w_, spatial_dim = h * w;
-  const Order &order = im_src.order();
+  const auto &order = im_src.order();
   const unsigned char *data_src = im_src.data();
 
   float *data_r, *data_g, *data_b;
@@ -106,9 +106,7 @@ inline void ApplyNMSFast(const VecBoxF &bboxes, const VecFloat &scores,
 }
 
 void SSD::Setup(const std::string &model_file, int batch) {
-#if defined(USE_CUDA) | defined(USE_CL)
-  Kernel::Setup();
-#endif
+  net_.Setup();
 
   net_.LoadModel(model_file, batch);
 
@@ -188,9 +186,6 @@ void SSD::Predict(const ASVLOFFSCREEN &im_arc, const VecRectF &rois,
 
 void SSD::Release() {
   net_.Release();
-#if defined(USE_CUDA) | defined(USE_CL)
-  Kernel::Release();
-#endif
 
   if (in_data_ != nullptr) {
     delete[] in_data_;

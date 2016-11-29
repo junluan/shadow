@@ -93,14 +93,6 @@ void NormalizeLayer::Forward() {
 }
 
 void NormalizeLayer::Release() {
-  bottoms_.clear();
-  tops_.clear();
-  for (auto &blob : blobs_) {
-    delete blob;
-    blob = nullptr;
-  }
-  blobs_.clear();
-
   scale_.clear();
   norm_.clear();
   buffer_.clear();

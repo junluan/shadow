@@ -53,8 +53,5 @@ void PoolingLayer::Forward() {
 }
 
 void PoolingLayer::Release() {
-  bottoms_.clear();
-  tops_.clear();
-
   // DLOG(INFO) << "Free PoolingLayer!";
 }

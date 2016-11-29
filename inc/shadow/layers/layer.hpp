@@ -14,7 +14,16 @@ class Layer {
       : layer_param_(layer_param),
         layer_name_(layer_param.name()),
         layer_type_(layer_param.type()) {}
-  virtual ~Layer() {}
+  virtual ~Layer() {
+    layer_param_.Clear();
+    bottoms_.clear();
+    tops_.clear();
+    for (auto &blob : blobs_) {
+      delete blob;
+      blob = nullptr;
+    }
+    blobs_.clear();
+  }
 
   virtual void Setup(VecBlob *blobs) {
     bottoms_.clear(), tops_.clear(), blobs_.clear();

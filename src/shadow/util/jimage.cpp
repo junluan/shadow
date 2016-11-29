@@ -79,6 +79,7 @@ void JImage::FromMat(const cv::Mat &im_mat, bool shared) {
   this->Reshape(im_mat.channels(), im_mat.rows, im_mat.cols, kBGR);
   if (shared) {
     data_ = im_mat.data;
+    shared_ = true;
   } else {
     memcpy(data_, im_mat.data, c_ * h_ * w_ * sizeof(unsigned char));
   }
@@ -314,7 +315,7 @@ void JImage::ColorInv() {
 }
 
 void JImage::Release() {
-  if (data_ != nullptr) {
+  if (data_ != nullptr && !shared_) {
     delete[] data_;
     data_ = nullptr;
   }

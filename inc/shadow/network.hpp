@@ -5,6 +5,8 @@
 
 class Network {
  public:
+  void Setup(int device_id = 0);
+
   void LoadModel(const std::string &proto_bin, int batch = 0);
   void LoadModel(const std::string &proto_str,
                  const std::vector<const float *> &weights, int batch = 0);
@@ -19,7 +21,7 @@ class Network {
   const Layer *GetLayerByName(const std::string &layer_name);
   const Blob<float> *GetBlobByName(const std::string &blob_name);
 
-  const VecInt in_shape() { return in_shape_; }
+  const VecInt &in_shape() { return in_shape_; }
 
  private:
   void LoadProtoBin(const std::string &proto_bin,

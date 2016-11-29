@@ -14,6 +14,12 @@
 #include "shadow/layers/reshape_layer.hpp"
 #include "shadow/layers/softmax_layer.hpp"
 
+void Network::Setup(int device_id) {
+#if defined(USE_CUDA) | defined(USE_CL)
+  Kernel::Setup(device_id);
+#endif
+}
+
 void Network::LoadModel(const std::string &proto_bin, int batch) {
   LoadProtoBin(proto_bin, &net_param_);
   Reshape(batch);
@@ -62,19 +68,24 @@ void Network::Forward(const float *data) {
 }
 
 void Network::Release() {
+  net_param_.Clear();
+  in_shape_.clear();
+
   for (auto &layer : layers_) {
     delete layer;
     layer = nullptr;
   }
+  layers_.clear();
+
   for (auto &blob : blobs_) {
     delete blob;
     blob = nullptr;
   }
-
-  net_param_.Clear();
-  in_shape_.clear();
-  layers_.clear();
   blobs_.clear();
+
+#if defined(USE_CUDA) | defined(USE_CL)
+  Kernel::Release();
+#endif
 
   DLOG(INFO) << "Release Network!";
 }

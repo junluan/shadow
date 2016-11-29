@@ -56,8 +56,5 @@ void ConcatLayer::Forward() {
 }
 
 void ConcatLayer::Release() {
-  bottoms_.clear();
-  tops_.clear();
-
   // DLOG(INFO) << "Free ConcatLayer!";
 }

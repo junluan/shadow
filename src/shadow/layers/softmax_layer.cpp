@@ -39,9 +39,6 @@ void SoftmaxLayer::Forward() {
 }
 
 void SoftmaxLayer::Release() {
-  bottoms_.clear();
-  tops_.clear();
-
   scale_.clear();
 
   // DLOG(INFO) << "Free SoftmaxLayer!";

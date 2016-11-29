@@ -103,6 +103,7 @@ class JImage {
 
   unsigned char *data_ = nullptr;
   Order order_;
+  bool shared_ = false;
 };
 
 #endif  // SHADOW_UTIL_JIMAGE_HPP

@@ -130,8 +130,5 @@ void PriorBoxLayer::Forward() {
 }
 
 void PriorBoxLayer::Release() {
-  bottoms_.clear();
-  tops_.clear();
-
   // DLOG(INFO) << "Free PriorBoxLayer!";
 }

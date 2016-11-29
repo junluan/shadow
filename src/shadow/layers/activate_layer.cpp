@@ -29,8 +29,5 @@ void ActivateLayer::Forward() {
 }
 
 void ActivateLayer::Release() {
-  bottoms_.clear();
-  tops_.clear();
-
   // DLOG(INFO) << "Free ActivateLayer!";
 }

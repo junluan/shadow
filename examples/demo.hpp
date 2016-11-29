@@ -11,7 +11,11 @@ class Demo {
   void Setup(const std::string &model_file, int batch = 1) {
     method_.Setup(model_file, batch);
   }
-  void Release() { method_.Release(); }
+  void Release() {
+    method_.Release();
+    im_ini_.Release();
+    Bboxes_.clear();
+  }
 
   void Test(const std::string &image_file);
   void BatchTest(const std::string &list_file, bool image_write = false);

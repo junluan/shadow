@@ -14,7 +14,10 @@ void Setup(int device_id) {
 }
 
 void Release() {
-  if (cublas_handle_ != nullptr) cublasDestroy(cublas_handle_);
+  if (cublas_handle_ != nullptr) {
+    cublasDestroy(cublas_handle_);
+    cublas_handle_ = nullptr;
+  }
 }
 
 template <typename T, typename Dtype>

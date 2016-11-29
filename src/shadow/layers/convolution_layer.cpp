@@ -67,14 +67,6 @@ void ConvolutionLayer::Forward() {
 }
 
 void ConvolutionLayer::Release() {
-  bottoms_.clear();
-  tops_.clear();
-  for (auto &blob : blobs_) {
-    delete blob;
-    blob = nullptr;
-  }
-  blobs_.clear();
-
   biases_multiplier_.clear();
   col_image_.clear();
 

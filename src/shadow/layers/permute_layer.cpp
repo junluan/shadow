@@ -53,9 +53,6 @@ void PermuteLayer::Forward() {
 }
 
 void PermuteLayer::Release() {
-  bottoms_.clear();
-  tops_.clear();
-
   permute_order_.clear();
   old_steps_.clear();
   new_steps_.clear();

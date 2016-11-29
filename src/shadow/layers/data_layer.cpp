@@ -57,8 +57,7 @@ void DataLayer::Forward() {
 }
 
 void DataLayer::Release() {
-  bottoms_.clear();
-  tops_.clear();
+  mean_value_.clear();
 
   // DLOG(INFO) << "Free DataLayer!";
 }
