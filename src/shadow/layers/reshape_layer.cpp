@@ -65,7 +65,7 @@ void ReshapeLayer::Reshape() {
     top_shape[start_axis + inferred_axis_] =
         bottoms_[0]->count() / explicit_count;
   }
-  tops_[0]->reshape(top_shape);
+  tops_[0]->set_shape(top_shape);
   CHECK_EQ(tops_[0]->count(), bottoms_[0]->count());
 
   DLOG(INFO) << layer_name_ << ": "

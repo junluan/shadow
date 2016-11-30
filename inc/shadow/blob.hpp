@@ -28,12 +28,12 @@ class Blob {
       data_ = const_cast<Dtype *>(data);
     }
     on_gpu_ = false;
+    shared_ = shared;
 
 #else
     Kernel::WriteBuffer(count(), data, data_);
     on_gpu_ = true;
 #endif
-    shared_ = shared;
   }
 
   inline void read_data(Dtype *data) const {
@@ -48,6 +48,9 @@ class Blob {
 
   inline void share_data(const BACKEND *data) {
     CHECK_NOTNULL(data);
+    if (data_ != data) {
+      CHECK(data_ == nullptr);
+    }
     data_ = const_cast<BACKEND *>(data);
     shared_ = true;
 #if !defined(USE_CUDA) & !defined(USE_CL)
@@ -86,10 +89,10 @@ class Blob {
   inline VecInt &shape() { return shape_; }
 
   inline const int shape(int index) const {
-    return shape_[CanonicalIndex(index)];
+    return shape_[canonical_index(index)];
   }
   inline void set_shape(int index, int value) {
-    shape_[CanonicalIndex(index)] = value;
+    shape_[canonical_index(index)] = value;
   }
   inline void set_shape(const VecInt &shape) { shape_ = shape; }
   inline void add_shape(int value) { shape_.push_back(value); }
@@ -111,7 +114,7 @@ class Blob {
     return count;
   }
 
-  inline const int CanonicalIndex(int index) const {
+  inline const int canonical_index(int index) const {
     CHECK_GE(index, -num_axes());
     CHECK_LT(index, num_axes());
     if (index < 0) {
@@ -140,12 +143,12 @@ class Blob {
       data_ = new Dtype[count];
     }
     on_gpu_ = false;
+    shared_ = shared;
 
 #else
     data_ = Kernel::MakeBuffer<BACKEND>(count, static_cast<Dtype *>(nullptr));
     on_gpu_ = true;
 #endif
-    shared_ = shared;
   }
 
   BACKEND *data_ = nullptr;

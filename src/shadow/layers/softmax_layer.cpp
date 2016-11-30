@@ -6,7 +6,7 @@ void SoftmaxLayer::Setup(VecBlob *blobs) {
 
   const auto &softmax_param = layer_param_.softmax_param();
 
-  axis_ = bottoms_[0]->CanonicalIndex(softmax_param.axis());
+  axis_ = bottoms_[0]->canonical_index(softmax_param.axis());
 }
 
 void SoftmaxLayer::Reshape() {
