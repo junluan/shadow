@@ -2,7 +2,8 @@
 #define SHADOW_BLOB_HPP
 
 #include "shadow/kernel.hpp"
-#include "shadow/util/util.hpp"
+#include "shadow/util/log.hpp"
+#include "shadow/util/type.hpp"
 
 #if defined(USE_CL)
 #define BACKEND cl_mem

@@ -3,78 +3,15 @@
 
 #include "shadow/util/log.hpp"
 
-#if !defined(__linux)
-#define _USE_MATH_DEFINES
-#endif
-
 #include <algorithm>
 #include <cfloat>
 #include <cmath>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
-#include <list>
 #include <sstream>
 #include <string>
 #include <vector>
-
-const float EPS = 0.000001f;
-
-template <class Dtype>
-class Point {
- public:
-  Point() {}
-  Point(Dtype x_t, Dtype y_t, float score_t = -1)
-      : x(x_t), y(y_t), score(score_t) {}
-  Point(const Point<int> &p) : x(p.x), y(p.y), score(p.score) {}
-  Point(const Point<float> &p) : x(p.x), y(p.y), score(p.score) {}
-  Dtype x, y;
-  float score;
-};
-
-template <class Dtype>
-class Rect {
- public:
-  Rect() {}
-  Rect(Dtype x_t, Dtype y_t, Dtype w_t, Dtype h_t)
-      : x(x_t), y(y_t), w(w_t), h(h_t) {}
-  Rect(const Rect<int> &rect) : x(rect.x), y(rect.y), w(rect.w), h(rect.h) {}
-  Rect(const Rect<float> &rect) : x(rect.x), y(rect.y), w(rect.w), h(rect.h) {}
-  Dtype x, y, w, h;
-};
-
-template <class Dtype>
-class Size {
- public:
-  Size() {}
-  Size(Dtype w_t, Dtype h_t) : w(w_t), h(h_t) {}
-  Size(const Size<int> &size) : w(size.w), h(size.h) {}
-  Size(const Size<float> &size) : w(size.w), h(size.h) {}
-  Dtype w, h;
-};
-
-typedef Point<int> PointI;
-typedef Point<float> PointF;
-typedef Rect<int> RectI;
-typedef Rect<float> RectF;
-typedef Size<int> SizeI;
-typedef Size<float> SizeF;
-
-typedef std::vector<PointI> VecPointI;
-typedef std::vector<PointF> VecPointF;
-typedef std::vector<RectI> VecRectI;
-typedef std::vector<RectF> VecRectF;
-typedef std::vector<SizeI> VecSizeI;
-typedef std::vector<SizeF> VecSizeF;
-
-typedef std::vector<int> VecInt;
-typedef std::vector<float> VecFloat;
-typedef std::vector<double> VecDouble;
-typedef std::vector<std::string> VecString;
-typedef std::list<int> ListInt;
-typedef std::list<float> ListFloat;
-typedef std::list<double> ListDouble;
-typedef std::list<std::string> ListString;
 
 namespace Util {
 
@@ -153,10 +90,11 @@ inline std::string change_extension(const std::string &str,
   return origin;
 }
 
-inline VecString tokenize(const std::string &str, const std::string &split) {
+inline std::vector<std::string> tokenize(const std::string &str,
+                                         const std::string &split) {
   std::string::size_type last_pos = 0;
   std::string::size_type pos = str.find_first_of(split, last_pos);
-  VecString tokens;
+  std::vector<std::string> tokens;
   while (last_pos != std::string::npos) {
     if (pos != last_pos) tokens.push_back(str.substr(last_pos, pos - last_pos));
     last_pos = pos;
@@ -166,11 +104,11 @@ inline VecString tokenize(const std::string &str, const std::string &split) {
   return tokens;
 }
 
-inline VecString load_list(const std::string &list_file) {
+inline std::vector<std::string> load_list(const std::string &list_file) {
   std::ifstream file(list_file);
   if (!file.is_open()) LOG(FATAL) << "Load image list file error!";
 
-  VecString image_list;
+  std::vector<std::string> image_list;
   std::string dir;
   while (std::getline(file, dir)) {
     if (dir.length()) image_list.push_back(dir);
@@ -453,7 +391,7 @@ class Path {
 
  private:
   PathType type_;
-  VecString path_;
+  std::vector<std::string> path_;
   bool absolute_;
 };
 

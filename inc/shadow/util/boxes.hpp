@@ -1,7 +1,7 @@
 #ifndef SHADOW_UTIL_BOXES_HPP
 #define SHADOW_UTIL_BOXES_HPP
 
-#include "shadow/util/util.hpp"
+#include "shadow/util/type.hpp"
 
 template <class Dtype>
 class Box {

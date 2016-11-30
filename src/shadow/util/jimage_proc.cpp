@@ -1,4 +1,5 @@
 #include "shadow/util/jimage_proc.hpp"
+#include "shadow/util/util.hpp"
 
 namespace JImageProc {
 

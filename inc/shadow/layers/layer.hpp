@@ -2,7 +2,7 @@
 #define SHADOW_LAYERS_LAYER_HPP
 
 #include "shadow/blob.hpp"
-#include "shadow/kernel.hpp"
+#include "shadow/util/log.hpp"
 #include "shadow/util/util.hpp"
 
 #include "shadow.pb.h"

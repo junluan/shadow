@@ -1,4 +1,5 @@
 #include "shadow/util/jimage.hpp"
+#include "shadow/util/util.hpp"
 
 //#define USE_STB
 #if defined(USE_STB)

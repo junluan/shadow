@@ -1,4 +1,5 @@
 #include "shadow/util/boxes.hpp"
+#include "shadow/util/log.hpp"
 
 namespace Boxes {
 

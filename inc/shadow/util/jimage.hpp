@@ -1,7 +1,7 @@
 #ifndef SHADOW_UTIL_JIMAGE_HPP
 #define SHADOW_UTIL_JIMAGE_HPP
 
-#include "shadow/util/util.hpp"
+#include "shadow/util/log.hpp"
 
 #if defined(USE_OpenCV)
 #include <opencv2/opencv.hpp>

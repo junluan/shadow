@@ -1,5 +1,6 @@
 #include "shadow/kernel.hpp"
 #include "shadow/util/image.hpp"
+#include "shadow/util/log.hpp"
 
 namespace Image {
 
