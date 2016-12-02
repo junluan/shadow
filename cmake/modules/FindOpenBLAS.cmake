@@ -1,56 +1,41 @@
-set(Open_BLAS_INCLUDE_SEARCH_PATHS
-  ./external/OpenBLAS/
-  /usr/include
-  /usr/include/openblas
-  /usr/include/openblas-base
-  /usr/local/include
-  /usr/local/include/openblas
-  /usr/local/include/openblas-base
-  /opt/OpenBLAS/include
-  $ENV{OpenBLAS_HOME}
-  $ENV{OpenBLAS_HOME}/include
-)
+set(OpenBLAS_PATHS
+    ./external/OpenBLAS
+    ./external/libs
+    /usr
+    /usr/local)
 
-set(Open_BLAS_LIB_SEARCH_PATHS
-  ./external/libs
-  /lib/
-  /lib/openblas-base
-  /lib64/
-  /usr/lib
-  /usr/lib/openblas-base
-  /usr/lib64
-  /usr/local/lib
-  /usr/local/lib64
-  /opt/OpenBLAS/lib
-  $ENV{OpenBLAS}cd
-  $ENV{OpenBLAS}/lib
-  $ENV{OpenBLAS_HOME}
-  $ENV{OpenBLAS_HOME}/lib
- )
+find_path(OpenBLAS_INCLUDE_DIRS
+          NAMES cblas.h
+          PATHS ${OpenBLAS_PATHS}
+          PATH_SUFFIXES include include/x86_64 include/x64
+          DOC "OpenBLAS include header cblas.h")
 
-find_path(OpenBLAS_INCLUDE_DIR NAMES cblas.h PATHS ${Open_BLAS_INCLUDE_SEARCH_PATHS})
-find_library(OpenBLAS_LIB NAMES openblas PATHS ${Open_BLAS_LIB_SEARCH_PATHS})
+find_library(OpenBLAS_LIBRARIES
+             NAMES openblas
+             PATHS ${OpenBLAS_PATHS}
+             PATH_SUFFIXES lib lib64 lib/x86_64 lib/x64 lib/x86
+             DOC "OpenBLAS library")
 
 set(OpenBLAS_FOUND ON)
 
-if(NOT OpenBLAS_INCLUDE_DIR)
-    set(OpenBLAS_FOUND OFF)
-    message(STATUS "Could not find OpenBLAS include. Turning OpenBLAS_FOUND off")
-endif()
+if (NOT OpenBLAS_INCLUDE_DIRS)
+  set(OpenBLAS_FOUND OFF)
+  message(STATUS "Could not find OpenBLAS include. Turning OpenBLAS_FOUND off")
+endif ()
 
-if(NOT OpenBLAS_LIB)
-    set(OpenBLAS_FOUND OFF)
-    message(STATUS "Could not find OpenBLAS lib. Turning OpenBLAS_FOUND off")
-endif()
+if (NOT OpenBLAS_LIBRARIES)
+  set(OpenBLAS_FOUND OFF)
+  message(STATUS "Could not find OpenBLAS lib. Turning OpenBLAS_FOUND off")
+endif ()
 
 if (OpenBLAS_FOUND)
   if (NOT OpenBLAS_FIND_QUIETLY)
-    message(STATUS "Found OpenBLAS libraries: ${OpenBLAS_LIB}")
-    message(STATUS "Found OpenBLAS include: ${OpenBLAS_INCLUDE_DIR}")
-  endif (NOT OpenBLAS_FIND_QUIETLY)
-  mark_as_advanced(OpenBLAS_INCLUDE_DIR OpenBLAS_LIB OpenBLAS)
+    message(STATUS "Found OpenBLAS include: ${OpenBLAS_INCLUDE_DIRS}")
+    message(STATUS "Found OpenBLAS libraries: ${OpenBLAS_LIBRARIES}")
+  endif ()
+  mark_as_advanced(OpenBLAS_INCLUDE_DIRS OpenBLAS_LIBRARIES OpenBLAS)
 else ()
   if (OpenBLAS_FIND_REQUIRED)
     message(FATAL_ERROR "Could not find OpenBLAS")
-  endif (OpenBLAS_FIND_REQUIRED)
+  endif ()
 endif ()

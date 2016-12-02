@@ -28,7 +28,7 @@ foreach (fil ${proto_files})
            "${fil_dir}/${fil_we}.pb.h"
     COMMAND ${PROTOBUF_PROTOC_EXECUTABLE} --proto_path=${fil_dir} --cpp_out=${fil_dir} ${abs_fil}
     DEPENDS ${abs_fil}
-    COMMENT "Running C++ protocol buffer compiler on ${fil}" VERBATIM )
+    COMMENT "Running C++ protocol buffer compiler on ${fil}" VERBATIM)
 endforeach ()
 
 add_library(proto STATIC ${proto_srcs} ${proto_hdrs})
