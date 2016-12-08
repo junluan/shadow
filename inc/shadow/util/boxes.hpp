@@ -31,8 +31,10 @@ class Box {
     return *this;
   }
 
-  RectI RectInt() { return RectI(xmin, ymin, xmax - xmin, ymax - ymin); }
-  RectF RectFloat() { return RectF(xmin, ymin, xmax - xmin, ymax - ymin); }
+  RectI RectInt() const { return RectI(xmin, ymin, xmax - xmin, ymax - ymin); }
+  RectF RectFloat() const {
+    return RectF(xmin, ymin, xmax - xmin, ymax - ymin);
+  }
 
   float score;
   int label;
@@ -67,12 +69,14 @@ std::vector<Box<Dtype>> NMS(const std::vector<std::vector<Box<Dtype>>> &Bboxes,
                             float iou_threshold);
 
 template <typename Dtype>
+void Smooth(const Box<Dtype> &old_boxes, Box<Dtype> *new_boxes, float smooth);
+template <typename Dtype>
 void Smooth(const std::vector<Box<Dtype>> &old_boxes,
             std::vector<Box<Dtype>> *new_boxes, float smooth);
 
 template <typename Dtype>
 void Amend(std::vector<std::vector<Box<Dtype>>> *Bboxes, const VecRectF &crops,
-           int height = 0, int width = 0);
+           int height = 1, int width = 1);
 
 }  // namespace Boxes
 
