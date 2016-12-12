@@ -130,7 +130,7 @@ void Demo::CaptureTest(cv::VideoCapture *capture,
     rois.push_back(RectF(0, 0, im_ini_.w_, im_ini_.h_));
     timer_.start();
     Predict(im_ini_, rois, &Bboxes_);
-    Boxes::Amend(&Bboxes_, rois, im_ini_.h_, im_ini_.w_);
+    Boxes::Amend(&Bboxes_, rois);
     boxes = Boxes::NMS(Bboxes_, 0.5);
     Boxes::Smooth(oldBoxes, &boxes, 0.3);
     time_cost = timer_.get_millisecond();

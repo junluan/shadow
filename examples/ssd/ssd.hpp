@@ -12,12 +12,18 @@ typedef std::vector<LabelBBox> VecLabelBBox;
 class SSD {
  public:
   void Setup(const std::string &model_file, int batch = 1);
+
   void Predict(const JImage &image, const VecRectF &rois,
                std::vector<VecBoxF> *Bboxes);
+#if defined(USE_OpenCV)
+  void Predict(const cv::Mat &im_mat, const VecRectF &rois,
+               std::vector<VecBoxF> *Bboxes);
+#endif
 #if defined(USE_ArcSoft)
   void Predict(const ASVLOFFSCREEN &im_arc, const VecRectF &rois,
                std::vector<VecBoxF> *Bboxes);
 #endif
+
   void Release();
 
  private:
@@ -56,7 +62,7 @@ class SSD {
       keep_top_k_;
   float threshold_, nms_threshold_, confidence_threshold_;
   bool share_location_;
-  JImage im_res_;
+  JImage im_ini_, im_res_;
 };
 
 typedef SSD METHOD;

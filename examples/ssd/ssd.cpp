@@ -153,6 +153,14 @@ void SSD::Predict(const JImage &image, const VecRectF &rois,
   }
 }
 
+#if defined(USE_OpenCV)
+void SSD::Predict(const cv::Mat &im_mat, const VecRectF &rois,
+                  std::vector<VecBoxF> *Bboxes) {
+  im_ini_.FromMat(im_mat, true);
+  Predict(im_ini_, rois, Bboxes);
+}
+#endif
+
 #if defined(USE_ArcSoft)
 #include "arcsoft/convert.hpp"
 void SSD::Predict(const ASVLOFFSCREEN &im_arc, const VecRectF &rois,
