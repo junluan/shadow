@@ -99,6 +99,9 @@
     <ClInclude Include="..\..\inc\shadow\network.hpp">
       <Filter>inc\shadow</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\inc\shadow\util\type.hpp">
+      <Filter>inc\shadow\util</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\shadow\layers\activate_layer.cpp">
@@ -161,16 +164,5 @@
     <ClCompile Include="..\..\src\shadow\network.cpp">
       <Filter>src\shadow</Filter>
     </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <CudaCompile Include="..\..\src\shadow\kernel.cu">
-      <Filter>src\shadow</Filter>
-    </CudaCompile>
-    <CudaCompile Include="..\..\src\shadow\util\blas.cu">
-      <Filter>src\shadow\util</Filter>
-    </CudaCompile>
-    <CudaCompile Include="..\..\src\shadow\util\image.cu">
-      <Filter>src\shadow\util</Filter>
-    </CudaCompile>
   </ItemGroup>
 </Project>

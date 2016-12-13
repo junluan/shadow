@@ -106,6 +106,7 @@
     <ClInclude Include="..\..\inc\shadow\util\jimage.hpp" />
     <ClInclude Include="..\..\inc\shadow\util\jimage_proc.hpp" />
     <ClInclude Include="..\..\inc\shadow\util\log.hpp" />
+    <ClInclude Include="..\..\inc\shadow\util\type.hpp" />
     <ClInclude Include="..\..\inc\shadow\util\util.hpp" />
   </ItemGroup>
   <ItemGroup>
