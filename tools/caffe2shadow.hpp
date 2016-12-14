@@ -5,6 +5,7 @@
 #include "shadow.pb.h"
 
 #include "shadow/util/io.hpp"
+#include "shadow/util/type.hpp"
 #include "shadow/util/util.hpp"
 
 namespace Caffe2Shadow {

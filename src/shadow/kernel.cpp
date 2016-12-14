@@ -1,88 +1,110 @@
 #include "shadow/kernel.hpp"
+#include "shadow/util/util.hpp"
 
 namespace Kernel {
 
 #if defined(USE_CL)
 #include <clBLAS.h>
 
-EasyCL *easyCL = nullptr;
+CLCudaAPI::Context *context_ = nullptr;
+CLCudaAPI::Queue *queue_ = nullptr;
+CLCudaAPI::Event *event_ = nullptr;
 
-CLKernel *cl_channelmax_kernel_ = nullptr;
-CLKernel *cl_channelsub_kernel_ = nullptr;
-CLKernel *cl_channelsum_kernel_ = nullptr;
-CLKernel *cl_channeldiv_kernel_ = nullptr;
-CLKernel *cl_set_kernel_ = nullptr;
-CLKernel *cl_add_kernel_ = nullptr;
-CLKernel *cl_sub_kernel_ = nullptr;
-CLKernel *cl_mul_kernel_ = nullptr;
-CLKernel *cl_div_kernel_ = nullptr;
-CLKernel *cl_sqr_kernel_ = nullptr;
-CLKernel *cl_exp_kernel_ = nullptr;
-CLKernel *cl_log_kernel_ = nullptr;
-CLKernel *cl_abs_kernel_ = nullptr;
-CLKernel *cl_pow_kernel_ = nullptr;
+CLCudaAPI::Kernel *cl_channelmax_kernel_ = nullptr;
+CLCudaAPI::Kernel *cl_channelsub_kernel_ = nullptr;
+CLCudaAPI::Kernel *cl_channelsum_kernel_ = nullptr;
+CLCudaAPI::Kernel *cl_channeldiv_kernel_ = nullptr;
+CLCudaAPI::Kernel *cl_set_kernel_ = nullptr;
+CLCudaAPI::Kernel *cl_add_kernel_ = nullptr;
+CLCudaAPI::Kernel *cl_sub_kernel_ = nullptr;
+CLCudaAPI::Kernel *cl_mul_kernel_ = nullptr;
+CLCudaAPI::Kernel *cl_div_kernel_ = nullptr;
+CLCudaAPI::Kernel *cl_sqr_kernel_ = nullptr;
+CLCudaAPI::Kernel *cl_exp_kernel_ = nullptr;
+CLCudaAPI::Kernel *cl_log_kernel_ = nullptr;
+CLCudaAPI::Kernel *cl_abs_kernel_ = nullptr;
+CLCudaAPI::Kernel *cl_pow_kernel_ = nullptr;
 
-CLKernel *cl_datatransform_kernel_ = nullptr;
-CLKernel *cl_im2col_kernel_ = nullptr;
-CLKernel *cl_pooling_kernel_ = nullptr;
-CLKernel *cl_concat_kernel_ = nullptr;
-CLKernel *cl_permute_kernel_ = nullptr;
-CLKernel *cl_activate_kernel_ = nullptr;
+CLCudaAPI::Kernel *cl_datatransform_kernel_ = nullptr;
+CLCudaAPI::Kernel *cl_im2col_kernel_ = nullptr;
+CLCudaAPI::Kernel *cl_pooling_kernel_ = nullptr;
+CLCudaAPI::Kernel *cl_concat_kernel_ = nullptr;
+CLCudaAPI::Kernel *cl_permute_kernel_ = nullptr;
+CLCudaAPI::Kernel *cl_activate_kernel_ = nullptr;
 
 void Setup(int device_id) {
-  easyCL = EasyCL::createForFirstGpuOtherwiseCpu(true);
+  auto platform_id = size_t{0};
+  auto dev_id = size_t{0};
+  auto platform_ = CLCudaAPI::Platform(platform_id);
+  auto device = new CLCudaAPI::Device(platform_, dev_id);
+  context_ = new CLCudaAPI::Context(*device);
+  queue_ = new CLCudaAPI::Queue(*context_, *device);
+  event_ = new CLCudaAPI::Event();
 
-  std::string cl_blas = "./src/shadow/util/blas.cl";
-  cl_channelmax_kernel_ = Kernel::easyCL->buildKernel(cl_blas, "ChannelMax");
-  cl_channelsub_kernel_ = Kernel::easyCL->buildKernel(cl_blas, "ChannelSub");
-  cl_channelsum_kernel_ = Kernel::easyCL->buildKernel(cl_blas, "ChannelSum");
-  cl_channeldiv_kernel_ = Kernel::easyCL->buildKernel(cl_blas, "ChannelDiv");
-  cl_set_kernel_ = Kernel::easyCL->buildKernel(cl_blas, "Set");
-  cl_add_kernel_ = Kernel::easyCL->buildKernel(cl_blas, "Add");
-  cl_sub_kernel_ = Kernel::easyCL->buildKernel(cl_blas, "Sub");
-  cl_mul_kernel_ = Kernel::easyCL->buildKernel(cl_blas, "Mul");
-  cl_div_kernel_ = Kernel::easyCL->buildKernel(cl_blas, "Div");
-  cl_sqr_kernel_ = Kernel::easyCL->buildKernel(cl_blas, "Sqr");
-  cl_exp_kernel_ = Kernel::easyCL->buildKernel(cl_blas, "Exp");
-  cl_log_kernel_ = Kernel::easyCL->buildKernel(cl_blas, "Log");
-  cl_abs_kernel_ = Kernel::easyCL->buildKernel(cl_blas, "Abs");
-  cl_pow_kernel_ = Kernel::easyCL->buildKernel(cl_blas, "Pow");
+  auto compiler_options = std::vector<std::string>{};
 
-  std::string cl_image = "src/shadow/util/image.cl";
-  cl_datatransform_kernel_ = easyCL->buildKernel(cl_image, "DataTransform");
-  cl_im2col_kernel_ = easyCL->buildKernel(cl_image, "Im2Col");
-  cl_pooling_kernel_ = easyCL->buildKernel(cl_image, "Pooling");
-  cl_concat_kernel_ = easyCL->buildKernel(cl_image, "Concat");
-  cl_permute_kernel_ = easyCL->buildKernel(cl_image, "Permute");
-  cl_activate_kernel_ = easyCL->buildKernel(cl_image, "Activate");
+  const std::string cl_blas = "src/shadow/util/blas.cl";
+  auto program_blas =
+      CLCudaAPI::Program(*context_, Util::read_text_from_file(cl_blas));
+  program_blas.Build(*device, compiler_options);
+
+  cl_channelmax_kernel_ = new CLCudaAPI::Kernel(program_blas, "ChannelMax");
+  cl_channelsub_kernel_ = new CLCudaAPI::Kernel(program_blas, "ChannelSub");
+  cl_channelsum_kernel_ = new CLCudaAPI::Kernel(program_blas, "ChannelSum");
+  cl_channeldiv_kernel_ = new CLCudaAPI::Kernel(program_blas, "ChannelDiv");
+  cl_set_kernel_ = new CLCudaAPI::Kernel(program_blas, "Set");
+  cl_add_kernel_ = new CLCudaAPI::Kernel(program_blas, "Add");
+  cl_sub_kernel_ = new CLCudaAPI::Kernel(program_blas, "Sub");
+  cl_mul_kernel_ = new CLCudaAPI::Kernel(program_blas, "Mul");
+  cl_div_kernel_ = new CLCudaAPI::Kernel(program_blas, "Div");
+  cl_sqr_kernel_ = new CLCudaAPI::Kernel(program_blas, "Sqr");
+  cl_exp_kernel_ = new CLCudaAPI::Kernel(program_blas, "Exp");
+  cl_log_kernel_ = new CLCudaAPI::Kernel(program_blas, "Log");
+  cl_abs_kernel_ = new CLCudaAPI::Kernel(program_blas, "Abs");
+  cl_pow_kernel_ = new CLCudaAPI::Kernel(program_blas, "Pow");
+
+  const std::string cl_image = "src/shadow/util/image.cl";
+  auto program_image =
+      CLCudaAPI::Program(*context_, Util::read_text_from_file(cl_image));
+  program_image.Build(*device, compiler_options);
+
+  cl_datatransform_kernel_ =
+      new CLCudaAPI::Kernel(program_image, "DataTransform");
+  cl_im2col_kernel_ = new CLCudaAPI::Kernel(program_image, "Im2Col");
+  cl_pooling_kernel_ = new CLCudaAPI::Kernel(program_image, "Pooling");
+  cl_concat_kernel_ = new CLCudaAPI::Kernel(program_image, "Concat");
+  cl_permute_kernel_ = new CLCudaAPI::Kernel(program_image, "Permute");
+  cl_activate_kernel_ = new CLCudaAPI::Kernel(program_image, "Activate");
 
   clblasSetup();
 }
 
 void Release() {
-  cl_channelmax_kernel_->~CLKernel();
-  cl_channelsub_kernel_->~CLKernel();
-  cl_channelsum_kernel_->~CLKernel();
-  cl_channeldiv_kernel_->~CLKernel();
-  cl_set_kernel_->~CLKernel();
-  cl_add_kernel_->~CLKernel();
-  cl_sub_kernel_->~CLKernel();
-  cl_mul_kernel_->~CLKernel();
-  cl_div_kernel_->~CLKernel();
-  cl_sqr_kernel_->~CLKernel();
-  cl_exp_kernel_->~CLKernel();
-  cl_log_kernel_->~CLKernel();
-  cl_abs_kernel_->~CLKernel();
-  cl_pow_kernel_->~CLKernel();
+  delete cl_channelmax_kernel_;
+  delete cl_channelsub_kernel_;
+  delete cl_channelsum_kernel_;
+  delete cl_channeldiv_kernel_;
+  delete cl_set_kernel_;
+  delete cl_add_kernel_;
+  delete cl_sub_kernel_;
+  delete cl_mul_kernel_;
+  delete cl_div_kernel_;
+  delete cl_sqr_kernel_;
+  delete cl_exp_kernel_;
+  delete cl_log_kernel_;
+  delete cl_abs_kernel_;
+  delete cl_pow_kernel_;
 
-  cl_datatransform_kernel_->~CLKernel();
-  cl_im2col_kernel_->~CLKernel();
-  cl_pooling_kernel_->~CLKernel();
-  cl_concat_kernel_->~CLKernel();
-  cl_permute_kernel_->~CLKernel();
-  cl_activate_kernel_->~CLKernel();
+  delete cl_datatransform_kernel_;
+  delete cl_im2col_kernel_;
+  delete cl_pooling_kernel_;
+  delete cl_concat_kernel_;
+  delete cl_permute_kernel_;
+  delete cl_activate_kernel_;
 
-  easyCL->~EasyCL();
+  delete context_;
+  delete queue_;
+  delete event_;
 
   clblasTeardown();
 }
@@ -90,30 +112,30 @@ void Release() {
 template <typename T, typename Dtype>
 T *MakeBuffer(int size, Dtype *host_ptr) {
   T *buffer = new cl_mem();
-  *buffer = clCreateBuffer(*easyCL->context, CL_MEM_READ_WRITE,
+  *buffer = clCreateBuffer((*Kernel::context_)(), CL_MEM_READ_WRITE,
                            size * sizeof(Dtype), host_ptr, nullptr);
   return buffer;
 }
 
 template <typename T, typename Dtype>
 void ReadBuffer(int size, const T *src, Dtype *des) {
-  clEnqueueReadBuffer(*easyCL->queue, *src, CL_TRUE, 0, size * sizeof(Dtype),
-                      des, 0, nullptr, nullptr);
-  clFinish(*easyCL->queue);
+  clEnqueueReadBuffer((*Kernel::queue_)(), *src, CL_TRUE, 0,
+                      size * sizeof(Dtype), des, 0, nullptr, nullptr);
+  clFinish((*Kernel::queue_)());
 }
 
 template <typename T, typename Dtype>
 void WriteBuffer(int size, const Dtype *src, T *des) {
-  clEnqueueWriteBuffer(*easyCL->queue, *des, CL_TRUE, 0, size * sizeof(Dtype),
-                       src, 0, nullptr, nullptr);
-  clFinish(*easyCL->queue);
+  clEnqueueWriteBuffer((*Kernel::queue_)(), *des, CL_TRUE, 0,
+                       size * sizeof(Dtype), src, 0, nullptr, nullptr);
+  clFinish((*Kernel::queue_)());
 }
 
 template <typename T, typename Dtype>
 void CopyBuffer(int size, const T *src, T *des) {
-  clEnqueueCopyBuffer(*easyCL->queue, *src, *des, 0, 0, size * sizeof(Dtype), 0,
-                      nullptr, nullptr);
-  clFinish(*easyCL->queue);
+  clEnqueueCopyBuffer((*Kernel::queue_)(), *src, *des, 0, 0,
+                      size * sizeof(Dtype), 0, nullptr, nullptr);
+  clFinish((*Kernel::queue_)());
 }
 
 template <typename T>

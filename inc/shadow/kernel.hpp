@@ -24,7 +24,7 @@ inline int GetBlocks(const int N) { return (N + NumThreads - 1) / NumThreads; }
   }
 
 #elif defined(USE_CL)
-#include <EasyCL.h>
+#include "CLCudaAPI/clpp11.h"
 #endif
 
 namespace Kernel {
@@ -51,29 +51,31 @@ void ReleaseBuffer(T *buffer);
 extern cublasHandle_t cublas_handle_;
 
 #elif defined(USE_CL)
-extern EasyCL *easyCL;
+extern CLCudaAPI::Context *context_;
+extern CLCudaAPI::Queue *queue_;
+extern CLCudaAPI::Event *event_;
 
-extern CLKernel *cl_channelmax_kernel_;
-extern CLKernel *cl_channelsub_kernel_;
-extern CLKernel *cl_channelsum_kernel_;
-extern CLKernel *cl_channeldiv_kernel_;
-extern CLKernel *cl_set_kernel_;
-extern CLKernel *cl_add_kernel_;
-extern CLKernel *cl_sub_kernel_;
-extern CLKernel *cl_mul_kernel_;
-extern CLKernel *cl_div_kernel_;
-extern CLKernel *cl_sqr_kernel_;
-extern CLKernel *cl_exp_kernel_;
-extern CLKernel *cl_log_kernel_;
-extern CLKernel *cl_abs_kernel_;
-extern CLKernel *cl_pow_kernel_;
+extern CLCudaAPI::Kernel *cl_channelmax_kernel_;
+extern CLCudaAPI::Kernel *cl_channelsub_kernel_;
+extern CLCudaAPI::Kernel *cl_channelsum_kernel_;
+extern CLCudaAPI::Kernel *cl_channeldiv_kernel_;
+extern CLCudaAPI::Kernel *cl_set_kernel_;
+extern CLCudaAPI::Kernel *cl_add_kernel_;
+extern CLCudaAPI::Kernel *cl_sub_kernel_;
+extern CLCudaAPI::Kernel *cl_mul_kernel_;
+extern CLCudaAPI::Kernel *cl_div_kernel_;
+extern CLCudaAPI::Kernel *cl_sqr_kernel_;
+extern CLCudaAPI::Kernel *cl_exp_kernel_;
+extern CLCudaAPI::Kernel *cl_log_kernel_;
+extern CLCudaAPI::Kernel *cl_abs_kernel_;
+extern CLCudaAPI::Kernel *cl_pow_kernel_;
 
-extern CLKernel *cl_datatransform_kernel_;
-extern CLKernel *cl_im2col_kernel_;
-extern CLKernel *cl_pooling_kernel_;
-extern CLKernel *cl_concat_kernel_;
-extern CLKernel *cl_permute_kernel_;
-extern CLKernel *cl_activate_kernel_;
+extern CLCudaAPI::Kernel *cl_datatransform_kernel_;
+extern CLCudaAPI::Kernel *cl_im2col_kernel_;
+extern CLCudaAPI::Kernel *cl_pooling_kernel_;
+extern CLCudaAPI::Kernel *cl_concat_kernel_;
+extern CLCudaAPI::Kernel *cl_permute_kernel_;
+extern CLCudaAPI::Kernel *cl_activate_kernel_;
 #endif
 
 }  // namespace Kernel
