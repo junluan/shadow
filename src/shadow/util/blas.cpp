@@ -319,60 +319,38 @@ template void BlasSgemm(int TA, int TB, int M, int N, int K, float alpha,
 template <typename T>
 void ChannelMax(int num, int channels, int spatial_dim, const T *data,
                 T *val_max) {
-  cl_kernel kernel = (*Kernel::cl_channelmax_kernel_)();
-  clSetKernelArg(kernel, 0, sizeof(int), &num);
-  clSetKernelArg(kernel, 1, sizeof(int), &channels);
-  clSetKernelArg(kernel, 2, sizeof(int), &spatial_dim);
-  clSetKernelArg(kernel, 3, sizeof(cl_mem), data);
-  clSetKernelArg(kernel, 4, sizeof(cl_mem), val_max);
   size_t global = num * spatial_dim;
-  clEnqueueNDRangeKernel((*Kernel::queue_)(), kernel, 1, nullptr, &global,
-                         nullptr, 0, nullptr, nullptr);
-  clFinish((*Kernel::queue_)());
+  CLCudaAPI::Kernel *kernel = Kernel::cl_channelmax_kernel_;
+  kernel->SetArguments(num, channels, spatial_dim, *data, *val_max);
+  kernel->Launch(*Kernel::queue_, {global}, Kernel::event_);
+  Kernel::queue_->Finish();
 }
 template <typename T>
 void ChannelSub(int count, int num, int channels, int spatial_dim,
                 const T *val_sub, T *data) {
-  cl_kernel kernel = (*Kernel::cl_channelsub_kernel_)();
-  clSetKernelArg(kernel, 0, sizeof(int), &count);
-  clSetKernelArg(kernel, 1, sizeof(int), &num);
-  clSetKernelArg(kernel, 2, sizeof(int), &channels);
-  clSetKernelArg(kernel, 3, sizeof(int), &spatial_dim);
-  clSetKernelArg(kernel, 4, sizeof(cl_mem), val_sub);
-  clSetKernelArg(kernel, 5, sizeof(cl_mem), data);
   size_t global = count;
-  clEnqueueNDRangeKernel((*Kernel::queue_)(), kernel, 1, nullptr, &global,
-                         nullptr, 0, nullptr, nullptr);
-  clFinish((*Kernel::queue_)());
+  CLCudaAPI::Kernel *kernel = Kernel::cl_channelsub_kernel_;
+  kernel->SetArguments(count, num, channels, spatial_dim, *val_sub, *data);
+  kernel->Launch(*Kernel::queue_, {global}, Kernel::event_);
+  Kernel::queue_->Finish();
 }
 template <typename T>
 void ChannelSum(int num, int channels, int spatial_dim, const T *data,
                 T *val_sum) {
-  cl_kernel kernel = (*Kernel::cl_channelsum_kernel_)();
-  clSetKernelArg(kernel, 0, sizeof(int), &num);
-  clSetKernelArg(kernel, 1, sizeof(int), &channels);
-  clSetKernelArg(kernel, 2, sizeof(int), &spatial_dim);
-  clSetKernelArg(kernel, 3, sizeof(cl_mem), data);
-  clSetKernelArg(kernel, 4, sizeof(cl_mem), val_sum);
   size_t global = num * spatial_dim;
-  clEnqueueNDRangeKernel((*Kernel::queue_)(), kernel, 1, nullptr, &global,
-                         nullptr, 0, nullptr, nullptr);
-  clFinish((*Kernel::queue_)());
+  CLCudaAPI::Kernel *kernel = Kernel::cl_channelsum_kernel_;
+  kernel->SetArguments(num, channels, spatial_dim, *data, *val_sum);
+  kernel->Launch(*Kernel::queue_, {global}, Kernel::event_);
+  Kernel::queue_->Finish();
 }
 template <typename T>
 void ChannelDiv(int count, int num, int channels, int spatial_dim,
                 const T *val_div, T *data) {
-  cl_kernel kernel = (*Kernel::cl_channeldiv_kernel_)();
-  clSetKernelArg(kernel, 0, sizeof(int), &count);
-  clSetKernelArg(kernel, 1, sizeof(int), &num);
-  clSetKernelArg(kernel, 2, sizeof(int), &channels);
-  clSetKernelArg(kernel, 3, sizeof(int), &spatial_dim);
-  clSetKernelArg(kernel, 4, sizeof(cl_mem), val_div);
-  clSetKernelArg(kernel, 5, sizeof(cl_mem), data);
   size_t global = count;
-  clEnqueueNDRangeKernel((*Kernel::queue_)(), kernel, 1, nullptr, &global,
-                         nullptr, 0, nullptr, nullptr);
-  clFinish((*Kernel::queue_)());
+  CLCudaAPI::Kernel *kernel = Kernel::cl_channeldiv_kernel_;
+  kernel->SetArguments(count, num, channels, spatial_dim, *val_div, *data);
+  kernel->Launch(*Kernel::queue_, {global}, Kernel::event_);
+  Kernel::queue_->Finish();
 }
 
 template <typename T>
@@ -388,24 +366,17 @@ void Set(int n, float val, T *y, int offy) {
   clFinish((*Kernel::queue_)());
 }
 
-#define BLAS_BINARY_FUNC(name, kname)                                        \
-  template <typename T>                                                      \
-  inline void name(int n, const T *a, int offa, const T *b, int offb, T *y,  \
-                   int offy) {                                               \
-    cl_kernel kernel = (*Kernel::cl_##kname)();                              \
-    clSetKernelArg(kernel, 0, sizeof(int), &n);                              \
-    clSetKernelArg(kernel, 1, sizeof(cl_mem), a);                            \
-    clSetKernelArg(kernel, 2, sizeof(int), &offa);                           \
-    clSetKernelArg(kernel, 3, sizeof(cl_mem), b);                            \
-    clSetKernelArg(kernel, 4, sizeof(int), &offb);                           \
-    clSetKernelArg(kernel, 5, sizeof(cl_mem), y);                            \
-    clSetKernelArg(kernel, 6, sizeof(int), &offy);                           \
-    size_t global = n;                                                       \
-    clEnqueueNDRangeKernel((*Kernel::queue_)(), kernel, 1, nullptr, &global, \
-                           nullptr, 0, nullptr, nullptr);                    \
-    clFinish((*Kernel::queue_)());                                           \
-  }                                                                          \
-  template void name(int n, const cl_mem *a, int offa, const cl_mem *b,      \
+#define BLAS_BINARY_FUNC(name, kname)                                       \
+  template <typename T>                                                     \
+  inline void name(int n, const T *a, int offa, const T *b, int offb, T *y, \
+                   int offy) {                                              \
+    size_t global = n;                                                      \
+    CLCudaAPI::Kernel *kernel = Kernel::cl_##kname;                         \
+    kernel->SetArguments(n, *a, offa, *b, offb, *y, offy);                  \
+    kernel->Launch(*Kernel::queue_, {global}, Kernel::event_);              \
+    Kernel::queue_->Finish();                                               \
+  }                                                                         \
+  template void name(int n, const cl_mem *a, int offa, const cl_mem *b,     \
                      int offb, cl_mem *y, int offy);
 
 BLAS_BINARY_FUNC(Add, add_kernel_);
@@ -413,20 +384,15 @@ BLAS_BINARY_FUNC(Sub, sub_kernel_);
 BLAS_BINARY_FUNC(Mul, mul_kernel_);
 BLAS_BINARY_FUNC(Div, div_kernel_);
 
-#define BLAS_UNARY_FUNC(name, kname)                                         \
-  template <typename T>                                                      \
-  inline void name(int n, const T *a, int offa, T *y, int offy) {            \
-    cl_kernel kernel = (*Kernel::cl_##kname)();                              \
-    clSetKernelArg(kernel, 0, sizeof(int), &n);                              \
-    clSetKernelArg(kernel, 1, sizeof(cl_mem), a);                            \
-    clSetKernelArg(kernel, 2, sizeof(int), &offa);                           \
-    clSetKernelArg(kernel, 3, sizeof(cl_mem), y);                            \
-    clSetKernelArg(kernel, 4, sizeof(int), &offy);                           \
-    size_t global = n;                                                       \
-    clEnqueueNDRangeKernel((*Kernel::queue_)(), kernel, 1, nullptr, &global, \
-                           nullptr, 0, nullptr, nullptr);                    \
-    clFinish((*Kernel::queue_)());                                           \
-  }                                                                          \
+#define BLAS_UNARY_FUNC(name, kname)                              \
+  template <typename T>                                           \
+  inline void name(int n, const T *a, int offa, T *y, int offy) { \
+    size_t global = n;                                            \
+    CLCudaAPI::Kernel *kernel = Kernel::cl_##kname;               \
+    kernel->SetArguments(n, *a, offa, *y, offy);                  \
+    kernel->Launch(*Kernel::queue_, {global}, Kernel::event_);    \
+    Kernel::queue_->Finish();                                     \
+  }                                                               \
   template void name(int n, const cl_mem *a, int offa, cl_mem *y, int offy);
 
 BLAS_UNARY_FUNC(Sqr, sqr_kernel_);
@@ -436,17 +402,11 @@ BLAS_UNARY_FUNC(Abs, abs_kernel_);
 
 template <typename T>
 void Pow(int n, const T *a, int offa, float alpha, T *y, int offy) {
-  cl_kernel kernel = (*Kernel::cl_pow_kernel_)();
-  clSetKernelArg(kernel, 0, sizeof(int), &n);
-  clSetKernelArg(kernel, 1, sizeof(cl_mem), a);
-  clSetKernelArg(kernel, 2, sizeof(int), &offa);
-  clSetKernelArg(kernel, 3, sizeof(float), &alpha);
-  clSetKernelArg(kernel, 4, sizeof(cl_mem), y);
-  clSetKernelArg(kernel, 5, sizeof(int), &offy);
   size_t global = n;
-  clEnqueueNDRangeKernel((*Kernel::queue_)(), kernel, 1, nullptr, &global,
-                         nullptr, 0, nullptr, nullptr);
-  clFinish((*Kernel::queue_)());
+  CLCudaAPI::Kernel *kernel = Kernel::cl_pow_kernel_;
+  kernel->SetArguments(n, *a, offa, alpha, *y, offy);
+  kernel->Launch(*Kernel::queue_, {global}, Kernel::event_);
+  Kernel::queue_->Finish();
 }
 
 template <typename T>
@@ -458,33 +418,32 @@ void Scale(int n, float alpha, const T *x, int offx, T *y, int offy) {
 // Level 1
 template <typename T>
 void BlasSscal(int n, float alpha, T *x, int offx) {
-  cl_command_queue queue = (*Kernel::queue_)();
-  clblasSscal(n, alpha, *x, offx, 1, 1, &queue, 0, nullptr, nullptr);
-  clFinish(queue);
+  clblasSscal(n, alpha, *x, offx, 1, 1, Kernel::queue_->pointer(), 0, nullptr,
+              nullptr);
+  Kernel::queue_->Finish();
 }
 
 template <typename T>
 void BlasScopy(int n, const T *x, int offx, T *y, int offy) {
-  cl_command_queue queue = (*Kernel::queue_)();
-  clblasScopy(n, *x, offx, 1, *y, offy, 1, 1, &queue, 0, nullptr, nullptr);
-  clFinish(queue);
+  clblasScopy(n, *x, offx, 1, *y, offy, 1, 1, Kernel::queue_->pointer(), 0,
+              nullptr, nullptr);
+  Kernel::queue_->Finish();
 }
 
 template <typename T>
 void BlasSaxpy(int n, float alpha, const T *x, int offx, T *y, int offy) {
-  cl_command_queue queue = (*Kernel::queue_)();
-  clblasSaxpy(n, alpha, *x, offx, 1, *y, offy, 1, 1, &queue, 0, nullptr,
-              nullptr);
-  clFinish(queue);
+  clblasSaxpy(n, alpha, *x, offx, 1, *y, offy, 1, 1, Kernel::queue_->pointer(),
+              0, nullptr, nullptr);
+  Kernel::queue_->Finish();
 }
 
 template <typename T>
 void BlasSasum(int n, const T *x, int offx, float *y) {
   cl_mem *y_ = Kernel::MakeBuffer<cl_mem>(1, static_cast<float *>(nullptr));
   cl_mem *temp_ = Kernel::MakeBuffer<cl_mem>(n, static_cast<float *>(nullptr));
-  cl_command_queue queue = (*Kernel::queue_)();
-  clblasSasum(n, *y_, 0, *x, offx, 1, *temp_, 1, &queue, 0, nullptr, nullptr);
-  clFinish(queue);
+  clblasSasum(n, *y_, 0, *x, offx, 1, *temp_, 1, Kernel::queue_->pointer(), 0,
+              nullptr, nullptr);
+  Kernel::queue_->Finish();
   Kernel::ReadBuffer(1, y_, y);
   Kernel::ReleaseBuffer(y_);
   Kernel::ReleaseBuffer(temp_);
@@ -495,10 +454,10 @@ template <typename T>
 void BlasSgemv(int TA, int M, int N, float alpha, const T *A, int offA,
                const T *x, int offx, float beta, T *y, int offy) {
   clblasTranspose transA = TA ? clblasTrans : clblasNoTrans;
-  cl_command_queue queue = (*Kernel::queue_)();
   clblasSgemv(clblasRowMajor, transA, M, N, alpha, *A, offA, N, *x, offx, 1,
-              beta, *y, offy, 1, 1, &queue, 0, nullptr, nullptr);
-  clFinish(queue);
+              beta, *y, offy, 1, 1, Kernel::queue_->pointer(), 0, nullptr,
+              nullptr);
+  Kernel::queue_->Finish();
 }
 
 // Level 3
@@ -508,10 +467,10 @@ void BlasSgemm(int TA, int TB, int M, int N, int K, float alpha, const T *A,
   int lda = TA ? M : K, ldb = TB ? K : N;
   clblasTranspose transA = TA ? clblasTrans : clblasNoTrans;
   clblasTranspose transB = TB ? clblasTrans : clblasNoTrans;
-  cl_command_queue queue = (*Kernel::queue_)();
   clblasSgemm(clblasRowMajor, transA, transB, M, N, K, alpha, *A, offA, lda, *B,
-              offB, ldb, beta, *C, offC, N, 1, &queue, 0, nullptr, nullptr);
-  clFinish(queue);
+              offB, ldb, beta, *C, offC, N, 1, Kernel::queue_->pointer(), 0,
+              nullptr, nullptr);
+  Kernel::queue_->Finish();
 }
 
 // Explicit instantiation

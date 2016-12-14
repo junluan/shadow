@@ -180,19 +180,12 @@ void DataTransform(const T *in_data, const VecInt &in_shape, float scale,
   int in_c = in_shape[1], spatial_dim = in_shape[2] * in_shape[3];
   int count = in_shape[0] * in_c * spatial_dim;
 
-  cl_kernel kernel = (*Kernel::cl_datatransform_kernel_)();
-  clSetKernelArg(kernel, 0, sizeof(cl_mem), in_data);
-  clSetKernelArg(kernel, 1, sizeof(int), &count);
-  clSetKernelArg(kernel, 2, sizeof(int), &in_c);
-  clSetKernelArg(kernel, 3, sizeof(int), &spatial_dim);
-  clSetKernelArg(kernel, 4, sizeof(float), &scale);
-  clSetKernelArg(kernel, 5, sizeof(int), &num_mean);
-  clSetKernelArg(kernel, 6, sizeof(cl_mem), mean_value);
-  clSetKernelArg(kernel, 7, sizeof(cl_mem), out_data);
   size_t global = count;
-  clEnqueueNDRangeKernel((*Kernel::queue_)(), kernel, 1, nullptr, &global,
-                         nullptr, 0, nullptr, nullptr);
-  clFinish((*Kernel::queue_)());
+  CLCudaAPI::Kernel *kernel = Kernel::cl_datatransform_kernel_;
+  kernel->SetArguments(*in_data, count, in_c, spatial_dim, scale, num_mean,
+                       *mean_value, *out_data);
+  kernel->Launch(*Kernel::queue_, {global}, Kernel::event_);
+  Kernel::queue_->Finish();
 }
 
 template <typename T>
@@ -202,23 +195,12 @@ void Im2Col(const T *in_data, const VecInt &in_shape, int offset,
   int in_c = in_shape[1], in_h = in_shape[2], in_w = in_shape[3];
   int out_h = out_shape[2], out_w = out_shape[3];
 
-  cl_kernel kernel = (*Kernel::cl_im2col_kernel_)();
-  clSetKernelArg(kernel, 0, sizeof(cl_mem), in_data);
-  clSetKernelArg(kernel, 1, sizeof(int), &offset);
-  clSetKernelArg(kernel, 2, sizeof(int), &in_c);
-  clSetKernelArg(kernel, 3, sizeof(int), &in_h);
-  clSetKernelArg(kernel, 4, sizeof(int), &in_w);
-  clSetKernelArg(kernel, 5, sizeof(int), &kernel_size);
-  clSetKernelArg(kernel, 6, sizeof(int), &stride);
-  clSetKernelArg(kernel, 7, sizeof(int), &pad);
-  clSetKernelArg(kernel, 8, sizeof(int), &dilation);
-  clSetKernelArg(kernel, 9, sizeof(int), &out_h);
-  clSetKernelArg(kernel, 10, sizeof(int), &out_w);
-  clSetKernelArg(kernel, 11, sizeof(cl_mem), out_data);
   size_t global = in_c * out_h * out_w;
-  clEnqueueNDRangeKernel((*Kernel::queue_)(), kernel, 1, nullptr, &global,
-                         nullptr, 0, nullptr, nullptr);
-  clFinish((*Kernel::queue_)());
+  CLCudaAPI::Kernel *kernel = Kernel::cl_im2col_kernel_;
+  kernel->SetArguments(*in_data, offset, in_c, in_h, in_w, kernel_size, stride,
+                       pad, dilation, out_h, out_w, *out_data);
+  kernel->Launch(*Kernel::queue_, {global}, Kernel::event_);
+  Kernel::queue_->Finish();
 }
 
 template <typename T>
@@ -229,72 +211,46 @@ void Pooling(const T *in_data, const VecInt &in_shape, int kernel_size,
   int in_c = in_shape[1], in_h = in_shape[2], in_w = in_shape[3];
   int out_h = out_shape[2], out_w = out_shape[3];
 
-  cl_kernel kernel = (*Kernel::cl_pooling_kernel_)();
-  clSetKernelArg(kernel, 0, sizeof(cl_mem), in_data);
-  clSetKernelArg(kernel, 1, sizeof(int), &batch);
-  clSetKernelArg(kernel, 2, sizeof(int), &in_c);
-  clSetKernelArg(kernel, 3, sizeof(int), &in_h);
-  clSetKernelArg(kernel, 4, sizeof(int), &in_w);
-  clSetKernelArg(kernel, 5, sizeof(int), &kernel_size);
-  clSetKernelArg(kernel, 6, sizeof(int), &stride);
-  clSetKernelArg(kernel, 7, sizeof(int), &pad);
-  clSetKernelArg(kernel, 8, sizeof(int), &mode);
-  clSetKernelArg(kernel, 9, sizeof(int), &out_h);
-  clSetKernelArg(kernel, 10, sizeof(int), &out_w);
-  clSetKernelArg(kernel, 11, sizeof(cl_mem), out_data);
   size_t global = batch * in_c * out_h * out_w;
-  clEnqueueNDRangeKernel((*Kernel::queue_)(), kernel, 1, nullptr, &global,
-                         nullptr, 0, nullptr, nullptr);
-  clFinish((*Kernel::queue_)());
+  CLCudaAPI::Kernel *kernel = Kernel::cl_pooling_kernel_;
+  kernel->SetArguments(*in_data, batch, in_c, in_h, in_w, kernel_size, stride,
+                       pad, mode, out_h, out_w, *out_data);
+  kernel->Launch(*Kernel::queue_, {global}, Kernel::event_);
+  Kernel::queue_->Finish();
 }
 
 template <typename T>
 void Concat(const T *in_data, int count, int num_concats, int concat_size,
             int top_concat_axis, int bottom_concat_axis, int offset_concat_axis,
             T *out_data) {
-  cl_kernel kernel = (*Kernel::cl_concat_kernel_)();
-  clSetKernelArg(kernel, 0, sizeof(cl_mem), in_data);
-  clSetKernelArg(kernel, 1, sizeof(int), &count);
-  clSetKernelArg(kernel, 2, sizeof(int), &num_concats);
-  clSetKernelArg(kernel, 3, sizeof(int), &concat_size);
-  clSetKernelArg(kernel, 4, sizeof(int), &top_concat_axis);
-  clSetKernelArg(kernel, 5, sizeof(int), &bottom_concat_axis);
-  clSetKernelArg(kernel, 6, sizeof(int), &offset_concat_axis);
-  clSetKernelArg(kernel, 7, sizeof(cl_mem), out_data);
   size_t global = count;
-  clEnqueueNDRangeKernel((*Kernel::queue_)(), kernel, 1, nullptr, &global,
-                         nullptr, 0, nullptr, nullptr);
-  clFinish((*Kernel::queue_)());
+  CLCudaAPI::Kernel *kernel = Kernel::cl_concat_kernel_;
+  kernel->SetArguments(*in_data, count, num_concats, concat_size,
+                       top_concat_axis, bottom_concat_axis, offset_concat_axis,
+                       *out_data);
+  kernel->Launch(*Kernel::queue_, {global}, Kernel::event_);
+  Kernel::queue_->Finish();
 }
 
 template <typename T, typename Dtype>
 void Permute(const T *in_data, int count, int num_axes,
              const Dtype *permute_order, const Dtype *old_steps,
              const Dtype *new_steps, T *out_data) {
-  cl_kernel kernel = (*Kernel::cl_permute_kernel_)();
-  clSetKernelArg(kernel, 0, sizeof(cl_mem), in_data);
-  clSetKernelArg(kernel, 1, sizeof(int), &count);
-  clSetKernelArg(kernel, 2, sizeof(int), &num_axes);
-  clSetKernelArg(kernel, 3, sizeof(cl_mem), permute_order);
-  clSetKernelArg(kernel, 4, sizeof(cl_mem), old_steps);
-  clSetKernelArg(kernel, 5, sizeof(cl_mem), new_steps);
-  clSetKernelArg(kernel, 6, sizeof(cl_mem), out_data);
   size_t global = count;
-  clEnqueueNDRangeKernel((*Kernel::queue_)(), kernel, 1, nullptr, &global,
-                         nullptr, 0, nullptr, nullptr);
-  clFinish((*Kernel::queue_)());
+  CLCudaAPI::Kernel *kernel = Kernel::cl_permute_kernel_;
+  kernel->SetArguments(*in_data, count, num_axes, *permute_order, *old_steps,
+                       *new_steps, *out_data);
+  kernel->Launch(*Kernel::queue_, {global}, Kernel::event_);
+  Kernel::queue_->Finish();
 }
 
 template <typename T>
 void Activate(T *data, int count, int type) {
-  cl_kernel kernel = (*Kernel::cl_activate_kernel_)();
-  clSetKernelArg(kernel, 0, sizeof(cl_mem), data);
-  clSetKernelArg(kernel, 1, sizeof(int), &count);
-  clSetKernelArg(kernel, 2, sizeof(int), &type);
   size_t global = count;
-  clEnqueueNDRangeKernel((*Kernel::queue_)(), kernel, 1, nullptr, &global,
-                         nullptr, 0, nullptr, nullptr);
-  clFinish((*Kernel::queue_)());
+  CLCudaAPI::Kernel *kernel = Kernel::cl_activate_kernel_;
+  kernel->SetArguments(*data, count, type);
+  kernel->Launch(*Kernel::queue_, {global}, Kernel::event_);
+  Kernel::queue_->Finish();
 }
 
 // Explicit instantiation

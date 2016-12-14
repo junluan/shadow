@@ -33,12 +33,10 @@ CLCudaAPI::Kernel *cl_permute_kernel_ = nullptr;
 CLCudaAPI::Kernel *cl_activate_kernel_ = nullptr;
 
 void Setup(int device_id) {
-  auto platform_id = size_t{0};
-  auto dev_id = size_t{0};
-  auto platform_ = CLCudaAPI::Platform(platform_id);
-  auto device = new CLCudaAPI::Device(platform_, dev_id);
-  context_ = new CLCudaAPI::Context(*device);
-  queue_ = new CLCudaAPI::Queue(*context_, *device);
+  auto platform_ = CLCudaAPI::Platform(1);
+  auto device = CLCudaAPI::Device(platform_, device_id);
+  context_ = new CLCudaAPI::Context(device);
+  queue_ = new CLCudaAPI::Queue(*context_, device);
   event_ = new CLCudaAPI::Event();
 
   auto compiler_options = std::vector<std::string>{};
@@ -46,7 +44,7 @@ void Setup(int device_id) {
   const std::string cl_blas = "src/shadow/util/blas.cl";
   auto program_blas =
       CLCudaAPI::Program(*context_, Util::read_text_from_file(cl_blas));
-  program_blas.Build(*device, compiler_options);
+  program_blas.Build(device, compiler_options);
 
   cl_channelmax_kernel_ = new CLCudaAPI::Kernel(program_blas, "ChannelMax");
   cl_channelsub_kernel_ = new CLCudaAPI::Kernel(program_blas, "ChannelSub");
@@ -66,7 +64,7 @@ void Setup(int device_id) {
   const std::string cl_image = "src/shadow/util/image.cl";
   auto program_image =
       CLCudaAPI::Program(*context_, Util::read_text_from_file(cl_image));
-  program_image.Build(*device, compiler_options);
+  program_image.Build(device, compiler_options);
 
   cl_datatransform_kernel_ =
       new CLCudaAPI::Kernel(program_image, "DataTransform");

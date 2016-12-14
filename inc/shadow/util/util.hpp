@@ -33,9 +33,7 @@ inline Dtype constrain(Dtype min, Dtype max, Dtype value) {
 
 template <typename Dtype>
 inline std::string str(Dtype val) {
-  std::stringstream out;
-  out << val;
-  return out.str();
+  return std::to_string(val);
 }
 
 inline std::string format_int(int n, int width, char pad = ' ') {
