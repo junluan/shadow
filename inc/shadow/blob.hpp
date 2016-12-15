@@ -6,7 +6,7 @@
 #include "shadow/util/type.hpp"
 
 #if defined(USE_CL)
-#define BACKEND cl_mem
+#define BACKEND EasyCL::Buffer<Dtype>
 #else
 #define BACKEND Dtype
 #endif

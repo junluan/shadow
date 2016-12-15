@@ -24,7 +24,9 @@ inline int GetBlocks(const int N) { return (N + NumThreads - 1) / NumThreads; }
   }
 
 #elif defined(USE_CL)
-#include "CLCudaAPI/clpp11.h"
+#include "CLCudaAPI/easycl.hpp"
+typedef EasyCL::Buffer<int> BufferI;
+typedef EasyCL::Buffer<float> BufferF;
 #endif
 
 namespace Kernel {
@@ -41,7 +43,7 @@ void ReadBuffer(int size, const T *src, Dtype *des);
 template <typename T, typename Dtype>
 void WriteBuffer(int size, const Dtype *src, T *des);
 
-template <typename T, typename Dtype>
+template <typename T, typename Dtype = float>
 void CopyBuffer(int size, const T *src, T *des);
 
 template <typename T>
@@ -51,31 +53,32 @@ void ReleaseBuffer(T *buffer);
 extern cublasHandle_t cublas_handle_;
 
 #elif defined(USE_CL)
-extern CLCudaAPI::Context *context_;
-extern CLCudaAPI::Queue *queue_;
-extern CLCudaAPI::Event *event_;
+extern EasyCL::Device *device_;
+extern EasyCL::Context *context_;
+extern EasyCL::Queue *queue_;
+extern EasyCL::Event *event_;
 
-extern CLCudaAPI::Kernel *cl_channelmax_kernel_;
-extern CLCudaAPI::Kernel *cl_channelsub_kernel_;
-extern CLCudaAPI::Kernel *cl_channelsum_kernel_;
-extern CLCudaAPI::Kernel *cl_channeldiv_kernel_;
-extern CLCudaAPI::Kernel *cl_set_kernel_;
-extern CLCudaAPI::Kernel *cl_add_kernel_;
-extern CLCudaAPI::Kernel *cl_sub_kernel_;
-extern CLCudaAPI::Kernel *cl_mul_kernel_;
-extern CLCudaAPI::Kernel *cl_div_kernel_;
-extern CLCudaAPI::Kernel *cl_sqr_kernel_;
-extern CLCudaAPI::Kernel *cl_exp_kernel_;
-extern CLCudaAPI::Kernel *cl_log_kernel_;
-extern CLCudaAPI::Kernel *cl_abs_kernel_;
-extern CLCudaAPI::Kernel *cl_pow_kernel_;
+extern EasyCL::Kernel *cl_channelmax_kernel_;
+extern EasyCL::Kernel *cl_channelsub_kernel_;
+extern EasyCL::Kernel *cl_channelsum_kernel_;
+extern EasyCL::Kernel *cl_channeldiv_kernel_;
+extern EasyCL::Kernel *cl_set_kernel_;
+extern EasyCL::Kernel *cl_add_kernel_;
+extern EasyCL::Kernel *cl_sub_kernel_;
+extern EasyCL::Kernel *cl_mul_kernel_;
+extern EasyCL::Kernel *cl_div_kernel_;
+extern EasyCL::Kernel *cl_sqr_kernel_;
+extern EasyCL::Kernel *cl_exp_kernel_;
+extern EasyCL::Kernel *cl_log_kernel_;
+extern EasyCL::Kernel *cl_abs_kernel_;
+extern EasyCL::Kernel *cl_pow_kernel_;
 
-extern CLCudaAPI::Kernel *cl_datatransform_kernel_;
-extern CLCudaAPI::Kernel *cl_im2col_kernel_;
-extern CLCudaAPI::Kernel *cl_pooling_kernel_;
-extern CLCudaAPI::Kernel *cl_concat_kernel_;
-extern CLCudaAPI::Kernel *cl_permute_kernel_;
-extern CLCudaAPI::Kernel *cl_activate_kernel_;
+extern EasyCL::Kernel *cl_datatransform_kernel_;
+extern EasyCL::Kernel *cl_im2col_kernel_;
+extern EasyCL::Kernel *cl_pooling_kernel_;
+extern EasyCL::Kernel *cl_concat_kernel_;
+extern EasyCL::Kernel *cl_permute_kernel_;
+extern EasyCL::Kernel *cl_activate_kernel_;
 #endif
 
 }  // namespace Kernel

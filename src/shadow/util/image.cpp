@@ -181,7 +181,7 @@ void DataTransform(const T *in_data, const VecInt &in_shape, float scale,
   int count = in_shape[0] * in_c * spatial_dim;
 
   size_t global = count;
-  CLCudaAPI::Kernel *kernel = Kernel::cl_datatransform_kernel_;
+  EasyCL::Kernel *kernel = Kernel::cl_datatransform_kernel_;
   kernel->SetArguments(*in_data, count, in_c, spatial_dim, scale, num_mean,
                        *mean_value, *out_data);
   kernel->Launch(*Kernel::queue_, {global}, Kernel::event_);
@@ -196,7 +196,7 @@ void Im2Col(const T *in_data, const VecInt &in_shape, int offset,
   int out_h = out_shape[2], out_w = out_shape[3];
 
   size_t global = in_c * out_h * out_w;
-  CLCudaAPI::Kernel *kernel = Kernel::cl_im2col_kernel_;
+  EasyCL::Kernel *kernel = Kernel::cl_im2col_kernel_;
   kernel->SetArguments(*in_data, offset, in_c, in_h, in_w, kernel_size, stride,
                        pad, dilation, out_h, out_w, *out_data);
   kernel->Launch(*Kernel::queue_, {global}, Kernel::event_);
@@ -212,7 +212,7 @@ void Pooling(const T *in_data, const VecInt &in_shape, int kernel_size,
   int out_h = out_shape[2], out_w = out_shape[3];
 
   size_t global = batch * in_c * out_h * out_w;
-  CLCudaAPI::Kernel *kernel = Kernel::cl_pooling_kernel_;
+  EasyCL::Kernel *kernel = Kernel::cl_pooling_kernel_;
   kernel->SetArguments(*in_data, batch, in_c, in_h, in_w, kernel_size, stride,
                        pad, mode, out_h, out_w, *out_data);
   kernel->Launch(*Kernel::queue_, {global}, Kernel::event_);
@@ -224,7 +224,7 @@ void Concat(const T *in_data, int count, int num_concats, int concat_size,
             int top_concat_axis, int bottom_concat_axis, int offset_concat_axis,
             T *out_data) {
   size_t global = count;
-  CLCudaAPI::Kernel *kernel = Kernel::cl_concat_kernel_;
+  EasyCL::Kernel *kernel = Kernel::cl_concat_kernel_;
   kernel->SetArguments(*in_data, count, num_concats, concat_size,
                        top_concat_axis, bottom_concat_axis, offset_concat_axis,
                        *out_data);
@@ -237,7 +237,7 @@ void Permute(const T *in_data, int count, int num_axes,
              const Dtype *permute_order, const Dtype *old_steps,
              const Dtype *new_steps, T *out_data) {
   size_t global = count;
-  CLCudaAPI::Kernel *kernel = Kernel::cl_permute_kernel_;
+  EasyCL::Kernel *kernel = Kernel::cl_permute_kernel_;
   kernel->SetArguments(*in_data, count, num_axes, *permute_order, *old_steps,
                        *new_steps, *out_data);
   kernel->Launch(*Kernel::queue_, {global}, Kernel::event_);
@@ -247,30 +247,30 @@ void Permute(const T *in_data, int count, int num_axes,
 template <typename T>
 void Activate(T *data, int count, int type) {
   size_t global = count;
-  CLCudaAPI::Kernel *kernel = Kernel::cl_activate_kernel_;
+  EasyCL::Kernel *kernel = Kernel::cl_activate_kernel_;
   kernel->SetArguments(*data, count, type);
   kernel->Launch(*Kernel::queue_, {global}, Kernel::event_);
   Kernel::queue_->Finish();
 }
 
 // Explicit instantiation
-template void DataTransform(const cl_mem *in_data, const VecInt &in_shape,
-                            float scale, int num_mean, const cl_mem *mean_value,
-                            cl_mem *out_data);
-template void Im2Col(const cl_mem *in_data, const VecInt &in_shape, int offset,
+template void DataTransform(const BufferF *in_data, const VecInt &in_shape,
+                            float scale, int num_mean,
+                            const BufferF *mean_value, BufferF *out_data);
+template void Im2Col(const BufferF *in_data, const VecInt &in_shape, int offset,
                      int kernel_size, int stride, int pad, int dilation,
-                     const VecInt &out_shape, cl_mem *out_data);
-template void Pooling(const cl_mem *in_data, const VecInt &in_shape,
+                     const VecInt &out_shape, BufferF *out_data);
+template void Pooling(const BufferF *in_data, const VecInt &in_shape,
                       int kernel_size, int stride, int pad, int mode,
-                      const VecInt &out_shape, cl_mem *out_data);
-template void Concat(const cl_mem *in_data, int count, int num_concats,
+                      const VecInt &out_shape, BufferF *out_data);
+template void Concat(const BufferF *in_data, int count, int num_concats,
                      int concat_size, int top_concat_axis,
                      int bottom_concat_axis, int offset_concat_axis,
-                     cl_mem *out_data);
-template void Permute(const cl_mem *in_data, int count, int num_axes,
-                      const cl_mem *permute_order, const cl_mem *old_steps,
-                      const cl_mem *new_steps, cl_mem *out_data);
-template void Activate(cl_mem *data, int count, int type);
+                     BufferF *out_data);
+template void Permute(const BufferF *in_data, int count, int num_axes,
+                      const BufferI *permute_order, const BufferI *old_steps,
+                      const BufferI *new_steps, BufferF *out_data);
+template void Activate(BufferF *data, int count, int type);
 #endif
 
 }  // namespace Image
