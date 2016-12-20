@@ -20,12 +20,16 @@ set(OpenBLAS_FOUND ON)
 
 if (NOT OpenBLAS_INCLUDE_DIRS)
   set(OpenBLAS_FOUND OFF)
-  message(STATUS "Could not find OpenBLAS include. Turning OpenBLAS_FOUND off")
+  if (NOT OpenBLAS_FIND_QUIETLY)
+    message(STATUS "Could not find OpenBLAS include. Turning OpenBLAS_FOUND off")
+  endif ()
 endif ()
 
 if (NOT OpenBLAS_LIBRARIES)
   set(OpenBLAS_FOUND OFF)
-  message(STATUS "Could not find OpenBLAS lib. Turning OpenBLAS_FOUND off")
+  if (NOT OpenBLAS_FIND_QUIETLY)
+    message(STATUS "Could not find OpenBLAS lib. Turning OpenBLAS_FOUND off")
+  endif ()
 endif ()
 
 if (OpenBLAS_FOUND)

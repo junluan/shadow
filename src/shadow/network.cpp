@@ -14,9 +14,17 @@
 #include "shadow/layers/reshape_layer.hpp"
 #include "shadow/layers/softmax_layer.hpp"
 
+#if defined(USE_NNPACK)
+#include "nnpack.h"
+#endif
+
 void Network::Setup(int device_id) {
 #if defined(USE_CUDA) | defined(USE_CL)
   Kernel::Setup(device_id);
+#endif
+
+#if defined(USE_NNPACK)
+  CHECK_EQ(nnp_initialize(), nnp_status_success);
 #endif
 }
 
@@ -85,6 +93,10 @@ void Network::Release() {
 
 #if defined(USE_CUDA) | defined(USE_CL)
   Kernel::Release();
+#endif
+
+#if defined(USE_NNPACK)
+  CHECK_EQ(nnp_deinitialize(), nnp_status_success);
 #endif
 
   DLOG(INFO) << "Release Network!";

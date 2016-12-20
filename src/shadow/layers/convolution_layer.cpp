@@ -2,6 +2,10 @@
 #include "shadow/util/blas.hpp"
 #include "shadow/util/image.hpp"
 
+#if defined(USE_NNPACK)
+#include "nnpack.h"
+#endif
+
 inline int convolution_out_size(int dim, int kernel_size, int stride, int pad,
                                 int dilation) {
   int kernel_extent = dilation * (kernel_size - 1) + 1;
@@ -51,6 +55,36 @@ void ConvolutionLayer::Reshape() {
 void ConvolutionLayer::Forward() {
   int batch = bottoms_[0]->shape(0);
   int top_num = tops_[0]->num(), bottom_num = bottoms_[0]->num();
+
+#if defined(USE_NNPACK)
+  if (batch == 1 && dilation_ == 1) {
+    int in_c = bottoms_[0]->shape(1), out_c = tops_[0]->shape(1);
+
+    nnp_size input_size;
+    input_size.height = static_cast<size_t>(bottoms_[0]->shape(2));
+    input_size.width = static_cast<size_t>(bottoms_[0]->shape(3));
+
+    nnp_padding pad;
+    pad.top = pad.bottom = pad.left = pad.right = static_cast<size_t>(pad_);
+
+    nnp_size kernel_size;
+    kernel_size.height = kernel_size.width = static_cast<size_t>(kernel_size_);
+
+    nnp_size stride;
+    stride.height = stride.width = static_cast<size_t>(stride_);
+
+    auto algorithm = nnp_convolution_algorithm_auto;
+    auto transform = nnp_convolution_transform_strategy_tuple_based;
+
+    auto status = nnp_convolution_inference(
+        algorithm, transform, in_c, out_c, input_size, pad, kernel_size, stride,
+        bottoms_[0]->data(), blobs_[0]->data(), blobs_[1]->data(),
+        tops_[0]->mutable_data(), nullptr, nullptr);
+    CHECK_EQ(nnp_status_success, status);
+    return;
+  }
+#endif
+
   for (int b = 0; b < batch; ++b) {
     Image::Im2Col(bottoms_[0]->data(), bottoms_[0]->shape(), b * bottom_num,
                   kernel_size_, stride_, pad_, dilation_, tops_[0]->shape(),

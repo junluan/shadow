@@ -19,12 +19,16 @@ set(OpenCL_FOUND ON)
 
 if (NOT OpenCL_INCLUDE_DIRS)
   set(OpenCL_FOUND OFF)
-  message(STATUS "Could not find OpenCL include. Turning OpenCL_FOUND off")
+  if (NOT OpenCL_FIND_QUIETLY)
+    message(STATUS "Could not find OpenCL include. Turning OpenCL_FOUND off")
+  endif ()
 endif ()
 
 if (NOT OpenCL_LIBRARIES)
   set(OpenCL_FOUND OFF)
-  message(STATUS "Could not find OpenCL lib. Turning OpenCL_FOUND off")
+  if (NOT OpenCL_FIND_QUIETLY)
+    message(STATUS "Could not find OpenCL lib. Turning OpenCL_FOUND off")
+  endif ()
 endif ()
 
 if (OpenCL_FOUND)
