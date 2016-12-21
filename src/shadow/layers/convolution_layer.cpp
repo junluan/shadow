@@ -24,11 +24,26 @@ void ConvolutionLayer::Setup(VecBlob *blobs) {
   pad_ = conv_param.pad();
   dilation_ = conv_param.dilation();
   bias_term_ = conv_param.bias_term();
+
+#if defined(USE_CUDNN)
+  if (dilation_ == 1) {
+    cudnn::createConvolutionDesc<float>(&conv_desc_);
+    cudnn::createTensor4dDesc<float>(&bottom_desc_);
+    cudnn::createTensor4dDesc<float>(&top_desc_);
+    cudnn::createFilterDesc<float>(&filter_desc_, num_output_,
+                                   bottoms_[0]->shape(1), kernel_size_,
+                                   kernel_size_);
+    if (bias_term_) {
+      cudnn::createTensor4dDesc<float>(&bias_desc_);
+      cudnn::setTensor4dDesc<float>(&bias_desc_, 1, num_output_, 1, 1);
+    }
+  }
+#endif
 }
 
 void ConvolutionLayer::Reshape() {
-  int in_c = bottoms_[0]->shape(1), in_h = bottoms_[0]->shape(2),
-      in_w = bottoms_[0]->shape(3);
+  int batch = bottoms_[0]->shape(0), in_c = bottoms_[0]->shape(1),
+      in_h = bottoms_[0]->shape(2), in_w = bottoms_[0]->shape(3);
 
   VecInt top_shape = bottoms_[0]->shape();
   top_shape[1] = num_output_;
@@ -45,6 +60,35 @@ void ConvolutionLayer::Reshape() {
   Blas::Set(out_spatial_dim_, 1, biases_multiplier_.mutable_data(), 0);
   col_image_.reshape(kernel_dim_, out_spatial_dim_);
 
+#if defined(USE_CUDNN)
+  if (dilation_ == 1) {
+    cudnn::setTensor4dDesc<float>(&bottom_desc_, batch, in_c, in_h, in_w);
+    cudnn::setTensor4dDesc<float>(&top_desc_, batch, num_output_, top_shape[2],
+                                  top_shape[3]);
+    cudnn::setConvolutionDesc<float>(&conv_desc_, bottom_desc_, filter_desc_,
+                                     pad_, pad_, stride_, stride_);
+
+    size_t workspace_limit_bytes = 8 * 1024 * 1024;
+    CUDNN_CHECK(cudnnGetConvolutionForwardAlgorithm(
+        Kernel::cudnn_handle_, bottom_desc_, filter_desc_, conv_desc_,
+        top_desc_, CUDNN_CONVOLUTION_FWD_SPECIFY_WORKSPACE_LIMIT,
+        workspace_limit_bytes, &fwd_algo_));
+
+    CUDNN_CHECK(cudnnGetConvolutionForwardWorkspaceSize(
+        Kernel::cudnn_handle_, bottom_desc_, filter_desc_, conv_desc_,
+        top_desc_, fwd_algo_, &(workspace_fwd_size_)));
+
+    if (workspace_fwd_size_ > 0) {
+      cudaFree(workspace_);
+      if (cudaMalloc(&workspace_, workspace_fwd_size_) != cudaSuccess) {
+        fwd_algo_ = CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_GEMM;
+        workspace_fwd_size_ = 0;
+        workspace_ = nullptr;
+      }
+    }
+  }
+#endif
+
   DLOG(INFO) << layer_name_ << ": "
              << Util::format_vector(bottoms_[0]->shape(), ",", "(", ")")
              << " -> " << num_output_ << "_" << kernel_size_ << "x"
@@ -55,6 +99,24 @@ void ConvolutionLayer::Reshape() {
 void ConvolutionLayer::Forward() {
   int batch = bottoms_[0]->shape(0);
   int top_num = tops_[0]->num(), bottom_num = bottoms_[0]->num();
+
+#if defined(USE_CUDNN)
+  if (dilation_ == 1) {
+    CUDNN_CHECK(cudnnConvolutionForward(
+        Kernel::cudnn_handle_, cudnn::dataType<float>::one, bottom_desc_,
+        bottoms_[0]->data(), filter_desc_, blobs_[0]->data(), conv_desc_,
+        fwd_algo_, workspace_, workspace_fwd_size_,
+        cudnn::dataType<float>::zero, top_desc_, tops_[0]->mutable_data()));
+
+    if (this->bias_term_) {
+      CUDNN_CHECK(cudnnAddTensor(Kernel::cudnn_handle_,
+                                 cudnn::dataType<float>::one, bias_desc_,
+                                 blobs_[1]->data(), cudnn::dataType<float>::one,
+                                 top_desc_, tops_[0]->mutable_data()));
+    }
+    return;
+  }
+#endif
 
 #if defined(USE_NNPACK)
   if (batch == 1 && dilation_ == 1) {
@@ -103,6 +165,34 @@ void ConvolutionLayer::Forward() {
 void ConvolutionLayer::Release() {
   biases_multiplier_.clear();
   col_image_.clear();
+
+#if defined(USE_CUDNN)
+  if (conv_desc_ != nullptr) {
+    cudnnDestroyConvolutionDescriptor(conv_desc_);
+    conv_desc_ = nullptr;
+  }
+  if (bottom_desc_ != nullptr) {
+    cudnnDestroyTensorDescriptor(bottom_desc_);
+    bottom_desc_ = nullptr;
+  }
+  if (top_desc_ != nullptr) {
+    cudnnDestroyTensorDescriptor(top_desc_);
+    top_desc_ = nullptr;
+  }
+  if (filter_desc_ != nullptr) {
+    cudnnDestroyFilterDescriptor(filter_desc_);
+    filter_desc_ = nullptr;
+  }
+  if (bias_desc_ != nullptr) {
+    cudnnDestroyTensorDescriptor(bias_desc_);
+    bias_desc_ = nullptr;
+  }
+
+  if (workspace_ != nullptr) {
+    cudaFree(workspace_);
+    workspace_ = nullptr;
+  }
+#endif
 
   // DLOG(INFO) << "Free ConvolutionLayer!";
 }

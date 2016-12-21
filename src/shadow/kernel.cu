@@ -9,8 +9,12 @@ namespace Kernel {
 cublasHandle_t cublas_handle_ = nullptr;
 
 void Setup(int device_id) {
-  CheckError(cudaSetDevice(device_id));
+  CUDA_CHECK(cudaSetDevice(device_id));
   cublasCreate(&cublas_handle_);
+
+#if defined(USE_CUDNN)
+  CUDNN_CHECK(cudnnCreate(&cudnn_handle_));
+#endif
 }
 
 void Release() {
@@ -18,12 +22,19 @@ void Release() {
     cublasDestroy(cublas_handle_);
     cublas_handle_ = nullptr;
   }
+
+#if defined(USE_CUDNN)
+  if (cudnn_handle_ != nullptr) {
+    CUDNN_CHECK(cudnnDestroy(cudnn_handle_));
+    cudnn_handle_ = nullptr;
+  }
+#endif
 }
 
 template <typename T, typename Dtype>
 T *MakeBuffer(int size, Dtype *host_ptr) {
   T *buffer;
-  CheckError(cudaMalloc(&buffer, size * sizeof(Dtype)));
+  CUDA_CHECK(cudaMalloc(&buffer, size * sizeof(Dtype)));
   if (host_ptr != nullptr) {
     WriteBuffer(size, host_ptr, buffer);
   }
@@ -32,25 +43,25 @@ T *MakeBuffer(int size, Dtype *host_ptr) {
 
 template <typename T, typename Dtype>
 void ReadBuffer(int size, const T *src, Dtype *des) {
-  CheckError(
+  CUDA_CHECK(
       cudaMemcpy(des, src, size * sizeof(Dtype), cudaMemcpyDeviceToHost));
 }
 
 template <typename T, typename Dtype>
 void WriteBuffer(int size, const Dtype *src, T *des) {
-  CheckError(
+  CUDA_CHECK(
       cudaMemcpy(des, src, size * sizeof(Dtype), cudaMemcpyHostToDevice));
 }
 
 template <typename T, typename Dtype>
 void CopyBuffer(int size, const T *src, T *des) {
-  CheckError(
+  CUDA_CHECK(
       cudaMemcpy(des, src, size * sizeof(Dtype), cudaMemcpyDeviceToDevice));
 }
 
 template <typename T>
 void ReleaseBuffer(T *buffer) {
-  CheckError(cudaFree(buffer));
+  CUDA_CHECK(cudaFree(buffer));
 }
 
 // Explicit instantiation

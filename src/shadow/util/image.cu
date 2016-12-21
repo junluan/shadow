@@ -30,7 +30,7 @@ void DataTransform(const T *in_data, const VecInt &in_shape, float scale,
   int count = in_shape[0] * in_c * spatial_dim;
   KernelDataTransform<<<GetBlocks(count), NumThreads>>>(
       in_data, count, in_c, spatial_dim, scale, num_mean, mean_value, out_data);
-  CheckError(cudaPeekAtLastError());
+  CUDA_CHECK(cudaPeekAtLastError());
 }
 
 __global__ void KernelIm2Col(const float *im_data, int offset, int in_c,
@@ -70,7 +70,7 @@ void Im2Col(const T *in_data, const VecInt &in_shape, int offset,
   KernelIm2Col<<<GetBlocks(N), NumThreads>>>(in_data, offset, in_c, in_h, in_w,
                                              kernel_size, stride, pad, dilation,
                                              out_h, out_w, out_data);
-  CheckError(cudaPeekAtLastError());
+  CUDA_CHECK(cudaPeekAtLastError());
 }
 
 __global__ void KernelPooling(const float *in_data, int batch, int in_c,
@@ -119,7 +119,7 @@ void Pooling(const T *in_data, const VecInt &in_shape, int kernel_size,
   KernelPooling<<<GetBlocks(N), NumThreads>>>(in_data, batch, in_c, in_h, in_w,
                                               kernel_size, stride, pad, mode,
                                               out_h, out_w, out_data);
-  CheckError(cudaPeekAtLastError());
+  CUDA_CHECK(cudaPeekAtLastError());
 }
 
 __global__ void KernelConcat(const float *in_data, int count, int num_concats,
@@ -144,7 +144,7 @@ void Concat(const T *in_data, int count, int num_concats, int concat_size,
   KernelConcat<<<GetBlocks(count), NumThreads>>>(
       in_data, count, num_concats, concat_size, top_concat_axis,
       bottom_concat_axis, offset_concat_axis, out_data);
-  CheckError(cudaPeekAtLastError());
+  CUDA_CHECK(cudaPeekAtLastError());
 }
 
 __global__ void KernelPermute(const float *in_data, int count, int num_axes,
@@ -168,7 +168,7 @@ void Permute(const T *in_data, int count, int num_axes,
              const Dtype *new_steps, T *out_data) {
   KernelPermute<<<GetBlocks(count), NumThreads>>>(
       in_data, count, num_axes, permute_order, old_steps, new_steps, out_data);
-  CheckError(cudaPeekAtLastError());
+  CUDA_CHECK(cudaPeekAtLastError());
 }
 
 __device__ float ActivateValue(float x, int type) {
@@ -193,7 +193,7 @@ __global__ void KernelActivate(float *data, int count, int type) {
 template <typename T>
 void Activate(T *data, int count, int type) {
   KernelActivate<<<GetBlocks(count), NumThreads>>>(data, count, type);
-  CheckError(cudaPeekAtLastError());
+  CUDA_CHECK(cudaPeekAtLastError());
 }
 
 // Explicit instantiation

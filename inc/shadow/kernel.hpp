@@ -4,6 +4,7 @@
 #if defined(USE_CUDA)
 #include "cublas_v2.h"
 #include "cuda_runtime.h"
+#include "shadow/cudnn.hpp"
 
 // CUDA: use 512 threads per block
 const int NumThreads = 512;
@@ -16,12 +17,11 @@ inline int GetBlocks(const int N) { return (N + NumThreads - 1) / NumThreads; }
   for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < (n); \
        i += blockDim.x * gridDim.x)
 
-#define CheckError(status)                                                \
-  {                                                                       \
-    if (status != cudaSuccess) {                                          \
-      LOG(FATAL) << "Error: " << std::string(cudaGetErrorString(status)); \
-    }                                                                     \
-  }
+#define CUDA_CHECK(condition)                                         \
+  do {                                                                \
+    cudaError_t error = condition;                                    \
+    CHECK_EQ(error, cudaSuccess) << " " << cudaGetErrorString(error); \
+  } while (0)
 
 #elif defined(USE_CL)
 #include "CLCudaAPI/easycl.hpp"
