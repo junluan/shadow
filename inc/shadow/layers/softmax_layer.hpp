@@ -19,6 +19,10 @@ class SoftmaxLayer : public Layer {
   int axis_, outer_num_, inner_num_;
 
   Blob<float> scale_;
+
+#if defined(USE_CUDNN)
+  cudnnTensorDescriptor_t bottom_desc_ = nullptr, top_desc_ = nullptr;
+#endif
 };
 
 #endif  // SHADOW_LAYERS_SOFTMAX_LAYER_HPP

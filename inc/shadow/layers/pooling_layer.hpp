@@ -20,6 +20,12 @@ class PoolingLayer : public Layer {
   bool global_pooling_;
 
   shadow::PoolingParameter::PoolType pool_type_;
+
+#if defined(USE_CUDNN)
+  cudnnPoolingDescriptor_t pooling_desc_ = nullptr;
+  cudnnTensorDescriptor_t bottom_desc_ = nullptr, top_desc_ = nullptr;
+  cudnnPoolingMode_t mode_;
+#endif
 };
 
 #endif  // SHADOW_LAYERS_POOLING_LAYER_HPP
