@@ -84,6 +84,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\..\inc\shadow\blob.hpp" />
+    <ClInclude Include="..\..\inc\shadow\cudnn.hpp" />
     <ClInclude Include="..\..\inc\shadow\kernel.hpp" />
     <ClInclude Include="..\..\inc\shadow\layers\activate_layer.hpp" />
     <ClInclude Include="..\..\inc\shadow\layers\concat_layer.hpp" />
@@ -110,6 +111,7 @@
     <ClInclude Include="..\..\inc\shadow\util\util.hpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\src\shadow\cudnn.cpp" />
     <ClCompile Include="..\..\src\shadow\kernel.cpp" />
     <ClCompile Include="..\..\src\shadow\layers\activate_layer.cpp" />
     <ClCompile Include="..\..\src\shadow\layers\concat_layer.cpp" />

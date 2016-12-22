@@ -23,4 +23,4 @@ if errorlevel 1 (
 
 rmdir /S /Q "%PROTO_TEMP_DIR%"
 
-if errorlevel 1 (exit 0)
+if errorlevel 1 (set errorlevel=0)

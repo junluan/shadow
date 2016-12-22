@@ -4,4 +4,4 @@ set DLLs=%~3%
 
 echo CopyDependencies.cmd : Copy "%DLLs%" dlls to "%OUT_DIR%"
 robocopy /NS /NC /NFL /NDL /NP /NJH /NJS "%DLL_Path%" %OUT_DIR% %DLLs%
-if errorlevel 1 (exit 0)
+if errorlevel 1 (set errorlevel=0)

@@ -9,6 +9,9 @@
         <CudaVersion>7.5</CudaVersion>
         <CudaArchitecture>compute_30,sm_30</CudaArchitecture>
 
+        <USE_CUDNN>true</USE_CUDNN>
+        <CUDNNRoot>C:\Softwares\cuda</CUDNNRoot>
+
         <USE_OpenCV>true</USE_OpenCV>
         <OpenCVVersion>2413</OpenCVVersion>
         <OpenCVRoot>C:\Softwares\OpenCV-2.4.13</OpenCVRoot>
@@ -35,6 +38,14 @@
             <AdditionalDependencies>$(CUDALibs);%(AdditionalDependencies)</AdditionalDependencies>
         </Link>
     </ItemDefinitionGroup>
+    <ItemDefinitionGroup Condition="'$(USE_CUDA)|$(USE_CUDNN)'=='true|true'">
+        <ClCompile>
+            <PreprocessorDefinitions>USE_CUDNN;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+        </ClCompile>
+        <Link>
+            <AdditionalDependencies>$(CUDNNLibs);%(AdditionalDependencies)</AdditionalDependencies>
+        </Link>
+    </ItemDefinitionGroup>
     <ItemDefinitionGroup Condition="'$(USE_OpenCV)'=='true'">
         <ClCompile>
             <PreprocessorDefinitions>USE_OpenCV;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -57,14 +68,19 @@
             <Command>"$(ScriptsDir)\ProtoCompile.cmd" "$(SolutionDir)" "$(ScriptsDir)"</Command>
         </PreBuildEvent>
     </ItemDefinitionGroup>
-    <ItemDefinitionGroup Condition="'$(ProjectName)'=='shadow'">
-        <PostBuildEvent Condition="'$(USE_CUDA)'=='true'">
-            <Command>"$(ScriptsDir)\CopyDependencies.cmd" "$(CUDADLLPath)" "$(OutDir)" "$(CUDADLLs)"</Command>
-        </PostBuildEvent>
-    </ItemDefinitionGroup>
     <ItemDefinitionGroup Condition="'$(ProjectName)'=='demo'">
-        <PostBuildEvent  Condition="'$(USE_OpenCV)'=='true'">
-            <Command>"$(ScriptsDir)\CopyDependencies.cmd" "$(OpenCVDLLPath)" "$(OutDir)" "$(OpenCVDLLs)"</Command>
+        <PostBuildEvent>
+            <Command>
+              if $(USE_CUDA) == true (
+                call "$(ScriptsDir)\CopyDependencies.cmd" "$(CUDADLLPath)" "$(OutDir)" "$(CUDADLLs)"
+                if $(USE_CUDNN) == true (
+                  call "$(ScriptsDir)\CopyDependencies.cmd" "$(CUDNNDLLPath)" "$(OutDir)" "$(CUDNNDLLs)"
+                )
+              )
+              if $(USE_OpenCV) == true (
+                call "$(ScriptsDir)\CopyDependencies.cmd" "$(OpenCVDLLPath)" "$(OutDir)" "$(OpenCVDLLs)"
+              )
+            </Command>
         </PostBuildEvent>
     </ItemDefinitionGroup>
 </Project>

@@ -24,4 +24,25 @@
         <IncludePath>$(CUDAIncPath);$(IncludePath)</IncludePath>
         <LibraryPath>$(CUDALibPath);$(LibraryPath)</LibraryPath>
     </PropertyGroup>
+
+    <!-- CUDNN settings -->
+    <PropertyGroup>
+        <CUDNNIncPath>$(CUDNNRoot)\include</CUDNNIncPath>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Platform)'=='x64'">
+        <CUDNNLibPath>$(CUDNNRoot)\lib\x64</CUDNNLibPath>
+        <CUDNNDLLPath>$(CUDNNRoot)\bin</CUDNNDLLPath>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <CUDNNLibs>cudnn.lib</CUDNNLibs>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Platform)'=='x64'">
+        <CUDNNDLLs>cudnn64*.dll</CUDNNDLLs>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <IncludePath>$(CUDNNIncPath);$(IncludePath)</IncludePath>
+        <LibraryPath>$(CUDNNLibPath);$(LibraryPath)</LibraryPath>
+    </PropertyGroup>
 </Project>
