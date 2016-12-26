@@ -52,6 +52,12 @@ __kernel void Set(int n, float val, __global float *y, int offy) {
   y[offy + globalid] = val;
 }
 
+__kernel void AddScalar(int n, float val, __global float *y, int offy) {
+  CL_KERNEL_LOOP(globalid, n);
+
+  y[offy + globalid] += val;
+}
+
 #define BLAS_BINARY_FUNC(name, operation)                                   \
   __kernel void name(int n, __global float *a, int offa, __global float *b, \
                      int offb, __global float *y, int offy) {               \

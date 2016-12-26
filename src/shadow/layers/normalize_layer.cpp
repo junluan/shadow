@@ -10,23 +10,20 @@ void NormalizeLayer::Setup(VecBlob *blobs) {
   channel_shared_ = normalize_param.channel_shared();
 
   if (blobs_.size() == 0) {
+    blobs_.push_back(new Blob<float>());
     if (channel_shared_) {
-      scale_.reshape(1);
+      blobs_[0]->reshape(1);
     } else {
-      scale_.reshape(bottoms_[0]->shape(1));
+      blobs_[0]->reshape(bottoms_[0]->shape(1));
     }
-    Blas::Set(scale_.count(), 1, scale_.mutable_data(), 0);
-  } else {
-    scale_.set_shape(blobs_[0]->shape());
-    scale_.share_data(blobs_[0]->data());
+    Blas::Set(blobs_[0]->count(), 1, blobs_[0]->mutable_data(), 0);
   }
 
   if (channel_shared_) {
-    CHECK_EQ(scale_.count(), 1);
-    scale_val_.resize(1);
-    scale_.read_data(scale_val_.data());
+    CHECK_EQ(blobs_[0]->count(), 1);
+    blobs_[0]->read_data(&scale_);
   } else {
-    CHECK_EQ(scale_.count(), bottoms_[0]->shape(1));
+    CHECK_EQ(blobs_[0]->count(), bottoms_[0]->shape(1));
   }
 }
 
@@ -80,10 +77,9 @@ void NormalizeLayer::Forward() {
                 tops_[0]->mutable_data(), data_offset);
     }
     if (channel_shared_) {
-      Blas::BlasSscal(num, scale_val_[0], tops_[0]->mutable_data(),
-                      data_offset);
+      Blas::BlasSscal(num, scale_, tops_[0]->mutable_data(), data_offset);
     } else {
-      Blas::BlasSgemm(0, 0, channels, spatial_dim_, 1, 1, scale_.data(), 0,
+      Blas::BlasSgemm(0, 0, channels, spatial_dim_, 1, 1, blobs_[0]->data(), 0,
                       sum_spatial_multiplier_.data(), 0, 0,
                       buffer_.mutable_data(), 0);
       Blas::Mul(num, tops_[0]->data(), data_offset, buffer_.data(), 0,
@@ -93,9 +89,7 @@ void NormalizeLayer::Forward() {
 }
 
 void NormalizeLayer::Release() {
-  scale_.clear();
-  norm_.clear();
-  buffer_.clear();
+  norm_.clear(), buffer_.clear();
   sum_channel_multiplier_.clear();
   sum_spatial_multiplier_.clear();
 

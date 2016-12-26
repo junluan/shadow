@@ -21,6 +21,10 @@ message ActivateParameter {
   optional ActivateType type = 1 [default = Relu];
 }
 
+message BatchNormParameter {
+  optional bool use_global_stats = 1 [default = true];
+}
+
 message ConcatParameter {
   optional int32 axis = 1 [default = 1];
 }
@@ -43,10 +47,6 @@ message ConvolutionParameter {
 message DataParameter {
   optional float scale = 1 [default = 1];
   repeated float mean_value = 2;
-}
-
-message DropoutParameter {
-  optional float probability = 1 [default = 0.5];
 }
 
 message FlattenParameter {
@@ -108,11 +108,11 @@ message LayerParameter {
   repeated Blob blobs = 5;
 
   optional ActivateParameter activate_param = 11;
-  optional ConcatParameter concat_param = 12;
-  optional ConnectedParameter connected_param = 13;
-  optional ConvolutionParameter convolution_param = 14;
-  optional DataParameter data_param = 15;
-  optional DropoutParameter dropout_param = 16;
+  optional BatchNormParameter batch_norm_param = 12;
+  optional ConcatParameter concat_param = 13;
+  optional ConnectedParameter connected_param = 14;
+  optional ConvolutionParameter convolution_param = 15;
+  optional DataParameter data_param = 16;
   optional FlattenParameter flatten_param = 17;
   optional NormalizeParameter normalize_param = 18;
   optional PermuteParameter permute_param = 19;

@@ -2,6 +2,7 @@
 #include "shadow/util/io.hpp"
 
 #include "shadow/layers/activate_layer.hpp"
+#include "shadow/layers/batch_norm_layer.hpp"
 #include "shadow/layers/concat_layer.hpp"
 #include "shadow/layers/connected_layer.hpp"
 #include "shadow/layers/convolution_layer.hpp"
@@ -182,6 +183,8 @@ Layer *Network::LayerFactory(const shadow::LayerParameter &layer_param) {
   const auto &layer_type = layer_param.type();
   if (!layer_type.compare("Activate")) {
     layer = new ActivateLayer(layer_param);
+  } else if (!layer_type.compare("BatchNorm")) {
+    layer = new BatchNormLayer(layer_param);
   } else if (!layer_type.compare("Concat")) {
     layer = new ConcatLayer(layer_param);
   } else if (!layer_type.compare("Connected")) {

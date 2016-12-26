@@ -95,6 +95,16 @@ void Set(int n, float val, T *y, int offy) {
   CUDA_CHECK(cudaPeekAtLastError());
 }
 
+__global__ void KernelAddScalar(int n, float val, float *y, int offy) {
+  CUDA_KERNEL_LOOP(globalid, n) { y[offy + globalid] += val; }
+}
+
+template <typename T>
+void Add(int n, float val, T *y, int offy) {
+  KernelAddScalar<<<GetBlocks(n), NumThreads>>>(n, val, y, offy);
+  CUDA_CHECK(cudaPeekAtLastError());
+}
+
 #define BLAS_BINARY_FUNC(name, operation)                                      \
   __global__ void Kernel##name(int n, const float *a, int offa,                \
                                const float *b, int offb, float *y, int offy) { \
@@ -208,6 +218,7 @@ template void ChannelDiv(int count, int num, int channels, int spatial_dim,
                          const float *val_div, float *data);
 
 template void Set(int n, float val, float *y, int offy);
+template void Add(int n, float val, float *y, int offy);
 template void Pow(int n, const float *a, int offa, float alpha, float *y,
                   int offy);
 template void Scale(int n, float alpha, const float *x, int offx, float *y,

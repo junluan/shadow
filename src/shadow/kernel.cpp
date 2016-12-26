@@ -16,6 +16,7 @@ EasyCL::Kernel *cl_channelsub_kernel_ = nullptr;
 EasyCL::Kernel *cl_channelsum_kernel_ = nullptr;
 EasyCL::Kernel *cl_channeldiv_kernel_ = nullptr;
 EasyCL::Kernel *cl_set_kernel_ = nullptr;
+EasyCL::Kernel *cl_addscalar_kernel_ = nullptr;
 EasyCL::Kernel *cl_add_kernel_ = nullptr;
 EasyCL::Kernel *cl_sub_kernel_ = nullptr;
 EasyCL::Kernel *cl_mul_kernel_ = nullptr;
@@ -51,6 +52,7 @@ void Setup(int device_id) {
   cl_channelsum_kernel_ = new EasyCL::Kernel(program_blas, "ChannelSum");
   cl_channeldiv_kernel_ = new EasyCL::Kernel(program_blas, "ChannelDiv");
   cl_set_kernel_ = new EasyCL::Kernel(program_blas, "Set");
+  cl_addscalar_kernel_ = new EasyCL::Kernel(program_blas, "AddScalar");
   cl_add_kernel_ = new EasyCL::Kernel(program_blas, "Add");
   cl_sub_kernel_ = new EasyCL::Kernel(program_blas, "Sub");
   cl_mul_kernel_ = new EasyCL::Kernel(program_blas, "Mul");
@@ -82,6 +84,7 @@ void Release() {
   delete cl_channelsum_kernel_;
   delete cl_channeldiv_kernel_;
   delete cl_set_kernel_;
+  delete cl_addscalar_kernel_;
   delete cl_add_kernel_;
   delete cl_sub_kernel_;
   delete cl_mul_kernel_;

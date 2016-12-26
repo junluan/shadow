@@ -18,9 +18,7 @@ class NormalizeLayer : public Layer {
  private:
   bool across_spatial_, channel_shared_;
   int spatial_dim_;
-
-  VecFloat scale_val_;
-  Blob<float> scale_;
+  float scale_;
 
   Blob<float> norm_, buffer_;
   Blob<float> sum_channel_multiplier_, sum_spatial_multiplier_;

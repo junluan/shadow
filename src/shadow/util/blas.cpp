@@ -67,6 +67,13 @@ void Set(int n, float val, T *y, int offy) {
   std::fill(y + offy, y + offy + n, val);
 }
 
+template <typename T>
+void Add(int n, float val, T *y, int offy) {
+  for (int i = 0; i < n; ++i) {
+    y[offy + i] += val;
+  }
+}
+
 #define BLAS_BINARY_FUNC(name, operation)                             \
   template <typename T>                                               \
   void name(int n, const T *a, int offa, const T *b, int offb, T *y,  \
@@ -291,6 +298,7 @@ template void ChannelDiv(int count, int num, int channels, int spatial_dim,
                          const float *val_div, float *data);
 
 template void Set(int n, float val, float *y, int offy);
+template void Add(int n, float val, float *y, int offy);
 template void Pow(int n, const float *a, int offa, float alpha, float *y,
                   int offy);
 template void Scale(int n, float alpha, const float *x, int offx, float *y,
@@ -357,6 +365,15 @@ template <typename T>
 void Set(int n, float val, T *y, int offy) {
   size_t global = n;
   EasyCL::Kernel *kernel = Kernel::cl_set_kernel_;
+  kernel->SetArguments(n, val, *y, offy);
+  kernel->Launch(*Kernel::queue_, {global}, Kernel::event_);
+  Kernel::queue_->Finish();
+}
+
+template <typename T>
+void Add(int n, float val, T *y, int offy) {
+  size_t global = n;
+  EasyCL::Kernel *kernel = Kernel::cl_addscalar_kernel_;
   kernel->SetArguments(n, val, *y, offy);
   kernel->Launch(*Kernel::queue_, {global}, Kernel::event_);
   Kernel::queue_->Finish();
@@ -477,6 +494,7 @@ template void ChannelDiv(int count, int num, int channels, int spatial_dim,
                          const BufferF *val_div, BufferF *data);
 
 template void Set(int n, float val, BufferF *y, int offy);
+template void Add(int n, float val, BufferF *y, int offy);
 template void Pow(int n, const BufferF *a, int offa, float alpha, BufferF *y,
                   int offy);
 template void Scale(int n, float alpha, const BufferF *x, int offx, BufferF *y,

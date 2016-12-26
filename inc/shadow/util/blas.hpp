@@ -20,6 +20,9 @@ template <typename T>
 void Set(int n, float val, T *y, int offy);
 
 template <typename T>
+void Add(int n, float val, T *y, int offy);
+
+template <typename T>
 void Add(int n, const T *a, int offa, const T *b, int offb, T *y, int offy);
 template <typename T>
 void Sub(int n, const T *a, int offa, const T *b, int offb, T *y, int offy);

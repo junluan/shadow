@@ -2,9 +2,9 @@ cmake_minimum_required(VERSION 3.2)
 project(shadow)
 
 option(USE_CUDA "Use CUDA" ON)
-option(USE_CUDNN "Use CUDNN for acceleration" ON)
-
 option(USE_CL "Use OpenCL" OFF)
+
+option(USE_CUDNN "Use CUDNN for acceleration" OFF)
 
 option(USE_BLAS "Use BLAS library in CPU mode" ON)
 option(USE_NNPACK "Use NNPACK library in CPU mode" ON)

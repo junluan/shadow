@@ -72,6 +72,22 @@ void ConvertActivate(const caffe::NetParameter& caffe_model,
   }
 }
 
+void ConvertBatchNorm(const caffe::NetParameter& caffe_model,
+                      const caffe::LayerParameter& caffe_layer,
+                      shadow::NetParameter* shadow_net) {
+  auto shadow_layer = shadow_net->add_layer();
+  shadow_layer->set_type("BatchNorm");
+  ConvertCommon(caffe_model, caffe_layer, shadow_layer);
+
+  auto shadow_param = shadow_layer->mutable_batch_norm_param();
+  if (caffe_layer.has_batch_norm_param()) {
+    const auto& caffe_param = caffe_layer.batch_norm_param();
+    if (caffe_param.has_use_global_stats()) {
+      shadow_param->set_use_global_stats(caffe_param.use_global_stats());
+    }
+  }
+}
+
 void ConvertConcat(const caffe::NetParameter& caffe_model,
                    const caffe::LayerParameter& caffe_layer,
                    shadow::NetParameter* shadow_net) {
@@ -306,6 +322,8 @@ void Convert(const caffe::NetParameter& caffe_deploy,
     const auto& layer_type = caffe_layer.type();
     if (!layer_type.compare("ReLU")) {
       ConvertActivate(caffe_model, caffe_layer, shadow_net);
+    } else if (!layer_type.compare("BatchNorm")) {
+      ConvertBatchNorm(caffe_model, caffe_layer, shadow_net);
     } else if (!layer_type.compare("Concat")) {
       ConvertConcat(caffe_model, caffe_layer, shadow_net);
     } else if (!layer_type.compare("InnerProduct")) {

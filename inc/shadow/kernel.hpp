@@ -63,6 +63,7 @@ extern EasyCL::Kernel *cl_channelsub_kernel_;
 extern EasyCL::Kernel *cl_channelsum_kernel_;
 extern EasyCL::Kernel *cl_channeldiv_kernel_;
 extern EasyCL::Kernel *cl_set_kernel_;
+extern EasyCL::Kernel *cl_addscalar_kernel_;
 extern EasyCL::Kernel *cl_add_kernel_;
 extern EasyCL::Kernel *cl_sub_kernel_;
 extern EasyCL::Kernel *cl_mul_kernel_;
