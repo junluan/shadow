@@ -25,7 +25,9 @@ void ConvertCommon(const caffe::NetParameter& caffe_model,
     if (!layer_name.compare(layer.name())) {
       for (const auto& caffe_blob : layer.blobs()) {
         auto shadow_blob = shadow_layer->add_blobs();
-        shadow_blob->set_count(caffe_blob.data_size());
+        for (const auto& dim : caffe_blob.shape().dim()) {
+          shadow_blob->mutable_shape()->add_dim(dim);
+        }
         for (const auto& data : caffe_blob.data()) {
           shadow_blob->add_data(data);
         }

@@ -15,6 +15,10 @@ template <typename Dtype>
 class Blob {
  public:
   explicit Blob(const std::string &name = "") : name_(name) {}
+  explicit Blob(const VecInt &shape, const std::string &name = "")
+      : name_(name) {
+    reshape(shape);
+  }
   ~Blob() { clear(); }
 
   inline const BACKEND *data() const { return data_; }

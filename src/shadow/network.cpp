@@ -51,17 +51,16 @@ void Network::LoadModel(const std::string &proto_str,
 void Network::SaveModel(const std::string &proto_bin) {
   for (int l = 0; l < layers_.size(); ++l) {
     net_param_.mutable_layer(l)->clear_blobs();
-    const Layer *layer = layers_[l];
-    for (auto &blob : layer->blobs()) {
-      int data_size = blob->count();
-      float *blob_data = new float[data_size];
-      blob->read_data(blob_data);
-      shadow::Blob *layer_blob = net_param_.mutable_layer(l)->add_blobs();
-      layer_blob->set_count(data_size);
-      for (int i = 0; i < data_size; ++i) {
-        layer_blob->add_data(blob_data[i]);
+    for (const auto &blob : layers_[l]->blobs()) {
+      auto layer_blob = net_param_.mutable_layer(l)->add_blobs();
+      for (const auto &dim : blob->shape()) {
+        layer_blob->mutable_shape()->add_dim(dim);
       }
-      delete[] blob_data;
+      VecFloat blob_data(blob->count());
+      blob->read_data(blob_data.data());
+      for (const auto &data : blob_data) {
+        layer_blob->add_data(data);
+      }
     }
   }
   IO::WriteProtoToBinaryFile(net_param_, proto_bin);

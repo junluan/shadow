@@ -51,13 +51,20 @@ class Layer {
       tops_.push_back(top);
     }
     for (const auto &proto_blob : layer_param_.blobs()) {
-      int data_size = proto_blob.data_size(), count = proto_blob.count();
       Blob<float> *blob = new Blob<float>();
+      const auto &dims = proto_blob.shape().dim();
+      VecInt shape;
+      int cc = 1, data_size = proto_blob.data_size();
+      for (const auto &dim : dims) {
+        cc *= dim;
+        shape.push_back(dim);
+      }
       if (data_size > 0) {
-        blob->reshape(data_size, 1, 1, 1, true);
+        CHECK_EQ(data_size, cc) << "Blob data size and blob shape are mismatch";
+        blob->reshape(shape, true);
         blob->set_data(proto_blob.data().data(), true);
-      } else if (count > 0) {
-        blob->reshape(count);
+      } else {
+        blob->reshape(shape);
       }
       blobs_.push_back(blob);
     }
