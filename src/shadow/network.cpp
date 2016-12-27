@@ -13,6 +13,7 @@
 #include "shadow/layers/pooling_layer.hpp"
 #include "shadow/layers/prior_box_layer.hpp"
 #include "shadow/layers/reshape_layer.hpp"
+#include "shadow/layers/scale_layer.hpp"
 #include "shadow/layers/softmax_layer.hpp"
 
 #if defined(USE_NNPACK)
@@ -204,6 +205,8 @@ Layer *Network::LayerFactory(const shadow::LayerParameter &layer_param) {
     layer = new PriorBoxLayer(layer_param);
   } else if (!layer_type.compare("Reshape")) {
     layer = new ReshapeLayer(layer_param);
+  } else if (!layer_type.compare("Scale")) {
+    layer = new ScaleLayer(layer_param);
   } else if (!layer_type.compare("Softmax")) {
     layer = new SoftmaxLayer(layer_param);
   } else {

@@ -79,6 +79,7 @@ extern EasyCL::Kernel *cl_im2col_kernel_;
 extern EasyCL::Kernel *cl_pooling_kernel_;
 extern EasyCL::Kernel *cl_concat_kernel_;
 extern EasyCL::Kernel *cl_permute_kernel_;
+extern EasyCL::Kernel *cl_scale_kernel_;
 extern EasyCL::Kernel *cl_activate_kernel_;
 #endif
 

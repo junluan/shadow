@@ -32,6 +32,7 @@ EasyCL::Kernel *cl_im2col_kernel_ = nullptr;
 EasyCL::Kernel *cl_pooling_kernel_ = nullptr;
 EasyCL::Kernel *cl_concat_kernel_ = nullptr;
 EasyCL::Kernel *cl_permute_kernel_ = nullptr;
+EasyCL::Kernel *cl_scale_kernel_ = nullptr;
 EasyCL::Kernel *cl_activate_kernel_ = nullptr;
 
 void Setup(int device_id) {
@@ -73,6 +74,7 @@ void Setup(int device_id) {
   cl_pooling_kernel_ = new EasyCL::Kernel(program_image, "Pooling");
   cl_concat_kernel_ = new EasyCL::Kernel(program_image, "Concat");
   cl_permute_kernel_ = new EasyCL::Kernel(program_image, "Permute");
+  cl_scale_kernel_ = new EasyCL::Kernel(program_image, "Scale");
   cl_activate_kernel_ = new EasyCL::Kernel(program_image, "Activate");
 
   clblasSetup();
@@ -100,6 +102,7 @@ void Release() {
   delete cl_pooling_kernel_;
   delete cl_concat_kernel_;
   delete cl_permute_kernel_;
+  delete cl_scale_kernel_;
   delete cl_activate_kernel_;
 
   delete device_;

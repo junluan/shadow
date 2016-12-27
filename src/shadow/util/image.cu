@@ -171,6 +171,24 @@ void Permute(const T *in_data, int count, int num_axes,
   CUDA_CHECK(cudaPeekAtLastError());
 }
 
+__global__ void KernelScale(const float *in_data, int count,
+                            const float *scale_data, const float *bias_data,
+                            int scale_dim, int inner_dim, float *out_data) {
+  CUDA_KERNEL_LOOP(globalid, count) {
+    int index = (globalid / inner_dim) % scale_dim;
+    out_data[globalid] =
+        in_data[globalid] * scale_data[index] + bias_data[index];
+  }
+}
+
+template <typename T>
+void Scale(const T *in_data, int count, const T *scale_data, const T *bias_data,
+           int scale_dim, int inner_dim, T *out_data) {
+  KernelScale<<<GetBlocks(count), NumThreads>>>(
+      in_data, count, scale_data, bias_data, scale_dim, inner_dim, out_data);
+  CUDA_CHECK(cudaPeekAtLastError());
+}
+
 __device__ float ActivateValue(float x, int type) {
   switch (type) {
     case 0:
@@ -213,6 +231,9 @@ template void Concat(const float *in_data, int count, int num_concats,
 template void Permute(const float *in_data, int count, int num_axes,
                       const int *permute_order, const int *old_steps,
                       const int *new_steps, float *out_data);
+template void Scale(const float *in_data, int count, const float *scale_data,
+                    const float *bias_data, int scale_dim, int inner_dim,
+                    float *out_data);
 template void Activate(float *data, int count, int type);
 #endif
 

@@ -9,7 +9,6 @@ message BlobShape {
 message Blob {
   repeated float data = 1 [packed = true];
   optional BlobShape shape = 2;
-  optional int32 count = 3 [default = 0];
 }
 
 message ActivateParameter {
@@ -95,6 +94,12 @@ message ReshapeParameter {
   optional int32 num_axes = 3 [default = -1];
 }
 
+message ScaleParameter {
+  optional int32 axis = 1 [default = 1];
+  optional int32 num_axes = 2 [default = 1];
+  optional bool bias_term = 3 [default = false];
+}
+
 message SoftmaxParameter {
   optional int32 axis = 1 [default = 1];
 }
@@ -119,7 +124,8 @@ message LayerParameter {
   optional PoolingParameter pooling_param = 20;
   optional PriorBoxParameter prior_box_param = 21;
   optional ReshapeParameter reshape_param = 22;
-  optional SoftmaxParameter softmax_param = 23;
+  optional ScaleParameter scale_param = 23;
+  optional SoftmaxParameter softmax_param = 24;
 }
 
 message NetParameter {

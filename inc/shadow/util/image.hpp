@@ -30,6 +30,10 @@ void Permute(const T *in_data, int count, int num_axes,
              const Dtype *new_steps, T *out_data);
 
 template <typename T>
+void Scale(const T *in_data, int count, const T *scale_data, const T *bias_data,
+           int scale_dim, int inner_dim, T *out_data);
+
+template <typename T>
 void Activate(T *data, int count, int type);
 
 }  // namespace Image

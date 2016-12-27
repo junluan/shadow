@@ -298,6 +298,28 @@ void ConvertReshape(const caffe::NetParameter& caffe_model,
   }
 }
 
+void ConvertScale(const caffe::NetParameter& caffe_model,
+                  const caffe::LayerParameter& caffe_layer,
+                  shadow::NetParameter* shadow_net) {
+  auto shadow_layer = shadow_net->add_layer();
+  shadow_layer->set_type("Scale");
+  ConvertCommon(caffe_model, caffe_layer, shadow_layer);
+
+  auto shadow_param = shadow_layer->mutable_scale_param();
+  if (caffe_layer.has_scale_param()) {
+    const auto& caffe_param = caffe_layer.scale_param();
+    if (caffe_param.has_axis()) {
+      shadow_param->set_axis(caffe_param.axis());
+    }
+    if (caffe_param.has_num_axes()) {
+      shadow_param->set_num_axes(caffe_param.num_axes());
+    }
+    if (caffe_param.has_bias_term()) {
+      shadow_param->set_bias_term(caffe_param.bias_term());
+    }
+  }
+}
+
 void ConvertSoftmax(const caffe::NetParameter& caffe_model,
                     const caffe::LayerParameter& caffe_layer,
                     shadow::NetParameter* shadow_net) {
@@ -344,6 +366,8 @@ void Convert(const caffe::NetParameter& caffe_deploy,
       ConvertPriorBox(caffe_model, caffe_layer, shadow_net);
     } else if (!layer_type.compare("Reshape")) {
       ConvertReshape(caffe_model, caffe_layer, shadow_net);
+    } else if (!layer_type.compare("Scale")) {
+      ConvertScale(caffe_model, caffe_layer, shadow_net);
     } else if (!layer_type.compare("Softmax")) {
       ConvertSoftmax(caffe_model, caffe_layer, shadow_net);
     } else {

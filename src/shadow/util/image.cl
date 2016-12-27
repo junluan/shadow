@@ -112,6 +112,15 @@ __kernel void Permute(__global float *in_data, int count, int num_axes,
   out_data[globalid] = in_data[old_idx];
 }
 
+__kernel void Scale(__global float *in_data, int count,
+                    __global float *scale_data, __global float *bias_data,
+                    int scale_dim, int inner_dim, __global float *out_data) {
+  CL_KERNEL_LOOP(globalid, count)
+
+  int index = (globalid / inner_dim) % scale_dim;
+  out_data[globalid] = in_data[globalid] * scale_data[index] + bias_data[index];
+}
+
 inline float ActivateValue(float x, int type) {
   switch (type) {
     case 0:

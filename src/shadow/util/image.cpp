@@ -134,6 +134,15 @@ void Permute(const T *in_data, int count, int num_axes,
 }
 
 template <typename T>
+void Scale(const T *in_data, int count, const T *scale_data, const T *bias_data,
+           int scale_dim, int inner_dim, T *out_data) {
+  for (int i = 0; i < count; ++i) {
+    int index = (i / inner_dim) % scale_dim;
+    out_data[i] = in_data[i] * scale_data[index] + bias_data[index];
+  }
+}
+
+template <typename T>
 inline T Activate(T x, int type) {
   switch (type) {
     case 0:
@@ -171,6 +180,9 @@ template void Concat(const float *in_data, int count, int num_concats,
 template void Permute(const float *in_data, int count, int num_axes,
                       const int *permute_order, const int *old_steps,
                       const int *new_steps, float *out_data);
+template void Scale(const float *in_data, int count, const float *scale_data,
+                    const float *bias_data, int scale_dim, int inner_dim,
+                    float *out_data);
 template void Activate(float *data, int count, int type);
 
 #elif defined(USE_CL)
@@ -245,6 +257,17 @@ void Permute(const T *in_data, int count, int num_axes,
 }
 
 template <typename T>
+void Scale(const T *in_data, int count, const T *scale_data, const T *bias_data,
+           int scale_dim, int inner_dim, T *out_data) {
+  size_t global = count;
+  EasyCL::Kernel *kernel = Kernel::cl_scale_kernel_;
+  kernel->SetArguments(*in_data, count, *scale_data, *bias_data, scale_dim,
+                       inner_dim, *out_data);
+  kernel->Launch(*Kernel::queue_, {global}, Kernel::event_);
+  Kernel::queue_->Finish();
+}
+
+template <typename T>
 void Activate(T *data, int count, int type) {
   size_t global = count;
   EasyCL::Kernel *kernel = Kernel::cl_activate_kernel_;
@@ -270,6 +293,9 @@ template void Concat(const BufferF *in_data, int count, int num_concats,
 template void Permute(const BufferF *in_data, int count, int num_axes,
                       const BufferI *permute_order, const BufferI *old_steps,
                       const BufferI *new_steps, BufferF *out_data);
+template void Scale(const BufferF *in_data, int count,
+                    const BufferF *scale_data, const BufferF *bias_data,
+                    int scale_dim, int inner_dim, BufferF *out_data);
 template void Activate(BufferF *data, int count, int type);
 #endif
 
