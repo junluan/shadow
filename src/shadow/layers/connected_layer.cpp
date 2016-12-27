@@ -10,6 +10,12 @@ void ConnectedLayer::Setup(VecBlob *blobs) {
   num_output_ = conn_param.num_output();
   bias_term_ = conn_param.bias_term();
   transpose_ = conn_param.transpose();
+
+  if (bias_term_) {
+    CHECK_EQ(blobs_.size(), 2);
+  } else {
+    CHECK_EQ(blobs_.size(), 1);
+  }
 }
 
 void ConnectedLayer::Reshape() {

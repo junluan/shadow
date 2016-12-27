@@ -13,20 +13,25 @@ void BatchNormLayer::Setup(VecBlob *blobs) {
     channels_ = bottoms_[0]->shape(1);
   }
 
-  if (blobs_.size() == 0) {
+  if (use_global_stats_ && blobs_.size() == 0) {
     for (int i = 0; i < 3; ++i) {
       blobs_.push_back(new Blob<float>());
     }
     blobs_[0]->reshape(1, channels_);
     blobs_[1]->reshape(1, channels_);
     blobs_[2]->reshape(1);
-    for (int i = 0; i < 3; ++i) {
-      Blas::Set(blobs_[i]->count(), 0, blobs_[i]->mutable_data(), 0);
-    }
+    Blas::Set(blobs_[0]->count(), 0, blobs_[0]->mutable_data(), 0);
+    Blas::Set(blobs_[1]->count(), 1, blobs_[1]->mutable_data(), 0);
+    Blas::Set(blobs_[2]->count(), 1, blobs_[2]->mutable_data(), 0);
+    DLOG(WARNING) << "Mean, variance and scale params are initialized with the "
+                     "default values 0, 1 and 1";
   }
 
-  CHECK_EQ(blobs_[2]->count(), 1);
-  blobs_[2]->read_data(&scale_);
+  if (use_global_stats_) {
+    CHECK_EQ(blobs_.size(), 3);
+    CHECK_EQ(blobs_[2]->count(), 1);
+    blobs_[2]->read_data(&scale_);
+  }
 }
 
 void BatchNormLayer::Reshape() {

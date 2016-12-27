@@ -39,6 +39,12 @@ void ConvolutionLayer::Setup(VecBlob *blobs) {
     }
   }
 #endif
+
+  if (bias_term_) {
+    CHECK_EQ(blobs_.size(), 2);
+  } else {
+    CHECK_EQ(blobs_.size(), 1);
+  }
 }
 
 void ConvolutionLayer::Reshape() {

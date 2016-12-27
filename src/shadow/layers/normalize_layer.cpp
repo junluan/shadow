@@ -17,8 +17,10 @@ void NormalizeLayer::Setup(VecBlob *blobs) {
       blobs_[0]->reshape(bottoms_[0]->shape(1));
     }
     Blas::Set(blobs_[0]->count(), 1, blobs_[0]->mutable_data(), 0);
+    DLOG(WARNING) << "Scale param is initialized with the default values 1";
   }
 
+  CHECK_EQ(blobs_.size(), 1);
   if (channel_shared_) {
     CHECK_EQ(blobs_[0]->count(), 1);
     blobs_[0]->read_data(&scale_);

@@ -141,10 +141,8 @@ void Network::Reshape(int batch) {
   CHECK_EQ(in_shape_.size(), 4) << "input_shape dimension mismatch!";
   if (batch > 0) in_shape_[0] = batch;
 
-  Blob<float> *in_blob = new Blob<float>("in_blob");
-  in_blob->reshape(in_shape_);
   blobs_.clear();
-  blobs_.push_back(in_blob);
+  blobs_.push_back(new Blob<float>(in_shape_, "in_blob"));
 
   layers_.clear();
   for (const auto &layer_param : net_param_.layer()) {
