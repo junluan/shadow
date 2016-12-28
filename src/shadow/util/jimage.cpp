@@ -16,10 +16,12 @@ void JImage::Read(const std::string &im_path) {
   }
 #if defined(USE_OpenCV)
   FromMat(cv::imread(im_path));
+
 #elif defined(USE_STB)
   data_ = stbi_load(im_path.c_str(), &w_, &h_, &c_, 3);
   CHECK_NOTNULL(data_);
   order_ = kRGB;
+
 #else
   LOG(FATAL) << "Not compiled with either OpenCV or STB, could not read image "
              << im_path;
@@ -31,6 +33,7 @@ void JImage::Write(const std::string &im_path) const {
 
 #if defined(USE_OpenCV)
   cv::imwrite(im_path, ToMat());
+
 #elif defined(USE_STB)
   int is_ok = -1;
   int step = w_ * c_;
@@ -46,6 +49,7 @@ void JImage::Write(const std::string &im_path) const {
     LOG(FATAL) << "Unsupported format to disk!";
   }
   CHECK(is_ok) << "Failed to write image to " + im_path;
+
 #else
   LOG(FATAL) << "Not compiled with either OpenCV or STB, could not write image "
              << im_path;
@@ -59,6 +63,7 @@ void JImage::Show(const std::string &show_name, int wait_time) const {
   cv::namedWindow(show_name, cv::WINDOW_NORMAL);
   cv::imshow(show_name, ToMat());
   cv::waitKey(wait_time);
+
 #else
   LOG(WARNING) << "Not compiled with OpenCV, saving image to " << show_name
                << ".png";
@@ -198,7 +203,7 @@ inline void I4202RGB(unsigned char *src_y, unsigned char *src_u,
       u -= 128;
       v -= 128;
       int r = y + v + ((v * 103) >> 8);
-      int g = y - ((u * 88) >> 8) + ((v * 183) >> 8);
+      int g = y - ((u * 88) >> 8) - ((v * 183) >> 8);
       int b = y + u + ((u * 198) >> 8);
 
       int offset = (src_w * h + w) * 3;
