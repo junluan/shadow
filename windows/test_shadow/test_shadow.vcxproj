@@ -1,0 +1,116 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{7A75CABD-4E50-4D54-AE4F-73B9DADDC96A}</ProjectGuid>
+    <RootNamespace>test_shadow</RootNamespace>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v120</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <PlatformToolset>v120</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="PropertySheets" Condition="Exists('$(SolutionDir)\Settings.props')">
+    <Import Project="..\Settings.props" />
+  </ImportGroup>
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <AdditionalIncludeDirectories>$(SolutionDir)\..\inc;$(SolutionDir)\..\src\shadow\proto;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <AdditionalOptions>/ignore:4099 %(AdditionalOptions)</AdditionalOptions>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <AdditionalIncludeDirectories>$(SolutionDir)\..\inc;$(SolutionDir)\..\src\shadow\proto;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <AdditionalOptions>/ignore:4099 %(AdditionalOptions)</AdditionalOptions>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup Condition="'$(BUILD_TEST)'=='true'">
+    <ClInclude Include="..\..\external\inc\gtest\gtest.h" />
+    <ClInclude Include="..\..\inc\test\layers\test_activate_layer.hpp" />
+    <ClInclude Include="..\..\inc\test\layers\test_batch_norm_layer.hpp" />
+    <ClInclude Include="..\..\inc\test\layers\test_concat_layer.hpp" />
+    <ClInclude Include="..\..\inc\test\layers\test_connected_layer.hpp" />
+    <ClInclude Include="..\..\inc\test\layers\test_convolution_layer.hpp" />
+    <ClInclude Include="..\..\inc\test\layers\test_data_layer.hpp" />
+    <ClInclude Include="..\..\inc\test\layers\test_flatten_layer.hpp" />
+    <ClInclude Include="..\..\inc\test\layers\test_normalize_layer.hpp" />
+    <ClInclude Include="..\..\inc\test\layers\test_permute_layer.hpp" />
+    <ClInclude Include="..\..\inc\test\layers\test_pooling_layer.hpp" />
+    <ClInclude Include="..\..\inc\test\layers\test_prior_box_layer.hpp" />
+    <ClInclude Include="..\..\inc\test\layers\test_reshape_layer.hpp" />
+    <ClInclude Include="..\..\inc\test\layers\test_scale_layer.hpp" />
+    <ClInclude Include="..\..\inc\test\layers\test_softmax_layer.hpp" />
+    <ClInclude Include="..\..\inc\test\test_shadow.hpp" />
+    <ClInclude Include="..\..\inc\test\util\test_blas.hpp" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(BUILD_TEST)'=='true'">
+    <ClCompile Include="..\..\external\inc\gtest\gtest-all.cc" />
+    <ClCompile Include="..\..\src\test\layers\test_activate_layer.cpp" />
+    <ClCompile Include="..\..\src\test\layers\test_batch_norm_layer.cpp" />
+    <ClCompile Include="..\..\src\test\layers\test_concat_layer.cpp" />
+    <ClCompile Include="..\..\src\test\layers\test_connected_layer.cpp" />
+    <ClCompile Include="..\..\src\test\layers\test_convolution_layer.cpp" />
+    <ClCompile Include="..\..\src\test\layers\test_data_layer.cpp" />
+    <ClCompile Include="..\..\src\test\layers\test_flatten_layer.cpp" />
+    <ClCompile Include="..\..\src\test\layers\test_normalize_layer.cpp" />
+    <ClCompile Include="..\..\src\test\layers\test_permute_layer.cpp" />
+    <ClCompile Include="..\..\src\test\layers\test_pooling_layer.cpp" />
+    <ClCompile Include="..\..\src\test\layers\test_prior_box_layer.cpp" />
+    <ClCompile Include="..\..\src\test\layers\test_reshape_layer.cpp" />
+    <ClCompile Include="..\..\src\test\layers\test_scale_layer.cpp" />
+    <ClCompile Include="..\..\src\test\layers\test_softmax_layer.cpp" />
+    <ClCompile Include="..\..\src\test\test_shadow.cpp" />
+    <ClCompile Include="..\..\src\test\util\test_blas.cpp" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(BUILD_TEST)'=='true'">
+    <ProjectReference Include="..\shadow\shadow.vcxproj">
+      <Project>{40355aff-ebdf-4c40-8800-05b4d7ddc473}</Project>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

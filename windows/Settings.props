@@ -5,6 +5,8 @@
         <ExternalDir>$(SolutionDir)..\external</ExternalDir>
         <ScriptsDir>$(SolutionDir)\scripts</ScriptsDir>
 
+        <BUILD_TEST>false</BUILD_TEST>
+
         <USE_CUDA>true</USE_CUDA>
         <CudaVersion>7.5</CudaVersion>
         <CudaArchitecture>compute_30,sm_30</CudaArchitecture>
@@ -68,7 +70,7 @@
             <Command>"$(ScriptsDir)\ProtoCompile.cmd" "$(SolutionDir)" "$(ScriptsDir)"</Command>
         </PreBuildEvent>
     </ItemDefinitionGroup>
-    <ItemDefinitionGroup Condition="'$(ProjectName)'=='demo'">
+    <ItemDefinitionGroup Condition="'$(ConfigurationType)'=='Application'">
         <PostBuildEvent>
             <Command>
               if $(USE_CUDA) == true (

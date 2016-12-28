@@ -30,6 +30,9 @@
     <ClInclude Include="..\..\inc\shadow\layers\activate_layer.hpp">
       <Filter>inc\shadow\layers</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\inc\shadow\layers\batch_norm_layer.hpp">
+      <Filter>inc\shadow\layers</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\inc\shadow\layers\concat_layer.hpp">
       <Filter>inc\shadow\layers</Filter>
     </ClInclude>
@@ -63,6 +66,9 @@
     <ClInclude Include="..\..\inc\shadow\layers\reshape_layer.hpp">
       <Filter>inc\shadow\layers</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\inc\shadow\layers\scale_layer.hpp">
+      <Filter>inc\shadow\layers</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\inc\shadow\layers\softmax_layer.hpp">
       <Filter>inc\shadow\layers</Filter>
     </ClInclude>
@@ -87,10 +93,16 @@
     <ClInclude Include="..\..\inc\shadow\util\log.hpp">
       <Filter>inc\shadow\util</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\inc\shadow\util\type.hpp">
+      <Filter>inc\shadow\util</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\inc\shadow\util\util.hpp">
       <Filter>inc\shadow\util</Filter>
     </ClInclude>
     <ClInclude Include="..\..\inc\shadow\blob.hpp">
+      <Filter>inc\shadow</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\inc\shadow\cudnn.hpp">
       <Filter>inc\shadow</Filter>
     </ClInclude>
     <ClInclude Include="..\..\inc\shadow\kernel.hpp">
@@ -99,15 +111,12 @@
     <ClInclude Include="..\..\inc\shadow\network.hpp">
       <Filter>inc\shadow</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\inc\shadow\util\type.hpp">
-      <Filter>inc\shadow\util</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\inc\shadow\cudnn.hpp">
-      <Filter>inc\shadow</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\shadow\layers\activate_layer.cpp">
+      <Filter>src\shadow\layers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\shadow\layers\batch_norm_layer.cpp">
       <Filter>src\shadow\layers</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\shadow\layers\concat_layer.cpp">
@@ -140,6 +149,9 @@
     <ClCompile Include="..\..\src\shadow\layers\reshape_layer.cpp">
       <Filter>src\shadow\layers</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\shadow\layers\scale_layer.cpp">
+      <Filter>src\shadow\layers</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\src\shadow\layers\softmax_layer.cpp">
       <Filter>src\shadow\layers</Filter>
     </ClCompile>
@@ -161,13 +173,13 @@
     <ClCompile Include="..\..\src\shadow\util\jimage_proc.cpp">
       <Filter>src\shadow\util</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\shadow\cudnn.cpp">
+      <Filter>src\shadow</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\src\shadow\kernel.cpp">
       <Filter>src\shadow</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\shadow\network.cpp">
-      <Filter>src\shadow</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\shadow\cudnn.cpp">
       <Filter>src\shadow</Filter>
     </ClCompile>
   </ItemGroup>
