@@ -24,6 +24,11 @@ message BatchNormParameter {
   optional bool use_global_stats = 1 [default = true];
 }
 
+message BiasParameter {
+  optional int32 axis = 1 [default = 1];
+  optional int32 num_axes = 2 [default = 1];
+}
+
 message ConcatParameter {
   optional int32 axis = 1 [default = 1];
 }
@@ -88,6 +93,10 @@ message PriorBoxParameter {
   repeated float variance = 6;
 }
 
+message ReorgParameter {
+  optional int32 stride = 1 [default = 2];
+}
+
 message ReshapeParameter {
   optional BlobShape shape = 1;
   optional int32 axis = 2 [default = 0];
@@ -114,18 +123,20 @@ message LayerParameter {
 
   optional ActivateParameter activate_param = 11;
   optional BatchNormParameter batch_norm_param = 12;
-  optional ConcatParameter concat_param = 13;
-  optional ConnectedParameter connected_param = 14;
-  optional ConvolutionParameter convolution_param = 15;
-  optional DataParameter data_param = 16;
-  optional FlattenParameter flatten_param = 17;
-  optional NormalizeParameter normalize_param = 18;
-  optional PermuteParameter permute_param = 19;
-  optional PoolingParameter pooling_param = 20;
-  optional PriorBoxParameter prior_box_param = 21;
-  optional ReshapeParameter reshape_param = 22;
-  optional ScaleParameter scale_param = 23;
-  optional SoftmaxParameter softmax_param = 24;
+  optional BiasParameter bias_param = 13;
+  optional ConcatParameter concat_param = 14;
+  optional ConnectedParameter connected_param = 15;
+  optional ConvolutionParameter convolution_param = 16;
+  optional DataParameter data_param = 17;
+  optional FlattenParameter flatten_param = 18;
+  optional NormalizeParameter normalize_param = 19;
+  optional PermuteParameter permute_param = 20;
+  optional PoolingParameter pooling_param = 21;
+  optional PriorBoxParameter prior_box_param = 22;
+  optional ReorgParameter reorg_param = 23;
+  optional ReshapeParameter reshape_param = 24;
+  optional ScaleParameter scale_param = 25;
+  optional SoftmaxParameter softmax_param = 26;
 }
 
 message NetParameter {

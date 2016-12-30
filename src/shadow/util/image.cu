@@ -38,13 +38,13 @@ __global__ void KernelIm2Col(const float *im_data, int offset, int in_c,
                              int pad, int dilation, int out_h, int out_w,
                              float *col_data) {
   CUDA_KERNEL_LOOP(globalid, in_c * out_h * out_w) {
-    const int h_index = globalid / out_w;
-    const int h_col = h_index % out_h;
-    const int w_col = globalid % out_w;
-    const int c_im = h_index / out_h;
-    const int c_col = c_im * kernel_size * kernel_size;
-    const int h_offset = h_col * stride - pad;
-    const int w_offset = w_col * stride - pad;
+    int h_index = globalid / out_w;
+    int h_col = h_index % out_h;
+    int w_col = globalid % out_w;
+    int c_im = h_index / out_h;
+    int c_col = c_im * kernel_size * kernel_size;
+    int h_offset = h_col * stride - pad;
+    int w_offset = w_col * stride - pad;
     col_data += (c_col * out_h + h_col) * out_w + w_col;
     im_data += offset + (c_im * in_h + h_offset) * in_w + w_offset;
     for (int i = 0; i < kernel_size; ++i) {
@@ -189,6 +189,57 @@ void Scale(const T *in_data, int count, const T *scale_data, const T *bias_data,
   CUDA_CHECK(cudaPeekAtLastError());
 }
 
+__global__ void KernelBias(const float *in_data, int count,
+                           const float *bias_data, int bias_dim, int inner_dim,
+                           float *out_data) {
+  CUDA_KERNEL_LOOP(globalid, count) {
+    int index = (globalid / inner_dim) % bias_dim;
+    out_data[globalid] = in_data[globalid] + bias_data[index];
+  }
+}
+
+template <typename T>
+void Bias(const T *in_data, int count, const T *bias_data, int bias_dim,
+          int inner_dim, T *out_data) {
+  KernelBias<<<GetBlocks(count), NumThreads>>>(in_data, count, bias_data,
+                                               bias_dim, inner_dim, out_data);
+  CUDA_CHECK(cudaPeekAtLastError());
+}
+
+__global__ void KernelReorg(const float *in_data, int count, int batch,
+                            int in_c, int in_h, int in_w, int stride,
+                            float *out_data) {
+  CUDA_KERNEL_LOOP(globalid, count) {
+    int out_c = in_c / (stride * stride);
+
+    int temp = globalid / in_w;
+    int w_in = globalid % in_w;
+    int h_in = temp % in_h;
+    temp = temp / in_h;
+    int c_in = temp % in_c;
+    temp = temp / in_c;
+    int b_in = temp % batch;
+
+    int c2 = c_in % out_c;
+    temp = c_in / out_c;
+    int w2 = w_in * stride + temp % stride;
+    int h2 = h_in * stride + temp / stride;
+    int out_index =
+        w2 + in_w * stride * (h2 + in_h * stride * (c2 + out_c * b_in));
+    out_data[globalid] = in_data[out_index];
+  }
+}
+
+template <typename T>
+void Reorg(const T *in_data, const VecInt &in_shape, int stride, T *out_data) {
+  int batch = in_shape[0];
+  int in_c = in_shape[1], in_h = in_shape[2], in_w = in_shape[3];
+  int count = batch * in_c * in_h * in_w;
+  KernelReorg<<<GetBlocks(count), NumThreads>>>(in_data, count, batch, in_c,
+                                                in_h, in_w, stride, out_data);
+  CUDA_CHECK(cudaPeekAtLastError());
+}
+
 __device__ float ActivateValue(float x, int type) {
   switch (type) {
     case 0:
@@ -233,6 +284,10 @@ template void Permute(const float *in_data, int count, int num_axes,
                       const int *new_steps, float *out_data);
 template void Scale(const float *in_data, int count, const float *scale_data,
                     const float *bias_data, int scale_dim, int inner_dim,
+                    float *out_data);
+template void Bias(const float *in_data, int count, const float *bias_data,
+                   int bias_dim, int inner_dim, float *out_data);
+template void Reorg(const float *in_data, const VecInt &in_shape, int stride,
                     float *out_data);
 template void Activate(float *data, int count, int type);
 #endif

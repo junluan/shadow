@@ -143,6 +143,39 @@ void Scale(const T *in_data, int count, const T *scale_data, const T *bias_data,
 }
 
 template <typename T>
+void Bias(const T *in_data, int count, const T *bias_data, int bias_dim,
+          int inner_dim, T *out_data) {
+  for (int i = 0; i < count; ++i) {
+    int index = (i / inner_dim) % bias_dim;
+    out_data[i] = in_data[i] + bias_data[index];
+  }
+}
+
+template <typename T>
+void Reorg(const T *in_data, const VecInt &in_shape, int stride, T *out_data) {
+  int batch = in_shape[0];
+  int in_c = in_shape[1], in_h = in_shape[2], in_w = in_shape[3];
+
+  int out_c = in_c / (stride * stride);
+  for (int b = 0; b < batch; ++b) {
+    for (int k = 0; k < in_c; ++k) {
+      for (int j = 0; j < in_h; ++j) {
+        for (int i = 0; i < in_w; ++i) {
+          int in_index = i + in_w * (j + in_h * (k + in_c * b));
+          int c2 = k % out_c;
+          int offset = k / out_c;
+          int w2 = i * stride + offset % stride;
+          int h2 = j * stride + offset / stride;
+          int out_index =
+              w2 + in_w * stride * (h2 + in_h * stride * (c2 + out_c * b));
+          out_data[in_index] = in_data[out_index];
+        }
+      }
+    }
+  }
+}
+
+template <typename T>
 inline T Activate(T x, int type) {
   switch (type) {
     case 0:
@@ -182,6 +215,10 @@ template void Permute(const float *in_data, int count, int num_axes,
                       const int *new_steps, float *out_data);
 template void Scale(const float *in_data, int count, const float *scale_data,
                     const float *bias_data, int scale_dim, int inner_dim,
+                    float *out_data);
+template void Bias(const float *in_data, int count, const float *bias_data,
+                   int bias_dim, int inner_dim, float *out_data);
+template void Reorg(const float *in_data, const VecInt &in_shape, int stride,
                     float *out_data);
 template void Activate(float *data, int count, int type);
 
@@ -268,6 +305,31 @@ void Scale(const T *in_data, int count, const T *scale_data, const T *bias_data,
 }
 
 template <typename T>
+void Bias(const T *in_data, int count, const T *bias_data, int bias_dim,
+          int inner_dim, T *out_data) {
+  size_t global = count;
+  EasyCL::Kernel *kernel = Kernel::cl_bias_kernel_;
+  kernel->SetArguments(*in_data, count, *bias_data, bias_dim, inner_dim,
+                       *out_data);
+  kernel->Launch(*Kernel::queue_, {global}, Kernel::event_);
+  Kernel::queue_->Finish();
+}
+
+template <typename T>
+void Reorg(const T *in_data, const VecInt &in_shape, int stride, T *out_data) {
+  int batch = in_shape[0];
+  int in_c = in_shape[1], in_h = in_shape[2], in_w = in_shape[3];
+  int count = batch * in_c * in_h * in_w;
+
+  size_t global = count;
+  EasyCL::Kernel *kernel = Kernel::cl_reorg_kernel_;
+  kernel->SetArguments(*in_data, count, batch, in_c, in_h, in_w, stride,
+                       *out_data);
+  kernel->Launch(*Kernel::queue_, {global}, Kernel::event_);
+  Kernel::queue_->Finish();
+}
+
+template <typename T>
 void Activate(T *data, int count, int type) {
   size_t global = count;
   EasyCL::Kernel *kernel = Kernel::cl_activate_kernel_;
@@ -296,6 +358,10 @@ template void Permute(const BufferF *in_data, int count, int num_axes,
 template void Scale(const BufferF *in_data, int count,
                     const BufferF *scale_data, const BufferF *bias_data,
                     int scale_dim, int inner_dim, BufferF *out_data);
+template void Bias(const BufferF *in_data, int count, const BufferF *bias_data,
+                   int bias_dim, int inner_dim, BufferF *out_data);
+template void Reorg(const BufferF *in_data, const VecInt &in_shape, int stride,
+                    BufferF *out_data);
 template void Activate(BufferF *data, int count, int type);
 #endif
 

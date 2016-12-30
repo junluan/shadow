@@ -3,6 +3,7 @@
 
 #include "shadow/layers/activate_layer.hpp"
 #include "shadow/layers/batch_norm_layer.hpp"
+#include "shadow/layers/bias_layer.hpp"
 #include "shadow/layers/concat_layer.hpp"
 #include "shadow/layers/connected_layer.hpp"
 #include "shadow/layers/convolution_layer.hpp"
@@ -12,6 +13,7 @@
 #include "shadow/layers/permute_layer.hpp"
 #include "shadow/layers/pooling_layer.hpp"
 #include "shadow/layers/prior_box_layer.hpp"
+#include "shadow/layers/reorg_layer.hpp"
 #include "shadow/layers/reshape_layer.hpp"
 #include "shadow/layers/scale_layer.hpp"
 #include "shadow/layers/softmax_layer.hpp"
@@ -183,6 +185,8 @@ Layer *Network::LayerFactory(const shadow::LayerParameter &layer_param) {
     layer = new ActivateLayer(layer_param);
   } else if (!layer_type.compare("BatchNorm")) {
     layer = new BatchNormLayer(layer_param);
+  } else if (!layer_type.compare("Bias")) {
+    layer = new BiasLayer(layer_param);
   } else if (!layer_type.compare("Concat")) {
     layer = new ConcatLayer(layer_param);
   } else if (!layer_type.compare("Connected")) {
@@ -201,6 +205,8 @@ Layer *Network::LayerFactory(const shadow::LayerParameter &layer_param) {
     layer = new PoolingLayer(layer_param);
   } else if (!layer_type.compare("PriorBox")) {
     layer = new PriorBoxLayer(layer_param);
+  } else if (!layer_type.compare("Reorg")) {
+    layer = new ReorgLayer(layer_param);
   } else if (!layer_type.compare("Reshape")) {
     layer = new ReshapeLayer(layer_param);
   } else if (!layer_type.compare("Scale")) {

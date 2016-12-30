@@ -27,13 +27,13 @@ __kernel void Im2Col(__global float *im_data, int offset, int in_c, int in_h,
                      __global float *col_data) {
   CL_KERNEL_LOOP(globalid, in_c * out_h * out_w)
 
-  const int h_index = globalid / out_w;
-  const int h_col = h_index % out_h;
-  const int w_col = globalid % out_w;
-  const int c_im = h_index / out_h;
-  const int c_col = c_im * kernel_size * kernel_size;
-  const int h_offset = h_col * stride - pad;
-  const int w_offset = w_col * stride - pad;
+  int h_index = globalid / out_w;
+  int h_col = h_index % out_h;
+  int w_col = globalid % out_w;
+  int c_im = h_index / out_h;
+  int c_col = c_im * kernel_size * kernel_size;
+  int h_offset = h_col * stride - pad;
+  int w_offset = w_col * stride - pad;
   col_data += (c_col * out_h + h_col) * out_w + w_col;
   im_data += offset + (c_im * in_h + h_offset) * in_w + w_offset;
   for (int i = 0; i < kernel_size; ++i) {
@@ -119,6 +119,37 @@ __kernel void Scale(__global float *in_data, int count,
 
   int index = (globalid / inner_dim) % scale_dim;
   out_data[globalid] = in_data[globalid] * scale_data[index] + bias_data[index];
+}
+
+__kernel void Bias(__global float *in_data, int count,
+                   __global float *bias_data, int bias_dim, int inner_dim,
+                   __global float *out_data) {
+  CL_KERNEL_LOOP(globalid, count)
+
+  int index = (globalid / inner_dim) % bias_dim;
+  out_data[globalid] = in_data[globalid] + bias_data[index];
+}
+
+__kernel void Reorg(__global float *in_data, int count, int batch, int in_c,
+                    int in_h, int in_w, int stride, __global float *out_data) {
+  CL_KERNEL_LOOP(globalid, count)
+  int out_c = in_c / (stride * stride);
+
+  int temp = globalid / in_w;
+  int w_in = globalid % in_w;
+  int h_in = temp % in_h;
+  temp = temp / in_h;
+  int c_in = temp % in_c;
+  temp = temp / in_c;
+  int b_in = temp % batch;
+
+  int c2 = c_in % out_c;
+  temp = c_in / out_c;
+  int w2 = w_in * stride + temp % stride;
+  int h2 = h_in * stride + temp / stride;
+  int out_index =
+      w2 + in_w * stride * (h2 + in_h * stride * (c2 + out_c * b_in));
+  out_data[globalid] = in_data[out_index];
 }
 
 inline float ActivateValue(float x, int type) {

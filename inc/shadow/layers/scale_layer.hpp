@@ -17,7 +17,7 @@ class ScaleLayer : public Layer {
 
  private:
   bool bias_term_;
-  int axis_, num_axis_, outer_dim_, scale_dim_, inner_dim_, bias_param_id_;
+  int axis_, num_axis_, scale_dim_, inner_dim_, bias_param_id_;
 
   Blob<float> *scale_ = nullptr, *bias_ = nullptr;
 };

@@ -34,6 +34,13 @@ void Scale(const T *in_data, int count, const T *scale_data, const T *bias_data,
            int scale_dim, int inner_dim, T *out_data);
 
 template <typename T>
+void Bias(const T *in_data, int count, const T *bias_data, int bias_dim,
+          int inner_dim, T *out_data);
+
+template <typename T>
+void Reorg(const T *in_data, const VecInt &in_shape, int stride, T *out_data);
+
+template <typename T>
 void Activate(T *data, int count, int type);
 
 }  // namespace Image

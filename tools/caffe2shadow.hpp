@@ -90,6 +90,25 @@ void ConvertBatchNorm(const caffe::NetParameter& caffe_model,
   }
 }
 
+void ConvertBias(const caffe::NetParameter& caffe_model,
+                 const caffe::LayerParameter& caffe_layer,
+                 shadow::NetParameter* shadow_net) {
+  auto shadow_layer = shadow_net->add_layer();
+  shadow_layer->set_type("Bias");
+  ConvertCommon(caffe_model, caffe_layer, shadow_layer);
+
+  auto shadow_param = shadow_layer->mutable_bias_param();
+  if (caffe_layer.has_bias_param()) {
+    const auto& caffe_param = caffe_layer.bias_param();
+    if (caffe_param.has_axis()) {
+      shadow_param->set_axis(caffe_param.axis());
+    }
+    if (caffe_param.has_num_axes()) {
+      shadow_param->set_num_axes(caffe_param.num_axes());
+    }
+  }
+}
+
 void ConvertConcat(const caffe::NetParameter& caffe_model,
                    const caffe::LayerParameter& caffe_layer,
                    shadow::NetParameter* shadow_net) {
@@ -348,6 +367,8 @@ void Convert(const caffe::NetParameter& caffe_deploy,
       ConvertActivate(caffe_model, caffe_layer, shadow_net);
     } else if (!layer_type.compare("BatchNorm")) {
       ConvertBatchNorm(caffe_model, caffe_layer, shadow_net);
+    } else if (!layer_type.compare("Bias")) {
+      ConvertBias(caffe_model, caffe_layer, shadow_net);
     } else if (!layer_type.compare("Concat")) {
       ConvertConcat(caffe_model, caffe_layer, shadow_net);
     } else if (!layer_type.compare("InnerProduct")) {
