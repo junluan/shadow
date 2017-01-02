@@ -35,6 +35,9 @@
     <ClInclude Include="..\..\inc\test\layers\test_batch_norm_layer.hpp">
       <Filter>inc\test\layers</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\inc\test\layers\test_bias_layer.hpp">
+      <Filter>inc\test\layers</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\inc\test\layers\test_concat_layer.hpp">
       <Filter>inc\test\layers</Filter>
     </ClInclude>
@@ -89,6 +92,9 @@
       <Filter>src\test\layers</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\test\layers\test_batch_norm_layer.cpp">
+      <Filter>src\test\layers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\test\layers\test_bias_layer.cpp">
       <Filter>src\test\layers</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\test\layers\test_concat_layer.cpp">

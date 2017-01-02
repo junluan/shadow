@@ -33,6 +33,9 @@
     <ClInclude Include="..\..\inc\shadow\layers\batch_norm_layer.hpp">
       <Filter>inc\shadow\layers</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\inc\shadow\layers\bias_layer.hpp">
+      <Filter>inc\shadow\layers</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\inc\shadow\layers\concat_layer.hpp">
       <Filter>inc\shadow\layers</Filter>
     </ClInclude>
@@ -61,6 +64,9 @@
       <Filter>inc\shadow\layers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\inc\shadow\layers\prior_box_layer.hpp">
+      <Filter>inc\shadow\layers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\inc\shadow\layers\reorg_layer.hpp">
       <Filter>inc\shadow\layers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\inc\shadow\layers\reshape_layer.hpp">
@@ -119,6 +125,9 @@
     <ClCompile Include="..\..\src\shadow\layers\batch_norm_layer.cpp">
       <Filter>src\shadow\layers</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\shadow\layers\bias_layer.cpp">
+      <Filter>src\shadow\layers</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\src\shadow\layers\concat_layer.cpp">
       <Filter>src\shadow\layers</Filter>
     </ClCompile>
@@ -144,6 +153,9 @@
       <Filter>src\shadow\layers</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\shadow\layers\prior_box_layer.cpp">
+      <Filter>src\shadow\layers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\shadow\layers\reorg_layer.cpp">
       <Filter>src\shadow\layers</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\shadow\layers\reshape_layer.cpp">

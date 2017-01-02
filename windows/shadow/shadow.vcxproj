@@ -88,6 +88,7 @@
     <ClInclude Include="..\..\inc\shadow\kernel.hpp" />
     <ClInclude Include="..\..\inc\shadow\layers\activate_layer.hpp" />
     <ClInclude Include="..\..\inc\shadow\layers\batch_norm_layer.hpp" />
+    <ClInclude Include="..\..\inc\shadow\layers\bias_layer.hpp" />
     <ClInclude Include="..\..\inc\shadow\layers\concat_layer.hpp" />
     <ClInclude Include="..\..\inc\shadow\layers\connected_layer.hpp" />
     <ClInclude Include="..\..\inc\shadow\layers\convolution_layer.hpp" />
@@ -98,6 +99,7 @@
     <ClInclude Include="..\..\inc\shadow\layers\permute_layer.hpp" />
     <ClInclude Include="..\..\inc\shadow\layers\pooling_layer.hpp" />
     <ClInclude Include="..\..\inc\shadow\layers\prior_box_layer.hpp" />
+    <ClInclude Include="..\..\inc\shadow\layers\reorg_layer.hpp" />
     <ClInclude Include="..\..\inc\shadow\layers\reshape_layer.hpp" />
     <ClInclude Include="..\..\inc\shadow\layers\scale_layer.hpp" />
     <ClInclude Include="..\..\inc\shadow\layers\softmax_layer.hpp" />
@@ -117,6 +119,7 @@
     <ClCompile Include="..\..\src\shadow\kernel.cpp" />
     <ClCompile Include="..\..\src\shadow\layers\activate_layer.cpp" />
     <ClCompile Include="..\..\src\shadow\layers\batch_norm_layer.cpp" />
+    <ClCompile Include="..\..\src\shadow\layers\bias_layer.cpp" />
     <ClCompile Include="..\..\src\shadow\layers\concat_layer.cpp" />
     <ClCompile Include="..\..\src\shadow\layers\connected_layer.cpp" />
     <ClCompile Include="..\..\src\shadow\layers\convolution_layer.cpp" />
@@ -126,6 +129,7 @@
     <ClCompile Include="..\..\src\shadow\layers\permute_layer.cpp" />
     <ClCompile Include="..\..\src\shadow\layers\pooling_layer.cpp" />
     <ClCompile Include="..\..\src\shadow\layers\prior_box_layer.cpp" />
+    <ClCompile Include="..\..\src\shadow\layers\reorg_layer.cpp" />
     <ClCompile Include="..\..\src\shadow\layers\reshape_layer.cpp" />
     <ClCompile Include="..\..\src\shadow\layers\scale_layer.cpp" />
     <ClCompile Include="..\..\src\shadow\layers\softmax_layer.cpp" />

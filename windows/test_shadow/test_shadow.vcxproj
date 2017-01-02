@@ -71,6 +71,7 @@
     <ClInclude Include="..\..\external\inc\gtest\gtest.h" />
     <ClInclude Include="..\..\inc\test\layers\test_activate_layer.hpp" />
     <ClInclude Include="..\..\inc\test\layers\test_batch_norm_layer.hpp" />
+    <ClInclude Include="..\..\inc\test\layers\test_bias_layer.hpp" />
     <ClInclude Include="..\..\inc\test\layers\test_concat_layer.hpp" />
     <ClInclude Include="..\..\inc\test\layers\test_connected_layer.hpp" />
     <ClInclude Include="..\..\inc\test\layers\test_convolution_layer.hpp" />
@@ -90,6 +91,7 @@
     <ClCompile Include="..\..\external\inc\gtest\gtest-all.cc" />
     <ClCompile Include="..\..\src\test\layers\test_activate_layer.cpp" />
     <ClCompile Include="..\..\src\test\layers\test_batch_norm_layer.cpp" />
+    <ClCompile Include="..\..\src\test\layers\test_bias_layer.cpp" />
     <ClCompile Include="..\..\src\test\layers\test_concat_layer.cpp" />
     <ClCompile Include="..\..\src\test\layers\test_connected_layer.cpp" />
     <ClCompile Include="..\..\src\test\layers\test_convolution_layer.cpp" />
