@@ -95,6 +95,16 @@ void ConvolutionLayer::Reshape() {
   }
 #endif
 
+#if defined(USE_NNPACK)
+  if (!bias_term_ && batch == 1 && dilation_ == 1) {
+    CHECK_EQ(blobs_.size(), 1);
+    Blob<float> *bias_blob = new Blob<float>();
+    bias_blob->reshape(num_output_);
+    Blas::Set(bias_blob->count(), 0, bias_blob->mutable_data(), 0);
+    blobs_.push_back(bias_blob);
+  }
+#endif
+
   DLOG(INFO) << layer_name_ << ": "
              << Util::format_vector(bottoms_[0]->shape(), ",", "(", ")")
              << " -> " << num_output_ << "_" << kernel_size_ << "x"
