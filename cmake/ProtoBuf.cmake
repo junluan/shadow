@@ -12,8 +12,7 @@ endif ()
 
 set(copy_dir "${PROJECT_SOURCE_DIR}/tools")
 
-file(GLOB proto_files "${PROJECT_SOURCE_DIR}/src/shadow/proto/shadow.proto"
-                      "${PROJECT_SOURCE_DIR}/tools/caffe.proto")
+file(GLOB proto_files "${PROJECT_SOURCE_DIR}/src/shadow/proto/*.proto")
 
 foreach (fil ${proto_files})
   get_filename_component(abs_fil ${fil} ABSOLUTE)
@@ -26,9 +25,11 @@ foreach (fil ${proto_files})
   add_custom_command(
     OUTPUT "${fil_dir}/${fil_we}.pb.cc"
            "${fil_dir}/${fil_we}.pb.h"
+           "${PROJECT_SOURCE_DIR}/python/shadow/${fil_we}_pb2.py"
     COMMAND ${PROTOBUF_PROTOC_EXECUTABLE} --proto_path=${fil_dir} --cpp_out=${fil_dir} ${abs_fil}
+    COMMAND ${PROTOBUF_PROTOC_EXECUTABLE} --proto_path=${fil_dir} --python_out=${PROJECT_SOURCE_DIR}/python/shadow ${abs_fil}
     DEPENDS ${abs_fil}
-    COMMENT "Running C++ protocol buffer compiler on ${fil}" VERBATIM)
+    COMMENT "Running C++/Python protocol buffer compiler on ${fil}" VERBATIM)
 endforeach ()
 
 add_library(proto STATIC ${proto_srcs} ${proto_hdrs})

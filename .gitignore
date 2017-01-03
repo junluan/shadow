@@ -3,10 +3,9 @@ build
 data
 external
 models
-tools/*.cc
-tools/*.h
-src/shadow/proto/*.cc
-src/shadow/proto/*.h
+python/shadow/*_pb2.py
+src/shadow/proto/caffe.proto
+src/shadow/proto/*.pb.*
 inc/test
 src/test
 
