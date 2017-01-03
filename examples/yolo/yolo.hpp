@@ -1,13 +1,13 @@
-#ifndef SHADOW_YOLO_HPP
-#define SHADOW_YOLO_HPP
+#ifndef SHADOW_EXAMPLES_YOLO_HPP
+#define SHADOW_EXAMPLES_YOLO_HPP
 
-#include "shadow/network.hpp"
-#include "shadow/util/boxes.hpp"
-#include "shadow/util/jimage.hpp"
-#include "shadow/util/util.hpp"
+#include "method.hpp"
 
-class YOLO {
+class YOLO : public Method {
  public:
+  YOLO() {}
+  ~YOLO() { Release(); }
+
   void Setup(const std::string &model_file, int batch = 1);
 
   void Predict(const JImage &image, const VecRectF &rois,
@@ -33,6 +33,4 @@ class YOLO {
   JImage im_ini_, im_res_;
 };
 
-typedef YOLO METHOD;
-
-#endif  // SHADOW_YOLO_HPP
+#endif  // SHADOW_EXAMPLES_YOLO_HPP

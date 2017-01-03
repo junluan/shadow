@@ -5,10 +5,10 @@ int main(int argc, char const *argv[]) {
   std::string test_image = "data/static/demo_6.png";
   std::string test_list = "data/static/demo_list.txt";
 
-  Demo demo;
+  Demo demo("ssd");
   demo.Setup(model, 1);
   demo.Test(test_image);
-  //demo.BatchTest(test_list, true);
+  //demo.BatchTest(test_list, false);
   //demo.CameraTest(0);
   demo.Release();
 

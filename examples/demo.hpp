@@ -1,20 +1,30 @@
-#ifndef SHADOW_DEMO_HPP
-#define SHADOW_DEMO_HPP
+#ifndef SHADOW_EXAMPLES_DEMO_HPP
+#define SHADOW_EXAMPLES_DEMO_HPP
 
 #include "ssd/ssd.hpp"
-
-#include "shadow/util/boxes.hpp"
-#include "shadow/util/jimage.hpp"
+#include "yolo/yolo.hpp"
 
 class Demo {
  public:
+  Demo(const std::string &method_name = "ssd") {
+    if (!method_name.compare("ssd")) {
+      method_ = new SSD();
+    } else if (!method_name.compare("yolo")) {
+      method_ = new YOLO();
+    } else {
+      LOG(FATAL) << "Unknown method " << method_name;
+    }
+  }
+  ~Demo() { Release(); }
+
   void Setup(const std::string &model_file, int batch = 1) {
-    method_.Setup(model_file, batch);
+    method_->Setup(model_file, batch);
   }
   void Release() {
-    method_.Release();
-    im_ini_.Release();
-    Bboxes_.clear();
+    if (method_ != nullptr) {
+      delete method_;
+      method_ = nullptr;
+    }
   }
 
   void Test(const std::string &image_file);
@@ -28,7 +38,7 @@ class Demo {
  private:
   void Predict(const JImage &image, const VecRectF &rois,
                std::vector<VecBoxF> *Bboxes) {
-    method_.Predict(image, rois, Bboxes);
+    method_->Predict(image, rois, Bboxes);
   }
 
 #if defined(USE_OpenCV)
@@ -41,10 +51,10 @@ class Demo {
   void PrintDetections(const std::string &im_name, const VecBoxF &boxes,
                        std::ofstream *file);
 
-  METHOD method_;
+  Method *method_;
   JImage im_ini_;
   std::vector<VecBoxF> Bboxes_;
   Timer timer_;
 };
 
-#endif  // SHADOW_DEMO_HPP
+#endif  // SHADOW_EXAMPLES_DEMO_HPP

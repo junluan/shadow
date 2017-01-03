@@ -1,16 +1,16 @@
-#ifndef SHADOW_SSD_HPP
-#define SHADOW_SSD_HPP
+#ifndef SHADOW_EXAMPLES_SSD_HPP
+#define SHADOW_EXAMPLES_SSD_HPP
 
-#include "shadow/network.hpp"
-#include "shadow/util/boxes.hpp"
-#include "shadow/util/jimage.hpp"
-#include "shadow/util/util.hpp"
+#include "method.hpp"
 
 typedef std::map<int, VecBoxF> LabelBBox;
 typedef std::vector<LabelBBox> VecLabelBBox;
 
-class SSD {
+class SSD : public Method {
  public:
+  SSD() {}
+  ~SSD() { Release(); }
+
   void Setup(const std::string &model_file, int batch = 1);
 
   void Predict(const JImage &image, const VecRectF &rois,
@@ -61,6 +61,4 @@ class SSD {
   JImage im_ini_, im_res_;
 };
 
-typedef SSD METHOD;
-
-#endif  // SHADOW_SSD_HPP
+#endif  // SHADOW_EXAMPLES_SSD_HPP

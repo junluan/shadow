@@ -2,3 +2,4 @@ file(GLOB_RECURSE demo_src *.cpp)
 
 add_executable(demo ${demo_src})
 target_link_libraries(demo shadow)
+target_include_directories(demo SYSTEM PRIVATE ".")
