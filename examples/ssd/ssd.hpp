@@ -29,9 +29,6 @@ class SSD {
  private:
   void Process(const float *data, std::vector<VecBoxF> *Bboxes);
 
-  const float *GetBlobDataByName(const std::string &name);
-  const Blob<float> *GetBlobByName(const std::string &name);
-
   void GetLocPredictions(const float *loc_data, int num,
                          int num_preds_per_class, int num_loc_classes,
                          bool share_location, VecLabelBBox *loc_preds);
@@ -55,8 +52,7 @@ class SSD {
                   const BoxF &bbox, BoxF *decode_bbox);
 
   Network net_;
-  float *in_data_;
-  std::map<std::string, float *> blobs_data_;
+  VecFloat in_data_;
   int batch_, in_num_, in_c_, in_h_, in_w_;
   int num_classes_, num_priors_, num_loc_classes_, background_label_id_, top_k_,
       keep_top_k_;

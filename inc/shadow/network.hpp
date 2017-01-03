@@ -20,6 +20,7 @@ class Network {
 
   const Layer *GetLayerByName(const std::string &layer_name);
   const Blob<float> *GetBlobByName(const std::string &blob_name);
+  const float *GetBlobDataByName(const std::string &blob_name);
 
   const VecInt &in_shape() { return in_shape_; }
 
@@ -41,6 +42,7 @@ class Network {
   VecInt in_shape_;
   VecLayer layers_;
   VecBlob blobs_;
+  std::map<std::string, VecFloat> blobs_data_;
 };
 
 #endif  // SHADOW_NETWORK_HPP

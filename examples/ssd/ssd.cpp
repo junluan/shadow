@@ -116,11 +116,11 @@ void SSD::Setup(const std::string &model_file, int batch) {
   in_w_ = net_.in_shape()[3];
   in_num_ = in_c_ * in_h_ * in_w_;
 
-  in_data_ = new float[batch_ * in_num_];
+  in_data_.resize(batch_ * in_num_);
 
   threshold_ = 0.6;
   num_classes_ = 3;
-  num_priors_ = GetBlobByName("mbox_priorbox")->shape(2) / 4;
+  num_priors_ = net_.GetBlobByName("mbox_priorbox")->shape(2) / 4;
   num_loc_classes_ = 1;
   background_label_id_ = 0;
   top_k_ = 400;
@@ -135,10 +135,10 @@ void SSD::Predict(const JImage &image, const VecRectF &rois,
   CHECK_LE(rois.size(), batch_);
   for (int b = 0; b < rois.size(); ++b) {
     JImageProc::CropResize(image, &im_res_, rois[b], in_h_, in_w_);
-    ConvertData(im_res_, in_data_ + b * in_num_);
+    ConvertData(im_res_, in_data_.data() + b * in_num_);
   }
 
-  Process(in_data_, Bboxes);
+  Process(in_data_.data(), Bboxes);
 
   CHECK_EQ(Bboxes->size(), rois.size());
   for (int b = 0; b < Bboxes->size(); ++b) {
@@ -173,10 +173,11 @@ void SSD::Predict(const ASVLOFFSCREEN &im_arc, const VecRectF &rois,
     rect.top = static_cast<int>(roi.y);
     rect.right = static_cast<int>(roi.x + roi.w);
     rect.bottom = static_cast<int>(roi.y + roi.h);
-    Convert::CropResize2BGR(im_arc, in_data_ + b * in_num_, rect, in_h_, in_w_);
+    Convert::CropResize2BGR(im_arc, in_data_.data() + b * in_num_, rect, in_h_,
+                            in_w_);
   }
 
-  Process(in_data_, Bboxes);
+  Process(in_data_.data(), Bboxes);
 
   CHECK_EQ(Bboxes->size(), rois.size());
   for (int b = 0; b < Bboxes->size(); ++b) {
@@ -195,26 +196,15 @@ void SSD::Predict(const ASVLOFFSCREEN &im_arc, const VecRectF &rois,
 void SSD::Release() {
   net_.Release();
 
-  if (in_data_ != nullptr) {
-    delete[] in_data_;
-    in_data_ = nullptr;
-  }
-
-  for (auto &it : blobs_data_) {
-    if (it.second != nullptr) {
-      delete[] it.second;
-      it.second = nullptr;
-    }
-  }
-  blobs_data_.clear();
+  in_data_.clear();
 }
 
 void SSD::Process(const float *data, std::vector<VecBoxF> *Bboxes) {
   net_.Forward(data);
 
-  const float *loc_data = GetBlobDataByName("mbox_loc");
-  const float *conf_data = GetBlobDataByName("mbox_conf_flatten");
-  const float *prior_data = GetBlobDataByName("mbox_priorbox");
+  const float *loc_data = net_.GetBlobDataByName("mbox_loc");
+  const float *conf_data = net_.GetBlobDataByName("mbox_conf_flatten");
+  const float *prior_data = net_.GetBlobDataByName("mbox_priorbox");
 
   VecLabelBBox all_loc_preds;
   GetLocPredictions(loc_data, batch_, num_priors_, num_loc_classes_,
@@ -320,22 +310,6 @@ void SSD::Process(const float *data, std::vector<VecBoxF> *Bboxes) {
     }
     Bboxes->push_back(boxes);
   }
-}
-
-const float *SSD::GetBlobDataByName(const std::string &name) {
-  const Blob<float> *blob = net_.GetBlobByName(name);
-  if (blob == nullptr) LOG(FATAL) << "Unknown blob: " + name;
-
-  if (blobs_data_.find(name) == blobs_data_.end()) {
-    blobs_data_[name] = new float[blob->count()];
-  }
-  float *data = blobs_data_.find(name)->second;
-  blob->read_data(data);
-  return data;
-}
-
-const Blob<float> *SSD::GetBlobByName(const std::string &name) {
-  return net_.GetBlobByName(name);
 }
 
 void SSD::GetLocPredictions(const float *loc_data, int num,

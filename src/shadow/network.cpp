@@ -94,6 +94,11 @@ void Network::Release() {
   }
   blobs_.clear();
 
+  for (auto &blob_data : blobs_data_) {
+    blob_data.second.clear();
+  }
+  blobs_data_.clear();
+
 #if defined(USE_CUDA) | defined(USE_CL)
   Kernel::Release();
 #endif
@@ -114,6 +119,18 @@ const Layer *Network::GetLayerByName(const std::string &layer_name) {
 
 const Blob<float> *Network::GetBlobByName(const std::string &blob_name) {
   return get_blob_by_name(blobs_, blob_name);
+}
+
+const float *Network::GetBlobDataByName(const std::string &blob_name) {
+  const Blob<float> *blob = GetBlobByName(blob_name);
+  if (blob == nullptr) {
+    LOG(FATAL) << "Unknown blob: " + blob_name;
+  } else if (blobs_data_.find(blob_name) == blobs_data_.end()) {
+    blobs_data_[blob_name] = VecFloat(blob->count(), 0);
+  }
+  VecFloat &blob_data = blobs_data_.find(blob_name)->second;
+  blob->read_data(blob_data.data());
+  return blob_data.data();
 }
 
 void Network::LoadProtoBin(const std::string &proto_bin,

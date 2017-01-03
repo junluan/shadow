@@ -15,12 +15,10 @@ void Demo::Test(const std::string &image_file) {
 
   for (const auto &boxF : boxes) {
     BoxI box(boxF);
-    Scalar scalar(0, 255, 255);
-    if (box.label == 1) {
-      scalar = Scalar(0, 255, 0);
-    } else if (box.label == 2) {
-      scalar = Scalar(0, 0, 255);
-    }
+    int color_r = (box.label * 50) % 255;
+    int color_g = (color_r + 50) % 255;
+    int color_b = (color_g + 50) % 255;
+    Scalar scalar(color_r, color_g, color_b);
     JImageProc::Rectangle(&im_ini_, box.RectInt(), scalar);
     std::cout << "xmin = " << box.xmin << ", ymin = " << box.ymin
               << ", xmax = " << box.xmax << ", ymax = " << box.ymax
@@ -51,12 +49,10 @@ void Demo::BatchTest(const std::string &list_file, bool image_write) {
           Util::find_replace_last(im_path, ".", "-result.");
       for (const auto &boxF : boxes) {
         BoxI box(boxF);
-        Scalar scalar(0, 255, 255);
-        if (box.label == 1) {
-          scalar = Scalar(0, 255, 0);
-        } else if (box.label == 2) {
-          scalar = Scalar(0, 0, 255);
-        }
+        int color_r = (box.label * 50) % 255;
+        int color_g = (color_r + 50) % 255;
+        int color_b = (color_g + 50) % 255;
+        Scalar scalar(color_r, color_g, color_b);
         JImageProc::Rectangle(&im_ini_, box.RectInt(), scalar);
       }
       im_ini_.Write(path);
@@ -162,14 +158,10 @@ void Demo::DrawDetections(const VecBoxF &boxes, cv::Mat *im_mat,
                           bool console_show) {
   for (const auto &boxF : boxes) {
     const BoxI box(boxF);
-    cv::Scalar scalar(0, 255, 255);
-    if (box.label == 1) {
-      scalar = cv::Scalar(0, 255, 0);
-    } else if (box.label == 2) {
-      scalar = cv::Scalar(255, 0, 0);
-    } else {
-      continue;
-    }
+    int color_r = (box.label * 50) % 255;
+    int color_g = (color_r + 50) % 255;
+    int color_b = (color_g + 50) % 255;
+    cv::Scalar scalar(color_b, color_g, color_r);
     cv::rectangle(*im_mat, cv::Point(box.xmin, box.ymin),
                   cv::Point(box.xmax, box.ymax), scalar, 2);
     if (console_show) {
