@@ -9,7 +9,7 @@
 
 #define USE_ArcSoft
 #if defined(USE_ArcSoft)
-#include "arcsoft/asvloffscreen.h"
+#include "asvloffscreen.h"
 #endif
 
 enum Order { kGray, kRGB, kBGR, kArc };

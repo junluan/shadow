@@ -80,7 +80,7 @@
     <ClInclude Include="..\..\inc\test\test_shadow.hpp">
       <Filter>inc\test</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\external\inc\gtest\gtest.h">
+    <ClInclude Include="..\..\external\gtest\gtest.h">
       <Filter>inc</Filter>
     </ClInclude>
   </ItemGroup>
@@ -136,7 +136,7 @@
     <ClCompile Include="..\..\src\test\util\test_blas.cpp">
       <Filter>src\test\util</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\external\inc\gtest\gtest-all.cc">
+    <ClCompile Include="..\..\external\gtest\gtest-all.cc">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>

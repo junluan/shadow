@@ -28,8 +28,8 @@
     </ImportGroup>
 
     <PropertyGroup>
-        <IncludePath>$(ExternalDir)\inc;$(ExternalDir)\inc\OpenBLAS;$(IncludePath)</IncludePath>
-        <LibraryPath>$(ExternalDir)\lib\x64;$(LibraryPath)</LibraryPath>
+        <IncludePath>$(ExternalDir);$(ExternalDir)\arcsoft\include;$(ExternalDir)\openblas\include;$(ExternalDir)\protobuf\include;$(IncludePath)</IncludePath>
+        <LibraryPath>$(ExternalDir)\openblas\x64\lib;$(ExternalDir)\protobuf\x64\lib;$(LibraryPath)</LibraryPath>
     </PropertyGroup>
 
     <ItemDefinitionGroup Condition="'$(USE_CUDA)'=='true'">

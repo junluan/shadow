@@ -162,7 +162,7 @@ void SSD::Predict(const cv::Mat &im_mat, const VecRectF &rois,
 #endif
 
 #if defined(USE_ArcSoft)
-#include "arcsoft/convert.hpp"
+#include "convert.hpp"
 void SSD::Predict(const ASVLOFFSCREEN &im_arc, const VecRectF &rois,
                   std::vector<VecBoxF> *Bboxes) {
   CHECK_LE(rois.size(), batch_);
