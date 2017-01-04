@@ -11,12 +11,12 @@
         <CudaVersion>7.5</CudaVersion>
         <CudaArchitecture>compute_30,sm_30</CudaArchitecture>
 
-        <USE_CUDNN>true</USE_CUDNN>
+        <USE_CUDNN>false</USE_CUDNN>
         <CUDNNRoot>C:\Softwares\cuda</CUDNNRoot>
 
         <USE_OpenCV>true</USE_OpenCV>
         <OpenCVVersion>2413</OpenCVVersion>
-        <OpenCVRoot>C:\Softwares\OpenCV-2.4.13</OpenCVRoot>
+        <OpenCVRoot>$(ExternalDir)\opencv</OpenCVRoot>
 
         <USE_OpenBLAS>true</USE_OpenBLAS>
     </PropertyGroup>
