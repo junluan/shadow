@@ -9,7 +9,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\tools\caffe.pb.h">
+    <ClInclude Include="..\..\src\shadow\proto\caffe.pb.h">
       <Filter>inc</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\shadow\proto\shadow.pb.h">
@@ -17,7 +17,7 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\tools\caffe.pb.cc">
+    <ClCompile Include="..\..\src\shadow\proto\caffe.pb.cc">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\shadow\proto\shadow.pb.cc">

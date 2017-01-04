@@ -10,13 +10,22 @@
     <Filter Include="ssd">
       <UniqueIdentifier>{e9cf8a0e-0ca8-4331-9abc-a751e06928d1}</UniqueIdentifier>
     </Filter>
+    <Filter Include="yolo">
+      <UniqueIdentifier>{4d456fee-4471-444c-ba3d-95c7d210ad8d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\examples\demo.hpp">
       <Filter>inc</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\examples\method.hpp">
+      <Filter>inc</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\examples\ssd\ssd.hpp">
       <Filter>ssd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\examples\yolo\yolo.hpp">
+      <Filter>yolo</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -28,6 +37,9 @@
     </ClCompile>
     <ClCompile Include="..\..\examples\ssd\ssd.cpp">
       <Filter>ssd</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\examples\yolo\yolo.cpp">
+      <Filter>yolo</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

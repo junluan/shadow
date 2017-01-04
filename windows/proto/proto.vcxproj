@@ -49,7 +49,6 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
-      <AdditionalIncludeDirectories>$(SolutionDir)\..\tools;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -63,7 +62,6 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>$(SolutionDir)\..\tools;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -74,12 +72,12 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\src\shadow\proto\caffe.pb.h" />
     <ClInclude Include="..\..\src\shadow\proto\shadow.pb.h" />
-    <ClInclude Include="..\..\tools\caffe.pb.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\src\shadow\proto\caffe.pb.cc" />
     <ClCompile Include="..\..\src\shadow\proto\shadow.pb.cc" />
-    <ClCompile Include="..\..\tools\caffe.pb.cc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
