@@ -11,7 +11,7 @@ class Method {
   Method() {}
   virtual ~Method() {}
 
-  virtual void Setup(const std::string &model_file, int batch = 1) {
+  virtual void Setup(const std::string &model_file, int classes, int batch) {
     LOG(INFO) << "Setup method!";
   }
 

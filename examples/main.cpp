@@ -6,7 +6,7 @@ int main(int argc, char const *argv[]) {
   std::string test_list = "data/static/demo_list.txt";
 
   Demo demo("ssd");
-  demo.Setup(model, 1);
+  demo.Setup(model, 3, 1);
   demo.Test(test_image);
   //demo.BatchTest(test_list, false);
   //demo.CameraTest(0);

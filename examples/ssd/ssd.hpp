@@ -11,7 +11,7 @@ class SSD : public Method {
   SSD() {}
   ~SSD() { Release(); }
 
-  void Setup(const std::string &model_file, int batch = 1);
+  void Setup(const std::string &model_file, int classes, int batch);
 
   void Predict(const JImage &image, const VecRectF &rois,
                std::vector<VecBoxF> *Bboxes);

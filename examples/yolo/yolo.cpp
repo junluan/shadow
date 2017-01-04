@@ -41,7 +41,7 @@ inline void ConvertData(const JImage &im_src, float *data, int flag = 1) {
   }
 }
 
-void YOLO::Setup(const std::string &model_file, int batch) {
+void YOLO::Setup(const std::string &model_file, int classes, int batch) {
   net_.Setup();
 
   net_.LoadModel(model_file, batch);
@@ -60,7 +60,7 @@ void YOLO::Setup(const std::string &model_file, int batch) {
   biases_ =
       VecFloat{1.08, 1.19, 3.42, 4.41, 6.63, 11.38, 9.42, 5.11, 16.62, 10.52};
   threshold_ = 0.6;
-  num_classes_ = 20;
+  num_classes_ = classes;
   num_km_ = 5;
 }
 

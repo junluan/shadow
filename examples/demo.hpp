@@ -17,8 +17,8 @@ class Demo {
   }
   ~Demo() { Release(); }
 
-  void Setup(const std::string &model_file, int batch = 1) {
-    method_->Setup(model_file, batch);
+  void Setup(const std::string &model_file, int classes, int batch = 1) {
+    method_->Setup(model_file, classes, batch);
   }
   void Release() {
     if (method_ != nullptr) {

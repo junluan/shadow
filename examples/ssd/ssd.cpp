@@ -105,7 +105,7 @@ inline void ApplyNMSFast(const VecBoxF &bboxes, const VecFloat &scores,
   }
 }
 
-void SSD::Setup(const std::string &model_file, int batch) {
+void SSD::Setup(const std::string &model_file, int classes, int batch) {
   net_.Setup();
 
   net_.LoadModel(model_file, batch);
@@ -119,7 +119,7 @@ void SSD::Setup(const std::string &model_file, int batch) {
   in_data_.resize(batch_ * in_num_);
 
   threshold_ = 0.6;
-  num_classes_ = 3;
+  num_classes_ = classes;
   num_priors_ = net_.GetBlobByName("mbox_priorbox")->shape(2) / 4;
   num_loc_classes_ = 1;
   background_label_id_ = 0;

@@ -81,10 +81,6 @@ message PoolingParameter {
 }
 
 message PriorBoxParameter {
-  enum CodeType {
-    Corner = 1;
-    Center = 2;
-  }
   optional float min_size = 1;
   optional float max_size = 2;
   repeated float aspect_ratio = 3;
