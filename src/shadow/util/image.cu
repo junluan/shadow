@@ -33,11 +33,11 @@ void DataTransform(const T *in_data, const VecInt &in_shape, float scale,
   CUDA_CHECK(cudaPeekAtLastError());
 }
 
-__global__ void KernelIm2Col(const float *im_data, int offset, int in_c,
-                             int in_h, int in_w, int kernel_size, int stride,
-                             int pad, int dilation, int out_h, int out_w,
-                             float *col_data) {
-  CUDA_KERNEL_LOOP(globalid, in_c * out_h * out_w) {
+__global__ void KernelIm2Col(const float *in_data, int offset, int count,
+                             int in_c, int in_h, int in_w, int kernel_size,
+                             int stride, int pad, int dilation, int out_h,
+                             int out_w, float *out_data) {
+  CUDA_KERNEL_LOOP(globalid, count) {
     int h_index = globalid / out_w;
     int h_col = h_index % out_h;
     int w_col = globalid % out_w;
@@ -45,16 +45,16 @@ __global__ void KernelIm2Col(const float *im_data, int offset, int in_c,
     int c_col = c_im * kernel_size * kernel_size;
     int h_offset = h_col * stride - pad;
     int w_offset = w_col * stride - pad;
-    col_data += (c_col * out_h + h_col) * out_w + w_col;
-    im_data += offset + (c_im * in_h + h_offset) * in_w + w_offset;
+    out_data += (c_col * out_h + h_col) * out_w + w_col;
+    in_data += offset + (c_im * in_h + h_offset) * in_w + w_offset;
     for (int i = 0; i < kernel_size; ++i) {
       for (int j = 0; j < kernel_size; ++j) {
         int h_im = h_offset + i * dilation;
         int w_im = w_offset + j * dilation;
-        *col_data = (h_im >= 0 && w_im >= 0 && h_im < in_h && w_im < in_w)
-                        ? im_data[i * dilation * in_w + j * dilation]
+        *out_data = (h_im >= 0 && w_im >= 0 && h_im < in_h && w_im < in_w)
+                        ? in_data[i * dilation * in_w + j * dilation]
                         : 0;
-        col_data += out_h * out_w;
+        out_data += out_h * out_w;
       }
     }
   }
@@ -66,22 +66,24 @@ void Im2Col(const T *in_data, const VecInt &in_shape, int offset,
             const VecInt &out_shape, T *out_data) {
   int in_c = in_shape[1], in_h = in_shape[2], in_w = in_shape[3];
   int out_h = out_shape[2], out_w = out_shape[3];
-  int N = in_c * out_h * out_w;
-  KernelIm2Col<<<GetBlocks(N), NumThreads>>>(in_data, offset, in_c, in_h, in_w,
-                                             kernel_size, stride, pad, dilation,
-                                             out_h, out_w, out_data);
+  int count = in_c * out_h * out_w;
+  KernelIm2Col<<<GetBlocks(count), NumThreads>>>(
+      in_data, offset, count, in_c, in_h, in_w, kernel_size, stride, pad,
+      dilation, out_h, out_w, out_data);
   CUDA_CHECK(cudaPeekAtLastError());
 }
 
-__global__ void KernelPooling(const float *in_data, int batch, int in_c,
+__global__ void KernelPooling(const float *in_data, int count, int in_c,
                               int in_h, int in_w, int kernel_size, int stride,
                               int pad, int mode, int out_h, int out_w,
                               float *out_data) {
-  CUDA_KERNEL_LOOP(globalid, batch * in_c * out_h * out_w) {
-    int b_out = (globalid / (out_w * out_h * in_c)) % batch;
-    int c_out = (globalid / (out_w * out_h)) % in_c;
-    int i_out = (globalid / out_w) % out_h;
+  CUDA_KERNEL_LOOP(globalid, count) {
+    int temp = globalid / out_w;
     int j_out = globalid % out_w;
+    int i_out = temp % out_h;
+    temp = temp / out_h;
+    int c_out = temp % in_c;
+    int b_out = temp / in_c;
 
     int kistart = i_out * stride - pad, kjstart = j_out * stride - pad;
     int kiend = min(kistart + kernel_size, in_h);
@@ -115,10 +117,10 @@ void Pooling(const T *in_data, const VecInt &in_shape, int kernel_size,
   int batch = in_shape[0];
   int in_c = in_shape[1], in_h = in_shape[2], in_w = in_shape[3];
   int out_h = out_shape[2], out_w = out_shape[3];
-  int N = batch * in_c * out_h * out_w;
-  KernelPooling<<<GetBlocks(N), NumThreads>>>(in_data, batch, in_c, in_h, in_w,
-                                              kernel_size, stride, pad, mode,
-                                              out_h, out_w, out_data);
+  int count = batch * in_c * out_h * out_w;
+  KernelPooling<<<GetBlocks(count), NumThreads>>>(
+      in_data, count, in_c, in_h, in_w, kernel_size, stride, pad, mode, out_h,
+      out_w, out_data);
   CUDA_CHECK(cudaPeekAtLastError());
 }
 
@@ -206,27 +208,24 @@ void Bias(const T *in_data, int count, const T *bias_data, int bias_dim,
   CUDA_CHECK(cudaPeekAtLastError());
 }
 
-__global__ void KernelReorg(const float *in_data, int count, int batch,
-                            int in_c, int in_h, int in_w, int stride,
-                            float *out_data) {
+__global__ void KernelReorg(const float *in_data, int count, int in_c, int in_h,
+                            int in_w, int out_c, int out_h, int out_w,
+                            int stride, float *out_data) {
   CUDA_KERNEL_LOOP(globalid, count) {
-    int out_c = in_c / (stride * stride);
+    int temp = globalid / out_w;
+    int w = globalid % out_w;
+    int h = temp % out_h;
+    temp = temp / out_h;
+    int c = temp % out_c;
+    int b = temp / out_c;
 
-    int temp = globalid / in_w;
-    int w_in = globalid % in_w;
-    int h_in = temp % in_h;
-    temp = temp / in_h;
-    int c_in = temp % in_c;
-    temp = temp / in_c;
-    int b_in = temp % batch;
-
-    int c2 = c_in % out_c;
-    temp = c_in / out_c;
-    int w2 = w_in * stride + temp % stride;
-    int h2 = h_in * stride + temp / stride;
-    int out_index =
-        w2 + in_w * stride * (h2 + in_h * stride * (c2 + out_c * b_in));
-    out_data[globalid] = in_data[out_index];
+    int c_in = c % in_c;
+    int area = c / in_c;
+    int h_in = h * stride + area / stride;
+    int w_in = w * stride + area % stride;
+    int in_index = ((b * in_c + c_in) * in_h + h_in) * in_w + w_in;
+    int out_index = ((b * out_c + c) * out_h + h) * out_w + w;
+    out_data[out_index] = in_data[in_index];
   }
 }
 
@@ -234,9 +233,11 @@ template <typename T>
 void Reorg(const T *in_data, const VecInt &in_shape, int stride, T *out_data) {
   int batch = in_shape[0];
   int in_c = in_shape[1], in_h = in_shape[2], in_w = in_shape[3];
-  int count = batch * in_c * in_h * in_w;
-  KernelReorg<<<GetBlocks(count), NumThreads>>>(in_data, count, batch, in_c,
-                                                in_h, in_w, stride, out_data);
+  int out_c = in_c * stride * stride;
+  int out_h = in_h / stride, out_w = in_w / stride;
+  int count = batch * out_c * out_h * out_w;
+  KernelReorg<<<GetBlocks(count), NumThreads>>>(
+      in_data, count, in_c, in_h, in_w, out_c, out_h, out_w, stride, out_data);
   CUDA_CHECK(cudaPeekAtLastError());
 }
 

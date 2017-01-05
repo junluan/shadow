@@ -73,7 +73,6 @@ void Pooling(const T *in_data, const VecInt &in_shape, int kernel_size,
   int batch = in_shape[0];
   int in_c = in_shape[1], in_h = in_shape[2], in_w = in_shape[3];
   int out_h = out_shape[2], out_w = out_shape[3];
-
   for (int b = 0; b < batch; ++b) {
     for (int c = 0; c < in_c; ++c) {
       for (int h = 0; h < out_h; ++h) {
@@ -153,22 +152,21 @@ void Bias(const T *in_data, int count, const T *bias_data, int bias_dim,
 
 template <typename T>
 void Reorg(const T *in_data, const VecInt &in_shape, int stride, T *out_data) {
-  int batch = in_shape[0];
-  int in_c = in_shape[1], in_h = in_shape[2], in_w = in_shape[3];
-
-  int out_c = in_c / (stride * stride);
+  int batch = in_shape[0], in_c = in_shape[1];
+  int in_h = in_shape[2], in_w = in_shape[3];
+  int out_c = in_c * stride * stride;
+  int out_h = in_h / stride, out_w = in_w / stride;
   for (int b = 0; b < batch; ++b) {
-    for (int k = 0; k < in_c; ++k) {
-      for (int j = 0; j < in_h; ++j) {
-        for (int i = 0; i < in_w; ++i) {
-          int in_index = i + in_w * (j + in_h * (k + in_c * b));
-          int c2 = k % out_c;
-          int offset = k / out_c;
-          int w2 = i * stride + offset % stride;
-          int h2 = j * stride + offset / stride;
-          int out_index =
-              w2 + in_w * stride * (h2 + in_h * stride * (c2 + out_c * b));
-          out_data[in_index] = in_data[out_index];
+    for (int c = 0; c < out_c; ++c) {
+      for (int h = 0; h < out_h; ++h) {
+        for (int w = 0; w < out_w; ++w) {
+          int c_in = c % in_c;
+          int area = c / in_c;
+          int h_in = h * stride + area / stride;
+          int w_in = w * stride + area % stride;
+          int in_index = ((b * in_c + c_in) * in_h + h_in) * in_w + w_in;
+          int out_index = ((b * out_c + c) * out_h + h) * out_w + w;
+          out_data[out_index] = in_data[in_index];
         }
       }
     }
@@ -243,11 +241,12 @@ void Im2Col(const T *in_data, const VecInt &in_shape, int offset,
             const VecInt &out_shape, T *out_data) {
   int in_c = in_shape[1], in_h = in_shape[2], in_w = in_shape[3];
   int out_h = out_shape[2], out_w = out_shape[3];
+  int count = in_c * out_h * out_w;
 
-  size_t global = in_c * out_h * out_w;
+  size_t global = count;
   EasyCL::Kernel *kernel = Kernel::cl_im2col_kernel_;
-  kernel->SetArguments(*in_data, offset, in_c, in_h, in_w, kernel_size, stride,
-                       pad, dilation, out_h, out_w, *out_data);
+  kernel->SetArguments(*in_data, offset, count, in_c, in_h, in_w, kernel_size,
+                       stride, pad, dilation, out_h, out_w, *out_data);
   kernel->Launch(*Kernel::queue_, {global}, Kernel::event_);
   Kernel::queue_->Finish();
 }
@@ -259,10 +258,11 @@ void Pooling(const T *in_data, const VecInt &in_shape, int kernel_size,
   int batch = in_shape[0];
   int in_c = in_shape[1], in_h = in_shape[2], in_w = in_shape[3];
   int out_h = out_shape[2], out_w = out_shape[3];
+  int count = batch * in_c * out_h * out_w;
 
-  size_t global = batch * in_c * out_h * out_w;
+  size_t global = count;
   EasyCL::Kernel *kernel = Kernel::cl_pooling_kernel_;
-  kernel->SetArguments(*in_data, batch, in_c, in_h, in_w, kernel_size, stride,
+  kernel->SetArguments(*in_data, count, in_c, in_h, in_w, kernel_size, stride,
                        pad, mode, out_h, out_w, *out_data);
   kernel->Launch(*Kernel::queue_, {global}, Kernel::event_);
   Kernel::queue_->Finish();
@@ -319,12 +319,14 @@ template <typename T>
 void Reorg(const T *in_data, const VecInt &in_shape, int stride, T *out_data) {
   int batch = in_shape[0];
   int in_c = in_shape[1], in_h = in_shape[2], in_w = in_shape[3];
-  int count = batch * in_c * in_h * in_w;
+  int out_c = in_c * stride * stride;
+  int out_h = in_h / stride, out_w = in_w / stride;
+  int count = batch * out_c * out_h * out_w;
 
   size_t global = count;
   EasyCL::Kernel *kernel = Kernel::cl_reorg_kernel_;
-  kernel->SetArguments(*in_data, count, batch, in_c, in_h, in_w, stride,
-                       *out_data);
+  kernel->SetArguments(*in_data, count, in_c, in_h, in_w, out_c, out_h, out_w,
+                       stride, *out_data);
   kernel->Launch(*Kernel::queue_, {global}, Kernel::event_);
   Kernel::queue_->Finish();
 }
