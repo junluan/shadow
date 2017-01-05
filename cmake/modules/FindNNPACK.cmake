@@ -1,6 +1,5 @@
 set(NNPACK_PATHS
-    ./external/NNPACK
-    ./external/libs
+    ./external/nnpack
     /usr
     /usr/local)
 

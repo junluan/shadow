@@ -15,14 +15,14 @@ option(USE_OpenCV "Use OpenCV to read, write and show image" ON)
 option(BUILD_TEST "Build gtest to test shadow" OFF)
 
 set(BLAS "Open" CACHE STRING "Selected BLAS library")
-set(OpenCV_ROOT "/usr/local/opencv-3.1.0" CACHE PATH "OpenCV root folder")
+set(OpenCV_ROOT "/usr/local/opencv-3.2.0" CACHE PATH "OpenCV root folder")
 
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake/modules)
 include(cmake/Dependencies.cmake)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -std=c++11")
 
-include_directories("inc" "src/shadow/proto" "external/arcsoft/include")
+include_directories("inc" "src/shadow/proto" "external" "external/arcsoft/include")
 
 add_subdirectory(src)
 add_subdirectory(examples)

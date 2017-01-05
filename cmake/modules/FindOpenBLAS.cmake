@@ -1,6 +1,5 @@
 set(OpenBLAS_PATHS
-    ./external/OpenBLAS
-    ./external/libs
+    ./external/openblas
     /usr
     /usr/local)
 

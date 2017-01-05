@@ -24,7 +24,7 @@ inline int GetBlocks(const int N) { return (N + NumThreads - 1) / NumThreads; }
   } while (0)
 
 #elif defined(USE_CL)
-#include "CLCudaAPI/easycl.hpp"
+#include "easycl/easycl.hpp"
 typedef EasyCL::Buffer<int> BufferI;
 typedef EasyCL::Buffer<float> BufferF;
 #endif
