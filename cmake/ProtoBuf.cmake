@@ -1,16 +1,15 @@
 find_package(Protobuf REQUIRED QUIET)
-if (PROTOBUF_FOUND)
-  include_directories(SYSTEM ${PROTOBUF_INCLUDE_DIRS})
-  message(STATUS "Found Protobuf: ${PROTOBUF_LIBRARY} (found version ${Protobuf_VERSION})")
+if (Protobuf_FOUND)
+  include_directories(SYSTEM ${Protobuf_INCLUDE_DIRS})
+  message(STATUS "Found Protobuf include: ${Protobuf_INCLUDE_DIRS} (found version ${Protobuf_VERSION})")
+  message(STATUS "Found Protobuf libraries: ${Protobuf_LIBRARIES}")
 endif ()
 
-if (EXISTS ${PROTOBUF_PROTOC_EXECUTABLE})
-  message(STATUS "Found Protobuf Compiler: ${PROTOBUF_PROTOC_EXECUTABLE}")
+if (EXISTS ${Protobuf_PROTOC_EXECUTABLE})
+  message(STATUS "Found Protobuf protoc: ${Protobuf_PROTOC_EXECUTABLE}")
 else ()
   message(FATAL_ERROR "Could not find Protobuf Compiler")
 endif ()
-
-set(copy_dir "${PROJECT_SOURCE_DIR}/tools")
 
 file(GLOB proto_files "${PROJECT_SOURCE_DIR}/src/shadow/proto/*.proto")
 
@@ -26,11 +25,11 @@ foreach (fil ${proto_files})
     OUTPUT "${fil_dir}/${fil_we}.pb.cc"
            "${fil_dir}/${fil_we}.pb.h"
            "${PROJECT_SOURCE_DIR}/python/shadow/${fil_we}_pb2.py"
-    COMMAND ${PROTOBUF_PROTOC_EXECUTABLE} --proto_path=${fil_dir} --cpp_out=${fil_dir} ${abs_fil}
-    COMMAND ${PROTOBUF_PROTOC_EXECUTABLE} --proto_path=${fil_dir} --python_out=${PROJECT_SOURCE_DIR}/python/shadow ${abs_fil}
+    COMMAND ${Protobuf_PROTOC_EXECUTABLE} --proto_path=${fil_dir} --cpp_out=${fil_dir} ${abs_fil}
+    COMMAND ${Protobuf_PROTOC_EXECUTABLE} --proto_path=${fil_dir} --python_out=${PROJECT_SOURCE_DIR}/python/shadow ${abs_fil}
     DEPENDS ${abs_fil}
     COMMENT "Running C++/Python protocol buffer compiler on ${fil}" VERBATIM)
 endforeach ()
 
 add_library(proto STATIC ${proto_srcs} ${proto_hdrs})
-target_link_libraries(proto ${PROTOBUF_LIBRARIES})
+target_link_libraries(proto ${Protobuf_LIBRARIES})

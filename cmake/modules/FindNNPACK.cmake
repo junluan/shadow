@@ -7,13 +7,15 @@ find_path(NNPACK_INCLUDE_DIRS
           NAMES nnpack.h
           PATHS ${NNPACK_PATHS}
           PATH_SUFFIXES include include/x86_64 include/x64
-          DOC "NNPACK include header nnpack.h")
+          DOC "NNPACK include header nnpack.h"
+          NO_DEFAULT_PATH)
 
 find_library(NNPACK_LIBRARIES
              NAMES nnpack
              PATHS ${NNPACK_PATHS}
              PATH_SUFFIXES lib lib64 lib/x86_64 lib/x64 lib/x86
-             DOC "NNPACK library")
+             DOC "NNPACK library"
+             NO_DEFAULT_PATH)
 
 set(NNPACK_FOUND ON)
 

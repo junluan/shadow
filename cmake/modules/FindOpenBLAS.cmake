@@ -7,13 +7,15 @@ find_path(OpenBLAS_INCLUDE_DIRS
           NAMES cblas.h
           PATHS ${OpenBLAS_PATHS}
           PATH_SUFFIXES include include/x86_64 include/x64
-          DOC "OpenBLAS include header cblas.h")
+          DOC "OpenBLAS include header cblas.h"
+          NO_DEFAULT_PATH)
 
 find_library(OpenBLAS_LIBRARIES
              NAMES openblas
              PATHS ${OpenBLAS_PATHS}
              PATH_SUFFIXES lib lib64 lib/x86_64 lib/x64 lib/x86
-             DOC "OpenBLAS library")
+             DOC "OpenBLAS library"
+             NO_DEFAULT_PATH)
 
 set(OpenBLAS_FOUND ON)
 
