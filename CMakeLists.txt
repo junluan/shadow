@@ -22,7 +22,7 @@ include(cmake/Dependencies.cmake)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -std=c++11")
 
-include_directories("inc" "src/shadow/proto" "external")
+include_directories("inc" "src/shadow/proto" "external/arcsoft/include")
 
 add_subdirectory(src)
 add_subdirectory(examples)
