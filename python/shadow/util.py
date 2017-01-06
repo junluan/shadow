@@ -5,23 +5,26 @@ import os
 import platform
 import zipfile
 
+
 def mkdir_p(path):
     try:
         os.makedirs(path)
-    except Exception, e:
+    except OSError as e:
         if e.errno == errno.EEXIST and os.path.isdir(path):
             pass
         else:
-            raise ValueError('mkdir failed', path, e.errno)
+            raise OSError('mkdir failed', path)
+
 
 def rmfile_p(path):
     try:
         os.remove(path)
-    except Exception as e:
+    except OSError as e:
         if e.errno == errno.ENOENT:
             pass
         else:
-            raise ValueError('rmfile failed', path, e.errno)
+            raise OSError('rmfile failed', path)
+
 
 def check_os():
     os_str = platform.system().lower()
@@ -30,13 +33,12 @@ def check_os():
     elif 'windows' in os_str:
         return 'windows'
     else:
-        raise ValueError('Unknown OS type!', os_str)
+        raise ValueError('Unknown OS type', os_str)
 
-def handle_zip(file_path):
-    uzip_dir = os.path.dirname(file_path)
-    mkdir_p(uzip_dir)
-    zfile = zipfile.ZipFile(file_path)
-    for name in zfile.namelist():
-        zfile.extract(name, uzip_dir)
-    zfile.close()
-    rmfile_p(file_path)
+
+def handle_zip(file_path, extract_path=''):
+    if extract_path == '':
+        extract_path = os.path.dirname(file_path)
+    mkdir_p(extract_path)
+    with zipfile.ZipFile(file_path) as zfile:
+        zfile.extractall(extract_path)
