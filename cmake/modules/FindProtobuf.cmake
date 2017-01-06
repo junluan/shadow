@@ -13,7 +13,7 @@ find_path(Protobuf_INCLUDE_DIRS
 find_library(Protobuf_LIBRARIES
              NAMES protobuf
              PATHS ${Protobuf_PATHS}
-             PATH_SUFFIXES lib lib64 lib/x86_64 lib/x64 lib/x86
+             PATH_SUFFIXES lib lib64 lib/x86_64 lib/x86_64-linux-gnu lib/x64 lib/x86
              DOC "Protobuf library"
              NO_DEFAULT_PATH)
 
