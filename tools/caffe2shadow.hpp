@@ -5,7 +5,6 @@
 #include "shadow.pb.h"
 
 #include "shadow/util/io.hpp"
-#include "shadow/util/type.hpp"
 #include "shadow/util/util.hpp"
 
 namespace Caffe2Shadow {
@@ -435,8 +434,8 @@ void WriteDefines(const shadow::NetParameter& shadow_net,
   cpp_file.close();
 
   // write all definitions to hpp
-  VecInt weight_counts;
-  VecString weight_names;
+  std::vector<int> weight_counts;
+  std::vector<std::string> weight_names;
   for (const auto& layer_param : shadow_net.layer()) {
     if (layer_param.blobs_size() == 0) continue;
     int count = 0;

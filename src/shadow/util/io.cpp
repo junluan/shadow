@@ -10,6 +10,10 @@
 #include <google/protobuf/io/zero_copy_stream_impl.h>
 #include <google/protobuf/text_format.h>
 
+#if defined(SUPPORT_JSON)
+#include <google/protobuf/util/json_util.h>
+#endif
+
 namespace IO {
 
 using google::protobuf::io::CodedInputStream;
@@ -70,5 +74,19 @@ void WriteProtoToBinaryFile(const Message& proto,
                      std::ios::out | std::ios::trunc | std::ios::binary);
   CHECK(proto.SerializeToOstream(&file)) << "Write proto to binary file error!";
 }
+
+#if defined(SUPPORT_JSON)
+using google::protobuf::util::JsonPrintOptions;
+using google::protobuf::util::MessageToJsonString;
+using google::protobuf::util::Status;
+
+void WriteProtoToJsonText(const Message& proto, std::string* json_text,
+                          bool compact) {
+  JsonPrintOptions options;
+  options.add_whitespace = !compact;
+  CHECK(MessageToJsonString(proto, json_text, options).ok())
+      << "Write proto to json text error!";
+}
+#endif
 
 }  // namespace IO

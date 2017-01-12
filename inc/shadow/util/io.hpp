@@ -3,6 +3,10 @@
 
 #include <google/protobuf/message.h>
 
+#if GOOGLE_PROTOBUF_VERSION >= 3000000
+#define SUPPORT_JSON
+#endif
+
 namespace IO {
 
 using google::protobuf::Message;
@@ -19,6 +23,11 @@ void WriteProtoToTextFile(const Message& proto, const std::string& proto_file);
 
 void WriteProtoToBinaryFile(const Message& proto,
                             const std::string& proto_file);
+
+#if defined(SUPPORT_JSON)
+void WriteProtoToJsonText(const Message& proto, std::string* json_text,
+                          bool compact = false);
+#endif
 
 }  // namespace IO
 
