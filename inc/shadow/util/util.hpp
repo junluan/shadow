@@ -2,6 +2,7 @@
 #define SHADOW_UTIL_UTIL_HPP
 
 #include <algorithm>
+#include <cctype>
 #include <cfloat>
 #include <cmath>
 #include <cstring>
@@ -134,6 +135,7 @@ inline std::string read_text_from_file(const std::string &filename) {
 }  // namespace Util
 
 #if defined(__linux)
+#include <linux/limits.h>
 #include <unistd.h>
 #else
 #define NOMINMAX

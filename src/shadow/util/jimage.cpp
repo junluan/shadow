@@ -82,11 +82,11 @@ void JImage::CopyTo(JImage *im_copy) const {
 void JImage::FromMat(const cv::Mat &im_mat, bool shared) {
   CHECK(!im_mat.empty()) << "Mat data is empty!";
 
-  this->Reshape(im_mat.channels(), im_mat.rows, im_mat.cols, kBGR);
   if (shared) {
-    data_ = im_mat.data;
-    shared_ = true;
+    ShareData(im_mat.data);
+    c_ = im_mat.channels(), h_ = im_mat.rows, w_ = im_mat.cols, order_ = kBGR;
   } else {
+    Reshape(im_mat.channels(), im_mat.rows, im_mat.cols, kBGR);
     memcpy(data_, im_mat.data, c_ * h_ * w_ * sizeof(unsigned char));
   }
 }

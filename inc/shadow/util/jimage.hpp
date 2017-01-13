@@ -63,6 +63,7 @@ class JImage {
   inline void ShareData(unsigned char *data) {
     CHECK_NOTNULL(data);
     data_ = data;
+    shared_ = true;
   }
 
   inline void Reshape(int c, int h, int w, Order order = kRGB) {
