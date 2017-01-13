@@ -1,15 +1,15 @@
 #ifndef SHADOW_UTIL_UTIL_HPP
 #define SHADOW_UTIL_UTIL_HPP
 
-#include "shadow/util/log.hpp"
-
 #include <algorithm>
 #include <cfloat>
 #include <cmath>
+#include <cstring>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <sstream>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -104,7 +104,9 @@ inline std::vector<std::string> tokenize(const std::string &str,
 
 inline std::vector<std::string> load_list(const std::string &list_file) {
   std::ifstream file(list_file);
-  if (!file.is_open()) LOG(FATAL) << "Load image list file error!";
+  if (!file.is_open()) {
+    throw std::runtime_error("Load image list file error!");
+  }
 
   std::vector<std::string> image_list;
   std::string dir;
@@ -118,7 +120,7 @@ inline std::vector<std::string> load_list(const std::string &list_file) {
 inline std::string read_text_from_file(const std::string &filename) {
   std::ifstream file(filename);
   if (!file.is_open()) {
-    LOG(WARNING) << "Can't open text file " << filename;
+    std::cerr << "Can't open text file " << filename;
     return std::string();
   }
 
@@ -131,29 +133,23 @@ inline std::string read_text_from_file(const std::string &filename) {
 
 }  // namespace Util
 
-#if defined(_WIN32)
+#if defined(__linux)
+#include <unistd.h>
+#else
 #define NOMINMAX
 #include <windows.h>
-#else
-#include <linux/limits.h>
-#include <unistd.h>
 #endif
 
 #include <sys/stat.h>
-#include <cctype>
-#include <cerrno>
-#include <cstdlib>
-#include <cstring>
-#include <stdexcept>
 class Path {
  public:
   enum PathType {
-    kWindows = 0,
-    kPosix = 1,
-#if defined(_WIN32)
-    KNative = kWindows
-#else
+    kPosix = 0,
+    kWindows = 1,
+#if defined(__linux)
     KNative = kPosix
+#else
+    KNative = kWindows
 #endif
   };
 
@@ -166,55 +162,57 @@ class Path {
   bool is_empty() const { return path_.empty(); }
 
   bool is_exist() const {
-#if defined(_WIN32)
-    return GetFileAttributesW(wstr().c_str()) != INVALID_FILE_ATTRIBUTES;
-#else
+#if defined(__linux)
     struct stat sb;
     return stat(str().c_str(), &sb) == 0;
+#else
+    return GetFileAttributesW(wstr().c_str()) != INVALID_FILE_ATTRIBUTES;
 #endif
   }
 
   bool is_directory() const {
-#if defined(_WIN32)
-    DWORD attr = GetFileAttributesW(wstr().c_str());
-    return (attr != INVALID_FILE_ATTRIBUTES &&
-            (attr & FILE_ATTRIBUTE_DIRECTORY) != 0);
-#else
+#if defined(__linux)
     struct stat sb;
     if (stat(str().c_str(), &sb)) return false;
     return S_ISDIR(sb.st_mode);
+#else
+    DWORD attr = GetFileAttributesW(wstr().c_str());
+    return attr != INVALID_FILE_ATTRIBUTES &&
+           (attr & FILE_ATTRIBUTE_DIRECTORY) != 0;
 #endif
   }
 
   bool is_file() const {
-#if defined(_WIN32)
-    DWORD attr = GetFileAttributesW(wstr().c_str());
-    return (attr != INVALID_FILE_ATTRIBUTES &&
-            (attr & FILE_ATTRIBUTE_DIRECTORY) == 0);
-#else
+#if defined(__linux)
     struct stat sb;
     if (stat(str().c_str(), &sb)) return false;
     return S_ISREG(sb.st_mode);
+#else
+    DWORD attr = GetFileAttributesW(wstr().c_str());
+    return attr != INVALID_FILE_ATTRIBUTES &&
+           (attr & FILE_ATTRIBUTE_DIRECTORY) == 0;
 #endif
   }
 
   bool is_absolute() const { return absolute_; }
 
   Path make_absolute() const {
-#if defined(_WIN32)
-    std::wstring value = wstr(), out(MAX_PATH, '\0');
-    DWORD length = GetFullPathNameW(value.c_str(), MAX_PATH, &out[0], NULL);
-    if (length == 0)
-      throw std::runtime_error("Error in make_absolute(): " +
-                               std::to_string(GetLastError()));
-    std::wstring temp = out.substr(0, length);
-    return Path(std::string(temp.begin(), temp.end()));
-#else
+#if defined(__linux)
     char temp[PATH_MAX];
-    if (realpath(str().c_str(), temp) == NULL)
+    if (realpath(str().c_str(), temp) == NULL) {
       throw std::runtime_error("Error in make_absolute(): " +
                                std::string(strerror(errno)));
+    }
     return Path(temp);
+#else
+    std::wstring value = wstr(), out(MAX_PATH, '\0');
+    DWORD length = GetFullPathNameW(value.c_str(), MAX_PATH, &out[0], NULL);
+    if (length == 0) {
+      throw std::runtime_error("Error in make_absolute(): " +
+                               std::to_string(GetLastError()));
+    }
+    std::wstring temp = out.substr(0, length);
+    return Path(std::string(temp.begin(), temp.end()));
 #endif
   }
 
@@ -223,7 +221,7 @@ class Path {
     return path_[path_.size() - 1];
   }
 
-  std::string folder_name() {
+  std::string folder_name() const {
     if (path_.empty() || !is_directory()) return "";
     return path_[path_.size() - 1];
   }
@@ -245,14 +243,16 @@ class Path {
   size_t length() const { return path_.size(); }
 
   size_t file_size() const {
-#if defined(_WIN32)
-    struct _stati64 sb;
-    if (_wstati64(wstr().c_str(), &sb) != 0)
-      throw std::runtime_error("Error in file_size(): " + str());
-#else
+#if defined(__linux)
     struct stat sb;
-    if (stat(str().c_str(), &sb) != 0)
+    if (stat(str().c_str(), &sb) != 0) {
       throw std::runtime_error("Error in file_size(): " + str());
+    }
+#else
+    struct _stati64 sb;
+    if (_wstati64(wstr().c_str(), &sb) != 0) {
+      throw std::runtime_error("Error in file_size(): " + str());
+    }
 #endif
     return (size_t)sb.st_size;
   }
@@ -276,10 +276,11 @@ class Path {
     for (size_t i = 0; i < path_.size(); ++i) {
       oss << path_[i];
       if (i + 1 < path_.size()) {
-        if (type == kPosix)
+        if (type == kPosix) {
           oss << '/';
-        else
+        } else {
           oss << '\\';
+        }
       }
     }
     return oss.str();
@@ -302,15 +303,17 @@ class Path {
   }
 
   bool remove_file() {
-#if defined(_WIN32)
-    return DeleteFileW(wstr().c_str()) != 0;
-#else
+#if defined(__linux)
     return std::remove(str().c_str()) == 0;
+#else
+    return DeleteFileW(wstr().c_str()) != 0;
 #endif
   }
 
   bool resize_file(size_t target_length) {
-#if defined(_WIN32)
+#if defined(__linux)
+    return ::truncate(str().c_str(), (off_t)target_length) == 0;
+#else
     HANDLE handle = CreateFileW(wstr().c_str(), GENERIC_WRITE, 0, nullptr, 0,
                                 FILE_ATTRIBUTE_NORMAL, nullptr);
     if (handle == INVALID_HANDLE_VALUE) return false;
@@ -326,33 +329,35 @@ class Path {
     }
     CloseHandle(handle);
     return true;
-#else
-    return ::truncate(str().c_str(), (off_t)target_length) == 0;
 #endif
   }
 
   static Path cwd() {
-#if defined(_WIN32)
-    std::wstring temp(MAX_PATH, '\0');
-    if (!_wgetcwd(&temp[0], MAX_PATH))
-      throw std::runtime_error("Error in cwd(): " +
-                               std::to_string(GetLastError()));
-    return Path(std::string(temp.begin(), temp.end()));
-#else
+#if defined(__linux)
     char temp[PATH_MAX];
-    if (::getcwd(temp, PATH_MAX) == NULL)
+    if (::getcwd(temp, PATH_MAX) == NULL) {
       throw std::runtime_error("Error in cwd(): " +
                                std::string(strerror(errno)));
+    }
     return Path(temp);
+#else
+    std::wstring temp(MAX_PATH, '\0');
+    if (!_wgetcwd(&temp[0], MAX_PATH)) {
+      throw std::runtime_error("Error in cwd(): " +
+                               std::to_string(GetLastError()));
+    }
+    return Path(std::string(temp.begin(), temp.end()));
 #endif
   }
 
   Path operator/(const Path &other) const {
-    if (other.absolute_)
+    if (other.absolute_) {
       throw std::runtime_error("Error in operator/: expected a relative path!");
-    if (type_ != other.type_)
+    }
+    if (type_ != other.type_) {
       throw std::runtime_error(
           "Error in operator/: expected a path of the same type!");
+    }
     Path result(*this);
     for (const auto &path : other.path_) {
       result.path_.push_back(path);
@@ -360,11 +365,13 @@ class Path {
     return result;
   }
   Path operator+(const Path &other) const {
-    if (other.absolute_)
+    if (other.absolute_) {
       throw std::runtime_error("Error in operator/: expected a relative path!");
-    if (type_ != other.type_)
+    }
+    if (type_ != other.type_) {
       throw std::runtime_error(
           "Error in operator/: expected a path of the same type!");
+    }
     Path result(*this);
     for (const auto &path : other.path_) {
       result.path_.push_back(path);
@@ -396,10 +403,10 @@ class Path {
 namespace Util {
 
 inline bool make_directory(const Path &path) {
-#if defined(_WIN32)
-  return CreateDirectoryW(path.wstr().c_str(), NULL) != 0;
-#else
+#if defined(__linux)
   return mkdir(path.str().c_str(), S_IRUSR | S_IWUSR | S_IXUSR) == 0;
+#else
+  return CreateDirectoryW(path.wstr().c_str(), NULL) != 0;
 #endif
 }
 
@@ -424,7 +431,6 @@ class Timer {
 };
 
 #else
-#include <Windows.h>
 class Timer {
  public:
   Timer() { QueryPerformanceFrequency(&tfrequency_); }
