@@ -43,6 +43,13 @@ inline std::string format_int(int n, int width, char pad = ' ') {
   return out.str();
 }
 
+inline std::string format_process(int current, int total) {
+  int digits = total > 0 ? std::log10(total) + 1 : 1;
+  std::stringstream out;
+  out << format_int(current, digits) << " / " << total;
+  return out.str();
+}
+
 template <typename Dtype>
 inline std::string format_vector(const std::vector<Dtype> &vector,
                                  const std::string &split = ",",
@@ -453,5 +460,24 @@ class Timer {
   LARGE_INTEGER tstart_, tend_, tfrequency_;
 };
 #endif
+
+class Process {
+ public:
+  Process(int slice, int total) {
+    period_ = static_cast<float>(total) / slice;
+    percent_ = 0;
+  }
+
+  void update(int current, std::ostream *os) {
+    if (current / period_ >= percent_) {
+      *os << "." << std::flush;
+      percent_++;
+    }
+  }
+
+ private:
+  float period_;
+  int percent_;
+};
 
 #endif  // SHADOW_UTIL_UTIL_HPP
