@@ -12,13 +12,13 @@
         <CudaArchitecture>compute_30,sm_30</CudaArchitecture>
 
         <USE_CUDNN>false</USE_CUDNN>
-        <CUDNNRoot>C:\Softwares\cuda</CUDNNRoot>
+        <CUDNNRoot>C:\Softwares\cudnn-7.5-v5.1</CUDNNRoot>
+
+        <USE_OpenBLAS>false</USE_OpenBLAS>
 
         <USE_OpenCV>true</USE_OpenCV>
         <OpenCVVersion>2413</OpenCVVersion>
-        <OpenCVRoot>$(ExternalDir)\opencv</OpenCVRoot>
-
-        <USE_OpenBLAS>true</USE_OpenBLAS>
+        <OpenCVRoot>$(ExternalDir)\opencv-2.4.13</OpenCVRoot>
     </PropertyGroup>
 
     <ImportGroup Label="PropertySheets">
@@ -48,20 +48,20 @@
             <AdditionalDependencies>$(CUDNNLibs);%(AdditionalDependencies)</AdditionalDependencies>
         </Link>
     </ItemDefinitionGroup>
-    <ItemDefinitionGroup Condition="'$(USE_OpenCV)'=='true'">
-        <ClCompile>
-            <PreprocessorDefinitions>USE_OpenCV;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-        </ClCompile>
-        <Link>
-            <AdditionalDependencies>$(OpenCVLibs);%(AdditionalDependencies)</AdditionalDependencies>
-        </Link>
-    </ItemDefinitionGroup>
     <ItemDefinitionGroup Condition="'$(USE_CUDA)|$(USE_OpenBLAS)'=='false|true'">
         <ClCompile>
             <PreprocessorDefinitions>USE_OpenBLAS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
         </ClCompile>
         <Link>
             <AdditionalDependencies>libopenblas.dll.a;%(AdditionalDependencies)</AdditionalDependencies>
+        </Link>
+    </ItemDefinitionGroup>
+    <ItemDefinitionGroup Condition="'$(USE_OpenCV)'=='true'">
+        <ClCompile>
+            <PreprocessorDefinitions>USE_OpenCV;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+        </ClCompile>
+        <Link>
+            <AdditionalDependencies>$(OpenCVLibs);%(AdditionalDependencies)</AdditionalDependencies>
         </Link>
     </ItemDefinitionGroup>
 
@@ -73,15 +73,15 @@
     <ItemDefinitionGroup Condition="'$(ConfigurationType)'=='Application'">
         <PostBuildEvent>
             <Command>
-              if $(USE_CUDA) == true (
-                call "$(ScriptsDir)\CopyDependencies.cmd" "$(CUDADLLPath)" "$(OutDir)" "$(CUDADLLs)"
-                if $(USE_CUDNN) == true (
-                  call "$(ScriptsDir)\CopyDependencies.cmd" "$(CUDNNDLLPath)" "$(OutDir)" "$(CUDNNDLLs)"
+                if $(USE_CUDA) == true (
+                    call "$(ScriptsDir)\CopyDependencies.cmd" "$(CUDADLLPath)" "$(OutDir)" "$(CUDADLLs)"
+                    if $(USE_CUDNN) == true (
+                        call "$(ScriptsDir)\CopyDependencies.cmd" "$(CUDNNDLLPath)" "$(OutDir)" "$(CUDNNDLLs)"
+                    )
                 )
-              )
-              if $(USE_OpenCV) == true (
-                call "$(ScriptsDir)\CopyDependencies.cmd" "$(OpenCVDLLPath)" "$(OutDir)" "$(OpenCVDLLs)"
-              )
+                if $(USE_OpenCV) == true (
+                    call "$(ScriptsDir)\CopyDependencies.cmd" "$(OpenCVDLLPath)" "$(OutDir)" "$(OpenCVDLLs)"
+                )
             </Command>
         </PostBuildEvent>
     </ItemDefinitionGroup>

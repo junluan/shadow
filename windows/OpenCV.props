@@ -21,6 +21,15 @@
         <OpenCVDLLs>opencv_core$(OpenCVVersion).dll opencv_highgui$(OpenCVVersion).dll opencv_imgproc$(OpenCVVersion).dll opencv_ffmpeg*.dll</OpenCVDLLs>
     </PropertyGroup>
 
+    <PropertyGroup Condition="'$(Configuration)'=='Debug' And '$(OpenCVVersion)'=='310'">
+        <OpenCVLibs>opencv_world$(OpenCVVersion)d.lib</OpenCVLibs>
+        <OpenCVDLLs>opencv_world$(OpenCVVersion)d.dll opencv_ffmpeg*.dll</OpenCVDLLs>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Configuration)'=='Release' And '$(OpenCVVersion)'=='310'">
+        <OpenCVLibs>opencv_world$(OpenCVVersion).lib</OpenCVLibs>
+        <OpenCVDLLs>opencv_world$(OpenCVVersion).dll opencv_ffmpeg*.dll</OpenCVDLLs>
+    </PropertyGroup>
+
     <PropertyGroup>
         <IncludePath>$(OpenCVIncPath);$(IncludePath)</IncludePath>
         <LibraryPath>$(OpenCVLibPath);$(LibraryPath)</LibraryPath>

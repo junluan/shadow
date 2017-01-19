@@ -9,7 +9,7 @@
 
     <ItemDefinitionGroup>
         <ClCompile>
-            <DisableSpecificWarnings>4005;4018;4221;4244;4267;4305;4316;4996</DisableSpecificWarnings>
+            <DisableSpecificWarnings>4005;4018;4221;4244;4267;4305;4316;4819;4996</DisableSpecificWarnings>
             <MinimalRebuild>false</MinimalRebuild>
             <MultiProcessorCompilation>true</MultiProcessorCompilation>
             <PreprocessorDefinitions>_SCL_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
