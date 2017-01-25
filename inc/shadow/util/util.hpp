@@ -442,7 +442,10 @@ class Timer {
 #else
 class Timer {
  public:
-  Timer() { QueryPerformanceFrequency(&tfrequency_); }
+  Timer() {
+    QueryPerformanceFrequency(&tfrequency_);
+    QueryPerformanceCounter(&tstart_);
+  }
 
   void start() { QueryPerformanceCounter(&tstart_); }
   double get_second() {
