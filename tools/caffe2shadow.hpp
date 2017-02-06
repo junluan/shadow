@@ -25,8 +25,12 @@ void ConvertCommon(const caffe::NetParameter& caffe_model,
     if (!layer_name.compare(layer.name())) {
       for (const auto& caffe_blob : layer.blobs()) {
         auto shadow_blob = shadow_layer->add_blobs();
-        for (const auto& dim : caffe_blob.shape().dim()) {
-          shadow_blob->mutable_shape()->add_dim(dim);
+        if (caffe_blob.shape().dim_size() > 0) {
+          for (const auto& dim : caffe_blob.shape().dim()) {
+            shadow_blob->mutable_shape()->add_dim(dim);
+          }
+        } else {
+          shadow_blob->mutable_shape()->add_dim(caffe_blob.data_size());
         }
         for (const auto& data : caffe_blob.data()) {
           shadow_blob->add_data(data);
@@ -47,8 +51,8 @@ void ConvertData(const caffe::LayerParameter& data_model,
     shadow_layer->add_top(top_name);
   }
 
-  auto shadow_param = shadow_layer->mutable_data_param();
   if (data_model.has_transform_param()) {
+    auto shadow_param = shadow_layer->mutable_data_param();
     const auto& caffe_param = data_model.transform_param();
     if (caffe_param.has_scale()) {
       shadow_param->set_scale(caffe_param.scale());
@@ -81,8 +85,8 @@ void ConvertBatchNorm(const caffe::NetParameter& caffe_model,
   shadow_layer->set_type("BatchNorm");
   ConvertCommon(caffe_model, caffe_layer, shadow_layer);
 
-  auto shadow_param = shadow_layer->mutable_batch_norm_param();
   if (caffe_layer.has_batch_norm_param()) {
+    auto shadow_param = shadow_layer->mutable_batch_norm_param();
     const auto& caffe_param = caffe_layer.batch_norm_param();
     if (caffe_param.has_use_global_stats()) {
       shadow_param->set_use_global_stats(caffe_param.use_global_stats());
@@ -97,8 +101,8 @@ void ConvertBias(const caffe::NetParameter& caffe_model,
   shadow_layer->set_type("Bias");
   ConvertCommon(caffe_model, caffe_layer, shadow_layer);
 
-  auto shadow_param = shadow_layer->mutable_bias_param();
   if (caffe_layer.has_bias_param()) {
+    auto shadow_param = shadow_layer->mutable_bias_param();
     const auto& caffe_param = caffe_layer.bias_param();
     if (caffe_param.has_axis()) {
       shadow_param->set_axis(caffe_param.axis());
@@ -116,8 +120,8 @@ void ConvertConcat(const caffe::NetParameter& caffe_model,
   shadow_layer->set_type("Concat");
   ConvertCommon(caffe_model, caffe_layer, shadow_layer);
 
-  auto shadow_param = shadow_layer->mutable_concat_param();
   if (caffe_layer.has_concat_param()) {
+    auto shadow_param = shadow_layer->mutable_concat_param();
     const auto& caffe_param = caffe_layer.concat_param();
     if (caffe_param.has_axis()) {
       shadow_param->set_axis(caffe_param.axis());
@@ -132,17 +136,17 @@ void ConvertConnected(const caffe::NetParameter& caffe_model,
   shadow_layer->set_type("Connected");
   ConvertCommon(caffe_model, caffe_layer, shadow_layer);
 
-  auto shadow_param = shadow_layer->mutable_connected_param();
   if (caffe_layer.has_inner_product_param()) {
+    auto shadow_param = shadow_layer->mutable_connected_param();
     const auto& caffe_param = caffe_layer.inner_product_param();
     if (caffe_param.has_num_output()) {
       shadow_param->set_num_output(caffe_param.num_output());
     }
-    if (caffe_param.has_bias_term() && !caffe_param.bias_term()) {
-      shadow_param->set_bias_term(false);
+    if (caffe_param.has_bias_term()) {
+      shadow_param->set_bias_term(caffe_param.bias_term());
     }
-    if (caffe_param.has_transpose() && caffe_param.transpose()) {
-      shadow_param->set_transpose(true);
+    if (caffe_param.has_transpose()) {
+      shadow_param->set_transpose(caffe_param.transpose());
     }
   }
 }
@@ -154,8 +158,8 @@ void ConvertConv(const caffe::NetParameter& caffe_model,
   shadow_layer->set_type("Convolution");
   ConvertCommon(caffe_model, caffe_layer, shadow_layer);
 
-  auto shadow_param = shadow_layer->mutable_convolution_param();
   if (caffe_layer.has_convolution_param()) {
+    auto shadow_param = shadow_layer->mutable_convolution_param();
     const auto& caffe_param = caffe_layer.convolution_param();
     if (caffe_param.has_num_output()) {
       shadow_param->set_num_output(caffe_param.num_output());
@@ -185,8 +189,8 @@ void ConvertFlatten(const caffe::NetParameter& caffe_model,
   shadow_layer->set_type("Flatten");
   ConvertCommon(caffe_model, caffe_layer, shadow_layer);
 
-  auto shadow_param = shadow_layer->mutable_flatten_param();
   if (caffe_layer.has_flatten_param()) {
+    auto shadow_param = shadow_layer->mutable_flatten_param();
     const auto& caffe_param = caffe_layer.flatten_param();
     if (caffe_param.has_axis()) {
       shadow_param->set_axis(caffe_param.axis());
@@ -204,8 +208,8 @@ void ConvertLRN(const caffe::NetParameter& caffe_model,
   shadow_layer->set_type("LRN");
   ConvertCommon(caffe_model, caffe_layer, shadow_layer);
 
-  auto shadow_param = shadow_layer->mutable_lrn_param();
   if (caffe_layer.has_lrn_param()) {
+    auto shadow_param = shadow_layer->mutable_lrn_param();
     const auto& caffe_param = caffe_layer.lrn_param();
     if (caffe_param.has_local_size()) {
       shadow_param->set_local_size(caffe_param.local_size());
@@ -238,8 +242,8 @@ void ConvertNormalize(const caffe::NetParameter& caffe_model,
   shadow_layer->set_type("Normalize");
   ConvertCommon(caffe_model, caffe_layer, shadow_layer);
 
-  auto shadow_param = shadow_layer->mutable_normalize_param();
   if (caffe_layer.has_norm_param()) {
+    auto shadow_param = shadow_layer->mutable_normalize_param();
     const auto& caffe_param = caffe_layer.norm_param();
     if (caffe_param.has_across_spatial()) {
       shadow_param->set_across_spatial(caffe_param.across_spatial());
@@ -257,8 +261,8 @@ void ConvertPermute(const caffe::NetParameter& caffe_model,
   shadow_layer->set_type("Permute");
   ConvertCommon(caffe_model, caffe_layer, shadow_layer);
 
-  auto shadow_param = shadow_layer->mutable_permute_param();
   if (caffe_layer.has_permute_param()) {
+    auto shadow_param = shadow_layer->mutable_permute_param();
     const auto& caffe_param = caffe_layer.permute_param();
     for (int i = 0; i < caffe_param.order_size(); ++i) {
       shadow_param->add_order(caffe_param.order(i));
@@ -273,8 +277,8 @@ void ConvertPooling(const caffe::NetParameter& caffe_model,
   shadow_layer->set_type("Pooling");
   ConvertCommon(caffe_model, caffe_layer, shadow_layer);
 
-  auto shadow_param = shadow_layer->mutable_pooling_param();
   if (caffe_layer.has_pooling_param()) {
+    auto shadow_param = shadow_layer->mutable_pooling_param();
     const auto& caffe_param = caffe_layer.pooling_param();
     if (caffe_param.has_pool()) {
       if (caffe_param.pool() == caffe::PoolingParameter_PoolMethod_MAX) {
@@ -305,8 +309,8 @@ void ConvertPriorBox(const caffe::NetParameter& caffe_model,
   shadow_layer->set_type("PriorBox");
   ConvertCommon(caffe_model, caffe_layer, shadow_layer);
 
-  auto shadow_param = shadow_layer->mutable_prior_box_param();
   if (caffe_layer.has_prior_box_param()) {
+    auto shadow_param = shadow_layer->mutable_prior_box_param();
     const auto& caffe_param = caffe_layer.prior_box_param();
     if (caffe_param.has_min_size()) {
       shadow_param->set_min_size(caffe_param.min_size());
@@ -336,16 +340,16 @@ void ConvertReshape(const caffe::NetParameter& caffe_model,
   shadow_layer->set_type("Reshape");
   ConvertCommon(caffe_model, caffe_layer, shadow_layer);
 
-  auto shadow_param = shadow_layer->mutable_reshape_param();
   if (caffe_layer.has_reshape_param()) {
+    auto shadow_param = shadow_layer->mutable_reshape_param();
     const auto& caffe_param = caffe_layer.reshape_param();
     for (const auto& dim : caffe_param.shape().dim()) {
       shadow_param->mutable_shape()->add_dim(dim);
     }
-    if (caffe_param.has_axis() && caffe_param.axis() != 0) {
+    if (caffe_param.has_axis()) {
       shadow_param->set_axis(caffe_param.axis());
     }
-    if (caffe_param.has_num_axes() && caffe_param.num_axes() != -1) {
+    if (caffe_param.has_num_axes()) {
       shadow_param->set_num_axes(caffe_param.num_axes());
     }
   }
@@ -358,8 +362,8 @@ void ConvertScale(const caffe::NetParameter& caffe_model,
   shadow_layer->set_type("Scale");
   ConvertCommon(caffe_model, caffe_layer, shadow_layer);
 
-  auto shadow_param = shadow_layer->mutable_scale_param();
   if (caffe_layer.has_scale_param()) {
+    auto shadow_param = shadow_layer->mutable_scale_param();
     const auto& caffe_param = caffe_layer.scale_param();
     if (caffe_param.has_axis()) {
       shadow_param->set_axis(caffe_param.axis());
@@ -380,10 +384,10 @@ void ConvertSoftmax(const caffe::NetParameter& caffe_model,
   shadow_layer->set_type("Softmax");
   ConvertCommon(caffe_model, caffe_layer, shadow_layer);
 
-  auto shadow_param = shadow_layer->mutable_softmax_param();
   if (caffe_layer.has_softmax_param()) {
+    auto shadow_param = shadow_layer->mutable_softmax_param();
     const auto& caffe_param = caffe_layer.softmax_param();
-    if (caffe_param.has_axis() && caffe_param.axis() != 1) {
+    if (caffe_param.has_axis()) {
       shadow_param->set_axis(caffe_param.axis());
     }
   }
