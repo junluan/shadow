@@ -41,6 +41,10 @@ template <typename T>
 void Reorg(const T *in_data, const VecInt &in_shape, int stride, T *out_data);
 
 template <typename T>
+void LRN(const T *in_data, const VecInt &in_shape, int size, float alpha,
+         float beta, float k, T *scale_data, T *out_data);
+
+template <typename T>
 void Activate(T *data, int count, int type);
 
 }  // namespace Image

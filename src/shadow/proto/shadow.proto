@@ -58,6 +58,18 @@ message FlattenParameter {
   optional int32 end_axis = 2 [default = -1];
 }
 
+message LRNParameter {
+  enum NormRegion {
+    AcrossChannels = 0;
+    WithinChannel = 1;
+  }
+  optional int32 local_size = 1 [default = 5];
+  optional float alpha = 2 [default = 1];
+  optional float beta = 3 [default = 0.75];
+  optional NormRegion norm_region = 4 [default = AcrossChannels];
+  optional float k = 5 [default = 1];
+}
+
 message NormalizeParameter {
   optional bool across_spatial = 1 [default = true];
   optional bool channel_shared = 2 [default = true];
@@ -125,14 +137,15 @@ message LayerParameter {
   optional ConvolutionParameter convolution_param = 16;
   optional DataParameter data_param = 17;
   optional FlattenParameter flatten_param = 18;
-  optional NormalizeParameter normalize_param = 19;
-  optional PermuteParameter permute_param = 20;
-  optional PoolingParameter pooling_param = 21;
-  optional PriorBoxParameter prior_box_param = 22;
-  optional ReorgParameter reorg_param = 23;
-  optional ReshapeParameter reshape_param = 24;
-  optional ScaleParameter scale_param = 25;
-  optional SoftmaxParameter softmax_param = 26;
+  optional LRNParameter lrn_param = 19;
+  optional NormalizeParameter normalize_param = 20;
+  optional PermuteParameter permute_param = 21;
+  optional PoolingParameter pooling_param = 22;
+  optional PriorBoxParameter prior_box_param = 23;
+  optional ReorgParameter reorg_param = 24;
+  optional ReshapeParameter reshape_param = 25;
+  optional ScaleParameter scale_param = 26;
+  optional SoftmaxParameter softmax_param = 27;
 }
 
 message NetParameter {

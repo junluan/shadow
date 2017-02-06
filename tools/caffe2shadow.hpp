@@ -197,6 +197,40 @@ void ConvertFlatten(const caffe::NetParameter& caffe_model,
   }
 }
 
+void ConvertLRN(const caffe::NetParameter& caffe_model,
+                const caffe::LayerParameter& caffe_layer,
+                shadow::NetParameter* shadow_net) {
+  auto shadow_layer = shadow_net->add_layer();
+  shadow_layer->set_type("LRN");
+  ConvertCommon(caffe_model, caffe_layer, shadow_layer);
+
+  auto shadow_param = shadow_layer->mutable_lrn_param();
+  if (caffe_layer.has_lrn_param()) {
+    const auto& caffe_param = caffe_layer.lrn_param();
+    if (caffe_param.has_local_size()) {
+      shadow_param->set_local_size(caffe_param.local_size());
+    }
+    if (caffe_param.has_alpha()) {
+      shadow_param->set_alpha(caffe_param.alpha());
+    }
+    if (caffe_param.has_beta()) {
+      shadow_param->set_beta(caffe_param.beta());
+    }
+    if (caffe_param.has_norm_region()) {
+      if (caffe_param.norm_region() ==
+          caffe::LRNParameter_NormRegion_ACROSS_CHANNELS) {
+        shadow_param->set_norm_region(
+            shadow::LRNParameter_NormRegion_AcrossChannels);
+      } else {
+        LOG(FATAL) << "Unsupported norm region method: Within Channel!";
+      }
+    }
+    if (caffe_param.has_k()) {
+      shadow_param->set_k(caffe_param.k());
+    }
+  }
+}
+
 void ConvertNormalize(const caffe::NetParameter& caffe_model,
                       const caffe::LayerParameter& caffe_layer,
                       shadow::NetParameter* shadow_net) {
@@ -377,6 +411,8 @@ void Convert(const caffe::NetParameter& caffe_deploy,
       ConvertConv(caffe_model, caffe_layer, shadow_net);
     } else if (!layer_type.compare("Flatten")) {
       ConvertFlatten(caffe_model, caffe_layer, shadow_net);
+    } else if (!layer_type.compare("LRN")) {
+      ConvertLRN(caffe_model, caffe_layer, shadow_net);
     } else if (!layer_type.compare("Normalize")) {
       ConvertNormalize(caffe_model, caffe_layer, shadow_net);
     } else if (!layer_type.compare("Permute")) {

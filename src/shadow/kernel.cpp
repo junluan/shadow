@@ -35,6 +35,8 @@ EasyCL::Kernel *cl_permute_kernel_ = nullptr;
 EasyCL::Kernel *cl_scale_kernel_ = nullptr;
 EasyCL::Kernel *cl_bias_kernel_ = nullptr;
 EasyCL::Kernel *cl_reorg_kernel_ = nullptr;
+EasyCL::Kernel *cl_lrn_kernel_ = nullptr;
+EasyCL::Kernel *cl_lrnfillscale_kernel_ = nullptr;
 EasyCL::Kernel *cl_activate_kernel_ = nullptr;
 
 void Setup(int device_id) {
@@ -79,6 +81,8 @@ void Setup(int device_id) {
   cl_scale_kernel_ = new EasyCL::Kernel(program_image, "Scale");
   cl_bias_kernel_ = new EasyCL::Kernel(program_image, "Bias");
   cl_reorg_kernel_ = new EasyCL::Kernel(program_image, "Reorg");
+  cl_lrn_kernel_ = new EasyCL::Kernel(program_image, "LRN");
+  cl_lrnfillscale_kernel_ = new EasyCL::Kernel(program_image, "LRNFillScale");
   cl_activate_kernel_ = new EasyCL::Kernel(program_image, "Activate");
 
   clblasSetup();
@@ -109,6 +113,8 @@ void Release() {
   delete cl_scale_kernel_;
   delete cl_bias_kernel_;
   delete cl_reorg_kernel_;
+  delete cl_lrn_kernel_;
+  delete cl_lrnfillscale_kernel_;
   delete cl_activate_kernel_;
 
   delete device_;

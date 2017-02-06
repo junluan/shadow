@@ -82,6 +82,8 @@ extern EasyCL::Kernel *cl_permute_kernel_;
 extern EasyCL::Kernel *cl_scale_kernel_;
 extern EasyCL::Kernel *cl_bias_kernel_;
 extern EasyCL::Kernel *cl_reorg_kernel_;
+extern EasyCL::Kernel *cl_lrn_kernel_;
+extern EasyCL::Kernel *cl_lrnfillscale_kernel_;
 extern EasyCL::Kernel *cl_activate_kernel_;
 #endif
 

@@ -9,6 +9,7 @@
 #include "shadow/layers/convolution_layer.hpp"
 #include "shadow/layers/data_layer.hpp"
 #include "shadow/layers/flatten_layer.hpp"
+#include "shadow/layers/lrn_layer.hpp"
 #include "shadow/layers/normalize_layer.hpp"
 #include "shadow/layers/permute_layer.hpp"
 #include "shadow/layers/pooling_layer.hpp"
@@ -214,6 +215,8 @@ Layer *Network::LayerFactory(const shadow::LayerParameter &layer_param) {
     layer = new DataLayer(layer_param);
   } else if (!layer_type.compare("Flatten")) {
     layer = new FlattenLayer(layer_param);
+  } else if (!layer_type.compare("LRN")) {
+    layer = new LRNLayer(layer_param);
   } else if (!layer_type.compare("Normalize")) {
     layer = new NormalizeLayer(layer_param);
   } else if (!layer_type.compare("Permute")) {
