@@ -31,6 +31,8 @@ if (NOT OpenCL_LIBRARIES)
   endif ()
 endif ()
 
+include(CheckSymbolExists)
+
 if (OpenCL_FOUND)
   if (APPLE)
     set(CL_HEADER_FILE "${OpenCL_INCLUDE_DIRS}/OpenCL/cl.h")
