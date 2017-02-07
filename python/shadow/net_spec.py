@@ -7,12 +7,10 @@ from google.protobuf import text_format
 
 class Shadow:
 
-    def __init__(self, name, in_shape, blob_shape=True):
+    def __init__(self, name, blob_shape=True):
         self.net_param = shadow_pb2.NetParameter()
         self.net_param.name = name
-        for dim in in_shape:
-            self.net_param.input_shape.dim.append(dim)
-        self.blobs = {'in_blob': {'shape': in_shape}}
+        self.blobs = {}
         self.blob_shape = blob_shape
 
     def add_common(self, layer_param, layer_name, layer_type, bottoms, tops):
@@ -148,17 +146,19 @@ class Shadow:
                 bias_blob = layer_param.blobs.add()
                 bias_blob.shape.dim.append(num_output)
 
-    def add_data(self, name, bottoms, tops, scale=1, mean_value=[]):
+    def add_data(self, name, bottoms, tops, input_shape=[], scale=1, mean_value=[]):
         layer_param = self.net_param.layer.add()
         self.add_common(layer_param, name, 'Data', bottoms, tops)
+
+        for dim in input_shape:
+            layer_param.data_param.data_shape.dim.append(dim)
 
         if scale != 1:
             layer_param.data_param.scale = scale
         for mean in mean_value:
             layer_param.data_param.mean_value.append(mean)
 
-        in_shape = self.blobs['in_blob']['shape']
-        self.blobs[tops[0]] = {'shape': in_shape}
+        self.blobs[tops[0]] = {'shape': input_shape}
 
     def add_flatten(self, name, bottoms, tops, axis=1, end_axis=-1):
         layer_param = self.net_param.layer.add()

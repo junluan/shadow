@@ -49,8 +49,9 @@ message ConvolutionParameter {
 }
 
 message DataParameter {
-  optional float scale = 1 [default = 1];
-  repeated float mean_value = 2;
+  optional BlobShape data_shape = 1;
+  optional float scale = 2 [default = 1];
+  repeated float mean_value = 3;
 }
 
 message FlattenParameter {
@@ -150,7 +151,6 @@ message LayerParameter {
 
 message NetParameter {
   optional string name = 1;
-  optional BlobShape input_shape = 2;
 
   repeated LayerParameter layer = 11;
 }

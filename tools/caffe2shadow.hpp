@@ -41,19 +41,32 @@ void ConvertCommon(const caffe::NetParameter& caffe_model,
   }
 }
 
-void ConvertData(const caffe::LayerParameter& data_model,
-                 const caffe::LayerParameter& data_deploy,
+void ConvertData(const caffe::LayerParameter& data_layer,
+                 const std::vector<int>& input_shape,
                  shadow::NetParameter* shadow_net) {
   auto shadow_layer = shadow_net->add_layer();
-  shadow_layer->set_name(data_deploy.name());
+  shadow_layer->set_name(data_layer.name());
   shadow_layer->set_type("Data");
-  for (const auto& top_name : data_deploy.top()) {
+  for (const auto& top_name : data_layer.top()) {
     shadow_layer->add_top(top_name);
   }
 
-  if (data_model.has_transform_param()) {
+  if (data_layer.has_input_param()) {
     auto shadow_param = shadow_layer->mutable_data_param();
-    const auto& caffe_param = data_model.transform_param();
+    const auto& caffe_param = data_layer.input_param();
+    for (const auto& dim : caffe_param.shape(0).dim()) {
+      shadow_param->mutable_data_shape()->add_dim(dim);
+    }
+  } else {
+    auto shadow_param = shadow_layer->mutable_data_param();
+    for (const auto& dim : input_shape) {
+      shadow_param->mutable_data_shape()->add_dim(dim);
+    }
+  }
+
+  if (data_layer.has_transform_param()) {
+    auto shadow_param = shadow_layer->mutable_data_param();
+    const auto& caffe_param = data_layer.transform_param();
     if (caffe_param.has_scale()) {
       shadow_param->set_scale(caffe_param.scale());
     }
@@ -395,9 +408,10 @@ void ConvertSoftmax(const caffe::NetParameter& caffe_model,
 
 void Convert(const caffe::NetParameter& caffe_deploy,
              const caffe::NetParameter& caffe_model,
+             const std::vector<int>& input_shape,
              shadow::NetParameter* shadow_net) {
   shadow_net->set_name(caffe_deploy.name());
-  ConvertData(caffe_model.layer(0), caffe_deploy.layer(0), shadow_net);
+  ConvertData(caffe_deploy.layer(0), input_shape, shadow_net);
   for (int l = 1; l < caffe_deploy.layer_size(); ++l) {
     const auto& caffe_layer = caffe_deploy.layer(l);
     const auto& layer_type = caffe_layer.type();

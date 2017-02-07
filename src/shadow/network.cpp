@@ -155,10 +155,11 @@ void Network::LoadProtoStrOrText(const std::string &proto_str_or_text,
 
 void Network::Reshape(int batch) {
   in_shape_.clear();
-  for (const auto &dim : net_param_.input_shape().dim()) {
+  CHECK(!net_param_.layer(0).type().compare("Data"));
+  for (const auto &dim : net_param_.layer(0).data_param().data_shape().dim()) {
     in_shape_.push_back(dim);
   }
-  CHECK_EQ(in_shape_.size(), 4) << "input_shape dimension mismatch!";
+  CHECK_EQ(in_shape_.size(), 4) << "data_shape dimension must be four!";
   if (batch > 0) in_shape_[0] = batch;
 
   blobs_.clear();

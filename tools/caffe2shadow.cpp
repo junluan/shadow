@@ -19,11 +19,8 @@ int main(int argc, char const* argv[]) {
   shadow::NetParameter shadow_net;
 
   const auto input_shape = std::vector<int>{1, 3, 300, 300};
-  for (const auto& dim : input_shape) {
-    shadow_net.mutable_input_shape()->add_dim(dim);
-  }
 
-  Convert(caffe_deploy, caffe_model, &shadow_net);
+  Convert(caffe_deploy, caffe_model, input_shape, &shadow_net);
 
   WriteProtoToBinary(shadow_net, save_path, model_name);
 
