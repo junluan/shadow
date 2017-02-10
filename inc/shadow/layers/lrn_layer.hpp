@@ -16,10 +16,8 @@ class LRNLayer : public Layer {
   void Release();
 
  private:
-  int size_;
+  int size_, norm_region_;
   float alpha_, beta_, k_;
-
-  shadow::LRNParameter_NormRegion norm_region_;
 
   Blob<float> scale_;
 };

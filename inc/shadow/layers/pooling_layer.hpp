@@ -16,10 +16,8 @@ class PoolingLayer : public Layer {
   void Release();
 
  private:
-  int kernel_size_, stride_, pad_;
+  int pool_type_, kernel_size_, stride_, pad_;
   bool global_pooling_;
-
-  shadow::PoolingParameter::PoolType pool_type_;
 
 #if defined(USE_CUDNN)
   cudnnPoolingDescriptor_t pooling_desc_ = nullptr;

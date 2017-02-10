@@ -16,7 +16,7 @@ class ActivateLayer : public Layer {
   void Release();
 
  private:
-  shadow::ActivateParameter::ActivateType activate_type_;
+  int activate_type_;
 };
 
 #endif  // SHADOW_ACTIVATE_LAYER_HPP
