@@ -13,8 +13,8 @@ int main(int argc, char const* argv[]) {
   std::string model_file = model_root + "/" + model_name + ".caffemodel";
 
   caffe::NetParameter caffe_deploy, caffe_model;
-  IO::ReadProtoFromTextFile(deploy_file, &caffe_deploy);
-  IO::ReadProtoFromBinaryFile(model_file, &caffe_model);
+  ReadProtoFromTextFile(deploy_file, &caffe_deploy);
+  ReadProtoFromBinaryFile(model_file, &caffe_model);
 
   shadow::NetParameter shadow_net;
 

@@ -4,7 +4,8 @@
 #include "caffe.pb.h"
 #include "shadow.pb.h"
 
-#include "shadow/util/io.hpp"
+#include "io.hpp"
+
 #include "shadow/util/log.hpp"
 #include "shadow/util/util.hpp"
 
@@ -455,8 +456,6 @@ void Convert(const caffe::NetParameter& caffe_deploy,
 
 namespace Caffe2Shadow {
 
-using google::protobuf::Message;
-
 void WriteDefines(const shadow::NetParameter& shadow_net,
                   const std::string& root, const std::string& model_name) {
   // write network proto definition to cpp
@@ -470,7 +469,7 @@ void WriteDefines(const shadow::NetParameter& shadow_net,
 
   std::ofstream cpp_file(root + "/" + model_name + ".cpp");
   std::string proto_str;
-  IO::WriteProtoToText(net, &proto_str);
+  WriteProtoToText(net, &proto_str);
 
   size_t split_count = 10000, str_count = proto_str.size();
   size_t split_off = str_count % split_count;
@@ -614,7 +613,7 @@ void WriteProtoToFiles(const shadow::NetParameter& shadow_net,
 void WriteProtoToBinary(const Message& proto, const std::string& root,
                         const std::string& model_name) {
   std::string filename = root + "/" + model_name + ".shadowmodel";
-  IO::WriteProtoToBinaryFile(proto, filename);
+  WriteProtoToBinaryFile(proto, filename);
 }
 
 }  // namespace Caffe2Shadow
