@@ -5,7 +5,12 @@
 #include "shadow/util/log.hpp"
 #include "shadow/util/util.hpp"
 
+#if defined(USE_Protobuf)
 #include "shadow.pb.h"
+
+#else
+#include "shadow/params.hpp"
+#endif
 
 class Layer {
  public:

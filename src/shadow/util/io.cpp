@@ -1,6 +1,7 @@
 #include "shadow/util/io.hpp"
 #include "shadow/util/log.hpp"
 
+#if defined(USE_Protobuf)
 #if defined(__linux)
 #include <unistd.h>
 #else
@@ -94,3 +95,23 @@ void WriteProtoToJsonText(const Message& proto, std::string* json_text,
 #endif
 
 }  // namespace IO
+
+#else
+#include "shadow/util/parser.hpp"
+#include "shadow/util/util.hpp"
+
+namespace IO {
+
+bool ReadProtoFromText(const std::string& proto_text,
+                       shadow::NetParameter* proto) {
+  Parser::ParseNet(proto_text, proto);
+  return true;
+}
+
+bool ReadProtoFromTextFile(const std::string& proto_file,
+                           shadow::NetParameter* proto) {
+  return ReadProtoFromText(Util::read_text_from_file(proto_file), proto);
+}
+
+}  // namespace IO
+#endif

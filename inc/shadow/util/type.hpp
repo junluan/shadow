@@ -68,10 +68,12 @@ typedef std::vector<RectF> VecRectF;
 typedef std::vector<SizeI> VecSizeI;
 typedef std::vector<SizeF> VecSizeF;
 
+typedef std::vector<bool> VecBool;
 typedef std::vector<int> VecInt;
 typedef std::vector<float> VecFloat;
 typedef std::vector<double> VecDouble;
 typedef std::vector<std::string> VecString;
+typedef std::list<bool> ListBool;
 typedef std::list<int> ListInt;
 typedef std::list<float> ListFloat;
 typedef std::list<double> ListDouble;

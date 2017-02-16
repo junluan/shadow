@@ -468,19 +468,36 @@ void WriteDefines(const shadow::NetParameter& shadow_net,
   }
 
   std::ofstream cpp_file(root + "/" + model_name + ".cpp");
-  std::string proto_str;
-  WriteProtoToText(net, &proto_str);
 
-  size_t split_count = 10000, str_count = proto_str.size();
-  size_t split_off = str_count % split_count;
-  size_t split_num = str_count / split_count + (split_off > 0 ? 1 : 0);
+  std::string proto_str, json_str;
+  WriteProtoToText(net, &proto_str);
+  WriteProtoToJsonText(net, &json_str);
+
+  size_t split_count = 10000;
+  size_t proto_str_count = proto_str.size(), json_str_count = json_str.size();
+
+  size_t proto_split_off = proto_str_count % split_count;
+  size_t proto_split_num =
+      proto_str_count / split_count + (proto_split_off > 0 ? 1 : 0);
+
+  size_t json_split_off = json_str_count % split_count;
+  size_t json_split_num =
+      json_str_count / split_count + (json_split_off > 0 ? 1 : 0);
 
   cpp_file << "#include \"" << model_name << ".hpp\"\n\n";
 
   size_t offset = 0;
-  for (int n = 0; n < split_num; ++n) {
+  for (int n = 0; n < proto_split_num; ++n) {
     cpp_file << "const std::string Model::model_" << n << "_ = \nR\"(";
     cpp_file << proto_str.substr(offset, split_count);
+    cpp_file << ")\";\n\n";
+    offset += split_count;
+  }
+
+  offset = 0;
+  for (int n = 0; n < proto_split_num; ++n) {
+    cpp_file << "const std::string Model::json_model_" << n << "_ = \nR\"(";
+    cpp_file << json_str.substr(offset, split_count);
     cpp_file << ")\";\n\n";
     offset += split_count;
   }
@@ -500,6 +517,7 @@ void WriteDefines(const shadow::NetParameter& shadow_net,
     weight_names.push_back(model_name + "_" + layer_param.name());
   }
 
+  // write network proto definition to hpp
   std::ofstream file(root + "/" + model_name + ".hpp");
 
   file << "#ifndef SHADOW_MODEL_HPP\n"
@@ -513,13 +531,19 @@ void WriteDefines(const shadow::NetParameter& shadow_net,
        << Util::format_vector(weight_counts, ", ", "{", "}") << ";\n\n";
 
   file << "class Model {\n"
-          " public:\n"
-          "  static const std::string model() { return";
+          " public:\n";
 
-  for (int i = 0; i < split_num - 1; ++i) {
+  file << "  static const std::string model() { return";
+  for (int i = 0; i < proto_split_num - 1; ++i) {
     file << " model_" << i << "_ +";
   }
-  file << " model_" << split_num - 1 << "_; }\n\n";
+  file << " model_" << proto_split_num - 1 << "_; }\n\n";
+
+  file << "  static const std::string json_model() { return";
+  for (int i = 0; i < json_split_num - 1; ++i) {
+    file << " json_model_" << i << "_ +";
+  }
+  file << " json_model_" << json_split_num - 1 << "_; }\n\n";
 
   file << "  static const float *weight(int n) {\n"
           "    switch (n) {\n";
@@ -557,8 +581,12 @@ void WriteDefines(const shadow::NetParameter& shadow_net,
 
   file << " private:\n";
 
-  for (int i = 0; i < split_num; ++i) {
+  for (int i = 0; i < proto_split_num; ++i) {
     file << "  static const std::string model_" << i << "_;\n";
+  }
+  file << "\n";
+  for (int i = 0; i < json_split_num; ++i) {
+    file << "  static const std::string json_model_" << i << "_;\n";
   }
   file << "\n";
   for (const auto& weight_name : weight_names) {

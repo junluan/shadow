@@ -53,6 +53,7 @@ void Network::LoadModel(const std::string &proto_str,
 }
 
 void Network::SaveModel(const std::string &proto_bin) {
+#if defined(USE_Protobuf)
   for (int l = 0; l < layers_.size(); ++l) {
     net_param_.mutable_layer(l)->clear_blobs();
     for (const auto &blob : layers_[l]->blobs()) {
@@ -68,6 +69,10 @@ void Network::SaveModel(const std::string &proto_bin) {
     }
   }
   IO::WriteProtoToBinaryFile(net_param_, proto_bin);
+
+#else
+  LOG(FATAL) << "Unsupported save binary model, recompiled with USE_Protobuf";
+#endif
 }
 
 void Network::Forward(const float *data) {
@@ -136,8 +141,13 @@ const float *Network::GetBlobDataByName(const std::string &blob_name) {
 
 void Network::LoadProtoBin(const std::string &proto_bin,
                            shadow::NetParameter *net_param) {
+#if defined(USE_Protobuf)
   CHECK(IO::ReadProtoFromBinaryFile(proto_bin, net_param))
       << "Error when loading proto binary file: " << proto_bin;
+
+#else
+  LOG(FATAL) << "Unsupported load binary model, recompiled with USE_Protobuf";
+#endif
 }
 
 void Network::LoadProtoStrOrText(const std::string &proto_str_or_text,

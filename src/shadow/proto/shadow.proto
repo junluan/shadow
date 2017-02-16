@@ -3,7 +3,7 @@ syntax = "proto2";
 package shadow;
 
 message BlobShape {
-  repeated int64 dim = 1;
+  repeated int32 dim = 1;
 }
 
 message Blob {

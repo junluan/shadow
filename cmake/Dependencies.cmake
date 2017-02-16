@@ -1,7 +1,10 @@
 set(Shadow_LINKER_LIBS "")
 
 include(cmake/ProtoBuf.cmake)
-list(APPEND Shadow_LINKER_LIBS proto)
+if (${USE_Protobuf} STREQUAL "ON")
+  list(APPEND Shadow_LINKER_LIBS proto)
+  add_definitions(-DUSE_Protobuf)
+endif ()
 
 if (${USE_GLog} STREQUAL "ON")
   list(APPEND Shadow_LINKER_LIBS glog)
