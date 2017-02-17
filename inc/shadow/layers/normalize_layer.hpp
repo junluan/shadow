@@ -1,7 +1,7 @@
 #ifndef SHADOW_LAYERS_NORMALIZE_LAYER_HPP
 #define SHADOW_LAYERS_NORMALIZE_LAYER_HPP
 
-#include "shadow/layers/layer.hpp"
+#include "shadow/layer.hpp"
 
 class NormalizeLayer : public Layer {
  public:

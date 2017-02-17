@@ -1,7 +1,7 @@
 #ifndef SHADOW_LAYERS_PRIOR_BOX_LAYER_HPP
 #define SHADOW_LAYERS_PRIOR_BOX_LAYER_HPP
 
-#include "shadow/layers/layer.hpp"
+#include "shadow/layer.hpp"
 
 class PriorBoxLayer : public Layer {
  public:

@@ -1,7 +1,7 @@
 #ifndef SHADOW_LAYERS_BATCH_NORM_LAYER_HPP
 #define SHADOW_LAYERS_BATCH_NORM_LAYER_HPP
 
-#include "shadow/layers/layer.hpp"
+#include "shadow/layer.hpp"
 
 class BatchNormLayer : public Layer {
  public:

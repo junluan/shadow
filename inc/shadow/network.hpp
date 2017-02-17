@@ -1,7 +1,7 @@
 #ifndef SHADOW_NETWORK_HPP
 #define SHADOW_NETWORK_HPP
 
-#include "shadow/layers/layer.hpp"
+#include "shadow/layer.hpp"
 
 class Network {
  public:
