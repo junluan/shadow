@@ -94,12 +94,14 @@ message PoolingParameter {
 }
 
 message PriorBoxParameter {
-  optional float min_size = 1;
-  optional float max_size = 2;
+  repeated float min_size = 1;
+  repeated float max_size = 2;
   repeated float aspect_ratio = 3;
   optional bool flip = 4 [default = true];
-  optional bool clip = 5 [default = true];
+  optional bool clip = 5 [default = false];
   repeated float variance = 6;
+  optional float step = 7;
+  optional float offset = 8 [default = 0.5];
 }
 
 message ReorgParameter {

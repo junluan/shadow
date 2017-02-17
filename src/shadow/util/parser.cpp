@@ -383,24 +383,26 @@ const shadow::LayerParameter ParsePriorBox(const JValue &root) {
 
   ParseCommon(root, &shadow_layer);
 
-  float min_size = -1, max_size = -1;
-  bool flip = true, clip = true;
-  VecFloat aspect_ratio, variance;
+  VecFloat min_size, max_size, aspect_ratio, variance;
+  bool flip = true, clip = false;
+  float step = -1, offset = 0.5;
   if (root.HasMember("priorBoxParam")) {
     const auto &json_param = Json::GetValue(root, "priorBoxParam");
-    min_size = Json::GetFloat(json_param, "minSize", -1);
-    max_size = Json::GetFloat(json_param, "maxSize", -1);
+    min_size = Json::GetVecFloat(json_param, "minSize");
+    max_size = Json::GetVecFloat(json_param, "maxSize");
     aspect_ratio = Json::GetVecFloat(json_param, "aspectRatio");
     flip = Json::GetBool(json_param, "flip", true);
-    clip = Json::GetBool(json_param, "clip", true);
+    clip = Json::GetBool(json_param, "clip", false);
     variance = Json::GetVecFloat(json_param, "variance");
+    step = Json::GetFloat(json_param, "step", -1);
+    offset = Json::GetFloat(json_param, "offset", 0.5);
   }
 
-  if (min_size > 0) {
-    shadow_param->set_min_size(min_size);
+  for (const auto &min : min_size) {
+    shadow_param->add_min_size(min);
   }
-  if (max_size > 0) {
-    shadow_param->set_max_size(max_size);
+  for (const auto &max : max_size) {
+    shadow_param->add_max_size(max);
   }
   for (const auto &r : aspect_ratio) {
     shadow_param->add_aspect_ratio(r);
@@ -410,6 +412,10 @@ const shadow::LayerParameter ParsePriorBox(const JValue &root) {
   for (const auto &v : variance) {
     shadow_param->add_variance(v);
   }
+  if (step > 0) {
+    shadow_param->set_step(step);
+  }
+  shadow_param->set_offset(offset);
 
   return shadow_layer;
 }

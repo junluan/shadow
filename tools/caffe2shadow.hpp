@@ -326,11 +326,11 @@ void ConvertPriorBox(const caffe::NetParameter& caffe_model,
   if (caffe_layer.has_prior_box_param()) {
     auto shadow_param = shadow_layer->mutable_prior_box_param();
     const auto& caffe_param = caffe_layer.prior_box_param();
-    if (caffe_param.has_min_size()) {
-      shadow_param->set_min_size(caffe_param.min_size());
+    for (const auto& min_size : caffe_param.min_size()) {
+      shadow_param->add_min_size(min_size);
     }
-    if (caffe_param.has_max_size()) {
-      shadow_param->set_max_size(caffe_param.max_size());
+    for (const auto& max_size : caffe_param.max_size()) {
+      shadow_param->add_max_size(max_size);
     }
     for (const auto& ratio : caffe_param.aspect_ratio()) {
       shadow_param->add_aspect_ratio(ratio);
@@ -343,6 +343,12 @@ void ConvertPriorBox(const caffe::NetParameter& caffe_model,
     }
     for (const auto& variance : caffe_param.variance()) {
       shadow_param->add_variance(variance);
+    }
+    if (caffe_param.has_step()) {
+      shadow_param->set_step(caffe_param.step());
+    }
+    if (caffe_param.has_offset()) {
+      shadow_param->set_offset(caffe_param.offset());
     }
   }
 }

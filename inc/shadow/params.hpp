@@ -353,16 +353,17 @@ class PriorBoxParameter {
   PriorBoxParameter() {}
   ~PriorBoxParameter() { Clear(); }
 
-  OPTIONAL_FIELD_DEFAULT_FUNC(min_size, float, -1);
-  bool has_min_size() const { return min_size_ > 0; }
-
-  OPTIONAL_FIELD_DEFAULT_FUNC(max_size, float, -1);
-  bool has_max_size() const { return max_size_ > 0; }
-
+  REPEATED_FIELD_FUNC(min_size, float);
+  REPEATED_FIELD_FUNC(max_size, float);
   REPEATED_FIELD_FUNC(aspect_ratio, float);
   OPTIONAL_FIELD_DEFAULT_FUNC(flip, bool, true);
-  OPTIONAL_FIELD_DEFAULT_FUNC(clip, bool, true);
+  OPTIONAL_FIELD_DEFAULT_FUNC(clip, bool, false);
   REPEATED_FIELD_FUNC(variance, float);
+
+  OPTIONAL_FIELD_DEFAULT_FUNC(step, float, 0);
+  bool has_step() const { return step_ > 0; }
+
+  OPTIONAL_FIELD_DEFAULT_FUNC(offset, float, 0.5);
 
   void Clear() {
     clear_min_size();
@@ -374,9 +375,9 @@ class PriorBoxParameter {
   }
 
  private:
-  float min_size_ = -1, max_size_ = -1;
-  std::vector<float> aspect_ratio_, variance_;
-  bool flip_ = true, clip_ = true;
+  std::vector<float> min_size_, max_size_, aspect_ratio_, variance_;
+  bool flip_ = true, clip_ = false;
+  float step_ = -1, offset_ = 0.5;
 };
 
 class ReorgParameter {

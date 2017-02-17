@@ -17,9 +17,9 @@ class PriorBoxLayer : public Layer {
 
  private:
   int num_priors_;
-  float min_size_, max_size_;
+  float step_, offset_;
   bool flip_, clip_, is_initial_;
-  VecFloat aspect_ratios_, variance_, top_data_;
+  VecFloat min_sizes_, max_sizes_, aspect_ratios_, variance_, top_data_;
 };
 
 #endif  // SHADOW_LAYERS_PRIOR_BOX_LAYER_HPP
