@@ -15,9 +15,9 @@ void Demo::Test(const std::string &image_file) {
 
   for (const auto &boxF : boxes) {
     BoxI box(boxF);
-    int color_r = (box.label * 50) % 255;
-    int color_g = (color_r + 50) % 255;
-    int color_b = (color_g + 50) % 255;
+    int color_r = (box.label * 100) % 255;
+    int color_g = (color_r + 100) % 255;
+    int color_b = (color_g + 100) % 255;
     Scalar scalar(color_r, color_g, color_b);
     JImageProc::Rectangle(&im_ini_, box.RectInt(), scalar);
     std::cout << "xmin = " << box.xmin << ", ymin = " << box.ymin
@@ -29,7 +29,7 @@ void Demo::Test(const std::string &image_file) {
 }
 
 void Demo::BatchTest(const std::string &list_file, bool image_write) {
-  const VecString &image_list = Util::load_list(list_file);
+  const auto &image_list = Util::load_list(list_file);
   size_t num_im = image_list.size();
 
   double time_cost = 0;
@@ -45,13 +45,12 @@ void Demo::BatchTest(const std::string &list_file, bool image_write) {
     const auto &boxes = Boxes::NMS(Bboxes_, 0.5);
     time_cost += timer_.get_millisecond();
     if (image_write) {
-      const std::string &path =
-          Util::find_replace_last(im_path, ".", "-result.");
+      const auto &path = Util::find_replace_last(im_path, ".", "-result.");
       for (const auto &boxF : boxes) {
         BoxI box(boxF);
-        int color_r = (box.label * 50) % 255;
-        int color_g = (color_r + 50) % 255;
-        int color_b = (color_g + 50) % 255;
+        int color_r = (box.label * 100) % 255;
+        int color_g = (color_r + 100) % 255;
+        int color_b = (color_g + 100) % 255;
         Scalar scalar(color_r, color_g, color_b);
         JImageProc::Rectangle(&im_ini_, box.RectInt(), scalar);
       }
@@ -158,9 +157,9 @@ void Demo::DrawDetections(const VecBoxF &boxes, cv::Mat *im_mat,
                           bool console_show) {
   for (const auto &boxF : boxes) {
     const BoxI box(boxF);
-    int color_r = (box.label * 50) % 255;
-    int color_g = (color_r + 50) % 255;
-    int color_b = (color_g + 50) % 255;
+    int color_r = (box.label * 100) % 255;
+    int color_g = (color_r + 100) % 255;
+    int color_b = (color_g + 100) % 255;
     cv::Scalar scalar(color_b, color_g, color_r);
     cv::rectangle(*im_mat, cv::Point(box.xmin, box.ymin),
                   cv::Point(box.xmax, box.ymax), scalar, 2);
@@ -175,11 +174,11 @@ void Demo::DrawDetections(const VecBoxF &boxes, cv::Mat *im_mat,
 #endif
 
 void Demo::PrintDetections(const std::string &im_name, const VecBoxF &boxes,
-                           std::ofstream *file) {
+                           std::ostream *file) {
   for (const auto &boxF : boxes) {
     const BoxI box(boxF);
-    *file << im_name << " " << box.xmin << ", " << box.ymin << ", " << box.xmax
-          << ", " << box.ymax << ", " << box.label << ", " << box.score
+    *file << im_name << " (" << box.xmin << "," << box.ymin << "," << box.xmax
+          << "," << box.ymax << "," << box.label << ") " << box.score
           << std::endl;
   }
 }

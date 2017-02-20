@@ -49,7 +49,7 @@ class Demo {
 #endif
 
   void PrintDetections(const std::string &im_name, const VecBoxF &boxes,
-                       std::ofstream *file);
+                       std::ostream *file);
 
   Method *method_;
   JImage im_ini_;

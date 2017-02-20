@@ -143,7 +143,7 @@ void SSD::Predict(const JImage &image, const VecRectF &rois,
   CHECK_EQ(Bboxes->size(), rois.size());
   for (int b = 0; b < Bboxes->size(); ++b) {
     float height = rois[b].h, width = rois[b].w;
-    VecBoxF &boxes = Bboxes->at(b);
+    auto &boxes = Bboxes->at(b);
     for (auto &box : boxes) {
       box.xmin *= width;
       box.xmax *= width;
@@ -167,7 +167,7 @@ void SSD::Predict(const ASVLOFFSCREEN &im_arc, const VecRectF &rois,
                   std::vector<VecBoxF> *Bboxes) {
   CHECK_LE(rois.size(), batch_);
   for (int b = 0; b < rois.size(); ++b) {
-    const RectF &roi = rois[b];
+    const auto &roi = rois[b];
     MRECT rect;
     rect.left = static_cast<int>(roi.x);
     rect.top = static_cast<int>(roi.y);
@@ -182,7 +182,7 @@ void SSD::Predict(const ASVLOFFSCREEN &im_arc, const VecRectF &rois,
   CHECK_EQ(Bboxes->size(), rois.size());
   for (int b = 0; b < Bboxes->size(); ++b) {
     float height = rois[b].h, width = rois[b].w;
-    VecBoxF &boxes = Bboxes->at(b);
+    auto &boxes = Bboxes->at(b);
     for (auto &box : boxes) {
       box.xmin *= width;
       box.xmax *= width;
@@ -237,12 +237,12 @@ void SSD::Process(const float *data, std::vector<VecBoxF> *Bboxes) {
       if (conf_scores.find(c) == conf_scores.end()) {
         LOG(FATAL) << "Could not find confidence predictions";
       }
-      const VecFloat &scores = conf_scores.find(c)->second;
+      const auto &scores = conf_scores.find(c)->second;
       int label = share_location_ ? -1 : c;
       if (decode_bboxes.find(label) == decode_bboxes.end()) {
         LOG(FATAL) << "Could not find confidence predictions";
       }
-      const VecBoxF &bboxes = decode_bboxes.find(label)->second;
+      const auto &bboxes = decode_bboxes.find(label)->second;
       ApplyNMSFast(bboxes, scores, confidence_threshold_, nms_threshold_,
                    top_k_, &(indices[c]));
       num_det += indices[c].size();
@@ -254,7 +254,7 @@ void SSD::Process(const float *data, std::vector<VecBoxF> *Bboxes) {
         if (conf_scores.find(label) == conf_scores.end()) {
           LOG(FATAL) << "Could not find confidence predictions";
         }
-        const VecFloat &scores = conf_scores.find(label)->second;
+        const auto &scores = conf_scores.find(label)->second;
         for (const auto &idx : it.second) {
           CHECK_LT(idx, scores.size());
           score_index_pairs.push_back(
@@ -267,9 +267,9 @@ void SSD::Process(const float *data, std::vector<VecBoxF> *Bboxes) {
       score_index_pairs.resize(keep_top_k_);
       // Store the new indices.
       std::map<int, VecInt> new_indices;
-      for (int j = 0; j < score_index_pairs.size(); ++j) {
-        int label = score_index_pairs[j].second.first;
-        int idx = score_index_pairs[j].second.second;
+      for (const auto &score_index_pair : score_index_pairs) {
+        int label = score_index_pair.second.first;
+        int idx = score_index_pair.second.second;
         new_indices[label].push_back(idx);
       }
       all_indices.push_back(new_indices);
@@ -290,18 +290,17 @@ void SSD::Process(const float *data, std::vector<VecBoxF> *Bboxes) {
       if (conf_scores.find(label) == conf_scores.end()) {
         LOG(FATAL) << "Could not find confidence predictions";
       }
-      const VecFloat &scores = conf_scores.find(label)->second;
+      const auto &scores = conf_scores.find(label)->second;
       int loc_label = share_location_ ? -1 : label;
       if (decode_bboxes.find(loc_label) == decode_bboxes.end()) {
         LOG(FATAL) << "Could not find confidence predictions";
       }
-      const VecBoxF &bboxes = decode_bboxes.find(loc_label)->second;
+      const auto &bboxes = decode_bboxes.find(loc_label)->second;
       for (const auto &idx : it.second) {
         float score = scores[idx];
         if (score > threshold_) {
           BoxF clip_bbox;
           ClipBBox(bboxes[idx], &clip_bbox);
-
           clip_bbox.score = score;
           clip_bbox.label = label;
           boxes.push_back(clip_bbox);
@@ -385,7 +384,7 @@ void SSD::DecodeBBoxesAll(const VecLabelBBox &all_loc_preds,
   all_decode_bboxes->clear();
   all_decode_bboxes->resize(num);
   for (int i = 0; i < num; ++i) {
-    LabelBBox &decode_bboxes = (*all_decode_bboxes)[i];
+    auto &decode_bboxes = all_decode_bboxes->at(i);
     for (int c = 0; c < num_loc_classes; ++c) {
       int label = share_location ? -1 : c;
       if (label == background_label_id) {
@@ -394,7 +393,7 @@ void SSD::DecodeBBoxesAll(const VecLabelBBox &all_loc_preds,
       if (all_loc_preds[i].find(label) == all_loc_preds[i].end()) {
         LOG(FATAL) << "Could not find location predictions";
       }
-      const VecBoxF &label_loc_preds = all_loc_preds[i].find(label)->second;
+      const auto &label_loc_preds = all_loc_preds[i].find(label)->second;
       DecodeBBoxes(prior_bboxes, prior_variances, label_loc_preds,
                    &(decode_bboxes[label]));
     }
