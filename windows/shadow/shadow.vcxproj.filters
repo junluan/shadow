@@ -51,7 +51,7 @@
     <ClInclude Include="..\..\inc\shadow\layers\flatten_layer.hpp">
       <Filter>inc\shadow\layers</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\inc\shadow\layers\layer.hpp">
+    <ClInclude Include="..\..\inc\shadow\layers\lrn_layer.hpp">
       <Filter>inc\shadow\layers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\inc\shadow\layers\normalize_layer.hpp">
@@ -96,7 +96,13 @@
     <ClInclude Include="..\..\inc\shadow\util\jimage_proc.hpp">
       <Filter>inc\shadow\util</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\inc\shadow\util\json.hpp">
+      <Filter>inc\shadow\util</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\inc\shadow\util\log.hpp">
+      <Filter>inc\shadow\util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\inc\shadow\util\parser.hpp">
       <Filter>inc\shadow\util</Filter>
     </ClInclude>
     <ClInclude Include="..\..\inc\shadow\util\type.hpp">
@@ -114,7 +120,13 @@
     <ClInclude Include="..\..\inc\shadow\kernel.hpp">
       <Filter>inc\shadow</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\inc\shadow\layer.hpp">
+      <Filter>inc\shadow</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\inc\shadow\network.hpp">
+      <Filter>inc\shadow</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\inc\shadow\params.hpp">
       <Filter>inc\shadow</Filter>
     </ClInclude>
   </ItemGroup>
@@ -141,6 +153,9 @@
       <Filter>src\shadow\layers</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\shadow\layers\flatten_layer.cpp">
+      <Filter>src\shadow\layers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\shadow\layers\lrn_layer.cpp">
       <Filter>src\shadow\layers</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\shadow\layers\normalize_layer.cpp">
@@ -183,6 +198,12 @@
       <Filter>src\shadow\util</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\shadow\util\jimage_proc.cpp">
+      <Filter>src\shadow\util</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\shadow\util\json.cpp">
+      <Filter>src\shadow\util</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\shadow\util\parser.cpp">
       <Filter>src\shadow\util</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\shadow\cudnn.cpp">

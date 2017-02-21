@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|x64">
@@ -67,9 +67,9 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\..\tools\caffe2shadow.hpp" />
+    <ClInclude Include="..\..\tools\io.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\src\shadow\util\io.cpp" />
     <ClCompile Include="..\..\tools\caffe2shadow.cpp" />
   </ItemGroup>
   <ItemGroup>

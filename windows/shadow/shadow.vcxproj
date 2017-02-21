@@ -86,6 +86,7 @@
     <ClInclude Include="..\..\inc\shadow\blob.hpp" />
     <ClInclude Include="..\..\inc\shadow\cudnn.hpp" />
     <ClInclude Include="..\..\inc\shadow\kernel.hpp" />
+    <ClInclude Include="..\..\inc\shadow\layer.hpp" />
     <ClInclude Include="..\..\inc\shadow\layers\activate_layer.hpp" />
     <ClInclude Include="..\..\inc\shadow\layers\batch_norm_layer.hpp" />
     <ClInclude Include="..\..\inc\shadow\layers\bias_layer.hpp" />
@@ -94,7 +95,7 @@
     <ClInclude Include="..\..\inc\shadow\layers\convolution_layer.hpp" />
     <ClInclude Include="..\..\inc\shadow\layers\data_layer.hpp" />
     <ClInclude Include="..\..\inc\shadow\layers\flatten_layer.hpp" />
-    <ClInclude Include="..\..\inc\shadow\layers\layer.hpp" />
+    <ClInclude Include="..\..\inc\shadow\layers\lrn_layer.hpp" />
     <ClInclude Include="..\..\inc\shadow\layers\normalize_layer.hpp" />
     <ClInclude Include="..\..\inc\shadow\layers\permute_layer.hpp" />
     <ClInclude Include="..\..\inc\shadow\layers\pooling_layer.hpp" />
@@ -104,13 +105,16 @@
     <ClInclude Include="..\..\inc\shadow\layers\scale_layer.hpp" />
     <ClInclude Include="..\..\inc\shadow\layers\softmax_layer.hpp" />
     <ClInclude Include="..\..\inc\shadow\network.hpp" />
+    <ClInclude Include="..\..\inc\shadow\params.hpp" />
     <ClInclude Include="..\..\inc\shadow\util\blas.hpp" />
     <ClInclude Include="..\..\inc\shadow\util\boxes.hpp" />
     <ClInclude Include="..\..\inc\shadow\util\image.hpp" />
     <ClInclude Include="..\..\inc\shadow\util\io.hpp" />
     <ClInclude Include="..\..\inc\shadow\util\jimage.hpp" />
     <ClInclude Include="..\..\inc\shadow\util\jimage_proc.hpp" />
+    <ClInclude Include="..\..\inc\shadow\util\json.hpp" />
     <ClInclude Include="..\..\inc\shadow\util\log.hpp" />
+    <ClInclude Include="..\..\inc\shadow\util\parser.hpp" />
     <ClInclude Include="..\..\inc\shadow\util\type.hpp" />
     <ClInclude Include="..\..\inc\shadow\util\util.hpp" />
   </ItemGroup>
@@ -125,6 +129,7 @@
     <ClCompile Include="..\..\src\shadow\layers\convolution_layer.cpp" />
     <ClCompile Include="..\..\src\shadow\layers\data_layer.cpp" />
     <ClCompile Include="..\..\src\shadow\layers\flatten_layer.cpp" />
+    <ClCompile Include="..\..\src\shadow\layers\lrn_layer.cpp" />
     <ClCompile Include="..\..\src\shadow\layers\normalize_layer.cpp" />
     <ClCompile Include="..\..\src\shadow\layers\permute_layer.cpp" />
     <ClCompile Include="..\..\src\shadow\layers\pooling_layer.cpp" />
@@ -140,13 +145,15 @@
     <ClCompile Include="..\..\src\shadow\util\io.cpp" />
     <ClCompile Include="..\..\src\shadow\util\jimage.cpp" />
     <ClCompile Include="..\..\src\shadow\util\jimage_proc.cpp" />
+    <ClCompile Include="..\..\src\shadow\util\json.cpp" />
+    <ClCompile Include="..\..\src\shadow\util\parser.cpp" />
   </ItemGroup>
   <ItemGroup Condition="'$(USE_CUDA)'=='true'">
     <CudaCompile Include="..\..\src\shadow\kernel.cu" />
     <CudaCompile Include="..\..\src\shadow\util\blas.cu" />
     <CudaCompile Include="..\..\src\shadow\util\image.cu" />
   </ItemGroup>
-  <ItemGroup>
+  <ItemGroup Condition="'$(USE_Protobuf)'=='true'">
     <ProjectReference Include="..\proto\proto.vcxproj">
       <Project>{9612cf7a-9f49-4879-98ea-b0dbbbf528db}</Project>
     </ProjectReference>

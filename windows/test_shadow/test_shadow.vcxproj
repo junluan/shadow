@@ -75,10 +75,12 @@
     <ClInclude Include="..\..\inc\test\layers\test_convolution_layer.hpp" />
     <ClInclude Include="..\..\inc\test\layers\test_data_layer.hpp" />
     <ClInclude Include="..\..\inc\test\layers\test_flatten_layer.hpp" />
+    <ClInclude Include="..\..\inc\test\layers\test_lrn_layer.hpp" />
     <ClInclude Include="..\..\inc\test\layers\test_normalize_layer.hpp" />
     <ClInclude Include="..\..\inc\test\layers\test_permute_layer.hpp" />
     <ClInclude Include="..\..\inc\test\layers\test_pooling_layer.hpp" />
     <ClInclude Include="..\..\inc\test\layers\test_prior_box_layer.hpp" />
+    <ClInclude Include="..\..\inc\test\layers\test_reorg_layer.hpp" />
     <ClInclude Include="..\..\inc\test\layers\test_reshape_layer.hpp" />
     <ClInclude Include="..\..\inc\test\layers\test_scale_layer.hpp" />
     <ClInclude Include="..\..\inc\test\layers\test_softmax_layer.hpp" />
@@ -95,10 +97,12 @@
     <ClCompile Include="..\..\src\test\layers\test_convolution_layer.cpp" />
     <ClCompile Include="..\..\src\test\layers\test_data_layer.cpp" />
     <ClCompile Include="..\..\src\test\layers\test_flatten_layer.cpp" />
+    <ClCompile Include="..\..\src\test\layers\test_lrn_layer.cpp" />
     <ClCompile Include="..\..\src\test\layers\test_normalize_layer.cpp" />
     <ClCompile Include="..\..\src\test\layers\test_permute_layer.cpp" />
     <ClCompile Include="..\..\src\test\layers\test_pooling_layer.cpp" />
     <ClCompile Include="..\..\src\test\layers\test_prior_box_layer.cpp" />
+    <ClCompile Include="..\..\src\test\layers\test_reorg_layer.cpp" />
     <ClCompile Include="..\..\src\test\layers\test_reshape_layer.cpp" />
     <ClCompile Include="..\..\src\test\layers\test_scale_layer.cpp" />
     <ClCompile Include="..\..\src\test\layers\test_softmax_layer.cpp" />

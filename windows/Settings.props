@@ -14,6 +14,8 @@
         <USE_CUDNN>false</USE_CUDNN>
         <CUDNNRoot>C:\Softwares\cudnn-7.5-v5.1</CUDNNRoot>
 
+        <USE_Protobuf>true</USE_Protobuf>
+
         <USE_OpenBLAS>false</USE_OpenBLAS>
 
         <USE_OpenCV>true</USE_OpenCV>
@@ -55,6 +57,11 @@
         <Link>
             <AdditionalDependencies>libopenblas.dll.a;%(AdditionalDependencies)</AdditionalDependencies>
         </Link>
+    </ItemDefinitionGroup>
+    <ItemDefinitionGroup Condition="'$(USE_Protobuf)'=='true'">
+        <ClCompile>
+            <PreprocessorDefinitions>USE_Protobuf;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+        </ClCompile>
     </ItemDefinitionGroup>
     <ItemDefinitionGroup Condition="'$(USE_OpenCV)'=='true'">
         <ClCompile>
