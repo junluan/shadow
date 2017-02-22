@@ -504,7 +504,7 @@ void WriteDefines(const shadow::NetParameter& shadow_net,
   }
 
   offset = 0;
-  for (int n = 0; n < proto_split_num; ++n) {
+  for (int n = 0; n < json_split_num; ++n) {
     cpp_file << "const std::string Model::json_model_" << n << "_ = \nR\"(";
     cpp_file << json_str.substr(offset, split_count);
     cpp_file << ")\";\n\n";
