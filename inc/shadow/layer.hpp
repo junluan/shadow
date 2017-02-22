@@ -1,5 +1,5 @@
-#ifndef SHADOW_LAYERS_LAYER_HPP
-#define SHADOW_LAYERS_LAYER_HPP
+#ifndef SHADOW_LAYER_HPP
+#define SHADOW_LAYER_HPP
 
 #include "shadow/blob.hpp"
 #include "shadow/util/log.hpp"
@@ -131,9 +131,10 @@ class Layer {
     return blobs_[i];
   }
 
-  inline void set_blob(int i, const float *data) {
+  inline void set_blob(int i, int count, const float *data) {
     CHECK_GE(i, 0);
     CHECK_LT(i, blobs_.size());
+    CHECK_LE(count, blobs_[i]->count());
     blobs_[i]->set_data(data);
   }
 
@@ -147,4 +148,4 @@ class Layer {
 
 typedef std::vector<Layer *> VecLayer;
 
-#endif  // SHADOW_LAYERS_LAYER_HPP
+#endif  // SHADOW_LAYER_HPP

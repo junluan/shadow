@@ -193,6 +193,9 @@ void ConvertConv(const caffe::NetParameter& caffe_model,
     if (caffe_param.has_bias_term() && !caffe_param.bias_term()) {
       shadow_param->set_bias_term(false);
     }
+    if (caffe_param.has_group() && caffe_param.group() != 1) {
+      shadow_param->set_group(caffe_param.group());
+    }
   }
 }
 

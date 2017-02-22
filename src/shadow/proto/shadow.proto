@@ -45,7 +45,8 @@ message ConvolutionParameter {
   optional int32 stride = 3 [default = 1];
   optional int32 pad = 4 [default = 0];
   optional int32 dilation = 5 [default = 1];
-  optional bool bias_term = 6 [default = true];
+  optional int32 group = 6 [default = 1];
+  optional bool bias_term = 7 [default = true];
 }
 
 message DataParameter {

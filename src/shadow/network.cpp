@@ -185,14 +185,15 @@ void Network::Reshape(int batch) {
 }
 
 void Network::CopyWeights(const std::vector<const float *> &weights) {
-  int count = 0;
+  int weights_count = 0;
   for (auto &layer : layers_) {
     if (layer->num_blobs() > 0) {
-      CHECK_LT(count, weights.size());
-      const float *weights_data = weights[count++];
+      CHECK_LT(weights_count, weights.size());
+      const float *weights_data = weights[weights_count++];
       for (int n = 0; n < layer->num_blobs(); ++n) {
-        layer->set_blob(n, weights_data);
-        weights_data += layer->blob(n)->count();
+        int blob_count = layer->blob(n)->count();
+        layer->set_blob(n, blob_count, weights_data);
+        weights_data += blob_count;
       }
     }
   }
@@ -201,8 +202,9 @@ void Network::CopyWeights(const std::vector<const float *> &weights) {
 void Network::CopyWeights(const float *weights_data) {
   for (auto &layer : layers_) {
     for (int n = 0; n < layer->num_blobs(); ++n) {
-      layer->set_blob(n, weights_data);
-      weights_data += layer->blob(n)->count();
+      int blob_count = layer->blob(n)->count();
+      layer->set_blob(n, blob_count, weights_data);
+      weights_data += blob_count;
     }
   }
 }

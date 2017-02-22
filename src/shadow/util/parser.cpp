@@ -191,7 +191,8 @@ const shadow::LayerParameter ParseConvolution(const JValue &root) {
 
   ParseCommon(root, &shadow_layer);
 
-  int num_output = -1, kernel_size = -1, stride = 1, pad = 0, dilation = 1;
+  int num_output = -1, kernel_size = -1, stride = 1, pad = 0, group = 1,
+      dilation = 1;
   bool bias_term = true;
   if (root.HasMember("convolutionParam")) {
     const auto &json_param = Json::GetValue(root, "convolutionParam");
@@ -200,6 +201,7 @@ const shadow::LayerParameter ParseConvolution(const JValue &root) {
     stride = Json::GetInt(json_param, "stride", 1);
     pad = Json::GetInt(json_param, "pad", 0);
     dilation = Json::GetInt(json_param, "dilation", 1);
+    group = Json::GetInt(json_param, "group", 1);
     bias_term = Json::GetBool(json_param, "biasTerm", true);
   }
 
@@ -210,6 +212,7 @@ const shadow::LayerParameter ParseConvolution(const JValue &root) {
   shadow_param->set_stride(stride);
   shadow_param->set_pad(pad);
   shadow_param->set_dilation(dilation);
+  shadow_param->set_group(group);
   shadow_param->set_bias_term(bias_term);
 
   return shadow_layer;

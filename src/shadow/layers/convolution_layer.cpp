@@ -23,10 +23,20 @@ void ConvolutionLayer::Setup(VecBlob *blobs) {
   stride_ = conv_param.stride();
   pad_ = conv_param.pad();
   dilation_ = conv_param.dilation();
+  group_ = conv_param.group();
+  CHECK_EQ(bottoms_[0]->shape(1) % group_, 0);
+  CHECK_EQ(num_output_ % group_, 0);
   bias_term_ = conv_param.bias_term();
 
+  if (bias_term_) {
+    CHECK_EQ(blobs_.size(), 2);
+  } else {
+    CHECK_EQ(blobs_.size(), 1);
+  }
+
 #if defined(USE_CUDNN)
-  if (dilation_ == 1) {
+  use_cudnn_ = dilation_ == 1 && group_ == 1;
+  if (use_cudnn_) {
     cudnn::createConvolutionDesc<float>(&conv_desc_);
     cudnn::createTensor4dDesc<float>(&bottom_desc_);
     cudnn::createTensor4dDesc<float>(&top_desc_);
@@ -39,12 +49,6 @@ void ConvolutionLayer::Setup(VecBlob *blobs) {
     }
   }
 #endif
-
-  if (bias_term_) {
-    CHECK_EQ(blobs_.size(), 2);
-  } else {
-    CHECK_EQ(blobs_.size(), 1);
-  }
 }
 
 void ConvolutionLayer::Reshape() {
@@ -60,14 +64,20 @@ void ConvolutionLayer::Reshape() {
   tops_[0]->reshape(top_shape);
 
   out_spatial_dim_ = tops_[0]->count(2);
-  kernel_dim_ = kernel_size_ * kernel_size_ * in_c;
+  kernel_dim_ = kernel_size_ * kernel_size_ * in_c / group_;
 
-  biases_multiplier_.reshape(out_spatial_dim_);
-  Blas::Set(out_spatial_dim_, 1, biases_multiplier_.mutable_data(), 0);
-  col_image_.reshape(kernel_dim_, out_spatial_dim_);
+  weight_offset_ = num_output_ * kernel_dim_ / group_;
+  col_offset_ = kernel_dim_ * out_spatial_dim_;
+  output_offset_ = num_output_ * out_spatial_dim_ / group_;
+
+  if (!use_cudnn_) {
+    biases_multiplier_.reshape(out_spatial_dim_);
+    Blas::Set(out_spatial_dim_, 1, biases_multiplier_.mutable_data(), 0);
+    col_image_.reshape(kernel_dim_ * group_, out_spatial_dim_);
+  }
 
 #if defined(USE_CUDNN)
-  if (dilation_ == 1) {
+  if (use_cudnn_) {
     cudnn::setTensor4dDesc<float>(&bottom_desc_, batch, in_c, in_h, in_w);
     cudnn::setTensor4dDesc<float>(&top_desc_, batch, num_output_, top_shape[2],
                                   top_shape[3]);
@@ -107,7 +117,7 @@ void ConvolutionLayer::Forward() {
   int top_num = tops_[0]->num(), bottom_num = bottoms_[0]->num();
 
 #if defined(USE_CUDNN)
-  if (dilation_ == 1) {
+  if (use_cudnn_) {
     CUDNN_CHECK(cudnnConvolutionForward(
         Kernel::cudnn_handle_, cudnn::dataType<float>::one, bottom_desc_,
         bottoms_[0]->data(), filter_desc_, blobs_[0]->data(), conv_desc_,
@@ -125,7 +135,7 @@ void ConvolutionLayer::Forward() {
 #endif
 
 #if defined(USE_NNPACK)
-  if (batch == 1 && dilation_ == 1 && bias_term_) {
+  if (batch == 1 && group_ == 1 && dilation_ == 1 && bias_term_) {
     int in_c = bottoms_[0]->shape(1), out_c = tops_[0]->shape(1);
 
     nnp_size input_size;
@@ -157,9 +167,13 @@ void ConvolutionLayer::Forward() {
     Image::Im2Col(bottoms_[0]->data(), bottoms_[0]->shape(), b * bottom_num,
                   kernel_size_, stride_, pad_, dilation_, tops_[0]->shape(),
                   col_image_.mutable_data());
-    Blas::BlasSgemm(0, 0, num_output_, out_spatial_dim_, kernel_dim_, 1,
-                    blobs_[0]->data(), 0, col_image_.data(), 0, 0,
-                    tops_[0]->mutable_data(), b * top_num);
+    for (int g = 0; g < group_; ++g) {
+      Blas::BlasSgemm(0, 0, num_output_ / group_, out_spatial_dim_, kernel_dim_,
+                      1, blobs_[0]->data(), weight_offset_ * g,
+                      col_image_.data(), col_offset_ * g, 0,
+                      tops_[0]->mutable_data(),
+                      b * top_num + output_offset_ * g);
+    }
     if (bias_term_) {
       Blas::BlasSgemm(0, 0, num_output_, out_spatial_dim_, 1, 1,
                       blobs_[1]->data(), 0, biases_multiplier_.data(), 0, 1,

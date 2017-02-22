@@ -183,6 +183,7 @@ class ConvolutionParameter {
   OPTIONAL_FIELD_DEFAULT_FUNC(stride, int, 1);
   OPTIONAL_FIELD_DEFAULT_FUNC(pad, int, 0);
   OPTIONAL_FIELD_DEFAULT_FUNC(dilation, int, 1);
+  OPTIONAL_FIELD_DEFAULT_FUNC(group, int, 1);
   OPTIONAL_FIELD_DEFAULT_FUNC(bias_term, bool, true);
 
   void Clear() {
@@ -195,7 +196,8 @@ class ConvolutionParameter {
   }
 
  private:
-  int num_output_ = -1, kernel_size_ = -1, stride_ = 1, pad_ = 0, dilation_ = 1;
+  int num_output_ = -1, kernel_size_ = -1, stride_ = 1, pad_ = 0, group_ = 1,
+      dilation_ = 1;
   bool bias_term_ = true;
 };
 

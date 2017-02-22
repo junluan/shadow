@@ -16,9 +16,10 @@ class ConvolutionLayer : public Layer {
   void Release();
 
  private:
-  int num_output_, kernel_size_, stride_, pad_, dilation_, out_spatial_dim_,
-      kernel_dim_;
-  bool bias_term_;
+  int num_output_, kernel_size_, stride_, pad_, dilation_, group_,
+      out_spatial_dim_, kernel_dim_;
+  int weight_offset_, col_offset_, output_offset_;
+  bool bias_term_, use_cudnn_ = false;
 
   Blob<float> biases_multiplier_, col_image_;
 
