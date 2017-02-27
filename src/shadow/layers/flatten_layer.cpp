@@ -1,6 +1,6 @@
 #include "shadow/layers/flatten_layer.hpp"
 
-void FlattenLayer::Setup(VecBlob *blobs) {
+void FlattenLayer::Setup(VecBlobF *blobs) {
   Layer::Setup(blobs);
 
   CHECK_NE(tops_[0], bottoms_[0]);

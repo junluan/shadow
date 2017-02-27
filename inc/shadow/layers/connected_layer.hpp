@@ -10,7 +10,7 @@ class ConnectedLayer : public Layer {
       : Layer(layer_param) {}
   ~ConnectedLayer() { Release(); }
 
-  void Setup(VecBlob *blobs);
+  void Setup(VecBlobF *blobs);
   void Reshape();
   void Forward();
   void Release();
@@ -19,7 +19,7 @@ class ConnectedLayer : public Layer {
   int num_output_;
   bool bias_term_, transpose_;
 
-  Blob<float> biases_multiplier_;
+  BlobF biases_multiplier_;
 };
 
 #endif  // SHADOW_LAYERS_CONNECTED_LAYER_HPP

@@ -10,7 +10,7 @@ class LRNLayer : public Layer {
       : Layer(layer_param) {}
   ~LRNLayer() { Release(); }
 
-  void Setup(VecBlob *blobs);
+  void Setup(VecBlobF *blobs);
   void Reshape();
   void Forward();
   void Release();
@@ -19,7 +19,7 @@ class LRNLayer : public Layer {
   int size_, norm_region_;
   float alpha_, beta_, k_;
 
-  Blob<float> scale_;
+  BlobF scale_;
 };
 
 #endif  // SHADOW_LAYERS_LRN_LAYER_HPP

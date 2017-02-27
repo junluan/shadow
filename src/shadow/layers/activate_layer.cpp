@@ -2,7 +2,7 @@
 #include "shadow/util/blas.hpp"
 #include "shadow/util/image.hpp"
 
-void ActivateLayer::Setup(VecBlob *blobs) {
+void ActivateLayer::Setup(VecBlobF *blobs) {
   Layer::Setup(blobs);
 
   const auto &activate_param = layer_param_.activate_param();

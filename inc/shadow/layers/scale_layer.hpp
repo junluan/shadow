@@ -10,7 +10,7 @@ class ScaleLayer : public Layer {
       : Layer(layer_param) {}
   ~ScaleLayer() { Release(); }
 
-  void Setup(VecBlob *blobs);
+  void Setup(VecBlobF *blobs);
   void Reshape();
   void Forward();
   void Release();
@@ -19,7 +19,7 @@ class ScaleLayer : public Layer {
   bool bias_term_;
   int axis_, num_axis_, scale_dim_, inner_dim_, bias_param_id_;
 
-  Blob<float> *scale_ = nullptr, *bias_ = nullptr;
+  BlobF *scale_ = nullptr, *bias_ = nullptr;
 };
 
 #endif  // SHADOW_LAYERS_SCALE_LAYER_HPP

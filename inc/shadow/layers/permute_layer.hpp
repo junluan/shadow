@@ -10,7 +10,7 @@ class PermuteLayer : public Layer {
       : Layer(layer_param) {}
   ~PermuteLayer() { Release(); }
 
-  void Setup(VecBlob *blobs);
+  void Setup(VecBlobF *blobs);
   void Reshape();
   void Forward();
   void Release();
@@ -19,7 +19,7 @@ class PermuteLayer : public Layer {
   int num_axes_;
   VecInt permute_order_data_;
 
-  Blob<int> permute_order_, old_steps_, new_steps_;
+  BlobI permute_order_, old_steps_, new_steps_;
 };
 
 #endif  // SHADOW_LAYERS_PERMUTE_LAYER_HPP

@@ -10,7 +10,7 @@ class ActivateLayer : public Layer {
       : Layer(layer_param) {}
   ~ActivateLayer() { Release(); }
 
-  void Setup(VecBlob *blobs);
+  void Setup(VecBlobF *blobs);
   void Reshape();
   void Forward();
   void Release();

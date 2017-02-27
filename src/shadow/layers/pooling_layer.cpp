@@ -7,7 +7,7 @@ inline int pooling_out_size(int dim, int kernel_size, int stride, int pad) {
          1;
 }
 
-void PoolingLayer::Setup(VecBlob *blobs) {
+void PoolingLayer::Setup(VecBlobF *blobs) {
   Layer::Setup(blobs);
 
   const auto &pooling_param = layer_param_.pooling_param();

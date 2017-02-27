@@ -1,7 +1,7 @@
 #include "shadow/layers/normalize_layer.hpp"
 #include "shadow/util/blas.hpp"
 
-void NormalizeLayer::Setup(VecBlob *blobs) {
+void NormalizeLayer::Setup(VecBlobF *blobs) {
   Layer::Setup(blobs);
 
   const auto &normalize_param = layer_param_.normalize_param();
@@ -10,7 +10,7 @@ void NormalizeLayer::Setup(VecBlob *blobs) {
   channel_shared_ = normalize_param.channel_shared();
 
   if (blobs_.size() == 0) {
-    blobs_.push_back(new Blob<float>());
+    blobs_.push_back(new BlobF());
     if (channel_shared_) {
       blobs_[0]->reshape(1);
     } else {

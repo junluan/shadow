@@ -10,7 +10,7 @@ class NormalizeLayer : public Layer {
       : Layer(layer_param) {}
   ~NormalizeLayer() { Release(); }
 
-  void Setup(VecBlob *blobs);
+  void Setup(VecBlobF *blobs);
   void Reshape();
   void Forward();
   void Release();
@@ -20,8 +20,8 @@ class NormalizeLayer : public Layer {
   int spatial_dim_;
   float scale_;
 
-  Blob<float> norm_, buffer_;
-  Blob<float> sum_channel_multiplier_, sum_spatial_multiplier_;
+  BlobF norm_, buffer_;
+  BlobF sum_channel_multiplier_, sum_spatial_multiplier_;
 };
 
 #endif  // SHADOW_LAYERS_NORMALIZE_LAYER_HPP

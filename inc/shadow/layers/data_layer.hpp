@@ -10,7 +10,7 @@ class DataLayer : public Layer {
       : Layer(layer_param) {}
   ~DataLayer() { Release(); }
 
-  void Setup(VecBlob *blobs);
+  void Setup(VecBlobF *blobs);
   void Reshape();
   void Forward();
   void Release();
@@ -19,7 +19,7 @@ class DataLayer : public Layer {
   float scale_;
   int num_mean_;
 
-  Blob<float> mean_value_;
+  BlobF mean_value_;
 };
 
 #endif  // SHADOW_LAYERS_DATA_LAYER_HPP

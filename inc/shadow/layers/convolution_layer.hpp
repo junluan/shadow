@@ -10,7 +10,7 @@ class ConvolutionLayer : public Layer {
       : Layer(layer_param) {}
   ~ConvolutionLayer() { Release(); }
 
-  void Setup(VecBlob *blobs);
+  void Setup(VecBlobF *blobs);
   void Reshape();
   void Forward();
   void Release();
@@ -21,7 +21,7 @@ class ConvolutionLayer : public Layer {
   int weight_offset_, col_offset_, output_offset_;
   bool bias_term_, use_cudnn_ = false;
 
-  Blob<float> biases_multiplier_, col_image_;
+  BlobF biases_multiplier_, col_image_;
 
 #if defined(USE_CUDNN)
   cudnnConvolutionFwdAlgo_t fwd_algo_ =

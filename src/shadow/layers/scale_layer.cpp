@@ -2,7 +2,7 @@
 #include "shadow/util/blas.hpp"
 #include "shadow/util/image.hpp"
 
-void ScaleLayer::Setup(VecBlob *blobs) {
+void ScaleLayer::Setup(VecBlobF *blobs) {
   Layer::Setup(blobs);
 
   const auto &scale_param = layer_param_.scale_param();
@@ -24,7 +24,7 @@ void ScaleLayer::Setup(VecBlob *blobs) {
     for (int i = axis_; i < end_axis; ++i) {
       scale_shape.push_back(bottoms_[0]->shape(i));
     }
-    blobs_.push_back(new Blob<float>(scale_shape));
+    blobs_.push_back(new BlobF(scale_shape));
     Blas::Set(blobs_[0]->count(), 1, blobs_[0]->mutable_data(), 0);
     DLOG(WARNING) << "Scale param is initialized with the default value 1";
   }
@@ -35,7 +35,7 @@ void ScaleLayer::Setup(VecBlob *blobs) {
   } else {
     bias_param_id_ = blobs_.size();
     blobs_.resize(bias_param_id_ + 1);
-    blobs_[bias_param_id_] = new Blob<float>(scale_->shape());
+    blobs_[bias_param_id_] = new BlobF(scale_->shape());
     Blas::Set(blobs_[bias_param_id_]->count(), 0,
               blobs_[bias_param_id_]->mutable_data(), 0);
     DLOG(WARNING) << "Bias param is initialized with the default value 0";

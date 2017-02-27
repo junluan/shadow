@@ -1,7 +1,7 @@
 #include "shadow/layers/softmax_layer.hpp"
 #include "shadow/util/blas.hpp"
 
-void SoftmaxLayer::Setup(VecBlob *blobs) {
+void SoftmaxLayer::Setup(VecBlobF *blobs) {
   Layer::Setup(blobs);
 
   const auto &softmax_param = layer_param_.softmax_param();

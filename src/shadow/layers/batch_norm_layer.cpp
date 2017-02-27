@@ -1,7 +1,7 @@
 #include "shadow/layers/batch_norm_layer.hpp"
 #include "shadow/util/blas.hpp"
 
-void BatchNormLayer::Setup(VecBlob *blobs) {
+void BatchNormLayer::Setup(VecBlobF *blobs) {
   Layer::Setup(blobs);
 
   const auto &batch_norm_param = layer_param_.batch_norm_param();
@@ -15,7 +15,7 @@ void BatchNormLayer::Setup(VecBlob *blobs) {
 
   if (use_global_stats_ && blobs_.size() == 0) {
     for (int i = 0; i < 3; ++i) {
-      blobs_.push_back(new Blob<float>());
+      blobs_.push_back(new BlobF());
     }
     blobs_[0]->reshape(1, channels_);
     blobs_[1]->reshape(1, channels_);

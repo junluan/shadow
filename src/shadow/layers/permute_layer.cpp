@@ -1,7 +1,7 @@
 #include "shadow/layers/permute_layer.hpp"
 #include "shadow/util/image.hpp"
 
-void PermuteLayer::Setup(VecBlob *blobs) {
+void PermuteLayer::Setup(VecBlobF *blobs) {
   Layer::Setup(blobs);
 
   const auto &permute_param = layer_param_.permute_param();

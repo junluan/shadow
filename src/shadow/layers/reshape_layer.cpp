@@ -1,6 +1,6 @@
 #include "shadow/layers/reshape_layer.hpp"
 
-void ReshapeLayer::Setup(VecBlob *blobs) {
+void ReshapeLayer::Setup(VecBlobF *blobs) {
   Layer::Setup(blobs);
 
   CHECK_NE(tops_[0], bottoms_[0]);

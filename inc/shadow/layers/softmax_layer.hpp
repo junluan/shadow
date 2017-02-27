@@ -10,7 +10,7 @@ class SoftmaxLayer : public Layer {
       : Layer(layer_param) {}
   ~SoftmaxLayer() { Release(); }
 
-  void Setup(VecBlob *blobs);
+  void Setup(VecBlobF *blobs);
   void Reshape();
   void Forward();
   void Release();
@@ -18,7 +18,7 @@ class SoftmaxLayer : public Layer {
  private:
   int axis_, outer_num_, inner_num_;
 
-  Blob<float> scale_;
+  BlobF scale_;
 
 #if defined(USE_CUDNN)
   cudnnTensorDescriptor_t bottom_desc_ = nullptr, top_desc_ = nullptr;

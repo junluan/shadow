@@ -88,27 +88,23 @@ class Blob {
   }
 
   inline const std::string &name() const { return name_; }
-  inline std::string &name() { return name_; }
+  inline void set_name(const std::string &name) { name_ = name; }
 
   inline const VecInt &shape() const { return shape_; }
-  inline VecInt &shape() { return shape_; }
-
-  inline const int shape(int index) const {
-    return shape_[canonical_index(index)];
-  }
+  inline int shape(int index) const { return shape_[canonical_index(index)]; }
   inline void set_shape(int index, int value) {
     shape_[canonical_index(index)] = value;
   }
   inline void set_shape(const VecInt &shape) { shape_ = shape; }
   inline void add_shape(int value) { shape_.push_back(value); }
 
-  inline const int num_axes() const { return shape_.size(); }
-  inline const int num() const { return count() / shape(0); }
-  inline const int count() const { return count(0); }
-  inline const int count(int start_axis) const {
+  inline int num_axes() const { return shape_.size(); }
+  inline int num() const { return count() / shape(0); }
+  inline int count() const { return count(0); }
+  inline int count(int start_axis) const {
     return count(start_axis, num_axes());
   }
-  inline const int count(int start_axis, int end_axis) const {
+  inline int count(int start_axis, int end_axis) const {
     CHECK_LE(start_axis, end_axis);
     CHECK_GE(start_axis, 0);
     CHECK_GE(end_axis, 0);
@@ -119,7 +115,7 @@ class Blob {
     return count;
   }
 
-  inline const int canonical_index(int index) const {
+  inline int canonical_index(int index) const {
     CHECK_GE(index, -num_axes());
     CHECK_LT(index, num_axes());
     if (index < 0) {
@@ -164,10 +160,14 @@ class Blob {
   bool shared_ = false;
 };
 
-typedef std::vector<Blob<float> *> VecBlob;
+typedef Blob<int> BlobI;
+typedef Blob<float> BlobF;
 
-inline static Blob<float> *get_blob_by_name(const VecBlob &blobs,
-                                            const std::string &name) {
+typedef std::vector<BlobI *> VecBlobI;
+typedef std::vector<BlobF *> VecBlobF;
+
+inline static BlobF *get_blob_by_name(const VecBlobF &blobs,
+                                      const std::string &name) {
   for (const auto &blob : blobs) {
     if (!name.compare(blob->name())) return blob;
   }

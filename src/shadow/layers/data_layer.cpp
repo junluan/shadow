@@ -1,8 +1,8 @@
 #include "shadow/layers/data_layer.hpp"
 #include "shadow/util/image.hpp"
 
-void DataLayer::Setup(VecBlob *blobs) {
-  Blob<float> *bottom = get_blob_by_name(*blobs, "in_blob");
+void DataLayer::Setup(VecBlobF *blobs) {
+  BlobF *bottom = get_blob_by_name(*blobs, "in_blob");
   if (bottom != nullptr) {
     if (bottom->num() && bottom->num_axes() == 4) {
       bottoms_.push_back(bottom);
@@ -19,7 +19,7 @@ void DataLayer::Setup(VecBlob *blobs) {
   }
 
   for (const auto &top_name : layer_param_.top()) {
-    Blob<float> *top = new Blob<float>(top_name);
+    BlobF *top = new BlobF(top_name);
     tops_.push_back(top);
     blobs->push_back(top);
   }

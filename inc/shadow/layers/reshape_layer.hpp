@@ -10,7 +10,7 @@ class ReshapeLayer : public Layer {
       : Layer(layer_param) {}
   ~ReshapeLayer() { Release(); }
 
-  void Setup(VecBlob *blobs);
+  void Setup(VecBlobF *blobs);
   void Reshape();
   void Forward();
   void Release();

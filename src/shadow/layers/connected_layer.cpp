@@ -1,7 +1,7 @@
 #include "shadow/layers/connected_layer.hpp"
 #include "shadow/util/blas.hpp"
 
-void ConnectedLayer::Setup(VecBlob *blobs) {
+void ConnectedLayer::Setup(VecBlobF *blobs) {
   Layer::Setup(blobs);
 
   const auto &conn_param = layer_param_.connected_param();

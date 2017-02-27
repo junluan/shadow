@@ -12,7 +12,7 @@ inline int convolution_out_size(int dim, int kernel_size, int stride, int pad,
   return (dim + 2 * pad - kernel_extent) / stride + 1;
 }
 
-void ConvolutionLayer::Setup(VecBlob *blobs) {
+void ConvolutionLayer::Setup(VecBlobF *blobs) {
   Layer::Setup(blobs);
 
   const auto &conv_param = layer_param_.convolution_param();

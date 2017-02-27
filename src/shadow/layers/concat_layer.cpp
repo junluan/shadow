@@ -1,7 +1,7 @@
 #include "shadow/layers/concat_layer.hpp"
 #include "shadow/util/image.hpp"
 
-void ConcatLayer::Setup(VecBlob *blobs) {
+void ConcatLayer::Setup(VecBlobF *blobs) {
   Layer::Setup(blobs);
 
   const auto &concat_param = layer_param_.concat_param();

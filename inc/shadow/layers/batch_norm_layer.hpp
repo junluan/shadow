@@ -10,7 +10,7 @@ class BatchNormLayer : public Layer {
       : Layer(layer_param) {}
   ~BatchNormLayer() { Release(); }
 
-  void Setup(VecBlob *blobs);
+  void Setup(VecBlobF *blobs);
   void Reshape();
   void Forward();
   void Release();
@@ -20,8 +20,8 @@ class BatchNormLayer : public Layer {
   float scale_;
   int channels_, spatial_dim_;
 
-  Blob<float> mean_, variance_, temp_;
-  Blob<float> sum_batch_multiplier_, sum_spatial_multiplier_, batch_by_channel_;
+  BlobF mean_, variance_, temp_;
+  BlobF sum_batch_multiplier_, sum_spatial_multiplier_, batch_by_channel_;
 };
 
 #endif  // SHADOW_LAYERS_BATCH_NORM_LAYER_HPP

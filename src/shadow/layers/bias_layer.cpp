@@ -2,7 +2,7 @@
 #include "shadow/util/blas.hpp"
 #include "shadow/util/image.hpp"
 
-void BiasLayer::Setup(VecBlob *blobs) {
+void BiasLayer::Setup(VecBlobF *blobs) {
   Layer::Setup(blobs);
 
   const auto &bias_param = layer_param_.bias_param();
@@ -23,7 +23,7 @@ void BiasLayer::Setup(VecBlob *blobs) {
     for (int i = axis_; i < end_axis; ++i) {
       bias_shape.push_back(bottoms_[0]->shape(i));
     }
-    blobs_.push_back(new Blob<float>(bias_shape));
+    blobs_.push_back(new BlobF(bias_shape));
     Blas::Set(blobs_[0]->count(), 0, blobs_[0]->mutable_data(), 0);
     DLOG(WARNING) << "Bias param is initialized with the default value 0";
   }

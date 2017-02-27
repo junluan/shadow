@@ -1,6 +1,6 @@
 #include "shadow/layers/prior_box_layer.hpp"
 
-void PriorBoxLayer::Setup(VecBlob *blobs) {
+void PriorBoxLayer::Setup(VecBlobF *blobs) {
   Layer::Setup(blobs);
 
   const auto &prior_box_param = layer_param_.prior_box_param();

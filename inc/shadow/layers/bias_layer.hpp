@@ -10,7 +10,7 @@ class BiasLayer : public Layer {
       : Layer(layer_param) {}
   ~BiasLayer() { Release(); }
 
-  void Setup(VecBlob *blobs);
+  void Setup(VecBlobF *blobs);
   void Reshape();
   void Forward();
   void Release();
@@ -18,7 +18,7 @@ class BiasLayer : public Layer {
  private:
   int axis_, num_axis_, bias_dim_, inner_dim_;
 
-  Blob<float> *bias_;
+  BlobF *bias_;
 };
 
 #endif  // SHADOW_LAYERS_BIAS_LAYER_HPP

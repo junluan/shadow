@@ -1,7 +1,7 @@
 #include "shadow/layers/lrn_layer.hpp"
 #include "shadow/util/image.hpp"
 
-void LRNLayer::Setup(VecBlob *blobs) {
+void LRNLayer::Setup(VecBlobF *blobs) {
   Layer::Setup(blobs);
 
   const auto &lrn_param = layer_param_.lrn_param();

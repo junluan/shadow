@@ -30,10 +30,10 @@ class Layer {
     blobs_.clear();
   }
 
-  virtual void Setup(VecBlob *blobs) {
+  virtual void Setup(VecBlobF *blobs) {
     bottoms_.clear(), tops_.clear(), blobs_.clear();
     for (const auto &bottom_name : layer_param_.bottom()) {
-      Blob<float> *bottom = get_blob_by_name(*blobs, bottom_name);
+      BlobF *bottom = get_blob_by_name(*blobs, bottom_name);
       if (bottom != nullptr) {
         if (bottom->num()) {
           bottoms_.push_back(bottom);
@@ -48,15 +48,15 @@ class Layer {
       }
     }
     for (const auto &top_name : layer_param_.top()) {
-      Blob<float> *top = get_blob_by_name(*blobs, top_name);
+      BlobF *top = get_blob_by_name(*blobs, top_name);
       if (top == nullptr) {
-        top = new Blob<float>(top_name);
+        top = new BlobF(top_name);
         blobs->push_back(top);
       }
       tops_.push_back(top);
     }
     for (const auto &proto_blob : layer_param_.blobs()) {
-      Blob<float> *blob = new Blob<float>();
+      BlobF *blob = new BlobF();
       const auto &dims = proto_blob.shape().dim();
       VecInt shape;
       int cc = 1, data_size = proto_blob.data_size();
@@ -79,58 +79,57 @@ class Layer {
   virtual void Release() { LOG(INFO) << "Release Layer!"; }
 
   inline const shadow::LayerParameter &param() const { return layer_param_; }
-  inline shadow::LayerParameter &param() { return layer_param_; }
+  inline void set_param(const shadow::LayerParameter &param) {
+    layer_param_ = param;
+  }
 
   inline const std::string &name() const { return layer_name_; }
-  inline std::string &name() { return layer_name_; }
+  inline void set_name(const std::string &name) { layer_name_ = name; }
 
   inline const std::string &type() const { return layer_type_; }
-  inline std::string &type() { return layer_type_; }
+  inline void set_type(const std::string &type) { layer_type_ = type; }
 
-  inline int num_bottoms() const { return bottoms_.size(); }
-  inline int num_tops() const { return tops_.size(); }
-  inline int num_blobs() const { return blobs_.size(); }
-
-  inline const VecBlob &bottoms() const { return bottoms_; }
-  inline const VecBlob &tops() const { return tops_; }
-  inline const VecBlob &blobs() const { return blobs_; }
-
-  inline VecBlob &bottoms() { return bottoms_; }
-  inline VecBlob &tops() { return tops_; }
-  inline VecBlob &blobs() { return blobs_; }
-
-  inline const Blob<float> *bottom(int i) const {
+  inline const VecBlobF &bottoms() const { return bottoms_; }
+  inline VecBlobF *mutable_bottoms() { return &bottoms_; }
+  inline const BlobF *bottoms(int i) const {
     CHECK_GE(i, 0);
     CHECK_LT(i, bottoms_.size());
     return bottoms_[i];
   }
-  inline const Blob<float> *top(int i) const {
-    CHECK_GE(i, 0);
-    CHECK_LT(i, tops_.size());
-    return tops_[i];
-  }
-  inline const Blob<float> *blob(int i) const {
-    CHECK_GE(i, 0);
-    CHECK_LT(i, blobs_.size());
-    return blobs_[i];
-  }
-
-  inline Blob<float> *bottom(int i) {
+  inline BlobF *mutable_bottoms(int i) {
     CHECK_GE(i, 0);
     CHECK_LT(i, bottoms_.size());
     return bottoms_[i];
   }
-  inline Blob<float> *top(int i) {
+  inline int bottoms_size() const { return bottoms_.size(); }
+
+  inline const VecBlobF &tops() const { return tops_; }
+  inline VecBlobF *mutable_tops() { return &tops_; }
+  inline const BlobF *tops(int i) const {
     CHECK_GE(i, 0);
     CHECK_LT(i, tops_.size());
     return tops_[i];
   }
-  inline Blob<float> *blob(int i) {
+  inline BlobF *mutable_tops(int i) {
+    CHECK_GE(i, 0);
+    CHECK_LT(i, tops_.size());
+    return tops_[i];
+  }
+  inline int tops_size() const { return tops_.size(); }
+
+  inline const VecBlobF &blobs() const { return blobs_; }
+  inline VecBlobF *mutable_blobs() { return &blobs_; }
+  inline const BlobF *blobs(int i) const {
     CHECK_GE(i, 0);
     CHECK_LT(i, blobs_.size());
     return blobs_[i];
   }
-
+  inline BlobF *mutable_blobs(int i) {
+    CHECK_GE(i, 0);
+    CHECK_LT(i, blobs_.size());
+    return blobs_[i];
+  }
+  inline int blobs_size() const { return blobs_.size(); }
   inline void set_blob(int i, int count, const float *data) {
     CHECK_GE(i, 0);
     CHECK_LT(i, blobs_.size());
@@ -143,7 +142,7 @@ class Layer {
 
   std::string layer_name_, layer_type_;
 
-  VecBlob bottoms_, tops_, blobs_;
+  VecBlobF bottoms_, tops_, blobs_;
 };
 
 typedef std::vector<Layer *> VecLayer;

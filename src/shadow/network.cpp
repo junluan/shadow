@@ -80,7 +80,7 @@ void Network::Forward(const float *data) {
   if (layers_.size() == 0) return;
   CHECK(!layers_[0]->type().compare("Data"))
       << "The first layer must be Data layer!";
-  layers_[0]->bottom(0)->set_data(data);
+  layers_[0]->mutable_bottoms(0)->set_data(data);
   for (auto &layer : layers_) layer->Forward();
 }
 
@@ -123,12 +123,12 @@ const Layer *Network::GetLayerByName(const std::string &layer_name) {
   return nullptr;
 }
 
-const Blob<float> *Network::GetBlobByName(const std::string &blob_name) {
+const BlobF *Network::GetBlobByName(const std::string &blob_name) {
   return get_blob_by_name(blobs_, blob_name);
 }
 
 const float *Network::GetBlobDataByName(const std::string &blob_name) {
-  const Blob<float> *blob = GetBlobByName(blob_name);
+  const BlobF *blob = GetBlobByName(blob_name);
   if (blob == nullptr) {
     LOG(FATAL) << "Unknown blob: " + blob_name;
   } else if (blobs_data_.find(blob_name) == blobs_data_.end()) {
@@ -173,7 +173,7 @@ void Network::Reshape(int batch) {
   if (batch > 0) in_shape_[0] = batch;
 
   blobs_.clear();
-  blobs_.push_back(new Blob<float>(in_shape_, "in_blob"));
+  blobs_.push_back(new BlobF(in_shape_, "in_blob"));
 
   layers_.clear();
   for (const auto &layer_param : net_param_.layer()) {
@@ -187,11 +187,11 @@ void Network::Reshape(int batch) {
 void Network::CopyWeights(const std::vector<const float *> &weights) {
   int weights_count = 0;
   for (auto &layer : layers_) {
-    if (layer->num_blobs() > 0) {
+    if (layer->blobs_size() > 0) {
       CHECK_LT(weights_count, weights.size());
       const float *weights_data = weights[weights_count++];
-      for (int n = 0; n < layer->num_blobs(); ++n) {
-        int blob_count = layer->blob(n)->count();
+      for (int n = 0; n < layer->blobs_size(); ++n) {
+        int blob_count = layer->blobs(n)->count();
         layer->set_blob(n, blob_count, weights_data);
         weights_data += blob_count;
       }
@@ -201,8 +201,8 @@ void Network::CopyWeights(const std::vector<const float *> &weights) {
 
 void Network::CopyWeights(const float *weights_data) {
   for (auto &layer : layers_) {
-    for (int n = 0; n < layer->num_blobs(); ++n) {
-      int blob_count = layer->blob(n)->count();
+    for (int n = 0; n < layer->blobs_size(); ++n) {
+      int blob_count = layer->blobs(n)->count();
       layer->set_blob(n, blob_count, weights_data);
       weights_data += blob_count;
     }

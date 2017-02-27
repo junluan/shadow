@@ -1,7 +1,7 @@
 #include "shadow/layers/reorg_layer.hpp"
 #include "shadow/util/image.hpp"
 
-void ReorgLayer::Setup(VecBlob *blobs) {
+void ReorgLayer::Setup(VecBlobF *blobs) {
   Layer::Setup(blobs);
 
   const auto &reorg_param = layer_param_.reorg_param();
