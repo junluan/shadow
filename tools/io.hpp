@@ -14,7 +14,7 @@
 #include <google/protobuf/message.h>
 #include <google/protobuf/text_format.h>
 
-#if GOOGLE_PROTOBUF_VERSION >= 3000000
+#if GOOGLE_PROTOBUF_VERSION >= 3001000
 #define SUPPORT_JSON
 #include <google/protobuf/util/json_util.h>
 #endif
