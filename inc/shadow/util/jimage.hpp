@@ -12,6 +12,8 @@
 #include "asvloffscreen.h"
 #endif
 
+#include <cstring>
+
 enum Order { kGray, kRGB, kBGR, kArc };
 
 class JImage {
