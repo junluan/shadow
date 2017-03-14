@@ -467,21 +467,39 @@ class Timer {
 
 class Process {
  public:
-  Process(int slice, int total) {
-    period_ = static_cast<float>(total) / slice;
-    percent_ = 0;
+  Process(int slice, int total, const std::string &prefix = "") {
+    slice_ = slice;
+    total_ = total;
+    prefix_ = prefix;
   }
 
-  void update(int current, std::ostream *os) {
-    if (current / period_ >= percent_) {
-      *os << "." << std::flush;
-      percent_++;
+  void update(int current, std::ostream *os, int mode = 0) {
+    *os << prefix_ << "[";
+    int pos = slice_ * (current + 1) / total_;
+    for (int i = 0; i < slice_; ++i) {
+      if (i < pos) {
+        *os << "=";
+      } else if (i == pos) {
+        *os << ">";
+      } else {
+        *os << " ";
+      }
     }
+    *os << "] ";
+    if (mode == 0) {
+      *os << "(" << static_cast<int>(100.f * (current + 1) / total_) << "%)\r";
+    } else if (mode == 1) {
+      *os << "(" << current + 1 << "/" << total_ << ")\r";
+    }
+    if (pos == slice_) {
+      *os << "\n";
+    }
+    *os << std::flush;
   }
 
  private:
-  float period_;
-  int percent_;
+  int slice_, total_;
+  std::string prefix_;
 };
 
 #endif  // SHADOW_UTIL_UTIL_HPP

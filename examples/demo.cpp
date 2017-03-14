@@ -35,13 +35,14 @@ void Demo::BatchTest(const std::string &list_file, bool image_write) {
   double time_cost = 0;
   std::ofstream file(Util::find_replace_last(list_file, ".", "-result."));
   int count = 0;
+  Process process(20, num_im, "Processing: ");
   for (const auto &im_path : image_list) {
     im_ini_.Read(im_path);
     VecRectF rois;
     rois.push_back(RectF(0, 0, im_ini_.w_, im_ini_.h_));
     timer_.start();
     Predict(im_ini_, rois, &Bboxes_);
-    Boxes::Amend(&Bboxes_, rois, im_ini_.h_, im_ini_.w_);
+    Boxes::Amend(&Bboxes_, rois);
     const auto &boxes = Boxes::NMS(Bboxes_, 0.5);
     time_cost += timer_.get_millisecond();
     if (image_write) {
@@ -57,13 +58,9 @@ void Demo::BatchTest(const std::string &list_file, bool image_write) {
       im_ini_.Write(path);
     }
     PrintDetections(im_path, boxes, &file);
-    count++;
-    if (!((count) % 100)) {
-      std::cout << "Processing: " << count << " / " << num_im << std::endl;
-    }
+    process.update(count++, &std::cout);
   }
   file.close();
-  std::cout << "Processing: " << num_im << " / " << num_im << std::endl;
   std::cout << "Processed in: " << time_cost
             << " ms, each frame: " << time_cost / num_im << " ms" << std::endl;
 }
