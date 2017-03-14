@@ -105,8 +105,13 @@ void Amend(std::vector<std::vector<Box<Dtype>>> *Bboxes, const VecRectF &crops,
   for (int i = 0; i < crops.size(); ++i) {
     std::vector<Box<Dtype>> &boxes = Bboxes->at(i);
     const RectF &crop = crops[i];
-    float x_off = crop.x <= 1 ? crop.x * width : crop.x;
-    float y_off = crop.y <= 1 ? crop.y * height : crop.y;
+    bool normalize = crop.h <= 1 || crop.w <= 1;
+    if (normalize) {
+      CHECK_GT(height, 1);
+      CHECK_GT(width, 1);
+    }
+    float x_off = normalize ? crop.x * width : crop.x;
+    float y_off = normalize ? crop.y * height : crop.y;
     for (auto &box : boxes) {
       box.xmin += x_off;
       box.xmax += x_off;
