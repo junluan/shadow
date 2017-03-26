@@ -420,12 +420,16 @@ inline bool make_directory(const Path &path) {
 #endif
 }
 
+inline bool make_directory(const std::string &path) {
+  return make_directory(Path(path));
+}
+
 }  // namespace Util
 
-#if defined(__linux)
 #include <ctime>
 class Timer {
  public:
+#if defined(__linux)
   Timer() : ts(clock()) {}
 
   void start() { ts = clock(); }
@@ -436,13 +440,7 @@ class Timer {
     return 1000.0 * static_cast<double>(clock() - ts) / CLOCKS_PER_SEC;
   }
 
- private:
-  clock_t ts;
-};
-
 #else
-class Timer {
- public:
   Timer() {
     QueryPerformanceFrequency(&tfrequency_);
     QueryPerformanceCounter(&tstart_);
@@ -459,11 +457,60 @@ class Timer {
     return 1000.0 * static_cast<double>(tend_.QuadPart - tstart_.QuadPart) /
            tfrequency_.QuadPart;
   }
+#endif
+
+  static tm get_compile_time() {
+    int sec, min, hour, day, month, year;
+    char s_month[5], month_names[] = "JanFebMarAprMayJunJulAugSepOctNovDec";
+    sscanf(__TIME__, "%d:%d:%d", &hour, &min, &sec);
+    sscanf(__DATE__, "%s %d %d", s_month, &day, &year);
+    month = (strstr(month_names, s_month) - month_names) / 3;
+    return tm{sec, min, hour, day, month, year - 1900};
+  }
+
+  static std::string get_compile_time_str() {
+    tm ltm = get_compile_time();
+    return std::string(asctime(&ltm)).substr(4);
+  }
+
+  static tm get_current_time() {
+    time_t now = time(0);
+    return *localtime(&now);
+  }
+
+  static std::string get_current_time_str() {
+    tm ltm = get_current_time();
+    return std::string(asctime(&ltm)).substr(4);
+  }
+
+  static bool is_expired(int year = 0, int mon = 3, int day = 0) {
+    tm compile_tm = get_compile_time(), current_tm = get_current_time();
+    int year_gap = current_tm.tm_year - compile_tm.tm_year;
+    int mon_gap = current_tm.tm_mon - compile_tm.tm_mon;
+    int day_gap = current_tm.tm_mday - compile_tm.tm_mday;
+    if (year < year_gap) {
+      return true;
+    } else if (year > year_gap) {
+      return false;
+    } else {
+      if (mon < mon_gap) {
+        return true;
+      } else if (mon > mon_gap) {
+        return false;
+      } else {
+        return day < day_gap;
+      }
+    }
+  }
 
  private:
+#if defined(__linux)
+  clock_t ts;
+
+#else
   LARGE_INTEGER tstart_, tend_, tfrequency_;
-};
 #endif
+};
 
 class Process {
  public:
