@@ -470,7 +470,7 @@ class Timer {
 
   static std::string get_compile_time_str() {
     tm ltm = get_compile_time();
-    return std::string(asctime(&ltm)).substr(4);
+    return Util::find_replace(std::string(asctime(&ltm)).substr(4), "\n", "");
   }
 
   static tm get_current_time() {
@@ -480,7 +480,7 @@ class Timer {
 
   static std::string get_current_time_str() {
     tm ltm = get_current_time();
-    return std::string(asctime(&ltm)).substr(4);
+    return Util::find_replace(std::string(asctime(&ltm)).substr(4), "\n", "");
   }
 
   static bool is_expired(int year = 0, int mon = 3, int day = 0) {
