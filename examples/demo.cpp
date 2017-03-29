@@ -171,11 +171,13 @@ void Demo::DrawDetections(const VecBoxF &boxes, cv::Mat *im_mat,
 #endif
 
 void Demo::PrintDetections(const std::string &im_name, const VecBoxF &boxes,
-                           std::ostream *file) {
+                           std::ostream *os) {
+  *os << im_name << ":" << std::endl;
+  *os << "objects:" << std::endl;
   for (const auto &boxF : boxes) {
     const BoxI box(boxF);
-    *file << im_name << " (" << box.xmin << "," << box.ymin << "," << box.xmax
-          << "," << box.ymax << "," << box.label << ") " << box.score
-          << std::endl;
+    *os << "   " << box.xmin << " " << box.ymin << " " << box.xmax << " "
+        << box.ymax << " " << box.label << " " << box.score << std::endl;
   }
+  *os << "-------------------------" << std::endl;
 }
