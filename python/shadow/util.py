@@ -1,8 +1,10 @@
 from __future__ import print_function
 
 import errno
+import hashlib
 import os
 import platform
+import shutil
 import zipfile
 
 
@@ -14,6 +16,13 @@ def mkdir_p(path):
             pass
         else:
             raise OSError('mkdir failed', path)
+
+
+def rmdir_p(path):
+    try:
+        shutil.rmtree(path)
+    except OSError as e:
+        pass
 
 
 def rmfile_p(path):
@@ -42,3 +51,14 @@ def handle_zip(file_path, extract_path=''):
     mkdir_p(extract_path)
     with zipfile.ZipFile(file_path) as zfile:
         zfile.extractall(extract_path)
+
+
+def get_file_md5(file_path):
+    with open(file_path) as f:
+        m = hashlib.md5()
+        while True:
+            data = f.read(10240)
+            if not data:
+                break
+            m.update(data)
+        return m.hexdigest()

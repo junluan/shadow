@@ -3,31 +3,65 @@ from __future__ import print_function
 import argparse
 import json
 import os
+import shutil
 import sys
 import urllib
+import zipfile
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/shadow')
 import util as util
 
 
+def update_file(file_disk_path, file_download_path):
+    if os.path.isfile(file_disk_path):
+        file_disk_md5 = util.get_file_md5(file_disk_path)
+        file_download_md5 = util.get_file_md5(file_download_path)
+        if file_disk_md5 != file_download_md5:
+            shutil.copy(file_download_path, file_disk_path)
+    else:
+        file_disk_dir = os.path.dirname(file_disk_path)
+        if not os.path.isdir(file_disk_dir):
+            util.mkdir_p(file_disk_dir)
+        shutil.copy(file_download_path, file_disk_path)
+
+
+def update_zipfile(file_disk_dir, file_download_path):
+    extract_path = os.path.dirname(file_download_path)
+    with zipfile.ZipFile(file_download_path) as zfile:
+        for file_name in zfile.namelist():
+            zfile.extract(file_name, extract_path)
+            file_disk_path = file_disk_dir + '/' + file_name
+            file_extract_path = extract_path + '/' + file_name
+            if os.path.isfile(file_extract_path):
+                update_file(file_disk_path, file_extract_path)
+
+
 def download_file(file_obj, ftp_root, disk_work_root):
+    download_dir = disk_work_root + '/.download'
+
     file_name = file_obj['name']
     file_ext = os.path.splitext(file_name)[1]
     file_folder = file_obj['folder']
 
-    file_ftp_path = ftp_root + '/' + file_folder + '/' + file_name
     file_disk_dir = disk_work_root + '/' + file_folder
-    file_disk_path = file_disk_dir + '/' + file_name
 
-    util.mkdir_p(file_disk_dir)
+    file_disk_path = file_disk_dir + '/' + file_name
+    file_ftp_path = ftp_root + '/' + file_folder + '/' + file_name
+
+    file_download_path = download_dir + '/' + file_folder + '/' + file_name
+    util.mkdir_p(os.path.dirname(file_download_path))
+
     print('Downloading ' + file_name + ' ... ', end='')
-    urllib.urlretrieve(file_ftp_path, file_disk_path)
+    urllib.urlretrieve(file_ftp_path, file_download_path)
     urllib.urlcleanup()
-    print('Done!')
 
     if file_ext == '.zip':
-        util.handle_zip(file_disk_path)
-        util.rmfile_p(file_disk_path)
+        update_zipfile(file_disk_dir, file_download_path)
+    else:
+        update_file(file_disk_path, file_download_path)
+
+    util.rmdir_p(download_dir)
+    print('Done!')
 
 
 def download(ftp_ip, project_name, files_name):
