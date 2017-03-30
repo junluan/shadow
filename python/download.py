@@ -103,7 +103,7 @@ if __name__ == '__main__':
                         help='The ftp server\'s ip address, default is 172.17.122.193.')
     parser.add_argument('--project', default='shadow',
                         help='The project\'s name, default is shadow.')
-    parser.add_argument('--files', nargs='*', default=[],
+    parser.add_argument('--files', '-f', nargs='*', default=[],
                         help='The files to be downloaded manually.')
     args = parser.parse_args()
 
