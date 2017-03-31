@@ -39,9 +39,9 @@ def update_zipfile(file_disk_dir, file_download_path):
 def download_file(file_obj, ftp_root, disk_work_root):
     download_dir = disk_work_root + '/.download'
 
-    file_name = file_obj['name']
+    file_name = file_obj['Name']
     file_ext = os.path.splitext(file_name)[1]
-    file_folder = file_obj['folder']
+    file_folder = file_obj['Folder']
 
     file_disk_dir = disk_work_root + '/' + file_folder
 
@@ -82,14 +82,14 @@ def download(ftp_ip, project_name, files_name):
 
     if len(files_name) == 0:
         for file_obj in json_obj['Files']:
-            if file_obj['type'] != 'required':
+            if file_obj['Type'] != 'required':
                 continue
             download_file(file_obj, ftp_root, disk_work_root)
     else:
         for name in files_name:
             is_download = False
             for file_obj in json_obj['Files']:
-                if name == file_obj['name']:
+                if name == file_obj['Name']:
                     download_file(file_obj, ftp_root, disk_work_root)
                     is_download = True
                     break
