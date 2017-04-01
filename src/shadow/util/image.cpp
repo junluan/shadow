@@ -240,6 +240,18 @@ void Activate(T *data, int count, int type) {
   }
 }
 
+template <typename T>
+void PRelu(T *data, const VecInt &in_shape, bool channel_shared,
+           const T *slope_data) {
+  int channels = in_shape[1], dim = in_shape[2] * in_shape[3];
+  int count = in_shape[0] * channels * dim;
+  int div_factor = channel_shared ? channels : 1;
+  for (int i = 0; i < count; ++i) {
+    int c = (i / dim) % channels / div_factor;
+    data[i] = data[i] > 0 ? data[i] : data[i] * slope_data[c];
+  }
+}
+
 // Explicit instantiation
 template void DataTransform(const float *in_data, const VecInt &in_shape,
                             float scale, int num_mean, const float *mean_value,
@@ -268,6 +280,8 @@ template void LRN(const float *in_data, const VecInt &in_shape, int size,
                   float alpha, float beta, float k, float *scale_data,
                   float *out_data);
 template void Activate(float *data, int count, int type);
+template void PRelu(float *data, const VecInt &in_shape, bool channel_shared,
+                    const float *slope_data);
 
 #elif defined(USE_CL)
 template <typename T>
@@ -412,6 +426,20 @@ void Activate(T *data, int count, int type) {
   Kernel::queue_->Finish();
 }
 
+template <typename T>
+void PRelu(T *data, const VecInt &in_shape, bool channel_shared,
+           const T *slope_data) {
+  int channels = in_shape[1], dim = in_shape[2] * in_shape[3];
+  int count = in_shape[0] * channels * dim;
+  int div_factor = channel_shared ? channels : 1;
+
+  size_t global = count;
+  EasyCL::Kernel *kernel = Kernel::cl_prelu_kernel_;
+  kernel->SetArguments(*data, count, channels, dim, div_factor, *slope_data);
+  kernel->Launch(*Kernel::queue_, {global}, Kernel::event_);
+  Kernel::queue_->Finish();
+}
+
 // Explicit instantiation
 template void DataTransform(const BufferF *in_data, const VecInt &in_shape,
                             float scale, int num_mean,
@@ -441,6 +469,8 @@ template void LRN(const BufferF *in_data, const VecInt &in_shape, int size,
                   BufferF *out_data);
 
 template void Activate(BufferF *data, int count, int type);
+template void PRelu(BufferF *data, const VecInt &in_shape, bool channel_shared,
+                    const BufferF *slope_data);
 #endif
 
 }  // namespace Image

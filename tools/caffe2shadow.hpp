@@ -89,6 +89,14 @@ void ConvertActivate(const caffe::NetParameter& caffe_model,
   auto shadow_param = shadow_layer->mutable_activate_param();
   if (!caffe_layer.type().compare("ReLU")) {
     shadow_param->set_type(shadow::ActivateParameter_ActivateType_Relu);
+  } else if (!caffe_layer.type().compare("PReLU")) {
+    if (caffe_layer.has_prelu_param()) {
+      const auto& caffe_param = caffe_layer.prelu_param();
+      if (caffe_param.has_channel_shared()) {
+        shadow_param->set_channel_shared(caffe_param.channel_shared());
+      }
+      shadow_param->set_type(shadow::ActivateParameter_ActivateType_PRelu);
+    }
   }
 }
 
@@ -425,7 +433,7 @@ void Convert(const caffe::NetParameter& caffe_deploy,
   for (int l = 1; l < caffe_deploy.layer_size(); ++l) {
     const auto& caffe_layer = caffe_deploy.layer(l);
     const auto& layer_type = caffe_layer.type();
-    if (!layer_type.compare("ReLU")) {
+    if (!layer_type.compare("ReLU") || !layer_type.compare("PReLU")) {
       ConvertActivate(caffe_model, caffe_layer, shadow_net);
     } else if (!layer_type.compare("BatchNorm")) {
       ConvertBatchNorm(caffe_model, caffe_layer, shadow_net);

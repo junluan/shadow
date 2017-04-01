@@ -92,6 +92,7 @@ const shadow::LayerParameter ParseActivate(const JValue &root) {
 
   shadow::ActivateParameter_ActivateType type =
       shadow::ActivateParameter_ActivateType_Relu;
+  bool channel_shared = false;
   if (root.HasMember("activateParam")) {
     const auto &json_param = Json::GetValue(root, "activateParam");
     const auto &type_str = Json::GetString(json_param, "type", "Relu");
@@ -101,10 +102,14 @@ const shadow::LayerParameter ParseActivate(const JValue &root) {
       type = shadow::ActivateParameter_ActivateType_Relu;
     } else if (!type_str.compare("Leaky")) {
       type = shadow::ActivateParameter_ActivateType_Leaky;
+    } else if (!type_str.compare("PRelu")) {
+      type = shadow::ActivateParameter_ActivateType_PRelu;
+      channel_shared = Json::GetBool(json_param, "channelShared", false);
     }
   }
 
   shadow_param->set_type(type);
+  shadow_param->set_channel_shared(channel_shared);
 
   return shadow_layer;
 }

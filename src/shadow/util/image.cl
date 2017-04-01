@@ -219,3 +219,12 @@ __kernel void Activate(__global float *data, int count, int type) {
 
   data[globalid] = ActivateValue(data[globalid], type);
 }
+
+__kernel void PRelu(__global float *data, int count, int channels, int dim,
+                    int div_factor, __global float *slope_data) {
+  CL_KERNEL_LOOP(globalid, count)
+
+  int c = (globalid / dim) % channels / div_factor;
+  float value = data[globalid];
+  data[globalid] = value > 0 ? value : value * slope_data[c];
+}

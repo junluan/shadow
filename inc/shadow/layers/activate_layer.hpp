@@ -17,6 +17,7 @@ class ActivateLayer : public Layer {
 
  private:
   int activate_type_;
+  bool channel_shared_;
 };
 
 #endif  // SHADOW_ACTIVATE_LAYER_HPP

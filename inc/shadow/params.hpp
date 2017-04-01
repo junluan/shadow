@@ -87,7 +87,8 @@ class Blob {
 enum ActivateParameter_ActivateType {
   ActivateParameter_ActivateType_Linear = 0,
   ActivateParameter_ActivateType_Relu = 1,
-  ActivateParameter_ActivateType_Leaky = 2
+  ActivateParameter_ActivateType_Leaky = 2,
+  ActivateParameter_ActivateType_PRelu = 3
 };
 
 class ActivateParameter {
@@ -97,11 +98,16 @@ class ActivateParameter {
 
   OPTIONAL_FIELD_DEFAULT_FUNC(type, ActivateParameter_ActivateType,
                               ActivateParameter_ActivateType_Relu);
+  OPTIONAL_FIELD_DEFAULT_FUNC(channel_shared, bool, false);
 
-  void Clear() { clear_type(); }
+  void Clear() {
+    clear_type();
+    clear_channel_shared();
+  }
 
  private:
   ActivateParameter_ActivateType type_ = ActivateParameter_ActivateType_Relu;
+  bool channel_shared_ = false;
 };
 
 class BatchNormParameter {

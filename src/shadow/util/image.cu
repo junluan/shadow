@@ -330,6 +330,26 @@ void Activate(T *data, int count, int type) {
   CUDA_CHECK(cudaPeekAtLastError());
 }
 
+__global__ void KernelPRelu(float *data, int count, int channels, int dim,
+                            int div_factor, const float *slope_data) {
+  CUDA_KERNEL_LOOP(globalid, count) {
+    int c = (globalid / dim) % channels / div_factor;
+    float value = data[globalid];
+    data[globalid] = value > 0 ? value : value * slope_data[c];
+  }
+}
+
+template <typename T>
+void PRelu(T *data, const VecInt &in_shape, bool channel_shared,
+           const T *slope_data) {
+  int channels = in_shape[1], dim = in_shape[2] * in_shape[3];
+  int count = in_shape[0] * channels * dim;
+  int div_factor = channel_shared ? channels : 1;
+  KernelPRelu<<<GetBlocks(count), NumThreads>>>(data, count, channels, dim,
+                                                div_factor, slope_data);
+  CUDA_CHECK(cudaPeekAtLastError());
+}
+
 // Explicit instantiation
 template void DataTransform(const float *in_data, const VecInt &in_shape,
                             float scale, int num_mean, const float *mean_value,
@@ -358,6 +378,8 @@ template void LRN(const float *in_data, const VecInt &in_shape, int size,
                   float alpha, float beta, float k, float *scale_data,
                   float *out_data);
 template void Activate(float *data, int count, int type);
+template void PRelu(float *data, const VecInt &in_shape, bool channel_shared,
+                    const float *slope_data);
 #endif
 
 }  // namespace Image

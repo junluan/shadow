@@ -47,6 +47,10 @@ void LRN(const T *in_data, const VecInt &in_shape, int size, float alpha,
 template <typename T>
 void Activate(T *data, int count, int type);
 
+template <typename T>
+void PRelu(T *data, const VecInt &in_shape, bool channel_shared,
+           const T *slope_data);
+
 }  // namespace Image
 
 #endif  // SHADOW_UTIL_IMAGE_HPP

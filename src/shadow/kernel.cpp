@@ -38,6 +38,7 @@ EasyCL::Kernel *cl_reorg_kernel_ = nullptr;
 EasyCL::Kernel *cl_lrn_kernel_ = nullptr;
 EasyCL::Kernel *cl_lrnfillscale_kernel_ = nullptr;
 EasyCL::Kernel *cl_activate_kernel_ = nullptr;
+EasyCL::Kernel *cl_prelu_kernel_ = nullptr;
 
 void Setup(int device_id) {
   device_ = EasyCL::CreateForIndexedGPU(device_id);
@@ -84,6 +85,7 @@ void Setup(int device_id) {
   cl_lrn_kernel_ = new EasyCL::Kernel(program_image, "LRN");
   cl_lrnfillscale_kernel_ = new EasyCL::Kernel(program_image, "LRNFillScale");
   cl_activate_kernel_ = new EasyCL::Kernel(program_image, "Activate");
+  cl_prelu_kernel_ = new EasyCL::Kernel(program_image, "PRelu");
 
   clblasSetup();
 }
@@ -116,6 +118,7 @@ void Release() {
   delete cl_lrn_kernel_;
   delete cl_lrnfillscale_kernel_;
   delete cl_activate_kernel_;
+  delete cl_prelu_kernel_;
 
   delete device_;
   delete context_;

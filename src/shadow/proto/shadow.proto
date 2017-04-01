@@ -16,8 +16,10 @@ message ActivateParameter {
     Linear = 0;
     Relu = 1;
     Leaky = 2;
+    PRelu = 3;
   }
   optional ActivateType type = 1 [default = Relu];
+  optional bool channel_shared = 2 [default = false];
 }
 
 message BatchNormParameter {
