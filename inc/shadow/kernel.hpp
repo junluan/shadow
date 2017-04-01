@@ -58,34 +58,7 @@ extern EasyCL::Context *context_;
 extern EasyCL::Queue *queue_;
 extern EasyCL::Event *event_;
 
-extern EasyCL::Kernel *cl_channelmax_kernel_;
-extern EasyCL::Kernel *cl_channelsub_kernel_;
-extern EasyCL::Kernel *cl_channelsum_kernel_;
-extern EasyCL::Kernel *cl_channeldiv_kernel_;
-extern EasyCL::Kernel *cl_set_kernel_;
-extern EasyCL::Kernel *cl_addscalar_kernel_;
-extern EasyCL::Kernel *cl_add_kernel_;
-extern EasyCL::Kernel *cl_sub_kernel_;
-extern EasyCL::Kernel *cl_mul_kernel_;
-extern EasyCL::Kernel *cl_div_kernel_;
-extern EasyCL::Kernel *cl_sqr_kernel_;
-extern EasyCL::Kernel *cl_exp_kernel_;
-extern EasyCL::Kernel *cl_log_kernel_;
-extern EasyCL::Kernel *cl_abs_kernel_;
-extern EasyCL::Kernel *cl_pow_kernel_;
-
-extern EasyCL::Kernel *cl_datatransform_kernel_;
-extern EasyCL::Kernel *cl_im2col_kernel_;
-extern EasyCL::Kernel *cl_pooling_kernel_;
-extern EasyCL::Kernel *cl_concat_kernel_;
-extern EasyCL::Kernel *cl_permute_kernel_;
-extern EasyCL::Kernel *cl_scale_kernel_;
-extern EasyCL::Kernel *cl_bias_kernel_;
-extern EasyCL::Kernel *cl_reorg_kernel_;
-extern EasyCL::Kernel *cl_lrn_kernel_;
-extern EasyCL::Kernel *cl_lrnfillscale_kernel_;
-extern EasyCL::Kernel *cl_activate_kernel_;
-extern EasyCL::Kernel *cl_prelu_kernel_;
+extern EasyCL::KernelSet cl_kernels_;
 #endif
 
 }  // namespace Kernel

@@ -11,34 +11,7 @@ EasyCL::Context *context_ = nullptr;
 EasyCL::Queue *queue_ = nullptr;
 EasyCL::Event *event_ = nullptr;
 
-EasyCL::Kernel *cl_channelmax_kernel_ = nullptr;
-EasyCL::Kernel *cl_channelsub_kernel_ = nullptr;
-EasyCL::Kernel *cl_channelsum_kernel_ = nullptr;
-EasyCL::Kernel *cl_channeldiv_kernel_ = nullptr;
-EasyCL::Kernel *cl_set_kernel_ = nullptr;
-EasyCL::Kernel *cl_addscalar_kernel_ = nullptr;
-EasyCL::Kernel *cl_add_kernel_ = nullptr;
-EasyCL::Kernel *cl_sub_kernel_ = nullptr;
-EasyCL::Kernel *cl_mul_kernel_ = nullptr;
-EasyCL::Kernel *cl_div_kernel_ = nullptr;
-EasyCL::Kernel *cl_sqr_kernel_ = nullptr;
-EasyCL::Kernel *cl_exp_kernel_ = nullptr;
-EasyCL::Kernel *cl_log_kernel_ = nullptr;
-EasyCL::Kernel *cl_abs_kernel_ = nullptr;
-EasyCL::Kernel *cl_pow_kernel_ = nullptr;
-
-EasyCL::Kernel *cl_datatransform_kernel_ = nullptr;
-EasyCL::Kernel *cl_im2col_kernel_ = nullptr;
-EasyCL::Kernel *cl_pooling_kernel_ = nullptr;
-EasyCL::Kernel *cl_concat_kernel_ = nullptr;
-EasyCL::Kernel *cl_permute_kernel_ = nullptr;
-EasyCL::Kernel *cl_scale_kernel_ = nullptr;
-EasyCL::Kernel *cl_bias_kernel_ = nullptr;
-EasyCL::Kernel *cl_reorg_kernel_ = nullptr;
-EasyCL::Kernel *cl_lrn_kernel_ = nullptr;
-EasyCL::Kernel *cl_lrnfillscale_kernel_ = nullptr;
-EasyCL::Kernel *cl_activate_kernel_ = nullptr;
-EasyCL::Kernel *cl_prelu_kernel_ = nullptr;
+EasyCL::KernelSet cl_kernels_ = {};
 
 void Setup(int device_id) {
   device_ = EasyCL::CreateForIndexedGPU(device_id);
@@ -53,73 +26,44 @@ void Setup(int device_id) {
       EasyCL::Program(*context_, Util::read_text_from_file(cl_blas));
   program_blas.Build(*device_, compiler_options);
 
-  cl_channelmax_kernel_ = new EasyCL::Kernel(program_blas, "ChannelMax");
-  cl_channelsub_kernel_ = new EasyCL::Kernel(program_blas, "ChannelSub");
-  cl_channelsum_kernel_ = new EasyCL::Kernel(program_blas, "ChannelSum");
-  cl_channeldiv_kernel_ = new EasyCL::Kernel(program_blas, "ChannelDiv");
-  cl_set_kernel_ = new EasyCL::Kernel(program_blas, "Set");
-  cl_addscalar_kernel_ = new EasyCL::Kernel(program_blas, "AddScalar");
-  cl_add_kernel_ = new EasyCL::Kernel(program_blas, "Add");
-  cl_sub_kernel_ = new EasyCL::Kernel(program_blas, "Sub");
-  cl_mul_kernel_ = new EasyCL::Kernel(program_blas, "Mul");
-  cl_div_kernel_ = new EasyCL::Kernel(program_blas, "Div");
-  cl_sqr_kernel_ = new EasyCL::Kernel(program_blas, "Sqr");
-  cl_exp_kernel_ = new EasyCL::Kernel(program_blas, "Exp");
-  cl_log_kernel_ = new EasyCL::Kernel(program_blas, "Log");
-  cl_abs_kernel_ = new EasyCL::Kernel(program_blas, "Abs");
-  cl_pow_kernel_ = new EasyCL::Kernel(program_blas, "Pow");
+  cl_kernels_.set_kernel(program_blas, "ChannelMax");
+  cl_kernels_.set_kernel(program_blas, "ChannelSub");
+  cl_kernels_.set_kernel(program_blas, "ChannelSum");
+  cl_kernels_.set_kernel(program_blas, "ChannelDiv");
+  cl_kernels_.set_kernel(program_blas, "Set");
+  cl_kernels_.set_kernel(program_blas, "AddScalar");
+  cl_kernels_.set_kernel(program_blas, "Add");
+  cl_kernels_.set_kernel(program_blas, "Sub");
+  cl_kernels_.set_kernel(program_blas, "Mul");
+  cl_kernels_.set_kernel(program_blas, "Div");
+  cl_kernels_.set_kernel(program_blas, "Sqr");
+  cl_kernels_.set_kernel(program_blas, "Exp");
+  cl_kernels_.set_kernel(program_blas, "Log");
+  cl_kernels_.set_kernel(program_blas, "Abs");
+  cl_kernels_.set_kernel(program_blas, "Pow");
 
   const std::string cl_image = "src/shadow/util/image.cl";
   auto program_image =
       EasyCL::Program(*context_, Util::read_text_from_file(cl_image));
   program_image.Build(*device_, compiler_options);
 
-  cl_datatransform_kernel_ = new EasyCL::Kernel(program_image, "DataTransform");
-  cl_im2col_kernel_ = new EasyCL::Kernel(program_image, "Im2Col");
-  cl_pooling_kernel_ = new EasyCL::Kernel(program_image, "Pooling");
-  cl_concat_kernel_ = new EasyCL::Kernel(program_image, "Concat");
-  cl_permute_kernel_ = new EasyCL::Kernel(program_image, "Permute");
-  cl_scale_kernel_ = new EasyCL::Kernel(program_image, "Scale");
-  cl_bias_kernel_ = new EasyCL::Kernel(program_image, "Bias");
-  cl_reorg_kernel_ = new EasyCL::Kernel(program_image, "Reorg");
-  cl_lrn_kernel_ = new EasyCL::Kernel(program_image, "LRN");
-  cl_lrnfillscale_kernel_ = new EasyCL::Kernel(program_image, "LRNFillScale");
-  cl_activate_kernel_ = new EasyCL::Kernel(program_image, "Activate");
-  cl_prelu_kernel_ = new EasyCL::Kernel(program_image, "PRelu");
+  cl_kernels_.set_kernel(program_image, "DataTransform");
+  cl_kernels_.set_kernel(program_image, "Im2Col");
+  cl_kernels_.set_kernel(program_image, "Pooling");
+  cl_kernels_.set_kernel(program_image, "Concat");
+  cl_kernels_.set_kernel(program_image, "Permute");
+  cl_kernels_.set_kernel(program_image, "Scale");
+  cl_kernels_.set_kernel(program_image, "Bias");
+  cl_kernels_.set_kernel(program_image, "Reorg");
+  cl_kernels_.set_kernel(program_image, "LRN");
+  cl_kernels_.set_kernel(program_image, "LRNFillScale");
+  cl_kernels_.set_kernel(program_image, "Activate");
+  cl_kernels_.set_kernel(program_image, "PRelu");
 
   clblasSetup();
 }
 
 void Release() {
-  delete cl_channelmax_kernel_;
-  delete cl_channelsub_kernel_;
-  delete cl_channelsum_kernel_;
-  delete cl_channeldiv_kernel_;
-  delete cl_set_kernel_;
-  delete cl_addscalar_kernel_;
-  delete cl_add_kernel_;
-  delete cl_sub_kernel_;
-  delete cl_mul_kernel_;
-  delete cl_div_kernel_;
-  delete cl_sqr_kernel_;
-  delete cl_exp_kernel_;
-  delete cl_log_kernel_;
-  delete cl_abs_kernel_;
-  delete cl_pow_kernel_;
-
-  delete cl_datatransform_kernel_;
-  delete cl_im2col_kernel_;
-  delete cl_pooling_kernel_;
-  delete cl_concat_kernel_;
-  delete cl_permute_kernel_;
-  delete cl_scale_kernel_;
-  delete cl_bias_kernel_;
-  delete cl_reorg_kernel_;
-  delete cl_lrn_kernel_;
-  delete cl_lrnfillscale_kernel_;
-  delete cl_activate_kernel_;
-  delete cl_prelu_kernel_;
-
   delete device_;
   delete context_;
   delete queue_;

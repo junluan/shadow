@@ -328,7 +328,7 @@ template <typename T>
 void ChannelMax(int num, int channels, int spatial_dim, const T *data,
                 T *val_max) {
   size_t global = num * spatial_dim;
-  EasyCL::Kernel *kernel = Kernel::cl_channelmax_kernel_;
+  EasyCL::Kernel *kernel = Kernel::cl_kernels_["ChannelMax"];
   kernel->SetArguments(num, channels, spatial_dim, *data, *val_max);
   kernel->Launch(*Kernel::queue_, {global}, Kernel::event_);
   Kernel::queue_->Finish();
@@ -337,7 +337,7 @@ template <typename T>
 void ChannelSub(int count, int num, int channels, int spatial_dim,
                 const T *val_sub, T *data) {
   size_t global = count;
-  EasyCL::Kernel *kernel = Kernel::cl_channelsub_kernel_;
+  EasyCL::Kernel *kernel = Kernel::cl_kernels_["ChannelSub"];
   kernel->SetArguments(count, num, channels, spatial_dim, *val_sub, *data);
   kernel->Launch(*Kernel::queue_, {global}, Kernel::event_);
   Kernel::queue_->Finish();
@@ -346,7 +346,7 @@ template <typename T>
 void ChannelSum(int num, int channels, int spatial_dim, const T *data,
                 T *val_sum) {
   size_t global = num * spatial_dim;
-  EasyCL::Kernel *kernel = Kernel::cl_channelsum_kernel_;
+  EasyCL::Kernel *kernel = Kernel::cl_kernels_["ChannelSum"];
   kernel->SetArguments(num, channels, spatial_dim, *data, *val_sum);
   kernel->Launch(*Kernel::queue_, {global}, Kernel::event_);
   Kernel::queue_->Finish();
@@ -355,7 +355,7 @@ template <typename T>
 void ChannelDiv(int count, int num, int channels, int spatial_dim,
                 const T *val_div, T *data) {
   size_t global = count;
-  EasyCL::Kernel *kernel = Kernel::cl_channeldiv_kernel_;
+  EasyCL::Kernel *kernel = Kernel::cl_kernels_["ChannelDiv"];
   kernel->SetArguments(count, num, channels, spatial_dim, *val_div, *data);
   kernel->Launch(*Kernel::queue_, {global}, Kernel::event_);
   Kernel::queue_->Finish();
@@ -364,7 +364,7 @@ void ChannelDiv(int count, int num, int channels, int spatial_dim,
 template <typename T>
 void Set(int n, float val, T *y, int offy) {
   size_t global = n;
-  EasyCL::Kernel *kernel = Kernel::cl_set_kernel_;
+  EasyCL::Kernel *kernel = Kernel::cl_kernels_["Set"];
   kernel->SetArguments(n, val, *y, offy);
   kernel->Launch(*Kernel::queue_, {global}, Kernel::event_);
   Kernel::queue_->Finish();
@@ -373,7 +373,7 @@ void Set(int n, float val, T *y, int offy) {
 template <typename T>
 void Add(int n, float val, T *y, int offy) {
   size_t global = n;
-  EasyCL::Kernel *kernel = Kernel::cl_addscalar_kernel_;
+  EasyCL::Kernel *kernel = Kernel::cl_kernels_["AddScalar"];
   kernel->SetArguments(n, val, *y, offy);
   kernel->Launch(*Kernel::queue_, {global}, Kernel::event_);
   Kernel::queue_->Finish();
@@ -384,7 +384,7 @@ void Add(int n, float val, T *y, int offy) {
   inline void name(int n, const T *a, int offa, const T *b, int offb, T *y, \
                    int offy) {                                              \
     size_t global = n;                                                      \
-    EasyCL::Kernel *kernel = Kernel::cl_##kname;                            \
+    EasyCL::Kernel *kernel = Kernel::cl_kernels_[kname];                    \
     kernel->SetArguments(n, *a, offa, *b, offb, *y, offy);                  \
     kernel->Launch(*Kernel::queue_, {global}, Kernel::event_);              \
     Kernel::queue_->Finish();                                               \
@@ -392,31 +392,31 @@ void Add(int n, float val, T *y, int offy) {
   template void name(int n, const BufferF *a, int offa, const BufferF *b,   \
                      int offb, BufferF *y, int offy);
 
-BLAS_BINARY_FUNC(Add, add_kernel_);
-BLAS_BINARY_FUNC(Sub, sub_kernel_);
-BLAS_BINARY_FUNC(Mul, mul_kernel_);
-BLAS_BINARY_FUNC(Div, div_kernel_);
+BLAS_BINARY_FUNC(Add, "Add");
+BLAS_BINARY_FUNC(Sub, "Sub");
+BLAS_BINARY_FUNC(Mul, "Mul");
+BLAS_BINARY_FUNC(Div, "Div");
 
 #define BLAS_UNARY_FUNC(name, kname)                              \
   template <typename T>                                           \
   inline void name(int n, const T *a, int offa, T *y, int offy) { \
     size_t global = n;                                            \
-    EasyCL::Kernel *kernel = Kernel::cl_##kname;                  \
+    EasyCL::Kernel *kernel = Kernel::cl_kernels_[kname];          \
     kernel->SetArguments(n, *a, offa, *y, offy);                  \
     kernel->Launch(*Kernel::queue_, {global}, Kernel::event_);    \
     Kernel::queue_->Finish();                                     \
   }                                                               \
   template void name(int n, const BufferF *a, int offa, BufferF *y, int offy);
 
-BLAS_UNARY_FUNC(Sqr, sqr_kernel_);
-BLAS_UNARY_FUNC(Exp, exp_kernel_);
-BLAS_UNARY_FUNC(Log, log_kernel_);
-BLAS_UNARY_FUNC(Abs, abs_kernel_);
+BLAS_UNARY_FUNC(Sqr, "Sqr");
+BLAS_UNARY_FUNC(Exp, "Exp");
+BLAS_UNARY_FUNC(Log, "Log");
+BLAS_UNARY_FUNC(Abs, "Abs");
 
 template <typename T>
 void Pow(int n, const T *a, int offa, float alpha, T *y, int offy) {
   size_t global = n;
-  EasyCL::Kernel *kernel = Kernel::cl_pow_kernel_;
+  EasyCL::Kernel *kernel = Kernel::cl_kernels_["Pow"];
   kernel->SetArguments(n, *a, offa, alpha, *y, offy);
   kernel->Launch(*Kernel::queue_, {global}, Kernel::event_);
   Kernel::queue_->Finish();
