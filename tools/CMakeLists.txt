@@ -1,4 +1,5 @@
-add_executable(caffe2shadow "caffe2shadow.cpp")
+add_executable(caffe2shadow "caffe2shadow.cpp" "../src/shadow/util/io.cpp")
+target_compile_definitions(caffe2shadow PRIVATE -DUSE_Protobuf)
 target_link_libraries(caffe2shadow proto)
 if (${USE_GLog} STREQUAL "ON")
   target_link_libraries(caffe2shadow glog)

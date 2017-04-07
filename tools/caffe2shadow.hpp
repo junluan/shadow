@@ -4,8 +4,7 @@
 #include "caffe.pb.h"
 #include "shadow.pb.h"
 
-#include "io.hpp"
-
+#include "shadow/util/io.hpp"
 #include "shadow/util/log.hpp"
 #include "shadow/util/util.hpp"
 
@@ -487,9 +486,9 @@ void WriteDefines(const shadow::NetParameter& shadow_net,
   std::ofstream cpp_file(root + "/" + model_name + ".cpp");
 
   std::string proto_str, json_str;
-  WriteProtoToText(net, &proto_str);
+  IO::WriteProtoToText(net, &proto_str);
 #if defined(SUPPORT_JSON)
-  WriteProtoToJsonText(net, &json_str);
+  IO::WriteProtoToJsonText(net, &json_str);
 #endif
 
   size_t split_count = 10000;
@@ -663,10 +662,10 @@ void WriteProtoToFiles(const shadow::NetParameter& shadow_net,
   WriteWeights(shadow_net, root, model_name);
 }
 
-void WriteProtoToBinary(const Message& proto, const std::string& root,
+void WriteProtoToBinary(const IO::Message& proto, const std::string& root,
                         const std::string& model_name) {
   std::string filename = root + "/" + model_name + ".shadowmodel";
-  WriteProtoToBinaryFile(proto, filename);
+  IO::WriteProtoToBinaryFile(proto, filename);
 }
 
 }  // namespace Caffe2Shadow
