@@ -518,6 +518,7 @@ class Process {
     slice_ = slice;
     total_ = total;
     prefix_ = prefix;
+    time_start_ = 0;
   }
 
   void update(int current, std::ostream *os, int mode = 0) {
@@ -534,19 +535,37 @@ class Process {
     }
     *os << "] ";
     if (mode == 0) {
-      *os << "(" << static_cast<int>(100.f * (current + 1) / total_) << "%)\r";
+      *os << "(" << static_cast<int>(100.f * (current + 1) / total_) << "%)";
     } else if (mode == 1) {
-      *os << "(" << current + 1 << "/" << total_ << ")\r";
+      *os << "(" << current + 1 << "/" << total_ << ")";
     }
-    if (pos == slice_) {
+    if (time_start_) {
+      int left = timer_.get_millisecond() * (total_ - current) / current;
+      int left_sec = left / 1000;
+      int sec = left_sec % 60;
+      int left_min = left_sec / 60;
+      int min = left_min % 60;
+      int hour = left_min / 60;
+      *os << " eta: " << Util::format_int(hour, 2, '0') << ":"
+          << Util::format_int(min, 2, '0') << ":"
+          << Util::format_int(sec, 2, '0');
+    } else {
+      timer_.start();
+      time_start_ = 1;
+    }
+
+    if (pos < slice_) {
+      *os << "\r";
+    } else {
       *os << "\n";
     }
     *os << std::flush;
   }
 
  private:
-  int slice_, total_;
+  int slice_, total_, time_start_;
   std::string prefix_;
+  Timer timer_;
 };
 
 #endif  // SHADOW_UTIL_UTIL_HPP
