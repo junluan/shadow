@@ -9,14 +9,17 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\tools\caffe2shadow.hpp">
+    <ClInclude Include="..\..\inc\shadow\util\io.hpp">
       <Filter>inc</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\tools\io.hpp">
+    <ClInclude Include="..\..\tools\caffe2shadow.hpp">
       <Filter>inc</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\src\shadow\util\io.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\tools\caffe2shadow.cpp">
       <Filter>src</Filter>
     </ClCompile>
