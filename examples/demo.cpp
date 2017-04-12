@@ -68,13 +68,13 @@ void Demo::VideoTest(const std::string &video_file, bool video_show,
   cv::VideoCapture capture;
   CHECK(capture.open(video_file)) << "Error when opening video file "
                                   << video_file;
-  float rate = static_cast<float>(capture.get(cv::CAP_PROP_FPS));
-  int width = static_cast<int>(capture.get(cv::CAP_PROP_FRAME_WIDTH));
-  int height = static_cast<int>(capture.get(cv::CAP_PROP_FRAME_HEIGHT));
+  float rate = static_cast<float>(capture.get(CV_CAP_PROP_FPS));
+  int width = static_cast<int>(capture.get(CV_CAP_PROP_FRAME_WIDTH));
+  int height = static_cast<int>(capture.get(CV_CAP_PROP_FRAME_HEIGHT));
   cv::VideoWriter writer;
   if (video_write) {
     const auto &out_file = Util::change_extension(video_file, "-result.avi");
-    int format = writer.fourcc('H', '2', '6', '4');
+    int format = CV_FOURCC('H', '2', '6', '4');
     writer.open(out_file, format, rate, cv::Size(width, height));
   }
   CaptureTest(&capture, "video test!-:)", video_show, &writer);
@@ -85,13 +85,13 @@ void Demo::VideoTest(const std::string &video_file, bool video_show,
 void Demo::CameraTest(int camera, bool video_write) {
   cv::VideoCapture capture;
   CHECK(capture.open(camera)) << "Error when opening camera!";
-  float rate = static_cast<float>(capture.get(cv::CAP_PROP_FPS));
-  int width = static_cast<int>(capture.get(cv::CAP_PROP_FRAME_WIDTH));
-  int height = static_cast<int>(capture.get(cv::CAP_PROP_FRAME_HEIGHT));
+  float rate = static_cast<float>(capture.get(CV_CAP_PROP_FPS));
+  int width = static_cast<int>(capture.get(CV_CAP_PROP_FRAME_WIDTH));
+  int height = static_cast<int>(capture.get(CV_CAP_PROP_FRAME_HEIGHT));
   cv::VideoWriter writer;
   if (video_write) {
     const auto &out_file = "data/demo-result.avi";
-    int format = writer.fourcc('H', '2', '6', '4');
+    int format = CV_FOURCC('H', '2', '6', '4');
     writer.open(out_file, format, rate, cv::Size(width, height));
   }
   CaptureTest(&capture, "camera test!-:)", true, &writer);
@@ -102,7 +102,7 @@ void Demo::CameraTest(int camera, bool video_write) {
 void Demo::CaptureTest(cv::VideoCapture *capture,
                        const std::string &window_name, bool video_show,
                        cv::VideoWriter *writer) {
-  float rate = static_cast<float>(capture->get(cv::CAP_PROP_FPS));
+  float rate = static_cast<float>(capture->get(CV_CAP_PROP_FPS));
   if (video_show) {
     cv::namedWindow(window_name, cv::WINDOW_NORMAL);
   }
