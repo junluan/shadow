@@ -1,3 +1,4 @@
+from __future__ import division
 from __future__ import print_function
 
 import errno
@@ -5,6 +6,7 @@ import hashlib
 import os
 import platform
 import shutil
+import sys
 import zipfile
 
 
@@ -62,3 +64,16 @@ def get_file_md5(file_path):
                 break
             m.update(data)
         return m.hexdigest()
+
+
+def progress(percentage, prefix=''):
+    max_columns = 20
+    full = int(max_columns * percentage / 100)
+    left_columns = max_columns - full - 1
+    if full < max_columns:
+        bar = full * '=' + '>' + left_columns * ' '
+    else:
+        bar = full * '=' + left_columns * ' '
+    sys.stdout.write(u'\u001b[1000D' + prefix +
+                     '[' + bar + '] ' + str(percentage) + '%')
+    sys.stdout.flush()

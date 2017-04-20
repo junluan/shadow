@@ -1,3 +1,4 @@
+from __future__ import division
 from __future__ import print_function
 
 import argparse
@@ -5,8 +6,17 @@ import json
 import os
 import shutil
 import sys
-import urllib
 import zipfile
+
+try:
+    import urllib.error as urlliberror
+    import urllib.request as urllib
+    HTTPError = urlliberror.HTTPError
+    URLError = urlliberror.URLError
+except ImportError:
+    import urllib2 as urllib
+    HTTPError = urllib.HTTPError
+    URLError = urllib.URLError
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/shadow')
 import util as util
@@ -51,9 +61,30 @@ def download_file(file_obj, ftp_root, disk_work_root):
     file_download_path = download_dir + '/' + file_folder + '/' + file_name
     util.mkdir_p(os.path.dirname(file_download_path))
 
-    print('Downloading ' + file_name + ' ... ', end='')
-    urllib.urlretrieve(file_ftp_path, file_download_path)
-    urllib.urlcleanup()
+    try:
+        response = urllib.urlopen(file_ftp_path)
+        size = int(response.info().getheader('Content-Length').strip())
+        downloaded_size = 0
+        chunk = min(size, 8192)
+        util.progress(0, 'Downloading ' + file_name + ' ')
+        with open(file_download_path, "wb") as local_file:
+            while True:
+                data_chunk = response.read(chunk)
+                if not data_chunk:
+                    break
+                local_file.write(data_chunk)
+                downloaded_size += len(data_chunk)
+                util.progress(int(100 * downloaded_size / size),
+                              'Downloading ' + file_name + ' ')
+        print(' Done!')
+    except HTTPError as e:
+        raise Exception("Could not download file. [HTTP Error] {code}: {reason}."
+                        .format(code=e.code, reason=e.reason))
+    except URLError as e:
+        raise Exception("Could not download file. [URL Error] {reason}."
+                        .format(reason=e.reason))
+    except Exception as e:
+        raise e
 
     if file_ext == '.zip':
         update_zipfile(file_disk_dir, file_download_path)
@@ -61,7 +92,6 @@ def download_file(file_obj, ftp_root, disk_work_root):
         update_file(file_disk_path, file_download_path)
 
     util.rmdir_p(download_dir)
-    print('Done!')
 
 
 def download(ftp_ip, project_name, files_name):
