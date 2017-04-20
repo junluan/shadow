@@ -46,7 +46,7 @@ def update_zipfile(file_disk_dir, file_download_path):
                 update_file(file_disk_path, file_extract_path)
 
 
-def download_file(file_obj, ftp_root, disk_work_root):
+def download_file(file_obj, ftp_root, disk_work_root, show_progress):
     download_dir = disk_work_root + '/.download'
 
     file_name = file_obj['Name']
@@ -66,7 +66,10 @@ def download_file(file_obj, ftp_root, disk_work_root):
         size = int(response.info().getheader('Content-Length').strip())
         downloaded_size = 0
         chunk = min(size, 8192)
-        util.progress(0, 'Downloading ' + file_name + ' ')
+        if show_progress:
+            util.progress(0, 'Downloading ' + file_name + ' ')
+        else:
+            print('Downloading ' + file_name + ' ...', end='')
         with open(file_download_path, "wb") as local_file:
             while True:
                 data_chunk = response.read(chunk)
@@ -74,8 +77,9 @@ def download_file(file_obj, ftp_root, disk_work_root):
                     break
                 local_file.write(data_chunk)
                 downloaded_size += len(data_chunk)
-                util.progress(int(100 * downloaded_size / size),
-                              'Downloading ' + file_name + ' ')
+                if show_progress:
+                    util.progress(int(100 * downloaded_size / size),
+                                  'Downloading ' + file_name + ' ')
         print(' Done!')
     except HTTPError as e:
         raise Exception("Could not download file. [HTTP Error] {code}: {reason}."
@@ -94,33 +98,34 @@ def download_file(file_obj, ftp_root, disk_work_root):
     util.rmdir_p(download_dir)
 
 
-def download(ftp_ip, project_name, files_name):
+def download(args):
     os_type = util.check_os()
     disk_work_root = os.path.dirname(os.path.abspath(__file__)) + '/..'
 
-    ftp_url = 'ftp://' + ftp_ip
-    ftp_root = ftp_url + '/' + project_name + '/' + os_type
+    ftp_url = 'ftp://' + args.ftp
+    ftp_root = ftp_url + '/' + args.project + '/' + os_type
 
-    json_file_path = ftp_url + '/' + project_name + '/download_' + os_type + '.json'
+    json_file_path = ftp_url + '/' + args.project + '/download_' + os_type + '.json'
     json_file = urllib.urlopen(json_file_path)
     json_obj = json.load(json_file)
     json_file.close()
 
-    if project_name != json_obj['Project']:
+    if args.project != json_obj['Project']:
         raise ValueError('Project mismatch!',
-                         project_name, json_obj['Project'])
+                         args.project, json_obj['Project'])
 
-    if len(files_name) == 0:
+    if len(args.files) == 0:
         for file_obj in json_obj['Files']:
             if file_obj['Type'] != 'required':
                 continue
-            download_file(file_obj, ftp_root, disk_work_root)
+            download_file(file_obj, ftp_root, disk_work_root, args.progress)
     else:
-        for name in files_name:
+        for name in args.files:
             is_download = False
             for file_obj in json_obj['Files']:
                 if name == file_obj['Name']:
-                    download_file(file_obj, ftp_root, disk_work_root)
+                    download_file(file_obj, ftp_root,
+                                  disk_work_root, args.progress)
                     is_download = True
                     break
             if not is_download:
@@ -135,10 +140,8 @@ if __name__ == '__main__':
                         help='The project\'s name, default is shadow.')
     parser.add_argument('--files', '-f', nargs='*', default=[],
                         help='The files to be downloaded manually.')
+    parser.add_argument('--progress', '-p', nargs='?', const=True, default=False,
+                        help='Show progress bar when downloading files.')
     args = parser.parse_args()
 
-    ftp_ip = args.ftp
-    project_name = args.project
-    files_name = args.files
-
-    download(ftp_ip, project_name, files_name)
+    download(args)
