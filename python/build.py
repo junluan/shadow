@@ -9,16 +9,16 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/shadow')
 import util as util
 
 
-def build(subdir, features, generator, debug):
-    use_cuda = 'cuda' in features
-    use_cl = 'cl' in features
-    use_cudnn = 'cudnn' in features
-    use_blas = 'openblas' in features
-    use_nnpack = 'nnpack' in features
-    use_protobuf = 'protobuf' in features
-    use_glog = 'glog' in features
-    use_opencv = 'opencv' in features
-    build_test = 'test' in features
+def build(args):
+    use_cuda = 'cuda' in args.features
+    use_cl = 'cl' in args.features
+    use_cudnn = 'cudnn' in args.features
+    use_blas = 'openblas' in args.features
+    use_nnpack = 'nnpack' in args.features
+    use_protobuf = 'protobuf' in args.features
+    use_glog = 'glog' in args.features
+    use_opencv = 'opencv' in args.features
+    build_test = 'test' in args.features
 
     cmake_options = []
     if use_cuda:
@@ -60,21 +60,21 @@ def build(subdir, features, generator, debug):
         cmake_options.append('-DBUILD_TEST=OFF')
 
     shadow_root = os.path.dirname(os.path.abspath(__file__)) + '/..'
-    build_root = shadow_root + '/build/' + subdir
+    build_root = shadow_root + '/build/' + args.subdir
 
     if not os.path.isdir(build_root):
         util.mkdir_p(build_root)
 
-    shell_cmd = 'cd ' + build_root + '\n'
+    shell_cmd = 'cd ' + build_root + ' && '
     shell_cmd += 'cmake ../.. -DCMAKE_BUILD_TYPE=Release '
     for op in cmake_options:
         shell_cmd += op + ' '
-    if generator == 'make':
+    if args.generator == 'make':
         shell_cmd += '&& make -j2'
-    elif generator == 'ninja':
+    elif args.generator == 'ninja':
         shell_cmd += '-GNinja && ninja -j2'
 
-    if debug != 'nodebug':
+    if args.debug != 'nodebug':
         print(shell_cmd)
 
     subprocess.check_call(shell_cmd, shell=True)
@@ -92,9 +92,4 @@ if __name__ == '__main__':
                         help='Open debug mode.')
     args = parser.parse_args()
 
-    subdir = args.subdir
-    features = args.features
-    generator = args.generator
-    debug = args.debug
-
-    build(subdir, features, generator, debug)
+    build(args)
