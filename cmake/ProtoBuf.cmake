@@ -33,3 +33,4 @@ endforeach ()
 
 add_library(proto STATIC ${proto_srcs} ${proto_hdrs})
 target_link_libraries(proto ${Protobuf_LIBRARIES})
+install(FILES ${proto_hdrs} DESTINATION include)
