@@ -26,11 +26,9 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -std=c++11")
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake/modules)
 include(cmake/Dependencies.cmake)
 
-include_directories("inc" "src/shadow/proto" "external" "external/arcsoft/include")
+include_directories("third_party" "third_party/arcsoft/include")
 
-add_subdirectory(src)
-add_subdirectory(examples)
-add_subdirectory(tools)
+add_subdirectory(shadow)
 
 set(CPACK_GENERATOR "ZIP")
 set(CPACK_PACKAGE_DIRECTORY ${CMAKE_INSTALL_PREFIX})

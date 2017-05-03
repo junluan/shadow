@@ -1,13 +1,13 @@
 ### Example user template
 build
 data
-external
 models
-python/shadow/*_pb2.py
-src/shadow/proto/caffe.proto
-src/shadow/proto/*.pb.*
-inc/test
-src/test
+third_party
+*_pb2.py
+*.pb.cc
+*.pb.h
+caffe.proto
+shadow/test
 
 # IntelliJ project files
 .idea

@@ -1,5 +1,5 @@
 set(Protobuf_PATHS
-    ./external/protobuf
+    ./third_party/protobuf
     /usr
     /usr/local)
 
