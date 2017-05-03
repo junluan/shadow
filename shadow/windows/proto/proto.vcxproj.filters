@@ -1,27 +1,24 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="inc">
+    <Filter Include="proto">
       <UniqueIdentifier>{8d4208ac-4525-4ee7-88d3-001810132c3d}</UniqueIdentifier>
     </Filter>
-    <Filter Include="src">
-      <UniqueIdentifier>{9a59864f-ebb7-4701-a033-7a482ae15555}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\src\shadow\proto\caffe.pb.h">
-      <Filter>inc</Filter>
+    <ClInclude Include="..\..\proto\caffe.pb.h">
+      <Filter>proto</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\shadow\proto\shadow.pb.h">
-      <Filter>inc</Filter>
+    <ClInclude Include="..\..\proto\shadow.pb.h">
+      <Filter>proto</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\src\shadow\proto\caffe.pb.cc">
-      <Filter>src</Filter>
+    <ClCompile Include="..\..\proto\caffe.pb.cc">
+      <Filter>proto</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\shadow\proto\shadow.pb.cc">
-      <Filter>src</Filter>
+    <ClCompile Include="..\..\proto\shadow.pb.cc">
+      <Filter>proto</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

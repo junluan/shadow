@@ -49,7 +49,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
-      <AdditionalIncludeDirectories>$(SolutionDir)\..\inc;$(SolutionDir)\..\src\shadow\proto;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)\..;$(SolutionDir)\..\proto;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -59,55 +59,55 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>$(SolutionDir)\..\inc;$(SolutionDir)\..\src\shadow\proto;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)\..;$(SolutionDir)\..\proto;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup Condition="'$(BUILD_TEST)'=='true'">
-    <ClInclude Include="..\..\external\gtest\gtest.h" />
-    <ClInclude Include="..\..\inc\test\layers\test_activate_layer.hpp" />
-    <ClInclude Include="..\..\inc\test\layers\test_batch_norm_layer.hpp" />
-    <ClInclude Include="..\..\inc\test\layers\test_bias_layer.hpp" />
-    <ClInclude Include="..\..\inc\test\layers\test_concat_layer.hpp" />
-    <ClInclude Include="..\..\inc\test\layers\test_connected_layer.hpp" />
-    <ClInclude Include="..\..\inc\test\layers\test_convolution_layer.hpp" />
-    <ClInclude Include="..\..\inc\test\layers\test_data_layer.hpp" />
-    <ClInclude Include="..\..\inc\test\layers\test_flatten_layer.hpp" />
-    <ClInclude Include="..\..\inc\test\layers\test_lrn_layer.hpp" />
-    <ClInclude Include="..\..\inc\test\layers\test_normalize_layer.hpp" />
-    <ClInclude Include="..\..\inc\test\layers\test_permute_layer.hpp" />
-    <ClInclude Include="..\..\inc\test\layers\test_pooling_layer.hpp" />
-    <ClInclude Include="..\..\inc\test\layers\test_prior_box_layer.hpp" />
-    <ClInclude Include="..\..\inc\test\layers\test_reorg_layer.hpp" />
-    <ClInclude Include="..\..\inc\test\layers\test_reshape_layer.hpp" />
-    <ClInclude Include="..\..\inc\test\layers\test_scale_layer.hpp" />
-    <ClInclude Include="..\..\inc\test\layers\test_softmax_layer.hpp" />
-    <ClInclude Include="..\..\inc\test\test_shadow.hpp" />
-    <ClInclude Include="..\..\inc\test\util\test_blas.hpp" />
+    <ClInclude Include="..\..\test\layers\test_activate_layer.hpp" />
+    <ClInclude Include="..\..\test\layers\test_batch_norm_layer.hpp" />
+    <ClInclude Include="..\..\test\layers\test_bias_layer.hpp" />
+    <ClInclude Include="..\..\test\layers\test_concat_layer.hpp" />
+    <ClInclude Include="..\..\test\layers\test_connected_layer.hpp" />
+    <ClInclude Include="..\..\test\layers\test_convolution_layer.hpp" />
+    <ClInclude Include="..\..\test\layers\test_data_layer.hpp" />
+    <ClInclude Include="..\..\test\layers\test_flatten_layer.hpp" />
+    <ClInclude Include="..\..\test\layers\test_lrn_layer.hpp" />
+    <ClInclude Include="..\..\test\layers\test_normalize_layer.hpp" />
+    <ClInclude Include="..\..\test\layers\test_permute_layer.hpp" />
+    <ClInclude Include="..\..\test\layers\test_pooling_layer.hpp" />
+    <ClInclude Include="..\..\test\layers\test_prior_box_layer.hpp" />
+    <ClInclude Include="..\..\test\layers\test_reorg_layer.hpp" />
+    <ClInclude Include="..\..\test\layers\test_reshape_layer.hpp" />
+    <ClInclude Include="..\..\test\layers\test_scale_layer.hpp" />
+    <ClInclude Include="..\..\test\layers\test_softmax_layer.hpp" />
+    <ClInclude Include="..\..\test\util\test_blas.hpp" />
+    <ClInclude Include="..\..\test\test_shadow.hpp" />
+    <ClInclude Include="..\..\..\third_party\gtest\gtest.h" />
   </ItemGroup>
   <ItemGroup Condition="'$(BUILD_TEST)'=='true'">
-    <ClCompile Include="..\..\external\gtest\gtest-all.cc" />
-    <ClCompile Include="..\..\src\test\layers\test_activate_layer.cpp" />
-    <ClCompile Include="..\..\src\test\layers\test_batch_norm_layer.cpp" />
-    <ClCompile Include="..\..\src\test\layers\test_bias_layer.cpp" />
-    <ClCompile Include="..\..\src\test\layers\test_concat_layer.cpp" />
-    <ClCompile Include="..\..\src\test\layers\test_connected_layer.cpp" />
-    <ClCompile Include="..\..\src\test\layers\test_convolution_layer.cpp" />
-    <ClCompile Include="..\..\src\test\layers\test_data_layer.cpp" />
-    <ClCompile Include="..\..\src\test\layers\test_flatten_layer.cpp" />
-    <ClCompile Include="..\..\src\test\layers\test_lrn_layer.cpp" />
-    <ClCompile Include="..\..\src\test\layers\test_normalize_layer.cpp" />
-    <ClCompile Include="..\..\src\test\layers\test_permute_layer.cpp" />
-    <ClCompile Include="..\..\src\test\layers\test_pooling_layer.cpp" />
-    <ClCompile Include="..\..\src\test\layers\test_prior_box_layer.cpp" />
-    <ClCompile Include="..\..\src\test\layers\test_reorg_layer.cpp" />
-    <ClCompile Include="..\..\src\test\layers\test_reshape_layer.cpp" />
-    <ClCompile Include="..\..\src\test\layers\test_scale_layer.cpp" />
-    <ClCompile Include="..\..\src\test\layers\test_softmax_layer.cpp" />
-    <ClCompile Include="..\..\src\test\test_shadow.cpp" />
-    <ClCompile Include="..\..\src\test\util\test_blas.cpp" />
+    <ClCompile Include="..\..\test\layers\test_activate_layer.cpp" />
+    <ClCompile Include="..\..\test\layers\test_batch_norm_layer.cpp" />
+    <ClCompile Include="..\..\test\layers\test_bias_layer.cpp" />
+    <ClCompile Include="..\..\test\layers\test_concat_layer.cpp" />
+    <ClCompile Include="..\..\test\layers\test_connected_layer.cpp" />
+    <ClCompile Include="..\..\test\layers\test_convolution_layer.cpp" />
+    <ClCompile Include="..\..\test\layers\test_data_layer.cpp" />
+    <ClCompile Include="..\..\test\layers\test_flatten_layer.cpp" />
+    <ClCompile Include="..\..\test\layers\test_lrn_layer.cpp" />
+    <ClCompile Include="..\..\test\layers\test_normalize_layer.cpp" />
+    <ClCompile Include="..\..\test\layers\test_permute_layer.cpp" />
+    <ClCompile Include="..\..\test\layers\test_pooling_layer.cpp" />
+    <ClCompile Include="..\..\test\layers\test_prior_box_layer.cpp" />
+    <ClCompile Include="..\..\test\layers\test_reorg_layer.cpp" />
+    <ClCompile Include="..\..\test\layers\test_reshape_layer.cpp" />
+    <ClCompile Include="..\..\test\layers\test_scale_layer.cpp" />
+    <ClCompile Include="..\..\test\layers\test_softmax_layer.cpp" />
+    <ClCompile Include="..\..\test\util\test_blas.cpp" />
+    <ClCompile Include="..\..\test\test_shadow.cpp" />
+    <ClCompile Include="..\..\..\third_party\gtest\gtest-all.cc" />
   </ItemGroup>
   <ItemGroup Condition="'$(BUILD_TEST)'=='true'">
     <ProjectReference Include="..\shadow\shadow.vcxproj">

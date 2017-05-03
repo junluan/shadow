@@ -72,12 +72,12 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\src\shadow\proto\caffe.pb.h" />
-    <ClInclude Include="..\..\src\shadow\proto\shadow.pb.h" />
+    <ClInclude Include="..\..\proto\caffe.pb.h" />
+    <ClInclude Include="..\..\proto\shadow.pb.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\src\shadow\proto\caffe.pb.cc" />
-    <ClCompile Include="..\..\src\shadow\proto\shadow.pb.cc" />
+    <ClCompile Include="..\..\proto\caffe.pb.cc" />
+    <ClCompile Include="..\..\proto\shadow.pb.cc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

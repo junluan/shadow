@@ -50,7 +50,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>USE_Protobuf;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(SolutionDir)\..\inc;$(SolutionDir)\..\src\shadow\proto;$(SolutionDir)\..\tools;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)\..;$(SolutionDir)\..\proto;$(SolutionDir)\..\tools;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -61,19 +61,19 @@
       <WarningLevel>Level3</WarningLevel>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>USE_Protobuf;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(SolutionDir)\..\inc;$(SolutionDir)\..\src\shadow\proto;$(SolutionDir)\..\tools;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)\..;$(SolutionDir)\..\proto;$(SolutionDir)\..\tools;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\inc\shadow\util\io.hpp" />
     <ClInclude Include="..\..\tools\caffe2shadow.hpp" />
+    <ClInclude Include="..\..\util\io.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\src\shadow\util\io.cpp" />
     <ClCompile Include="..\..\tools\caffe2shadow.cpp" />
+    <ClCompile Include="..\..\util\io.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\proto\proto.vcxproj">

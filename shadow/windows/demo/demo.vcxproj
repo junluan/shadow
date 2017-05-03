@@ -49,7 +49,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
-      <AdditionalIncludeDirectories>$(SolutionDir)\..\inc;$(SolutionDir)\..\examples;$(SolutionDir)\..\src\shadow\proto;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)\..;$(SolutionDir)\..\proto;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -59,7 +59,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>$(SolutionDir)\..\inc;$(SolutionDir)\..\examples;$(SolutionDir)\..\src\shadow\proto;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)\..;$(SolutionDir)\..\proto;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -68,14 +68,14 @@
   <ItemGroup>
     <ClInclude Include="..\..\examples\demo.hpp" />
     <ClInclude Include="..\..\examples\method.hpp" />
-    <ClInclude Include="..\..\examples\ssd\ssd.hpp" />
-    <ClInclude Include="..\..\examples\yolo\yolo.hpp" />
+    <ClInclude Include="..\..\examples\ssd.hpp" />
+    <ClInclude Include="..\..\examples\yolo.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\examples\demo.cpp" />
     <ClCompile Include="..\..\examples\main.cpp" />
-    <ClCompile Include="..\..\examples\ssd\ssd.cpp" />
-    <ClCompile Include="..\..\examples\yolo\yolo.cpp" />
+    <ClCompile Include="..\..\examples\ssd.cpp" />
+    <ClCompile Include="..\..\examples\yolo.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\shadow\shadow.vcxproj">

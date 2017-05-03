@@ -1,7 +1,7 @@
 set SOLUTION_DIR=%~1%
 set PROTOC_DIR=%~2%
 
-set PROTO_DIR=%SOLUTION_DIR%..\src\shadow\proto
+set PROTO_DIR=%SOLUTION_DIR%..\proto
 set PROTO_PY_DIR=%SOLUTION_DIR%..\python\shadow
 set PROTO_TEMP_DIR=%PROTO_DIR%\temp
 
