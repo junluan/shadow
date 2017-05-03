@@ -12,7 +12,7 @@ if (${USE_GLog} STREQUAL "ON")
 endif ()
 
 if (${USE_OpenCV} STREQUAL "ON")
-  find_package(OpenCV PATHS ${OpenCV_ROOT} NO_DEFAULT_PATH QUIET COMPONENTS core highgui imgproc imgcodecs videoio)
+  find_package(OpenCV PATHS ${OpenCV_ROOT_DIR} NO_DEFAULT_PATH QUIET COMPONENTS core highgui imgproc imgcodecs videoio)
   if (NOT OpenCV_FOUND) # if not OpenCV 3.x, then try to find OpenCV 2.x in default path
     find_package(OpenCV REQUIRED COMPONENTS core highgui imgproc)
   endif ()

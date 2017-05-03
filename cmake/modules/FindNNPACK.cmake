@@ -1,25 +1,25 @@
-set(NNPACK_PATHS
+set(NNPACK_ROOT_DIR
     ./third_party/nnpack
     /usr
     /usr/local)
 
 find_path(NNPACK_INCLUDE_DIRS
           NAMES nnpack.h
-          PATHS ${NNPACK_PATHS}
+          PATHS ${NNPACK_ROOT_DIR}
           PATH_SUFFIXES include include/x86_64 include/x64
           DOC "NNPACK include header nnpack.h"
           NO_DEFAULT_PATH)
 
 find_library(NNPACK_LIBRARY
              NAMES nnpack
-             PATHS ${NNPACK_PATHS}
+             PATHS ${NNPACK_ROOT_DIR}
              PATH_SUFFIXES lib lib64 lib/x86_64 lib/x64 lib/x86
              DOC "NNPACK library"
              NO_DEFAULT_PATH)
 
 find_library(PTHREADPOOL_LIBRARY
              NAMES pthreadpool
-             PATHS ${NNPACK_PATHS}
+             PATHS ${NNPACK_ROOT_DIR}
              PATH_SUFFIXES lib lib64 lib/x86_64 lib/x64 lib/x86
              DOC "NNPACK library"
              NO_DEFAULT_PATH)

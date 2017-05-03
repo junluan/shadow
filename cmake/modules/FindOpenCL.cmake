@@ -1,17 +1,17 @@
-set(OpenCL_PATHS
+set(OpenCL_ROOT_DIR
     /usr
     /usr/local
     /usr/local/cuda)
 
 find_path(OpenCL_INCLUDE_DIRS
           NAMES OpenCL/cl.h CL/cl.h
-          PATHS ${OpenCL_PATHS}
+          PATHS ${OpenCL_ROOT_DIR}
           PATH_SUFFIXES include include/x86_64 include/x64
           DOC "OpenCL include header OpenCL/cl.h or CL/cl.h")
 
 find_library(OpenCL_LIBRARIES
              NAMES OpenCL
-             PATHS ${OPENCL_PATHS}
+             PATHS ${OPENCL_ROOT_DIR}
              PATH_SUFFIXES lib lib64 lib/x86_64 lib/x64 lib/x86
              DOC "OpenCL library")
 

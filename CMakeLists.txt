@@ -16,12 +16,21 @@ option(USE_OpenCV "Use OpenCV to read, write and show image" ON)
 option(BUILD_TEST "Build gtest to test shadow" OFF)
 
 set(BLAS "Open" CACHE STRING "Selected BLAS library")
-set(OpenCV_ROOT "/usr/local/opencv-3.2.0" CACHE PATH "OpenCV root folder")
+set(OpenCV_ROOT_DIR "/usr/local/opencv-3.2.0" CACHE PATH "OpenCV root directory")
 
 set(CMAKE_INSTALL_PREFIX ${CMAKE_BINARY_DIR}/distribute)
 set(CMAKE_INSTALL_RPATH ${CMAKE_INSTALL_PREFIX}/lib)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -std=c++11")
+if (NOT CMAKE_BUILD_TYPE)
+  message(STATUS "Build type not set - defaulting to Release")
+  set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build from: Debug Release." FORCE)
+endif ()
+
+if (NOT MSVC)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -fPIC")
+else ()
+  add_definitions("/wd4005 /wd4018 /wd4244 /wd4267 /wd4305 /wd4996")
+endif ()
 
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake/modules)
 include(cmake/Dependencies.cmake)

@@ -1,18 +1,18 @@
-set(OpenBLAS_PATHS
+set(OpenBLAS_ROOT_DIR
     ./third_party/openblas
     /usr
     /usr/local)
 
 find_path(OpenBLAS_INCLUDE_DIRS
           NAMES cblas.h
-          PATHS ${OpenBLAS_PATHS}
+          PATHS ${OpenBLAS_ROOT_DIR}
           PATH_SUFFIXES include include/x86_64 include/x64
           DOC "OpenBLAS include header cblas.h"
           NO_DEFAULT_PATH)
 
 find_library(OpenBLAS_LIBRARIES
-             NAMES openblas
-             PATHS ${OpenBLAS_PATHS}
+             NAMES openblas libopenblas.dll
+             PATHS ${OpenBLAS_ROOT_DIR}
              PATH_SUFFIXES lib lib64 lib/x86_64 lib/x64 lib/x86
              DOC "OpenBLAS library"
              NO_DEFAULT_PATH)
