@@ -1,0 +1,5 @@
+if (Protobuf_FOUND)
+  file(GLOB proto_files "*.proto")
+  GenProtobuf(proto_srcs proto_hdrs ${proto_files})
+  add_library(proto STATIC ${proto_srcs} ${proto_hdrs})
+endif ()

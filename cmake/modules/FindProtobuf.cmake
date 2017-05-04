@@ -1,50 +1,42 @@
-set(Protobuf_ROOT_DIR
-    ./third_party/protobuf
-    /usr
-    /usr/local)
+include(FindPackageHandleStandardArgs)
+
+set(Protobuf_ROOT_DIR ${PROJECT_SOURCE_DIR}/third_party/protobuf CACHE PATH "Folder contains Google Protobuf")
+
+set(Protobuf_DIR ${Protobuf_ROOT_DIR} /usr /usr/local)
 
 find_path(Protobuf_INCLUDE_DIRS
           NAMES google/protobuf/message.h
-          PATHS ${Protobuf_ROOT_DIR}
+          PATHS ${Protobuf_DIR}
           PATH_SUFFIXES include include/x86_64 include/x64
           DOC "Protobuf include"
           NO_DEFAULT_PATH)
 
 find_library(Protobuf_LIBRARIES
              NAMES protobuf libprotobuf
-             PATHS ${Protobuf_ROOT_DIR}
+             PATHS ${Protobuf_DIR}
              PATH_SUFFIXES lib lib64 lib/x86_64 lib/x86_64-linux-gnu lib/x64 lib/x86
              DOC "Protobuf library"
              NO_DEFAULT_PATH)
 
 find_program(Protobuf_PROTOC_EXECUTABLE
              NAMES protoc
-             PATHS ${Protobuf_ROOT_DIR}
+             PATHS ${Protobuf_DIR}
              PATH_SUFFIXES bin
              DOC "Protobuf protoc"
              NO_DEFAULT_PATH)
 
-set(Protobuf_FOUND ON)
+find_package_handle_standard_args(Protobuf DEFAULT_MSG Protobuf_INCLUDE_DIRS Protobuf_LIBRARIES Protobuf_PROTOC_EXECUTABLE)
 
-if (NOT Protobuf_INCLUDE_DIRS)
-  set(Protobuf_FOUND OFF)
-  if (NOT Protobuf_FIND_QUIETLY)
-    message(STATUS "Could not find Protobuf include. Turning Protobuf_FOUND off")
-  endif ()
+if (NOT Protobuf_INCLUDE_DIRS AND NOT Protobuf_FIND_QUIETLY)
+  message(STATUS "Could not find Protobuf include")
 endif ()
 
-if (NOT Protobuf_LIBRARIES)
-  set(Protobuf_FOUND OFF)
-  if (NOT Protobuf_FIND_QUIETLY)
-    message(STATUS "Could not find Protobuf lib. Turning Protobuf_FOUND off")
-  endif ()
+if (NOT Protobuf_LIBRARIES AND NOT Protobuf_FIND_QUIETLY)
+  message(STATUS "Could not find Protobuf lib")
 endif ()
 
-if (NOT Protobuf_PROTOC_EXECUTABLE)
-  set(Protobuf_FOUND OFF)
-  if (NOT Protobuf_FIND_QUIETLY)
-    message(STATUS "Could not find Protobuf protoc. Turning Protobuf_FOUND off")
-  endif ()
+if (NOT Protobuf_PROTOC_EXECUTABLE AND NOT Protobuf_FIND_QUIETLY)
+  message(STATUS "Could not find Protobuf protoc")
 endif ()
 
 if (Protobuf_FOUND)
@@ -72,11 +64,11 @@ if (Protobuf_FOUND)
             " doesn't match library version ${Protobuf_VERSION}")
   endif ()
   if (NOT Protobuf_FIND_QUIETLY)
-    message(STATUS "Found Protobuf include: ${Protobuf_INCLUDE_DIRS}")
+    message(STATUS "Found Protobuf include: ${Protobuf_INCLUDE_DIRS} (found version ${Protobuf_VERSION})")
     message(STATUS "Found Protobuf libraries: ${Protobuf_LIBRARIES}")
     message(STATUS "Found Protobuf protoc: ${Protobuf_PROTOC_EXECUTABLE}")
   endif ()
-  mark_as_advanced(Protobuf_INCLUDE_DIRS Protobuf_LIBRARIES Protobuf_PROTOC_EXECUTABLE Protobuf)
+  mark_as_advanced(Protobuf_ROOT_DIR Protobuf_INCLUDE_DIRS Protobuf_LIBRARIES Protobuf_PROTOC_EXECUTABLE)
 else ()
   if (Protobuf_FIND_REQUIRED)
     message(FATAL_ERROR "Could not find Protobuf")
