@@ -31,7 +31,7 @@
 
     <PropertyGroup>
         <IncludePath>$(ExternalDir);$(ExternalDir)\arcsoft\include;$(ExternalDir)\openblas\include;$(ExternalDir)\protobuf\include;$(IncludePath)</IncludePath>
-        <LibraryPath>$(ExternalDir)\openblas\x64\lib;$(ExternalDir)\protobuf\x64\lib;$(LibraryPath)</LibraryPath>
+        <LibraryPath>$(ExternalDir)\openblas\lib\x64;$(ExternalDir)\protobuf\lib\x64;$(LibraryPath)</LibraryPath>
     </PropertyGroup>
 
     <ItemDefinitionGroup Condition="'$(USE_CUDA)'=='true'">
@@ -74,7 +74,7 @@
 
     <ItemDefinitionGroup Condition="'$(ProjectName)'=='proto'">
         <PreBuildEvent>
-            <Command>"$(ScriptsDir)\ProtoCompile.cmd" "$(SolutionDir)" "$(ScriptsDir)"</Command>
+            <Command>"$(ScriptsDir)\ProtoCompile.cmd" "$(SolutionDir)" "$(ExternalDir)\protobuf\bin"</Command>
         </PreBuildEvent>
     </ItemDefinitionGroup>
     <ItemDefinitionGroup Condition="'$(ConfigurationType)'=='Application'">
