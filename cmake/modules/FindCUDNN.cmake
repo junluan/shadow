@@ -32,12 +32,14 @@ if (CUDNN_FOUND)
          CUDNN_VERSION_PATCH "${CUDNN_HEADER_CONTENTS}")
   string(REGEX REPLACE "define CUDNN_PATCHLEVEL * +([0-9]+)" "\\1"
          CUDNN_VERSION_PATCH "${CUDNN_VERSION_PATCH}")
-
   if (NOT CUDNN_VERSION_MAJOR)
     set(CUDNN_VERSION "?")
   else ()
     set(CUDNN_VERSION "${CUDNN_VERSION_MAJOR}.${CUDNN_VERSION_MINOR}.${CUDNN_VERSION_PATCH}")
   endif ()
-
   mark_as_advanced(CUDNN_ROOT_DIR CUDNN_INCLUDE_DIRS CUDNN_LIBRARIES)
+else ()
+  if (CUDNN_FIND_REQUIRED)
+    message(FATAL_ERROR "Could not find CUDNN")
+  endif ()
 endif ()

@@ -4,20 +4,6 @@ set(Protobuf_ROOT_DIR ${PROJECT_SOURCE_DIR}/third_party/protobuf CACHE PATH "Fol
 
 set(Protobuf_DIR ${Protobuf_ROOT_DIR} /usr /usr/local)
 
-find_path(Protobuf_INCLUDE_DIRS
-          NAMES google/protobuf/message.h
-          PATHS ${Protobuf_DIR}
-          PATH_SUFFIXES include include/x86_64 include/x64
-          DOC "Protobuf include"
-          NO_DEFAULT_PATH)
-
-find_library(Protobuf_LIBRARIES
-             NAMES protobuf libprotobuf
-             PATHS ${Protobuf_DIR}
-             PATH_SUFFIXES lib lib64 lib/x86_64 lib/x86_64-linux-gnu lib/x64 lib/x86
-             DOC "Protobuf library"
-             NO_DEFAULT_PATH)
-
 find_program(Protobuf_PROTOC_EXECUTABLE
              NAMES protoc
              PATHS ${Protobuf_DIR}
@@ -25,19 +11,38 @@ find_program(Protobuf_PROTOC_EXECUTABLE
              DOC "Protobuf protoc"
              NO_DEFAULT_PATH)
 
+find_path(Protobuf_INCLUDE_DIRS
+          NAMES google/protobuf/message.h
+          PATHS ${Protobuf_DIR}
+          PATH_SUFFIXES include include/x86_64 include/x64
+          DOC "Protobuf include"
+          NO_DEFAULT_PATH)
+
+if (NOT MSVC)
+  find_library(Protobuf_LIBRARIES
+               NAMES protobuf libprotobuf
+               PATHS ${Protobuf_DIR}
+               PATH_SUFFIXES lib lib64 lib/x86_64 lib/x86_64-linux-gnu lib/x64 lib/x86
+               DOC "Protobuf library"
+               NO_DEFAULT_PATH)
+else ()
+  find_library(Protobuf_LIBRARIES_RELEASE
+               NAMES libprotobuf
+               PATHS ${Protobuf_DIR}
+               PATH_SUFFIXES lib lib64 lib/x86_64 lib/x86_64-linux-gnu lib/x64 lib/x86
+               DOC "Protobuf library"
+               NO_DEFAULT_PATH)
+  find_library(Protobuf_LIBRARIES_DEBUG
+               NAMES libprotobufd
+               PATHS ${Protobuf_DIR}
+               PATH_SUFFIXES lib lib64 lib/x86_64 lib/x86_64-linux-gnu lib/x64 lib/x86
+               DOC "Protobuf library"
+               NO_DEFAULT_PATH)
+
+  set(Protobuf_LIBRARIES optimized ${Protobuf_LIBRARIES_RELEASE} debug ${Protobuf_LIBRARIES_DEBUG})
+endif ()
+
 find_package_handle_standard_args(Protobuf DEFAULT_MSG Protobuf_INCLUDE_DIRS Protobuf_LIBRARIES Protobuf_PROTOC_EXECUTABLE)
-
-if (NOT Protobuf_INCLUDE_DIRS AND NOT Protobuf_FIND_QUIETLY)
-  message(STATUS "Could not find Protobuf include")
-endif ()
-
-if (NOT Protobuf_LIBRARIES AND NOT Protobuf_FIND_QUIETLY)
-  message(STATUS "Could not find Protobuf lib")
-endif ()
-
-if (NOT Protobuf_PROTOC_EXECUTABLE AND NOT Protobuf_FIND_QUIETLY)
-  message(STATUS "Could not find Protobuf protoc")
-endif ()
 
 if (Protobuf_FOUND)
   set(Protobuf_VERSION "")
@@ -68,7 +73,7 @@ if (Protobuf_FOUND)
     message(STATUS "Found Protobuf libraries: ${Protobuf_LIBRARIES}")
     message(STATUS "Found Protobuf protoc: ${Protobuf_PROTOC_EXECUTABLE}")
   endif ()
-  mark_as_advanced(Protobuf_ROOT_DIR Protobuf_INCLUDE_DIRS Protobuf_LIBRARIES Protobuf_PROTOC_EXECUTABLE)
+  mark_as_advanced(Protobuf_ROOT_DIR Protobuf_INCLUDE_DIRS Protobuf_LIBRARIES Protobuf_LIBRARIES_RELEASE Protobuf_LIBRARIES_DEBUG Protobuf_PROTOC_EXECUTABLE)
 else ()
   if (Protobuf_FIND_REQUIRED)
     message(FATAL_ERROR "Could not find Protobuf")

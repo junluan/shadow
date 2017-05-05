@@ -1,4 +1,5 @@
 include(FindPackageHandleStandardArgs)
+include(CheckSymbolExists)
 
 set(OpenCL_ROOT_DIR "" CACHE PATH "Folder contains OpenCL")
 
@@ -17,16 +18,6 @@ find_library(OpenCL_LIBRARIES
              DOC "OpenCL library")
 
 find_package_handle_standard_args(OpenCL DEFAULT_MSG OpenCL_INCLUDE_DIRS OpenCL_LIBRARIES)
-
-if (NOT OpenCL_INCLUDE_DIRS AND NOT OpenCL_FIND_QUIETLY)
-  message(STATUS "Could not find OpenCL include")
-endif ()
-
-if (NOT OpenCL_LIBRARIES AND NOT OpenCL_FIND_QUIETLY)
-  message(STATUS "Could not find OpenCL lib")
-endif ()
-
-include(CheckSymbolExists)
 
 if (OpenCL_FOUND)
   if (APPLE)
