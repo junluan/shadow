@@ -16,7 +16,7 @@ option(USE_OpenCV "Use OpenCV to read, write and show image" ON)
 option(BUILD_TEST "Build gtest to test shadow" OFF)
 
 set(BLAS "Open" CACHE STRING "Selected BLAS library")
-set(OpenCV_ROOT_DIR "/usr/local/opencv-3.2.0" CACHE PATH "OpenCV root directory")
+set(OpenCV_DIR "/usr/local/opencv-3.2.0" CACHE PATH "OpenCV root directory")
 
 set(CMAKE_INSTALL_PREFIX ${CMAKE_BINARY_DIR}/distribute)
 set(CMAKE_INSTALL_RPATH ${CMAKE_INSTALL_PREFIX}/lib)
@@ -29,7 +29,7 @@ endif ()
 if (NOT MSVC)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -fPIC")
 else ()
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP /wd4005 /wd4018 /wd4244 /wd4267 /wd4305 /wd4996")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP /wd4005 /wd4018 /wd4244 /wd4267 /wd4305 /wd4819 /wd4996")
 endif ()
 
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake/modules)
