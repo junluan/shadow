@@ -30,9 +30,16 @@ endif ()
 find_package_handle_standard_args(OpenBLAS DEFAULT_MSG OpenBLAS_INCLUDE_DIRS OpenBLAS_LIBRARIES)
 
 if (OpenBLAS_FOUND)
+  file(READ ${OpenBLAS_INCLUDE_DIRS}/openblas_config.h OpenBLAS_HEADER_CONTENTS)
+  string(REGEX MATCH "define OPENBLAS_VERSION * +\" OpenBLAS ([0-9]+\\.[0-9]+\\.[0-9]+.[a-z]+) \""
+         OpenBLAS_VERSION "${OpenBLAS_HEADER_CONTENTS}")
+  string(REGEX REPLACE "define OPENBLAS_VERSION * +\" OpenBLAS ([0-9]+\\.[0-9]+\\.[0-9]+.[a-z]+) \"" "\\1"
+         OpenBLAS_VERSION "${OpenBLAS_VERSION}")
+  if (NOT OpenBLAS_VERSION)
+    set(OpenBLAS_VERSION "?")
+  endif ()
   if (NOT OpenBLAS_FIND_QUIETLY)
-    message(STATUS "Found OpenBLAS include: ${OpenBLAS_INCLUDE_DIRS}")
-    message(STATUS "Found OpenBLAS libraries: ${OpenBLAS_LIBRARIES}")
+    message(STATUS "Found OpenBLAS: ${OpenBLAS_INCLUDE_DIRS}, ${OpenBLAS_LIBRARIES} (found version ${OpenBLAS_VERSION})")
   endif ()
   mark_as_advanced(OpenBLAS_ROOT_DIR OpenBLAS_INCLUDE_DIRS OpenBLAS_LIBRARIES)
 else ()

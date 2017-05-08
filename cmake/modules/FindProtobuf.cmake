@@ -4,7 +4,7 @@ set(Protobuf_ROOT_DIR ${PROJECT_SOURCE_DIR}/third_party/protobuf CACHE PATH "Fol
 
 set(Protobuf_DIR ${Protobuf_ROOT_DIR} /usr /usr/local)
 
-find_program(Protobuf_PROTOC_EXECUTABLE
+find_program(Protoc_EXECUTABLE
              NAMES protoc
              PATHS ${Protobuf_DIR}
              PATH_SUFFIXES bin
@@ -42,7 +42,7 @@ else ()
   set(Protobuf_LIBRARIES optimized ${Protobuf_LIBRARIES_RELEASE} debug ${Protobuf_LIBRARIES_DEBUG})
 endif ()
 
-find_package_handle_standard_args(Protobuf DEFAULT_MSG Protobuf_INCLUDE_DIRS Protobuf_LIBRARIES Protobuf_PROTOC_EXECUTABLE)
+find_package_handle_standard_args(Protobuf DEFAULT_MSG Protobuf_INCLUDE_DIRS Protobuf_LIBRARIES Protoc_EXECUTABLE)
 
 if (Protobuf_FOUND)
   set(Protobuf_VERSION "")
@@ -59,21 +59,18 @@ if (Protobuf_FOUND)
   math(EXPR PROTOBUF_MINOR_VERSION "${Protobuf_LIB_VERSION} / 1000 % 1000")
   math(EXPR PROTOBUF_SUBMINOR_VERSION "${Protobuf_LIB_VERSION} % 1000")
   set(Protobuf_VERSION "${PROTOBUF_MAJOR_VERSION}.${PROTOBUF_MINOR_VERSION}.${PROTOBUF_SUBMINOR_VERSION}")
-  execute_process(COMMAND ${Protobuf_PROTOC_EXECUTABLE} --version
-                  OUTPUT_VARIABLE PROTOBUF_PROTOC_EXECUTABLE_VERSION)
-  if ("${PROTOBUF_PROTOC_EXECUTABLE_VERSION}" MATCHES "libprotoc ([0-9.]+)")
-    set(PROTOBUF_PROTOC_EXECUTABLE_VERSION "${CMAKE_MATCH_1}")
+  execute_process(COMMAND ${Protoc_EXECUTABLE} --version OUTPUT_VARIABLE Protoc_VERSION)
+  if ("${Protoc_VERSION}" MATCHES "libprotoc ([0-9.]+)")
+    set(Protoc_VERSION "${CMAKE_MATCH_1}")
   endif ()
-  if (NOT "${PROTOBUF_PROTOC_EXECUTABLE_VERSION}" VERSION_EQUAL "${Protobuf_VERSION}")
-    message(FATAL_ERROR "Protobuf compiler version ${PROTOBUF_PROTOC_EXECUTABLE_VERSION}"
-            " doesn't match library version ${Protobuf_VERSION}")
+  if (NOT "${Protoc_VERSION}" VERSION_EQUAL "${Protobuf_VERSION}")
+    message(FATAL_ERROR "Protobuf compiler version ${Protoc_VERSION} doesn't match library version ${Protobuf_VERSION}")
   endif ()
   if (NOT Protobuf_FIND_QUIETLY)
-    message(STATUS "Found Protobuf include: ${Protobuf_INCLUDE_DIRS} (found version ${Protobuf_VERSION})")
-    message(STATUS "Found Protobuf libraries: ${Protobuf_LIBRARIES}")
-    message(STATUS "Found Protobuf protoc: ${Protobuf_PROTOC_EXECUTABLE}")
+    message(STATUS "Found Protobuf: ${Protobuf_INCLUDE_DIRS}, ${Protobuf_LIBRARIES} (found version ${Protobuf_VERSION})")
+    message(STATUS "Found Protoc: ${Protoc_EXECUTABLE} (found version ${Protoc_VERSION})")
   endif ()
-  mark_as_advanced(Protobuf_ROOT_DIR Protobuf_INCLUDE_DIRS Protobuf_LIBRARIES Protobuf_LIBRARIES_RELEASE Protobuf_LIBRARIES_DEBUG Protobuf_PROTOC_EXECUTABLE)
+  mark_as_advanced(Protobuf_ROOT_DIR Protobuf_INCLUDE_DIRS Protobuf_LIBRARIES Protobuf_LIBRARIES_RELEASE Protobuf_LIBRARIES_DEBUG Protoc_EXECUTABLE)
 else ()
   if (Protobuf_FIND_REQUIRED)
     message(FATAL_ERROR "Could not find Protobuf")

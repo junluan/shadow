@@ -21,9 +21,26 @@ find_library(clBLAS_LIBRARIES
 find_package_handle_standard_args(clBLAS DEFAULT_MSG clBLAS_INCLUDE_DIRS clBLAS_LIBRARIES)
 
 if (clBLAS_FOUND)
+  file(READ ${clBLAS_INCLUDE_DIRS}/clBLAS.version.h clBLAS_HEADER_CONTENTS)
+  string(REGEX MATCH "define clblasVersionMajor * +([0-9]+)"
+         clBLAS_VERSION_MAJOR "${clBLAS_HEADER_CONTENTS}")
+  string(REGEX REPLACE "define clblasVersionMajor * +([0-9]+)" "\\1"
+         clBLAS_VERSION_MAJOR "${clBLAS_VERSION_MAJOR}")
+  string(REGEX MATCH "define clblasVersionMinor * +([0-9]+)"
+         clBLAS_VERSION_MINOR "${clBLAS_HEADER_CONTENTS}")
+  string(REGEX REPLACE "define clblasVersionMinor * +([0-9]+)" "\\1"
+         clBLAS_VERSION_MINOR "${clBLAS_VERSION_MINOR}")
+  string(REGEX MATCH "define clblasVersionPatch * +([0-9]+)"
+         clBLAS_VERSION_PATCH "${clBLAS_HEADER_CONTENTS}")
+  string(REGEX REPLACE "define clblasVersionPatch * +([0-9]+)" "\\1"
+         clBLAS_VERSION_PATCH "${clBLAS_VERSION_PATCH}")
+  if (NOT clBLAS_VERSION_MAJOR)
+    set(clBLAS_VERSION "?")
+  else ()
+    set(clBLAS_VERSION "${clBLAS_VERSION_MAJOR}.${clBLAS_VERSION_MINOR}.${clBLAS_VERSION_PATCH}")
+  endif ()
   if (NOT clBLAS_FIND_QUIETLY)
-    message(STATUS "Found clBLAS include: ${clBLAS_INCLUDE_DIRS}")
-    message(STATUS "Found clBLAS libraries: ${clBLAS_LIBRARIES}")
+    message(STATUS "Found clBLAS: ${clBLAS_INCLUDE_DIRS}, ${clBLAS_LIBRARIES} (found version ${clBLAS_VERSION})")
   endif ()
   mark_as_advanced(clBLAS_ROOT_DIR clBLAS_INCLUDE_DIRS clBLAS_LIBRARIES)
 else ()
