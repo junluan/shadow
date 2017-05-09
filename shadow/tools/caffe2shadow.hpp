@@ -502,11 +502,15 @@ void WriteDefines(const shadow::NetParameter& shadow_net,
   size_t json_split_num =
       json_str_count / split_count + (json_split_off > 0 ? 1 : 0);
 
+  std::string model_name_upper = model_name;
+  std::transform(model_name.begin(), model_name.end(), model_name_upper.begin(),
+                 ::toupper);
   cpp_file << "#include \"" << model_name << ".hpp\"\n\n";
 
   size_t offset = 0;
   for (int n = 0; n < proto_split_num; ++n) {
-    cpp_file << "const std::string Model::model_" << n << "_ = \nR\"(";
+    cpp_file << "const std::string " << model_name_upper << "::model_" << n
+             << "_ = \nR\"(";
     cpp_file << proto_str.substr(offset, split_count);
     cpp_file << ")\";\n\n";
     offset += split_count;
@@ -515,7 +519,8 @@ void WriteDefines(const shadow::NetParameter& shadow_net,
 #if defined(SUPPORT_JSON)
   offset = 0;
   for (int n = 0; n < json_split_num; ++n) {
-    cpp_file << "const std::string Model::json_model_" << n << "_ = \nR\"(";
+    cpp_file << "const std::string " << model_name_upper << "::json_model_" << n
+             << "_ = \nR\"(";
     cpp_file << json_str.substr(offset, split_count);
     cpp_file << ")\";\n\n";
     offset += split_count;
@@ -534,14 +539,14 @@ void WriteDefines(const shadow::NetParameter& shadow_net,
       count += blob.data_size();
     }
     weight_counts.push_back(count);
-    weight_names.push_back(model_name + "_" + layer_param.name());
+    weight_names.push_back(layer_param.name());
   }
 
   // write network proto definition to hpp
   std::ofstream file(root + "/" + model_name + ".hpp");
 
-  file << "#ifndef SHADOW_MODEL_HPP\n"
-          "#define SHADOW_MODEL_HPP\n\n";
+  file << "#ifndef SHADOW_" << model_name_upper << "_HPP\n";
+  file << "#define SHADOW_" << model_name_upper << "_HPP\n\n";
 
   file << "#include <cstring>\n"
        << "#include <string>\n"
@@ -550,8 +555,7 @@ void WriteDefines(const shadow::NetParameter& shadow_net,
   file << "static int counts_[] = "
        << Util::format_vector(weight_counts, ", ", "{", "}") << ";\n\n";
 
-  file << "class Model {\n"
-          " public:\n";
+  file << "class " << model_name_upper << " {\n public:\n";
 
   file << "  static const std::string model() { return";
   for (int i = 0; i < proto_split_num - 1; ++i) {
@@ -618,18 +622,21 @@ void WriteDefines(const shadow::NetParameter& shadow_net,
   }
   file << "};\n\n";
 
-  file << "#endif  // SHADOW_MODEL_HPP\n";
+  file << "#endif  // SHADOW_" << model_name_upper << "_HPP\n";
 
   file.close();
 }
 
 void WriteWeights(const shadow::NetParameter& shadow_net,
                   const std::string& root, const std::string& model_name) {
+  std::string model_name_upper = model_name;
+  std::transform(model_name.begin(), model_name.end(), model_name_upper.begin(),
+                 ::toupper);
   for (const auto& layer_param : shadow_net.layer()) {
     if (layer_param.blobs_size() == 0) continue;
 
-    std::string weight_name = model_name + "_" + layer_param.name();
-    std::ofstream file(root + "/" + weight_name + ".cpp");
+    const auto& weight_name = layer_param.name();
+    std::ofstream file(root + "/" + model_name + "_" + weight_name + ".cpp");
 
     file << "#include \"" << model_name << ".hpp\"\n\n";
     file << "const float " << weight_name << "_weights[] = {\n";
@@ -649,8 +656,8 @@ void WriteWeights(const shadow::NetParameter& shadow_net,
     }
 
     file << "};\n\n";
-    file << "const float *Model::" << weight_name << "_ = " << weight_name
-         << "_weights;\n";
+    file << "const float *" << model_name_upper << "::" << weight_name
+         << "_ = " << weight_name << "_weights;\n";
 
     file.close();
   }
@@ -658,12 +665,14 @@ void WriteWeights(const shadow::NetParameter& shadow_net,
 
 void WriteProtoToFiles(const shadow::NetParameter& shadow_net,
                        const std::string& root, const std::string& model_name) {
+  Util::make_directory(root);
   WriteDefines(shadow_net, root, model_name);
   WriteWeights(shadow_net, root, model_name);
 }
 
 void WriteProtoToBinary(const IO::Message& proto, const std::string& root,
                         const std::string& model_name) {
+  Util::make_directory(root);
   std::string filename = root + "/" + model_name + ".shadowmodel";
   IO::WriteProtoToBinaryFile(proto, filename);
 }
