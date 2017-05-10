@@ -1,11 +1,13 @@
 #include "kernel.hpp"
 #include "util/util.hpp"
 
+#if defined(USE_CL)
+#include <clBLAS.h>
+#endif
+
 namespace Kernel {
 
 #if defined(USE_CL)
-#include <clBLAS.h>
-
 EasyCL::Device *device_ = nullptr;
 EasyCL::Context *context_ = nullptr;
 EasyCL::Queue *queue_ = nullptr;

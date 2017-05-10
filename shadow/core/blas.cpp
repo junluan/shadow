@@ -1,6 +1,10 @@
 #include "blas.hpp"
 #include "kernel.hpp"
 
+#if defined(USE_CL)
+#include <clBLAS.h>
+#endif
+
 #if defined(USE_OpenBLAS)
 #include "cblas.h"
 #endif
@@ -432,8 +436,6 @@ template void BlasSgemm(int TA, int TB, int M, int N, int K, float alpha,
                         float beta, float *C, int offC);
 
 #elif defined(USE_CL)
-#include <clBLAS.h>
-
 template <typename T>
 void ChannelMax(int num, int channels, int spatial_dim, const T *data,
                 T *val_max) {
