@@ -145,6 +145,8 @@ inline std::string read_text_from_file(const std::string &filename) {
 #if defined(__linux)
 #include <linux/limits.h>
 #include <unistd.h>
+#include <chrono>
+using namespace std::chrono;
 #else
 #define NOMINMAX
 #include <windows.h>
@@ -426,38 +428,37 @@ inline bool make_directory(const std::string &path) {
 
 }  // namespace Util
 
-#include <ctime>
 class Timer {
  public:
-#if defined(__linux)
-  Timer() : ts(clock()) {}
-
-  void start() { ts = clock(); }
-  double get_second() {
-    return static_cast<double>(clock() - ts) / CLOCKS_PER_SEC;
-  }
-  double get_millisecond() {
-    return 1000.0 * static_cast<double>(clock() - ts) / CLOCKS_PER_SEC;
-  }
-
-#else
   Timer() {
+#if defined(__linux)
+    tstart_ = system_clock::now();
+#else
     QueryPerformanceFrequency(&tfrequency_);
     QueryPerformanceCounter(&tstart_);
+#endif
   }
 
-  void start() { QueryPerformanceCounter(&tstart_); }
-  double get_second() {
-    QueryPerformanceCounter(&tend_);
-    return static_cast<double>(tend_.QuadPart - tstart_.QuadPart) /
-           tfrequency_.QuadPart;
-  }
-  double get_millisecond() {
-    QueryPerformanceCounter(&tend_);
-    return 1000.0 * static_cast<double>(tend_.QuadPart - tstart_.QuadPart) /
-           tfrequency_.QuadPart;
-  }
+  void start() {
+#if defined(__linux)
+    tstart_ = system_clock::now();
+#else
+    QueryPerformanceCounter(&tstart_);
 #endif
+  }
+
+  double get_microsecond() {
+#if defined(__linux)
+    tend_ = system_clock::now();
+    return duration_cast<microseconds>(tend_ - tstart_).count();
+#else
+    QueryPerformanceCounter(&tend_);
+    return 1000000.0 * (tend_.QuadPart - tstart_.QuadPart) /
+           tfrequency_.QuadPart;
+#endif
+  }
+  double get_second() { return 0.000001 * get_microsecond(); }
+  double get_millisecond() { return 0.001 * get_microsecond(); }
 
   static tm get_compile_time() {
     int sec, min, hour, day, month, year;
@@ -505,8 +506,7 @@ class Timer {
 
  private:
 #if defined(__linux)
-  clock_t ts;
-
+  time_point<system_clock> tstart_, tend_;
 #else
   LARGE_INTEGER tstart_, tend_, tfrequency_;
 #endif
