@@ -5,6 +5,15 @@
 #include "cblas.h"
 #endif
 
+#if defined(USE_Eigen)
+#include <Eigen/Eigen>
+
+template <typename T>
+using MapVector = Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, 1>>;
+template <typename T>
+using MapMatrix = Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>>;
+#endif
+
 #include <algorithm>
 #include <cfloat>
 
@@ -64,16 +73,59 @@ void ChannelDiv(int count, int num, int channels, int spatial_dim,
 
 template <typename T>
 void Set(int n, float val, T *y, int offy) {
-  std::fill(y + offy, y + offy + n, val);
+#if defined(USE_Eigen)
+  auto y_eigen = MapVector<T>(y + offy, n);
+  y_eigen.setConstant(static_cast<T>(val));
+#else
+  std::fill(y + offy, y + offy + n, static_cast<T>(val));
+#endif
 }
 
 template <typename T>
 void Add(int n, float val, T *y, int offy) {
+#if defined(USE_Eigen)
+  auto y_eigen = MapVector<T>(y + offy, n);
+  y_eigen = y_eigen.array() + static_cast<T>(val);
+#else
   for (int i = 0; i < n; ++i) {
-    y[offy + i] += val;
+    y[offy + i] += static_cast<T>(val);
   }
+#endif
 }
 
+#if defined(USE_Eigen)
+#define BLAS_BINARY_FUNC_EIGEN(name, operation)                       \
+  template <typename T>                                               \
+  void name(int n, const T *a, int offa, const T *b, int offb, T *y,  \
+            int offy) {                                               \
+    const auto &a_eigen = MapVector<T>(const_cast<T *>(a + offa), n); \
+    const auto &b_eigen = MapVector<T>(const_cast<T *>(b + offb), n); \
+    auto y_eigen = MapVector<T>(y + offy, n);                         \
+    operation;                                                        \
+  }                                                                   \
+  template void name(int n, const float *a, int offa, const float *b, \
+                     int offb, float *y, int offy);
+
+#define BLAS_UNARY_FUNC_EIGEN(name, operation)                        \
+  template <typename T>                                               \
+  void name(int n, const T *a, int offa, T *y, int offy) {            \
+    const auto &a_eigen = MapVector<T>(const_cast<T *>(a + offa), n); \
+    auto y_eigen = MapVector<T>(y + offy, n);                         \
+    operation;                                                        \
+  }                                                                   \
+  template void name(int n, const float *a, int offa, float *y, int offy);
+
+BLAS_BINARY_FUNC_EIGEN(Add, y_eigen = a_eigen.array() + b_eigen.array());
+BLAS_BINARY_FUNC_EIGEN(Sub, y_eigen = a_eigen.array() - b_eigen.array());
+BLAS_BINARY_FUNC_EIGEN(Mul, y_eigen = a_eigen.array() * b_eigen.array());
+BLAS_BINARY_FUNC_EIGEN(Div, y_eigen = a_eigen.array() / b_eigen.array());
+
+BLAS_UNARY_FUNC_EIGEN(Sqr, y_eigen = a_eigen.array() * a_eigen.array());
+BLAS_UNARY_FUNC_EIGEN(Exp, y_eigen = a_eigen.array().exp());
+BLAS_UNARY_FUNC_EIGEN(Log, y_eigen = a_eigen.array().log());
+BLAS_UNARY_FUNC_EIGEN(Abs, y_eigen = a_eigen.array().abs());
+
+#else
 #define BLAS_BINARY_FUNC(name, operation)                             \
   template <typename T>                                               \
   void name(int n, const T *a, int offa, const T *b, int offb, T *y,  \
@@ -86,11 +138,6 @@ void Add(int n, float val, T *y, int offy) {
   template void name(int n, const float *a, int offa, const float *b, \
                      int offb, float *y, int offy);
 
-BLAS_BINARY_FUNC(Add, y[i] = a[i] + b[i]);
-BLAS_BINARY_FUNC(Sub, y[i] = a[i] - b[i]);
-BLAS_BINARY_FUNC(Mul, y[i] = a[i] * b[i]);
-BLAS_BINARY_FUNC(Div, y[i] = a[i] / b[i]);
-
 #define BLAS_UNARY_FUNC(name, operation)                   \
   template <typename T>                                    \
   void name(int n, const T *a, int offa, T *y, int offy) { \
@@ -101,23 +148,41 @@ BLAS_BINARY_FUNC(Div, y[i] = a[i] / b[i]);
   }                                                        \
   template void name(int n, const float *a, int offa, float *y, int offy);
 
+BLAS_BINARY_FUNC(Add, y[i] = a[i] + b[i]);
+BLAS_BINARY_FUNC(Sub, y[i] = a[i] - b[i]);
+BLAS_BINARY_FUNC(Mul, y[i] = a[i] * b[i]);
+BLAS_BINARY_FUNC(Div, y[i] = a[i] / b[i]);
+
 BLAS_UNARY_FUNC(Sqr, y[i] = a[i] * a[i]);
 BLAS_UNARY_FUNC(Exp, y[i] = std::exp(a[i]));
 BLAS_UNARY_FUNC(Log, y[i] = std::log(a[i]));
 BLAS_UNARY_FUNC(Abs, y[i] = std::abs(a[i]));
+#endif
 
 template <typename T>
 void Pow(int n, const T *a, int offa, float alpha, T *y, int offy) {
+#if defined(USE_Eigen)
+  const auto &a_eigen = MapVector<T>(const_cast<T *>(a + offa), n);
+  auto y_eigen = MapVector<T>(y + offy, n);
+  y_eigen = a_eigen.array().pow(alpha);
+#else
   for (int i = 0; i < n; ++i) {
     y[offy + i] = std::pow(a[offa + i], alpha);
   }
+#endif
 }
 
 template <typename T>
 void Scale(int n, float alpha, const T *x, int offx, T *y, int offy) {
+#if defined(USE_Eigen)
+  const auto &x_eigen = MapVector<T>(const_cast<T *>(x + offx), n);
+  auto y_eigen = MapVector<T>(y + offy, n);
+  y_eigen = static_cast<T>(alpha) * x_eigen;
+#else
   for (int i = 0; i < n; ++i) {
-    y[offy + i] = alpha * x[offx + i];
+    y[offy + i] = static_cast<T>(alpha) * x[offx + i];
   }
+#endif
 }
 
 // Level 1
@@ -125,6 +190,9 @@ template <typename T>
 void BlasSscal(int n, float alpha, T *x, int offx) {
 #if defined(USE_OpenBLAS)
   cblas_sscal(n, alpha, x + offx, 1);
+#elif defined(USE_Eigen)
+  auto x_eigen = MapVector<T>(x + offx, n);
+  x_eigen = alpha * x_eigen;
 #else
   for (int i = 0; i < n; ++i) {
     x[offx + i] *= alpha;
@@ -136,6 +204,10 @@ template <typename T>
 void BlasScopy(int n, const T *x, int offx, T *y, int offy) {
 #if defined(USE_OpenBLAS)
   cblas_scopy(n, x + offx, 1, y + offy, 1);
+#elif defined(USE_Eigen)
+  const auto &x_eigen = MapVector<T>(const_cast<T *>(x + offx), n);
+  auto y_eigen = MapVector<T>(y + offy, n);
+  y_eigen = x_eigen;
 #else
   for (int i = 0; i < n; ++i) {
     y[offy + i] = x[offx + i];
@@ -147,6 +219,10 @@ template <typename T>
 void BlasSaxpy(int n, float alpha, const T *x, int offx, T *y, int offy) {
 #if defined(USE_OpenBLAS)
   cblas_saxpy(n, alpha, x + offx, 1, y + offy, 1);
+#elif defined(USE_Eigen)
+  const auto &x_eigen = MapVector<T>(const_cast<T *>(x + offx), n);
+  auto y_eigen = MapVector<T>(y + offy, n);
+  y_eigen = alpha * x_eigen + y_eigen;
 #else
   for (int i = 0; i < n; ++i) {
     y[offy + i] += alpha * x[offx + i];
@@ -158,6 +234,9 @@ template <typename T>
 void BlasSasum(int n, const T *x, int offx, float *y) {
 #if defined(USE_OpenBLAS)
   *y = cblas_sasum(n, x + offx, 1);
+#elif defined(USE_Eigen)
+  const auto &x_eigen = MapVector<T>(const_cast<T *>(x + offx), n);
+  *y = static_cast<T>(x_eigen.cwiseAbs().sum());
 #else
   double asum = 0;
   for (int i = 0; i < n; ++i) {
@@ -197,6 +276,17 @@ void BlasSgemv(int TA, int M, int N, float alpha, const T *A, int offA,
   CBLAS_TRANSPOSE transA = TA ? CblasTrans : CblasNoTrans;
   cblas_sgemv(CblasRowMajor, transA, M, N, alpha, A + offA, N, x + offx, 1,
               beta, y + offy, 1);
+#elif defined(USE_Eigen)
+  const auto &A_eigen = MapMatrix<T>(const_cast<T *>(A + offA), N, M);
+  if (!TA) {
+    const auto &x_eigen = MapVector<T>(const_cast<T *>(x + offx), N);
+    auto y_eigen = MapVector<T>(y + offy, M);
+    y_eigen = alpha * A_eigen.transpose() * x_eigen + beta * y_eigen;
+  } else {
+    const auto &x_eigen = MapVector<T>(const_cast<T *>(x + offx), M);
+    auto y_eigen = MapVector<T>(y + offy, N);
+    y_eigen = alpha * A_eigen * x_eigen + beta * y_eigen;
+  }
 #else
   for (int i = 0; i < (TA ? N : M); ++i) {
     y[offy + i] *= beta;
@@ -269,6 +359,26 @@ void BlasSgemm(int TA, int TB, int M, int N, int K, float alpha, const T *A,
   CBLAS_TRANSPOSE transB = TB ? CblasTrans : CblasNoTrans;
   cblas_sgemm(CblasRowMajor, transA, transB, M, N, K, alpha, A + offA, lda,
               B + offB, ldb, beta, C + offC, N);
+#elif defined(USE_Eigen)
+  auto C_eigen = MapMatrix<T>(C + offC, N, M);
+  if (!TA && !TB) {
+    const auto &A_eigen = MapMatrix<T>(const_cast<T *>(A + offA), K, M);
+    const auto &B_eigen = MapMatrix<T>(const_cast<T *>(B + offB), N, K);
+    C_eigen = alpha * B_eigen * A_eigen + beta * C_eigen;
+  } else if (TA && !TB) {
+    const auto &A_eigen = MapMatrix<T>(const_cast<T *>(A + offA), M, K);
+    const auto &B_eigen = MapMatrix<T>(const_cast<T *>(B + offB), N, K);
+    C_eigen = alpha * B_eigen * A_eigen.transpose() + beta * C_eigen;
+  } else if (!TA && TB) {
+    const auto &A_eigen = MapMatrix<T>(const_cast<T *>(A + offA), K, M);
+    const auto &B_eigen = MapMatrix<T>(const_cast<T *>(B + offB), K, N);
+    C_eigen = alpha * B_eigen.transpose() * A_eigen + beta * C_eigen;
+  } else {
+    const auto &A_eigen = MapMatrix<T>(const_cast<T *>(A + offA), M, K);
+    const auto &B_eigen = MapMatrix<T>(const_cast<T *>(B + offB), K, N);
+    C_eigen =
+        alpha * B_eigen.transpose() * A_eigen.transpose() + beta * C_eigen;
+  }
 #else
   for (int i = 0; i < M; ++i) {
     for (int j = 0; j < N; ++j) {

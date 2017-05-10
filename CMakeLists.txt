@@ -6,7 +6,8 @@ option(USE_CL "Use OpenCL" OFF)
 
 option(USE_CUDNN "Use CUDNN for acceleration" OFF)
 
-option(USE_BLAS "Use BLAS library in CPU mode" ON)
+option(USE_Eigen "Use Eigen in CPU mode" ON)
+option(USE_BLAS "Use BLAS library in CPU mode" OFF)
 option(USE_NNPACK "Use NNPACK library in CPU mode" ON)
 
 option(USE_Protobuf "Use Protobuf" ON)
