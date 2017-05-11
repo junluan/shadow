@@ -26,16 +26,24 @@ if (NOT MSVC)
                DOC "Protobuf library"
                NO_DEFAULT_PATH)
 else ()
+  set(Protobuf_RUNTIME)
+  if (MSVC_VERSION EQUAL 1800)
+    set(Protobuf_RUNTIME vc120)
+  elseif (MSVC_VERSION EQUAL 1900)
+    set(Protobuf_RUNTIME vc140)
+  elseif (MSVC_VERSION EQUAL 1910)
+    set(Protobuf_RUNTIME vc141)
+  endif ()
   find_library(Protobuf_LIBRARIES_RELEASE
                NAMES libprotobuf
                PATHS ${Protobuf_DIR}
-               PATH_SUFFIXES lib lib64 lib/x86_64 lib/x86_64-linux-gnu lib/x64 lib/x86
+               PATH_SUFFIXES lib/x64/${Protobuf_RUNTIME}
                DOC "Protobuf library"
                NO_DEFAULT_PATH)
   find_library(Protobuf_LIBRARIES_DEBUG
                NAMES libprotobufd
                PATHS ${Protobuf_DIR}
-               PATH_SUFFIXES lib lib64 lib/x86_64 lib/x86_64-linux-gnu lib/x64 lib/x86
+               PATH_SUFFIXES lib/x64/${Protobuf_RUNTIME}
                DOC "Protobuf library"
                NO_DEFAULT_PATH)
 
