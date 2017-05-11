@@ -3,6 +3,8 @@
 
 #include "util/type.hpp"
 
+namespace Shadow {
+
 namespace Image {
 
 template <typename T>
@@ -52,5 +54,7 @@ void PRelu(T *data, const VecInt &in_shape, bool channel_shared,
            const T *slope_data);
 
 }  // namespace Image
+
+}  // namespace Shadow
 
 #endif  // SHADOW_CORE_IMAGE_HPP

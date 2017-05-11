@@ -24,12 +24,13 @@ set(CMAKE_INSTALL_RPATH ${CMAKE_INSTALL_PREFIX}/lib)
 
 if (NOT CMAKE_BUILD_TYPE)
   message(STATUS "Build type not set - defaulting to Release")
-  set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build from: Debug Release." FORCE)
+  set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build from: Release Debug." FORCE)
 endif ()
 
 if (NOT MSVC)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -fPIC")
 else ()
+  set(CMAKE_CONFIGURATION_TYPES "Release;Debug")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP /wd4005 /wd4018 /wd4244 /wd4267 /wd4305 /wd4309 /wd4800 /wd4819 /wd4996")
 endif ()
 

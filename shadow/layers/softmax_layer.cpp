@@ -1,6 +1,8 @@
 #include "softmax_layer.hpp"
 #include "core/blas.hpp"
 
+namespace Shadow {
+
 void SoftmaxLayer::Setup(VecBlobF *blobs) {
   Layer::Setup(blobs);
 
@@ -74,3 +76,5 @@ void SoftmaxLayer::Release() {
 
   // DLOG(INFO) << "Free SoftmaxLayer!";
 }
+
+}  // namespace Shadow

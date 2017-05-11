@@ -1,11 +1,15 @@
 #ifndef SHADOW_CORE_CUDNN_HPP
 #define SHADOW_CORE_CUDNN_HPP
 
-#if defined(USE_CUDNN)
-
 #include "util/log.hpp"
 
+#if defined(USE_CUDNN)
 #include "cudnn.h"
+#endif
+
+namespace Shadow {
+
+#if defined(USE_CUDNN)
 
 #define CUDNN_VERSION_MIN(major, minor, patch) \
   (CUDNN_VERSION >= (major * 1000 + minor * 100 + patch))
@@ -16,40 +20,6 @@
     CHECK_EQ(status, CUDNN_STATUS_SUCCESS) << " "                          \
                                            << cudnnGetErrorString(status); \
   } while (0)
-
-#if defined(__linux)
-inline const char* cudnnGetErrorString(cudnnStatus_t status) {
-  switch (status) {
-    case CUDNN_STATUS_SUCCESS:
-      return "CUDNN_STATUS_SUCCESS";
-    case CUDNN_STATUS_NOT_INITIALIZED:
-      return "CUDNN_STATUS_NOT_INITIALIZED";
-    case CUDNN_STATUS_ALLOC_FAILED:
-      return "CUDNN_STATUS_ALLOC_FAILED";
-    case CUDNN_STATUS_BAD_PARAM:
-      return "CUDNN_STATUS_BAD_PARAM";
-    case CUDNN_STATUS_INTERNAL_ERROR:
-      return "CUDNN_STATUS_INTERNAL_ERROR";
-    case CUDNN_STATUS_INVALID_VALUE:
-      return "CUDNN_STATUS_INVALID_VALUE";
-    case CUDNN_STATUS_ARCH_MISMATCH:
-      return "CUDNN_STATUS_ARCH_MISMATCH";
-    case CUDNN_STATUS_MAPPING_ERROR:
-      return "CUDNN_STATUS_MAPPING_ERROR";
-    case CUDNN_STATUS_EXECUTION_FAILED:
-      return "CUDNN_STATUS_EXECUTION_FAILED";
-    case CUDNN_STATUS_NOT_SUPPORTED:
-      return "CUDNN_STATUS_NOT_SUPPORTED";
-    case CUDNN_STATUS_LICENSE_ERROR:
-      return "CUDNN_STATUS_LICENSE_ERROR";
-#if CUDNN_VERSION_MIN(6, 0, 0)
-    case CUDNN_STATUS_RUNTIME_PREREQUISITE_MISSING:
-      return "CUDNN_STATUS_RUNTIME_PREREQUISITE_MISSING";
-#endif
-  }
-  return "Unknown cudnn status";
-}
-#endif
 
 namespace cudnn {
 
@@ -164,5 +134,7 @@ extern cudnnHandle_t cudnn_handle_;
 }  // namespace Kernel
 
 #endif
+
+}  // namespace Shadow
 
 #endif  // SHADOW_CORE_CUDNN_HPP

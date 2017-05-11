@@ -3,6 +3,8 @@
 
 #include "method.hpp"
 
+namespace Shadow {
+
 typedef std::map<int, VecBoxF> LabelBBox;
 typedef std::vector<LabelBBox> VecLabelBBox;
 
@@ -60,5 +62,7 @@ class SSD : public Method {
   bool share_location_;
   JImage im_ini_, im_res_;
 };
+
+}  // namespace Shadow
 
 #endif  // SHADOW_EXAMPLES_SSD_HPP

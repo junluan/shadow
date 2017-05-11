@@ -1,6 +1,7 @@
 #include "demo.hpp"
-
 #include "util/jimage_proc.hpp"
+
+namespace Shadow {
 
 void Demo::Test(const std::string &image_file) {
   im_ini_.Read(image_file);
@@ -176,3 +177,5 @@ void Demo::PrintDetections(const std::string &im_name, const VecBoxF &boxes,
   }
   *os << "-------------------------" << std::endl;
 }
+
+}  // namespace Shadow

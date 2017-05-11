@@ -3,6 +3,8 @@
 
 #include "core/layer.hpp"
 
+namespace Shadow {
+
 class ReshapeLayer : public Layer {
  public:
   ReshapeLayer() {}
@@ -19,5 +21,7 @@ class ReshapeLayer : public Layer {
   int axis_, num_axes_, inferred_axis_, constant_count_;
   VecInt copy_axes_;
 };
+
+}  // namespace Shadow
 
 #endif  // SHADOW_LAYERS_RESHAPE_LAYER_HPP

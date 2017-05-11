@@ -1,6 +1,8 @@
 #ifndef SHADOW_CORE_BLAS_HPP
 #define SHADOW_CORE_BLAS_HPP
 
+namespace Shadow {
+
 namespace Blas {
 
 template <typename T>
@@ -70,5 +72,7 @@ void BlasSgemm(int TA, int TB, int M, int N, int K, float alpha, const T *A,
                int offA, const T *B, int offB, float beta, T *C, int offC);
 
 }  // namespace Blas
+
+}  // namespace Shadow
 
 #endif  // SHADOW_CORE_BLAS_HPP

@@ -3,6 +3,8 @@
 
 #include "type.hpp"
 
+namespace Shadow {
+
 template <class Dtype>
 class Box {
  public:
@@ -79,5 +81,7 @@ void Amend(std::vector<std::vector<Box<Dtype>>> *Bboxes, const VecRectF &crops,
            int height = 1, int width = 1);
 
 }  // namespace Boxes
+
+}  // namespace Shadow
 
 #endif  // SHADOW_UTIL_BOXES_HPP

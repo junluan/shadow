@@ -3,6 +3,8 @@
 
 #include "core/layer.hpp"
 
+namespace Shadow {
+
 class SoftmaxLayer : public Layer {
  public:
   SoftmaxLayer() {}
@@ -24,5 +26,7 @@ class SoftmaxLayer : public Layer {
   cudnnTensorDescriptor_t bottom_desc_ = nullptr, top_desc_ = nullptr;
 #endif
 };
+
+}  // namespace Shadow
 
 #endif  // SHADOW_LAYERS_SOFTMAX_LAYER_HPP

@@ -1,6 +1,8 @@
 #include "normalize_layer.hpp"
 #include "core/blas.hpp"
 
+namespace Shadow {
+
 void NormalizeLayer::Setup(VecBlobF *blobs) {
   Layer::Setup(blobs);
 
@@ -97,3 +99,5 @@ void NormalizeLayer::Release() {
 
   // DLOG(INFO) << "Free NormalizeLayer!";
 }
+
+}  // namespace Shadow

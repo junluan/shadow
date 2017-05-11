@@ -1,6 +1,8 @@
 #include "json.hpp"
 #include "util/log.hpp"
 
+namespace Shadow {
+
 #if !defined(USE_Protobuf)
 namespace Json {
 
@@ -124,3 +126,5 @@ const VecString GetVecString(const JValue &root, const std::string &name,
 
 }  // namespace Json
 #endif
+
+}  // namespace Shadow

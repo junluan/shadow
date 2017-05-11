@@ -12,6 +12,8 @@
 #include "params.hpp"
 #endif
 
+namespace Shadow {
+
 class Layer {
  public:
   Layer() {}
@@ -146,5 +148,7 @@ class Layer {
 };
 
 typedef std::vector<Layer *> VecLayer;
+
+}  // namespace Shadow
 
 #endif  // SHADOW_CORE_LAYER_HPP

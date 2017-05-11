@@ -1,6 +1,8 @@
 #include "jimage_proc.hpp"
 #include "util.hpp"
 
+namespace Shadow {
+
 namespace JImageProc {
 
 VecPointI GetLinePoints(const PointI &start, const PointI &end, const int step,
@@ -803,3 +805,5 @@ template void CropResize2Gray(const ASVLOFFSCREEN &im_arc, JImage *im_gray,
 #endif
 
 }  // namespace JImageProc
+
+}  // namespace Shadow

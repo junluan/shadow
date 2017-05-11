@@ -3,6 +3,8 @@
 
 #include "core/layer.hpp"
 
+namespace Shadow {
+
 class PriorBoxLayer : public Layer {
  public:
   PriorBoxLayer() {}
@@ -21,5 +23,7 @@ class PriorBoxLayer : public Layer {
   bool flip_, clip_, is_initial_;
   VecFloat min_sizes_, max_sizes_, aspect_ratios_, variance_, top_data_;
 };
+
+}  // namespace Shadow
 
 #endif  // SHADOW_LAYERS_PRIOR_BOX_LAYER_HPP

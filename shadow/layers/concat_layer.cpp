@@ -1,6 +1,8 @@
 #include "concat_layer.hpp"
 #include "core/image.hpp"
 
+namespace Shadow {
+
 void ConcatLayer::Setup(VecBlobF *blobs) {
   Layer::Setup(blobs);
 
@@ -58,3 +60,5 @@ void ConcatLayer::Forward() {
 void ConcatLayer::Release() {
   // DLOG(INFO) << "Free ConcatLayer!";
 }
+
+}  // namespace Shadow

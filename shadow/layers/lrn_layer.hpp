@@ -3,6 +3,8 @@
 
 #include "core/layer.hpp"
 
+namespace Shadow {
+
 class LRNLayer : public Layer {
  public:
   LRNLayer() {}
@@ -21,5 +23,7 @@ class LRNLayer : public Layer {
 
   BlobF scale_;
 };
+
+}  // namespace Shadow
 
 #endif  // SHADOW_LAYERS_LRN_LAYER_HPP

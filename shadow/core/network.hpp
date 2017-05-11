@@ -3,6 +3,8 @@
 
 #include "layer.hpp"
 
+namespace Shadow {
+
 class Network {
  public:
   void Setup(int device_id = 0);
@@ -44,5 +46,7 @@ class Network {
   VecBlobF blobs_;
   std::map<std::string, VecFloat> blobs_data_;
 };
+
+}  // namespace Shadow
 
 #endif  // SHADOW_CORE_NETWORK_HPP

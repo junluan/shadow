@@ -3,6 +3,8 @@
 
 #include "core/layer.hpp"
 
+namespace Shadow {
+
 class BatchNormLayer : public Layer {
  public:
   BatchNormLayer() {}
@@ -23,5 +25,7 @@ class BatchNormLayer : public Layer {
   BlobF mean_, variance_, temp_;
   BlobF sum_batch_multiplier_, sum_spatial_multiplier_, batch_by_channel_;
 };
+
+}  // namespace Shadow
 
 #endif  // SHADOW_LAYERS_BATCH_NORM_LAYER_HPP

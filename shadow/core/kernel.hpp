@@ -5,7 +5,15 @@
 #include "cublas_v2.h"
 #include "cuda_runtime.h"
 #include "cudnn.hpp"
+#elif defined(USE_CL)
+#include "easycl/easycl.hpp"
+using BufferI = EasyCL::Buffer<int>;
+using BufferF = EasyCL::Buffer<float>;
+#endif
 
+namespace Shadow {
+
+#if defined(USE_CUDA)
 // CUDA: use 512 threads per block
 const int NumThreads = 512;
 
@@ -22,11 +30,6 @@ inline int GetBlocks(const int N) { return (N + NumThreads - 1) / NumThreads; }
     cudaError_t error = condition;                                    \
     CHECK_EQ(error, cudaSuccess) << " " << cudaGetErrorString(error); \
   } while (0)
-
-#elif defined(USE_CL)
-#include "easycl/easycl.hpp"
-typedef EasyCL::Buffer<int> BufferI;
-typedef EasyCL::Buffer<float> BufferF;
 #endif
 
 namespace Kernel {
@@ -62,5 +65,7 @@ extern EasyCL::KernelSet cl_kernels_;
 #endif
 
 }  // namespace Kernel
+
+}  // namespace Shadow
 
 #endif  // SHADOW_CORE_KERNEL_HPP

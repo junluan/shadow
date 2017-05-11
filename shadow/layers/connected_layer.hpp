@@ -3,6 +3,8 @@
 
 #include "core/layer.hpp"
 
+namespace Shadow {
+
 class ConnectedLayer : public Layer {
  public:
   ConnectedLayer() {}
@@ -21,5 +23,7 @@ class ConnectedLayer : public Layer {
 
   BlobF biases_multiplier_;
 };
+
+}  // namespace Shadow
 
 #endif  // SHADOW_LAYERS_CONNECTED_LAYER_HPP

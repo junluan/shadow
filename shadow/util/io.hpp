@@ -8,6 +8,13 @@
 #define SUPPORT_JSON
 #endif
 
+#else
+#include "core/params.hpp"
+#endif
+
+namespace Shadow {
+
+#if defined(USE_Protobuf)
 namespace IO {
 
 using google::protobuf::Message;
@@ -33,8 +40,6 @@ void WriteProtoToJsonText(const Message& proto, std::string* json_text,
 }  // namespace IO
 
 #else
-#include "core/params.hpp"
-
 namespace IO {
 
 bool ReadProtoFromText(const std::string& proto_text,
@@ -45,5 +50,7 @@ bool ReadProtoFromTextFile(const std::string& proto_file,
 
 }  // namespace IO
 #endif
+
+}  // namespace Shadow
 
 #endif  // SHADOW_CORE_UTIL_IO_HPP

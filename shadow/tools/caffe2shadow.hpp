@@ -8,6 +8,8 @@
 #include "util/log.hpp"
 #include "util/util.hpp"
 
+namespace Shadow {
+
 namespace Caffe2Shadow {
 
 void ConvertCommon(const caffe::NetParameter& caffe_model,
@@ -678,5 +680,7 @@ void WriteProtoToBinary(const IO::Message& proto, const std::string& root,
 }
 
 }  // namespace Caffe2Shadow
+
+} // namespace Shadow
 
 #endif  // SHADOW_TOOLS_CAFFE2SHADOW_HPP

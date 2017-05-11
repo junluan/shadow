@@ -1,6 +1,8 @@
 #include "batch_norm_layer.hpp"
 #include "core/blas.hpp"
 
+namespace Shadow {
+
 void BatchNormLayer::Setup(VecBlobF *blobs) {
   Layer::Setup(blobs);
 
@@ -120,3 +122,5 @@ void BatchNormLayer::Release() {
 
   // DLOG(INFO) << "Free BatchNormLayer!";
 }
+
+}  // namespace Shadow

@@ -1,6 +1,8 @@
 #include "lrn_layer.hpp"
 #include "core/image.hpp"
 
+namespace Shadow {
+
 void LRNLayer::Setup(VecBlobF *blobs) {
   Layer::Setup(blobs);
 
@@ -34,3 +36,5 @@ void LRNLayer::Release() {
 
   // DLOG(INFO) << "Free LRNLayer!";
 }
+
+}  // namespace Shadow

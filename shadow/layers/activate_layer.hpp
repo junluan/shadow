@@ -3,6 +3,8 @@
 
 #include "core/layer.hpp"
 
+namespace Shadow {
+
 class ActivateLayer : public Layer {
  public:
   ActivateLayer() {}
@@ -19,5 +21,7 @@ class ActivateLayer : public Layer {
   int activate_type_;
   bool channel_shared_;
 };
+
+}  // namespace Shadow
 
 #endif  // SHADOW_ACTIVATE_LAYER_HPP

@@ -1,6 +1,8 @@
 #include "data_layer.hpp"
 #include "core/image.hpp"
 
+namespace Shadow {
+
 void DataLayer::Setup(VecBlobF *blobs) {
   BlobF *bottom = get_blob_by_name(*blobs, "in_blob");
   if (bottom != nullptr) {
@@ -61,3 +63,5 @@ void DataLayer::Release() {
 
   // DLOG(INFO) << "Free DataLayer!";
 }
+
+}  // namespace Shadow

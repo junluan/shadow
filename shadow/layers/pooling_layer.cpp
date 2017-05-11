@@ -1,6 +1,8 @@
 #include "pooling_layer.hpp"
 #include "core/image.hpp"
 
+namespace Shadow {
+
 inline int pooling_out_size(int dim, int kernel_size, int stride, int pad) {
   return static_cast<int>(std::ceil(
              static_cast<float>(dim + 2 * pad - kernel_size) / stride)) +
@@ -93,3 +95,5 @@ void PoolingLayer::Release() {
 
   // DLOG(INFO) << "Free PoolingLayer!";
 }
+
+}  // namespace Shadow

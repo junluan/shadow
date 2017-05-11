@@ -3,6 +3,8 @@
 
 #include "core/layer.hpp"
 
+namespace Shadow {
+
 class ConcatLayer : public Layer {
  public:
   ConcatLayer() {}
@@ -18,5 +20,7 @@ class ConcatLayer : public Layer {
  private:
   int concat_axis_, num_concats_, concat_input_size_;
 };
+
+}  // namespace Shadow
 
 #endif  // SHADOW_LAYERS_CONCAT_LAYER_HPP

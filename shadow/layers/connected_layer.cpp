@@ -1,6 +1,8 @@
 #include "connected_layer.hpp"
 #include "core/blas.hpp"
 
+namespace Shadow {
+
 void ConnectedLayer::Setup(VecBlobF *blobs) {
   Layer::Setup(blobs);
 
@@ -59,3 +61,5 @@ void ConnectedLayer::Release() {
 
   // DLOG(INFO) << "Free ConnectedLayer!";
 }
+
+}  // namespace Shadow

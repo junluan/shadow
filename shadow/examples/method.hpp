@@ -6,6 +6,8 @@
 #include "util/jimage.hpp"
 #include "util/util.hpp"
 
+namespace Shadow {
+
 class Method {
  public:
   Method() {}
@@ -28,5 +30,7 @@ class Method {
 
   virtual void Release() { LOG(INFO) << "Release method!"; }
 };
+
+}  // namespace Shadow
 
 #endif  // SHADOW_EXAMPLES_METHOD_HPP

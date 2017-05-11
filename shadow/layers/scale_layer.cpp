@@ -2,6 +2,8 @@
 #include "core/blas.hpp"
 #include "core/image.hpp"
 
+namespace Shadow {
+
 void ScaleLayer::Setup(VecBlobF *blobs) {
   Layer::Setup(blobs);
 
@@ -69,3 +71,5 @@ void ScaleLayer::Forward() {
 void ScaleLayer::Release() {
   // DLOG(INFO) << "Free ScaleLayer!";
 }
+
+}  // namespace Shadow

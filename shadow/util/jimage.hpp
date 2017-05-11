@@ -14,6 +14,8 @@
 
 #include <cstring>
 
+namespace Shadow {
+
 enum Order { kGray, kRGB, kBGR, kArc };
 
 class JImage {
@@ -108,5 +110,7 @@ class JImage {
   Order order_;
   bool shared_ = false;
 };
+
+}  // namespace Shadow
 
 #endif  // SHADOW_UTIL_JIMAGE_HPP

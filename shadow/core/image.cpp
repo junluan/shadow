@@ -1,6 +1,8 @@
 #include "image.hpp"
 #include "kernel.hpp"
 
+namespace Shadow {
+
 namespace Image {
 
 #if !defined(USE_CUDA) & !defined(USE_CL)
@@ -474,3 +476,5 @@ template void PRelu(BufferF *data, const VecInt &in_shape, bool channel_shared,
 #endif
 
 }  // namespace Image
+
+}  // namespace Shadow

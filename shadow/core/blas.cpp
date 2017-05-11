@@ -21,6 +21,8 @@ using MapMatrix = Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>>;
 #include <algorithm>
 #include <cfloat>
 
+namespace Shadow {
+
 namespace Blas {
 
 #if !defined(USE_CUDA) & !defined(USE_CL)
@@ -632,3 +634,5 @@ template void BlasSgemm(int TA, int TB, int M, int N, int K, float alpha,
 #endif
 
 }  // namespace Blas
+
+}  // namespace Shadow

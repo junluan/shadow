@@ -5,6 +5,8 @@
 #include "util/log.hpp"
 #include "util/type.hpp"
 
+namespace Shadow {
+
 #if defined(USE_CL)
 #define BACKEND EasyCL::Buffer<Dtype>
 #else
@@ -173,5 +175,7 @@ inline static BlobF *get_blob_by_name(const VecBlobF &blobs,
   }
   return nullptr;
 }
+
+}  // namespace Shadow
 
 #endif  // SHADOW_CORE_BLOB_HPP

@@ -5,7 +5,11 @@
 
 #if !defined(USE_Protobuf)
 #include "rapidjson/document.h"
+#endif
 
+namespace Shadow {
+
+#if !defined(USE_Protobuf)
 using JValue = rapidjson::Value;
 using JDocument = rapidjson::Document;
 
@@ -40,5 +44,7 @@ const VecString GetVecString(const JValue &root, const std::string &name,
 
 }  // namespace Json
 #endif
+
+}  // namespace Shadow
 
 #endif  // SHADOW_CORE_JSON_HPP

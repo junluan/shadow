@@ -4,6 +4,8 @@
 #include <string>
 #include <vector>
 
+namespace Shadow {
+
 #if !defined(USE_Protobuf)
 namespace shadow {
 
@@ -614,5 +616,7 @@ class NetParameter {
 
 }  // namespace shadow
 #endif
+
+}  // namespace Shadow
 
 #endif  // SHADOW_CORE_PARAMS_HPP

@@ -3,6 +3,8 @@
 
 #include "core/layer.hpp"
 
+namespace Shadow {
+
 class NormalizeLayer : public Layer {
  public:
   NormalizeLayer() {}
@@ -23,5 +25,7 @@ class NormalizeLayer : public Layer {
   BlobF norm_, buffer_;
   BlobF sum_channel_multiplier_, sum_spatial_multiplier_;
 };
+
+}  // namespace Shadow
 
 #endif  // SHADOW_LAYERS_NORMALIZE_LAYER_HPP

@@ -1,6 +1,8 @@
 #include "ssd.hpp"
 #include "util/jimage_proc.hpp"
 
+namespace Shadow {
+
 inline void ConvertData(const JImage &im_src, float *data, int flag = 1) {
   CHECK_NOTNULL(im_src.data());
   CHECK_NOTNULL(data);
@@ -442,3 +444,5 @@ void SSD::DecodeBBox(const BoxF &prior_bbox, const VecFloat &prior_variance,
   decode_bbox->xmax = decode_bbox_center_x + decode_bbox_width / 2.f;
   decode_bbox->ymax = decode_bbox_center_y + decode_bbox_height / 2.f;
 }
+
+}  // namespace Shadow

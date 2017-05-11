@@ -3,6 +3,8 @@
 
 #include "core/layer.hpp"
 
+namespace Shadow {
+
 class DataLayer : public Layer {
  public:
   DataLayer() {}
@@ -21,5 +23,7 @@ class DataLayer : public Layer {
 
   BlobF mean_value_;
 };
+
+}  // namespace Shadow
 
 #endif  // SHADOW_LAYERS_DATA_LAYER_HPP

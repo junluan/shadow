@@ -5,6 +5,8 @@
 #include <clBLAS.h>
 #endif
 
+namespace Shadow {
+
 namespace Kernel {
 
 #if defined(USE_CL)
@@ -117,3 +119,5 @@ template void ReleaseBuffer(BufferF *buffer);
 #endif
 
 }  // namespace Kernel
+
+}  // namespace Shadow

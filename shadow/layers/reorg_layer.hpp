@@ -3,6 +3,8 @@
 
 #include "core/layer.hpp"
 
+namespace Shadow {
+
 class ReorgLayer : public Layer {
  public:
   ReorgLayer() {}
@@ -18,5 +20,7 @@ class ReorgLayer : public Layer {
  private:
   int stride_;
 };
+
+}  // namespace Shadow
 
 #endif  // SHADOW_LAYERS_REORG_LAYER_HPP

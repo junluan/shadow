@@ -1,6 +1,8 @@
 #include "reorg_layer.hpp"
 #include "core/image.hpp"
 
+namespace Shadow {
+
 void ReorgLayer::Setup(VecBlobF *blobs) {
   Layer::Setup(blobs);
 
@@ -34,3 +36,5 @@ void ReorgLayer::Forward() {
 void ReorgLayer::Release() {
   // DLOG(INFO) << "Free ReorgLayer!";
 }
+
+}  // namespace Shadow

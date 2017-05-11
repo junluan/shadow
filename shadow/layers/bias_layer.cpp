@@ -2,6 +2,8 @@
 #include "core/blas.hpp"
 #include "core/image.hpp"
 
+namespace Shadow {
+
 void BiasLayer::Setup(VecBlobF *blobs) {
   Layer::Setup(blobs);
 
@@ -56,3 +58,5 @@ void BiasLayer::Forward() {
 void BiasLayer::Release() {
   // DLOG(INFO) << "Free BiasLayer!";
 }
+
+}  // namespace Shadow

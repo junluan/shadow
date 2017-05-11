@@ -1,5 +1,7 @@
 #include "cudnn.hpp"
 
+namespace Shadow {
+
 #if defined(USE_CUDNN)
 
 namespace cudnn {
@@ -26,3 +28,5 @@ cudnnHandle_t cudnn_handle_ = nullptr;
 }  // namespace Kernel
 
 #endif
+
+}  // namespace Shadow

@@ -3,6 +3,8 @@
 
 #include "core/layer.hpp"
 
+namespace Shadow {
+
 class PermuteLayer : public Layer {
  public:
   PermuteLayer() {}
@@ -21,5 +23,7 @@ class PermuteLayer : public Layer {
 
   BlobI permute_order_, old_steps_, new_steps_;
 };
+
+}  // namespace Shadow
 
 #endif  // SHADOW_LAYERS_PERMUTE_LAYER_HPP

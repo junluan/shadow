@@ -1,5 +1,7 @@
 #include "flatten_layer.hpp"
 
+namespace Shadow {
+
 void FlattenLayer::Setup(VecBlobF *blobs) {
   Layer::Setup(blobs);
 
@@ -35,3 +37,5 @@ void FlattenLayer::Forward() { tops_[0]->share_data(bottoms_[0]->data()); }
 void FlattenLayer::Release() {
   // DLOG(INFO) << "Free FlattenLayer!";
 }
+
+}  // namespace Shadow

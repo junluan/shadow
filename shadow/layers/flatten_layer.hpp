@@ -3,6 +3,8 @@
 
 #include "core/layer.hpp"
 
+namespace Shadow {
+
 class FlattenLayer : public Layer {
  public:
   FlattenLayer() {}
@@ -18,5 +20,7 @@ class FlattenLayer : public Layer {
  private:
   int axis_, end_axis_;
 };
+
+}  // namespace Shadow
 
 #endif  // SHADOW_LAYERS_FLATTEN_LAYER_HPP

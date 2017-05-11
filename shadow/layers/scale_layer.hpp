@@ -3,6 +3,8 @@
 
 #include "core/layer.hpp"
 
+namespace Shadow {
+
 class ScaleLayer : public Layer {
  public:
   ScaleLayer() {}
@@ -21,5 +23,7 @@ class ScaleLayer : public Layer {
 
   BlobF *scale_ = nullptr, *bias_ = nullptr;
 };
+
+}  // namespace Shadow
 
 #endif  // SHADOW_LAYERS_SCALE_LAYER_HPP

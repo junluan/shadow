@@ -2,6 +2,8 @@
 #include "core/blas.hpp"
 #include "core/image.hpp"
 
+namespace Shadow {
+
 void ActivateLayer::Setup(VecBlobF *blobs) {
   Layer::Setup(blobs);
 
@@ -56,3 +58,5 @@ void ActivateLayer::Forward() {
 void ActivateLayer::Release() {
   // DLOG(INFO) << "Free ActivateLayer!";
 }
+
+}  // namespace Shadow

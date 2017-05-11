@@ -4,6 +4,8 @@
 #include "ssd.hpp"
 #include "yolo.hpp"
 
+namespace Shadow {
+
 class Demo {
  public:
   Demo(const std::string &method_name = "ssd") {
@@ -56,5 +58,7 @@ class Demo {
   std::vector<VecBoxF> Bboxes_;
   Timer timer_;
 };
+
+}  // namespace Shadow
 
 #endif  // SHADOW_EXAMPLES_DEMO_HPP

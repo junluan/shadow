@@ -3,6 +3,8 @@
 
 #include "core/layer.hpp"
 
+namespace Shadow {
+
 class ConvolutionLayer : public Layer {
  public:
   ConvolutionLayer() {}
@@ -36,5 +38,7 @@ class ConvolutionLayer : public Layer {
   void *workspace_ = nullptr;
 #endif
 };
+
+}  // namespace Shadow
 
 #endif  // SHADOW_LAYERS_CONVOLUTION_LAYER_HPP

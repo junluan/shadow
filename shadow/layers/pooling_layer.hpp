@@ -3,6 +3,8 @@
 
 #include "core/layer.hpp"
 
+namespace Shadow {
+
 class PoolingLayer : public Layer {
  public:
   PoolingLayer() {}
@@ -25,5 +27,7 @@ class PoolingLayer : public Layer {
   cudnnPoolingMode_t mode_;
 #endif
 };
+
+}  // namespace Shadow
 
 #endif  // SHADOW_LAYERS_POOLING_LAYER_HPP

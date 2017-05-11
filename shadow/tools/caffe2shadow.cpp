@@ -1,6 +1,7 @@
 #include "caffe2shadow.hpp"
 
-using namespace Caffe2Shadow;
+using namespace Shadow::Caffe2Shadow;
+using namespace Shadow::IO;
 
 int main(int argc, char const* argv[]) {
   std::string model_root = "models/ssd";
@@ -12,8 +13,8 @@ int main(int argc, char const* argv[]) {
   std::string model_file = model_root + "/" + model_name + ".caffemodel";
 
   caffe::NetParameter caffe_deploy, caffe_model;
-  IO::ReadProtoFromTextFile(deploy_file, &caffe_deploy);
-  IO::ReadProtoFromBinaryFile(model_file, &caffe_model);
+  ReadProtoFromTextFile(deploy_file, &caffe_deploy);
+  ReadProtoFromBinaryFile(model_file, &caffe_model);
 
   const std::vector<int> input_shape{1, 3, 300, 300};
 

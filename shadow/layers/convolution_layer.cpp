@@ -6,6 +6,8 @@
 #include "nnpack.h"
 #endif
 
+namespace Shadow {
+
 inline int convolution_out_size(int dim, int kernel_size, int stride, int pad,
                                 int dilation) {
   int kernel_extent = dilation * (kernel_size - 1) + 1;
@@ -216,3 +218,5 @@ void ConvolutionLayer::Release() {
 
   // DLOG(INFO) << "Free ConvolutionLayer!";
 }
+
+}  // namespace Shadow

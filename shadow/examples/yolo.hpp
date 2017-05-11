@@ -3,6 +3,8 @@
 
 #include "method.hpp"
 
+namespace Shadow {
+
 class YOLO : public Method {
  public:
   YOLO() {}
@@ -32,5 +34,7 @@ class YOLO : public Method {
   float threshold_;
   JImage im_ini_, im_res_;
 };
+
+}  // namespace Shadow
 
 #endif  // SHADOW_EXAMPLES_YOLO_HPP

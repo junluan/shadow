@@ -9,6 +9,8 @@
 #include "stb/stb_image_write.h"
 #endif
 
+namespace Shadow {
+
 void JImage::Read(const std::string &im_path) {
   if (data_ != nullptr) {
     delete[] data_;
@@ -350,3 +352,5 @@ void JImage::GetInv(unsigned char *im_inv) const {
     LOG(FATAL) << "Unsupported format to get inverse!";
   }
 }
+
+}  // namespace Shadow

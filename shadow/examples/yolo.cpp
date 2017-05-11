@@ -1,6 +1,8 @@
 #include "yolo.hpp"
 #include "util/jimage_proc.hpp"
 
+namespace Shadow {
+
 inline void ConvertData(const JImage &im_src, float *data, int flag = 1) {
   CHECK_NOTNULL(im_src.data());
   CHECK_NOTNULL(data);
@@ -193,3 +195,5 @@ void YOLO::ConvertDetections(float *data, float *biases, int classes,
   ActivateSoftmax(data, classes, num_km, side);
   ConvertRegionBoxes(data, biases, classes, num_km, side, threshold, boxes);
 }
+
+}  // namespace Shadow

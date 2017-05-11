@@ -4,6 +4,8 @@
 
 #include <cfloat>
 
+namespace Shadow {
+
 namespace Blas {
 
 #if defined(USE_CUDA)
@@ -243,3 +245,5 @@ template void BlasSgemm(int TA, int TB, int M, int N, int K, float alpha,
 #endif
 
 }  // namespace Blas
+
+}  // namespace Shadow

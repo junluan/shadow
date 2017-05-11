@@ -8,6 +8,15 @@
 #include <io.h>
 #endif
 
+#if defined(SUPPORT_JSON)
+#include <google/protobuf/util/json_util.h>
+#endif
+
+#else
+#include "core/parser.hpp"
+#include "util/util.hpp"
+#endif
+
 #include <fcntl.h>
 #include <fstream>
 
@@ -15,10 +24,9 @@
 #include <google/protobuf/io/zero_copy_stream_impl.h>
 #include <google/protobuf/text_format.h>
 
-#if defined(SUPPORT_JSON)
-#include <google/protobuf/util/json_util.h>
-#endif
+namespace Shadow {
 
+#if defined(USE_Protobuf)
 namespace IO {
 
 using google::protobuf::io::CodedInputStream;
@@ -97,9 +105,6 @@ void WriteProtoToJsonText(const Message& proto, std::string* json_text,
 }  // namespace IO
 
 #else
-#include "core/parser.hpp"
-#include "util/util.hpp"
-
 namespace IO {
 
 bool ReadProtoFromText(const std::string& proto_text,
@@ -115,3 +120,5 @@ bool ReadProtoFromTextFile(const std::string& proto_file,
 
 }  // namespace IO
 #endif
+
+}  // namespace Shadow

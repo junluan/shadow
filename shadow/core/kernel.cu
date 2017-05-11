@@ -3,6 +3,8 @@
 
 #include <cmath>
 
+namespace Shadow {
+
 namespace Kernel {
 
 #if defined(USE_CUDA)
@@ -82,3 +84,5 @@ template void ReleaseBuffer<float>(float *buffer);
 #endif
 
 }  // namespace Kernel
+
+}  // namespace Shadow

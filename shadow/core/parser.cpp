@@ -1,6 +1,8 @@
 #include "parser.hpp"
 #include "util/log.hpp"
 
+namespace Shadow {
+
 #if !defined(USE_Protobuf)
 namespace Parser {
 
@@ -513,3 +515,5 @@ const shadow::LayerParameter ParseSoftmax(const JValue &root) {
 
 }  // namespace Parser
 #endif
+
+}  // namespace Shadow

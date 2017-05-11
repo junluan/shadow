@@ -1,5 +1,7 @@
 #include "reshape_layer.hpp"
 
+namespace Shadow {
+
 void ReshapeLayer::Setup(VecBlobF *blobs) {
   Layer::Setup(blobs);
 
@@ -78,3 +80,5 @@ void ReshapeLayer::Forward() { tops_[0]->share_data(bottoms_[0]->data()); }
 void ReshapeLayer::Release() {
   // DLOG(INFO) << "Free ReshapeLayer!";
 }
+
+}  // namespace Shadow

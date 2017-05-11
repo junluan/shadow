@@ -1,6 +1,8 @@
 #include "permute_layer.hpp"
 #include "core/image.hpp"
 
+namespace Shadow {
+
 void PermuteLayer::Setup(VecBlobF *blobs) {
   Layer::Setup(blobs);
 
@@ -59,3 +61,5 @@ void PermuteLayer::Release() {
 
   // DLOG(INFO) << "Free PermuteLayer!";
 }
+
+}  // namespace Shadow

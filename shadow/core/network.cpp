@@ -23,6 +23,8 @@
 #include "nnpack.h"
 #endif
 
+namespace Shadow {
+
 void Network::Setup(int device_id) {
 #if defined(USE_CUDA) | defined(USE_CL)
   Kernel::Setup(device_id);
@@ -252,3 +254,5 @@ Layer *Network::LayerFactory(const shadow::LayerParameter &layer_param) {
   }
   return layer;
 }
+
+}  // namespace Shadow

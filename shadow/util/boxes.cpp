@@ -1,6 +1,8 @@
 #include "boxes.hpp"
 #include "log.hpp"
 
+namespace Shadow {
+
 namespace Boxes {
 
 template <typename Dtype>
@@ -168,3 +170,5 @@ template void Amend(std::vector<VecBoxF> *Bboxes, const VecRectF &crops,
                     int height, int width);
 
 }  // namespace Boxes
+
+}  // namespace Shadow

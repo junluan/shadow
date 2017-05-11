@@ -3,6 +3,8 @@
 
 #include "core/layer.hpp"
 
+namespace Shadow {
+
 class BiasLayer : public Layer {
  public:
   BiasLayer() {}
@@ -20,5 +22,7 @@ class BiasLayer : public Layer {
 
   BlobF *bias_;
 };
+
+}  // namespace Shadow
 
 #endif  // SHADOW_LAYERS_BIAS_LAYER_HPP

@@ -4,6 +4,8 @@
 #include "jimage.hpp"
 #include "type.hpp"
 
+namespace Shadow {
+
 namespace JImageProc {
 
 VecPointI GetLinePoints(const PointI &start, const PointI &end,
@@ -54,5 +56,7 @@ void Gradient(const JImage &im_src, int *grad_x, int *grad_y, int *magnitude,
               bool L2 = false);
 
 }  // namespace JImageProc
+
+}  // namespace Shadow
 
 #endif  // SHADOW_UTIL_JIMAGE_PROC_HPP

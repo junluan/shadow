@@ -1,5 +1,7 @@
 #include "prior_box_layer.hpp"
 
+namespace Shadow {
+
 void PriorBoxLayer::Setup(VecBlobF *blobs) {
   Layer::Setup(blobs);
 
@@ -156,3 +158,5 @@ void PriorBoxLayer::Forward() {
 void PriorBoxLayer::Release() {
   // DLOG(INFO) << "Free PriorBoxLayer!";
 }
+
+}  // namespace Shadow
