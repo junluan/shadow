@@ -14,23 +14,12 @@ find_path(Eigen_INCLUDE_DIRS
 find_package_handle_standard_args(Eigen DEFAULT_MSG Eigen_INCLUDE_DIRS)
 
 if (Eigen_FOUND)
-  file(READ ${Eigen_INCLUDE_DIRS}/Eigen/src/Core/util/Macros.h Eigen_HEADER_CONTENTS)
-  string(REGEX MATCH "define EIGEN_WORLD_VERSION * +([0-9]+)"
-         Eigen_VERSION_WORLD "${Eigen_HEADER_CONTENTS}")
-  string(REGEX REPLACE "define EIGEN_WORLD_VERSION * +([0-9]+)" "\\1"
-         Eigen_VERSION_WORLD "${Eigen_VERSION_WORLD}")
-  string(REGEX MATCH "define EIGEN_MAJOR_VERSION * +([0-9]+)"
-         Eigen_VERSION_MAJOR "${Eigen_HEADER_CONTENTS}")
-  string(REGEX REPLACE "define EIGEN_MAJOR_VERSION * +([0-9]+)" "\\1"
-         Eigen_VERSION_MAJOR "${Eigen_VERSION_MAJOR}")
-  string(REGEX MATCH "define EIGEN_MINOR_VERSION * +([0-9]+)"
-         Eigen_VERSION_MINOR "${Eigen_HEADER_CONTENTS}")
-  string(REGEX REPLACE "define EIGEN_MINOR_VERSION * +([0-9]+)" "\\1"
-         Eigen_VERSION_MINOR "${Eigen_VERSION_MINOR}")
-  if (NOT Eigen_VERSION_WORLD)
+  shadow_parse_header(${Eigen_INCLUDE_DIRS}/Eigen/src/Core/util/Macros.h
+                      EIGEN_WORLD_VERSION EIGEN_MAJOR_VERSION EIGEN_MINOR_VERSION)
+  if (NOT EIGEN_WORLD_VERSION)
     set(Eigen_VERSION "?")
   else ()
-    set(Eigen_VERSION "${Eigen_VERSION_WORLD}.${Eigen_VERSION_MAJOR}.${Eigen_VERSION_MINOR}")
+    set(Eigen_VERSION "${EIGEN_WORLD_VERSION}.${EIGEN_MAJOR_VERSION}.${EIGEN_MINOR_VERSION}")
   endif ()
   if (NOT Eigen_FIND_QUIETLY)
     message(STATUS "Found Eigen: ${Eigen_INCLUDE_DIRS} (found version ${Eigen_VERSION})")
