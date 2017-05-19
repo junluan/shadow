@@ -476,16 +476,29 @@ namespace Caffe2Shadow {
 
 void WriteDefines(const shadow::NetParameter& shadow_net,
                   const std::string& root, const std::string& model_name) {
-  // write network proto definition to cpp
+  auto class_name = model_name;
+  std::transform(model_name.begin(), model_name.end(), class_name.begin(),
+                 ::toupper);
+  const auto& model_name_cpp = model_name + ".cpp";
+  const auto& model_name_hpp = model_name + ".hpp";
+  const auto& model_name_weights_hpp = model_name + "_weights.hpp";
+
+  int whole_count = 0;
+  std::vector<int> weight_counts;
   shadow::NetParameter net(shadow_net);
   for (int l = 0; l < net.layer_size(); ++l) {
     auto layer_param = net.mutable_layer(l);
+    if (layer_param->blobs_size() == 0) continue;
+    int count = 0;
+    for (const auto& blob : layer_param->blobs()) {
+      count += blob.data_size();
+    }
+    whole_count += count;
+    weight_counts.push_back(count);
     for (int n = 0; n < layer_param->blobs_size(); ++n) {
       layer_param->mutable_blobs(n)->clear_data();
     }
   }
-
-  std::ofstream cpp_file(root + "/" + model_name + ".cpp");
 
   std::string proto_str, json_str;
   IO::WriteProtoToText(net, &proto_str);
@@ -494,155 +507,149 @@ void WriteDefines(const shadow::NetParameter& shadow_net,
 #endif
 
   size_t split_count = 10000;
-  size_t proto_str_count = proto_str.size(), json_str_count = json_str.size();
+  auto proto_str_count = proto_str.size(), json_str_count = json_str.size();
 
-  size_t proto_split_off = proto_str_count % split_count;
-  size_t proto_split_num =
+  auto proto_split_off = proto_str_count % split_count;
+  auto proto_split_num =
       proto_str_count / split_count + (proto_split_off > 0 ? 1 : 0);
 
-  size_t json_split_off = json_str_count % split_count;
-  size_t json_split_num =
+  auto json_split_off = json_str_count % split_count;
+  auto json_split_num =
       json_str_count / split_count + (json_split_off > 0 ? 1 : 0);
 
-  std::string model_name_upper = model_name;
-  std::transform(model_name.begin(), model_name.end(), model_name_upper.begin(),
-                 ::toupper);
-  cpp_file << "#include \"" << model_name << ".hpp\"\n\n";
+  //########## write network proto definition to cpp ##########//
+  std::ofstream cpp_file(root + "/" + model_name_cpp);
+
+  cpp_file << "#include \"" << model_name_hpp << "\"\n"
+           << "#include \"" << model_name_weights_hpp << "\"\n\n";
 
   size_t offset = 0;
   for (int n = 0; n < proto_split_num; ++n) {
-    cpp_file << "const std::string " << model_name_upper << "::model_" << n
-             << "_ = \nR\"(";
+    cpp_file << "const std::string model_" << n << "_ = \nR\"(";
     cpp_file << proto_str.substr(offset, split_count);
     cpp_file << ")\";\n\n";
     offset += split_count;
   }
+  cpp_file << "const std::string " << class_name << "::model_ = ";
+  for (int n = 0; n < proto_split_num - 1; ++n) {
+    cpp_file << "model_" << n << "_ + ";
+  }
+  cpp_file << "model_" << proto_split_num - 1 << "_;\n\n";
 
 #if defined(SUPPORT_JSON)
   offset = 0;
   for (int n = 0; n < json_split_num; ++n) {
-    cpp_file << "const std::string " << model_name_upper << "::json_model_" << n
-             << "_ = \nR\"(";
+    cpp_file << "const std::string json_model_" << n << "_ = \nR\"(";
     cpp_file << json_str.substr(offset, split_count);
     cpp_file << ")\";\n\n";
     offset += split_count;
   }
+  cpp_file << "const std::string " << class_name << "::json_model_ = ";
+  for (int n = 0; n < json_split_num - 1; ++n) {
+    cpp_file << "json_model_" << n << "_ + ";
+  }
+  cpp_file << "json_model_" << json_split_num - 1 << "_;\n\n";
 #endif
+
+  cpp_file << "const std::vector<int> " << class_name << "::counts_"
+           << Util::format_vector(weight_counts, ", ", "{", "}") << ";\n\n";
+
+  cpp_file << "const std::vector<const float *> " << class_name
+           << "::weights_{";
+  for (int i = 0; i < weight_counts.size() - 1; ++i) {
+    cpp_file << "weight_" << i << "_, ";
+  }
+  cpp_file << "weight_" << weight_counts.size() - 1 << "_};\n";
 
   cpp_file.close();
 
-  // write all definitions to hpp
-  std::vector<int> weight_counts;
-  std::vector<std::string> weight_names;
-  for (const auto& layer_param : shadow_net.layer()) {
-    if (layer_param.blobs_size() == 0) continue;
-    int count = 0;
-    for (const auto& blob : layer_param.blobs()) {
-      count += blob.data_size();
-    }
-    weight_counts.push_back(count);
-    weight_names.push_back(layer_param.name());
-  }
+  //########## write network proto definition to hpp ##########//
+  std::ofstream hpp_file(root + "/" + model_name_hpp);
 
-  // write network proto definition to hpp
-  std::ofstream file(root + "/" + model_name + ".hpp");
+  hpp_file << "#ifndef SHADOW_" << class_name << "_HPP\n"
+           << "#define SHADOW_" << class_name << "_HPP\n\n";
 
-  file << "#ifndef SHADOW_" << model_name_upper << "_HPP\n";
-  file << "#define SHADOW_" << model_name_upper << "_HPP\n\n";
+  hpp_file << "#include <cstring>\n"
+           << "#include <string>\n"
+           << "#include <vector>\n\n";
 
-  file << "#include <cstring>\n"
-       << "#include <string>\n"
-       << "#include <vector>\n\n";
-
-  file << "static int counts_[] = "
-       << Util::format_vector(weight_counts, ", ", "{", "}") << ";\n\n";
-
-  file << "class " << model_name_upper << " {\n public:\n";
-
-  file << "  static const std::string model() { return";
-  for (int i = 0; i < proto_split_num - 1; ++i) {
-    file << " model_" << i << "_ +";
-  }
-  file << " model_" << proto_split_num - 1 << "_; }\n\n";
-
+  hpp_file << "class " << class_name << " {\n"
+           << " public:\n";
+  hpp_file << "  static const std::string model() { return model_; }\n";
 #if defined(SUPPORT_JSON)
-  file << "  static const std::string json_model() { return";
-  for (int i = 0; i < json_split_num - 1; ++i) {
-    file << " json_model_" << i << "_ +";
-  }
-  file << " json_model_" << json_split_num - 1 << "_; }\n\n";
+  hpp_file
+      << "  static const std::string json_model() { return json_model_; }\n";
 #endif
+  hpp_file << "\n";
 
-  file << "  static const float *weight(int n) {\n"
-          "    switch (n) {\n";
-  for (int i = 0; i < weight_names.size(); ++i) {
-    file << "      case " << i << ":\n"
-         << "        return " << weight_names[i] << "_;\n";
-  }
-  file << "      default:\n"
-          "        return nullptr;\n"
-          "    }\n"
-          "  }\n";
-  file << "  static const std::vector<const float *> get_weights() {\n"
-          "    std::vector<const float *> weights;\n"
-          "    for (int n = 0; n < num(); ++n) {\n"
-          "      weights.push_back(weight(n));\n"
-          "    }\n"
-          "    return weights;\n"
-          "  }\n"
-          "  static void get_weights(float *weights_data) {\n"
-          "    for (int n = 0; n < num(); ++n) {\n"
-          "      memcpy(weights_data, weight(n), count(n) * sizeof(float));\n"
-          "      weights_data += count(n);\n"
-          "    }\n"
-          "  }\n\n";
+  hpp_file
+      << "  static const std::vector<const float *> get_weights() {\n"
+         "    std::vector<const float *> weights;\n"
+         "    for (int n = 0; n < num(); ++n) {\n"
+         "      weights.push_back(weight(n));\n"
+         "    }\n"
+         "    return weights;\n"
+         "  }\n"
+         "  static void get_weights(float *weights_data) {\n"
+         "    for (int n = 0; n < num(); ++n) {\n"
+         "      memcpy(weights_data, weight(n), count(n) * sizeof(float));\n"
+         "      weights_data += count(n);\n"
+         "    }\n"
+         "  }\n\n";
 
-  file << "  static const int count(int n) { return counts_[n]; }\n"
-          "  static const int count() {\n"
-          "    int cou = 0;\n"
-          "    for (int n = 0; n < num(); ++n) cou += count(n);\n"
-          "    return cou;\n"
-          "  }\n\n";
+  hpp_file << "  static const int count() { return " << whole_count
+           << "; }\n\n";
 
-  file << "  static const int num() { return " << weight_names.size()
-       << "; }\n\n";
+  hpp_file << " private:\n";
+  hpp_file << "  static const int num() { return " << weight_counts.size()
+           << "; }\n";
+  hpp_file << "  static const int count(int n) { return counts_[n]; }\n";
+  hpp_file << "  static const float *weight(int n) { return weights_[n]; }\n\n";
 
-  file << " private:\n";
-
-  for (int i = 0; i < proto_split_num; ++i) {
-    file << "  static const std::string model_" << i << "_;\n";
-  }
-  file << "\n";
+  hpp_file << "  static const std::string model_;\n";
 #if defined(SUPPORT_JSON)
-  for (int i = 0; i < json_split_num; ++i) {
-    file << "  static const std::string json_model_" << i << "_;\n";
-  }
-  file << "\n";
+  hpp_file << "  static const std::string json_model_;\n";
 #endif
-  for (const auto& weight_name : weight_names) {
-    file << "  static const float *" << weight_name << "_;\n";
+  hpp_file << "\n";
+
+  hpp_file << "  static const std::vector<int> counts_;\n";
+  hpp_file << "  static const std::vector<const float *> weights_;\n";
+  hpp_file << "};\n\n";
+
+  hpp_file << "#endif  // SHADOW_" << class_name << "_HPP\n";
+
+  hpp_file.close();
+
+  //########## write extern weights definition to hpp ##########//
+  std::ofstream weight_file(root + "/" + model_name_weights_hpp);
+
+  weight_file << "#ifndef SHADOW_" << class_name << "_WEIGHTS_HPP\n"
+              << "#define SHADOW_" << class_name << "_WEIGHTS_HPP\n\n";
+
+  for (int i = 0; i < weight_counts.size(); ++i) {
+    weight_file << "extern const float weight_" << i << "_[];\n";
   }
-  file << "};\n\n";
+  weight_file << "\n";
 
-  file << "#endif  // SHADOW_" << model_name_upper << "_HPP\n";
+  weight_file << "#endif  // SHADOW_" << class_name << "_WEIGHTS_HPP\n";
 
-  file.close();
+  weight_file.close();
 }
 
 void WriteWeights(const shadow::NetParameter& shadow_net,
                   const std::string& root, const std::string& model_name) {
-  std::string model_name_upper = model_name;
-  std::transform(model_name.begin(), model_name.end(), model_name_upper.begin(),
-                 ::toupper);
+  const auto& model_name_weights_hpp = model_name + "_weights.hpp";
+
+  int weight_count = 0;
   for (const auto& layer_param : shadow_net.layer()) {
     if (layer_param.blobs_size() == 0) continue;
 
-    const auto& weight_name = layer_param.name();
+    const auto& weight_name = Util::find_replace(layer_param.name(), "/", "_");
     std::ofstream file(root + "/" + model_name + "_" + weight_name + ".cpp");
 
-    file << "#include \"" << model_name << ".hpp\"\n\n";
-    file << "const float " << weight_name << "_weights[] = {\n";
+    file << "#include \"" << model_name_weights_hpp << "\"\n\n";
 
+    file << "const float weight_" << weight_count << "_[] = {\n";
     int count = 0, num_of_line = 10;
     for (const auto& blob : layer_param.blobs()) {
       for (const auto& data : blob.data()) {
@@ -656,12 +663,11 @@ void WriteWeights(const shadow::NetParameter& shadow_net,
         count++;
       }
     }
-
-    file << "};\n\n";
-    file << "const float *" << model_name_upper << "::" << weight_name
-         << "_ = " << weight_name << "_weights;\n";
+    file << "};\n";
 
     file.close();
+
+    weight_count++;
   }
 }
 
@@ -681,6 +687,6 @@ void WriteProtoToBinary(const IO::Message& proto, const std::string& root,
 
 }  // namespace Caffe2Shadow
 
-} // namespace Shadow
+}  // namespace Shadow
 
 #endif  // SHADOW_TOOLS_CAFFE2SHADOW_HPP
