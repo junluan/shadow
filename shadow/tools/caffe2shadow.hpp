@@ -517,6 +517,23 @@ void WriteDefines(const shadow::NetParameter& shadow_net,
   auto json_split_num =
       json_str_count / split_count + (json_split_off > 0 ? 1 : 0);
 
+  std::vector<std::string> proto_split_names, json_split_names, weight_names;
+  for (int n = 0; n < proto_split_num; ++n) {
+    std::stringstream ss;
+    ss << "model_" << n << "_";
+    proto_split_names.push_back(ss.str());
+  }
+  for (int n = 0; n < json_split_num; ++n) {
+    std::stringstream ss;
+    ss << "json_model_" << n << "_";
+    json_split_names.push_back(ss.str());
+  }
+  for (int n = 0; n < weight_counts.size(); ++n) {
+    std::stringstream ss;
+    ss << "weight_" << n << "_";
+    weight_names.push_back(ss.str());
+  }
+
   //########## write network proto definition to cpp ##########//
   std::ofstream cpp_file(root + "/" + model_name_cpp);
 
@@ -525,41 +542,33 @@ void WriteDefines(const shadow::NetParameter& shadow_net,
 
   size_t offset = 0;
   for (int n = 0; n < proto_split_num; ++n) {
-    cpp_file << "const std::string model_" << n << "_ = \nR\"(";
+    cpp_file << "const std::string " << proto_split_names[n] << " = \nR\"(";
     cpp_file << proto_str.substr(offset, split_count);
     cpp_file << ")\";\n\n";
     offset += split_count;
   }
-  cpp_file << "const std::string " << class_name << "::model_ = ";
-  for (int n = 0; n < proto_split_num - 1; ++n) {
-    cpp_file << "model_" << n << "_ + ";
-  }
-  cpp_file << "model_" << proto_split_num - 1 << "_;\n\n";
+  cpp_file << "const std::string " << class_name
+           << "::model_ = " << Util::format_vector(proto_split_names, " + ")
+           << ";\n\n";
 
 #if defined(SUPPORT_JSON)
   offset = 0;
   for (int n = 0; n < json_split_num; ++n) {
-    cpp_file << "const std::string json_model_" << n << "_ = \nR\"(";
+    cpp_file << "const std::string " << json_split_names[n] << " = \nR\"(";
     cpp_file << json_str.substr(offset, split_count);
     cpp_file << ")\";\n\n";
     offset += split_count;
   }
-  cpp_file << "const std::string " << class_name << "::json_model_ = ";
-  for (int n = 0; n < json_split_num - 1; ++n) {
-    cpp_file << "json_model_" << n << "_ + ";
-  }
-  cpp_file << "json_model_" << json_split_num - 1 << "_;\n\n";
+  cpp_file << "const std::string " << class_name
+           << "::json_model_ = " << Util::format_vector(json_split_names, " + ")
+           << ";\n\n";
 #endif
 
-  cpp_file << "const std::vector<int> " << class_name << "::counts_"
-           << Util::format_vector(weight_counts, ", ", "{", "}") << ";\n\n";
+  cpp_file << "const std::vector<int> " << class_name << "::counts_{"
+           << Util::format_vector(weight_counts, ", ") << "};\n\n";
 
-  cpp_file << "const std::vector<const float *> " << class_name
-           << "::weights_{";
-  for (int i = 0; i < weight_counts.size() - 1; ++i) {
-    cpp_file << "weight_" << i << "_, ";
-  }
-  cpp_file << "weight_" << weight_counts.size() - 1 << "_};\n";
+  cpp_file << "const std::vector<const float *> " << class_name << "::weights_{"
+           << Util::format_vector(weight_names, ", ") << "};\n\n";
 
   cpp_file.close();
 
@@ -626,8 +635,8 @@ void WriteDefines(const shadow::NetParameter& shadow_net,
   weight_file << "#ifndef SHADOW_" << class_name << "_WEIGHTS_HPP\n"
               << "#define SHADOW_" << class_name << "_WEIGHTS_HPP\n\n";
 
-  for (int i = 0; i < weight_counts.size(); ++i) {
-    weight_file << "extern const float weight_" << i << "_[];\n";
+  for (int n = 0; n < weight_names.size(); ++n) {
+    weight_file << "extern const float " << weight_names[n] << "[];\n";
   }
   weight_file << "\n";
 
