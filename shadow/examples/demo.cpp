@@ -27,6 +27,36 @@ void Demo::Test(const std::string &image_file) {
   im_ini_.Show("result");
 }
 
+#if defined(BUILD_SERVICE)
+void Demo::Test(const std::string &image_file, ::shadow::ADASReply *reply) {
+  im_ini_.Read(image_file);
+  VecRectF rois{RectF(0, 0, im_ini_.w_, im_ini_.h_)};
+  Predict(im_ini_, rois, &Bboxes_);
+  Boxes::Amend(&Bboxes_, rois);
+  const auto &boxes = Boxes::NMS(Bboxes_, 0.5);
+  reply->clear_objects();
+  for (const auto &boxF : boxes) {
+    const BoxI box(boxF);
+    int color_r = (box.label * 100) % 255;
+    int color_g = (color_r + 100) % 255;
+    int color_b = (color_g + 100) % 255;
+    Scalar scalar(color_r, color_g, color_b);
+    JImageProc::Rectangle(&im_ini_, box.RectInt(), scalar);
+    auto object = reply->add_objects();
+    object->set_xmin(box.xmin);
+    object->set_ymin(box.ymin);
+    object->set_xmax(box.xmax);
+    object->set_ymax(box.ymax);
+    object->set_label(box.label);
+    object->set_score(box.score);
+  }
+  const auto &ext = Path(image_file).extension();
+  const auto &result_path =
+      Util::change_extension(image_file, "-result." + ext);
+  im_ini_.Write(result_path);
+}
+#endif
+
 void Demo::BatchTest(const std::string &list_file, bool image_write) {
   const auto &image_list = Util::load_list(list_file);
   int num_im = image_list.size(), count = 0;

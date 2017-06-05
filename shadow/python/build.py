@@ -19,6 +19,8 @@ def build(args):
     use_protobuf = 'protobuf' in args.features
     use_glog = 'glog' in args.features
     use_opencv = 'opencv' in args.features
+    build_shared_libs = 'shared' in args.features
+    build_service = 'service' in args.features
     build_test = 'test' in args.features
 
     cmake_options = {}
@@ -38,6 +40,8 @@ def build(args):
     cmake_options['USE_Protobuf'] = use_protobuf
     cmake_options['USE_GLog'] = use_glog
     cmake_options['USE_OpenCV'] = use_opencv
+    cmake_options['BUILD_SHARED_LIBS'] = build_shared_libs
+    cmake_options['BUILD_SERVICE'] = build_service
     cmake_options['BUILD_TEST'] = build_test
 
     shadow_root = os.path.dirname(os.path.abspath(__file__)) + '/../..'

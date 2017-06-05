@@ -4,6 +4,10 @@
 #include "ssd.hpp"
 #include "yolo.hpp"
 
+#if defined(BUILD_SERVICE)
+#include "server/server.pb.h"
+#endif
+
 namespace Shadow {
 
 class Demo {
@@ -30,6 +34,9 @@ class Demo {
   }
 
   void Test(const std::string &image_file);
+#if defined(BUILD_SERVICE)
+  void Test(const std::string &image_file, ::shadow::ADASReply *reply);
+#endif
   void BatchTest(const std::string &list_file, bool image_write = false);
 #if defined(USE_OpenCV)
   void VideoTest(const std::string &video_file, bool video_show = true,

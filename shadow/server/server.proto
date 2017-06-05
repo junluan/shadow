@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package shadow;
+
+message Rect {
+  int32 xmin = 1;
+  int32 ymin = 2;
+  int32 xmax = 3;
+  int32 ymax = 4;
+  int32 label = 5;
+  float score = 6;
+}
+
+message ADASRequest {
+  string file_path = 1;
+}
+
+message ADASReply {
+  repeated Rect objects = 1;
+}
+
+service ADAS {
+  rpc Process (ADASRequest) returns (ADASReply) {}
+}

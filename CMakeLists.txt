@@ -16,6 +16,8 @@ option(USE_OpenCV "Use OpenCV to read, write and show image" ON)
 
 option(BUILD_SHARED_LIBS "Build shared library" ON)
 
+option(BUILD_SERVICE "Build server and client" ON)
+
 option(BUILD_TEST "Build gtest to test shadow" OFF)
 
 set(BLAS "Open" CACHE STRING "Selected BLAS library")
