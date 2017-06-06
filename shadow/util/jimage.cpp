@@ -12,6 +12,7 @@
 namespace Shadow {
 
 void JImage::Read(const std::string &im_path) {
+  CHECK(Path(im_path).is_file()) << "Can not find " << im_path;
   if (data_ != nullptr) {
     delete[] data_;
     data_ = nullptr;
