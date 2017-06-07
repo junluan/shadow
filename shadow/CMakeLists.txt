@@ -9,9 +9,12 @@ add_subdirectory(examples)
 add_subdirectory(layers)
 add_subdirectory(proto)
 add_subdirectory(server)
-add_subdirectory(test)
 add_subdirectory(tools)
 add_subdirectory(util)
+
+if (${BUILD_TEST})
+  add_subdirectory(test)
+endif ()
 
 include_directories(".")
 
