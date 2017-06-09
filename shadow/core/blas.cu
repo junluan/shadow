@@ -124,11 +124,6 @@ void Add(int n, float val, T *y, int offy) {
   template void name(int n, const float *a, int offa, const float *b,          \
                      int offb, float *y, int offy);
 
-BLAS_BINARY_FUNC(Add, y[i] = a[i] + b[i]);
-BLAS_BINARY_FUNC(Sub, y[i] = a[i] - b[i]);
-BLAS_BINARY_FUNC(Mul, y[i] = a[i] * b[i]);
-BLAS_BINARY_FUNC(Div, y[i] = a[i] / b[i]);
-
 #define BLAS_UNARY_FUNC(name, operation)                                  \
   __global__ void Kernel##name(int n, const float *a, int offa, float *y, \
                                int offy) {                                \
@@ -143,6 +138,14 @@ BLAS_BINARY_FUNC(Div, y[i] = a[i] / b[i]);
     CUDA_CHECK(cudaPeekAtLastError());                                    \
   }                                                                       \
   template void name(int n, const float *a, int offa, float *y, int offy);
+
+BLAS_BINARY_FUNC(Add, y[i] = a[i] + b[i]);
+BLAS_BINARY_FUNC(Sub, y[i] = a[i] - b[i]);
+BLAS_BINARY_FUNC(Mul, y[i] = a[i] * b[i]);
+BLAS_BINARY_FUNC(Div, y[i] = a[i] / b[i]);
+
+BLAS_BINARY_FUNC(Max, y[i] = fmaxf(a[i], b[i]));
+BLAS_BINARY_FUNC(Min, y[i] = fminf(a[i], b[i]));
 
 BLAS_UNARY_FUNC(Sqr, y[i] = a[i] * a[i]);
 BLAS_UNARY_FUNC(Exp, y[i] = expf(a[i]));

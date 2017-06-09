@@ -8,6 +8,7 @@
 #include "layers/connected_layer.hpp"
 #include "layers/convolution_layer.hpp"
 #include "layers/data_layer.hpp"
+#include "layers/eltwise_layer.hpp"
 #include "layers/flatten_layer.hpp"
 #include "layers/lrn_layer.hpp"
 #include "layers/normalize_layer.hpp"
@@ -228,6 +229,8 @@ Layer *Network::LayerFactory(const shadow::LayerParameter &layer_param) {
     layer = new ConvolutionLayer(layer_param);
   } else if (!layer_type.compare("Data")) {
     layer = new DataLayer(layer_param);
+  } else if (!layer_type.compare("Eltwise")) {
+    layer = new EltwiseLayer(layer_param);
   } else if (!layer_type.compare("Flatten")) {
     layer = new FlattenLayer(layer_param);
   } else if (!layer_type.compare("LRN")) {

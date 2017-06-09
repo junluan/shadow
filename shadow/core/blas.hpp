@@ -34,6 +34,11 @@ template <typename T>
 void Div(int n, const T *a, int offa, const T *b, int offb, T *y, int offy);
 
 template <typename T>
+void Max(int n, const T *a, int offa, const T *b, int offb, T *y, int offy);
+template <typename T>
+void Min(int n, const T *a, int offa, const T *b, int offb, T *y, int offy);
+
+template <typename T>
 void Sqr(int n, const T *a, int offa, T *y, int offy);
 template <typename T>
 void Exp(int n, const T *a, int offa, T *y, int offy);

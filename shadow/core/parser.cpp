@@ -32,6 +32,8 @@ void ParseNet(const std::string &proto_text, shadow::NetParameter *net) {
       net->add_layer(ParseConvolution(json_layer));
     } else if (!layer_type.compare("Data")) {
       net->add_layer(ParseData(json_layer));
+    } else if (!layer_type.compare("Eltwise")) {
+      net->add_layer(ParseEltwise(json_layer));
     } else if (!layer_type.compare("Flatten")) {
       net->add_layer(ParseFlatten(json_layer));
     } else if (!layer_type.compare("LRN")) {
@@ -250,6 +252,36 @@ const shadow::LayerParameter ParseData(const JValue &root) {
   shadow_param->set_scale(scale);
   for (const auto &mean : mean_value) {
     shadow_param->add_mean_value(mean);
+  }
+
+  return shadow_layer;
+}
+
+const shadow::LayerParameter ParseEltwise(const JValue &root) {
+  shadow::LayerParameter shadow_layer;
+  auto shadow_param = shadow_layer.mutable_eltwise_param();
+
+  ParseCommon(root, &shadow_layer);
+
+  shadow::EltwiseParameter_EltwiseOp operation =
+      shadow::EltwiseParameter_EltwiseOp_Sum;
+  VecFloat coeffs;
+  if (root.HasMember("eltwiseParam")) {
+    const auto &json_param = Json::GetValue(root, "eltwiseParam");
+    const auto &operation_str = Json::GetString(json_param, "operation", "Sum");
+    if (!operation_str.compare("Prod")) {
+      operation = shadow::EltwiseParameter_EltwiseOp_Prod;
+    } else if (!operation_str.compare("Sum")) {
+      operation = shadow::EltwiseParameter_EltwiseOp_Sum;
+    } else if (!operation_str.compare("Max")) {
+      operation = shadow::EltwiseParameter_EltwiseOp_Max;
+    }
+    coeffs = Json::GetVecFloat(json_param, "coeff");
+  }
+
+  shadow_param->set_operation(operation);
+  for (const auto &coeff : coeffs) {
+    shadow_param->add_coeff(coeff);
   }
 
   return shadow_layer;

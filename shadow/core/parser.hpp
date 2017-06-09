@@ -20,6 +20,7 @@ const shadow::LayerParameter ParseConcat(const JValue &root);
 const shadow::LayerParameter ParseConnected(const JValue &root);
 const shadow::LayerParameter ParseConvolution(const JValue &root);
 const shadow::LayerParameter ParseData(const JValue &root);
+const shadow::LayerParameter ParseEltwise(const JValue &root);
 const shadow::LayerParameter ParseFlatten(const JValue &root);
 const shadow::LayerParameter ParseLRN(const JValue &root);
 const shadow::LayerParameter ParseNormalize(const JValue &root);

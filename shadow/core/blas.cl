@@ -66,11 +66,6 @@ __kernel void AddScalar(int n, float val, __global float *y, int offy) {
     operation;                                                              \
   }
 
-BLAS_BINARY_FUNC(Add, y[i] = a[i] + b[i]);
-BLAS_BINARY_FUNC(Sub, y[i] = a[i] - b[i]);
-BLAS_BINARY_FUNC(Mul, y[i] = a[i] * b[i]);
-BLAS_BINARY_FUNC(Div, y[i] = a[i] / b[i]);
-
 #define BLAS_UNARY_FUNC(name, operation)                                    \
   __kernel void name(int n, __global float *a, int offa, __global float *y, \
                      int offy) {                                            \
@@ -78,6 +73,14 @@ BLAS_BINARY_FUNC(Div, y[i] = a[i] / b[i]);
     a += offa, y += offy;                                                   \
     operation;                                                              \
   }
+
+BLAS_BINARY_FUNC(Add, y[i] = a[i] + b[i]);
+BLAS_BINARY_FUNC(Sub, y[i] = a[i] - b[i]);
+BLAS_BINARY_FUNC(Mul, y[i] = a[i] * b[i]);
+BLAS_BINARY_FUNC(Div, y[i] = a[i] / b[i]);
+
+BLAS_BINARY_FUNC(Max, y[i] = fmax(a[i], b[i]));
+BLAS_BINARY_FUNC(Min, y[i] = fmin(a[i], b[i]));
 
 BLAS_UNARY_FUNC(Sqr, y[i] = a[i] * a[i]);
 BLAS_UNARY_FUNC(Exp, y[i] = exp(a[i]));

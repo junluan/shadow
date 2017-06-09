@@ -208,6 +208,33 @@ void ConvertConv(const caffe::NetParameter& caffe_model,
   }
 }
 
+void ConvertEltwise(const caffe::NetParameter& caffe_model,
+                    const caffe::LayerParameter& caffe_layer,
+                    shadow::NetParameter* shadow_net) {
+  auto shadow_layer = shadow_net->add_layer();
+  shadow_layer->set_type("Eltwise");
+  ConvertCommon(caffe_model, caffe_layer, shadow_layer);
+
+  if (caffe_layer.has_eltwise_param()) {
+    auto shadow_param = shadow_layer->mutable_eltwise_param();
+    const auto& caffe_param = caffe_layer.eltwise_param();
+    if (caffe_param.has_operation()) {
+      if (caffe_param.operation() == caffe::EltwiseParameter_EltwiseOp_PROD) {
+        shadow_param->set_operation(shadow::EltwiseParameter_EltwiseOp_Prod);
+      } else if (caffe_param.operation() ==
+                 caffe::EltwiseParameter_EltwiseOp_SUM) {
+        shadow_param->set_operation(shadow::EltwiseParameter_EltwiseOp_Sum);
+      } else if (caffe_param.operation() ==
+                 caffe::EltwiseParameter_EltwiseOp_MAX) {
+        shadow_param->set_operation(shadow::EltwiseParameter_EltwiseOp_Max);
+      }
+    }
+    for (int i = 0; i < caffe_param.coeff_size(); ++i) {
+      shadow_param->add_coeff(caffe_param.coeff(i));
+    }
+  }
+}
+
 void ConvertFlatten(const caffe::NetParameter& caffe_model,
                     const caffe::LayerParameter& caffe_layer,
                     shadow::NetParameter* shadow_net) {
@@ -446,6 +473,8 @@ void Convert(const caffe::NetParameter& caffe_deploy,
       ConvertConnected(caffe_model, caffe_layer, shadow_net);
     } else if (!layer_type.compare("Convolution")) {
       ConvertConv(caffe_model, caffe_layer, shadow_net);
+    } else if (!layer_type.compare("Eltwise")) {
+      ConvertEltwise(caffe_model, caffe_layer, shadow_net);
     } else if (!layer_type.compare("Flatten")) {
       ConvertFlatten(caffe_model, caffe_layer, shadow_net);
     } else if (!layer_type.compare("LRN")) {

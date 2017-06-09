@@ -57,6 +57,16 @@ message DataParameter {
   repeated float mean_value = 3;
 }
 
+message EltwiseParameter {
+  enum EltwiseOp {
+    Prod = 0;
+    Sum = 1;
+    Max = 2;
+  }
+  optional EltwiseOp operation = 1 [default = Sum];
+  repeated float coeff = 2;
+}
+
 message FlattenParameter {
   optional int32 axis = 1 [default = 1];
   optional int32 end_axis = 2 [default = -1];
@@ -142,16 +152,17 @@ message LayerParameter {
   optional ConnectedParameter connected_param = 15;
   optional ConvolutionParameter convolution_param = 16;
   optional DataParameter data_param = 17;
-  optional FlattenParameter flatten_param = 18;
-  optional LRNParameter lrn_param = 19;
-  optional NormalizeParameter normalize_param = 20;
-  optional PermuteParameter permute_param = 21;
-  optional PoolingParameter pooling_param = 22;
-  optional PriorBoxParameter prior_box_param = 23;
-  optional ReorgParameter reorg_param = 24;
-  optional ReshapeParameter reshape_param = 25;
-  optional ScaleParameter scale_param = 26;
-  optional SoftmaxParameter softmax_param = 27;
+  optional EltwiseParameter eltwise_param = 18;
+  optional FlattenParameter flatten_param = 19;
+  optional LRNParameter lrn_param = 20;
+  optional NormalizeParameter normalize_param = 21;
+  optional PermuteParameter permute_param = 22;
+  optional PoolingParameter pooling_param = 23;
+  optional PriorBoxParameter prior_box_param = 24;
+  optional ReorgParameter reorg_param = 25;
+  optional ReshapeParameter reshape_param = 26;
+  optional ScaleParameter scale_param = 27;
+  optional SoftmaxParameter softmax_param = 28;
 }
 
 message NetParameter {

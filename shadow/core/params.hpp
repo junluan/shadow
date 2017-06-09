@@ -244,6 +244,31 @@ class DataParameter {
   std::vector<float> mean_value_;
 };
 
+enum EltwiseParameter_EltwiseOp {
+  EltwiseParameter_EltwiseOp_Prod = 0,
+  EltwiseParameter_EltwiseOp_Sum = 1,
+  EltwiseParameter_EltwiseOp_Max = 2
+};
+
+class EltwiseParameter {
+ public:
+  EltwiseParameter() {}
+  ~EltwiseParameter() { Clear(); }
+
+  OPTIONAL_FIELD_DEFAULT_FUNC(operation, EltwiseParameter_EltwiseOp,
+                              EltwiseParameter_EltwiseOp_Sum);
+  REPEATED_FIELD_FUNC(coeff, float);
+
+  void Clear() {
+    clear_operation();
+    clear_coeff();
+  }
+
+ private:
+  EltwiseParameter_EltwiseOp operation_ = EltwiseParameter_EltwiseOp_Sum;
+  std::vector<float> coeff_;
+};
+
 class FlattenParameter {
  public:
   FlattenParameter() {}
@@ -496,6 +521,7 @@ class LayerParameter {
     *mutable_connected_param() = from.connected_param();
     *mutable_convolution_param() = from.convolution_param();
     *mutable_data_param() = from.data_param();
+    *mutable_eltwise_param() = from.eltwise_param();
     *mutable_flatten_param() = from.flatten_param();
     *mutable_lrn_param() = from.lrn_param();
     *mutable_normalize_param() = from.normalize_param();
@@ -522,6 +548,7 @@ class LayerParameter {
   OPTIONAL_NESTED_MESSAGE_FUNC(connected_param, ConnectedParameter);
   OPTIONAL_NESTED_MESSAGE_FUNC(convolution_param, ConvolutionParameter);
   OPTIONAL_NESTED_MESSAGE_FUNC(data_param, DataParameter);
+  OPTIONAL_NESTED_MESSAGE_FUNC(eltwise_param, EltwiseParameter);
   OPTIONAL_NESTED_MESSAGE_FUNC(flatten_param, FlattenParameter);
   OPTIONAL_NESTED_MESSAGE_FUNC(lrn_param, LRNParameter);
   OPTIONAL_NESTED_MESSAGE_FUNC(normalize_param, NormalizeParameter);
@@ -546,6 +573,7 @@ class LayerParameter {
     clear_connected_param();
     clear_convolution_param();
     clear_data_param();
+    clear_eltwise_param();
     clear_flatten_param();
     clear_lrn_param();
     clear_normalize_param();
@@ -571,6 +599,7 @@ class LayerParameter {
   ConvolutionParameter *convolution_param_ = nullptr,
                        default_convolution_param_;
   DataParameter *data_param_ = nullptr, default_data_param_;
+  EltwiseParameter *eltwise_param_ = nullptr, default_eltwise_param_;
   FlattenParameter *flatten_param_ = nullptr, default_flatten_param_;
   LRNParameter *lrn_param_ = nullptr, default_lrn_param_;
   NormalizeParameter *normalize_param_ = nullptr, default_normalize_param_;

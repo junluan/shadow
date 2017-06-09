@@ -126,6 +126,9 @@ BLAS_BINARY_FUNC_EIGEN(Sub, y_eigen = a_eigen.array() - b_eigen.array());
 BLAS_BINARY_FUNC_EIGEN(Mul, y_eigen = a_eigen.array() * b_eigen.array());
 BLAS_BINARY_FUNC_EIGEN(Div, y_eigen = a_eigen.array() / b_eigen.array());
 
+BLAS_BINARY_FUNC_EIGEN(Max, y_eigen = a_eigen.cwiseMax(b_eigen));
+BLAS_BINARY_FUNC_EIGEN(Min, y_eigen = a_eigen.cwiseMin(b_eigen));
+
 BLAS_UNARY_FUNC_EIGEN(Sqr, y_eigen = a_eigen.array() * a_eigen.array());
 BLAS_UNARY_FUNC_EIGEN(Exp, y_eigen = a_eigen.array().exp());
 BLAS_UNARY_FUNC_EIGEN(Log, y_eigen = a_eigen.array().log());
@@ -158,6 +161,9 @@ BLAS_BINARY_FUNC(Add, y[i] = a[i] + b[i]);
 BLAS_BINARY_FUNC(Sub, y[i] = a[i] - b[i]);
 BLAS_BINARY_FUNC(Mul, y[i] = a[i] * b[i]);
 BLAS_BINARY_FUNC(Div, y[i] = a[i] / b[i]);
+
+BLAS_BINARY_FUNC(Max, y[i] = std::max(a[i], b[i]));
+BLAS_BINARY_FUNC(Min, y[i] = std::min(a[i], b[i]));
 
 BLAS_UNARY_FUNC(Sqr, y[i] = a[i] * a[i]);
 BLAS_UNARY_FUNC(Exp, y[i] = std::exp(a[i]));
@@ -506,11 +512,6 @@ void Add(int n, float val, T *y, int offy) {
   template void name(int n, const BufferF *a, int offa, const BufferF *b,   \
                      int offb, BufferF *y, int offy);
 
-BLAS_BINARY_FUNC(Add, "Add");
-BLAS_BINARY_FUNC(Sub, "Sub");
-BLAS_BINARY_FUNC(Mul, "Mul");
-BLAS_BINARY_FUNC(Div, "Div");
-
 #define BLAS_UNARY_FUNC(name, kname)                              \
   template <typename T>                                           \
   inline void name(int n, const T *a, int offa, T *y, int offy) { \
@@ -521,6 +522,14 @@ BLAS_BINARY_FUNC(Div, "Div");
     Kernel::queue_->Finish();                                     \
   }                                                               \
   template void name(int n, const BufferF *a, int offa, BufferF *y, int offy);
+
+BLAS_BINARY_FUNC(Add, "Add");
+BLAS_BINARY_FUNC(Sub, "Sub");
+BLAS_BINARY_FUNC(Mul, "Mul");
+BLAS_BINARY_FUNC(Div, "Div");
+
+BLAS_BINARY_FUNC(Max, "Max");
+BLAS_BINARY_FUNC(Min, "Min");
 
 BLAS_UNARY_FUNC(Sqr, "Sqr");
 BLAS_UNARY_FUNC(Exp, "Exp");

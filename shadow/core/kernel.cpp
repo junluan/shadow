@@ -40,6 +40,8 @@ void Setup(int device_id) {
   cl_kernels_.set_kernel(program_blas, "Sub");
   cl_kernels_.set_kernel(program_blas, "Mul");
   cl_kernels_.set_kernel(program_blas, "Div");
+  cl_kernels_.set_kernel(program_blas, "Max");
+  cl_kernels_.set_kernel(program_blas, "Min");
   cl_kernels_.set_kernel(program_blas, "Sqr");
   cl_kernels_.set_kernel(program_blas, "Exp");
   cl_kernels_.set_kernel(program_blas, "Log");
