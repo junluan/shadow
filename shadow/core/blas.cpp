@@ -7,6 +7,8 @@
 
 #if defined(USE_OpenBLAS)
 #include "cblas.h"
+#elif defined(USE_MKL)
+#include "mkl_cblas.h"
 #endif
 
 #if defined(USE_Eigen)
@@ -200,7 +202,7 @@ void Scale(int n, float alpha, const T *x, int offx, T *y, int offy) {
 // Level 1
 template <typename T>
 void BlasSscal(int n, float alpha, T *x, int offx) {
-#if defined(USE_OpenBLAS)
+#if defined(USE_OpenBLAS) | defined(USE_MKL)
   cblas_sscal(n, alpha, x + offx, 1);
 #elif defined(USE_Eigen)
   auto x_eigen = MapVector<T>(x + offx, n);
@@ -214,7 +216,7 @@ void BlasSscal(int n, float alpha, T *x, int offx) {
 
 template <typename T>
 void BlasScopy(int n, const T *x, int offx, T *y, int offy) {
-#if defined(USE_OpenBLAS)
+#if defined(USE_OpenBLAS) | defined(USE_MKL)
   cblas_scopy(n, x + offx, 1, y + offy, 1);
 #elif defined(USE_Eigen)
   const auto &x_eigen = MapVector<T>(const_cast<T *>(x + offx), n);
@@ -229,7 +231,7 @@ void BlasScopy(int n, const T *x, int offx, T *y, int offy) {
 
 template <typename T>
 void BlasSaxpy(int n, float alpha, const T *x, int offx, T *y, int offy) {
-#if defined(USE_OpenBLAS)
+#if defined(USE_OpenBLAS) | defined(USE_MKL)
   cblas_saxpy(n, alpha, x + offx, 1, y + offy, 1);
 #elif defined(USE_Eigen)
   const auto &x_eigen = MapVector<T>(const_cast<T *>(x + offx), n);
@@ -244,7 +246,7 @@ void BlasSaxpy(int n, float alpha, const T *x, int offx, T *y, int offy) {
 
 template <typename T>
 void BlasSasum(int n, const T *x, int offx, float *y) {
-#if defined(USE_OpenBLAS)
+#if defined(USE_OpenBLAS) | defined(USE_MKL)
   *y = cblas_sasum(n, x + offx, 1);
 #elif defined(USE_Eigen)
   const auto &x_eigen = MapVector<T>(const_cast<T *>(x + offx), n);
@@ -284,7 +286,7 @@ inline void SgemvT(int M, int N, float alpha, const float *A, const float *x,
 template <typename T>
 void BlasSgemv(int TA, int M, int N, float alpha, const T *A, int offA,
                const T *x, int offx, float beta, T *y, int offy) {
-#if defined(USE_OpenBLAS)
+#if defined(USE_OpenBLAS) | defined(USE_MKL)
   CBLAS_TRANSPOSE transA = TA ? CblasTrans : CblasNoTrans;
   cblas_sgemv(CblasRowMajor, transA, M, N, alpha, A + offA, N, x + offx, 1,
               beta, y + offy, 1);
@@ -365,7 +367,7 @@ inline void SgemmTT(int M, int N, int K, float alpha, const float *A,
 template <typename T>
 void BlasSgemm(int TA, int TB, int M, int N, int K, float alpha, const T *A,
                int offA, const T *B, int offB, float beta, T *C, int offC) {
-#if defined(USE_OpenBLAS)
+#if defined(USE_OpenBLAS) | defined(USE_MKL)
   int lda = TA ? M : K, ldb = TB ? K : N;
   CBLAS_TRANSPOSE transA = TA ? CblasTrans : CblasNoTrans;
   CBLAS_TRANSPOSE transB = TB ? CblasTrans : CblasNoTrans;
