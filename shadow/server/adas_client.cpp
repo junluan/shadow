@@ -1,3 +1,6 @@
+#if !defined(__linux)
+#include <sdkddkver.h>
+#endif
 #include <grpc++/grpc++.h>
 
 #include "server/server.grpc.pb.h"

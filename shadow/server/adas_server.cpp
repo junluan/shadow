@@ -1,3 +1,6 @@
+#if !defined(__linux)
+#include <sdkddkver.h>
+#endif
 #include <grpc++/grpc++.h>
 
 #include "examples/demo.hpp"
@@ -63,7 +66,7 @@ class ADASService final : public shadow::ADAS::Service {
 
 int main(int argc, char **argv) {
   std::string server_address("localhost:50051");
-  std::string model("models/ssd/adas/adas_model_finetune_reduce_3.shadowmodel");
+  std::string model("D:/Workspace/datasets/models/ssd/adas/adas_model_finetune_reduce_3.shadowmodel");
 
   ADASService service(model);
 

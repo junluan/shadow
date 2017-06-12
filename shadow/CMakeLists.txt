@@ -31,7 +31,7 @@ if (MSVC)
   set_target_properties(shadow PROPERTIES DEBUG_POSTFIX "d")
 endif ()
 install(TARGETS shadow DESTINATION lib)
-install(DIRECTORY core layers proto util DESTINATION include/shadow FILES_MATCHING PATTERN "*.hpp" PATTERN "*.h")
+install(DIRECTORY core layers proto server util DESTINATION include/shadow FILES_MATCHING PATTERN "*.hpp" PATTERN "*.h")
 
 add_executable(test_demo "examples/test_demo.cpp" ${shadow_examples_src})
 target_link_libraries(test_demo shadow)
