@@ -45,7 +45,7 @@ function (GenGRPC proto_src proto_hdr)
              "${fil_dir}/${fil_we}.pb.h"
              "${fil_dir}/${fil_we}.grpc.pb.h"
       COMMAND ${Protoc_EXECUTABLE} --proto_path=${fil_dir} --cpp_out=${fil_dir} ${abs_fil}
-      COMMAND ${Protoc_EXECUTABLE} --proto_path=${fil_dir} --grpc_out=${fil_dir} --plugin=protoc-gen-grpc=/usr/local/bin/grpc_cpp_plugin ${abs_fil}
+      COMMAND ${Protoc_EXECUTABLE} --proto_path=${fil_dir} --grpc_out=${fil_dir} --plugin=protoc-gen-grpc=${gRPC_CPP_PLUGIN} ${abs_fil}
       DEPENDS ${abs_fil}
       COMMENT "Running C++ protocol buffer compiler on ${fil}" VERBATIM)
   endforeach ()

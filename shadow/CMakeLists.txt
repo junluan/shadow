@@ -37,14 +37,14 @@ add_executable(test_demo "examples/test_demo.cpp" ${shadow_examples_src})
 target_link_libraries(test_demo shadow)
 install(TARGETS test_demo DESTINATION bin)
 
-if (${BUILD_SERVICE} AND Protobuf_FOUND)
+if (${BUILD_SERVICE} AND Protobuf_FOUND AND gRPC_FOUND)
   add_executable(adas_server "server/adas_server.cpp" ${shadow_examples_src})
   target_compile_definitions(adas_server PRIVATE -DBUILD_SERVICE)
-  target_link_libraries(adas_server shadow grpc_proto grpc++_unsecure ${Protobuf_LIBRARIES})
+  target_link_libraries(adas_server shadow grpc_proto ${gRPC_LIBRARIES} ${Protobuf_LIBRARIES})
   install(TARGETS adas_server DESTINATION bin)
 
   add_executable(adas_client "server/adas_client.cpp")
-  target_link_libraries(adas_client grpc_proto grpc++_unsecure ${Protobuf_LIBRARIES})
+  target_link_libraries(adas_client grpc_proto ${gRPC_LIBRARIES} ${Protobuf_LIBRARIES})
   install(TARGETS adas_client DESTINATION bin)
 endif ()
 

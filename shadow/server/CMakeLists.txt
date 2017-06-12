@@ -1,4 +1,4 @@
-if (${BUILD_SERVICE} AND Protobuf_FOUND)
+if (${BUILD_SERVICE} AND Protobuf_FOUND AND gRPC_FOUND)
   file(GLOB proto_files tmp *.proto)
   GenGRPC(proto_srcs proto_hdrs ${proto_files})
   add_library(grpc_proto STATIC ${proto_srcs} ${proto_hdrs})

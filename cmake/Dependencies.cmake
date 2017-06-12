@@ -11,6 +11,12 @@ if (Protobuf_FOUND)
   endif ()
 endif ()
 
+if (${BUILD_SERVICE})
+  find_package(gRPC QUIET)
+  message(STATUS "Found gRPC: ${gRPC_INCLUDE_DIRS}, ${gRPC_LIBRARIES}")
+  message(STATUS "Found gRPC cpp plugin: ${gRPC_CPP_PLUGIN}")
+endif ()
+
 if (${USE_GLog})
   list(APPEND Shadow_LINKER_LIBS glog)
   add_definitions(-DUSE_GLog)
