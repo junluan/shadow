@@ -8,6 +8,12 @@
 #include <io.h>
 #endif
 
+#include <fcntl.h>
+#include <fstream>
+
+#include <google/protobuf/io/coded_stream.h>
+#include <google/protobuf/io/zero_copy_stream_impl.h>
+#include <google/protobuf/text_format.h>
 #if defined(SUPPORT_JSON)
 #include <google/protobuf/util/json_util.h>
 #endif
@@ -16,13 +22,6 @@
 #include "core/parser.hpp"
 #include "util/util.hpp"
 #endif
-
-#include <fcntl.h>
-#include <fstream>
-
-#include <google/protobuf/io/coded_stream.h>
-#include <google/protobuf/io/zero_copy_stream_impl.h>
-#include <google/protobuf/text_format.h>
 
 namespace Shadow {
 

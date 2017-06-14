@@ -13,7 +13,6 @@ endif ()
 
 if (${BUILD_SERVICE})
   find_package(gRPC QUIET)
-  include_directories(SYSTEM ${gRPC_INCLUDE_DIRS})
   message(STATUS "Found gRPC: ${gRPC_INCLUDE_DIRS}, ${gRPC_LIBRARIES}")
   message(STATUS "Found gRPC cpp plugin: ${gRPC_CPP_PLUGIN}")
 endif ()
