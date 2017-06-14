@@ -34,21 +34,23 @@ inline Dtype constrain(Dtype min, Dtype max, Dtype value) {
 }
 
 template <typename Dtype>
-inline std::string str(Dtype val) {
-  return std::to_string(val);
+inline std::string to_string(const Dtype val) {
+  std::stringstream ss;
+  ss << val;
+  return ss.str();
 }
 
 inline std::string format_int(int n, int width, char pad = ' ') {
-  std::stringstream out;
-  out << std::setw(width) << std::setfill(pad) << n;
-  return out.str();
+  std::stringstream ss;
+  ss << std::setw(width) << std::setfill(pad) << n;
+  return ss.str();
 }
 
 inline std::string format_process(int current, int total) {
   int digits = total > 0 ? std::log10(total) + 1 : 1;
-  std::stringstream out;
-  out << format_int(current, digits) << " / " << total;
-  return out.str();
+  std::stringstream ss;
+  ss << format_int(current, digits) << " / " << total;
+  return ss.str();
 }
 
 template <typename Dtype>
@@ -56,16 +58,16 @@ inline std::string format_vector(const std::vector<Dtype> &vector,
                                  const std::string &split = ",",
                                  const std::string &prefix = "",
                                  const std::string &postfix = "") {
-  std::stringstream out;
-  out << prefix;
+  std::stringstream ss;
+  ss << prefix;
   for (int i = 0; i < vector.size() - 1; ++i) {
-    out << vector.at(i) << split;
+    ss << vector.at(i) << split;
   }
   if (vector.size() > 1) {
-    out << vector.at(vector.size() - 1);
+    ss << vector.at(vector.size() - 1);
   }
-  out << postfix;
-  return out.str();
+  ss << postfix;
+  return ss.str();
 }
 
 inline std::string find_replace(const std::string &str,
@@ -103,7 +105,9 @@ inline std::vector<std::string> tokenize(const std::string &str,
   std::string::size_type pos = str.find_first_of(split, last_pos);
   std::vector<std::string> tokens;
   while (last_pos != std::string::npos) {
-    if (pos != last_pos) tokens.push_back(str.substr(last_pos, pos - last_pos));
+    if (pos != last_pos) {
+      tokens.push_back(str.substr(last_pos, pos - last_pos));
+    }
     last_pos = pos;
     if (last_pos == std::string::npos || last_pos + 1 == str.length()) break;
     pos = str.find_first_of(split, ++last_pos);
@@ -120,7 +124,9 @@ inline std::vector<std::string> load_list(const std::string &list_file) {
   std::vector<std::string> image_list;
   std::string dir;
   while (std::getline(file, dir)) {
-    if (dir.length()) image_list.push_back(dir);
+    if (dir.length()) {
+      image_list.push_back(dir);
+    }
   }
   file.close();
   return image_list;
@@ -133,11 +139,13 @@ inline std::string read_text_from_file(const std::string &filename) {
     return std::string();
   }
 
-  std::stringstream result;
+  std::stringstream ss;
   std::string tmp;
-  while (std::getline(file, tmp)) result << tmp << std::endl;
+  while (std::getline(file, tmp)) {
+    ss << tmp << std::endl;
+  }
   file.close();
-  return result.str();
+  return ss.str();
 }
 
 }  // namespace Util
@@ -221,7 +229,7 @@ class Path {
     DWORD length = GetFullPathNameW(value.c_str(), MAX_PATH, &out[0], NULL);
     if (length == 0) {
       throw std::runtime_error("Error in make_absolute(): " +
-                               std::to_string(GetLastError()));
+                               std::string(GetLastError()));
     }
     std::wstring temp = out.substr(0, length);
     return Path(std::string(temp.begin(), temp.end()));
@@ -273,7 +281,9 @@ class Path {
     Path result;
     result.absolute_ = absolute_;
     if (path_.empty()) {
-      if (!absolute_) result.path_.push_back("..");
+      if (!absolute_) {
+        result.path_.push_back("..");
+      }
     } else {
       for (size_t i = 0; i < path_.size() - 1; ++i) {
         result.path_.push_back(path_[i]);
@@ -283,19 +293,21 @@ class Path {
   }
 
   std::string str(PathType type = KNative) const {
-    std::stringstream oss;
-    if (type_ == kPosix && absolute_) oss << "/";
+    std::stringstream ss;
+    if (type_ == kPosix && absolute_) {
+      ss << "/";
+    }
     for (size_t i = 0; i < path_.size(); ++i) {
-      oss << path_[i];
+      ss << path_[i];
       if (i + 1 < path_.size()) {
         if (type == kPosix) {
-          oss << '/';
+          ss << '/';
         } else {
-          oss << '\\';
+          ss << '\\';
         }
       }
     }
-    return oss.str();
+    return ss.str();
   }
 
   std::wstring wstr(PathType type = KNative) const {
@@ -356,7 +368,7 @@ class Path {
     std::wstring temp(MAX_PATH, '\0');
     if (!_wgetcwd(&temp[0], MAX_PATH)) {
       throw std::runtime_error("Error in cwd(): " +
-                               std::to_string(GetLastError()));
+                               std::string(GetLastError()));
     }
     return Path(std::string(temp.begin(), temp.end()));
 #endif
