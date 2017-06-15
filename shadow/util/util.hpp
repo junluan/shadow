@@ -63,7 +63,7 @@ inline std::string format_vector(const std::vector<Dtype> &vector,
   for (int i = 0; i < vector.size() - 1; ++i) {
     ss << vector.at(i) << split;
   }
-  if (vector.size() > 1) {
+  if (vector.size() >= 1) {
     ss << vector.at(vector.size() - 1);
   }
   ss << postfix;
