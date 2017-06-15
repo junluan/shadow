@@ -9,28 +9,28 @@ namespace Shadow {
 #if !defined(USE_Protobuf)
 namespace Parser {
 
-void ParseNet(const std::string &proto_text, shadow::NetParameter *net);
+void ParseNet(const std::string &proto_text, shadow::NetParam *net);
 
-void ParseCommon(const JValue &root, shadow::LayerParameter *layer);
+void ParseCommon(const JValue &root, shadow::OpParam *op);
 
-const shadow::LayerParameter ParseActivate(const JValue &root);
-const shadow::LayerParameter ParseBatchNorm(const JValue &root);
-const shadow::LayerParameter ParseBias(const JValue &root);
-const shadow::LayerParameter ParseConcat(const JValue &root);
-const shadow::LayerParameter ParseConnected(const JValue &root);
-const shadow::LayerParameter ParseConvolution(const JValue &root);
-const shadow::LayerParameter ParseData(const JValue &root);
-const shadow::LayerParameter ParseEltwise(const JValue &root);
-const shadow::LayerParameter ParseFlatten(const JValue &root);
-const shadow::LayerParameter ParseLRN(const JValue &root);
-const shadow::LayerParameter ParseNormalize(const JValue &root);
-const shadow::LayerParameter ParsePermute(const JValue &root);
-const shadow::LayerParameter ParsePooling(const JValue &root);
-const shadow::LayerParameter ParsePriorBox(const JValue &root);
-const shadow::LayerParameter ParseReorg(const JValue &root);
-const shadow::LayerParameter ParseReshape(const JValue &root);
-const shadow::LayerParameter ParseScale(const JValue &root);
-const shadow::LayerParameter ParseSoftmax(const JValue &root);
+const shadow::OpParam ParseActivate(const JValue &root);
+const shadow::OpParam ParseBatchNorm(const JValue &root);
+const shadow::OpParam ParseBias(const JValue &root);
+const shadow::OpParam ParseConcat(const JValue &root);
+const shadow::OpParam ParseConnected(const JValue &root);
+const shadow::OpParam ParseConvolution(const JValue &root);
+const shadow::OpParam ParseData(const JValue &root);
+const shadow::OpParam ParseEltwise(const JValue &root);
+const shadow::OpParam ParseFlatten(const JValue &root);
+const shadow::OpParam ParseLRN(const JValue &root);
+const shadow::OpParam ParseNormalize(const JValue &root);
+const shadow::OpParam ParsePermute(const JValue &root);
+const shadow::OpParam ParsePooling(const JValue &root);
+const shadow::OpParam ParsePriorBox(const JValue &root);
+const shadow::OpParam ParseReorg(const JValue &root);
+const shadow::OpParam ParseReshape(const JValue &root);
+const shadow::OpParam ParseScale(const JValue &root);
+const shadow::OpParam ParseSoftmax(const JValue &root);
 
 }  // namespace Parser
 #endif

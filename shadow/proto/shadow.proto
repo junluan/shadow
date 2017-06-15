@@ -11,7 +11,7 @@ message Blob {
   optional BlobShape shape = 2;
 }
 
-message ActivateParameter {
+message ActivateParam {
   enum ActivateType {
     Linear = 0;
     Relu = 1;
@@ -22,26 +22,26 @@ message ActivateParameter {
   optional bool channel_shared = 2 [default = false];
 }
 
-message BatchNormParameter {
+message BatchNormParam {
   optional bool use_global_stats = 1 [default = true];
 }
 
-message BiasParameter {
+message BiasParam {
   optional int32 axis = 1 [default = 1];
   optional int32 num_axes = 2 [default = 1];
 }
 
-message ConcatParameter {
+message ConcatParam {
   optional int32 axis = 1 [default = 1];
 }
 
-message ConnectedParameter {
+message ConnectedParam {
   optional int32 num_output = 1;
   optional bool bias_term = 2 [default = true];
   optional bool transpose = 3 [default = false];
 }
 
-message ConvolutionParameter {
+message ConvolutionParam {
   optional int32 num_output = 1;
   optional int32 kernel_size = 2;
   optional int32 stride = 3 [default = 1];
@@ -51,13 +51,13 @@ message ConvolutionParameter {
   optional bool bias_term = 7 [default = true];
 }
 
-message DataParameter {
+message DataParam {
   optional BlobShape data_shape = 1;
   optional float scale = 2 [default = 1];
   repeated float mean_value = 3;
 }
 
-message EltwiseParameter {
+message EltwiseParam {
   enum EltwiseOp {
     Prod = 0;
     Sum = 1;
@@ -67,12 +67,12 @@ message EltwiseParameter {
   repeated float coeff = 2;
 }
 
-message FlattenParameter {
+message FlattenParam {
   optional int32 axis = 1 [default = 1];
   optional int32 end_axis = 2 [default = -1];
 }
 
-message LRNParameter {
+message LRNParam {
   enum NormRegion {
     AcrossChannels = 0;
     WithinChannel = 1;
@@ -84,17 +84,17 @@ message LRNParameter {
   optional float k = 5 [default = 1];
 }
 
-message NormalizeParameter {
+message NormalizeParam {
   optional bool across_spatial = 1 [default = true];
   optional bool channel_shared = 2 [default = true];
   repeated float scale = 3;
 }
 
-message PermuteParameter {
+message PermuteParam {
   repeated int32 order = 1;
 }
 
-message PoolingParameter {
+message PoolingParam {
   enum PoolType {
     Max = 0;
     Ave = 1;
@@ -106,7 +106,7 @@ message PoolingParameter {
   optional bool global_pooling = 5 [default = false];
 }
 
-message PriorBoxParameter {
+message PriorBoxParam {
   repeated float min_size = 1;
   repeated float max_size = 2;
   repeated float aspect_ratio = 3;
@@ -117,27 +117,27 @@ message PriorBoxParameter {
   optional float offset = 8 [default = 0.5];
 }
 
-message ReorgParameter {
+message ReorgParam {
   optional int32 stride = 1 [default = 2];
 }
 
-message ReshapeParameter {
+message ReshapeParam {
   optional BlobShape shape = 1;
   optional int32 axis = 2 [default = 0];
   optional int32 num_axes = 3 [default = -1];
 }
 
-message ScaleParameter {
+message ScaleParam {
   optional int32 axis = 1 [default = 1];
   optional int32 num_axes = 2 [default = 1];
   optional bool bias_term = 3 [default = false];
 }
 
-message SoftmaxParameter {
+message SoftmaxParam {
   optional int32 axis = 1 [default = 1];
 }
 
-message LayerParameter {
+message OpParam {
   optional string name = 1 [default = ""];
   optional string type = 2;
   repeated string bottom = 3;
@@ -145,28 +145,28 @@ message LayerParameter {
 
   repeated Blob blobs = 5;
 
-  optional ActivateParameter activate_param = 11;
-  optional BatchNormParameter batch_norm_param = 12;
-  optional BiasParameter bias_param = 13;
-  optional ConcatParameter concat_param = 14;
-  optional ConnectedParameter connected_param = 15;
-  optional ConvolutionParameter convolution_param = 16;
-  optional DataParameter data_param = 17;
-  optional EltwiseParameter eltwise_param = 18;
-  optional FlattenParameter flatten_param = 19;
-  optional LRNParameter lrn_param = 20;
-  optional NormalizeParameter normalize_param = 21;
-  optional PermuteParameter permute_param = 22;
-  optional PoolingParameter pooling_param = 23;
-  optional PriorBoxParameter prior_box_param = 24;
-  optional ReorgParameter reorg_param = 25;
-  optional ReshapeParameter reshape_param = 26;
-  optional ScaleParameter scale_param = 27;
-  optional SoftmaxParameter softmax_param = 28;
+  optional ActivateParam activate_param = 11;
+  optional BatchNormParam batch_norm_param = 12;
+  optional BiasParam bias_param = 13;
+  optional ConcatParam concat_param = 14;
+  optional ConnectedParam connected_param = 15;
+  optional ConvolutionParam convolution_param = 16;
+  optional DataParam data_param = 17;
+  optional EltwiseParam eltwise_param = 18;
+  optional FlattenParam flatten_param = 19;
+  optional LRNParam lrn_param = 20;
+  optional NormalizeParam normalize_param = 21;
+  optional PermuteParam permute_param = 22;
+  optional PoolingParam pooling_param = 23;
+  optional PriorBoxParam prior_box_param = 24;
+  optional ReorgParam reorg_param = 25;
+  optional ReshapeParam reshape_param = 26;
+  optional ScaleParam scale_param = 27;
+  optional SoftmaxParam softmax_param = 28;
 }
 
-message NetParameter {
+message NetParam {
   optional string name = 1;
 
-  repeated LayerParameter layer = 11;
+  repeated OpParam op = 11;
 }

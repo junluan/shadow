@@ -1,24 +1,24 @@
 #include "network.hpp"
 #include "util/io.hpp"
 
-#include "layers/activate_layer.hpp"
-#include "layers/batch_norm_layer.hpp"
-#include "layers/bias_layer.hpp"
-#include "layers/concat_layer.hpp"
-#include "layers/connected_layer.hpp"
-#include "layers/convolution_layer.hpp"
-#include "layers/data_layer.hpp"
-#include "layers/eltwise_layer.hpp"
-#include "layers/flatten_layer.hpp"
-#include "layers/lrn_layer.hpp"
-#include "layers/normalize_layer.hpp"
-#include "layers/permute_layer.hpp"
-#include "layers/pooling_layer.hpp"
-#include "layers/prior_box_layer.hpp"
-#include "layers/reorg_layer.hpp"
-#include "layers/reshape_layer.hpp"
-#include "layers/scale_layer.hpp"
-#include "layers/softmax_layer.hpp"
+#include "operators/activate_op.hpp"
+#include "operators/batch_norm_op.hpp"
+#include "operators/bias_op.hpp"
+#include "operators/concat_op.hpp"
+#include "operators/connected_op.hpp"
+#include "operators/convolution_op.hpp"
+#include "operators/data_op.hpp"
+#include "operators/eltwise_op.hpp"
+#include "operators/flatten_op.hpp"
+#include "operators/lrn_op.hpp"
+#include "operators/normalize_op.hpp"
+#include "operators/permute_op.hpp"
+#include "operators/pooling_op.hpp"
+#include "operators/prior_box_op.hpp"
+#include "operators/reorg_op.hpp"
+#include "operators/reshape_op.hpp"
+#include "operators/scale_op.hpp"
+#include "operators/softmax_op.hpp"
 
 #if defined(USE_NNPACK)
 #include "nnpack.h"
@@ -57,17 +57,17 @@ void Network::LoadModel(const std::string &proto_str,
 
 void Network::SaveModel(const std::string &proto_bin) {
 #if defined(USE_Protobuf)
-  for (int l = 0; l < layers_.size(); ++l) {
-    net_param_.mutable_layer(l)->clear_blobs();
-    for (const auto &blob : layers_[l]->blobs()) {
-      auto layer_blob = net_param_.mutable_layer(l)->add_blobs();
+  for (int l = 0; l < ops_.size(); ++l) {
+    net_param_.mutable_op(l)->clear_blobs();
+    for (const auto &blob : ops_[l]->blobs()) {
+      auto op_blob = net_param_.mutable_op(l)->add_blobs();
       for (const auto &dim : blob->shape()) {
-        layer_blob->mutable_shape()->add_dim(dim);
+        op_blob->mutable_shape()->add_dim(dim);
       }
       VecFloat blob_data(blob->count());
       blob->read_data(blob_data.data());
       for (const auto &data : blob_data) {
-        layer_blob->add_data(data);
+        op_blob->add_data(data);
       }
     }
   }
@@ -80,22 +80,24 @@ void Network::SaveModel(const std::string &proto_bin) {
 
 void Network::Forward(const float *data) {
   CHECK_NOTNULL(data);
-  if (layers_.size() == 0) return;
-  CHECK(!layers_[0]->type().compare("Data"))
-      << "The first layer must be Data layer!";
-  layers_[0]->mutable_bottoms(0)->set_data(data);
-  for (auto &layer : layers_) layer->Forward();
+  if (ops_.size() == 0) return;
+  CHECK(!ops_[0]->type().compare("Data"))
+      << "The first Op must be Data operator!";
+  ops_[0]->mutable_bottoms(0)->set_data(data);
+  for (auto &op : ops_) {
+    op->Forward();
+  }
 }
 
 void Network::Release() {
   net_param_.Clear();
   in_shape_.clear();
 
-  for (auto &layer : layers_) {
-    delete layer;
-    layer = nullptr;
+  for (auto &op : ops_) {
+    delete op;
+    op = nullptr;
   }
-  layers_.clear();
+  ops_.clear();
 
   for (auto &blob : blobs_) {
     delete blob;
@@ -119,9 +121,9 @@ void Network::Release() {
   DLOG(INFO) << "Release Network!";
 }
 
-const Layer *Network::GetLayerByName(const std::string &layer_name) {
-  for (const auto &layer : layers_) {
-    if (!layer_name.compare(layer->name())) return layer;
+const Operator *Network::GetOpByName(const std::string &op_name) {
+  for (const auto &op : ops_) {
+    if (!op_name.compare(op->name())) return op;
   }
   return nullptr;
 }
@@ -143,7 +145,7 @@ const float *Network::GetBlobDataByName(const std::string &blob_name) {
 }
 
 void Network::LoadProtoBin(const std::string &proto_bin,
-                           shadow::NetParameter *net_param) {
+                           shadow::NetParam *net_param) {
 #if defined(USE_Protobuf)
   CHECK(IO::ReadProtoFromBinaryFile(proto_bin, net_param))
       << "Error when loading proto binary file: " << proto_bin;
@@ -154,7 +156,7 @@ void Network::LoadProtoBin(const std::string &proto_bin,
 }
 
 void Network::LoadProtoStrOrText(const std::string &proto_str_or_text,
-                                 shadow::NetParameter *net_param) {
+                                 shadow::NetParam *net_param) {
   bool success;
   Path path(proto_str_or_text);
   if (path.is_file()) {
@@ -168,8 +170,8 @@ void Network::LoadProtoStrOrText(const std::string &proto_str_or_text,
 
 void Network::Reshape(int batch) {
   in_shape_.clear();
-  CHECK(!net_param_.layer(0).type().compare("Data"));
-  for (const auto &dim : net_param_.layer(0).data_param().data_shape().dim()) {
+  CHECK(!net_param_.op(0).type().compare("Data"));
+  for (const auto &dim : net_param_.op(0).data_param().data_shape().dim()) {
     in_shape_.push_back(dim);
   }
   CHECK_EQ(in_shape_.size(), 4) << "data_shape dimension must be four!";
@@ -178,24 +180,24 @@ void Network::Reshape(int batch) {
   blobs_.clear();
   blobs_.push_back(new BlobF(in_shape_, "in_blob"));
 
-  layers_.clear();
-  for (const auto &layer_param : net_param_.layer()) {
-    Layer *layer = LayerFactory(layer_param);
-    layer->Setup(&blobs_);
-    layer->Reshape();
-    layers_.push_back(layer);
+  ops_.clear();
+  for (const auto &op_param : net_param_.op()) {
+    Operator *op = OpFactory(op_param);
+    op->Setup(&blobs_);
+    op->Reshape();
+    ops_.push_back(op);
   }
 }
 
 void Network::CopyWeights(const std::vector<const float *> &weights) {
   int weights_count = 0;
-  for (auto &layer : layers_) {
-    if (layer->blobs_size() > 0) {
+  for (auto &op : ops_) {
+    if (op->blobs_size() > 0) {
       CHECK_LT(weights_count, weights.size());
       const float *weights_data = weights[weights_count++];
-      for (int n = 0; n < layer->blobs_size(); ++n) {
-        int blob_count = layer->blobs(n)->count();
-        layer->set_blob(n, blob_count, weights_data);
+      for (int n = 0; n < op->blobs_size(); ++n) {
+        int blob_count = op->blobs(n)->count();
+        op->set_blob(n, blob_count, weights_data);
         weights_data += blob_count;
       }
     }
@@ -203,59 +205,59 @@ void Network::CopyWeights(const std::vector<const float *> &weights) {
 }
 
 void Network::CopyWeights(const float *weights_data) {
-  for (auto &layer : layers_) {
-    for (int n = 0; n < layer->blobs_size(); ++n) {
-      int blob_count = layer->blobs(n)->count();
-      layer->set_blob(n, blob_count, weights_data);
+  for (auto &op : ops_) {
+    for (int n = 0; n < op->blobs_size(); ++n) {
+      int blob_count = op->blobs(n)->count();
+      op->set_blob(n, blob_count, weights_data);
       weights_data += blob_count;
     }
   }
 }
 
-Layer *Network::LayerFactory(const shadow::LayerParameter &layer_param) {
-  Layer *layer = nullptr;
-  const auto &layer_type = layer_param.type();
-  if (!layer_type.compare("Activate")) {
-    layer = new ActivateLayer(layer_param);
-  } else if (!layer_type.compare("BatchNorm")) {
-    layer = new BatchNormLayer(layer_param);
-  } else if (!layer_type.compare("Bias")) {
-    layer = new BiasLayer(layer_param);
-  } else if (!layer_type.compare("Concat")) {
-    layer = new ConcatLayer(layer_param);
-  } else if (!layer_type.compare("Connected")) {
-    layer = new ConnectedLayer(layer_param);
-  } else if (!layer_type.compare("Convolution")) {
-    layer = new ConvolutionLayer(layer_param);
-  } else if (!layer_type.compare("Data")) {
-    layer = new DataLayer(layer_param);
-  } else if (!layer_type.compare("Eltwise")) {
-    layer = new EltwiseLayer(layer_param);
-  } else if (!layer_type.compare("Flatten")) {
-    layer = new FlattenLayer(layer_param);
-  } else if (!layer_type.compare("LRN")) {
-    layer = new LRNLayer(layer_param);
-  } else if (!layer_type.compare("Normalize")) {
-    layer = new NormalizeLayer(layer_param);
-  } else if (!layer_type.compare("Permute")) {
-    layer = new PermuteLayer(layer_param);
-  } else if (!layer_type.compare("Pooling")) {
-    layer = new PoolingLayer(layer_param);
-  } else if (!layer_type.compare("PriorBox")) {
-    layer = new PriorBoxLayer(layer_param);
-  } else if (!layer_type.compare("Reorg")) {
-    layer = new ReorgLayer(layer_param);
-  } else if (!layer_type.compare("Reshape")) {
-    layer = new ReshapeLayer(layer_param);
-  } else if (!layer_type.compare("Scale")) {
-    layer = new ScaleLayer(layer_param);
-  } else if (!layer_type.compare("Softmax")) {
-    layer = new SoftmaxLayer(layer_param);
+Operator *Network::OpFactory(const shadow::OpParam &op_param) {
+  Operator *op = nullptr;
+  const auto &op_type = op_param.type();
+  if (!op_type.compare("Activate")) {
+    op = new ActivateOp(op_param);
+  } else if (!op_type.compare("BatchNorm")) {
+    op = new BatchNormOp(op_param);
+  } else if (!op_type.compare("Bias")) {
+    op = new BiasOp(op_param);
+  } else if (!op_type.compare("Concat")) {
+    op = new ConcatOp(op_param);
+  } else if (!op_type.compare("Connected")) {
+    op = new ConnectedOp(op_param);
+  } else if (!op_type.compare("Convolution")) {
+    op = new ConvolutionOp(op_param);
+  } else if (!op_type.compare("Data")) {
+    op = new DataOp(op_param);
+  } else if (!op_type.compare("Eltwise")) {
+    op = new EltwiseOp(op_param);
+  } else if (!op_type.compare("Flatten")) {
+    op = new FlattenOp(op_param);
+  } else if (!op_type.compare("LRN")) {
+    op = new LRNOp(op_param);
+  } else if (!op_type.compare("Normalize")) {
+    op = new NormalizeOp(op_param);
+  } else if (!op_type.compare("Permute")) {
+    op = new PermuteOp(op_param);
+  } else if (!op_type.compare("Pooling")) {
+    op = new PoolingOp(op_param);
+  } else if (!op_type.compare("PriorBox")) {
+    op = new PriorBoxOp(op_param);
+  } else if (!op_type.compare("Reorg")) {
+    op = new ReorgOp(op_param);
+  } else if (!op_type.compare("Reshape")) {
+    op = new ReshapeOp(op_param);
+  } else if (!op_type.compare("Scale")) {
+    op = new ScaleOp(op_param);
+  } else if (!op_type.compare("Softmax")) {
+    op = new SoftmaxOp(op_param);
   } else {
-    LOG(FATAL) << "Error when making layer: " << layer_param.name()
-               << ", layer type: " << layer_type << " is not recognized!";
+    LOG(FATAL) << "Error when making op: " << op_param.name()
+               << ", op type: " << op_type << " is not recognized!";
   }
-  return layer;
+  return op;
 }
 
 }  // namespace Shadow

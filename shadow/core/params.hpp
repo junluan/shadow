@@ -86,20 +86,20 @@ class Blob {
   BlobShape *shape_ = nullptr, default_shape_;
 };
 
-enum ActivateParameter_ActivateType {
-  ActivateParameter_ActivateType_Linear = 0,
-  ActivateParameter_ActivateType_Relu = 1,
-  ActivateParameter_ActivateType_Leaky = 2,
-  ActivateParameter_ActivateType_PRelu = 3
+enum ActivateParam_ActivateType {
+  ActivateParam_ActivateType_Linear = 0,
+  ActivateParam_ActivateType_Relu = 1,
+  ActivateParam_ActivateType_Leaky = 2,
+  ActivateParam_ActivateType_PRelu = 3
 };
 
-class ActivateParameter {
+class ActivateParam {
  public:
-  ActivateParameter() {}
-  ~ActivateParameter() { Clear(); }
+  ActivateParam() {}
+  ~ActivateParam() { Clear(); }
 
-  OPTIONAL_FIELD_DEFAULT_FUNC(type, ActivateParameter_ActivateType,
-                              ActivateParameter_ActivateType_Relu);
+  OPTIONAL_FIELD_DEFAULT_FUNC(type, ActivateParam_ActivateType,
+                              ActivateParam_ActivateType_Relu);
   OPTIONAL_FIELD_DEFAULT_FUNC(channel_shared, bool, false);
 
   void Clear() {
@@ -108,14 +108,14 @@ class ActivateParameter {
   }
 
  private:
-  ActivateParameter_ActivateType type_ = ActivateParameter_ActivateType_Relu;
+  ActivateParam_ActivateType type_ = ActivateParam_ActivateType_Relu;
   bool channel_shared_ = false;
 };
 
-class BatchNormParameter {
+class BatchNormParam {
  public:
-  BatchNormParameter() {}
-  ~BatchNormParameter() { Clear(); }
+  BatchNormParam() {}
+  ~BatchNormParam() { Clear(); }
 
   OPTIONAL_FIELD_DEFAULT_FUNC(use_global_stats, bool, true);
 
@@ -125,10 +125,10 @@ class BatchNormParameter {
   bool use_global_stats_ = true;
 };
 
-class BiasParameter {
+class BiasParam {
  public:
-  BiasParameter() {}
-  ~BiasParameter() { Clear(); }
+  BiasParam() {}
+  ~BiasParam() { Clear(); }
 
   OPTIONAL_FIELD_DEFAULT_FUNC(axis, int, 1);
   OPTIONAL_FIELD_DEFAULT_FUNC(num_axes, int, 1);
@@ -142,10 +142,10 @@ class BiasParameter {
   int axis_ = 1, num_axes_ = 1;
 };
 
-class ConcatParameter {
+class ConcatParam {
  public:
-  ConcatParameter() {}
-  ~ConcatParameter() { Clear(); }
+  ConcatParam() {}
+  ~ConcatParam() { Clear(); }
 
   OPTIONAL_FIELD_DEFAULT_FUNC(axis, int, 1);
 
@@ -155,10 +155,10 @@ class ConcatParameter {
   int axis_ = 1;
 };
 
-class ConnectedParameter {
+class ConnectedParam {
  public:
-  ConnectedParameter() {}
-  ~ConnectedParameter() { Clear(); }
+  ConnectedParam() {}
+  ~ConnectedParam() { Clear(); }
 
   OPTIONAL_FIELD_DEFAULT_FUNC(num_output, int, -1);
   bool has_num_output() const { return num_output_ > 0; }
@@ -177,10 +177,10 @@ class ConnectedParameter {
   bool bias_term_ = true, transpose_ = false;
 };
 
-class ConvolutionParameter {
+class ConvolutionParam {
  public:
-  ConvolutionParameter() {}
-  ~ConvolutionParameter() { Clear(); }
+  ConvolutionParam() {}
+  ~ConvolutionParam() { Clear(); }
 
   OPTIONAL_FIELD_DEFAULT_FUNC(num_output, int, -1);
   bool has_num_output() const { return num_output_ > 0; }
@@ -209,18 +209,18 @@ class ConvolutionParameter {
   bool bias_term_ = true;
 };
 
-class DataParameter {
+class DataParam {
  public:
-  DataParameter() {}
-  DataParameter(const DataParameter &from) { *this = from; }
-  ~DataParameter() { Clear(); }
+  DataParam() {}
+  DataParam(const DataParam &from) { *this = from; }
+  ~DataParam() { Clear(); }
 
-  DataParameter &operator=(const DataParameter &from) {
+  DataParam &operator=(const DataParam &from) {
     CopyFrom(from);
     return *this;
   }
 
-  void CopyFrom(const DataParameter &from) {
+  void CopyFrom(const DataParam &from) {
     if (&from == this) return;
     Clear();
     *mutable_data_shape() = from.data_shape();
@@ -244,19 +244,19 @@ class DataParameter {
   std::vector<float> mean_value_;
 };
 
-enum EltwiseParameter_EltwiseOp {
-  EltwiseParameter_EltwiseOp_Prod = 0,
-  EltwiseParameter_EltwiseOp_Sum = 1,
-  EltwiseParameter_EltwiseOp_Max = 2
+enum EltwiseParam_EltwiseOp {
+  EltwiseParam_EltwiseOp_Prod = 0,
+  EltwiseParam_EltwiseOp_Sum = 1,
+  EltwiseParam_EltwiseOp_Max = 2
 };
 
-class EltwiseParameter {
+class EltwiseParam {
  public:
-  EltwiseParameter() {}
-  ~EltwiseParameter() { Clear(); }
+  EltwiseParam() {}
+  ~EltwiseParam() { Clear(); }
 
-  OPTIONAL_FIELD_DEFAULT_FUNC(operation, EltwiseParameter_EltwiseOp,
-                              EltwiseParameter_EltwiseOp_Sum);
+  OPTIONAL_FIELD_DEFAULT_FUNC(operation, EltwiseParam_EltwiseOp,
+                              EltwiseParam_EltwiseOp_Sum);
   REPEATED_FIELD_FUNC(coeff, float);
 
   void Clear() {
@@ -265,14 +265,14 @@ class EltwiseParameter {
   }
 
  private:
-  EltwiseParameter_EltwiseOp operation_ = EltwiseParameter_EltwiseOp_Sum;
+  EltwiseParam_EltwiseOp operation_ = EltwiseParam_EltwiseOp_Sum;
   std::vector<float> coeff_;
 };
 
-class FlattenParameter {
+class FlattenParam {
  public:
-  FlattenParameter() {}
-  ~FlattenParameter() { Clear(); }
+  FlattenParam() {}
+  ~FlattenParam() { Clear(); }
 
   OPTIONAL_FIELD_DEFAULT_FUNC(axis, int, 1);
   OPTIONAL_FIELD_DEFAULT_FUNC(end_axis, int, -1);
@@ -286,21 +286,21 @@ class FlattenParameter {
   int axis_ = 1, end_axis_ = -1;
 };
 
-enum LRNParameter_NormRegion {
-  LRNParameter_NormRegion_AcrossChannels = 0,
-  LRNParameter_NormRegion_WithinChannel = 1
+enum LRNParam_NormRegion {
+  LRNParam_NormRegion_AcrossChannels = 0,
+  LRNParam_NormRegion_WithinChannel = 1
 };
 
-class LRNParameter {
+class LRNParam {
  public:
-  LRNParameter() {}
-  ~LRNParameter() { Clear(); }
+  LRNParam() {}
+  ~LRNParam() { Clear(); }
 
   OPTIONAL_FIELD_DEFAULT_FUNC(local_size, int, 5);
   OPTIONAL_FIELD_DEFAULT_FUNC(alpha, float, 1);
   OPTIONAL_FIELD_DEFAULT_FUNC(beta, float, 0.75);
-  OPTIONAL_FIELD_DEFAULT_FUNC(norm_region, LRNParameter_NormRegion,
-                              LRNParameter_NormRegion_AcrossChannels);
+  OPTIONAL_FIELD_DEFAULT_FUNC(norm_region, LRNParam_NormRegion,
+                              LRNParam_NormRegion_AcrossChannels);
   OPTIONAL_FIELD_DEFAULT_FUNC(k, float, 1);
 
   void Clear() {
@@ -312,15 +312,15 @@ class LRNParameter {
   }
 
  private:
-  LRNParameter_NormRegion norm_region_ = LRNParameter_NormRegion_AcrossChannels;
+  LRNParam_NormRegion norm_region_ = LRNParam_NormRegion_AcrossChannels;
   int local_size_ = 5;
   float alpha_ = 1, beta_ = 0.75, k_ = 1;
 };
 
-class NormalizeParameter {
+class NormalizeParam {
  public:
-  NormalizeParameter() {}
-  ~NormalizeParameter() { Clear(); }
+  NormalizeParam() {}
+  ~NormalizeParam() { Clear(); }
 
   OPTIONAL_FIELD_DEFAULT_FUNC(across_spatial, bool, true);
   OPTIONAL_FIELD_DEFAULT_FUNC(channel_shared, bool, true);
@@ -337,10 +337,10 @@ class NormalizeParameter {
   std::vector<float> scale_;
 };
 
-class PermuteParameter {
+class PermuteParam {
  public:
-  PermuteParameter() {}
-  ~PermuteParameter() { Clear(); }
+  PermuteParam() {}
+  ~PermuteParam() { Clear(); }
 
   REPEATED_FIELD_FUNC(order, int);
 
@@ -350,18 +350,18 @@ class PermuteParameter {
   std::vector<int> order_;
 };
 
-enum PoolingParameter_PoolType {
-  PoolingParameter_PoolType_Max = 0,
-  PoolingParameter_PoolType_Ave = 1
+enum PoolingParam_PoolType {
+  PoolingParam_PoolType_Max = 0,
+  PoolingParam_PoolType_Ave = 1
 };
 
-class PoolingParameter {
+class PoolingParam {
  public:
-  PoolingParameter() {}
-  ~PoolingParameter() { Clear(); }
+  PoolingParam() {}
+  ~PoolingParam() { Clear(); }
 
-  OPTIONAL_FIELD_DEFAULT_FUNC(pool, PoolingParameter_PoolType,
-                              PoolingParameter_PoolType_Max);
+  OPTIONAL_FIELD_DEFAULT_FUNC(pool, PoolingParam_PoolType,
+                              PoolingParam_PoolType_Max);
   OPTIONAL_FIELD_DEFAULT_FUNC(stride, int, 1)
   OPTIONAL_FIELD_DEFAULT_FUNC(pad, int, 0)
   OPTIONAL_FIELD_DEFAULT_FUNC(global_pooling, bool, false)
@@ -378,15 +378,15 @@ class PoolingParameter {
   }
 
  private:
-  PoolingParameter_PoolType pool_ = PoolingParameter_PoolType_Max;
+  PoolingParam_PoolType pool_ = PoolingParam_PoolType_Max;
   int kernel_size_ = -1, stride_ = 1, pad_ = 0;
   bool global_pooling_ = false;
 };
 
-class PriorBoxParameter {
+class PriorBoxParam {
  public:
-  PriorBoxParameter() {}
-  ~PriorBoxParameter() { Clear(); }
+  PriorBoxParam() {}
+  ~PriorBoxParam() { Clear(); }
 
   REPEATED_FIELD_FUNC(min_size, float);
   REPEATED_FIELD_FUNC(max_size, float);
@@ -415,10 +415,10 @@ class PriorBoxParameter {
   float step_ = -1, offset_ = 0.5;
 };
 
-class ReorgParameter {
+class ReorgParam {
  public:
-  ReorgParameter() {}
-  ~ReorgParameter() { Clear(); }
+  ReorgParam() {}
+  ~ReorgParam() { Clear(); }
 
   OPTIONAL_FIELD_DEFAULT_FUNC(stride, int, 2);
 
@@ -428,18 +428,18 @@ class ReorgParameter {
   int stride_ = 2;
 };
 
-class ReshapeParameter {
+class ReshapeParam {
  public:
-  ReshapeParameter() {}
-  ReshapeParameter(const ReshapeParameter &from) { *this = from; }
-  ~ReshapeParameter() { Clear(); }
+  ReshapeParam() {}
+  ReshapeParam(const ReshapeParam &from) { *this = from; }
+  ~ReshapeParam() { Clear(); }
 
-  ReshapeParameter &operator=(const ReshapeParameter &from) {
+  ReshapeParam &operator=(const ReshapeParam &from) {
     CopyFrom(from);
     return *this;
   }
 
-  void CopyFrom(const ReshapeParameter &from) {
+  void CopyFrom(const ReshapeParam &from) {
     if (&from == this) return;
     Clear();
     *mutable_shape() = from.shape();
@@ -462,10 +462,10 @@ class ReshapeParameter {
   int axis_ = 0, num_axes_ = -1;
 };
 
-class ScaleParameter {
+class ScaleParam {
  public:
-  ScaleParameter() {}
-  ~ScaleParameter() { Clear(); }
+  ScaleParam() {}
+  ~ScaleParam() { Clear(); }
 
   OPTIONAL_FIELD_DEFAULT_FUNC(axis, int, 1);
   OPTIONAL_FIELD_DEFAULT_FUNC(num_axes, int, 1);
@@ -482,10 +482,10 @@ class ScaleParameter {
   bool bias_term_ = false;
 };
 
-class SoftmaxParameter {
+class SoftmaxParam {
  public:
-  SoftmaxParameter() {}
-  ~SoftmaxParameter() { Clear(); }
+  SoftmaxParam() {}
+  ~SoftmaxParam() { Clear(); }
 
   OPTIONAL_FIELD_DEFAULT_FUNC(axis, int, 1);
 
@@ -495,18 +495,18 @@ class SoftmaxParameter {
   int axis_ = 1;
 };
 
-class LayerParameter {
+class OpParam {
  public:
-  LayerParameter() {}
-  LayerParameter(const LayerParameter &from) { *this = from; }
-  ~LayerParameter() { Clear(); }
+  OpParam() {}
+  OpParam(const OpParam &from) { *this = from; }
+  ~OpParam() { Clear(); }
 
-  LayerParameter &operator=(const LayerParameter &from) {
+  OpParam &operator=(const OpParam &from) {
     CopyFrom(from);
     return *this;
   }
 
-  void CopyFrom(const LayerParameter &from) {
+  void CopyFrom(const OpParam &from) {
     if (&from == this) return;
     Clear();
     name_ = from.name_;
@@ -541,24 +541,24 @@ class LayerParameter {
   REPEATED_FIELD_FUNC(top, std::string);
   REPEATED_FIELD_FUNC(blobs, Blob);
 
-  OPTIONAL_NESTED_MESSAGE_FUNC(activate_param, ActivateParameter);
-  OPTIONAL_NESTED_MESSAGE_FUNC(batch_norm_param, BatchNormParameter);
-  OPTIONAL_NESTED_MESSAGE_FUNC(bias_param, BiasParameter);
-  OPTIONAL_NESTED_MESSAGE_FUNC(concat_param, ConcatParameter);
-  OPTIONAL_NESTED_MESSAGE_FUNC(connected_param, ConnectedParameter);
-  OPTIONAL_NESTED_MESSAGE_FUNC(convolution_param, ConvolutionParameter);
-  OPTIONAL_NESTED_MESSAGE_FUNC(data_param, DataParameter);
-  OPTIONAL_NESTED_MESSAGE_FUNC(eltwise_param, EltwiseParameter);
-  OPTIONAL_NESTED_MESSAGE_FUNC(flatten_param, FlattenParameter);
-  OPTIONAL_NESTED_MESSAGE_FUNC(lrn_param, LRNParameter);
-  OPTIONAL_NESTED_MESSAGE_FUNC(normalize_param, NormalizeParameter);
-  OPTIONAL_NESTED_MESSAGE_FUNC(permute_param, PermuteParameter);
-  OPTIONAL_NESTED_MESSAGE_FUNC(pooling_param, PoolingParameter);
-  OPTIONAL_NESTED_MESSAGE_FUNC(prior_box_param, PriorBoxParameter);
-  OPTIONAL_NESTED_MESSAGE_FUNC(reorg_param, ReorgParameter);
-  OPTIONAL_NESTED_MESSAGE_FUNC(reshape_param, ReshapeParameter);
-  OPTIONAL_NESTED_MESSAGE_FUNC(scale_param, ScaleParameter);
-  OPTIONAL_NESTED_MESSAGE_FUNC(softmax_param, SoftmaxParameter);
+  OPTIONAL_NESTED_MESSAGE_FUNC(activate_param, ActivateParam);
+  OPTIONAL_NESTED_MESSAGE_FUNC(batch_norm_param, BatchNormParam);
+  OPTIONAL_NESTED_MESSAGE_FUNC(bias_param, BiasParam);
+  OPTIONAL_NESTED_MESSAGE_FUNC(concat_param, ConcatParam);
+  OPTIONAL_NESTED_MESSAGE_FUNC(connected_param, ConnectedParam);
+  OPTIONAL_NESTED_MESSAGE_FUNC(convolution_param, ConvolutionParam);
+  OPTIONAL_NESTED_MESSAGE_FUNC(data_param, DataParam);
+  OPTIONAL_NESTED_MESSAGE_FUNC(eltwise_param, EltwiseParam);
+  OPTIONAL_NESTED_MESSAGE_FUNC(flatten_param, FlattenParam);
+  OPTIONAL_NESTED_MESSAGE_FUNC(lrn_param, LRNParam);
+  OPTIONAL_NESTED_MESSAGE_FUNC(normalize_param, NormalizeParam);
+  OPTIONAL_NESTED_MESSAGE_FUNC(permute_param, PermuteParam);
+  OPTIONAL_NESTED_MESSAGE_FUNC(pooling_param, PoolingParam);
+  OPTIONAL_NESTED_MESSAGE_FUNC(prior_box_param, PriorBoxParam);
+  OPTIONAL_NESTED_MESSAGE_FUNC(reorg_param, ReorgParam);
+  OPTIONAL_NESTED_MESSAGE_FUNC(reshape_param, ReshapeParam);
+  OPTIONAL_NESTED_MESSAGE_FUNC(scale_param, ScaleParam);
+  OPTIONAL_NESTED_MESSAGE_FUNC(softmax_param, SoftmaxParam);
 
   void Clear() {
     clear_name();
@@ -591,56 +591,55 @@ class LayerParameter {
   std::vector<std::string> bottom_, top_;
   std::vector<Blob> blobs_;
 
-  ActivateParameter *activate_param_ = nullptr, default_activate_param_;
-  BatchNormParameter *batch_norm_param_ = nullptr, default_batch_norm_param_;
-  BiasParameter *bias_param_ = nullptr, default_bias_param_;
-  ConcatParameter *concat_param_ = nullptr, default_concat_param_;
-  ConnectedParameter *connected_param_ = nullptr, default_connected_param_;
-  ConvolutionParameter *convolution_param_ = nullptr,
-                       default_convolution_param_;
-  DataParameter *data_param_ = nullptr, default_data_param_;
-  EltwiseParameter *eltwise_param_ = nullptr, default_eltwise_param_;
-  FlattenParameter *flatten_param_ = nullptr, default_flatten_param_;
-  LRNParameter *lrn_param_ = nullptr, default_lrn_param_;
-  NormalizeParameter *normalize_param_ = nullptr, default_normalize_param_;
-  PermuteParameter *permute_param_ = nullptr, default_permute_param_;
-  PoolingParameter *pooling_param_ = nullptr, default_pooling_param_;
-  PriorBoxParameter *prior_box_param_ = nullptr, default_prior_box_param_;
-  ReorgParameter *reorg_param_ = nullptr, default_reorg_param_;
-  ReshapeParameter *reshape_param_ = nullptr, default_reshape_param_;
-  ScaleParameter *scale_param_ = nullptr, default_scale_param_;
-  SoftmaxParameter *softmax_param_ = nullptr, default_softmax_param_;
+  ActivateParam *activate_param_ = nullptr, default_activate_param_;
+  BatchNormParam *batch_norm_param_ = nullptr, default_batch_norm_param_;
+  BiasParam *bias_param_ = nullptr, default_bias_param_;
+  ConcatParam *concat_param_ = nullptr, default_concat_param_;
+  ConnectedParam *connected_param_ = nullptr, default_connected_param_;
+  ConvolutionParam *convolution_param_ = nullptr, default_convolution_param_;
+  DataParam *data_param_ = nullptr, default_data_param_;
+  EltwiseParam *eltwise_param_ = nullptr, default_eltwise_param_;
+  FlattenParam *flatten_param_ = nullptr, default_flatten_param_;
+  LRNParam *lrn_param_ = nullptr, default_lrn_param_;
+  NormalizeParam *normalize_param_ = nullptr, default_normalize_param_;
+  PermuteParam *permute_param_ = nullptr, default_permute_param_;
+  PoolingParam *pooling_param_ = nullptr, default_pooling_param_;
+  PriorBoxParam *prior_box_param_ = nullptr, default_prior_box_param_;
+  ReorgParam *reorg_param_ = nullptr, default_reorg_param_;
+  ReshapeParam *reshape_param_ = nullptr, default_reshape_param_;
+  ScaleParam *scale_param_ = nullptr, default_scale_param_;
+  SoftmaxParam *softmax_param_ = nullptr, default_softmax_param_;
 };
 
-class NetParameter {
+class NetParam {
  public:
-  NetParameter() {}
-  NetParameter(const NetParameter &from) { *this = from; }
-  ~NetParameter() { Clear(); }
+  NetParam() {}
+  NetParam(const NetParam &from) { *this = from; }
+  ~NetParam() { Clear(); }
 
-  NetParameter &operator=(const NetParameter &from) {
+  NetParam &operator=(const NetParam &from) {
     CopyFrom(from);
     return *this;
   }
 
-  void CopyFrom(const NetParameter &from) {
+  void CopyFrom(const NetParam &from) {
     if (&from == this) return;
     Clear();
     name_ = from.name_;
-    layer_ = from.layer_;
+    op_ = from.op_;
   }
 
   OPTIONAL_FIELD_DEFAULT_FUNC(name, std::string, "");
-  REPEATED_FIELD_FUNC(layer, LayerParameter);
+  REPEATED_FIELD_FUNC(op, OpParam);
 
   void Clear() {
     clear_name();
-    clear_layer();
+    clear_op();
   }
 
  private:
   std::string name_;
-  std::vector<LayerParameter> layer_;
+  std::vector<OpParam> op_;
 };
 
 }  // namespace shadow

@@ -42,11 +42,10 @@ void WriteProtoToJsonText(const Message& proto, std::string* json_text,
 #else
 namespace IO {
 
-bool ReadProtoFromText(const std::string& proto_text,
-                       shadow::NetParameter* proto);
+bool ReadProtoFromText(const std::string& proto_text, shadow::NetParam* proto);
 
 bool ReadProtoFromTextFile(const std::string& proto_file,
-                           shadow::NetParameter* proto);
+                           shadow::NetParam* proto);
 
 }  // namespace IO
 #endif

@@ -6,69 +6,69 @@ namespace Shadow {
 #if !defined(USE_Protobuf)
 namespace Parser {
 
-void ParseNet(const std::string &proto_text, shadow::NetParameter *net) {
+void ParseNet(const std::string &proto_text, shadow::NetParam *net) {
   const auto &document = Json::GetDocument(proto_text);
 
   const auto &net_name = Json::GetString(document, "name", "");
-  const auto &json_layers = Json::GetValue(document, "layer");
+  const auto &json_ops = Json::GetValue(document, "op");
 
   net->set_name(net_name);
 
-  for (int i = 0; i < json_layers.Size(); ++i) {
-    const auto &json_layer = json_layers[i];
-    const auto &layer_name = Json::GetString(json_layer, "name", "");
-    const auto &layer_type = Json::GetString(json_layer, "type", "");
-    if (!layer_type.compare("Activate")) {
-      net->add_layer(ParseActivate(json_layer));
-    } else if (!layer_type.compare("BatchNorm")) {
-      net->add_layer(ParseBatchNorm(json_layer));
-    } else if (!layer_type.compare("Bias")) {
-      net->add_layer(ParseBias(json_layer));
-    } else if (!layer_type.compare("Concat")) {
-      net->add_layer(ParseConcat(json_layer));
-    } else if (!layer_type.compare("Connected")) {
-      net->add_layer(ParseConnected(json_layer));
-    } else if (!layer_type.compare("Convolution")) {
-      net->add_layer(ParseConvolution(json_layer));
-    } else if (!layer_type.compare("Data")) {
-      net->add_layer(ParseData(json_layer));
-    } else if (!layer_type.compare("Eltwise")) {
-      net->add_layer(ParseEltwise(json_layer));
-    } else if (!layer_type.compare("Flatten")) {
-      net->add_layer(ParseFlatten(json_layer));
-    } else if (!layer_type.compare("LRN")) {
-      net->add_layer(ParseLRN(json_layer));
-    } else if (!layer_type.compare("Normalize")) {
-      net->add_layer(ParseNormalize(json_layer));
-    } else if (!layer_type.compare("Permute")) {
-      net->add_layer(ParsePermute(json_layer));
-    } else if (!layer_type.compare("Pooling")) {
-      net->add_layer(ParsePooling(json_layer));
-    } else if (!layer_type.compare("PriorBox")) {
-      net->add_layer(ParsePriorBox(json_layer));
-    } else if (!layer_type.compare("Reorg")) {
-      net->add_layer(ParseReorg(json_layer));
-    } else if (!layer_type.compare("Reshape")) {
-      net->add_layer(ParseReshape(json_layer));
-    } else if (!layer_type.compare("Scale")) {
-      net->add_layer(ParseScale(json_layer));
-    } else if (!layer_type.compare("Softmax")) {
-      net->add_layer(ParseSoftmax(json_layer));
+  for (int i = 0; i < json_ops.Size(); ++i) {
+    const auto &json_op = json_ops[i];
+    const auto &op_name = Json::GetString(json_op, "name", "");
+    const auto &op_type = Json::GetString(json_op, "type", "");
+    if (!op_type.compare("Activate")) {
+      net->add_op(ParseActivate(json_op));
+    } else if (!op_type.compare("BatchNorm")) {
+      net->add_op(ParseBatchNorm(json_op));
+    } else if (!op_type.compare("Bias")) {
+      net->add_op(ParseBias(json_op));
+    } else if (!op_type.compare("Concat")) {
+      net->add_op(ParseConcat(json_op));
+    } else if (!op_type.compare("Connected")) {
+      net->add_op(ParseConnected(json_op));
+    } else if (!op_type.compare("Convolution")) {
+      net->add_op(ParseConvolution(json_op));
+    } else if (!op_type.compare("Data")) {
+      net->add_op(ParseData(json_op));
+    } else if (!op_type.compare("Eltwise")) {
+      net->add_op(ParseEltwise(json_op));
+    } else if (!op_type.compare("Flatten")) {
+      net->add_op(ParseFlatten(json_op));
+    } else if (!op_type.compare("LRN")) {
+      net->add_op(ParseLRN(json_op));
+    } else if (!op_type.compare("Normalize")) {
+      net->add_op(ParseNormalize(json_op));
+    } else if (!op_type.compare("Permute")) {
+      net->add_op(ParsePermute(json_op));
+    } else if (!op_type.compare("Pooling")) {
+      net->add_op(ParsePooling(json_op));
+    } else if (!op_type.compare("PriorBox")) {
+      net->add_op(ParsePriorBox(json_op));
+    } else if (!op_type.compare("Reorg")) {
+      net->add_op(ParseReorg(json_op));
+    } else if (!op_type.compare("Reshape")) {
+      net->add_op(ParseReshape(json_op));
+    } else if (!op_type.compare("Scale")) {
+      net->add_op(ParseScale(json_op));
+    } else if (!op_type.compare("Softmax")) {
+      net->add_op(ParseSoftmax(json_op));
     } else {
-      LOG(FATAL) << "Error when parsing layer: " << layer_name
-                 << ", layer type: " << layer_type << " is not recognized!";
+      LOG(FATAL) << "Error when parsing op: " << op_name
+                 << ", op type: " << op_type << " is not recognized!";
     }
   }
 }
 
-void ParseCommon(const JValue &root, shadow::LayerParameter *layer) {
-  layer->set_name(Json::GetString(root, "name", ""));
-  layer->set_type(Json::GetString(root, "type", ""));
+void ParseCommon(const JValue &root, shadow::OpParam *op) {
+  op->set_name(Json::GetString(root, "name", ""));
+  op->set_type(Json::GetString(root, "type", ""));
   for (const auto &top : Json::GetVecString(root, "top")) {
-    layer->add_top(top);
+    op->add_top(top);
   }
   for (const auto &bottom : Json::GetVecString(root, "bottom")) {
-    layer->add_bottom(bottom);
+    op->add_bottom(bottom);
   }
 
   if (root.HasMember("blobs")) {
@@ -83,31 +83,31 @@ void ParseCommon(const JValue &root, shadow::LayerParameter *layer) {
           shadow_blob.mutable_shape()->add_dim(dim);
         }
       }
-      layer->add_blobs(shadow_blob);
+      op->add_blobs(shadow_blob);
     }
   }
 }
 
-const shadow::LayerParameter ParseActivate(const JValue &root) {
-  shadow::LayerParameter shadow_layer;
-  auto shadow_param = shadow_layer.mutable_activate_param();
+const shadow::OpParam ParseActivate(const JValue &root) {
+  shadow::OpParam shadow_op;
+  auto shadow_param = shadow_op.mutable_activate_param();
 
-  ParseCommon(root, &shadow_layer);
+  ParseCommon(root, &shadow_op);
 
-  shadow::ActivateParameter_ActivateType type =
-      shadow::ActivateParameter_ActivateType_Relu;
+  shadow::ActivateParam_ActivateType type =
+      shadow::ActivateParam_ActivateType_Relu;
   bool channel_shared = false;
   if (root.HasMember("activateParam")) {
     const auto &json_param = Json::GetValue(root, "activateParam");
     const auto &type_str = Json::GetString(json_param, "type", "Relu");
     if (!type_str.compare("Linear")) {
-      type = shadow::ActivateParameter_ActivateType_Linear;
+      type = shadow::ActivateParam_ActivateType_Linear;
     } else if (!type_str.compare("Relu")) {
-      type = shadow::ActivateParameter_ActivateType_Relu;
+      type = shadow::ActivateParam_ActivateType_Relu;
     } else if (!type_str.compare("Leaky")) {
-      type = shadow::ActivateParameter_ActivateType_Leaky;
+      type = shadow::ActivateParam_ActivateType_Leaky;
     } else if (!type_str.compare("PRelu")) {
-      type = shadow::ActivateParameter_ActivateType_PRelu;
+      type = shadow::ActivateParam_ActivateType_PRelu;
       channel_shared = Json::GetBool(json_param, "channelShared", false);
     }
   }
@@ -115,14 +115,14 @@ const shadow::LayerParameter ParseActivate(const JValue &root) {
   shadow_param->set_type(type);
   shadow_param->set_channel_shared(channel_shared);
 
-  return shadow_layer;
+  return shadow_op;
 }
 
-const shadow::LayerParameter ParseBatchNorm(const JValue &root) {
-  shadow::LayerParameter shadow_layer;
-  auto shadow_param = shadow_layer.mutable_batch_norm_param();
+const shadow::OpParam ParseBatchNorm(const JValue &root) {
+  shadow::OpParam shadow_op;
+  auto shadow_param = shadow_op.mutable_batch_norm_param();
 
-  ParseCommon(root, &shadow_layer);
+  ParseCommon(root, &shadow_op);
 
   bool use_global_stats = true;
   if (root.HasMember("batchNormParam")) {
@@ -132,14 +132,14 @@ const shadow::LayerParameter ParseBatchNorm(const JValue &root) {
 
   shadow_param->set_use_global_stats(use_global_stats);
 
-  return shadow_layer;
+  return shadow_op;
 }
 
-const shadow::LayerParameter ParseBias(const JValue &root) {
-  shadow::LayerParameter shadow_layer;
-  auto shadow_param = shadow_layer.mutable_bias_param();
+const shadow::OpParam ParseBias(const JValue &root) {
+  shadow::OpParam shadow_op;
+  auto shadow_param = shadow_op.mutable_bias_param();
 
-  ParseCommon(root, &shadow_layer);
+  ParseCommon(root, &shadow_op);
 
   int axis = 1, num_axes = 1;
   if (root.HasMember("biasParam")) {
@@ -151,14 +151,14 @@ const shadow::LayerParameter ParseBias(const JValue &root) {
   shadow_param->set_axis(axis);
   shadow_param->set_num_axes(num_axes);
 
-  return shadow_layer;
+  return shadow_op;
 }
 
-const shadow::LayerParameter ParseConcat(const JValue &root) {
-  shadow::LayerParameter shadow_layer;
-  auto shadow_param = shadow_layer.mutable_concat_param();
+const shadow::OpParam ParseConcat(const JValue &root) {
+  shadow::OpParam shadow_op;
+  auto shadow_param = shadow_op.mutable_concat_param();
 
-  ParseCommon(root, &shadow_layer);
+  ParseCommon(root, &shadow_op);
 
   int axis = 1;
   if (root.HasMember("concatParam")) {
@@ -168,14 +168,14 @@ const shadow::LayerParameter ParseConcat(const JValue &root) {
 
   shadow_param->set_axis(axis);
 
-  return shadow_layer;
+  return shadow_op;
 }
 
-const shadow::LayerParameter ParseConnected(const JValue &root) {
-  shadow::LayerParameter shadow_layer;
-  auto shadow_param = shadow_layer.mutable_connected_param();
+const shadow::OpParam ParseConnected(const JValue &root) {
+  shadow::OpParam shadow_op;
+  auto shadow_param = shadow_op.mutable_connected_param();
 
-  ParseCommon(root, &shadow_layer);
+  ParseCommon(root, &shadow_op);
 
   int num_output = -1;
   bool bias_term = true, transpose = false;
@@ -191,14 +191,14 @@ const shadow::LayerParameter ParseConnected(const JValue &root) {
   shadow_param->set_bias_term(bias_term);
   shadow_param->set_transpose(transpose);
 
-  return shadow_layer;
+  return shadow_op;
 }
 
-const shadow::LayerParameter ParseConvolution(const JValue &root) {
-  shadow::LayerParameter shadow_layer;
-  auto shadow_param = shadow_layer.mutable_convolution_param();
+const shadow::OpParam ParseConvolution(const JValue &root) {
+  shadow::OpParam shadow_op;
+  auto shadow_param = shadow_op.mutable_convolution_param();
 
-  ParseCommon(root, &shadow_layer);
+  ParseCommon(root, &shadow_op);
 
   int num_output = -1, kernel_size = -1, stride = 1, pad = 0, group = 1,
       dilation = 1;
@@ -224,14 +224,14 @@ const shadow::LayerParameter ParseConvolution(const JValue &root) {
   shadow_param->set_group(group);
   shadow_param->set_bias_term(bias_term);
 
-  return shadow_layer;
+  return shadow_op;
 }
 
-const shadow::LayerParameter ParseData(const JValue &root) {
-  shadow::LayerParameter shadow_layer;
-  auto shadow_param = shadow_layer.mutable_data_param();
+const shadow::OpParam ParseData(const JValue &root) {
+  shadow::OpParam shadow_op;
+  auto shadow_param = shadow_op.mutable_data_param();
 
-  ParseCommon(root, &shadow_layer);
+  ParseCommon(root, &shadow_op);
 
   VecInt data_shape;
   float scale = 1;
@@ -254,27 +254,26 @@ const shadow::LayerParameter ParseData(const JValue &root) {
     shadow_param->add_mean_value(mean);
   }
 
-  return shadow_layer;
+  return shadow_op;
 }
 
-const shadow::LayerParameter ParseEltwise(const JValue &root) {
-  shadow::LayerParameter shadow_layer;
-  auto shadow_param = shadow_layer.mutable_eltwise_param();
+const shadow::OpParam ParseEltwise(const JValue &root) {
+  shadow::OpParam shadow_op;
+  auto shadow_param = shadow_op.mutable_eltwise_param();
 
-  ParseCommon(root, &shadow_layer);
+  ParseCommon(root, &shadow_op);
 
-  shadow::EltwiseParameter_EltwiseOp operation =
-      shadow::EltwiseParameter_EltwiseOp_Sum;
+  shadow::EltwiseParam_EltwiseOp operation = shadow::EltwiseParam_EltwiseOp_Sum;
   VecFloat coeffs;
   if (root.HasMember("eltwiseParam")) {
     const auto &json_param = Json::GetValue(root, "eltwiseParam");
     const auto &operation_str = Json::GetString(json_param, "operation", "Sum");
     if (!operation_str.compare("Prod")) {
-      operation = shadow::EltwiseParameter_EltwiseOp_Prod;
+      operation = shadow::EltwiseParam_EltwiseOp_Prod;
     } else if (!operation_str.compare("Sum")) {
-      operation = shadow::EltwiseParameter_EltwiseOp_Sum;
+      operation = shadow::EltwiseParam_EltwiseOp_Sum;
     } else if (!operation_str.compare("Max")) {
-      operation = shadow::EltwiseParameter_EltwiseOp_Max;
+      operation = shadow::EltwiseParam_EltwiseOp_Max;
     }
     coeffs = Json::GetVecFloat(json_param, "coeff");
   }
@@ -284,14 +283,14 @@ const shadow::LayerParameter ParseEltwise(const JValue &root) {
     shadow_param->add_coeff(coeff);
   }
 
-  return shadow_layer;
+  return shadow_op;
 }
 
-const shadow::LayerParameter ParseFlatten(const JValue &root) {
-  shadow::LayerParameter shadow_layer;
-  auto shadow_param = shadow_layer.mutable_flatten_param();
+const shadow::OpParam ParseFlatten(const JValue &root) {
+  shadow::OpParam shadow_op;
+  auto shadow_param = shadow_op.mutable_flatten_param();
 
-  ParseCommon(root, &shadow_layer);
+  ParseCommon(root, &shadow_op);
 
   int axis = 1, end_axis = -1;
   if (root.HasMember("flattenParam")) {
@@ -303,17 +302,17 @@ const shadow::LayerParameter ParseFlatten(const JValue &root) {
   shadow_param->set_axis(axis);
   shadow_param->set_end_axis(end_axis);
 
-  return shadow_layer;
+  return shadow_op;
 }
 
-const shadow::LayerParameter ParseLRN(const JValue &root) {
-  shadow::LayerParameter shadow_layer;
-  auto shadow_param = shadow_layer.mutable_lrn_param();
+const shadow::OpParam ParseLRN(const JValue &root) {
+  shadow::OpParam shadow_op;
+  auto shadow_param = shadow_op.mutable_lrn_param();
 
-  ParseCommon(root, &shadow_layer);
+  ParseCommon(root, &shadow_op);
 
-  shadow::LRNParameter_NormRegion norm_region =
-      shadow::LRNParameter_NormRegion_AcrossChannels;
+  shadow::LRNParam_NormRegion norm_region =
+      shadow::LRNParam_NormRegion_AcrossChannels;
   int local_size = 5;
   float alpha = 1, beta = 0.75, k = 1;
   if (root.HasMember("lrnParam")) {
@@ -325,9 +324,9 @@ const shadow::LayerParameter ParseLRN(const JValue &root) {
     const auto &norm_region_str =
         Json::GetString(json_param, "normRegion", "AcrossChannels");
     if (!norm_region_str.compare("AcrossChannels")) {
-      norm_region = shadow::LRNParameter_NormRegion_AcrossChannels;
+      norm_region = shadow::LRNParam_NormRegion_AcrossChannels;
     } else if (!norm_region_str.compare("WithinChannel")) {
-      norm_region = shadow::LRNParameter_NormRegion_WithinChannel;
+      norm_region = shadow::LRNParam_NormRegion_WithinChannel;
     }
   }
 
@@ -337,14 +336,14 @@ const shadow::LayerParameter ParseLRN(const JValue &root) {
   shadow_param->set_norm_region(norm_region);
   shadow_param->set_k(k);
 
-  return shadow_layer;
+  return shadow_op;
 }
 
-const shadow::LayerParameter ParseNormalize(const JValue &root) {
-  shadow::LayerParameter shadow_layer;
-  auto shadow_param = shadow_layer.mutable_normalize_param();
+const shadow::OpParam ParseNormalize(const JValue &root) {
+  shadow::OpParam shadow_op;
+  auto shadow_param = shadow_op.mutable_normalize_param();
 
-  ParseCommon(root, &shadow_layer);
+  ParseCommon(root, &shadow_op);
 
   bool across_spatial = true, channel_shared = true;
   VecFloat scale;
@@ -361,14 +360,14 @@ const shadow::LayerParameter ParseNormalize(const JValue &root) {
     shadow_param->add_scale(s);
   }
 
-  return shadow_layer;
+  return shadow_op;
 }
 
-const shadow::LayerParameter ParsePermute(const JValue &root) {
-  shadow::LayerParameter shadow_layer;
-  auto shadow_param = shadow_layer.mutable_permute_param();
+const shadow::OpParam ParsePermute(const JValue &root) {
+  shadow::OpParam shadow_op;
+  auto shadow_param = shadow_op.mutable_permute_param();
 
-  ParseCommon(root, &shadow_layer);
+  ParseCommon(root, &shadow_op);
 
   VecInt order;
   if (root.HasMember("permuteParam")) {
@@ -380,17 +379,16 @@ const shadow::LayerParameter ParsePermute(const JValue &root) {
     shadow_param->add_order(o);
   }
 
-  return shadow_layer;
+  return shadow_op;
 }
 
-const shadow::LayerParameter ParsePooling(const JValue &root) {
-  shadow::LayerParameter shadow_layer;
-  auto shadow_param = shadow_layer.mutable_pooling_param();
+const shadow::OpParam ParsePooling(const JValue &root) {
+  shadow::OpParam shadow_op;
+  auto shadow_param = shadow_op.mutable_pooling_param();
 
-  ParseCommon(root, &shadow_layer);
+  ParseCommon(root, &shadow_op);
 
-  shadow::PoolingParameter_PoolType pool =
-      shadow::PoolingParameter_PoolType_Max;
+  shadow::PoolingParam_PoolType pool = shadow::PoolingParam_PoolType_Max;
   int kernel_size = -1, stride = 1, pad = 0;
   bool global_pooling = false;
   if (root.HasMember("poolingParam")) {
@@ -401,9 +399,9 @@ const shadow::LayerParameter ParsePooling(const JValue &root) {
     global_pooling = Json::GetBool(json_param, "globalPooling", false);
     const auto &pool_str = Json::GetString(json_param, "pool", "Max");
     if (!pool_str.compare("Max")) {
-      pool = shadow::PoolingParameter_PoolType_Max;
+      pool = shadow::PoolingParam_PoolType_Max;
     } else if (!pool_str.compare("Ave")) {
-      pool = shadow::PoolingParameter_PoolType_Ave;
+      pool = shadow::PoolingParam_PoolType_Ave;
     }
   }
 
@@ -416,14 +414,14 @@ const shadow::LayerParameter ParsePooling(const JValue &root) {
   shadow_param->set_pad(pad);
   shadow_param->set_global_pooling(global_pooling);
 
-  return shadow_layer;
+  return shadow_op;
 }
 
-const shadow::LayerParameter ParsePriorBox(const JValue &root) {
-  shadow::LayerParameter shadow_layer;
-  auto shadow_param = shadow_layer.mutable_prior_box_param();
+const shadow::OpParam ParsePriorBox(const JValue &root) {
+  shadow::OpParam shadow_op;
+  auto shadow_param = shadow_op.mutable_prior_box_param();
 
-  ParseCommon(root, &shadow_layer);
+  ParseCommon(root, &shadow_op);
 
   VecFloat min_size, max_size, aspect_ratio, variance;
   bool flip = true, clip = false;
@@ -459,14 +457,14 @@ const shadow::LayerParameter ParsePriorBox(const JValue &root) {
   }
   shadow_param->set_offset(offset);
 
-  return shadow_layer;
+  return shadow_op;
 }
 
-const shadow::LayerParameter ParseReorg(const JValue &root) {
-  shadow::LayerParameter shadow_layer;
-  auto shadow_param = shadow_layer.mutable_reorg_param();
+const shadow::OpParam ParseReorg(const JValue &root) {
+  shadow::OpParam shadow_op;
+  auto shadow_param = shadow_op.mutable_reorg_param();
 
-  ParseCommon(root, &shadow_layer);
+  ParseCommon(root, &shadow_op);
 
   int stride = 2;
   if (root.HasMember("reorgParam")) {
@@ -476,14 +474,14 @@ const shadow::LayerParameter ParseReorg(const JValue &root) {
 
   shadow_param->set_stride(stride);
 
-  return shadow_layer;
+  return shadow_op;
 }
 
-const shadow::LayerParameter ParseReshape(const JValue &root) {
-  shadow::LayerParameter shadow_layer;
-  auto shadow_param = shadow_layer.mutable_reshape_param();
+const shadow::OpParam ParseReshape(const JValue &root) {
+  shadow::OpParam shadow_op;
+  auto shadow_param = shadow_op.mutable_reshape_param();
 
-  ParseCommon(root, &shadow_layer);
+  ParseCommon(root, &shadow_op);
 
   VecInt shape;
   int axis = 0, num_axes = -1;
@@ -503,14 +501,14 @@ const shadow::LayerParameter ParseReshape(const JValue &root) {
   shadow_param->set_axis(axis);
   shadow_param->set_num_axes(num_axes);
 
-  return shadow_layer;
+  return shadow_op;
 }
 
-const shadow::LayerParameter ParseScale(const JValue &root) {
-  shadow::LayerParameter shadow_layer;
-  auto shadow_param = shadow_layer.mutable_scale_param();
+const shadow::OpParam ParseScale(const JValue &root) {
+  shadow::OpParam shadow_op;
+  auto shadow_param = shadow_op.mutable_scale_param();
 
-  ParseCommon(root, &shadow_layer);
+  ParseCommon(root, &shadow_op);
 
   int axis = 1, num_axes = 1;
   bool bias_term = false;
@@ -525,14 +523,14 @@ const shadow::LayerParameter ParseScale(const JValue &root) {
   shadow_param->set_num_axes(num_axes);
   shadow_param->set_bias_term(bias_term);
 
-  return shadow_layer;
+  return shadow_op;
 }
 
-const shadow::LayerParameter ParseSoftmax(const JValue &root) {
-  shadow::LayerParameter shadow_layer;
-  auto shadow_param = shadow_layer.mutable_softmax_param();
+const shadow::OpParam ParseSoftmax(const JValue &root) {
+  shadow::OpParam shadow_op;
+  auto shadow_param = shadow_op.mutable_softmax_param();
 
-  ParseCommon(root, &shadow_layer);
+  ParseCommon(root, &shadow_op);
 
   int axis = 1;
   if (root.HasMember("softmaxParam")) {
@@ -542,7 +540,7 @@ const shadow::LayerParameter ParseSoftmax(const JValue &root) {
 
   shadow_param->set_axis(axis);
 
-  return shadow_layer;
+  return shadow_op;
 }
 
 }  // namespace Parser

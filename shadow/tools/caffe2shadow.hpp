@@ -14,19 +14,19 @@ namespace Caffe2Shadow {
 
 void ConvertCommon(const caffe::NetParameter& caffe_model,
                    const caffe::LayerParameter& caffe_layer,
-                   shadow::LayerParameter* shadow_layer) {
+                   shadow::OpParam* shadow_op) {
   const auto& layer_name = caffe_layer.name();
-  shadow_layer->set_name(layer_name);
+  shadow_op->set_name(layer_name);
   for (const auto& top_name : caffe_layer.top()) {
-    shadow_layer->add_top(top_name);
+    shadow_op->add_top(top_name);
   }
   for (const auto& bottom_name : caffe_layer.bottom()) {
-    shadow_layer->add_bottom(bottom_name);
+    shadow_op->add_bottom(bottom_name);
   }
   for (const auto& layer : caffe_model.layer()) {
     if (!layer_name.compare(layer.name())) {
       for (const auto& caffe_blob : layer.blobs()) {
-        auto shadow_blob = shadow_layer->add_blobs();
+        auto shadow_blob = shadow_op->add_blobs();
         if (caffe_blob.shape().dim_size() > 0) {
           for (const auto& dim : caffe_blob.shape().dim()) {
             shadow_blob->mutable_shape()->add_dim(dim);
@@ -45,29 +45,29 @@ void ConvertCommon(const caffe::NetParameter& caffe_model,
 
 void ConvertData(const caffe::LayerParameter& data_layer,
                  const std::vector<int>& input_shape,
-                 shadow::NetParameter* shadow_net) {
-  auto shadow_layer = shadow_net->add_layer();
-  shadow_layer->set_name(data_layer.name());
-  shadow_layer->set_type("Data");
+                 shadow::NetParam* shadow_net) {
+  auto shadow_op = shadow_net->add_op();
+  shadow_op->set_name(data_layer.name());
+  shadow_op->set_type("Data");
   for (const auto& top_name : data_layer.top()) {
-    shadow_layer->add_top(top_name);
+    shadow_op->add_top(top_name);
   }
 
   if (data_layer.has_input_param()) {
-    auto shadow_param = shadow_layer->mutable_data_param();
+    auto shadow_param = shadow_op->mutable_data_param();
     const auto& caffe_param = data_layer.input_param();
     for (const auto& dim : caffe_param.shape(0).dim()) {
       shadow_param->mutable_data_shape()->add_dim(dim);
     }
   } else {
-    auto shadow_param = shadow_layer->mutable_data_param();
+    auto shadow_param = shadow_op->mutable_data_param();
     for (const auto& dim : input_shape) {
       shadow_param->mutable_data_shape()->add_dim(dim);
     }
   }
 
   if (data_layer.has_transform_param()) {
-    auto shadow_param = shadow_layer->mutable_data_param();
+    auto shadow_param = shadow_op->mutable_data_param();
     const auto& caffe_param = data_layer.transform_param();
     if (caffe_param.has_scale()) {
       shadow_param->set_scale(caffe_param.scale());
@@ -82,34 +82,34 @@ void ConvertData(const caffe::LayerParameter& data_layer,
 
 void ConvertActivate(const caffe::NetParameter& caffe_model,
                      const caffe::LayerParameter& caffe_layer,
-                     shadow::NetParameter* shadow_net) {
-  auto shadow_layer = shadow_net->add_layer();
-  shadow_layer->set_type("Activate");
-  ConvertCommon(caffe_model, caffe_layer, shadow_layer);
+                     shadow::NetParam* shadow_net) {
+  auto shadow_op = shadow_net->add_op();
+  shadow_op->set_type("Activate");
+  ConvertCommon(caffe_model, caffe_layer, shadow_op);
 
-  auto shadow_param = shadow_layer->mutable_activate_param();
+  auto shadow_param = shadow_op->mutable_activate_param();
   if (!caffe_layer.type().compare("ReLU")) {
-    shadow_param->set_type(shadow::ActivateParameter_ActivateType_Relu);
+    shadow_param->set_type(shadow::ActivateParam_ActivateType_Relu);
   } else if (!caffe_layer.type().compare("PReLU")) {
     if (caffe_layer.has_prelu_param()) {
       const auto& caffe_param = caffe_layer.prelu_param();
       if (caffe_param.has_channel_shared()) {
         shadow_param->set_channel_shared(caffe_param.channel_shared());
       }
-      shadow_param->set_type(shadow::ActivateParameter_ActivateType_PRelu);
+      shadow_param->set_type(shadow::ActivateParam_ActivateType_PRelu);
     }
   }
 }
 
 void ConvertBatchNorm(const caffe::NetParameter& caffe_model,
                       const caffe::LayerParameter& caffe_layer,
-                      shadow::NetParameter* shadow_net) {
-  auto shadow_layer = shadow_net->add_layer();
-  shadow_layer->set_type("BatchNorm");
-  ConvertCommon(caffe_model, caffe_layer, shadow_layer);
+                      shadow::NetParam* shadow_net) {
+  auto shadow_op = shadow_net->add_op();
+  shadow_op->set_type("BatchNorm");
+  ConvertCommon(caffe_model, caffe_layer, shadow_op);
 
   if (caffe_layer.has_batch_norm_param()) {
-    auto shadow_param = shadow_layer->mutable_batch_norm_param();
+    auto shadow_param = shadow_op->mutable_batch_norm_param();
     const auto& caffe_param = caffe_layer.batch_norm_param();
     if (caffe_param.has_use_global_stats()) {
       shadow_param->set_use_global_stats(caffe_param.use_global_stats());
@@ -119,13 +119,13 @@ void ConvertBatchNorm(const caffe::NetParameter& caffe_model,
 
 void ConvertBias(const caffe::NetParameter& caffe_model,
                  const caffe::LayerParameter& caffe_layer,
-                 shadow::NetParameter* shadow_net) {
-  auto shadow_layer = shadow_net->add_layer();
-  shadow_layer->set_type("Bias");
-  ConvertCommon(caffe_model, caffe_layer, shadow_layer);
+                 shadow::NetParam* shadow_net) {
+  auto shadow_op = shadow_net->add_op();
+  shadow_op->set_type("Bias");
+  ConvertCommon(caffe_model, caffe_layer, shadow_op);
 
   if (caffe_layer.has_bias_param()) {
-    auto shadow_param = shadow_layer->mutable_bias_param();
+    auto shadow_param = shadow_op->mutable_bias_param();
     const auto& caffe_param = caffe_layer.bias_param();
     if (caffe_param.has_axis()) {
       shadow_param->set_axis(caffe_param.axis());
@@ -138,13 +138,13 @@ void ConvertBias(const caffe::NetParameter& caffe_model,
 
 void ConvertConcat(const caffe::NetParameter& caffe_model,
                    const caffe::LayerParameter& caffe_layer,
-                   shadow::NetParameter* shadow_net) {
-  auto shadow_layer = shadow_net->add_layer();
-  shadow_layer->set_type("Concat");
-  ConvertCommon(caffe_model, caffe_layer, shadow_layer);
+                   shadow::NetParam* shadow_net) {
+  auto shadow_op = shadow_net->add_op();
+  shadow_op->set_type("Concat");
+  ConvertCommon(caffe_model, caffe_layer, shadow_op);
 
   if (caffe_layer.has_concat_param()) {
-    auto shadow_param = shadow_layer->mutable_concat_param();
+    auto shadow_param = shadow_op->mutable_concat_param();
     const auto& caffe_param = caffe_layer.concat_param();
     if (caffe_param.has_axis()) {
       shadow_param->set_axis(caffe_param.axis());
@@ -154,13 +154,13 @@ void ConvertConcat(const caffe::NetParameter& caffe_model,
 
 void ConvertConnected(const caffe::NetParameter& caffe_model,
                       const caffe::LayerParameter& caffe_layer,
-                      shadow::NetParameter* shadow_net) {
-  auto shadow_layer = shadow_net->add_layer();
-  shadow_layer->set_type("Connected");
-  ConvertCommon(caffe_model, caffe_layer, shadow_layer);
+                      shadow::NetParam* shadow_net) {
+  auto shadow_op = shadow_net->add_op();
+  shadow_op->set_type("Connected");
+  ConvertCommon(caffe_model, caffe_layer, shadow_op);
 
   if (caffe_layer.has_inner_product_param()) {
-    auto shadow_param = shadow_layer->mutable_connected_param();
+    auto shadow_param = shadow_op->mutable_connected_param();
     const auto& caffe_param = caffe_layer.inner_product_param();
     if (caffe_param.has_num_output()) {
       shadow_param->set_num_output(caffe_param.num_output());
@@ -176,13 +176,13 @@ void ConvertConnected(const caffe::NetParameter& caffe_model,
 
 void ConvertConv(const caffe::NetParameter& caffe_model,
                  const caffe::LayerParameter& caffe_layer,
-                 shadow::NetParameter* shadow_net) {
-  auto shadow_layer = shadow_net->add_layer();
-  shadow_layer->set_type("Convolution");
-  ConvertCommon(caffe_model, caffe_layer, shadow_layer);
+                 shadow::NetParam* shadow_net) {
+  auto shadow_op = shadow_net->add_op();
+  shadow_op->set_type("Convolution");
+  ConvertCommon(caffe_model, caffe_layer, shadow_op);
 
   if (caffe_layer.has_convolution_param()) {
-    auto shadow_param = shadow_layer->mutable_convolution_param();
+    auto shadow_param = shadow_op->mutable_convolution_param();
     const auto& caffe_param = caffe_layer.convolution_param();
     if (caffe_param.has_num_output()) {
       shadow_param->set_num_output(caffe_param.num_output());
@@ -210,23 +210,23 @@ void ConvertConv(const caffe::NetParameter& caffe_model,
 
 void ConvertEltwise(const caffe::NetParameter& caffe_model,
                     const caffe::LayerParameter& caffe_layer,
-                    shadow::NetParameter* shadow_net) {
-  auto shadow_layer = shadow_net->add_layer();
-  shadow_layer->set_type("Eltwise");
-  ConvertCommon(caffe_model, caffe_layer, shadow_layer);
+                    shadow::NetParam* shadow_net) {
+  auto shadow_op = shadow_net->add_op();
+  shadow_op->set_type("Eltwise");
+  ConvertCommon(caffe_model, caffe_layer, shadow_op);
 
   if (caffe_layer.has_eltwise_param()) {
-    auto shadow_param = shadow_layer->mutable_eltwise_param();
+    auto shadow_param = shadow_op->mutable_eltwise_param();
     const auto& caffe_param = caffe_layer.eltwise_param();
     if (caffe_param.has_operation()) {
       if (caffe_param.operation() == caffe::EltwiseParameter_EltwiseOp_PROD) {
-        shadow_param->set_operation(shadow::EltwiseParameter_EltwiseOp_Prod);
+        shadow_param->set_operation(shadow::EltwiseParam_EltwiseOp_Prod);
       } else if (caffe_param.operation() ==
                  caffe::EltwiseParameter_EltwiseOp_SUM) {
-        shadow_param->set_operation(shadow::EltwiseParameter_EltwiseOp_Sum);
+        shadow_param->set_operation(shadow::EltwiseParam_EltwiseOp_Sum);
       } else if (caffe_param.operation() ==
                  caffe::EltwiseParameter_EltwiseOp_MAX) {
-        shadow_param->set_operation(shadow::EltwiseParameter_EltwiseOp_Max);
+        shadow_param->set_operation(shadow::EltwiseParam_EltwiseOp_Max);
       }
     }
     for (int i = 0; i < caffe_param.coeff_size(); ++i) {
@@ -237,13 +237,13 @@ void ConvertEltwise(const caffe::NetParameter& caffe_model,
 
 void ConvertFlatten(const caffe::NetParameter& caffe_model,
                     const caffe::LayerParameter& caffe_layer,
-                    shadow::NetParameter* shadow_net) {
-  auto shadow_layer = shadow_net->add_layer();
-  shadow_layer->set_type("Flatten");
-  ConvertCommon(caffe_model, caffe_layer, shadow_layer);
+                    shadow::NetParam* shadow_net) {
+  auto shadow_op = shadow_net->add_op();
+  shadow_op->set_type("Flatten");
+  ConvertCommon(caffe_model, caffe_layer, shadow_op);
 
   if (caffe_layer.has_flatten_param()) {
-    auto shadow_param = shadow_layer->mutable_flatten_param();
+    auto shadow_param = shadow_op->mutable_flatten_param();
     const auto& caffe_param = caffe_layer.flatten_param();
     if (caffe_param.has_axis()) {
       shadow_param->set_axis(caffe_param.axis());
@@ -256,13 +256,13 @@ void ConvertFlatten(const caffe::NetParameter& caffe_model,
 
 void ConvertLRN(const caffe::NetParameter& caffe_model,
                 const caffe::LayerParameter& caffe_layer,
-                shadow::NetParameter* shadow_net) {
-  auto shadow_layer = shadow_net->add_layer();
-  shadow_layer->set_type("LRN");
-  ConvertCommon(caffe_model, caffe_layer, shadow_layer);
+                shadow::NetParam* shadow_net) {
+  auto shadow_op = shadow_net->add_op();
+  shadow_op->set_type("LRN");
+  ConvertCommon(caffe_model, caffe_layer, shadow_op);
 
   if (caffe_layer.has_lrn_param()) {
-    auto shadow_param = shadow_layer->mutable_lrn_param();
+    auto shadow_param = shadow_op->mutable_lrn_param();
     const auto& caffe_param = caffe_layer.lrn_param();
     if (caffe_param.has_local_size()) {
       shadow_param->set_local_size(caffe_param.local_size());
@@ -277,7 +277,7 @@ void ConvertLRN(const caffe::NetParameter& caffe_model,
       if (caffe_param.norm_region() ==
           caffe::LRNParameter_NormRegion_ACROSS_CHANNELS) {
         shadow_param->set_norm_region(
-            shadow::LRNParameter_NormRegion_AcrossChannels);
+            shadow::LRNParam_NormRegion_AcrossChannels);
       } else {
         LOG(FATAL) << "Unsupported norm region method: Within Channel!";
       }
@@ -290,13 +290,13 @@ void ConvertLRN(const caffe::NetParameter& caffe_model,
 
 void ConvertNormalize(const caffe::NetParameter& caffe_model,
                       const caffe::LayerParameter& caffe_layer,
-                      shadow::NetParameter* shadow_net) {
-  auto shadow_layer = shadow_net->add_layer();
-  shadow_layer->set_type("Normalize");
-  ConvertCommon(caffe_model, caffe_layer, shadow_layer);
+                      shadow::NetParam* shadow_net) {
+  auto shadow_op = shadow_net->add_op();
+  shadow_op->set_type("Normalize");
+  ConvertCommon(caffe_model, caffe_layer, shadow_op);
 
   if (caffe_layer.has_norm_param()) {
-    auto shadow_param = shadow_layer->mutable_normalize_param();
+    auto shadow_param = shadow_op->mutable_normalize_param();
     const auto& caffe_param = caffe_layer.norm_param();
     if (caffe_param.has_across_spatial()) {
       shadow_param->set_across_spatial(caffe_param.across_spatial());
@@ -309,13 +309,13 @@ void ConvertNormalize(const caffe::NetParameter& caffe_model,
 
 void ConvertPermute(const caffe::NetParameter& caffe_model,
                     const caffe::LayerParameter& caffe_layer,
-                    shadow::NetParameter* shadow_net) {
-  auto shadow_layer = shadow_net->add_layer();
-  shadow_layer->set_type("Permute");
-  ConvertCommon(caffe_model, caffe_layer, shadow_layer);
+                    shadow::NetParam* shadow_net) {
+  auto shadow_op = shadow_net->add_op();
+  shadow_op->set_type("Permute");
+  ConvertCommon(caffe_model, caffe_layer, shadow_op);
 
   if (caffe_layer.has_permute_param()) {
-    auto shadow_param = shadow_layer->mutable_permute_param();
+    auto shadow_param = shadow_op->mutable_permute_param();
     const auto& caffe_param = caffe_layer.permute_param();
     for (int i = 0; i < caffe_param.order_size(); ++i) {
       shadow_param->add_order(caffe_param.order(i));
@@ -325,19 +325,19 @@ void ConvertPermute(const caffe::NetParameter& caffe_model,
 
 void ConvertPooling(const caffe::NetParameter& caffe_model,
                     const caffe::LayerParameter& caffe_layer,
-                    shadow::NetParameter* shadow_net) {
-  auto shadow_layer = shadow_net->add_layer();
-  shadow_layer->set_type("Pooling");
-  ConvertCommon(caffe_model, caffe_layer, shadow_layer);
+                    shadow::NetParam* shadow_net) {
+  auto shadow_op = shadow_net->add_op();
+  shadow_op->set_type("Pooling");
+  ConvertCommon(caffe_model, caffe_layer, shadow_op);
 
   if (caffe_layer.has_pooling_param()) {
-    auto shadow_param = shadow_layer->mutable_pooling_param();
+    auto shadow_param = shadow_op->mutable_pooling_param();
     const auto& caffe_param = caffe_layer.pooling_param();
     if (caffe_param.has_pool()) {
       if (caffe_param.pool() == caffe::PoolingParameter_PoolMethod_MAX) {
-        shadow_param->set_pool(shadow::PoolingParameter_PoolType_Max);
+        shadow_param->set_pool(shadow::PoolingParam_PoolType_Max);
       } else if (caffe_param.pool() == caffe::PoolingParameter_PoolMethod_AVE) {
-        shadow_param->set_pool(shadow::PoolingParameter_PoolType_Ave);
+        shadow_param->set_pool(shadow::PoolingParam_PoolType_Ave);
       }
     }
     if (caffe_param.has_kernel_size()) {
@@ -357,13 +357,13 @@ void ConvertPooling(const caffe::NetParameter& caffe_model,
 
 void ConvertPriorBox(const caffe::NetParameter& caffe_model,
                      const caffe::LayerParameter& caffe_layer,
-                     shadow::NetParameter* shadow_net) {
-  auto shadow_layer = shadow_net->add_layer();
-  shadow_layer->set_type("PriorBox");
-  ConvertCommon(caffe_model, caffe_layer, shadow_layer);
+                     shadow::NetParam* shadow_net) {
+  auto shadow_op = shadow_net->add_op();
+  shadow_op->set_type("PriorBox");
+  ConvertCommon(caffe_model, caffe_layer, shadow_op);
 
   if (caffe_layer.has_prior_box_param()) {
-    auto shadow_param = shadow_layer->mutable_prior_box_param();
+    auto shadow_param = shadow_op->mutable_prior_box_param();
     const auto& caffe_param = caffe_layer.prior_box_param();
     for (const auto& min_size : caffe_param.min_size()) {
       shadow_param->add_min_size(min_size);
@@ -394,13 +394,13 @@ void ConvertPriorBox(const caffe::NetParameter& caffe_model,
 
 void ConvertReshape(const caffe::NetParameter& caffe_model,
                     const caffe::LayerParameter& caffe_layer,
-                    shadow::NetParameter* shadow_net) {
-  auto shadow_layer = shadow_net->add_layer();
-  shadow_layer->set_type("Reshape");
-  ConvertCommon(caffe_model, caffe_layer, shadow_layer);
+                    shadow::NetParam* shadow_net) {
+  auto shadow_op = shadow_net->add_op();
+  shadow_op->set_type("Reshape");
+  ConvertCommon(caffe_model, caffe_layer, shadow_op);
 
   if (caffe_layer.has_reshape_param()) {
-    auto shadow_param = shadow_layer->mutable_reshape_param();
+    auto shadow_param = shadow_op->mutable_reshape_param();
     const auto& caffe_param = caffe_layer.reshape_param();
     for (const auto& dim : caffe_param.shape().dim()) {
       shadow_param->mutable_shape()->add_dim(dim);
@@ -416,13 +416,13 @@ void ConvertReshape(const caffe::NetParameter& caffe_model,
 
 void ConvertScale(const caffe::NetParameter& caffe_model,
                   const caffe::LayerParameter& caffe_layer,
-                  shadow::NetParameter* shadow_net) {
-  auto shadow_layer = shadow_net->add_layer();
-  shadow_layer->set_type("Scale");
-  ConvertCommon(caffe_model, caffe_layer, shadow_layer);
+                  shadow::NetParam* shadow_net) {
+  auto shadow_op = shadow_net->add_op();
+  shadow_op->set_type("Scale");
+  ConvertCommon(caffe_model, caffe_layer, shadow_op);
 
   if (caffe_layer.has_scale_param()) {
-    auto shadow_param = shadow_layer->mutable_scale_param();
+    auto shadow_param = shadow_op->mutable_scale_param();
     const auto& caffe_param = caffe_layer.scale_param();
     if (caffe_param.has_axis()) {
       shadow_param->set_axis(caffe_param.axis());
@@ -438,13 +438,13 @@ void ConvertScale(const caffe::NetParameter& caffe_model,
 
 void ConvertSoftmax(const caffe::NetParameter& caffe_model,
                     const caffe::LayerParameter& caffe_layer,
-                    shadow::NetParameter* shadow_net) {
-  auto shadow_layer = shadow_net->add_layer();
-  shadow_layer->set_type("Softmax");
-  ConvertCommon(caffe_model, caffe_layer, shadow_layer);
+                    shadow::NetParam* shadow_net) {
+  auto shadow_op = shadow_net->add_op();
+  shadow_op->set_type("Softmax");
+  ConvertCommon(caffe_model, caffe_layer, shadow_op);
 
   if (caffe_layer.has_softmax_param()) {
-    auto shadow_param = shadow_layer->mutable_softmax_param();
+    auto shadow_param = shadow_op->mutable_softmax_param();
     const auto& caffe_param = caffe_layer.softmax_param();
     if (caffe_param.has_axis()) {
       shadow_param->set_axis(caffe_param.axis());
@@ -455,7 +455,7 @@ void ConvertSoftmax(const caffe::NetParameter& caffe_model,
 void Convert(const caffe::NetParameter& caffe_deploy,
              const caffe::NetParameter& caffe_model,
              const std::vector<int>& input_shape,
-             shadow::NetParameter* shadow_net) {
+             shadow::NetParam* shadow_net) {
   shadow_net->set_name(caffe_deploy.name());
   ConvertData(caffe_deploy.layer(0), input_shape, shadow_net);
   for (int l = 1; l < caffe_deploy.layer_size(); ++l) {
@@ -503,8 +503,8 @@ void Convert(const caffe::NetParameter& caffe_deploy,
 
 namespace Caffe2Shadow {
 
-void WriteDefines(const shadow::NetParameter& shadow_net,
-                  const std::string& root, const std::string& model_name) {
+void WriteDefines(const shadow::NetParam& shadow_net, const std::string& root,
+                  const std::string& model_name) {
   auto class_name = model_name;
   std::transform(model_name.begin(), model_name.end(), class_name.begin(),
                  ::toupper);
@@ -514,18 +514,18 @@ void WriteDefines(const shadow::NetParameter& shadow_net,
 
   int whole_count = 0;
   std::vector<int> weight_counts;
-  shadow::NetParameter net(shadow_net);
-  for (int l = 0; l < net.layer_size(); ++l) {
-    auto layer_param = net.mutable_layer(l);
-    if (layer_param->blobs_size() == 0) continue;
+  shadow::NetParam net(shadow_net);
+  for (int l = 0; l < net.op_size(); ++l) {
+    auto op_param = net.mutable_op(l);
+    if (op_param->blobs_size() == 0) continue;
     int count = 0;
-    for (const auto& blob : layer_param->blobs()) {
+    for (const auto& blob : op_param->blobs()) {
       count += blob.data_size();
     }
     whole_count += count;
     weight_counts.push_back(count);
-    for (int n = 0; n < layer_param->blobs_size(); ++n) {
-      layer_param->mutable_blobs(n)->clear_data();
+    for (int n = 0; n < op_param->blobs_size(); ++n) {
+      op_param->mutable_blobs(n)->clear_data();
     }
   }
 
@@ -674,22 +674,22 @@ void WriteDefines(const shadow::NetParameter& shadow_net,
   weight_file.close();
 }
 
-void WriteWeights(const shadow::NetParameter& shadow_net,
-                  const std::string& root, const std::string& model_name) {
+void WriteWeights(const shadow::NetParam& shadow_net, const std::string& root,
+                  const std::string& model_name) {
   const auto& model_name_weights_hpp = model_name + "_weights.hpp";
 
   int weight_count = 0;
-  for (const auto& layer_param : shadow_net.layer()) {
-    if (layer_param.blobs_size() == 0) continue;
+  for (const auto& op_param : shadow_net.op()) {
+    if (op_param.blobs_size() == 0) continue;
 
-    const auto& weight_name = Util::find_replace(layer_param.name(), "/", "_");
+    const auto& weight_name = Util::find_replace(op_param.name(), "/", "_");
     std::ofstream file(root + "/" + model_name + "_" + weight_name + ".cpp");
 
     file << "#include \"" << model_name_weights_hpp << "\"\n\n";
 
     file << "const float weight_" << weight_count << "_[] = {\n";
     int count = 0, num_of_line = 10;
-    for (const auto& blob : layer_param.blobs()) {
+    for (const auto& blob : op_param.blobs()) {
       for (const auto& data : blob.data()) {
         if (count > 0) {
           file << ",";
@@ -709,7 +709,7 @@ void WriteWeights(const shadow::NetParameter& shadow_net,
   }
 }
 
-void WriteProtoToFiles(const shadow::NetParameter& shadow_net,
+void WriteProtoToFiles(const shadow::NetParam& shadow_net,
                        const std::string& root, const std::string& model_name) {
   Util::make_directory(root);
   WriteDefines(shadow_net, root, model_name);
