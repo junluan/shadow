@@ -16,9 +16,10 @@ option(USE_OpenCV "Use OpenCV to read, write and show image" ON)
 
 option(BUILD_SHARED_LIBS "Build shared library" ON)
 
-option(BUILD_SERVICE "Build server and client" ON)
-
-option(BUILD_TEST "Build gtest to test shadow" OFF)
+option(BUILD_EXAMPLES "Build examples" ON)
+option(BUILD_TOOLS "Build useful tools" ON)
+option(BUILD_SERVICE "Build grpc server and client" OFF)
+option(BUILD_TEST "Build test shadow" OFF)
 
 set(BLAS "Open" CACHE STRING "Selected BLAS library")
 set(OpenCV_DIR "/usr/local/opencv-3.2.0" CACHE PATH "OpenCV root directory")

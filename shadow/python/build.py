@@ -20,6 +20,8 @@ def build(args):
     use_glog = 'glog' in args.features
     use_opencv = 'opencv' in args.features
     build_shared_libs = 'shared' in args.features
+    build_examples = 'examples' in args.features
+    build_tools = 'tools' in args.features
     build_service = 'service' in args.features
     build_test = 'test' in args.features
 
@@ -41,6 +43,8 @@ def build(args):
     cmake_options['USE_GLog'] = use_glog
     cmake_options['USE_OpenCV'] = use_opencv
     cmake_options['BUILD_SHARED_LIBS'] = build_shared_libs
+    cmake_options['BUILD_EXAMPLES'] = build_examples
+    cmake_options['BUILD_TOOLS'] = build_tools
     cmake_options['BUILD_SERVICE'] = build_service
     cmake_options['BUILD_TEST'] = build_test
 
@@ -53,6 +57,8 @@ def build(args):
     shell_cmd = 'cd ' + build_root + ' && '
     shell_cmd += 'cmake ../.. '
     choices = ['OFF', 'ON']
+    for define in args.define:
+        shell_cmd += '-D' + define + ' '
     for (feature, value) in cmake_options.items():
         shell_cmd += '-D' + feature + '=' + choices[int(value)] + ' '
     if args.generator == 'make':
@@ -69,12 +75,14 @@ def build(args):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Build files!')
     parser.add_argument('--subdir', '-d', default='default',
-                        help='The subdirectory for building which is relevant to build.')
+                        help='The subdirectory for building, which is relevant to build.')
     parser.add_argument('--features', '-f', nargs='*', default=[],
                         help='Enable features to build.')
+    parser.add_argument('--define', '-D', nargs='+', default=[],
+                        help='Other flags should be passed to cmake.')
     parser.add_argument('--generator', '-g', default='make',
                         help='The cmake generators, default is gnu make.')
-    parser.add_argument('--debug', '-D', nargs='?', const='debug', default='nodebug',
+    parser.add_argument('--debug', nargs='?', const='debug', default='nodebug',
                         help='Open debug mode.')
     args = parser.parse_args()
 
