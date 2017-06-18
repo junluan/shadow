@@ -221,7 +221,7 @@ class Path {
     char temp[PATH_MAX];
     if (realpath(str().c_str(), temp) == NULL) {
       throw std::runtime_error("Error in make_absolute(): " +
-                               std::string(strerror(errno)));
+                               Util::to_string(strerror(errno)));
     }
     return Path(temp);
 #else
@@ -229,7 +229,7 @@ class Path {
     DWORD length = GetFullPathNameW(value.c_str(), MAX_PATH, &out[0], NULL);
     if (length == 0) {
       throw std::runtime_error("Error in make_absolute(): " +
-                               std::string(GetLastError()));
+                               Util::to_string(GetLastError()));
     }
     std::wstring temp = out.substr(0, length);
     return Path(std::string(temp.begin(), temp.end()));
@@ -361,14 +361,14 @@ class Path {
     char temp[PATH_MAX];
     if (::getcwd(temp, PATH_MAX) == NULL) {
       throw std::runtime_error("Error in cwd(): " +
-                               std::string(strerror(errno)));
+                               Util::to_string(strerror(errno)));
     }
     return Path(temp);
 #else
     std::wstring temp(MAX_PATH, '\0');
     if (!_wgetcwd(&temp[0], MAX_PATH)) {
       throw std::runtime_error("Error in cwd(): " +
-                               std::string(GetLastError()));
+                               Util::to_string(GetLastError()));
     }
     return Path(std::string(temp.begin(), temp.end()));
 #endif
