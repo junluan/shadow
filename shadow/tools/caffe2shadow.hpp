@@ -96,8 +96,8 @@ void ConvertActivate(const caffe::NetParameter& caffe_model,
       if (caffe_param.has_channel_shared()) {
         shadow_param->set_channel_shared(caffe_param.channel_shared());
       }
-      shadow_param->set_type(shadow::ActivateParam_ActivateType_PRelu);
     }
+    shadow_param->set_type(shadow::ActivateParam_ActivateType_PRelu);
   }
 }
 
