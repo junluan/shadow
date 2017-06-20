@@ -14,14 +14,15 @@ option(USE_Protobuf "Use Protobuf" ON)
 option(USE_GLog "Use GLog" OFF)
 option(USE_OpenCV "Use OpenCV to read, write and show image" ON)
 
-option(BUILD_SHARED_LIBS "Build shared library" ON)
-
 option(BUILD_EXAMPLES "Build examples" ON)
 option(BUILD_TOOLS "Build useful tools" ON)
 option(BUILD_SERVICE "Build grpc server and client" OFF)
 option(BUILD_TEST "Build test shadow" OFF)
 
-set(BLAS "Open" CACHE STRING "Selected BLAS library")
+option(BUILD_SHARED_LIBS "Build shared library" ON)
+
+set(BLAS "OpenBLAS" CACHE STRING "Selected BLAS library in CPU mode")
+set_property(CACHE BLAS PROPERTY STRINGS OpenBLAS MKL)
 set(OpenCV_DIR "/usr/local/opencv-3.2.0" CACHE PATH "OpenCV root directory")
 
 set(CMAKE_INSTALL_PREFIX ${CMAKE_BINARY_DIR}/distribute)
