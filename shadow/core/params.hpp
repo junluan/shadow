@@ -42,10 +42,30 @@ namespace shadow {
     }                                                         \
   }
 
+#define EQUAL_OPERATOR_FUNC(NAME)     \
+  NAME &operator=(const NAME &from) { \
+    CopyFrom(from);                   \
+    return *this;                     \
+  }
+
+#define DEFAULT_CONSTRUCTOR_FUNC(NAME)     \
+  NAME() {}                                \
+  NAME(const NAME &from) { *this = from; } \
+  ~NAME() { Clear(); }
+
+#define DEFAULT_CONSTRUCTOR_WITH_EQUAL_OPERATOR_FUNC(NAME) \
+  DEFAULT_CONSTRUCTOR_FUNC(NAME)                           \
+  EQUAL_OPERATOR_FUNC(NAME)
+
 class BlobShape {
  public:
-  BlobShape() {}
-  ~BlobShape() { Clear(); }
+  DEFAULT_CONSTRUCTOR_WITH_EQUAL_OPERATOR_FUNC(BlobShape);
+
+  void CopyFrom(const BlobShape &from) {
+    if (&from == this) return;
+    Clear();
+    dim_ = from.dim_;
+  }
 
   REPEATED_FIELD_FUNC(dim, int);
 
@@ -57,14 +77,7 @@ class BlobShape {
 
 class Blob {
  public:
-  Blob() {}
-  Blob(const Blob &from) { *this = from; }
-  ~Blob() { Clear(); }
-
-  Blob &operator=(const Blob &from) {
-    CopyFrom(from);
-    return *this;
-  }
+  DEFAULT_CONSTRUCTOR_WITH_EQUAL_OPERATOR_FUNC(Blob);
 
   void CopyFrom(const Blob &from) {
     if (&from == this) return;
@@ -95,8 +108,14 @@ enum ActivateParam_ActivateType {
 
 class ActivateParam {
  public:
-  ActivateParam() {}
-  ~ActivateParam() { Clear(); }
+  DEFAULT_CONSTRUCTOR_WITH_EQUAL_OPERATOR_FUNC(ActivateParam);
+
+  void CopyFrom(const ActivateParam &from) {
+    if (&from == this) return;
+    Clear();
+    type_ = from.type_;
+    channel_shared_ = from.channel_shared_;
+  }
 
   OPTIONAL_FIELD_DEFAULT_FUNC(type, ActivateParam_ActivateType,
                               ActivateParam_ActivateType_Relu);
@@ -114,8 +133,13 @@ class ActivateParam {
 
 class BatchNormParam {
  public:
-  BatchNormParam() {}
-  ~BatchNormParam() { Clear(); }
+  DEFAULT_CONSTRUCTOR_WITH_EQUAL_OPERATOR_FUNC(BatchNormParam);
+
+  void CopyFrom(const BatchNormParam &from) {
+    if (&from == this) return;
+    Clear();
+    use_global_stats_ = from.use_global_stats_;
+  }
 
   OPTIONAL_FIELD_DEFAULT_FUNC(use_global_stats, bool, true);
 
@@ -127,8 +151,14 @@ class BatchNormParam {
 
 class BiasParam {
  public:
-  BiasParam() {}
-  ~BiasParam() { Clear(); }
+  DEFAULT_CONSTRUCTOR_WITH_EQUAL_OPERATOR_FUNC(BiasParam);
+
+  void CopyFrom(const BiasParam &from) {
+    if (&from == this) return;
+    Clear();
+    axis_ = from.axis_;
+    num_axes_ = from.num_axes_;
+  }
 
   OPTIONAL_FIELD_DEFAULT_FUNC(axis, int, 1);
   OPTIONAL_FIELD_DEFAULT_FUNC(num_axes, int, 1);
@@ -144,8 +174,13 @@ class BiasParam {
 
 class ConcatParam {
  public:
-  ConcatParam() {}
-  ~ConcatParam() { Clear(); }
+  DEFAULT_CONSTRUCTOR_WITH_EQUAL_OPERATOR_FUNC(ConcatParam);
+
+  void CopyFrom(const ConcatParam &from) {
+    if (&from == this) return;
+    Clear();
+    axis_ = from.axis_;
+  }
 
   OPTIONAL_FIELD_DEFAULT_FUNC(axis, int, 1);
 
@@ -157,8 +192,15 @@ class ConcatParam {
 
 class ConnectedParam {
  public:
-  ConnectedParam() {}
-  ~ConnectedParam() { Clear(); }
+  DEFAULT_CONSTRUCTOR_WITH_EQUAL_OPERATOR_FUNC(ConnectedParam);
+
+  void CopyFrom(const ConnectedParam &from) {
+    if (&from == this) return;
+    Clear();
+    num_output_ = from.num_output_;
+    bias_term_ = from.bias_term_;
+    transpose_ = from.transpose_;
+  }
 
   OPTIONAL_FIELD_DEFAULT_FUNC(num_output, int, -1);
   bool has_num_output() const { return num_output_ > 0; }
@@ -179,8 +221,19 @@ class ConnectedParam {
 
 class ConvolutionParam {
  public:
-  ConvolutionParam() {}
-  ~ConvolutionParam() { Clear(); }
+  DEFAULT_CONSTRUCTOR_WITH_EQUAL_OPERATOR_FUNC(ConvolutionParam);
+
+  void CopyFrom(const ConvolutionParam &from) {
+    if (&from == this) return;
+    Clear();
+    num_output_ = from.num_output_;
+    kernel_size_ = from.kernel_size_;
+    stride_ = from.stride_;
+    pad_ = from.pad_;
+    group_ = from.group_;
+    dilation_ = from.dilation_;
+    bias_term_ = from.bias_term_;
+  }
 
   OPTIONAL_FIELD_DEFAULT_FUNC(num_output, int, -1);
   bool has_num_output() const { return num_output_ > 0; }
@@ -211,14 +264,7 @@ class ConvolutionParam {
 
 class DataParam {
  public:
-  DataParam() {}
-  DataParam(const DataParam &from) { *this = from; }
-  ~DataParam() { Clear(); }
-
-  DataParam &operator=(const DataParam &from) {
-    CopyFrom(from);
-    return *this;
-  }
+  DEFAULT_CONSTRUCTOR_WITH_EQUAL_OPERATOR_FUNC(DataParam);
 
   void CopyFrom(const DataParam &from) {
     if (&from == this) return;
@@ -252,8 +298,14 @@ enum EltwiseParam_EltwiseOp {
 
 class EltwiseParam {
  public:
-  EltwiseParam() {}
-  ~EltwiseParam() { Clear(); }
+  DEFAULT_CONSTRUCTOR_WITH_EQUAL_OPERATOR_FUNC(EltwiseParam);
+
+  void CopyFrom(const EltwiseParam &from) {
+    if (&from == this) return;
+    Clear();
+    operation_ = from.operation_;
+    coeff_ = from.coeff_;
+  }
 
   OPTIONAL_FIELD_DEFAULT_FUNC(operation, EltwiseParam_EltwiseOp,
                               EltwiseParam_EltwiseOp_Sum);
@@ -271,8 +323,14 @@ class EltwiseParam {
 
 class FlattenParam {
  public:
-  FlattenParam() {}
-  ~FlattenParam() { Clear(); }
+  DEFAULT_CONSTRUCTOR_WITH_EQUAL_OPERATOR_FUNC(FlattenParam);
+
+  void CopyFrom(const FlattenParam &from) {
+    if (&from == this) return;
+    Clear();
+    axis_ = from.axis_;
+    end_axis_ = from.end_axis_;
+  }
 
   OPTIONAL_FIELD_DEFAULT_FUNC(axis, int, 1);
   OPTIONAL_FIELD_DEFAULT_FUNC(end_axis, int, -1);
@@ -293,8 +351,17 @@ enum LRNParam_NormRegion {
 
 class LRNParam {
  public:
-  LRNParam() {}
-  ~LRNParam() { Clear(); }
+  DEFAULT_CONSTRUCTOR_WITH_EQUAL_OPERATOR_FUNC(LRNParam);
+
+  void CopyFrom(const LRNParam &from) {
+    if (&from == this) return;
+    Clear();
+    norm_region_ = from.norm_region_;
+    local_size_ = from.local_size_;
+    alpha_ = from.alpha_;
+    beta_ = from.beta_;
+    k_ = from.k_;
+  }
 
   OPTIONAL_FIELD_DEFAULT_FUNC(local_size, int, 5);
   OPTIONAL_FIELD_DEFAULT_FUNC(alpha, float, 1);
@@ -319,8 +386,15 @@ class LRNParam {
 
 class NormalizeParam {
  public:
-  NormalizeParam() {}
-  ~NormalizeParam() { Clear(); }
+  DEFAULT_CONSTRUCTOR_WITH_EQUAL_OPERATOR_FUNC(NormalizeParam);
+
+  void CopyFrom(const NormalizeParam &from) {
+    if (&from == this) return;
+    Clear();
+    across_spatial_ = from.across_spatial_;
+    channel_shared_ = from.channel_shared_;
+    scale_ = from.scale_;
+  }
 
   OPTIONAL_FIELD_DEFAULT_FUNC(across_spatial, bool, true);
   OPTIONAL_FIELD_DEFAULT_FUNC(channel_shared, bool, true);
@@ -339,8 +413,13 @@ class NormalizeParam {
 
 class PermuteParam {
  public:
-  PermuteParam() {}
-  ~PermuteParam() { Clear(); }
+  DEFAULT_CONSTRUCTOR_WITH_EQUAL_OPERATOR_FUNC(PermuteParam);
+
+  void CopyFrom(const PermuteParam &from) {
+    if (&from == this) return;
+    Clear();
+    order_ = from.order_;
+  }
 
   REPEATED_FIELD_FUNC(order, int);
 
@@ -357,8 +436,17 @@ enum PoolingParam_PoolType {
 
 class PoolingParam {
  public:
-  PoolingParam() {}
-  ~PoolingParam() { Clear(); }
+  DEFAULT_CONSTRUCTOR_WITH_EQUAL_OPERATOR_FUNC(PoolingParam);
+
+  void CopyFrom(const PoolingParam &from) {
+    if (&from == this) return;
+    Clear();
+    pool_ = from.pool_;
+    kernel_size_ = from.kernel_size_;
+    stride_ = from.stride_;
+    pad_ = from.pad_;
+    global_pooling_ = from.global_pooling_;
+  }
 
   OPTIONAL_FIELD_DEFAULT_FUNC(pool, PoolingParam_PoolType,
                               PoolingParam_PoolType_Max);
@@ -385,8 +473,20 @@ class PoolingParam {
 
 class PriorBoxParam {
  public:
-  PriorBoxParam() {}
-  ~PriorBoxParam() { Clear(); }
+  DEFAULT_CONSTRUCTOR_WITH_EQUAL_OPERATOR_FUNC(PriorBoxParam);
+
+  void CopyFrom(const PriorBoxParam &from) {
+    if (&from == this) return;
+    Clear();
+    min_size_ = from.min_size_;
+    max_size_ = from.max_size_;
+    aspect_ratio_ = from.aspect_ratio_;
+    variance_ = from.variance_;
+    flip_ = from.flip_;
+    clip_ = from.clip_;
+    step_ = from.step_;
+    offset_ = from.offset_;
+  }
 
   REPEATED_FIELD_FUNC(min_size, float);
   REPEATED_FIELD_FUNC(max_size, float);
@@ -417,8 +517,13 @@ class PriorBoxParam {
 
 class ReorgParam {
  public:
-  ReorgParam() {}
-  ~ReorgParam() { Clear(); }
+  DEFAULT_CONSTRUCTOR_WITH_EQUAL_OPERATOR_FUNC(ReorgParam);
+
+  void CopyFrom(const ReorgParam &from) {
+    if (&from == this) return;
+    Clear();
+    stride_ = from.stride_;
+  }
 
   OPTIONAL_FIELD_DEFAULT_FUNC(stride, int, 2);
 
@@ -430,14 +535,7 @@ class ReorgParam {
 
 class ReshapeParam {
  public:
-  ReshapeParam() {}
-  ReshapeParam(const ReshapeParam &from) { *this = from; }
-  ~ReshapeParam() { Clear(); }
-
-  ReshapeParam &operator=(const ReshapeParam &from) {
-    CopyFrom(from);
-    return *this;
-  }
+  DEFAULT_CONSTRUCTOR_WITH_EQUAL_OPERATOR_FUNC(ReshapeParam);
 
   void CopyFrom(const ReshapeParam &from) {
     if (&from == this) return;
@@ -464,8 +562,15 @@ class ReshapeParam {
 
 class ScaleParam {
  public:
-  ScaleParam() {}
-  ~ScaleParam() { Clear(); }
+  DEFAULT_CONSTRUCTOR_WITH_EQUAL_OPERATOR_FUNC(ScaleParam);
+
+  void CopyFrom(const ScaleParam &from) {
+    if (&from == this) return;
+    Clear();
+    axis_ = from.axis_;
+    num_axes_ = from.num_axes_;
+    bias_term_ = from.bias_term_;
+  }
 
   OPTIONAL_FIELD_DEFAULT_FUNC(axis, int, 1);
   OPTIONAL_FIELD_DEFAULT_FUNC(num_axes, int, 1);
@@ -484,8 +589,13 @@ class ScaleParam {
 
 class SoftmaxParam {
  public:
-  SoftmaxParam() {}
-  ~SoftmaxParam() { Clear(); }
+  DEFAULT_CONSTRUCTOR_WITH_EQUAL_OPERATOR_FUNC(SoftmaxParam);
+
+  void CopyFrom(const SoftmaxParam &from) {
+    if (&from == this) return;
+    Clear();
+    axis_ = from.axis_;
+  }
 
   OPTIONAL_FIELD_DEFAULT_FUNC(axis, int, 1);
 
@@ -497,14 +607,7 @@ class SoftmaxParam {
 
 class OpParam {
  public:
-  OpParam() {}
-  OpParam(const OpParam &from) { *this = from; }
-  ~OpParam() { Clear(); }
-
-  OpParam &operator=(const OpParam &from) {
-    CopyFrom(from);
-    return *this;
-  }
+  DEFAULT_CONSTRUCTOR_WITH_EQUAL_OPERATOR_FUNC(OpParam);
 
   void CopyFrom(const OpParam &from) {
     if (&from == this) return;
@@ -613,14 +716,7 @@ class OpParam {
 
 class NetParam {
  public:
-  NetParam() {}
-  NetParam(const NetParam &from) { *this = from; }
-  ~NetParam() { Clear(); }
-
-  NetParam &operator=(const NetParam &from) {
-    CopyFrom(from);
-    return *this;
-  }
+  DEFAULT_CONSTRUCTOR_WITH_EQUAL_OPERATOR_FUNC(NetParam);
 
   void CopyFrom(const NetParam &from) {
     if (&from == this) return;
