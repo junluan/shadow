@@ -38,9 +38,9 @@ void PermuteOp::Reshape() {
   old_steps_.reshape(num_axes_);
   new_steps_.reshape(num_axes_);
 
-  permute_order_.set_data(permute_order_data_.data());
-  old_steps_.set_data(old_steps.data());
-  new_steps_.set_data(new_steps.data());
+  permute_order_.set_data(permute_order_data_.data(), num_axes_);
+  old_steps_.set_data(old_steps.data(), num_axes_);
+  new_steps_.set_data(new_steps.data(), num_axes_);
 
   DLOG(INFO) << op_name_ << ": "
              << Util::format_vector(bottoms_[0]->shape(), ",", "(", ")")

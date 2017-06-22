@@ -75,7 +75,7 @@ void ReshapeOp::Reshape() {
              << " -> " << Util::format_vector(tops_[0]->shape(), ",", "(", ")");
 }
 
-void ReshapeOp::Forward() { tops_[0]->share_data(bottoms_[0]->data()); }
+void ReshapeOp::Forward() { tops_[0]->share_data(*bottoms_[0]); }
 
 void ReshapeOp::Release() {
   // DLOG(INFO) << "Free ReshapeOp!";

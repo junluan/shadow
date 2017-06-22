@@ -32,7 +32,7 @@ void BatchNormOp::Setup(VecBlobF *blobs) {
   if (use_global_stats_) {
     CHECK_EQ(blobs_.size(), 3);
     CHECK_EQ(blobs_[2]->count(), 1);
-    blobs_[2]->read_data(&scale_);
+    blobs_[2]->read_data(&scale_, 1);
   }
 }
 

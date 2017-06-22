@@ -151,7 +151,7 @@ void PriorBoxOp::Forward() {
       }
     }
   }
-  tops_[0]->set_data(top_data_.data());
+  tops_[0]->set_data(top_data_.data(), top_data_.size());
   is_initial_ = true;
 }
 

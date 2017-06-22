@@ -65,7 +65,7 @@ void Network::SaveModel(const std::string &proto_bin) {
         op_blob->mutable_shape()->add_dim(dim);
       }
       VecFloat blob_data(blob->count());
-      blob->read_data(blob_data.data());
+      blob->read_data(blob_data.data(), blob_data.size());
       for (const auto &data : blob_data) {
         op_blob->add_data(data);
       }
@@ -83,7 +83,8 @@ void Network::Forward(const float *data) {
   if (ops_.size() == 0) return;
   CHECK(!ops_[0]->type().compare("Data"))
       << "The first Op must be Data operator!";
-  ops_[0]->mutable_bottoms(0)->set_data(data);
+  auto in_blob = ops_[0]->mutable_bottoms(0);
+  in_blob->set_data(data, in_blob->count());
   for (auto &op : ops_) {
     op->Forward();
   }
@@ -133,14 +134,14 @@ const BlobF *Network::GetBlobByName(const std::string &blob_name) {
 }
 
 const float *Network::GetBlobDataByName(const std::string &blob_name) {
-  const BlobF *blob = GetBlobByName(blob_name);
+  const auto *blob = GetBlobByName(blob_name);
   if (blob == nullptr) {
     LOG(FATAL) << "Unknown blob: " + blob_name;
   } else if (blobs_data_.find(blob_name) == blobs_data_.end()) {
     blobs_data_[blob_name] = VecFloat(blob->count(), 0);
   }
-  VecFloat &blob_data = blobs_data_.find(blob_name)->second;
-  blob->read_data(blob_data.data());
+  auto &blob_data = blobs_data_.find(blob_name)->second;
+  blob->read_data(blob_data.data(), blob_data.size());
   return blob_data.data();
 }
 
@@ -175,14 +176,16 @@ void Network::Reshape(int batch) {
     in_shape_.push_back(dim);
   }
   CHECK_EQ(in_shape_.size(), 4) << "data_shape dimension must be four!";
-  if (batch > 0) in_shape_[0] = batch;
+  if (batch > 0) {
+    in_shape_[0] = batch;
+  }
 
   blobs_.clear();
   blobs_.push_back(new BlobF(in_shape_, "in_blob"));
 
   ops_.clear();
   for (const auto &op_param : net_param_.op()) {
-    Operator *op = OpFactory(op_param);
+    auto *op = OpFactory(op_param);
     op->Setup(&blobs_);
     op->Reshape();
     ops_.push_back(op);

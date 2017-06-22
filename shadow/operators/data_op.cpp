@@ -4,7 +4,7 @@
 namespace Shadow {
 
 void DataOp::Setup(VecBlobF *blobs) {
-  BlobF *bottom = get_blob_by_name(*blobs, "in_blob");
+  auto *bottom = get_blob_by_name(*blobs, "in_blob");
   if (bottom != nullptr) {
     if (bottom->num() && bottom->num_axes() == 4) {
       bottoms_.push_back(bottom);
@@ -21,7 +21,7 @@ void DataOp::Setup(VecBlobF *blobs) {
   }
 
   for (const auto &top_name : op_param_.top()) {
-    BlobF *top = new BlobF(top_name);
+    auto *top = new BlobF(top_name);
     tops_.push_back(top);
     blobs->push_back(top);
   }
@@ -43,7 +43,7 @@ void DataOp::Setup(VecBlobF *blobs) {
     mean_value.push_back(0);
   }
   mean_value_.reshape(num_mean_);
-  mean_value_.set_data(mean_value.data());
+  mean_value_.set_data(mean_value.data(), num_mean_);
 }
 
 void DataOp::Reshape() {

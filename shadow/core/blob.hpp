@@ -16,35 +16,36 @@ namespace Shadow {
 template <typename Dtype>
 class Blob {
  public:
-  explicit Blob(const std::string &name = "") : name_(name) {}
-  explicit Blob(const VecInt &shape, const std::string &name = "")
+  explicit Blob(const std::string &name = "") : name_(name) { set_device(); }
+  explicit Blob(const VecInt &shape, const std::string &name = "",
+                bool shared = false)
       : name_(name) {
-    reshape(shape);
+    reshape(shape, shared);
+    set_device();
   }
   ~Blob() { clear(); }
 
-  inline const BACKEND *data() const { return data_; }
-  inline BACKEND *mutable_data() { return data_; }
+  const BACKEND *data() const { return data_; }
+  BACKEND *mutable_data() { return data_; }
 
-  inline void set_data(const Dtype *data, bool shared = false) {
+  void set_data(const Dtype *data, int set_count) {
     CHECK_NOTNULL(data);
+    CHECK_EQ(set_count, count());
 #if !defined(USE_CUDA) & !defined(USE_CL)
-    if (!shared) {
+    if (!shared_) {
       memcpy(data_, data, count() * sizeof(Dtype));
     } else {
       data_ = const_cast<Dtype *>(data);
     }
-    on_gpu_ = false;
-    shared_ = shared;
 
 #else
     Kernel::WriteBuffer(count(), data, data_);
-    on_gpu_ = true;
 #endif
   }
 
-  inline void read_data(Dtype *data) const {
+  void read_data(Dtype *data, int read_count) const {
     CHECK_NOTNULL(data);
+    CHECK_EQ(read_count, count());
 #if !defined(USE_CUDA) & !defined(USE_CL)
     memcpy(data, data_, count() * sizeof(Dtype));
 
@@ -53,71 +54,64 @@ class Blob {
 #endif
   }
 
-  inline void share_data(const BACKEND *data) {
+  void share_data(const BACKEND *data, const VecInt &shape) {
     CHECK_NOTNULL(data);
+    int cou = 1;
+    for (const auto dim : shape) cou *= dim;
+    CHECK_EQ(cou, count());
     if (data_ != data) {
       CHECK(data_ == nullptr);
     }
     data_ = const_cast<BACKEND *>(data);
     shared_ = true;
-#if !defined(USE_CUDA) & !defined(USE_CL)
-    on_gpu_ = false;
-
-#else
-    on_gpu_ = true;
-#endif
+  }
+  void share_data(const Blob<Dtype> &from) {
+    share_data(from.data_, from.shape_);
   }
 
-  inline void reshape(const VecInt &shape, bool shared = false) {
+  void reshape(const VecInt &shape, bool shared = false) {
     if (shape.size() == 0) return;
-    int new_count = 1;
-    for (const auto &dim : shape) new_count *= dim;
-    CHECK_GT(new_count, 0);
-    if (data_ == nullptr || new_count > count()) {
+    int cou = 1;
+    for (const auto dim : shape) cou *= dim;
+    CHECK_GT(cou, 0);
+    if (data_ == nullptr || cou != count()) {
       clear();
-      allocate_data(new_count, shared);
+      allocate_data(cou, shared);
     }
     set_shape(shape);
   }
-  inline void reshape(int num, int channels = 1, int height = 1, int width = 1,
-                      bool shared = false) {
-    VecInt shape(4);
-    shape[0] = num;
-    shape[1] = channels;
-    shape[2] = height;
-    shape[3] = width;
-    reshape(shape, shared);
+  void reshape(int num, int channels = 1, int height = 1, int width = 1,
+               bool shared = false) {
+    reshape(VecInt{num, channels, height, width}, shared);
   }
 
-  inline const std::string &name() const { return name_; }
-  inline void set_name(const std::string &name) { name_ = name; }
+  const std::string &name() const { return name_; }
+  void set_name(const std::string &name) { name_ = name; }
 
-  inline const VecInt &shape() const { return shape_; }
-  inline int shape(int index) const { return shape_[canonical_index(index)]; }
-  inline void set_shape(int index, int value) {
+  const VecInt &shape() const { return shape_; }
+  int shape(int index) const { return shape_[canonical_index(index)]; }
+  void set_shape(int index, int value) {
     shape_[canonical_index(index)] = value;
   }
-  inline void set_shape(const VecInt &shape) { shape_ = shape; }
-  inline void add_shape(int value) { shape_.push_back(value); }
+  void set_shape(const VecInt &shape) { shape_ = shape; }
+  void add_shape(int value) { shape_.push_back(value); }
 
-  inline int num_axes() const { return shape_.size(); }
-  inline int num() const { return count() / shape(0); }
-  inline int count() const { return count(0); }
-  inline int count(int start_axis) const {
-    return count(start_axis, num_axes());
-  }
-  inline int count(int start_axis, int end_axis) const {
+  int num_axes() const { return shape_.size(); }
+  int num() const { return count() / shape(0); }
+  int count() const { return count(0); }
+  int count(int start_axis) const { return count(start_axis, num_axes()); }
+  int count(int start_axis, int end_axis) const {
     CHECK_LE(start_axis, end_axis);
     CHECK_GE(start_axis, 0);
     CHECK_GE(end_axis, 0);
     CHECK_LE(start_axis, num_axes());
     CHECK_LE(end_axis, num_axes());
-    int count = 1;
-    for (int i = start_axis; i < end_axis; ++i) count *= shape(i);
-    return count;
+    int cou = 1;
+    for (int i = start_axis; i < end_axis; ++i) cou *= shape(i);
+    return cou;
   }
 
-  inline int canonical_index(int index) const {
+  int canonical_index(int index) const {
     CHECK_GE(index, -num_axes());
     CHECK_LT(index, num_axes());
     if (index < 0) {
@@ -126,7 +120,7 @@ class Blob {
     return index;
   }
 
-  inline void clear() {
+  void clear() {
     if (data_ != nullptr && !shared_) {
 #if !defined(USE_CUDA) & !defined(USE_CL)
       delete[] data_;
@@ -140,16 +134,23 @@ class Blob {
   }
 
  private:
-  inline void allocate_data(int count, bool shared) {
+  void allocate_data(int count, bool shared) {
 #if !defined(USE_CUDA) & !defined(USE_CL)
     if (!shared) {
       data_ = new Dtype[count];
     }
-    on_gpu_ = false;
     shared_ = shared;
 
 #else
     data_ = Kernel::MakeBuffer<BACKEND>(count, static_cast<Dtype *>(nullptr));
+#endif
+  }
+
+  void set_device() {
+#if !defined(USE_CUDA) & !defined(USE_CL)
+    on_gpu_ = false;
+
+#else
     on_gpu_ = true;
 #endif
   }
@@ -168,8 +169,9 @@ typedef Blob<float> BlobF;
 typedef std::vector<BlobI *> VecBlobI;
 typedef std::vector<BlobF *> VecBlobF;
 
-inline static BlobF *get_blob_by_name(const VecBlobF &blobs,
-                                      const std::string &name) {
+template <typename Dtype>
+inline static Blob<Dtype> *get_blob_by_name(
+    const std::vector<Blob<Dtype> *> &blobs, const std::string &name) {
   for (const auto &blob : blobs) {
     if (!name.compare(blob->name())) return blob;
   }

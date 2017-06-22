@@ -32,7 +32,7 @@ void FlattenOp::Reshape() {
              << " -> " << Util::format_vector(tops_[0]->shape(), ",", "(", ")");
 }
 
-void FlattenOp::Forward() { tops_[0]->share_data(bottoms_[0]->data()); }
+void FlattenOp::Forward() { tops_[0]->share_data(*bottoms_[0]); }
 
 void FlattenOp::Release() {
   // DLOG(INFO) << "Free FlattenOp!";

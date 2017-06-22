@@ -17,7 +17,7 @@ void ConcatOp::Setup(VecBlobF *blobs) {
 
 void ConcatOp::Reshape() {
   int num_axes = bottoms_[0]->num_axes();
-  VecInt top_shape = bottoms_[0]->shape();
+  auto top_shape = bottoms_[0]->shape();
   for (int i = 1; i < bottoms_.size(); ++i) {
     CHECK_EQ(num_axes, bottoms_[i]->num_axes())
         << "Bottoms must have the same axes!";
@@ -43,7 +43,7 @@ void ConcatOp::Reshape() {
 
 void ConcatOp::Forward() {
   if (bottoms_.size() == 1) {
-    tops_[0]->share_data(bottoms_[0]->data());
+    tops_[0]->share_data(*bottoms_[0]);
     return;
   }
   int offset_concat_axis = 0;

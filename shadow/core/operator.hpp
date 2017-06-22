@@ -17,10 +17,11 @@ namespace Shadow {
 class Operator {
  public:
   Operator() {}
-  explicit Operator(const shadow::OpParam &op_param)
-      : op_param_(op_param),
-        op_name_(op_param.name()),
-        op_type_(op_param.type()) {}
+  explicit Operator(const shadow::OpParam &op_param) {
+    op_param_ = op_param;
+    op_name_ = op_param.name();
+    op_type_ = op_param.type();
+  }
   virtual ~Operator() {
     op_param_.Clear();
     bottoms_.clear();
@@ -58,20 +59,17 @@ class Operator {
       tops_.push_back(top);
     }
     for (const auto &proto_blob : op_param_.blobs()) {
-      auto *blob = new BlobF();
       const auto &dims = proto_blob.shape().dim();
       VecInt shape;
       int cc = 1, data_size = proto_blob.data_size();
-      for (const auto &dim : dims) {
+      for (const auto dim : dims) {
         cc *= dim;
         shape.push_back(dim);
       }
+      auto *blob = new BlobF(shape, "params", true);
       if (data_size > 0) {
         CHECK_EQ(data_size, cc) << "Blob data size and blob shape are mismatch";
-        blob->reshape(shape, true);
-        blob->set_data(proto_blob.data().data(), true);
-      } else {
-        blob->reshape(shape);
+        blob->set_data(proto_blob.data().data(), data_size);
       }
       blobs_.push_back(blob);
     }
@@ -80,61 +78,60 @@ class Operator {
   virtual void Forward() { LOG(INFO) << "Forward Operator!"; }
   virtual void Release() { LOG(INFO) << "Release Operator!"; }
 
-  inline const shadow::OpParam &param() const { return op_param_; }
-  inline void set_param(const shadow::OpParam &param) { op_param_ = param; }
+  const shadow::OpParam &param() const { return op_param_; }
+  void set_param(const shadow::OpParam &param) { op_param_ = param; }
 
-  inline const std::string &name() const { return op_name_; }
-  inline void set_name(const std::string &name) { op_name_ = name; }
+  const std::string &name() const { return op_name_; }
+  void set_name(const std::string &name) { op_name_ = name; }
 
-  inline const std::string &type() const { return op_type_; }
-  inline void set_type(const std::string &type) { op_type_ = type; }
+  const std::string &type() const { return op_type_; }
+  void set_type(const std::string &type) { op_type_ = type; }
 
-  inline const VecBlobF &bottoms() const { return bottoms_; }
-  inline VecBlobF *mutable_bottoms() { return &bottoms_; }
-  inline const BlobF *bottoms(int i) const {
+  const VecBlobF &bottoms() const { return bottoms_; }
+  VecBlobF *mutable_bottoms() { return &bottoms_; }
+  const BlobF *bottoms(int i) const {
     CHECK_GE(i, 0);
     CHECK_LT(i, bottoms_.size());
     return bottoms_[i];
   }
-  inline BlobF *mutable_bottoms(int i) {
+  BlobF *mutable_bottoms(int i) {
     CHECK_GE(i, 0);
     CHECK_LT(i, bottoms_.size());
     return bottoms_[i];
   }
-  inline int bottoms_size() const { return bottoms_.size(); }
+  int bottoms_size() const { return bottoms_.size(); }
 
-  inline const VecBlobF &tops() const { return tops_; }
-  inline VecBlobF *mutable_tops() { return &tops_; }
-  inline const BlobF *tops(int i) const {
+  const VecBlobF &tops() const { return tops_; }
+  VecBlobF *mutable_tops() { return &tops_; }
+  const BlobF *tops(int i) const {
     CHECK_GE(i, 0);
     CHECK_LT(i, tops_.size());
     return tops_[i];
   }
-  inline BlobF *mutable_tops(int i) {
+  BlobF *mutable_tops(int i) {
     CHECK_GE(i, 0);
     CHECK_LT(i, tops_.size());
     return tops_[i];
   }
-  inline int tops_size() const { return tops_.size(); }
+  int tops_size() const { return tops_.size(); }
 
-  inline const VecBlobF &blobs() const { return blobs_; }
-  inline VecBlobF *mutable_blobs() { return &blobs_; }
-  inline const BlobF *blobs(int i) const {
+  const VecBlobF &blobs() const { return blobs_; }
+  VecBlobF *mutable_blobs() { return &blobs_; }
+  const BlobF *blobs(int i) const {
     CHECK_GE(i, 0);
     CHECK_LT(i, blobs_.size());
     return blobs_[i];
   }
-  inline BlobF *mutable_blobs(int i) {
+  BlobF *mutable_blobs(int i) {
     CHECK_GE(i, 0);
     CHECK_LT(i, blobs_.size());
     return blobs_[i];
   }
-  inline int blobs_size() const { return blobs_.size(); }
-  inline void set_blob(int i, int count, const float *data) {
+  int blobs_size() const { return blobs_.size(); }
+  void set_blob(int i, int count, const float *data) {
     CHECK_GE(i, 0);
     CHECK_LT(i, blobs_.size());
-    CHECK_LE(count, blobs_[i]->count());
-    blobs_[i]->set_data(data);
+    blobs_[i]->set_data(data, count);
   }
 
  protected:
