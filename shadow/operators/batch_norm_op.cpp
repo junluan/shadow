@@ -32,7 +32,6 @@ void BatchNormOp::Setup(VecBlobF *blobs) {
   if (use_global_stats_) {
     CHECK_EQ(blobs_.size(), 3);
     CHECK_EQ(blobs_[2]->count(), 1);
-    blobs_[2]->read_data(&scale_, 1);
   }
 }
 
@@ -69,6 +68,7 @@ void BatchNormOp::Forward() {
   }
 
   if (use_global_stats_) {
+    blobs_[2]->read_data(&scale_, 1);
     float scale_factor = scale_ == 0 ? 0 : 1 / scale_;
     Blas::Scale(mean_.count(), scale_factor, blobs_[0]->data(), 0,
                 mean_.mutable_data(), 0);

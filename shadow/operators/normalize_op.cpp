@@ -25,7 +25,6 @@ void NormalizeOp::Setup(VecBlobF *blobs) {
   CHECK_EQ(blobs_.size(), 1);
   if (channel_shared_) {
     CHECK_EQ(blobs_[0]->count(), 1);
-    blobs_[0]->read_data(&scale_, 1);
   } else {
     CHECK_EQ(blobs_[0]->count(), bottoms_[0]->shape(1));
   }
@@ -81,6 +80,7 @@ void NormalizeOp::Forward() {
                 tops_[0]->mutable_data(), data_offset);
     }
     if (channel_shared_) {
+      blobs_[0]->read_data(&scale_, 1);
       Blas::BlasSscal(num, scale_, tops_[0]->mutable_data(), data_offset);
     } else {
       Blas::BlasSgemm(0, 0, channels, spatial_dim_, 1, 1, blobs_[0]->data(), 0,
