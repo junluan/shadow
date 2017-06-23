@@ -61,4 +61,6 @@ void ConcatOp::Release() {
   // DLOG(INFO) << "Free ConcatOp!";
 }
 
+REGISTER_OP_CLASS(Concat);
+
 }  // namespace Shadow

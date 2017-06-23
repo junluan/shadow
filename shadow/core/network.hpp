@@ -36,8 +36,6 @@ class Network {
   void CopyWeights(const std::vector<const float *> &weights);
   void CopyWeights(const float *weights_data);
 
-  Operator *OpFactory(const shadow::OpParam &op_param);
-
   shadow::NetParam net_param_;
 
   VecInt in_shape_;

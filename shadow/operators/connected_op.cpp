@@ -62,4 +62,6 @@ void ConnectedOp::Release() {
   // DLOG(INFO) << "Free ConnectedOp!";
 }
 
+REGISTER_OP_CLASS(Connected);
+
 }  // namespace Shadow

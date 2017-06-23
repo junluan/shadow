@@ -62,4 +62,6 @@ void PermuteOp::Release() {
   // DLOG(INFO) << "Free PermuteOp!";
 }
 
+REGISTER_OP_CLASS(Permute);
+
 }  // namespace Shadow

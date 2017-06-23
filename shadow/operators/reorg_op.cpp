@@ -37,4 +37,6 @@ void ReorgOp::Release() {
   // DLOG(INFO) << "Free ReorgOp!";
 }
 
+REGISTER_OP_CLASS(Reorg);
+
 }  // namespace Shadow

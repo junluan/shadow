@@ -1,25 +1,6 @@
 #include "network.hpp"
 #include "util/io.hpp"
 
-#include "operators/activate_op.hpp"
-#include "operators/batch_norm_op.hpp"
-#include "operators/bias_op.hpp"
-#include "operators/concat_op.hpp"
-#include "operators/connected_op.hpp"
-#include "operators/convolution_op.hpp"
-#include "operators/data_op.hpp"
-#include "operators/eltwise_op.hpp"
-#include "operators/flatten_op.hpp"
-#include "operators/lrn_op.hpp"
-#include "operators/normalize_op.hpp"
-#include "operators/permute_op.hpp"
-#include "operators/pooling_op.hpp"
-#include "operators/prior_box_op.hpp"
-#include "operators/reorg_op.hpp"
-#include "operators/reshape_op.hpp"
-#include "operators/scale_op.hpp"
-#include "operators/softmax_op.hpp"
-
 #if defined(USE_NNPACK)
 #include "nnpack.h"
 #endif
@@ -41,13 +22,6 @@ void Network::LoadModel(const std::string &proto_bin, int batch) {
   Reshape(batch);
 }
 
-void Network::LoadModel(const std::string &proto_str, const float *weights_data,
-                        int batch) {
-  LoadProtoStrOrText(proto_str, &net_param_);
-  Reshape(batch);
-  CopyWeights(weights_data);
-}
-
 void Network::LoadModel(const std::string &proto_str,
                         const std::vector<const float *> &weights, int batch) {
   LoadProtoStrOrText(proto_str, &net_param_);
@@ -55,12 +29,19 @@ void Network::LoadModel(const std::string &proto_str,
   CopyWeights(weights);
 }
 
+void Network::LoadModel(const std::string &proto_str, const float *weights_data,
+                        int batch) {
+  LoadProtoStrOrText(proto_str, &net_param_);
+  Reshape(batch);
+  CopyWeights(weights_data);
+}
+
 void Network::SaveModel(const std::string &proto_bin) {
 #if defined(USE_Protobuf)
-  for (int l = 0; l < ops_.size(); ++l) {
-    net_param_.mutable_op(l)->clear_blobs();
-    for (const auto &blob : ops_[l]->blobs()) {
-      auto op_blob = net_param_.mutable_op(l)->add_blobs();
+  for (int o = 0; o < ops_.size(); ++o) {
+    net_param_.mutable_op(o)->clear_blobs();
+    for (const auto &blob : ops_[o]->blobs()) {
+      auto op_blob = net_param_.mutable_op(o)->add_blobs();
       for (const auto &dim : blob->shape()) {
         op_blob->mutable_shape()->add_dim(dim);
       }
@@ -170,9 +151,11 @@ void Network::LoadProtoStrOrText(const std::string &proto_str_or_text,
 }
 
 void Network::Reshape(int batch) {
+  CHECK_GT(net_param_.op_size(), 0);
+  const auto &data_op = net_param_.op(0);
+  CHECK(!data_op.type().compare("Data"));
   in_shape_.clear();
-  CHECK(!net_param_.op(0).type().compare("Data"));
-  for (const auto &dim : net_param_.op(0).data_param().data_shape().dim()) {
+  for (const auto dim : data_op.data_param().data_shape().dim()) {
     in_shape_.push_back(dim);
   }
   CHECK_EQ(in_shape_.size(), 4) << "data_shape dimension must be four!";
@@ -185,7 +168,7 @@ void Network::Reshape(int batch) {
 
   ops_.clear();
   for (const auto &op_param : net_param_.op()) {
-    auto *op = OpFactory(op_param);
+    auto *op = OpRegistry::CreateOp(op_param);
     op->Setup(&blobs_);
     op->Reshape();
     ops_.push_back(op);
@@ -215,52 +198,6 @@ void Network::CopyWeights(const float *weights_data) {
       weights_data += blob_count;
     }
   }
-}
-
-Operator *Network::OpFactory(const shadow::OpParam &op_param) {
-  Operator *op = nullptr;
-  const auto &op_type = op_param.type();
-  if (!op_type.compare("Activate")) {
-    op = new ActivateOp(op_param);
-  } else if (!op_type.compare("BatchNorm")) {
-    op = new BatchNormOp(op_param);
-  } else if (!op_type.compare("Bias")) {
-    op = new BiasOp(op_param);
-  } else if (!op_type.compare("Concat")) {
-    op = new ConcatOp(op_param);
-  } else if (!op_type.compare("Connected")) {
-    op = new ConnectedOp(op_param);
-  } else if (!op_type.compare("Convolution")) {
-    op = new ConvolutionOp(op_param);
-  } else if (!op_type.compare("Data")) {
-    op = new DataOp(op_param);
-  } else if (!op_type.compare("Eltwise")) {
-    op = new EltwiseOp(op_param);
-  } else if (!op_type.compare("Flatten")) {
-    op = new FlattenOp(op_param);
-  } else if (!op_type.compare("LRN")) {
-    op = new LRNOp(op_param);
-  } else if (!op_type.compare("Normalize")) {
-    op = new NormalizeOp(op_param);
-  } else if (!op_type.compare("Permute")) {
-    op = new PermuteOp(op_param);
-  } else if (!op_type.compare("Pooling")) {
-    op = new PoolingOp(op_param);
-  } else if (!op_type.compare("PriorBox")) {
-    op = new PriorBoxOp(op_param);
-  } else if (!op_type.compare("Reorg")) {
-    op = new ReorgOp(op_param);
-  } else if (!op_type.compare("Reshape")) {
-    op = new ReshapeOp(op_param);
-  } else if (!op_type.compare("Scale")) {
-    op = new ScaleOp(op_param);
-  } else if (!op_type.compare("Softmax")) {
-    op = new SoftmaxOp(op_param);
-  } else {
-    LOG(FATAL) << "Error when making op: " << op_param.name()
-               << ", op type: " << op_type << " is not recognized!";
-  }
-  return op;
 }
 
 }  // namespace Shadow

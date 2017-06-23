@@ -2,6 +2,7 @@
 #define SHADOW_CORE_OPERATOR_HPP
 
 #include "blob.hpp"
+#include "factory.hpp"
 #include "util/log.hpp"
 #include "util/util.hpp"
 

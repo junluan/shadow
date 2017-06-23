@@ -96,4 +96,6 @@ void PoolingOp::Release() {
   // DLOG(INFO) << "Free PoolingOp!";
 }
 
+REGISTER_OP_CLASS(Pooling);
+
 }  // namespace Shadow

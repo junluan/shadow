@@ -38,4 +38,6 @@ void FlattenOp::Release() {
   // DLOG(INFO) << "Free FlattenOp!";
 }
 
+REGISTER_OP_CLASS(Flatten);
+
 }  // namespace Shadow

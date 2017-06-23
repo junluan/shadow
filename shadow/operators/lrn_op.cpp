@@ -37,4 +37,6 @@ void LRNOp::Release() {
   // DLOG(INFO) << "Free LRNOp!";
 }
 
+REGISTER_OP_CLASS(LRN);
+
 }  // namespace Shadow

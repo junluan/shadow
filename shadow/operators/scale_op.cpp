@@ -72,4 +72,6 @@ void ScaleOp::Release() {
   // DLOG(INFO) << "Free ScaleOp!";
 }
 
+REGISTER_OP_CLASS(Scale);
+
 }  // namespace Shadow

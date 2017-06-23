@@ -64,4 +64,6 @@ void DataOp::Release() {
   // DLOG(INFO) << "Free DataOp!";
 }
 
+REGISTER_OP_CLASS(Data);
+
 }  // namespace Shadow

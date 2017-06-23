@@ -219,4 +219,6 @@ void ConvolutionOp::Release() {
   // DLOG(INFO) << "Free ConvolutionOp!";
 }
 
+REGISTER_OP_CLASS(Convolution);
+
 }  // namespace Shadow

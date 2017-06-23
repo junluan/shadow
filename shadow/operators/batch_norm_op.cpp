@@ -123,4 +123,6 @@ void BatchNormOp::Release() {
   // DLOG(INFO) << "Free BatchNormOp!";
 }
 
+REGISTER_OP_CLASS(BatchNorm);
+
 }  // namespace Shadow

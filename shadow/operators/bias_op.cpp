@@ -59,4 +59,6 @@ void BiasOp::Release() {
   // DLOG(INFO) << "Free BiasOp!";
 }
 
+REGISTER_OP_CLASS(Bias);
+
 }  // namespace Shadow

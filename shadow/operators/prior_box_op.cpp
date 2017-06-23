@@ -159,4 +159,6 @@ void PriorBoxOp::Release() {
   // DLOG(INFO) << "Free PriorBoxOp!";
 }
 
+REGISTER_OP_CLASS(PriorBox);
+
 }  // namespace Shadow

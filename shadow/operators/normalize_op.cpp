@@ -100,4 +100,6 @@ void NormalizeOp::Release() {
   // DLOG(INFO) << "Free NormalizeOp!";
 }
 
+REGISTER_OP_CLASS(Normalize);
+
 }  // namespace Shadow
