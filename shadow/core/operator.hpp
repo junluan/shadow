@@ -3,15 +3,9 @@
 
 #include "blob.hpp"
 #include "factory.hpp"
+#include "params.hpp"
 #include "util/log.hpp"
 #include "util/util.hpp"
-
-#if defined(USE_Protobuf)
-#include "proto/shadow.pb.h"
-
-#else
-#include "params.hpp"
-#endif
 
 namespace Shadow {
 

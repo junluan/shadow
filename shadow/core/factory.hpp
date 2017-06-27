@@ -2,14 +2,8 @@
 #define SHADOW_CORE_FACTORY_HPP
 
 #include "operator.hpp"
-#include "util/util.hpp"
-
-#if defined(USE_Protobuf)
-#include "proto/shadow.pb.h"
-
-#else
 #include "params.hpp"
-#endif
+#include "util/util.hpp"
 
 namespace Shadow {
 

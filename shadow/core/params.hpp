@@ -1,6 +1,10 @@
 #ifndef SHADOW_CORE_PARAMS_HPP
 #define SHADOW_CORE_PARAMS_HPP
 
+#if defined(USE_Protobuf)
+#include "proto/shadow.pb.h"
+#endif
+
 #include <string>
 #include <vector>
 
