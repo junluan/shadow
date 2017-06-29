@@ -1,6 +1,7 @@
 #ifndef SHADOW_CORE_BLOB_HPP
 #define SHADOW_CORE_BLOB_HPP
 
+#include "common.hpp"
 #include "kernel.hpp"
 #include "util/log.hpp"
 #include "util/type.hpp"
@@ -174,6 +175,8 @@ class Blob {
   std::string name_ = "";
   VecInt shape_;
   bool on_gpu_ = false, shared_ = false;
+
+  DISABLE_COPY_AND_ASSIGN(Blob<Dtype>);
 };
 
 typedef Blob<int> BlobI;

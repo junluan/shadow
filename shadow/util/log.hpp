@@ -10,6 +10,7 @@
 
 #else
 #include <iostream>
+#include <sstream>
 #include <string>
 #define LOG_INFO LogMessage("INFO", __FILE__, __LINE__)
 #define LOG_WARNING LogMessage("WARNING", __FILE__, __LINE__)
@@ -73,29 +74,52 @@
 #define DCHECK_GT(val1, val2) CHECK_GT(val1, val2)
 #endif
 
+#if defined(__ANDROID__) || defined(ANDROID)
+#include <android/log.h>
+#endif
+
 #include <cstdlib>
 class LogMessage {
  public:
   LogMessage(const std::string& severity, const char* file, int line)
-      : severity_(severity), log_stream_(std::cerr) {
+      : severity_(severity) {
     std::string file_str(file);
     std::string file_name = file_str.substr(file_str.find_last_of("/\\") + 1);
-    log_stream_ << severity << ": " << file_name << ":" << line << "] ";
+    stream_ << severity << ": " << file_name << ":" << line << "] ";
   }
   ~LogMessage() {
+    stream_ << '\n';
+#if defined(__ANDROID__) || defined(ANDROID)
+    if (!severity_.compare("INFO")) {
+      __android_log_print(ANDROID_LOG_INFO, tag_, "%s", stream_.str().c_str());
+    } else if (!severity_.compare("WARNING")) {
+      __android_log_print(ANDROID_LOG_WARN, tag_, "%s", stream_.str().c_str());
+    } else if (!severity_.compare("ERROR")) {
+      __android_log_print(ANDROID_LOG_ERROR, tag_, "%s", stream_.str().c_str());
+    } else if (!severity_.compare("FATAL")) {
+      __android_log_print(ANDROID_LOG_FATAL, tag_, "%s", stream_.str().c_str());
+    }
+#else
+    std::cerr << stream_.str();
+#endif
     if (!severity_.compare("FATAL")) {
       abort();
     }
-    log_stream_ << '\n';
   }
-  std::ostream& stream() { return log_stream_; }
+  std::stringstream& stream() { return stream_; }
 
  private:
   LogMessage(const LogMessage&);
   void operator=(const LogMessage&);
 
+#if defined(__ANDROID__) || defined(ANDROID)
+  const char* tag_ = "native";
+#else
+  const char* tag_ = "";
+#endif
+
   std::string severity_;
-  std::ostream& log_stream_;
+  std::stringstream stream_;
 };
 
 class LogMessageVoidify {

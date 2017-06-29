@@ -102,6 +102,8 @@ class Operator {
   std::string op_name_, op_type_;
 
   VecBlobF bottoms_, tops_, blobs_;
+
+  DISABLE_COPY_AND_ASSIGN(Operator);
 };
 
 typedef std::vector<Operator *> VecOp;

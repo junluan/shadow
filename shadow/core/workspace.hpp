@@ -36,6 +36,8 @@ class Workspace {
 
  private:
   BlobMap blob_map_;
+
+  DISABLE_COPY_AND_ASSIGN(Workspace);
 };
 
 }  // namespace Shadow
