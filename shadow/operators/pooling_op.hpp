@@ -7,11 +7,11 @@ namespace Shadow {
 
 class PoolingOp : public Operator {
  public:
-  PoolingOp() {}
-  explicit PoolingOp(const shadow::OpParam &op_param) : Operator(op_param) {}
+  explicit PoolingOp(const shadow::OpParam &op_param, Workspace *ws)
+      : Operator(op_param, ws) {}
   ~PoolingOp() { Release(); }
 
-  void Setup(VecBlobF *blobs);
+  void Setup();
   void Reshape();
   void Forward();
   void Release();

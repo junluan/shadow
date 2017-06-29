@@ -4,13 +4,10 @@
 
 namespace Shadow {
 
-void BiasOp::Setup(VecBlobF *blobs) {
-  Operator::Setup(blobs);
-
-  const auto &bias_param = op_param_.bias_param();
-
-  axis_ = bottoms_[0]->canonical_index(bias_param.axis());
-  num_axis_ = bias_param.num_axes();
+void BiasOp::Setup() {
+  axis_ = arg_helper_.GetSingleArgument<int>("axis", 1);
+  axis_ = bottoms_[0]->canonical_index(axis_);
+  num_axis_ = arg_helper_.GetSingleArgument<int>("num_axis", 1);
   CHECK_GE(num_axis_, -1);
 
   if (bottoms_.size() == 1 && blobs_.size() == 0) {

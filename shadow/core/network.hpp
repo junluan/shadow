@@ -2,6 +2,7 @@
 #define SHADOW_CORE_NETWORK_HPP
 
 #include "operator.hpp"
+#include "workspace.hpp"
 
 namespace Shadow {
 
@@ -40,8 +41,7 @@ class Network {
 
   VecInt in_shape_;
   VecOp ops_;
-  VecBlobF blobs_;
-  std::map<std::string, VecFloat> blobs_data_;
+  Workspace ws_;
 };
 
 }  // namespace Shadow

@@ -3,17 +3,13 @@
 
 namespace Shadow {
 
-void LRNOp::Setup(VecBlobF *blobs) {
-  Operator::Setup(blobs);
-
-  const auto &lrn_param = op_param_.lrn_param();
-
-  size_ = lrn_param.local_size();
+void LRNOp::Setup() {
+  size_ = arg_helper_.GetSingleArgument<int>("local_size", 5);
   CHECK_EQ(size_ % 2, 1) << "LRN only supports odd values for local_size";
-  alpha_ = lrn_param.alpha();
-  beta_ = lrn_param.beta();
-  norm_region_ = lrn_param.norm_region();
-  k_ = lrn_param.k();
+  alpha_ = arg_helper_.GetSingleArgument<float>("alpha", 1);
+  beta_ = arg_helper_.GetSingleArgument<float>("beta", 0.75);
+  norm_region_ = arg_helper_.GetSingleArgument<int>("norm_region", 0);
+  k_ = arg_helper_.GetSingleArgument<float>("k", 1);
 }
 
 void LRNOp::Reshape() {

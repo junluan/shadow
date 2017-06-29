@@ -2,15 +2,11 @@
 
 namespace Shadow {
 
-void FlattenOp::Setup(VecBlobF *blobs) {
-  Operator::Setup(blobs);
-
+void FlattenOp::Setup() {
   CHECK_NE(tops_[0], bottoms_[0]);
 
-  const auto &flatten_param = op_param_.flatten_param();
-
-  axis_ = flatten_param.axis();
-  end_axis_ = flatten_param.end_axis();
+  axis_ = arg_helper_.GetSingleArgument<int>("axis", 1);
+  end_axis_ = arg_helper_.GetSingleArgument<int>("end_axis", -1);
   int num_axes = bottoms_[0]->num_axes();
   if (end_axis_ == -1) end_axis_ = num_axes - 1;
   CHECK_GE(axis_, 0);

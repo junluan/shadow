@@ -7,18 +7,18 @@ namespace Shadow {
 
 class ReshapeOp : public Operator {
  public:
-  ReshapeOp() {}
-  explicit ReshapeOp(const shadow::OpParam &op_param) : Operator(op_param) {}
+  explicit ReshapeOp(const shadow::OpParam &op_param, Workspace *ws)
+      : Operator(op_param, ws) {}
   ~ReshapeOp() { Release(); }
 
-  void Setup(VecBlobF *blobs);
+  void Setup();
   void Reshape();
   void Forward();
   void Release();
 
  private:
   int axis_, num_axes_, inferred_axis_, constant_count_;
-  VecInt copy_axes_;
+  VecInt shape_, copy_axes_;
 };
 
 }  // namespace Shadow

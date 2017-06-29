@@ -43,7 +43,7 @@ void Network::SaveModel(const std::string &proto_bin) {
     for (const auto &blob : ops_[o]->blobs()) {
       auto op_blob = net_param_.mutable_op(o)->add_blobs();
       for (const auto &dim : blob->shape()) {
-        op_blob->mutable_shape()->add_dim(dim);
+        op_blob->add_shape(dim);
       }
       VecFloat blob_data(blob->count());
       blob->read_data(blob_data.data(), blob_data.size());
@@ -81,17 +81,6 @@ void Network::Release() {
   }
   ops_.clear();
 
-  for (auto &blob : blobs_) {
-    delete blob;
-    blob = nullptr;
-  }
-  blobs_.clear();
-
-  for (auto &blob_data : blobs_data_) {
-    blob_data.second.clear();
-  }
-  blobs_data_.clear();
-
 #if defined(USE_CUDA) | defined(USE_CL)
   Kernel::Release();
 #endif
@@ -111,19 +100,17 @@ const Operator *Network::GetOpByName(const std::string &op_name) {
 }
 
 const BlobF *Network::GetBlobByName(const std::string &blob_name) {
-  return get_blob_by_name(blobs_, blob_name);
+  return ws_.GetBlob(blob_name);
 }
 
 const float *Network::GetBlobDataByName(const std::string &blob_name) {
-  const auto *blob = GetBlobByName(blob_name);
+  auto *blob = ws_.GetBlob(blob_name);
   if (blob == nullptr) {
     LOG(FATAL) << "Unknown blob: " + blob_name;
-  } else if (blobs_data_.find(blob_name) == blobs_data_.end()) {
-    blobs_data_[blob_name] = VecFloat(blob->count(), 0);
+  } else {
+    return blob->cpu_data();
   }
-  auto &blob_data = blobs_data_.find(blob_name)->second;
-  blob->read_data(blob_data.data(), blob_data.size());
-  return blob_data.data();
+  return nullptr;
 }
 
 void Network::LoadProtoBin(const std::string &proto_bin,
@@ -154,22 +141,19 @@ void Network::Reshape(int batch) {
   CHECK_GT(net_param_.op_size(), 0);
   const auto &data_op = net_param_.op(0);
   CHECK(!data_op.type().compare("Data"));
-  in_shape_.clear();
-  for (const auto dim : data_op.data_param().data_shape().dim()) {
-    in_shape_.push_back(dim);
-  }
+  ArgumentHelper arg_helper(data_op);
+  in_shape_ = arg_helper.GetRepeatedArgument<int>("data_shape", VecInt{});
   CHECK_EQ(in_shape_.size(), 4) << "data_shape dimension must be four!";
   if (batch > 0) {
     in_shape_[0] = batch;
   }
 
-  blobs_.clear();
-  blobs_.push_back(new BlobF(in_shape_, "in_blob"));
+  ws_.CreateBlob(in_shape_, "in_blob");
 
   ops_.clear();
   for (const auto &op_param : net_param_.op()) {
-    auto *op = OpRegistry::CreateOp(op_param);
-    op->Setup(&blobs_);
+    auto *op = OpRegistry::CreateOp(op_param, &ws_);
+    op->Setup();
     op->Reshape();
     ops_.push_back(op);
   }

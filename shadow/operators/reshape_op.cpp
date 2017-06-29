@@ -2,22 +2,19 @@
 
 namespace Shadow {
 
-void ReshapeOp::Setup(VecBlobF *blobs) {
-  Operator::Setup(blobs);
-
+void ReshapeOp::Setup() {
   CHECK_NE(tops_[0], bottoms_[0]);
 
-  const auto &reshape_param = op_param_.reshape_param();
-
-  axis_ = reshape_param.axis();
-  num_axes_ = reshape_param.num_axes();
+  axis_ = arg_helper_.GetSingleArgument<int>("axis", 0);
+  num_axes_ = arg_helper_.GetSingleArgument<int>("num_axes", -1);
   CHECK_GE(num_axes_, -1);
+  shape_ = arg_helper_.GetRepeatedArgument<int>("shape");
 
   inferred_axis_ = -1;
   copy_axes_.clear();
   constant_count_ = 1;
-  for (int i = 0; i < reshape_param.shape().dim_size(); ++i) {
-    int top_dim = reshape_param.shape().dim(i);
+  for (int i = 0; i < shape_.size(); ++i) {
+    int top_dim = shape_[i];
     if (top_dim == 0) {
       copy_axes_.push_back(i);
     } else if (top_dim == -1) {
@@ -38,13 +35,12 @@ void ReshapeOp::Reshape() {
   CHECK_LE(end_axis, bottoms_[0]->num_axes());
   int num_axes_replaced = end_axis - start_axis;
   int num_axes_retained = bottoms_[0]->num_axes() - num_axes_replaced;
-  const auto &shape = op_param_.reshape_param().shape();
-  VecInt top_shape(num_axes_retained + shape.dim_size());
+  VecInt top_shape(num_axes_retained + shape_.size());
   int top_shape_index = 0;
   for (int i = 0; i < start_axis; ++i) {
     top_shape[top_shape_index++] = bottoms_[0]->shape(i);
   }
-  for (const auto &shape_dim : shape.dim()) {
+  for (const auto &shape_dim : shape_) {
     top_shape[top_shape_index++] = shape_dim;
   }
   for (int i = end_axis; i < bottoms_[0]->num_axes(); ++i) {

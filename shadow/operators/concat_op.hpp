@@ -7,11 +7,11 @@ namespace Shadow {
 
 class ConcatOp : public Operator {
  public:
-  ConcatOp() {}
-  explicit ConcatOp(const shadow::OpParam &op_param) : Operator(op_param) {}
+  explicit ConcatOp(const shadow::OpParam &op_param, Workspace *ws)
+      : Operator(op_param, ws) {}
   ~ConcatOp() { Release(); }
 
-  void Setup(VecBlobF *blobs);
+  void Setup();
   void Reshape();
   void Forward();
   void Release();

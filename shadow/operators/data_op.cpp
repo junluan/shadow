@@ -3,43 +3,16 @@
 
 namespace Shadow {
 
-void DataOp::Setup(VecBlobF *blobs) {
-  auto *bottom = get_blob_by_name(*blobs, "in_blob");
-  if (bottom != nullptr) {
-    if (bottom->num() && bottom->num_axes() == 4) {
-      bottoms_.push_back(bottom);
-    } else {
-      LOG(FATAL) << op_name_ << ": bottom blob("
-                 << "in_blob"
-                 << Util::format_vector(bottom->shape(), ",", "(", ")")
-                 << ") dimension mismatch!";
-    }
-  } else {
-    LOG(FATAL) << op_name_ << ": bottom blob("
-               << "in_blob"
-               << ") not exist!";
-  }
+void DataOp::Setup() {
+  bottoms_.push_back(op_ws_->GetBlob("in_blob"));
 
-  for (const auto &top_name : op_param_.top()) {
-    auto *top = new BlobF(top_name);
-    tops_.push_back(top);
-    blobs->push_back(top);
-  }
-
-  const auto &data_param = op_param_.data_param();
-
-  scale_ = data_param.scale();
+  scale_ = arg_helper_.GetSingleArgument<float>("scale", 1);
+  VecFloat mean_value = arg_helper_.GetRepeatedArgument<float>("mean_value");
   num_mean_ = 1;
-  VecFloat mean_value;
-  if (data_param.mean_value_size() > 1) {
-    CHECK_EQ(data_param.mean_value_size(), bottoms_[0]->shape(1));
-    for (const auto &val : data_param.mean_value()) {
-      mean_value.push_back(val);
-    }
+  if (mean_value.size() > 1) {
+    CHECK_EQ(mean_value.size(), bottoms_[0]->shape(1));
     num_mean_ = mean_value.size();
-  } else if (data_param.mean_value_size() == 1) {
-    mean_value.push_back(data_param.mean_value(0));
-  } else {
+  } else if (mean_value.size() == 0) {
     mean_value.push_back(0);
   }
   mean_value_.reshape(num_mean_);

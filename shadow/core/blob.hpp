@@ -28,6 +28,18 @@ class Blob {
   const BACKEND *data() const { return data_; }
   BACKEND *mutable_data() { return data_; }
 
+  const Dtype *cpu_data() {
+#if !defined(USE_CUDA) & !defined(USE_CL)
+    return data_;
+
+#else
+    int cou = count();
+    cpu_data_.resize(cou);
+    read_data(cpu_data_.data(), cou);
+    return cpu_data_.data();
+#endif
+  }
+
   void set_data(const Dtype *data, int set_count) {
     CHECK_NOTNULL(data);
     CHECK_EQ(set_count, count());
@@ -130,6 +142,7 @@ class Blob {
 #endif
     }
     data_ = nullptr;
+    cpu_data_.clear();
     shape_.clear();
   }
 
@@ -156,11 +169,11 @@ class Blob {
   }
 
   BACKEND *data_ = nullptr;
+  std::vector<Dtype> cpu_data_;
 
   std::string name_ = "";
   VecInt shape_;
-  bool on_gpu_ = false;
-  bool shared_ = false;
+  bool on_gpu_ = false, shared_ = false;
 };
 
 typedef Blob<int> BlobI;
@@ -168,15 +181,6 @@ typedef Blob<float> BlobF;
 
 typedef std::vector<BlobI *> VecBlobI;
 typedef std::vector<BlobF *> VecBlobF;
-
-template <typename Dtype>
-inline static Blob<Dtype> *get_blob_by_name(
-    const std::vector<Blob<Dtype> *> &blobs, const std::string &name) {
-  for (const auto &blob : blobs) {
-    if (!name.compare(blob->name())) return blob;
-  }
-  return nullptr;
-}
 
 }  // namespace Shadow
 

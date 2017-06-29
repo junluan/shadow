@@ -4,7 +4,7 @@
 #if defined(USE_Protobuf)
 #include <google/protobuf/message.h>
 
-#if GOOGLE_PROTOBUF_VERSION >= 3001000
+#if GOOGLE_PROTOBUF_VERSION >= 3003000
 #define SUPPORT_JSON
 #endif
 

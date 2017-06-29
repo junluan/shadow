@@ -7,12 +7,11 @@ namespace Shadow {
 
 class ConvolutionOp : public Operator {
  public:
-  ConvolutionOp() {}
-  explicit ConvolutionOp(const shadow::OpParam &op_param)
-      : Operator(op_param) {}
+  explicit ConvolutionOp(const shadow::OpParam &op_param, Workspace *ws)
+      : Operator(op_param, ws) {}
   ~ConvolutionOp() { Release(); }
 
-  void Setup(VecBlobF *blobs);
+  void Setup();
   void Reshape();
   void Forward();
   void Release();

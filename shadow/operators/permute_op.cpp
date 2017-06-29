@@ -3,18 +3,10 @@
 
 namespace Shadow {
 
-void PermuteOp::Setup(VecBlobF *blobs) {
-  Operator::Setup(blobs);
-
-  const auto &permute_param = op_param_.permute_param();
-
-  num_axes_ = permute_param.order_size();
+void PermuteOp::Setup() {
+  permute_order_data_ = arg_helper_.GetRepeatedArgument<int>("order");
+  num_axes_ = permute_order_data_.size();
   CHECK_EQ(num_axes_, bottoms_[0]->num_axes());
-
-  permute_order_data_.clear();
-  for (const auto &order : permute_param.order()) {
-    permute_order_data_.push_back(order);
-  }
 }
 
 void PermuteOp::Reshape() {

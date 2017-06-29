@@ -96,6 +96,7 @@ void WriteProtoToJsonText(const Message& proto, std::string* json_text,
                           bool compact) {
   JsonPrintOptions options;
   options.add_whitespace = !compact;
+  options.preserve_proto_field_names = true;
   CHECK(MessageToJsonString(proto, json_text, options).ok())
       << "Write proto to json text error!";
 }

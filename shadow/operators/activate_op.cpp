@@ -4,15 +4,12 @@
 
 namespace Shadow {
 
-void ActivateOp::Setup(VecBlobF *blobs) {
-  Operator::Setup(blobs);
+void ActivateOp::Setup() {
+  activate_type_ = arg_helper_.GetSingleArgument<int>("type", 1);
 
-  const auto &activate_param = op_param_.activate_param();
-
-  activate_type_ = activate_param.type();
-
-  if (activate_type_ == shadow::ActivateParam_ActivateType_PRelu) {
-    channel_shared_ = activate_param.channel_shared();
+  if (activate_type_ == 3) {
+    channel_shared_ =
+        arg_helper_.GetSingleArgument<bool>("channel_shared", false);
     CHECK_GE(bottoms_[0]->num_axes(), 2);
     int channels = bottoms_[0]->shape(1);
     if (blobs_.size() == 0) {
@@ -46,7 +43,7 @@ void ActivateOp::Forward() {
     Blas::BlasScopy(bottoms_[0]->count(), bottoms_[0]->data(), 0,
                     tops_[0]->mutable_data(), 0);
   }
-  if (activate_type_ == shadow::ActivateParam_ActivateType_PRelu) {
+  if (activate_type_ == 3) {
     Image::PRelu(tops_[0]->mutable_data(), tops_[0]->shape(), channel_shared_,
                  blobs_[0]->data());
   } else {

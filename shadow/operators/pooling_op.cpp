@@ -9,18 +9,15 @@ inline int pooling_out_size(int dim, int kernel_size, int stride, int pad) {
          1;
 }
 
-void PoolingOp::Setup(VecBlobF *blobs) {
-  Operator::Setup(blobs);
-
-  const auto &pooling_param = op_param_.pooling_param();
-
-  pool_type_ = pooling_param.pool();
-  global_pooling_ = pooling_param.global_pooling();
+void PoolingOp::Setup() {
+  pool_type_ = arg_helper_.GetSingleArgument<int>("pool", 0);
+  global_pooling_ =
+      arg_helper_.GetSingleArgument<bool>("global_pooling", false);
   if (!global_pooling_) {
-    CHECK(pooling_param.has_kernel_size());
-    kernel_size_ = pooling_param.kernel_size();
-    stride_ = pooling_param.stride();
-    pad_ = pooling_param.pad();
+    CHECK(arg_helper_.HasArgument("kernel_size"));
+    kernel_size_ = arg_helper_.GetSingleArgument<int>("kernel_size", 2);
+    stride_ = arg_helper_.GetSingleArgument<int>("stride", 1);
+    pad_ = arg_helper_.GetSingleArgument<int>("pad", 0);
   } else {
     kernel_size_ = bottoms_[0]->shape(2);
     stride_ = 1;

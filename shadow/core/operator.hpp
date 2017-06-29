@@ -4,6 +4,8 @@
 #include "blob.hpp"
 #include "factory.hpp"
 #include "params.hpp"
+#include "workspace.hpp"
+
 #include "util/log.hpp"
 #include "util/util.hpp"
 
@@ -11,67 +13,30 @@ namespace Shadow {
 
 class Operator {
  public:
-  Operator() {}
-  explicit Operator(const shadow::OpParam &op_param) {
-    op_param_ = op_param;
-    op_name_ = op_param.name();
-    op_type_ = op_param.type();
-  }
-  virtual ~Operator() {
-    op_param_.Clear();
-    bottoms_.clear();
-    tops_.clear();
-    for (auto &blob : blobs_) {
-      delete blob;
-      blob = nullptr;
-    }
-    blobs_.clear();
-  }
+  explicit Operator(const shadow::OpParam &op_param, Workspace *ws);
+  virtual ~Operator();
 
-  virtual void Setup(VecBlobF *blobs) {
-    bottoms_.clear(), tops_.clear(), blobs_.clear();
-    for (const auto &bottom_name : op_param_.bottom()) {
-      auto *bottom = get_blob_by_name(*blobs, bottom_name);
-      if (bottom != nullptr) {
-        if (bottom->num()) {
-          bottoms_.push_back(bottom);
-        } else {
-          LOG(FATAL) << op_name_ << ": bottom blob(" << bottom_name
-                     << Util::format_vector(bottom->shape(), ",", "(", ")")
-                     << ") dimension mismatch!";
-        }
-      } else {
-        LOG(FATAL) << op_name_ << ": bottom blob(" << bottom_name
-                   << ") not exist!";
-      }
-    }
-    for (const auto &top_name : op_param_.top()) {
-      auto *top = get_blob_by_name(*blobs, top_name);
-      if (top == nullptr) {
-        top = new BlobF(top_name);
-        blobs->push_back(top);
-      }
-      tops_.push_back(top);
-    }
-    for (const auto &proto_blob : op_param_.blobs()) {
-      const auto &dims = proto_blob.shape().dim();
-      VecInt shape;
-      int cc = 1, data_size = proto_blob.data_size();
-      for (const auto dim : dims) {
-        cc *= dim;
-        shape.push_back(dim);
-      }
-      auto *blob = new BlobF(shape, "params", true);
-      if (data_size > 0) {
-        CHECK_EQ(data_size, cc) << "Blob data size and blob shape are mismatch";
-        blob->set_data(proto_blob.data().data(), data_size);
-      }
-      blobs_.push_back(blob);
-    }
-  }
+  virtual void Setup() { LOG(INFO) << "Setup Operator!"; }
   virtual void Reshape() { LOG(INFO) << "Reshape Operator!"; }
   virtual void Forward() { LOG(INFO) << "Forward Operator!"; }
   virtual void Release() { LOG(INFO) << "Release Operator!"; }
+
+  bool HasArgument(const std::string &name) const {
+    return arg_helper_.HasArgument(name);
+  }
+  template <typename T>
+  T GetSingleArgument(const std::string &name, const T &default_value) const {
+    return arg_helper_.template GetSingleArgument<T>(name, default_value);
+  }
+  template <typename T>
+  bool HasSingleArgumentOfType(const std::string &name) const {
+    return arg_helper_.template HasSingleArgumentOfType<T>(name);
+  }
+  template <typename T>
+  std::vector<T> GetRepeatedArgument(
+      const std::string &name, const std::vector<T> &default_value = {}) const {
+    return arg_helper_.template GetRepeatedArgument<T>(name, default_value);
+  }
 
   const shadow::OpParam &param() const { return op_param_; }
   void set_param(const shadow::OpParam &param) { op_param_ = param; }
@@ -131,6 +96,8 @@ class Operator {
 
  protected:
   shadow::OpParam op_param_;
+  ArgumentHelper arg_helper_;
+  Workspace *op_ws_ = nullptr;
 
   std::string op_name_, op_type_;
 

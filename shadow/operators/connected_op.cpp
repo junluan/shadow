@@ -3,15 +3,11 @@
 
 namespace Shadow {
 
-void ConnectedOp::Setup(VecBlobF *blobs) {
-  Operator::Setup(blobs);
-
-  const auto &conn_param = op_param_.connected_param();
-
-  CHECK(conn_param.has_num_output());
-  num_output_ = conn_param.num_output();
-  bias_term_ = conn_param.bias_term();
-  transpose_ = conn_param.transpose();
+void ConnectedOp::Setup() {
+  CHECK(arg_helper_.HasArgument("num_output"));
+  num_output_ = arg_helper_.GetSingleArgument<int>("num_output", 0);
+  bias_term_ = arg_helper_.GetSingleArgument<bool>("bias_term", true);
+  transpose_ = arg_helper_.GetSingleArgument<bool>("transpose", false);
 
   if (bias_term_) {
     CHECK_EQ(blobs_.size(), 2);

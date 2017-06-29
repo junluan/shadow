@@ -7,11 +7,11 @@ namespace Shadow {
 
 class EltwiseOp : public Operator {
  public:
-  EltwiseOp() {}
-  explicit EltwiseOp(const shadow::OpParam &op_param) : Operator(op_param) {}
+  explicit EltwiseOp(const shadow::OpParam &op_param, Workspace *ws)
+      : Operator(op_param, ws) {}
   ~EltwiseOp() { Release(); }
 
-  void Setup(VecBlobF *blobs);
+  void Setup();
   void Reshape();
   void Forward();
   void Release();

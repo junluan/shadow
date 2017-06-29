@@ -7,11 +7,11 @@ namespace Shadow {
 
 class ConnectedOp : public Operator {
  public:
-  ConnectedOp() {}
-  explicit ConnectedOp(const shadow::OpParam &op_param) : Operator(op_param) {}
+  explicit ConnectedOp(const shadow::OpParam &op_param, Workspace *ws)
+      : Operator(op_param, ws) {}
   ~ConnectedOp() { Release(); }
 
-  void Setup(VecBlobF *blobs);
+  void Setup();
   void Reshape();
   void Forward();
   void Release();

@@ -7,11 +7,11 @@ namespace Shadow {
 
 class FlattenOp : public Operator {
  public:
-  FlattenOp() {}
-  explicit FlattenOp(const shadow::OpParam &op_param) : Operator(op_param) {}
+  explicit FlattenOp(const shadow::OpParam &op_param, Workspace *ws)
+      : Operator(op_param, ws) {}
   ~FlattenOp() { Release(); }
 
-  void Setup(VecBlobF *blobs);
+  void Setup();
   void Reshape();
   void Forward();
   void Release();

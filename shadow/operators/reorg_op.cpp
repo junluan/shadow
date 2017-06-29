@@ -3,12 +3,8 @@
 
 namespace Shadow {
 
-void ReorgOp::Setup(VecBlobF *blobs) {
-  Operator::Setup(blobs);
-
-  const auto &reorg_param = op_param_.reorg_param();
-
-  stride_ = reorg_param.stride();
+void ReorgOp::Setup() {
+  stride_ = arg_helper_.GetSingleArgument<int>("stride", 2);
   CHECK_EQ(bottoms_[0]->shape(2) % stride_, 0);
   CHECK_EQ(bottoms_[0]->shape(3) % stride_, 0);
 }

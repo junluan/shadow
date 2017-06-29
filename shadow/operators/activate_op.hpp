@@ -7,11 +7,11 @@ namespace Shadow {
 
 class ActivateOp : public Operator {
  public:
-  ActivateOp() {}
-  explicit ActivateOp(const shadow::OpParam &op_param) : Operator(op_param) {}
+  explicit ActivateOp(const shadow::OpParam &op_param, Workspace *ws)
+      : Operator(op_param, ws) {}
   ~ActivateOp() { Release(); }
 
-  void Setup(VecBlobF *blobs);
+  void Setup();
   void Reshape();
   void Forward();
   void Release();

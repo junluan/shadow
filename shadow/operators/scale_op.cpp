@@ -4,15 +4,12 @@
 
 namespace Shadow {
 
-void ScaleOp::Setup(VecBlobF *blobs) {
-  Operator::Setup(blobs);
-
-  const auto &scale_param = op_param_.scale_param();
-
-  axis_ = bottoms_[0]->canonical_index(scale_param.axis());
-  num_axis_ = scale_param.num_axes();
+void ScaleOp::Setup() {
+  axis_ = arg_helper_.GetSingleArgument<int>("axis", 1);
+  axis_ = bottoms_[0]->canonical_index(axis_);
+  num_axis_ = arg_helper_.GetSingleArgument<int>("num_axis", 1);
   CHECK_GE(num_axis_, -1);
-  bias_term_ = scale_param.bias_term();
+  bias_term_ = arg_helper_.GetSingleArgument<bool>("bias_term", false);
 
   if (bottoms_.size() == 1 && blobs_.size() == 0) {
     int end_axis;

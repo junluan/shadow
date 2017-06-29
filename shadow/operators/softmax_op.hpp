@@ -7,11 +7,11 @@ namespace Shadow {
 
 class SoftmaxOp : public Operator {
  public:
-  SoftmaxOp() {}
-  explicit SoftmaxOp(const shadow::OpParam &op_param) : Operator(op_param) {}
+  explicit SoftmaxOp(const shadow::OpParam &op_param, Workspace *ws)
+      : Operator(op_param, ws) {}
   ~SoftmaxOp() { Release(); }
 
-  void Setup(VecBlobF *blobs);
+  void Setup();
   void Reshape();
   void Forward();
   void Release();

@@ -7,11 +7,11 @@ namespace Shadow {
 
 class PriorBoxOp : public Operator {
  public:
-  PriorBoxOp() {}
-  explicit PriorBoxOp(const shadow::OpParam &op_param) : Operator(op_param) {}
+  explicit PriorBoxOp(const shadow::OpParam &op_param, Workspace *ws)
+      : Operator(op_param, ws) {}
   ~PriorBoxOp() { Release(); }
 
-  void Setup(VecBlobF *blobs);
+  void Setup();
   void Reshape();
   void Forward();
   void Release();

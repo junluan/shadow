@@ -7,11 +7,11 @@ namespace Shadow {
 
 class LRNOp : public Operator {
  public:
-  LRNOp() {}
-  explicit LRNOp(const shadow::OpParam &op_param) : Operator(op_param) {}
+  explicit LRNOp(const shadow::OpParam &op_param, Workspace *ws)
+      : Operator(op_param, ws) {}
   ~LRNOp() { Release(); }
 
-  void Setup(VecBlobF *blobs);
+  void Setup();
   void Reshape();
   void Forward();
   void Release();

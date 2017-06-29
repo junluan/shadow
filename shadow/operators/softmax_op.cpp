@@ -3,12 +3,9 @@
 
 namespace Shadow {
 
-void SoftmaxOp::Setup(VecBlobF *blobs) {
-  Operator::Setup(blobs);
-
-  const auto &softmax_param = op_param_.softmax_param();
-
-  axis_ = bottoms_[0]->canonical_index(softmax_param.axis());
+void SoftmaxOp::Setup() {
+  axis_ = arg_helper_.GetSingleArgument<int>("axis", 1);
+  axis_ = bottoms_[0]->canonical_index(axis_);
 
 #if defined(USE_CUDNN)
   cudnn::createTensor4dDesc<float>(&bottom_desc_);

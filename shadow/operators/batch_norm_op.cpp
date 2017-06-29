@@ -3,12 +3,9 @@
 
 namespace Shadow {
 
-void BatchNormOp::Setup(VecBlobF *blobs) {
-  Operator::Setup(blobs);
-
-  const auto &batch_norm_param = op_param_.batch_norm_param();
-
-  use_global_stats_ = batch_norm_param.use_global_stats();
+void BatchNormOp::Setup() {
+  use_global_stats_ =
+      arg_helper_.GetSingleArgument<bool>("use_global_stats", true);
   if (bottoms_[0]->num_axes() == 1) {
     channels_ = 1;
   } else {

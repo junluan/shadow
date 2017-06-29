@@ -7,11 +7,11 @@ namespace Shadow {
 
 class BiasOp : public Operator {
  public:
-  BiasOp() {}
-  explicit BiasOp(const shadow::OpParam &op_param) : Operator(op_param) {}
+  explicit BiasOp(const shadow::OpParam &op_param, Workspace *ws)
+      : Operator(op_param, ws) {}
   ~BiasOp() { Release(); }
 
-  void Setup(VecBlobF *blobs);
+  void Setup();
   void Reshape();
   void Forward();
   void Release();

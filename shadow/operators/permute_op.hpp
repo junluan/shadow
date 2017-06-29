@@ -7,11 +7,11 @@ namespace Shadow {
 
 class PermuteOp : public Operator {
  public:
-  PermuteOp() {}
-  explicit PermuteOp(const shadow::OpParam &op_param) : Operator(op_param) {}
+  explicit PermuteOp(const shadow::OpParam &op_param, Workspace *ws)
+      : Operator(op_param, ws) {}
   ~PermuteOp() { Release(); }
 
-  void Setup(VecBlobF *blobs);
+  void Setup();
   void Reshape();
   void Forward();
   void Release();

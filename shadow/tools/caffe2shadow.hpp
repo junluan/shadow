@@ -12,6 +12,39 @@ namespace Shadow {
 
 namespace Caffe2Shadow {
 
+#define INSTANTIATE_SET_SINGLE_ARGUMENT(T, fieldname)                    \
+  static void set_##fieldname(shadow::OpParam* op_param,                 \
+                              const std::string& name, const T& value) { \
+    auto shadow_arg = op_param->add_arg();                               \
+    shadow_arg->set_name(name);                                          \
+    shadow_arg->set_##fieldname(value);                                  \
+  }
+
+INSTANTIATE_SET_SINGLE_ARGUMENT(float, s_f);
+INSTANTIATE_SET_SINGLE_ARGUMENT(int, s_i);
+INSTANTIATE_SET_SINGLE_ARGUMENT(unsigned int, s_i);
+INSTANTIATE_SET_SINGLE_ARGUMENT(bool, s_i);
+INSTANTIATE_SET_SINGLE_ARGUMENT(std::string, s_s);
+#undef INSTANTIATE_SET_SINGLE_ARGUMENT
+
+#define INSTANTIATE_SET_REPEATED_ARGUMENT(T, fieldname)      \
+  static void set_##fieldname(shadow::OpParam* op_param,     \
+                              const std::string& name,       \
+                              const std::vector<T>& value) { \
+    auto shadow_arg = op_param->add_arg();                   \
+    shadow_arg->set_name(name);                              \
+    for (const auto v : value) {                             \
+      shadow_arg->add_##fieldname(v);                        \
+    }                                                        \
+  }
+
+INSTANTIATE_SET_REPEATED_ARGUMENT(float, v_f);
+INSTANTIATE_SET_REPEATED_ARGUMENT(int, v_i);
+INSTANTIATE_SET_REPEATED_ARGUMENT(unsigned int, v_i);
+INSTANTIATE_SET_REPEATED_ARGUMENT(bool, v_i);
+INSTANTIATE_SET_REPEATED_ARGUMENT(std::string, v_s);
+#undef INSTANTIATE_SET_REPEATED_ARGUMENT
+
 void ConvertCommon(const caffe::NetParameter& caffe_model,
                    const caffe::LayerParameter& caffe_layer,
                    shadow::OpParam* shadow_op) {
@@ -28,13 +61,13 @@ void ConvertCommon(const caffe::NetParameter& caffe_model,
       for (const auto& caffe_blob : layer.blobs()) {
         auto shadow_blob = shadow_op->add_blobs();
         if (caffe_blob.shape().dim_size() > 0) {
-          for (const auto& dim : caffe_blob.shape().dim()) {
-            shadow_blob->mutable_shape()->add_dim(dim);
+          for (const auto dim : caffe_blob.shape().dim()) {
+            shadow_blob->add_shape(dim);
           }
         } else {
-          shadow_blob->mutable_shape()->add_dim(caffe_blob.data_size());
+          shadow_blob->add_shape(caffe_blob.data_size());
         }
-        for (const auto& data : caffe_blob.data()) {
+        for (const auto data : caffe_blob.data()) {
           shadow_blob->add_data(data);
         }
       }
@@ -54,28 +87,27 @@ void ConvertData(const caffe::LayerParameter& data_layer,
   }
 
   if (data_layer.has_input_param()) {
-    auto shadow_param = shadow_op->mutable_data_param();
+    std::vector<int> shape;
     const auto& caffe_param = data_layer.input_param();
-    for (const auto& dim : caffe_param.shape(0).dim()) {
-      shadow_param->mutable_data_shape()->add_dim(dim);
+    for (const auto dim : caffe_param.shape(0).dim()) {
+      shape.push_back(dim);
     }
+    set_v_i(shadow_op, "data_shape", shape);
   } else {
-    auto shadow_param = shadow_op->mutable_data_param();
-    for (const auto& dim : input_shape) {
-      shadow_param->mutable_data_shape()->add_dim(dim);
-    }
+    set_v_i(shadow_op, "data_shape", input_shape);
   }
 
   if (data_layer.has_transform_param()) {
-    auto shadow_param = shadow_op->mutable_data_param();
     const auto& caffe_param = data_layer.transform_param();
     if (caffe_param.has_scale()) {
-      shadow_param->set_scale(caffe_param.scale());
+      set_s_f(shadow_op, "scale", caffe_param.scale());
     }
     if (caffe_param.mean_value_size() > 0) {
-      for (const auto& mean_val : caffe_param.mean_value()) {
-        shadow_param->add_mean_value(mean_val);
+      std::vector<float> mean_value;
+      for (const auto mean_val : caffe_param.mean_value()) {
+        mean_value.push_back(mean_val);
       }
+      set_v_f(shadow_op, "mean_value", mean_value);
     }
   }
 }
@@ -87,17 +119,17 @@ void ConvertActivate(const caffe::NetParameter& caffe_model,
   shadow_op->set_type("Activate");
   ConvertCommon(caffe_model, caffe_layer, shadow_op);
 
-  auto shadow_param = shadow_op->mutable_activate_param();
+  // Linear: 0, Relu: 1, Leaky: 2, PRelu: 3
   if (!caffe_layer.type().compare("ReLU")) {
-    shadow_param->set_type(shadow::ActivateParam_ActivateType_Relu);
+    set_s_i(shadow_op, "type", 1);
   } else if (!caffe_layer.type().compare("PReLU")) {
+    set_s_i(shadow_op, "type", 3);
     if (caffe_layer.has_prelu_param()) {
       const auto& caffe_param = caffe_layer.prelu_param();
       if (caffe_param.has_channel_shared()) {
-        shadow_param->set_channel_shared(caffe_param.channel_shared());
+        set_s_i(shadow_op, "channel_shared", caffe_param.channel_shared());
       }
     }
-    shadow_param->set_type(shadow::ActivateParam_ActivateType_PRelu);
   }
 }
 
@@ -109,10 +141,9 @@ void ConvertBatchNorm(const caffe::NetParameter& caffe_model,
   ConvertCommon(caffe_model, caffe_layer, shadow_op);
 
   if (caffe_layer.has_batch_norm_param()) {
-    auto shadow_param = shadow_op->mutable_batch_norm_param();
     const auto& caffe_param = caffe_layer.batch_norm_param();
     if (caffe_param.has_use_global_stats()) {
-      shadow_param->set_use_global_stats(caffe_param.use_global_stats());
+      set_s_i(shadow_op, "use_global_stats", caffe_param.use_global_stats());
     }
   }
 }
@@ -125,13 +156,12 @@ void ConvertBias(const caffe::NetParameter& caffe_model,
   ConvertCommon(caffe_model, caffe_layer, shadow_op);
 
   if (caffe_layer.has_bias_param()) {
-    auto shadow_param = shadow_op->mutable_bias_param();
     const auto& caffe_param = caffe_layer.bias_param();
     if (caffe_param.has_axis()) {
-      shadow_param->set_axis(caffe_param.axis());
+      set_s_i(shadow_op, "axis", caffe_param.axis());
     }
     if (caffe_param.has_num_axes()) {
-      shadow_param->set_num_axes(caffe_param.num_axes());
+      set_s_i(shadow_op, "num_axes", caffe_param.num_axes());
     }
   }
 }
@@ -144,10 +174,9 @@ void ConvertConcat(const caffe::NetParameter& caffe_model,
   ConvertCommon(caffe_model, caffe_layer, shadow_op);
 
   if (caffe_layer.has_concat_param()) {
-    auto shadow_param = shadow_op->mutable_concat_param();
     const auto& caffe_param = caffe_layer.concat_param();
     if (caffe_param.has_axis()) {
-      shadow_param->set_axis(caffe_param.axis());
+      set_s_i(shadow_op, "axis", caffe_param.axis());
     }
   }
 }
@@ -160,16 +189,15 @@ void ConvertConnected(const caffe::NetParameter& caffe_model,
   ConvertCommon(caffe_model, caffe_layer, shadow_op);
 
   if (caffe_layer.has_inner_product_param()) {
-    auto shadow_param = shadow_op->mutable_connected_param();
     const auto& caffe_param = caffe_layer.inner_product_param();
     if (caffe_param.has_num_output()) {
-      shadow_param->set_num_output(caffe_param.num_output());
+      set_s_i(shadow_op, "num_output", caffe_param.num_output());
     }
     if (caffe_param.has_bias_term()) {
-      shadow_param->set_bias_term(caffe_param.bias_term());
+      set_s_i(shadow_op, "bias_term", caffe_param.bias_term());
     }
     if (caffe_param.has_transpose()) {
-      shadow_param->set_transpose(caffe_param.transpose());
+      set_s_i(shadow_op, "transpose", caffe_param.bias_term());
     }
   }
 }
@@ -182,28 +210,27 @@ void ConvertConv(const caffe::NetParameter& caffe_model,
   ConvertCommon(caffe_model, caffe_layer, shadow_op);
 
   if (caffe_layer.has_convolution_param()) {
-    auto shadow_param = shadow_op->mutable_convolution_param();
     const auto& caffe_param = caffe_layer.convolution_param();
     if (caffe_param.has_num_output()) {
-      shadow_param->set_num_output(caffe_param.num_output());
+      set_s_i(shadow_op, "num_output", caffe_param.num_output());
     }
     if (caffe_param.kernel_size_size() > 0) {
-      shadow_param->set_kernel_size(caffe_param.kernel_size(0));
+      set_s_i(shadow_op, "kernel_size", caffe_param.kernel_size(0));
     }
     if (caffe_param.stride_size() > 0) {
-      shadow_param->set_stride(caffe_param.stride(0));
+      set_s_i(shadow_op, "stride", caffe_param.stride(0));
     }
     if (caffe_param.pad_size() > 0) {
-      shadow_param->set_pad(caffe_param.pad(0));
+      set_s_i(shadow_op, "pad", caffe_param.pad(0));
     }
     if (caffe_param.dilation_size() > 0) {
-      shadow_param->set_dilation(caffe_param.dilation(0));
+      set_s_i(shadow_op, "dilation", caffe_param.dilation(0));
     }
     if (caffe_param.has_bias_term() && !caffe_param.bias_term()) {
-      shadow_param->set_bias_term(false);
+      set_s_i(shadow_op, "bias_term", false);
     }
     if (caffe_param.has_group() && caffe_param.group() != 1) {
-      shadow_param->set_group(caffe_param.group());
+      set_s_i(shadow_op, "group", caffe_param.group());
     }
   }
 }
@@ -215,23 +242,25 @@ void ConvertEltwise(const caffe::NetParameter& caffe_model,
   shadow_op->set_type("Eltwise");
   ConvertCommon(caffe_model, caffe_layer, shadow_op);
 
+  // Prod: 0, Sum: 1, Max: 2
   if (caffe_layer.has_eltwise_param()) {
-    auto shadow_param = shadow_op->mutable_eltwise_param();
     const auto& caffe_param = caffe_layer.eltwise_param();
     if (caffe_param.has_operation()) {
       if (caffe_param.operation() == caffe::EltwiseParameter_EltwiseOp_PROD) {
-        shadow_param->set_operation(shadow::EltwiseParam_EltwiseOp_Prod);
+        set_s_i(shadow_op, "operation", 0);
       } else if (caffe_param.operation() ==
                  caffe::EltwiseParameter_EltwiseOp_SUM) {
-        shadow_param->set_operation(shadow::EltwiseParam_EltwiseOp_Sum);
+        set_s_i(shadow_op, "operation", 1);
       } else if (caffe_param.operation() ==
                  caffe::EltwiseParameter_EltwiseOp_MAX) {
-        shadow_param->set_operation(shadow::EltwiseParam_EltwiseOp_Max);
+        set_s_i(shadow_op, "operation", 2);
       }
     }
-    for (int i = 0; i < caffe_param.coeff_size(); ++i) {
-      shadow_param->add_coeff(caffe_param.coeff(i));
+    std::vector<float> coeff;
+    for (const auto coe : caffe_param.coeff()) {
+      coeff.push_back(coe);
     }
+    set_v_f(shadow_op, "coeff", coeff);
   }
 }
 
@@ -243,13 +272,12 @@ void ConvertFlatten(const caffe::NetParameter& caffe_model,
   ConvertCommon(caffe_model, caffe_layer, shadow_op);
 
   if (caffe_layer.has_flatten_param()) {
-    auto shadow_param = shadow_op->mutable_flatten_param();
     const auto& caffe_param = caffe_layer.flatten_param();
     if (caffe_param.has_axis()) {
-      shadow_param->set_axis(caffe_param.axis());
+      set_s_i(shadow_op, "axis", caffe_param.axis());
     }
     if (caffe_param.has_end_axis()) {
-      shadow_param->set_end_axis(caffe_param.end_axis());
+      set_s_i(shadow_op, "end_axis", caffe_param.end_axis());
     }
   }
 }
@@ -261,29 +289,28 @@ void ConvertLRN(const caffe::NetParameter& caffe_model,
   shadow_op->set_type("LRN");
   ConvertCommon(caffe_model, caffe_layer, shadow_op);
 
+  // AcrossChannels: 0, WithinChannel: 1
   if (caffe_layer.has_lrn_param()) {
-    auto shadow_param = shadow_op->mutable_lrn_param();
     const auto& caffe_param = caffe_layer.lrn_param();
     if (caffe_param.has_local_size()) {
-      shadow_param->set_local_size(caffe_param.local_size());
+      set_s_i(shadow_op, "local_size", caffe_param.local_size());
     }
     if (caffe_param.has_alpha()) {
-      shadow_param->set_alpha(caffe_param.alpha());
+      set_s_f(shadow_op, "alpha", caffe_param.alpha());
     }
     if (caffe_param.has_beta()) {
-      shadow_param->set_beta(caffe_param.beta());
+      set_s_f(shadow_op, "beta", caffe_param.beta());
     }
     if (caffe_param.has_norm_region()) {
       if (caffe_param.norm_region() ==
           caffe::LRNParameter_NormRegion_ACROSS_CHANNELS) {
-        shadow_param->set_norm_region(
-            shadow::LRNParam_NormRegion_AcrossChannels);
+        set_s_i(shadow_op, "norm_region", 0);
       } else {
         LOG(FATAL) << "Unsupported norm region method: Within Channel!";
       }
     }
     if (caffe_param.has_k()) {
-      shadow_param->set_k(caffe_param.k());
+      set_s_f(shadow_op, "k", caffe_param.k());
     }
   }
 }
@@ -296,13 +323,12 @@ void ConvertNormalize(const caffe::NetParameter& caffe_model,
   ConvertCommon(caffe_model, caffe_layer, shadow_op);
 
   if (caffe_layer.has_norm_param()) {
-    auto shadow_param = shadow_op->mutable_normalize_param();
     const auto& caffe_param = caffe_layer.norm_param();
     if (caffe_param.has_across_spatial()) {
-      shadow_param->set_across_spatial(caffe_param.across_spatial());
+      set_s_i(shadow_op, "across_spatial", caffe_param.across_spatial());
     }
     if (caffe_param.has_channel_shared()) {
-      shadow_param->set_channel_shared(caffe_param.channel_shared());
+      set_s_i(shadow_op, "channel_shared", caffe_param.channel_shared());
     }
   }
 }
@@ -315,11 +341,12 @@ void ConvertPermute(const caffe::NetParameter& caffe_model,
   ConvertCommon(caffe_model, caffe_layer, shadow_op);
 
   if (caffe_layer.has_permute_param()) {
-    auto shadow_param = shadow_op->mutable_permute_param();
     const auto& caffe_param = caffe_layer.permute_param();
-    for (int i = 0; i < caffe_param.order_size(); ++i) {
-      shadow_param->add_order(caffe_param.order(i));
+    std::vector<int> order;
+    for (const auto o : caffe_param.order()) {
+      order.push_back(o);
     }
+    set_v_i(shadow_op, "order", order);
   }
 }
 
@@ -330,27 +357,27 @@ void ConvertPooling(const caffe::NetParameter& caffe_model,
   shadow_op->set_type("Pooling");
   ConvertCommon(caffe_model, caffe_layer, shadow_op);
 
+  // Max: 0, Ave: 1
   if (caffe_layer.has_pooling_param()) {
-    auto shadow_param = shadow_op->mutable_pooling_param();
     const auto& caffe_param = caffe_layer.pooling_param();
     if (caffe_param.has_pool()) {
       if (caffe_param.pool() == caffe::PoolingParameter_PoolMethod_MAX) {
-        shadow_param->set_pool(shadow::PoolingParam_PoolType_Max);
+        set_s_i(shadow_op, "pool", 0);
       } else if (caffe_param.pool() == caffe::PoolingParameter_PoolMethod_AVE) {
-        shadow_param->set_pool(shadow::PoolingParam_PoolType_Ave);
+        set_s_i(shadow_op, "pool", 1);
       }
     }
     if (caffe_param.has_kernel_size()) {
-      shadow_param->set_kernel_size(caffe_param.kernel_size());
+      set_s_i(shadow_op, "kernel_size", caffe_param.kernel_size());
     }
     if (caffe_param.has_stride()) {
-      shadow_param->set_stride(caffe_param.stride());
+      set_s_i(shadow_op, "stride", caffe_param.stride());
     }
     if (caffe_param.has_pad()) {
-      shadow_param->set_pad(caffe_param.pad());
+      set_s_i(shadow_op, "pad", caffe_param.pad());
     }
     if (caffe_param.has_global_pooling()) {
-      shadow_param->set_global_pooling(caffe_param.global_pooling());
+      set_s_i(shadow_op, "global_pooling", caffe_param.global_pooling());
     }
   }
 }
@@ -363,31 +390,35 @@ void ConvertPriorBox(const caffe::NetParameter& caffe_model,
   ConvertCommon(caffe_model, caffe_layer, shadow_op);
 
   if (caffe_layer.has_prior_box_param()) {
-    auto shadow_param = shadow_op->mutable_prior_box_param();
     const auto& caffe_param = caffe_layer.prior_box_param();
-    for (const auto& min_size : caffe_param.min_size()) {
-      shadow_param->add_min_size(min_size);
+    std::vector<float> min_size, max_size, aspect_ratio, variance;
+    for (const auto ms : caffe_param.min_size()) {
+      min_size.push_back(ms);
     }
-    for (const auto& max_size : caffe_param.max_size()) {
-      shadow_param->add_max_size(max_size);
+    set_v_f(shadow_op, "min_size", min_size);
+    for (const auto ms : caffe_param.max_size()) {
+      max_size.push_back(ms);
     }
-    for (const auto& ratio : caffe_param.aspect_ratio()) {
-      shadow_param->add_aspect_ratio(ratio);
+    set_v_f(shadow_op, "max_size", max_size);
+    for (const auto ar : caffe_param.aspect_ratio()) {
+      aspect_ratio.push_back(ar);
     }
+    set_v_f(shadow_op, "aspect_ratio", aspect_ratio);
     if (caffe_param.has_flip()) {
-      shadow_param->set_flip(caffe_param.flip());
+      set_s_i(shadow_op, "flip", caffe_param.flip());
     }
     if (caffe_param.has_clip()) {
-      shadow_param->set_clip(caffe_param.clip());
+      set_s_i(shadow_op, "clip", caffe_param.clip());
     }
-    for (const auto& variance : caffe_param.variance()) {
-      shadow_param->add_variance(variance);
+    for (const auto v : caffe_param.variance()) {
+      variance.push_back(v);
     }
+    set_v_f(shadow_op, "variance", variance);
     if (caffe_param.has_step()) {
-      shadow_param->set_step(caffe_param.step());
+      set_s_f(shadow_op, "step", caffe_param.step());
     }
     if (caffe_param.has_offset()) {
-      shadow_param->set_offset(caffe_param.offset());
+      set_s_f(shadow_op, "offset", caffe_param.offset());
     }
   }
 }
@@ -400,16 +431,17 @@ void ConvertReshape(const caffe::NetParameter& caffe_model,
   ConvertCommon(caffe_model, caffe_layer, shadow_op);
 
   if (caffe_layer.has_reshape_param()) {
-    auto shadow_param = shadow_op->mutable_reshape_param();
     const auto& caffe_param = caffe_layer.reshape_param();
-    for (const auto& dim : caffe_param.shape().dim()) {
-      shadow_param->mutable_shape()->add_dim(dim);
+    std::vector<int> shape;
+    for (const auto dim : caffe_param.shape().dim()) {
+      shape.push_back(dim);
     }
+    set_v_i(shadow_op, "shape", shape);
     if (caffe_param.has_axis()) {
-      shadow_param->set_axis(caffe_param.axis());
+      set_s_i(shadow_op, "axis", caffe_param.axis());
     }
     if (caffe_param.has_num_axes()) {
-      shadow_param->set_num_axes(caffe_param.num_axes());
+      set_s_i(shadow_op, "num_axes", caffe_param.num_axes());
     }
   }
 }
@@ -422,16 +454,15 @@ void ConvertScale(const caffe::NetParameter& caffe_model,
   ConvertCommon(caffe_model, caffe_layer, shadow_op);
 
   if (caffe_layer.has_scale_param()) {
-    auto shadow_param = shadow_op->mutable_scale_param();
     const auto& caffe_param = caffe_layer.scale_param();
     if (caffe_param.has_axis()) {
-      shadow_param->set_axis(caffe_param.axis());
+      set_s_i(shadow_op, "axis", caffe_param.axis());
     }
     if (caffe_param.has_num_axes()) {
-      shadow_param->set_num_axes(caffe_param.num_axes());
+      set_s_i(shadow_op, "num_axes", caffe_param.num_axes());
     }
     if (caffe_param.has_bias_term()) {
-      shadow_param->set_bias_term(caffe_param.bias_term());
+      set_s_i(shadow_op, "bias_term", caffe_param.bias_term());
     }
   }
 }
@@ -444,10 +475,9 @@ void ConvertSoftmax(const caffe::NetParameter& caffe_model,
   ConvertCommon(caffe_model, caffe_layer, shadow_op);
 
   if (caffe_layer.has_softmax_param()) {
-    auto shadow_param = shadow_op->mutable_softmax_param();
     const auto& caffe_param = caffe_layer.softmax_param();
     if (caffe_param.has_axis()) {
-      shadow_param->set_axis(caffe_param.axis());
+      set_s_i(shadow_op, "axis", caffe_param.axis());
     }
   }
 }

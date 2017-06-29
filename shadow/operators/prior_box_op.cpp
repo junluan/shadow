@@ -2,20 +2,18 @@
 
 namespace Shadow {
 
-void PriorBoxOp::Setup(VecBlobF *blobs) {
-  Operator::Setup(blobs);
-
-  const auto &prior_box_param = op_param_.prior_box_param();
-
-  CHECK_GT(prior_box_param.min_size_size(), 0) << "must provide min_size.";
-  for (const auto &min_size : prior_box_param.min_size()) {
+void PriorBoxOp::Setup() {
+  min_sizes_ = arg_helper_.GetRepeatedArgument<float>("min_size");
+  CHECK_GT(min_sizes_.size(), 0) << "must provide min_size.";
+  for (const auto &min_size : min_sizes_) {
     CHECK_GT(min_size, 0) << "min_size must be positive.";
-    min_sizes_.push_back(min_size);
   }
-  flip_ = prior_box_param.flip();
+  flip_ = arg_helper_.GetSingleArgument<bool>("flip", true);
+  VecFloat aspect_ratios =
+      arg_helper_.GetRepeatedArgument<float>("aspect_ratio");
   aspect_ratios_.clear();
   aspect_ratios_.push_back(1.f);
-  for (const auto &ratio : prior_box_param.aspect_ratio()) {
+  for (const auto &ratio : aspect_ratios) {
     bool already_exist = false;
     for (const auto &ar : aspect_ratios_) {
       if (std::abs(ratio - ar) < EPS) {
@@ -31,33 +29,32 @@ void PriorBoxOp::Setup(VecBlobF *blobs) {
     }
   }
   num_priors_ = aspect_ratios_.size() * min_sizes_.size();
-  if (prior_box_param.max_size_size() > 0) {
-    CHECK_EQ(prior_box_param.min_size_size(), prior_box_param.max_size_size());
-    for (int i = 0; i < prior_box_param.max_size_size(); ++i) {
-      max_sizes_.push_back(prior_box_param.max_size(i));
+  max_sizes_ = arg_helper_.GetRepeatedArgument<float>("max_size");
+  if (max_sizes_.size() > 0) {
+    CHECK_EQ(min_sizes_.size(), max_sizes_.size());
+    for (int i = 0; i < max_sizes_.size(); ++i) {
       CHECK_GT(max_sizes_[i], min_sizes_[i])
           << "max_size must be greater than min_size.";
       num_priors_ += 1;
     }
   }
-  clip_ = prior_box_param.clip();
-  if (prior_box_param.variance_size() > 1) {
-    CHECK_EQ(prior_box_param.variance_size(), 4);
-    for (const auto &variance : prior_box_param.variance()) {
-      variance_.push_back(variance);
-    }
-  } else if (prior_box_param.variance_size() == 1) {
-    variance_.push_back(prior_box_param.variance(0));
+  clip_ = arg_helper_.GetSingleArgument<bool>("clip", false);
+  VecFloat variance = arg_helper_.GetRepeatedArgument<float>("variance");
+  if (variance.size() > 1) {
+    CHECK_EQ(variance.size(), 4);
+    variance_ = variance;
+  } else if (variance.size() == 1) {
+    variance_ = variance;
   } else {
     variance_.push_back(0.1);
   }
-  if (prior_box_param.has_step()) {
-    step_ = prior_box_param.step();
+  if (arg_helper_.HasArgument("step")) {
+    step_ = arg_helper_.GetSingleArgument<float>("step", 0);
     CHECK_GT(step_, 0);
   } else {
     step_ = 0;
   }
-  offset_ = prior_box_param.offset();
+  offset_ = arg_helper_.GetSingleArgument<float>("offset", 0.5);
 }
 
 void PriorBoxOp::Reshape() {

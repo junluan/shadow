@@ -7,11 +7,11 @@ namespace Shadow {
 
 class ReorgOp : public Operator {
  public:
-  ReorgOp() {}
-  explicit ReorgOp(const shadow::OpParam &op_param) : Operator(op_param) {}
+  explicit ReorgOp(const shadow::OpParam &op_param, Workspace *ws)
+      : Operator(op_param, ws) {}
   ~ReorgOp() { Release(); }
 
-  void Setup(VecBlobF *blobs);
+  void Setup();
   void Reshape();
   void Forward();
   void Release();

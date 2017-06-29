@@ -3,23 +3,20 @@
 
 namespace Shadow {
 
-void EltwiseOp::Setup(VecBlobF *blobs) {
-  Operator::Setup(blobs);
-
-  const auto &eltwise_param = op_param_.eltwise_param();
-
-  operation_ = eltwise_param.operation();
-  coeff_size_ = eltwise_param.coeff_size();
+void EltwiseOp::Setup() {
+  operation_ = arg_helper_.GetSingleArgument<int>("operation", 1);
+  VecFloat coeff = arg_helper_.GetRepeatedArgument<float>("coeff");
+  coeff_size_ = coeff.size();
 
   CHECK_GE(bottoms_.size(), 2);
   CHECK(coeff_size_ == 0 || coeff_size_ == bottoms_.size())
       << "Eltwise op takes one coefficient per bottom blob.";
-  CHECK(!(operation_ != shadow::EltwiseParam_EltwiseOp_Sum && coeff_size_))
+  CHECK(!(operation_ != 1 && coeff_size_))
       << "Eltwise op only takes coefficients for summation.";
 
   coeff_.resize(bottoms_.size(), 1);
   for (int i = 0; i < coeff_size_; ++i) {
-    coeff_[i] = eltwise_param.coeff(i);
+    coeff_[i] = coeff[i];
   }
 }
 
@@ -38,7 +35,7 @@ void EltwiseOp::Forward() {
   int count = bottoms_[0]->count();
 
   switch (operation_) {
-    case shadow::EltwiseParam_EltwiseOp_Prod:
+    case 0:
       Blas::Mul(count, bottoms_[0]->data(), 0, bottoms_[1]->data(), 0,
                 tops_[0]->mutable_data(), 0);
       for (int i = 2; i < bottoms_.size(); ++i) {
@@ -46,14 +43,14 @@ void EltwiseOp::Forward() {
                   tops_[0]->mutable_data(), 0);
       }
       break;
-    case shadow::EltwiseParam_EltwiseOp_Sum:
+    case 1:
       Blas::Set(count, 0, tops_[0]->mutable_data(), 0);
       for (int i = 0; i < bottoms_.size(); ++i) {
         Blas::BlasSaxpy(count, coeff_[i], bottoms_[i]->data(), 0,
                         tops_[0]->mutable_data(), 0);
       }
       break;
-    case shadow::EltwiseParam_EltwiseOp_Max:
+    case 2:
       Blas::Max(count, bottoms_[0]->data(), 0, bottoms_[1]->data(), 0,
                 tops_[0]->mutable_data(), 0);
       for (int i = 2; i < bottoms_.size(); ++i) {

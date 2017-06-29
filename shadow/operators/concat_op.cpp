@@ -3,12 +3,8 @@
 
 namespace Shadow {
 
-void ConcatOp::Setup(VecBlobF *blobs) {
-  Operator::Setup(blobs);
-
-  const auto &concat_param = op_param_.concat_param();
-
-  concat_axis_ = concat_param.axis();
+void ConcatOp::Setup() {
+  concat_axis_ = arg_helper_.GetSingleArgument<int>("axis", 1);
   CHECK_GE(concat_axis_, 0);
   CHECK_LT(concat_axis_, bottoms_[0]->num_axes());
   num_concats_ = bottoms_[0]->count(0, concat_axis_);

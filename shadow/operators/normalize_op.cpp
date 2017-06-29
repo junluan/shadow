@@ -3,13 +3,9 @@
 
 namespace Shadow {
 
-void NormalizeOp::Setup(VecBlobF *blobs) {
-  Operator::Setup(blobs);
-
-  const auto &normalize_param = op_param_.normalize_param();
-
-  across_spatial_ = normalize_param.across_spatial();
-  channel_shared_ = normalize_param.channel_shared();
+void NormalizeOp::Setup() {
+  across_spatial_ = arg_helper_.GetSingleArgument<bool>("across_spatial", true);
+  channel_shared_ = arg_helper_.GetSingleArgument<bool>("channel_shared", true);
 
   if (blobs_.size() == 0) {
     blobs_.push_back(new BlobF());

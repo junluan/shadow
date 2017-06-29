@@ -14,21 +14,17 @@ inline int convolution_out_size(int dim, int kernel_size, int stride, int pad,
   return (dim + 2 * pad - kernel_extent) / stride + 1;
 }
 
-void ConvolutionOp::Setup(VecBlobF *blobs) {
-  Operator::Setup(blobs);
-
-  const auto &conv_param = op_param_.convolution_param();
-
-  num_output_ = conv_param.num_output();
-  CHECK(conv_param.has_kernel_size());
-  kernel_size_ = conv_param.kernel_size();
-  stride_ = conv_param.stride();
-  pad_ = conv_param.pad();
-  dilation_ = conv_param.dilation();
-  group_ = conv_param.group();
+void ConvolutionOp::Setup() {
+  num_output_ = arg_helper_.GetSingleArgument<int>("num_output", 0);
+  CHECK(arg_helper_.HasArgument("kernel_size"));
+  kernel_size_ = arg_helper_.GetSingleArgument<int>("kernel_size", 0);
+  stride_ = arg_helper_.GetSingleArgument<int>("stride", 1);
+  pad_ = arg_helper_.GetSingleArgument<int>("pad", 0);
+  dilation_ = arg_helper_.GetSingleArgument<int>("dilation", 1);
+  group_ = arg_helper_.GetSingleArgument<int>("group", 1);
   CHECK_EQ(bottoms_[0]->shape(1) % group_, 0);
   CHECK_EQ(num_output_ % group_, 0);
-  bias_term_ = conv_param.bias_term();
+  bias_term_ = arg_helper_.GetSingleArgument<bool>("bias_term", true);
 
   if (bias_term_) {
     CHECK_EQ(blobs_.size(), 2);
