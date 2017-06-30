@@ -95,3 +95,23 @@ function (shadow_parse_header_single_define FILENAME VARNAME REGEX)
   endif ()
   set(${VARNAME} ${version} PARENT_SCOPE)
 endfunction ()
+
+####################################################################
+# Add whole archive when build static library
+# Usage:
+#   shadow_add_whole_archive_flag(<lib> <output_var>)
+function (shadow_add_whole_archive_flag lib output_var)
+  if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "MSVC")
+    if (MSVC_VERSION GREATER 1900)
+      set(${output_var} -WHOLEARCHIVE:$<TARGET_FILE:${lib}> PARENT_SCOPE)
+    else ()
+      message(WARNING "MSVC version is ${MSVC_VERSION}, /WHOLEARCHIVE flag cannot be set")
+      set(${output_var} ${lib} PARENT_SCOPE)
+    endif ()
+  elseif ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
+    #set(${output_var} -Wl,-force_load,$<TARGET_FILE:${lib}> PARENT_SCOPE)
+    set(${output_var} -Wl,--whole-archive ${lib} -Wl,--no-whole-archive PARENT_SCOPE)
+  else ()
+    set(${output_var} -Wl,--whole-archive ${lib} -Wl,--no-whole-archive PARENT_SCOPE)
+  endif ()
+endfunction ()

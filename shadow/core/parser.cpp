@@ -511,7 +511,9 @@ const shadow::OpParam ParsePriorBox(const JValue &root) {
   set_s_i(&shadow_op, "flip", flip);
   set_s_i(&shadow_op, "clip", clip);
   set_v_f(&shadow_op, "variance", variance);
-  set_s_f(&shadow_op, "step", step);
+  if (step > 0) {
+    set_s_f(&shadow_op, "step", step);
+  }
   set_s_f(&shadow_op, "offset", offset);
 
   return shadow_op;
