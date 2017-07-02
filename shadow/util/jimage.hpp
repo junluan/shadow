@@ -7,16 +7,11 @@
 #include <opencv2/opencv.hpp>
 #endif
 
-#define USE_ArcSoft
-#if defined(USE_ArcSoft)
-#include "asvloffscreen.h"
-#endif
-
 #include <cstring>
 
 namespace Shadow {
 
-enum Order { kGray, kRGB, kBGR, kArc };
+enum Order { kGray, kRGB, kBGR, kI420 };
 
 class JImage {
  public:
@@ -38,14 +33,6 @@ class JImage {
   void FromMat(const cv::Mat &im_mat, bool shared = false);
   cv::Mat ToMat() const;
 #endif
-
-#if defined(USE_ArcSoft)
-  void FromArcImage(const ASVLOFFSCREEN &im_arc);
-  void ToArcImage(int arc_format);
-#endif
-
-  void Color2Gray();
-  void ColorInv();
 
   void Release();
 
@@ -85,7 +72,7 @@ class JImage {
   inline const Order &order() const { return order_; }
   inline Order &order() { return order_; }
 
-  inline const int count() const { return c_ * h_ * w_; }
+  inline int count() const { return c_ * h_ * w_; }
 
   const unsigned char operator()(int c, int h, int w) const {
     if (c >= c_ || h >= h_ || w >= w_) LOG(FATAL) << "Index out of range!";
@@ -97,11 +84,6 @@ class JImage {
   }
 
   int c_, h_, w_;
-
-#if defined(USE_ArcSoft)
-  ASVLOFFSCREEN arc_image_;
-  unsigned char *arc_data_ = nullptr;
-#endif
 
  private:
   inline void GetInv(unsigned char *im_inv) const;

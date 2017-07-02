@@ -12,7 +12,7 @@ class YOLO : public Method {
 
   void Setup(const std::string &model_file, int classes, int batch);
 
-  void Predict(const JImage &image, const VecRectF &rois,
+  void Predict(const JImage &im_src, const VecRectF &rois,
                std::vector<VecBoxF> *Bboxes);
 #if defined(USE_OpenCV)
   void Predict(const cv::Mat &im_mat, const VecRectF &rois,
@@ -32,7 +32,7 @@ class YOLO : public Method {
   int batch_, in_num_, in_c_, in_h_, in_w_, out_num_, out_hw_;
   int num_classes_, num_km_;
   float threshold_;
-  JImage im_ini_, im_res_;
+  JImage im_ini_;
 };
 
 }  // namespace Shadow

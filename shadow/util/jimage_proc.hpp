@@ -6,10 +6,22 @@
 
 namespace Shadow {
 
+enum Transformer {
+  kRGB2Gray,
+  kRGB2BGR,
+  kRGB2I420,
+  kBGR2Gray,
+  kBGR2RGB,
+  kBGR2I420,
+  kI4202Gray,
+  kI4202RGB,
+  kI4202BGR
+};
+
 namespace JImageProc {
 
-VecPointI GetLinePoints(const PointI &start, const PointI &end,
-                        const int step = 1, const int slice_axis = -1);
+VecPointI GetLinePoints(const PointI &start, const PointI &end, int step = 1,
+                        int slice_axis = -1);
 
 template <typename Dtype>
 void Line(JImage *im, const Point<Dtype> &start, const Point<Dtype> &end,
@@ -18,7 +30,8 @@ template <typename Dtype>
 void Rectangle(JImage *im, const Rect<Dtype> &rect,
                const Scalar &scalar = Scalar(0, 255, 0));
 
-void Color2Gray(const JImage &im_src, JImage *im_gray);
+void FormatTransform(const JImage &im_src, JImage *im_dst,
+                     const Transformer &transformer);
 
 void Resize(const JImage &im_src, JImage *im_res, int height, int width);
 
@@ -30,14 +43,6 @@ void CropResize(const JImage &im_src, JImage *im_res, const Rect<Dtype> &crop,
 template <typename Dtype>
 void CropResize2Gray(const JImage &im_src, JImage *im_gray,
                      const Rect<Dtype> &crop, int height, int width);
-#ifdef USE_ArcSoft
-template <typename Dtype>
-void CropResize(const ASVLOFFSCREEN &im_arc, float *batch_data,
-                const Rect<Dtype> &crop, int height, int width);
-template <typename Dtype>
-void CropResize2Gray(const ASVLOFFSCREEN &im_arc, JImage *im_gray,
-                     const Rect<Dtype> &crop, int height, int width);
-#endif
 
 void Filter1D(const JImage &im_src, JImage *im_filter, const float *kernel,
               int kernel_size, int direction = 0);

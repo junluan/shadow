@@ -5,14 +5,15 @@ namespace Shadow {
 
 namespace JImageProc {
 
-VecPointI GetLinePoints(const PointI &start, const PointI &end, const int step,
-                        const int slice_axis) {
+VecPointI GetLinePoints(const PointI &start, const PointI &end, int step,
+                        int slice_axis) {
   PointI start_p(start), end_p(end);
 
   float delta_x = end_p.x - start_p.x, delta_y = end_p.y - start_p.y;
 
-  if (std::abs(delta_x) < 1 && std::abs(delta_y) < 1)
+  if (std::abs(delta_x) < 1 && std::abs(delta_y) < 1) {
     return VecPointI(1, start_p);
+  }
 
   bool steep = false;
   if (slice_axis == 1 ||
@@ -58,10 +59,10 @@ void Line(JImage *im, const Point<Dtype> &start, const Point<Dtype> &end,
   const auto &order_ = im->order();
 
   if (order_ != kGray && order_ != kRGB && order_ != kBGR) {
-    LOG(FATAL) << "Unsupported format to resize!";
+    LOG(FATAL) << "Unsupported format " << order_ << " to draw line!";
   }
 
-  unsigned char *data = im->data();
+  auto *data = im->data();
 
   int loc_r = 0, loc_g = 1, loc_b = 2;
   if (order_ == kRGB) {
@@ -74,7 +75,7 @@ void Line(JImage *im, const Point<Dtype> &start, const Point<Dtype> &end,
     loc_b = 0;
   }
 
-  unsigned char gray = std::max(std::max(scalar.r, scalar.g), scalar.b);
+  auto gray = std::max(std::max(scalar.r, scalar.g), scalar.b);
 
   const auto &points = GetLinePoints(PointI(start), PointI(end));
 
@@ -102,7 +103,7 @@ void Rectangle(JImage *im, const Rect<Dtype> &rect, const Scalar &scalar) {
   const auto &order_ = im->order();
 
   if (order_ != kGray && order_ != kRGB && order_ != kBGR) {
-    LOG(FATAL) << "Unsupported format to resize!";
+    LOG(FATAL) << "Unsupported format " << order_ << " to draw rectangle!";
   }
 
   RectI rectI(rect);
@@ -118,32 +119,252 @@ void Rectangle(JImage *im, const Rect<Dtype> &rect, const Scalar &scalar) {
   Line(im, PointI(x2, y1), PointI(x2, y2), scalar);
 }
 
-void Color2Gray(const JImage &im_src, JImage *im_gray) {
+void Color2Gray(const JImage &im_src, JImage *im_gray,
+                const Transformer &transformer) {
   CHECK_NOTNULL(im_src.data());
   CHECK_NOTNULL(im_gray);
+  CHECK_NE(im_src.data(), im_gray->data());
 
-  int c_ = im_src.c_, h_ = im_src.h_, w_ = im_src.w_;
+  int h_ = im_src.h_, w_ = im_src.w_, spatial_dim_ = h_ * w_;
   const auto &order_ = im_src.order();
 
   im_gray->Reshape(1, h_, w_, kGray);
 
-  const unsigned char *data_src = im_src.data();
-  unsigned char *data_gray = im_gray->data();
+  const auto *data_src = im_src.data();
+  auto *data_gray = im_gray->data();
 
-  if (order_ == kRGB || order_ == kBGR) {
-    int index;
-    for (int h = 0; h < h_; ++h) {
-      for (int w = 0; w < w_; ++w) {
-        index = (w_ * h + w) * c_;
-        float sum =
-            data_src[index + 0] + data_src[index + 1] + data_src[index + 2];
-        *data_gray++ = static_cast<unsigned char>(sum / 3.f);
-      }
+  if (transformer == kRGB2Gray) {
+    CHECK((order_ == kRGB));
+    int index = 0;
+    for (int i = 0; i < spatial_dim_; ++i, index += 3) {
+      auto r = data_src[index + 0];
+      auto g = data_src[index + 1];
+      auto b = data_src[index + 2];
+      int val = static_cast<int>(0.299f * r + 0.587f * g + 0.114f * b);
+      *data_gray++ = (unsigned char)Util::constrain(0, 255, val);
     }
-  } else if (order_ == kGray) {
+  } else if (transformer == kBGR2Gray) {
+    CHECK((order_ == kBGR));
+    int index = 0;
+    for (int i = 0; i < spatial_dim_; ++i, index += 3) {
+      auto r = data_src[index + 2];
+      auto g = data_src[index + 1];
+      auto b = data_src[index + 0];
+      int val = static_cast<int>(0.299f * r + 0.587f * g + 0.114f * b);
+      *data_gray++ = (unsigned char)Util::constrain(0, 255, val);
+    }
+  } else if (transformer == kI4202Gray) {
+    CHECK((order_ == kI420));
     memcpy(data_gray, data_src, h_ * w_ * sizeof(unsigned char));
   } else {
-    LOG(FATAL) << "Unsupported format to convert color to gray!";
+    LOG(FATAL) << "Unsupported source format " << order_
+               << ", currently supported: kRGB2Gray, kBGR2Gray, kI4202Gray";
+  }
+}
+
+void RGB2BGR(const JImage &im_src, JImage *im_dst,
+             const Transformer &transformer) {
+  CHECK_NOTNULL(im_src.data());
+  CHECK_NOTNULL(im_dst);
+
+  int h_ = im_src.h_, w_ = im_src.w_, spatial_dim_ = h_ * w_;
+  const auto &order_ = im_src.order();
+
+  if (transformer == kRGB2BGR) {
+    CHECK((order_ == kRGB));
+    im_dst->Reshape(3, h_, w_, kBGR);
+  } else if (transformer == kBGR2RGB) {
+    CHECK((order_ == kBGR));
+    im_dst->Reshape(3, h_, w_, kRGB);
+  } else {
+    LOG(FATAL) << "Unsupported source format " << order_
+               << ", currently supported: kRGB2BGR, kBGR2RGB";
+  }
+
+  const auto *data_src = im_src.data();
+  auto *data_dst = im_dst->data();
+
+  for (int i = 0; i < spatial_dim_; ++i, data_src += 3, data_dst += 3) {
+    auto c_0 = *data_src, c_1 = *(data_src + 1), c_2 = *(data_src + 2);
+    *(data_dst + 0) = c_2;
+    *(data_dst + 1) = c_1;
+    *(data_dst + 2) = c_0;
+  }
+}
+
+#define CLIP(x) (unsigned char)((x) & (~255) ? ((-x) >> 31) : (x))
+#define fix(x, n) static_cast<int>((x) * (1 << (n)) + 0.5)
+#define yuvYr fix(0.299, 10)
+#define yuvYg fix(0.587, 10)
+#define yuvYb fix(0.114, 10)
+#define yuvCr fix(0.713, 10)
+#define yuvCb fix(0.564, 10)
+
+void RGB2I420(const JImage &im_src, JImage *im_i420,
+              const Transformer &transformer) {
+  CHECK_NOTNULL(im_src.data());
+  CHECK_NOTNULL(im_i420);
+  CHECK_NE(im_src.data(), im_i420->data());
+
+  int src_h_ = (im_src.h_ >> 1) << 1, src_w_ = (im_src.w_ >> 1) << 1;
+  int src_step_ = im_src.w_ * 3;
+  const auto &order_ = im_src.order();
+
+  int loc_r = 0, loc_g = 1, loc_b = 2;
+  if (transformer == kRGB2I420) {
+    CHECK((order_ == kRGB));
+    loc_r = 0, loc_g = 1, loc_b = 2;
+  } else if (transformer == kBGR2I420) {
+    CHECK((order_ == kBGR));
+    loc_r = 2, loc_g = 1, loc_b = 0;
+  } else {
+    LOG(FATAL) << "Unsupported source format " << order_
+               << ", currently supported: kRGB2I420, kBGR2I420";
+  }
+
+  im_i420->Reshape(3, src_h_, src_w_, kI420);
+
+  const auto *data_src = im_src.data();
+  auto *data_i420 = im_i420->data();
+
+  int r, g, b;
+  int dst_h = src_h_ >> 1, dst_w = src_w_ >> 1;
+  int uv_offset = src_h_ * src_w_, uv_step = dst_h * dst_w;
+  int s_h, s_w, y, h_off, w_off, src_offset, y_offset;
+  int cb, cb_0, cb_1, cb_2, cb_3, cr, cr_0, cr_1, cr_2, cr_3;
+  for (int h = 0; h < dst_h; ++h) {
+    for (int w = 0; w < dst_w; ++w) {
+      s_h = h << 1, s_w = w << 1;
+
+      h_off = 0, w_off = 0;
+      src_offset = (s_h + h_off) * src_step_ + (s_w + w_off) * 3;
+      y_offset = (s_h + h_off) * src_w_ + s_w + w_off;
+      r = data_src[src_offset + loc_r];
+      g = data_src[src_offset + loc_g];
+      b = data_src[src_offset + loc_b];
+      y = (b * yuvYb + g * yuvYg + r * yuvYr) >> 10;
+      cb_0 = ((b - y) * yuvCb + (128 << 10)) >> 10;
+      cr_0 = ((r - y) * yuvCr + (128 << 10)) >> 10;
+      data_i420[y_offset] = (unsigned char)y;
+
+      h_off = 0, w_off = 1;
+      src_offset = (s_h + h_off) * src_step_ + (s_w + w_off) * 3;
+      y_offset = (s_h + h_off) * src_w_ + s_w + w_off;
+      r = data_src[src_offset + loc_r];
+      g = data_src[src_offset + loc_g];
+      b = data_src[src_offset + loc_b];
+      y = (b * yuvYb + g * yuvYg + r * yuvYr) >> 10;
+      cb_1 = ((b - y) * yuvCb + (128 << 10)) >> 10;
+      cr_1 = ((r - y) * yuvCr + (128 << 10)) >> 10;
+      data_i420[y_offset] = (unsigned char)y;
+
+      h_off = 1, w_off = 0;
+      src_offset = (s_h + h_off) * src_step_ + (s_w + w_off) * 3;
+      y_offset = (s_h + h_off) * src_w_ + s_w + w_off;
+      r = data_src[src_offset + loc_r];
+      g = data_src[src_offset + loc_g];
+      b = data_src[src_offset + loc_b];
+      y = (b * yuvYb + g * yuvYg + r * yuvYr) >> 10;
+      cb_2 = ((b - y) * yuvCb + (128 << 10)) >> 10;
+      cr_2 = ((r - y) * yuvCr + (128 << 10)) >> 10;
+      data_i420[y_offset] = (unsigned char)y;
+
+      h_off = 1, w_off = 1;
+      src_offset = (s_h + h_off) * src_step_ + (s_w + w_off) * 3;
+      y_offset = (s_h + h_off) * src_w_ + s_w + w_off;
+      r = data_src[src_offset + loc_r];
+      g = data_src[src_offset + loc_g];
+      b = data_src[src_offset + loc_b];
+      y = (b * yuvYb + g * yuvYg + r * yuvYr) >> 10;
+      cb_3 = ((b - y) * yuvCb + (128 << 10)) >> 10;
+      cr_3 = ((r - y) * yuvCr + (128 << 10)) >> 10;
+      data_i420[y_offset] = (unsigned char)y;
+
+      cb = CLIP(((cb_0 + cb_1 + cb_2 + cb_3) >> 2));
+      cr = CLIP(((cr_0 + cr_1 + cr_2 + cr_3) >> 2));
+      int offset = uv_offset + h * dst_w + w;
+      data_i420[offset] = (unsigned char)cb;
+      data_i420[offset + uv_step] = (unsigned char)cr;
+    }
+  }
+}
+
+void I4202RGB(const JImage &im_src, JImage *im_dst,
+              const Transformer &transformer) {
+  CHECK_NOTNULL(im_src.data());
+  CHECK_NOTNULL(im_dst);
+  CHECK_NE(im_src.data(), im_dst->data());
+
+  int src_h_ = im_src.h_, src_w_ = im_src.w_, spatial_dim_ = src_h_ * src_w_;
+  const auto &order_ = im_src.order();
+
+  CHECK((order_ == kI420));
+  int loc_r = 0, loc_g = 1, loc_b = 2;
+  if (transformer == kI4202RGB) {
+    loc_r = 0, loc_g = 1, loc_b = 2;
+    im_dst->Reshape(3, src_h_, src_w_, kRGB);
+  } else if (transformer == kI4202BGR) {
+    loc_r = 2, loc_g = 1, loc_b = 0;
+    im_dst->Reshape(3, src_h_, src_w_, kBGR);
+  } else {
+    LOG(FATAL) << "Unsupported transformer " << transformer
+               << ", currently supported: kI4202RGB, kI4202BGR";
+  }
+
+  const auto *data_src_y = im_src.data();
+  const auto *data_src_u = data_src_y + spatial_dim_;
+  const auto *data_src_v = data_src_y + spatial_dim_ * 5 / 4;
+  auto *data_dst = im_dst->data();
+
+  for (int h = 0; h < src_h_; ++h) {
+    for (int w = 0; w < src_w_; ++w) {
+      int index_y = h * im_src.w_ + w;
+      int index_uv = (h >> 1) * (im_src.w_ >> 1) + (w >> 1);
+      int y = data_src_y[index_y];
+      int u = data_src_u[index_uv];
+      int v = data_src_v[index_uv];
+      u -= 128, v -= 128;
+      int r = y + v + ((v * 103) >> 8);
+      int g = y - ((u * 88) >> 8) - ((v * 183) >> 8);
+      int b = y + u + ((u * 198) >> 8);
+
+      int index = (src_w_ * h + w) * 3;
+      data_dst[index + loc_r] = (unsigned char)Util::constrain(0, 255, r);
+      data_dst[index + loc_g] = (unsigned char)Util::constrain(0, 255, g);
+      data_dst[index + loc_b] = (unsigned char)Util::constrain(0, 255, b);
+    }
+  }
+}
+
+// Format transform
+void FormatTransform(const JImage &im_src, JImage *im_dst,
+                     const Transformer &transformer) {
+  switch (transformer) {
+    case kRGB2Gray:
+    case kBGR2Gray:
+    case kI4202Gray: {
+      Color2Gray(im_src, im_dst, transformer);
+      break;
+    }
+    case kRGB2BGR:
+    case kBGR2RGB: {
+      RGB2BGR(im_src, im_dst, transformer);
+      break;
+    }
+    case kRGB2I420:
+    case kBGR2I420: {
+      RGB2I420(im_src, im_dst, transformer);
+      break;
+    }
+    case kI4202RGB:
+    case kI4202BGR: {
+      I4202RGB(im_src, im_dst, transformer);
+      break;
+    }
+    default: {
+      LOG(FATAL) << "Unsupported transformer: " << transformer;
+      break;
+    }
   }
 }
 
@@ -151,18 +372,19 @@ void Color2Gray(const JImage &im_src, JImage *im_gray) {
 void Resize(const JImage &im_src, JImage *im_res, int height, int width) {
   CHECK_NOTNULL(im_src.data());
   CHECK_NOTNULL(im_res);
+  CHECK_NE(im_src.data(), im_res->data());
 
   int c_ = im_src.c_, h_ = im_src.h_, w_ = im_src.w_;
   const auto &order_ = im_src.order();
 
   if (order_ != kGray && order_ != kRGB && order_ != kBGR) {
-    LOG(FATAL) << "Unsupported format to resize!";
+    LOG(FATAL) << "Unsupported format " << order_ << " to resize!";
   }
 
   im_res->Reshape(c_, height, width, order_);
 
-  const unsigned char *data_src = im_src.data();
-  unsigned char *data_gray = im_res->data();
+  const auto *data_src = im_src.data();
+  auto *data_gray = im_res->data();
 
   float step_h = static_cast<float>(h_) / im_res->h_;
   float step_w = static_cast<float>(w_) / im_res->w_;
@@ -185,13 +407,15 @@ template <typename Dtype>
 void Crop(const JImage &im_src, JImage *im_crop, const Rect<Dtype> &crop) {
   CHECK_NOTNULL(im_src.data());
   CHECK_NOTNULL(im_crop);
+  CHECK_NE(im_src.data(), im_crop->data());
 
   int c_ = im_src.c_, h_ = im_src.h_, w_ = im_src.w_;
   const auto &order_ = im_src.order();
 
   if (order_ != kGray && order_ != kRGB && order_ != kBGR) {
-    LOG(FATAL) << "Unsupported format to crop!";
+    LOG(FATAL) << "Unsupported format " << order_ << " to crop!";
   }
+
   if (crop.w <= 1 && crop.h <= 1) {
     if (crop.x < 0 || crop.y < 0 || crop.x + crop.w > 1 ||
         crop.y + crop.h > 1) {
@@ -210,15 +434,12 @@ void Crop(const JImage &im_src, JImage *im_crop, const Rect<Dtype> &crop) {
   int width = crop.w <= 1 ? static_cast<int>(crop.w * w_) : crop.w;
   im_crop->Reshape(c_, height, width, order_);
 
-  const unsigned char *data_src;
-  unsigned char *data_crop;
-
   int w_off = crop.w <= 1 ? static_cast<int>(crop.x * w_) : crop.x;
   int h_off = crop.h <= 1 ? static_cast<int>(crop.y * h_) : crop.y;
   int src_step = w_ * c_, dst_step = width * c_;
   for (int h = 0; h < im_crop->h_; ++h) {
-    data_src = im_src.data() + (h + h_off) * src_step + w_off * c_;
-    data_crop = im_crop->data() + h * dst_step;
+    const auto data_src = im_src.data() + (h + h_off) * src_step + w_off * c_;
+    auto data_crop = im_crop->data() + h * dst_step;
     memcpy(data_crop, data_src, dst_step * sizeof(unsigned char));
   }
 }
@@ -228,13 +449,15 @@ void CropResize(const JImage &im_src, JImage *im_res, const Rect<Dtype> &crop,
                 int height, int width) {
   CHECK_NOTNULL(im_src.data());
   CHECK_NOTNULL(im_res);
+  CHECK_NE(im_src.data(), im_res->data());
 
   int c_ = im_src.c_, h_ = im_src.h_, w_ = im_src.w_;
   const auto &order_ = im_src.order();
 
   if (order_ != kGray && order_ != kRGB && order_ != kBGR) {
-    LOG(FATAL) << "Unsupported format to crop and resize!";
+    LOG(FATAL) << "Unsupported format " << order_ << " to crop and resize!";
   }
+
   if (crop.w <= 1 && crop.h <= 1) {
     if (crop.x < 0 || crop.y < 0 || crop.x + crop.w > 1 ||
         crop.y + crop.h > 1) {
@@ -251,8 +474,8 @@ void CropResize(const JImage &im_src, JImage *im_res, const Rect<Dtype> &crop,
 
   im_res->Reshape(c_, height, width, order_);
 
-  const unsigned char *data_src = im_src.data();
-  unsigned char *data_res = im_res->data();
+  const auto *data_src = im_src.data();
+  auto *data_res = im_res->data();
 
   float step_h =
       (crop.h <= 1 ? crop.h * h_ : crop.h) / static_cast<float>(height);
@@ -280,13 +503,23 @@ void CropResize2Gray(const JImage &im_src, JImage *im_gray,
                      const Rect<Dtype> &crop, int height, int width) {
   CHECK_NOTNULL(im_src.data());
   CHECK_NOTNULL(im_gray);
+  CHECK_NE(im_src.data(), im_gray->data());
 
   int c_ = im_src.c_, h_ = im_src.h_, w_ = im_src.w_;
   const auto &order_ = im_src.order();
 
-  if (order_ != kGray && order_ != kRGB && order_ != kBGR) {
-    LOG(FATAL) << "Unsupported format to crop and resize!";
+  int loc_r = 0, loc_g = 1, loc_b = 2;
+  if (order_ == kRGB) {
+    loc_r = 0, loc_g = 1, loc_b = 2;
+  } else if (order_ == kBGR) {
+    loc_r = 2, loc_g = 1, loc_b = 0;
+  } else if (order_ == kGray || order_ == kI420) {
+    loc_r = 0, loc_g = 0, loc_b = 0, c_ = 1;
+  } else {
+    LOG(FATAL) << "Unsupported format " << order_
+               << " to crop and resize to gray!";
   }
+
   if (crop.w <= 1 && crop.h <= 1) {
     if (crop.x < 0 || crop.y < 0 || crop.x + crop.w > 1 ||
         crop.y + crop.h > 1) {
@@ -303,8 +536,8 @@ void CropResize2Gray(const JImage &im_src, JImage *im_gray,
 
   im_gray->Reshape(1, height, width, kGray);
 
-  const unsigned char *data_src = im_src.data();
-  unsigned char *data_gray = im_gray->data();
+  const auto *data_src = im_src.data();
+  auto *data_gray = im_gray->data();
 
   float step_h =
       (crop.h <= 1 ? crop.h * h_ : crop.h) / static_cast<float>(height);
@@ -314,130 +547,18 @@ void CropResize2Gray(const JImage &im_src, JImage *im_gray,
   float w_off = crop.w <= 1 ? crop.x * w_ : crop.x;
   float sum;
   int s_h, s_w, src_offset, src_step = w_ * c_;
-  if (order_ == kGray) {
-    for (int h = 0; h < height; ++h) {
-      for (int w = 0; w < width; ++w) {
-        s_h = static_cast<int>(h_off + step_h * h);
-        s_w = static_cast<int>(w_off + step_w * w);
-        src_offset = s_h * src_step + s_w * c_;
-        sum = data_src[src_offset];
-        *data_gray++ = static_cast<unsigned char>(sum);
-      }
-    }
-  } else {
-    for (int h = 0; h < height; ++h) {
-      for (int w = 0; w < width; ++w) {
-        s_h = static_cast<int>(h_off + step_h * h);
-        s_w = static_cast<int>(w_off + step_w * w);
-        src_offset = s_h * src_step + s_w * c_;
-        sum = data_src[src_offset + 0] + data_src[src_offset + 1] +
-              data_src[src_offset + 2];
-        *data_gray++ = static_cast<unsigned char>(sum / 3);
-      }
-    }
-  }
-}
-
-#ifdef USE_ArcSoft
-template <typename Dtype>
-void CropResize(const ASVLOFFSCREEN &im_arc, float *batch_data,
-                const Rect<Dtype> &crop, int height, int width) {
-  CHECK_NOTNULL(batch_data);
-
-  int h_ = im_arc.i32Height, w_ = im_arc.i32Width;
-
-  if (crop.w <= 1 && crop.h <= 1) {
-    if (crop.x < 0 || crop.y < 0 || crop.x + crop.w > 1 ||
-        crop.y + crop.h > 1) {
-      LOG(FATAL) << "Crop region overflow!";
-    }
-  } else if (crop.w > 1 && crop.h > 1) {
-    if (crop.x < 0 || crop.y < 0 || crop.x + crop.w > w_ ||
-        crop.y + crop.h > h_) {
-      LOG(FATAL) << "Crop region overflow!";
-    }
-  } else {
-    LOG(FATAL) << "Crop scale must be the same!";
-  }
-
-  const unsigned char *src_y = im_arc.ppu8Plane[0];
-  const unsigned char *src_u = im_arc.ppu8Plane[1];
-  const unsigned char *src_v = im_arc.ppu8Plane[2];
-  float *dst_b = batch_data;
-  float *dst_g = batch_data + height * width;
-  float *dst_r = batch_data + height * width * 2;
-
-  float step_h =
-      (crop.h <= 1 ? crop.h * h_ : crop.h) / static_cast<float>(height);
-  float step_w =
-      (crop.w <= 1 ? crop.w * w_ : crop.w) / static_cast<float>(width);
-  float h_off = crop.h <= 1 ? crop.y * h_ : crop.y;
-  float w_off = crop.w <= 1 ? crop.x * w_ : crop.x;
-  int s_h, s_w, src_step = im_arc.pi32Pitch[0];
-  int y, u, v, r, g, b;
   for (int h = 0; h < height; ++h) {
     for (int w = 0; w < width; ++w) {
       s_h = static_cast<int>(h_off + step_h * h);
       s_w = static_cast<int>(w_off + step_w * w);
-
-      y = src_y[s_h * src_step + s_w];
-      u = src_u[(s_h >> 1) * (src_step >> 1) + (s_w >> 1)];
-      v = src_v[(s_h >> 1) * (src_step >> 1) + (s_w >> 1)];
-      u -= 128;
-      v -= 128;
-      r = y + v + ((v * 103) >> 8);
-      g = y - ((u * 88) >> 8) + ((v * 183) >> 8);
-      b = y + u + ((u * 198) >> 8);
-
-      *dst_r++ = Util::constrain(0, 255, r);
-      *dst_g++ = Util::constrain(0, 255, g);
-      *dst_b++ = Util::constrain(0, 255, b);
+      src_offset = s_h * src_step + s_w * c_;
+      sum = 0.299f * data_src[src_offset + loc_r] +
+            0.587f * data_src[src_offset + loc_g] +
+            0.114f * data_src[src_offset + loc_b];
+      *data_gray++ = static_cast<unsigned char>(sum);
     }
   }
 }
-
-template <typename Dtype>
-void CropResize2Gray(const ASVLOFFSCREEN &im_arc, JImage *im_gray,
-                     const Rect<Dtype> &crop, int height, int width) {
-  CHECK_NOTNULL(im_gray);
-
-  int h_ = im_arc.i32Height, w_ = im_arc.i32Width;
-
-  if (crop.w <= 1 && crop.h <= 1) {
-    if (crop.x < 0 || crop.y < 0 || crop.x + crop.w > 1 ||
-        crop.y + crop.h > 1) {
-      LOG(FATAL) << "Crop region overflow!";
-    }
-  } else if (crop.w > 1 && crop.h > 1) {
-    if (crop.x < 0 || crop.y < 0 || crop.x + crop.w > w_ ||
-        crop.y + crop.h > h_) {
-      LOG(FATAL) << "Crop region overflow!";
-    }
-  } else {
-    LOG(FATAL) << "Crop scale must be the same!";
-  }
-
-  im_gray->Reshape(1, height, width, kGray);
-
-  const unsigned char *data_src = im_arc.ppu8Plane[0];
-  unsigned char *data_gray = im_gray->data();
-
-  float step_h =
-      (crop.h <= 1 ? crop.h * h_ : crop.h) / static_cast<float>(height);
-  float step_w =
-      (crop.w <= 1 ? crop.w * w_ : crop.w) / static_cast<float>(width);
-  float h_off = crop.h <= 1 ? crop.y * h_ : crop.y;
-  float w_off = crop.w <= 1 ? crop.x * w_ : crop.x;
-  int s_h, s_w, src_step = im_arc.pi32Pitch[0];
-  for (int h = 0; h < height; ++h) {
-    for (int w = 0; w < width; ++w) {
-      s_h = static_cast<int>(h_off + step_h * h);
-      s_w = static_cast<int>(w_off + step_w * w);
-      *data_gray++ = data_src[s_h * src_step + s_w];
-    }
-  }
-}
-#endif
 
 // Filter, Gaussian Blur and Canny.
 void Filter1D(const JImage &im_src, JImage *im_filter, const float *kernel,
@@ -450,8 +571,8 @@ void Filter1D(const JImage &im_src, JImage *im_filter, const float *kernel,
 
   im_filter->Reshape(c_, h_, w_, order_);
 
-  const unsigned char *data_src = im_src.data();
-  unsigned char *data_filter = im_filter->data();
+  const auto *data_src = im_src.data();
+  auto *data_filter = im_filter->data();
 
   float val_c0, val_c1, val_c2, val_kernel;
   int p, p_loc, l_, im_index, center = kernel_size >> 1;
@@ -494,8 +615,8 @@ void Filter2D(const JImage &im_src, JImage *im_filter, const float *kernel,
 
   im_filter->Reshape(c_, h_, w_, order_);
 
-  const unsigned char *data_src = im_src.data();
-  unsigned char *data_filter = im_filter->data();
+  const auto *data_src = im_src.data();
+  auto *data_filter = im_filter->data();
 
   float val_c0, val_c1, val_c2, val_kernel;
   int im_h, im_w, im_index;
@@ -540,8 +661,8 @@ void GaussianBlur(const JImage &im_src, JImage *im_blur, int kernel_size,
 
   im_blur->Reshape(c_, h_, w_, order_);
 
-  const unsigned char *data_src = im_src.data();
-  unsigned char *data_blur = im_blur->data();
+  const auto *data_src = im_src.data();
+  auto *data_blur = im_blur->data();
 
   float *kernel = new float[kernel_size];
   GetGaussianKernel(kernel, kernel_size, sigma);
@@ -606,12 +727,20 @@ void Canny(const JImage &im_src, JImage *im_canny, float thresh_low,
            float thresh_high, bool L2) {
   CHECK_NOTNULL(im_src.data());
 
-  im_src.CopyTo(im_canny);
+  const auto &order = im_src.order();
 
-  if (im_canny->order() != kGray) im_canny->Color2Gray();
+  if (order == kRGB) {
+    FormatTransform(im_src, im_canny, kRGB2Gray);
+  } else if (order == kBGR) {
+    FormatTransform(im_src, im_canny, kBGR2Gray);
+  } else if (order == kI420) {
+    FormatTransform(im_src, im_canny, kI4202Gray);
+  } else if (order == kGray) {
+    im_src.CopyTo(im_canny);
+  }
 
   int h_ = im_canny->h_, w_ = im_canny->w_;
-  unsigned char *data_ = im_canny->data();
+  auto *data_ = im_canny->data();
 
   int *grad_x = new int[h_ * w_], *grad_y = new int[h_ * w_];
   int *magnitude = new int[h_ * w_];
@@ -689,7 +818,7 @@ void Canny(const JImage &im_src, JImage *im_canny, float thresh_low,
     }
   }
 
-  unsigned char *data_index = data_;
+  auto *data_index = data_;
   for (int i = 0; i < h_ * w_; ++i, ++data_index) {
     *data_index = (unsigned char)-(*data_index >> 1);
   }
@@ -733,7 +862,7 @@ void Gradient(const JImage &im_src, int *grad_x, int *grad_y, int *magnitude,
               bool L2) {
   CHECK_NOTNULL(im_src.data());
 
-  const unsigned char *data_src = im_src.data();
+  const auto *data_src = im_src.data();
   int h_ = im_src.h_, w_ = im_src.w_;
 
   JImage *im_gray = nullptr;
@@ -793,16 +922,6 @@ template void CropResize2Gray(const JImage &im_src, JImage *im_gray,
                               const RectI &crop, int height, int width);
 template void CropResize2Gray(const JImage &im_src, JImage *im_gray,
                               const RectF &crop, int height, int width);
-#ifdef USE_ArcSoft
-template void CropResize(const ASVLOFFSCREEN &im_arc, float *batch_data,
-                         const RectI &crop, int height, int width);
-template void CropResize(const ASVLOFFSCREEN &im_arc, float *batch_data,
-                         const RectF &crop, int height, int width);
-template void CropResize2Gray(const ASVLOFFSCREEN &im_arc, JImage *im_gray,
-                              const RectI &crop, int height, int width);
-template void CropResize2Gray(const ASVLOFFSCREEN &im_arc, JImage *im_gray,
-                              const RectF &crop, int height, int width);
-#endif
 
 }  // namespace JImageProc
 

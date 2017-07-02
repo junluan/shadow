@@ -1,47 +1,6 @@
 #include "yolo.hpp"
-#include "util/jimage_proc.hpp"
 
 namespace Shadow {
-
-inline void ConvertData(const JImage &im_src, float *data, int flag = 1) {
-  CHECK_NOTNULL(im_src.data());
-  CHECK_NOTNULL(data);
-
-  int h = im_src.h_, w = im_src.w_, spatial_dim = h * w;
-  const auto &order = im_src.order();
-  const unsigned char *data_src = im_src.data();
-
-  float *data_r, *data_g, *data_b;
-  if (flag == 0) {
-    // Convert to RRRGGGBBB
-    data_r = data;
-    data_g = data + spatial_dim;
-    data_b = data + (spatial_dim << 1);
-  } else {
-    // Convert to BBBGGGRRR
-    data_r = data + (spatial_dim << 1);
-    data_g = data + spatial_dim;
-    data_b = data;
-  }
-
-  if (order == kRGB) {
-    for (int i = 0; i < spatial_dim; ++i) {
-      *(data_r++) = *data_src;
-      *(data_g++) = *(data_src + 1);
-      *(data_b++) = *(data_src + 2);
-      data_src += 3;
-    }
-  } else if (order == kBGR) {
-    for (int i = 0; i < spatial_dim; ++i) {
-      *(data_r++) = *(data_src + 2);
-      *(data_g++) = *(data_src + 1);
-      *(data_b++) = *data_src;
-      data_src += 3;
-    }
-  } else {
-    LOG(FATAL) << "Unsupported format to get batch data!";
-  }
-}
 
 void YOLO::Setup(const std::string &model_file, int classes, int batch) {
   net_.Setup();
@@ -66,12 +25,12 @@ void YOLO::Setup(const std::string &model_file, int classes, int batch) {
   num_km_ = 5;
 }
 
-void YOLO::Predict(const JImage &image, const VecRectF &rois,
+void YOLO::Predict(const JImage &im_src, const VecRectF &rois,
                    std::vector<VecBoxF> *Bboxes) {
   CHECK_LE(rois.size(), batch_);
   for (int b = 0; b < rois.size(); ++b) {
-    JImageProc::CropResize(image, &im_res_, rois[b], in_h_, in_w_);
-    ConvertData(im_res_, in_data_.data() + b * in_num_, 0);
+    ConvertData(im_src, in_data_.data() + b * in_num_, rois[b], in_h_, in_w_,
+                0);
   }
 
   Process(in_data_.data(), Bboxes);
