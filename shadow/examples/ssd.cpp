@@ -35,7 +35,7 @@ inline void GetMaxScoreIndex(
   }
 }
 
-inline void ApplyNMSFast(const VecBoxF &bboxes, const VecFloat &scores,
+inline void ApplyNMSFast(const VecBoxF &bboxes, VecFloat &scores,
                          float score_threshold, float nms_threshold, int top_k,
                          VecInt *indices) {
   // Sanity check.
@@ -47,21 +47,17 @@ inline void ApplyNMSFast(const VecBoxF &bboxes, const VecFloat &scores,
 
   // Do nms.
   indices->clear();
-  while (score_index_vec.size() != 0) {
+  while (score_index_vec.size()) {
+    std::stable_sort(score_index_vec.begin(), score_index_vec.end(),
+                     SortScorePairDescend<int>);
     const int idx = score_index_vec.front().second;
-    bool keep = true;
-    for (int k = 0; k < indices->size(); ++k) {
-      if (keep) {
-        const int kept_idx = (*indices)[k];
-        float overlap = Boxes::IoU(bboxes[idx], bboxes[kept_idx]);
-        keep = overlap <= nms_threshold;
-      } else {
-        break;
-      }
+    for (int i = 1; i < score_index_vec.size(); ++i) {
+      float overlap = Boxes::IoU(bboxes[idx], bboxes[i]);
+      float scale = std::exp(-overlap * overlap / 0.5f);
+      score_index_vec[i].first *= scale;
+      scores[score_index_vec[i].second] *= scale;
     }
-    if (keep) {
-      indices->push_back(idx);
-    }
+    indices->push_back(idx);
     score_index_vec.erase(score_index_vec.begin());
   }
 }
@@ -154,7 +150,7 @@ void SSD::Process(const float *data, std::vector<VecBoxF> *Bboxes) {
   int num_kept = 0;
   std::vector<std::map<int, VecInt>> all_indices;
   for (int b = 0; b < batch_; ++b) {
-    const auto &conf_scores = all_conf_scores[b];
+    auto &conf_scores = all_conf_scores[b];
     const auto &decode_bboxes = all_decode_bboxes[b];
     std::map<int, VecInt> indices;
     int num_det = 0;
@@ -165,7 +161,7 @@ void SSD::Process(const float *data, std::vector<VecBoxF> *Bboxes) {
       if (conf_scores.find(c) == conf_scores.end()) {
         LOG(FATAL) << "Could not find confidence predictions";
       }
-      const auto &scores = conf_scores.find(c)->second;
+      auto &scores = conf_scores.find(c)->second;
       int label = share_location_ ? -1 : c;
       if (decode_bboxes.find(label) == decode_bboxes.end()) {
         LOG(FATAL) << "Could not find confidence predictions";

@@ -53,18 +53,23 @@ class JImage {
 
   inline void ShareData(unsigned char *data) {
     CHECK_NOTNULL(data);
+    Release();
     data_ = data;
     shared_ = true;
   }
 
-  inline void Reshape(int c, int h, int w, Order order = kRGB) {
+  inline void Reshape(int c, int h, int w, Order order, bool shared = false) {
     int num = c * h * w;
     CHECK_GT(num, 0) << "Reshape dimension must be greater than zero!";
-    if (data_ == nullptr) {
-      data_ = new unsigned char[num];
-    } else if (num > count()) {
-      delete[] data_;
-      data_ = new unsigned char[num];
+    if (!shared) {
+      if (data_ == nullptr) {
+        data_ = new unsigned char[num];
+      } else if (num > count()) {
+        delete[] data_;
+        data_ = new unsigned char[num];
+      }
+    } else {
+      shared_ = true;
     }
     c_ = c, h_ = h, w_ = w, order_ = order;
   }
