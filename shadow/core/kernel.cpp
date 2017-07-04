@@ -2,7 +2,7 @@
 #include "util/util.hpp"
 
 #if defined(USE_CL)
-#include <clBLAS.h>
+#include "clBLAS.h"
 #endif
 
 namespace Shadow {

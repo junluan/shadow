@@ -1,23 +1,15 @@
 #include "blas.hpp"
+#include "common.hpp"
 #include "kernel.hpp"
 
 #if defined(USE_CL)
-#include <clBLAS.h>
+#include "clBLAS.h"
 #endif
 
 #if defined(USE_OpenBLAS)
 #include "cblas.h"
 #elif defined(USE_MKL)
 #include "mkl_cblas.h"
-#endif
-
-#if defined(USE_Eigen)
-#include <Eigen/Eigen>
-
-template <typename T>
-using MapVector = Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, 1>>;
-template <typename T>
-using MapMatrix = Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>>;
 #endif
 
 #include <algorithm>

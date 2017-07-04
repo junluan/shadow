@@ -1,4 +1,5 @@
 #include "image.hpp"
+#include "common.hpp"
 #include "kernel.hpp"
 
 namespace Shadow {
@@ -224,8 +225,6 @@ void LRN(const T *in_data, const VecInt &in_shape, int size, float alpha,
 template <typename T>
 inline T Activate(T x, int type) {
   switch (type) {
-    case 0:
-      return x;
     case 1:
       return x * (x > 0);
     case 2:
@@ -237,9 +236,24 @@ inline T Activate(T x, int type) {
 
 template <typename T>
 void Activate(T *data, int count, int type) {
+#if defined(USE_Eigen)
+  auto data_eigen = MapVector<T>(data, count);
+  switch (type) {
+    case 1:
+      data_eigen = data_eigen.cwiseMax(T(0));
+      break;
+    case 2:
+      data_eigen =
+          data_eigen.unaryExpr([](T x) { return x > 0 ? x : T(0.1) * x; });
+      break;
+    default:
+      return;
+  }
+#else
   for (int i = 0; i < count; ++i) {
     data[i] = Activate(data[i], type);
   }
+#endif
 }
 
 template <typename T>

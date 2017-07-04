@@ -2,10 +2,6 @@
 #include "core/blas.hpp"
 #include "core/image.hpp"
 
-#if defined(USE_NNPACK)
-#include "nnpack.h"
-#endif
-
 namespace Shadow {
 
 inline int convolution_out_size(int dim, int kernel_size, int stride, int pad,
@@ -47,6 +43,11 @@ void ConvolutionOp::Setup() {
     }
   }
 #endif
+
+#if defined(USE_NNPACK)
+  use_nnpack_ =
+      bottoms_[0]->shape(0) == 1 && group_ == 1 && dilation_ == 1 && bias_term_;
+#endif
 }
 
 void ConvolutionOp::Reshape() {
@@ -68,7 +69,7 @@ void ConvolutionOp::Reshape() {
   col_offset_ = kernel_dim_ * out_spatial_dim_;
   output_offset_ = num_output_ * out_spatial_dim_ / group_;
 
-  if (!use_cudnn_) {
+  if (!use_cudnn_ && !use_nnpack_) {
     biases_multiplier_.reshape(out_spatial_dim_);
     Blas::Set(out_spatial_dim_, 1, biases_multiplier_.mutable_data(), 0);
     col_image_.reshape(kernel_dim_ * group_, out_spatial_dim_);
@@ -82,7 +83,7 @@ void ConvolutionOp::Reshape() {
     cudnn::setConvolutionDesc<float>(&conv_desc_, bottom_desc_, filter_desc_,
                                      pad_, pad_, stride_, stride_);
 
-    size_t workspace_limit_bytes = 8 * 1024 * 1024;
+    size_t workspace_limit_bytes = 64 * 1024 * 1024;
     CUDNN_CHECK(cudnnGetConvolutionForwardAlgorithm(
         Kernel::cudnn_handle_, bottom_desc_, filter_desc_, conv_desc_,
         top_desc_, CUDNN_CONVOLUTION_FWD_SPECIFY_WORKSPACE_LIMIT,
@@ -100,6 +101,20 @@ void ConvolutionOp::Reshape() {
         workspace_ = nullptr;
       }
     }
+  }
+#endif
+
+#if defined(USE_NNPACK)
+  if (use_nnpack_) {
+    nnp_algorithm_ = nnp_convolution_algorithm_auto;
+    nnp_transform_ = nnp_convolution_transform_strategy_compute;
+    nnp_input_size_.height = static_cast<size_t>(in_h);
+    nnp_input_size_.width = static_cast<size_t>(in_w);
+    nnp_pad_.top = nnp_pad_.bottom = nnp_pad_.left = nnp_pad_.right =
+        static_cast<size_t>(pad_);
+    nnp_kernel_size_.height = nnp_kernel_size_.width =
+        static_cast<size_t>(kernel_size_);
+    nnp_stride_.height = nnp_stride_.width = static_cast<size_t>(stride_);
   }
 #endif
 
@@ -121,7 +136,6 @@ void ConvolutionOp::Forward() {
         bottoms_[0]->data(), filter_desc_, blobs_[0]->data(), conv_desc_,
         fwd_algo_, workspace_, workspace_fwd_size_,
         cudnn::dataType<float>::zero, top_desc_, tops_[0]->mutable_data()));
-
     if (this->bias_term_) {
       CUDNN_CHECK(cudnnAddTensor(Kernel::cudnn_handle_,
                                  cudnn::dataType<float>::one, bias_desc_,
@@ -133,29 +147,13 @@ void ConvolutionOp::Forward() {
 #endif
 
 #if defined(USE_NNPACK)
-  if (batch == 1 && group_ == 1 && dilation_ == 1 && bias_term_) {
+  if (use_nnpack_) {
     int in_c = bottoms_[0]->shape(1), out_c = tops_[0]->shape(1);
-
-    nnp_size input_size;
-    input_size.height = static_cast<size_t>(bottoms_[0]->shape(2));
-    input_size.width = static_cast<size_t>(bottoms_[0]->shape(3));
-
-    nnp_padding pad;
-    pad.top = pad.bottom = pad.left = pad.right = static_cast<size_t>(pad_);
-
-    nnp_size kernel_size;
-    kernel_size.height = kernel_size.width = static_cast<size_t>(kernel_size_);
-
-    nnp_size stride;
-    stride.height = stride.width = static_cast<size_t>(stride_);
-
-    auto algorithm = nnp_convolution_algorithm_auto;
-    auto transform = nnp_convolution_transform_strategy_tuple_based;
-
     auto status = nnp_convolution_inference(
-        algorithm, transform, in_c, out_c, input_size, pad, kernel_size, stride,
-        bottoms_[0]->data(), blobs_[0]->data(), blobs_[1]->data(),
-        tops_[0]->mutable_data(), nullptr, nullptr);
+        nnp_algorithm_, nnp_transform_, in_c, out_c, nnp_input_size_, nnp_pad_,
+        nnp_kernel_size_, nnp_stride_, bottoms_[0]->data(), blobs_[0]->data(),
+        blobs_[1]->data(), tops_[0]->mutable_data(), nullptr, nullptr,
+        nnp_activation_identity, nullptr, nullptr, nullptr);
     CHECK_EQ(nnp_status_success, status);
     return;
   }

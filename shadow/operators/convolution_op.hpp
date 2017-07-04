@@ -3,6 +3,10 @@
 
 #include "core/operator.hpp"
 
+#if defined(USE_NNPACK)
+#include "nnpack.h"
+#endif
+
 namespace Shadow {
 
 class ConvolutionOp : public Operator {
@@ -20,7 +24,7 @@ class ConvolutionOp : public Operator {
   int num_output_, kernel_size_, stride_, pad_, dilation_, group_,
       out_spatial_dim_, kernel_dim_;
   int weight_offset_, col_offset_, output_offset_;
-  bool bias_term_, use_cudnn_ = false;
+  bool bias_term_, use_cudnn_ = false, use_nnpack_ = false;
 
   BlobF biases_multiplier_, col_image_;
 
@@ -35,6 +39,14 @@ class ConvolutionOp : public Operator {
 
   size_t workspace_fwd_size_ = 0;
   void *workspace_ = nullptr;
+#endif
+
+#if defined(USE_NNPACK)
+  nnp_convolution_algorithm nnp_algorithm_ = nnp_convolution_algorithm_auto;
+  nnp_convolution_transform_strategy nnp_transform_ =
+      nnp_convolution_transform_strategy_compute;
+  nnp_size nnp_input_size_, nnp_kernel_size_, nnp_stride_;
+  nnp_padding nnp_pad_;
 #endif
 };
 
