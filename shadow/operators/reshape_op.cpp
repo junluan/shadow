@@ -77,6 +77,6 @@ void ReshapeOp::Release() {
   // DLOG(INFO) << "Free ReshapeOp!";
 }
 
-REGISTER_OP_CLASS(Reshape);
+REGISTER_OPERATOR(Reshape, ReshapeOp);
 
 }  // namespace Shadow

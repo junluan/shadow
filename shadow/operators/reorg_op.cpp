@@ -33,6 +33,6 @@ void ReorgOp::Release() {
   // DLOG(INFO) << "Free ReorgOp!";
 }
 
-REGISTER_OP_CLASS(Reorg);
+REGISTER_OPERATOR(Reorg, ReorgOp);
 
 }  // namespace Shadow

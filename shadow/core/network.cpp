@@ -152,7 +152,7 @@ void Network::Reshape(int batch) {
 
   ops_.clear();
   for (const auto &op_param : net_param_.op()) {
-    auto *op = OpRegistry::CreateOp(op_param, &ws_);
+    auto *op = CreateOperator(op_param, &ws_);
     op->Setup();
     op->Reshape();
     ops_.push_back(op);

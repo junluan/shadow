@@ -56,6 +56,6 @@ void ActivateOp::Release() {
   // DLOG(INFO) << "Free ActivateOp!";
 }
 
-REGISTER_OP_CLASS(Activate);
+REGISTER_OPERATOR(Activate, ActivateOp);
 
 }  // namespace Shadow

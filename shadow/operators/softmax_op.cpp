@@ -74,6 +74,6 @@ void SoftmaxOp::Release() {
   // DLOG(INFO) << "Free SoftmaxOp!";
 }
 
-REGISTER_OP_CLASS(Softmax);
+REGISTER_OPERATOR(Softmax, SoftmaxOp);
 
 }  // namespace Shadow

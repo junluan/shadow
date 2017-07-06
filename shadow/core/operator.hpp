@@ -2,8 +2,8 @@
 #define SHADOW_CORE_OPERATOR_HPP
 
 #include "blob.hpp"
-#include "factory.hpp"
 #include "params.hpp"
+#include "registry.hpp"
 #include "workspace.hpp"
 
 #include "util/log.hpp"
@@ -106,7 +106,27 @@ class Operator {
   DISABLE_COPY_AND_ASSIGN(Operator);
 };
 
-typedef std::vector<Operator *> VecOp;
+using VecOp = std::vector<Operator *>;
+
+Operator *CreateOperator(const shadow::OpParam &op_param, Workspace *ws);
+
+SHADOW_DECLARE_REGISTRY(OperatorRegistry, Operator, const shadow::OpParam &,
+                        Workspace *);
+#define REGISTER_OPERATOR(name, ...) \
+  SHADOW_REGISTER_CLASS(OperatorRegistry, name, __VA_ARGS__)
+
+class StaticLinkingProtector {
+ public:
+  StaticLinkingProtector() {
+    const auto registered_ops = OperatorRegistry()->Keys().size();
+    if (registered_ops == 0) {
+      LOG(FATAL) << "You might have made a build error: the Shadow library "
+                    "does not seem to be linked with whole-static library "
+                    "option. To do so, use -Wl,-force_load (clang) or "
+                    "-Wl,--whole-archive (gcc) to link the Shadow library.";
+    }
+  }
+};
 
 }  // namespace Shadow
 

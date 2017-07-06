@@ -67,6 +67,6 @@ void EltwiseOp::Release() {
   // DLOG(INFO) << "Free EltwiseOp!";
 }
 
-REGISTER_OP_CLASS(Eltwise);
+REGISTER_OPERATOR(Eltwise, EltwiseOp);
 
 }  // namespace Shadow

@@ -96,6 +96,6 @@ void NormalizeOp::Release() {
   // DLOG(INFO) << "Free NormalizeOp!";
 }
 
-REGISTER_OP_CLASS(Normalize);
+REGISTER_OPERATOR(Normalize, NormalizeOp);
 
 }  // namespace Shadow

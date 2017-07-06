@@ -54,4 +54,13 @@ Operator::~Operator() {
   blobs_.clear();
 }
 
+Operator *CreateOperator(const shadow::OpParam &op_param, Workspace *ws) {
+  static StaticLinkingProtector g_protector;
+  auto *registry = OperatorRegistry();
+  return registry->Create(op_param.type(), op_param, ws);
+}
+
+SHADOW_DEFINE_REGISTRY(OperatorRegistry, Operator, const shadow::OpParam &,
+                       Workspace *);
+
 }  // namespace Shadow
