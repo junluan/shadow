@@ -196,7 +196,7 @@ void BlasSasum(int n, const T *x, int offx, float *y) {
 template <typename T>
 void BlasSgemv(int TA, int M, int N, float alpha, const T *A, int offA,
                const T *x, int offx, float beta, T *y, int offy) {
-  cublasOperation_t transA = TA ? CUBLAS_OP_N : CUBLAS_OP_T;
+  auto transA = TA ? CUBLAS_OP_N : CUBLAS_OP_T;
   cublasSgemv(Kernel::cublas_handle_, transA, N, M, &alpha, A + offA, N,
               x + offx, 1, &beta, y + offy, 1);
 }
@@ -206,8 +206,8 @@ template <typename T>
 void BlasSgemm(int TA, int TB, int M, int N, int K, float alpha, const T *A,
                int offA, const T *B, int offB, float beta, T *C, int offC) {
   int lda = TA ? M : K, ldb = TB ? K : N;
-  cublasOperation_t transA = TA ? CUBLAS_OP_T : CUBLAS_OP_N;
-  cublasOperation_t transB = TB ? CUBLAS_OP_T : CUBLAS_OP_N;
+  auto transA = TA ? CUBLAS_OP_T : CUBLAS_OP_N;
+  auto transB = TB ? CUBLAS_OP_T : CUBLAS_OP_N;
   cublasSgemm(Kernel::cublas_handle_, transB, transA, N, M, K, &alpha, B + offB,
               ldb, A + offA, lda, &beta, C + offC, N);
 }

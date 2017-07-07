@@ -309,8 +309,6 @@ void LRN(const T *in_data, const VecInt &in_shape, int size, float alpha,
 
 __device__ float ActivateValue(float x, int type) {
   switch (type) {
-    case 0:
-      return x; /*linear*/
     case 1:
       return x * (x > 0); /*relu*/
     case 2:

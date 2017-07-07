@@ -5,8 +5,8 @@
 
 namespace Shadow {
 
-typedef std::map<int, VecBoxF> LabelBBox;
-typedef std::vector<LabelBBox> VecLabelBBox;
+using LabelBBox = std::map<int, VecBoxF>;
+using VecLabelBBox = std::vector<LabelBBox>;
 
 class SSD : public Method {
  public:

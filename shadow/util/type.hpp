@@ -54,33 +54,33 @@ class Size {
   Dtype w = 0, h = 0;
 };
 
-typedef Point<int> PointI;
-typedef Point<float> PointF;
-typedef Rect<int> RectI;
-typedef Rect<float> RectF;
-typedef Size<int> SizeI;
-typedef Size<float> SizeF;
+using PointI = Point<int>;
+using PointF = Point<float>;
+using RectI = Rect<int>;
+using RectF = Rect<float>;
+using SizeI = Size<int>;
+using SizeF = Size<float>;
 
-typedef std::vector<PointI> VecPointI;
-typedef std::vector<PointF> VecPointF;
-typedef std::vector<RectI> VecRectI;
-typedef std::vector<RectF> VecRectF;
-typedef std::vector<SizeI> VecSizeI;
-typedef std::vector<SizeF> VecSizeF;
+using VecPointI = std::vector<PointI>;
+using VecPointF = std::vector<PointF>;
+using VecRectI = std::vector<RectI>;
+using VecRectF = std::vector<RectF>;
+using VecSizeI = std::vector<SizeI>;
+using VecSizeF = std::vector<SizeF>;
 
-typedef std::vector<char> VecChar;
-typedef std::vector<unsigned char> VecUChar;
-typedef std::vector<bool> VecBool;
-typedef std::vector<int> VecInt;
-typedef std::vector<float> VecFloat;
-typedef std::vector<double> VecDouble;
-typedef std::vector<std::string> VecString;
-typedef std::list<char> ListChar;
-typedef std::list<unsigned char> ListUChar;
-typedef std::list<bool> ListBool;
-typedef std::list<int> ListInt;
-typedef std::list<float> ListFloat;
-typedef std::list<double> ListDouble;
-typedef std::list<std::string> ListString;
+using VecChar = std::vector<char>;
+using VecUChar = std::vector<unsigned char>;
+using VecBool = std::vector<bool>;
+using VecInt = std::vector<int>;
+using VecFloat = std::vector<float>;
+using VecDouble = std::vector<double>;
+using VecString = std::vector<std::string>;
+using ListChar = std::list<char>;
+using ListUChar = std::list<unsigned char>;
+using ListBool = std::list<bool>;
+using ListInt = std::list<int>;
+using ListFloat = std::list<float>;
+using ListDouble = std::list<double>;
+using ListString = std::list<std::string>;
 
 #endif  // SHADOW_UTIL_TYPE_HPP

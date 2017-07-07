@@ -279,7 +279,7 @@ template <typename T>
 void BlasSgemv(int TA, int M, int N, float alpha, const T *A, int offA,
                const T *x, int offx, float beta, T *y, int offy) {
 #if defined(USE_OpenBLAS) | defined(USE_MKL)
-  CBLAS_TRANSPOSE transA = TA ? CblasTrans : CblasNoTrans;
+  auto transA = TA ? CblasTrans : CblasNoTrans;
   cblas_sgemv(CblasRowMajor, transA, M, N, alpha, A + offA, N, x + offx, 1,
               beta, y + offy, 1);
 #elif defined(USE_Eigen)
@@ -361,8 +361,8 @@ void BlasSgemm(int TA, int TB, int M, int N, int K, float alpha, const T *A,
                int offA, const T *B, int offB, float beta, T *C, int offC) {
 #if defined(USE_OpenBLAS) | defined(USE_MKL)
   int lda = TA ? M : K, ldb = TB ? K : N;
-  CBLAS_TRANSPOSE transA = TA ? CblasTrans : CblasNoTrans;
-  CBLAS_TRANSPOSE transB = TB ? CblasTrans : CblasNoTrans;
+  auto transA = TA ? CblasTrans : CblasNoTrans;
+  auto transB = TB ? CblasTrans : CblasNoTrans;
   cblas_sgemm(CblasRowMajor, transA, transB, M, N, K, alpha, A + offA, lda,
               B + offB, ldb, beta, C + offC, N);
 #elif defined(USE_Eigen)
@@ -442,7 +442,7 @@ template <typename T>
 void ChannelMax(int num, int channels, int spatial_dim, const T *data,
                 T *val_max) {
   size_t global = num * spatial_dim;
-  EasyCL::Kernel *kernel = Kernel::cl_kernels_["ChannelMax"];
+  auto *kernel = Kernel::cl_kernels_["ChannelMax"];
   kernel->SetArguments(num, channels, spatial_dim, *data, *val_max);
   kernel->Launch(*Kernel::queue_, {global}, Kernel::event_);
   Kernel::queue_->Finish();
@@ -451,7 +451,7 @@ template <typename T>
 void ChannelSub(int count, int num, int channels, int spatial_dim,
                 const T *val_sub, T *data) {
   size_t global = count;
-  EasyCL::Kernel *kernel = Kernel::cl_kernels_["ChannelSub"];
+  auto *kernel = Kernel::cl_kernels_["ChannelSub"];
   kernel->SetArguments(count, num, channels, spatial_dim, *val_sub, *data);
   kernel->Launch(*Kernel::queue_, {global}, Kernel::event_);
   Kernel::queue_->Finish();
@@ -460,7 +460,7 @@ template <typename T>
 void ChannelSum(int num, int channels, int spatial_dim, const T *data,
                 T *val_sum) {
   size_t global = num * spatial_dim;
-  EasyCL::Kernel *kernel = Kernel::cl_kernels_["ChannelSum"];
+  auto *kernel = Kernel::cl_kernels_["ChannelSum"];
   kernel->SetArguments(num, channels, spatial_dim, *data, *val_sum);
   kernel->Launch(*Kernel::queue_, {global}, Kernel::event_);
   Kernel::queue_->Finish();
@@ -469,7 +469,7 @@ template <typename T>
 void ChannelDiv(int count, int num, int channels, int spatial_dim,
                 const T *val_div, T *data) {
   size_t global = count;
-  EasyCL::Kernel *kernel = Kernel::cl_kernels_["ChannelDiv"];
+  auto *kernel = Kernel::cl_kernels_["ChannelDiv"];
   kernel->SetArguments(count, num, channels, spatial_dim, *val_div, *data);
   kernel->Launch(*Kernel::queue_, {global}, Kernel::event_);
   Kernel::queue_->Finish();
@@ -478,7 +478,7 @@ void ChannelDiv(int count, int num, int channels, int spatial_dim,
 template <typename T>
 void Set(int n, float val, T *y, int offy) {
   size_t global = n;
-  EasyCL::Kernel *kernel = Kernel::cl_kernels_["Set"];
+  auto *kernel = Kernel::cl_kernels_["Set"];
   kernel->SetArguments(n, val, *y, offy);
   kernel->Launch(*Kernel::queue_, {global}, Kernel::event_);
   Kernel::queue_->Finish();
@@ -487,7 +487,7 @@ void Set(int n, float val, T *y, int offy) {
 template <typename T>
 void Add(int n, float val, T *y, int offy) {
   size_t global = n;
-  EasyCL::Kernel *kernel = Kernel::cl_kernels_["AddScalar"];
+  auto *kernel = Kernel::cl_kernels_["AddScalar"];
   kernel->SetArguments(n, val, *y, offy);
   kernel->Launch(*Kernel::queue_, {global}, Kernel::event_);
   Kernel::queue_->Finish();
@@ -498,7 +498,7 @@ void Add(int n, float val, T *y, int offy) {
   inline void name(int n, const T *a, int offa, const T *b, int offb, T *y, \
                    int offy) {                                              \
     size_t global = n;                                                      \
-    EasyCL::Kernel *kernel = Kernel::cl_kernels_[kname];                    \
+    auto *kernel = Kernel::cl_kernels_[kname];                              \
     kernel->SetArguments(n, *a, offa, *b, offb, *y, offy);                  \
     kernel->Launch(*Kernel::queue_, {global}, Kernel::event_);              \
     Kernel::queue_->Finish();                                               \
@@ -510,7 +510,7 @@ void Add(int n, float val, T *y, int offy) {
   template <typename T>                                           \
   inline void name(int n, const T *a, int offa, T *y, int offy) { \
     size_t global = n;                                            \
-    EasyCL::Kernel *kernel = Kernel::cl_kernels_[kname];          \
+    auto *kernel = Kernel::cl_kernels_[kname];                    \
     kernel->SetArguments(n, *a, offa, *y, offy);                  \
     kernel->Launch(*Kernel::queue_, {global}, Kernel::event_);    \
     Kernel::queue_->Finish();                                     \
@@ -533,7 +533,7 @@ BLAS_UNARY_FUNC(Abs, "Abs");
 template <typename T>
 void Pow(int n, const T *a, int offa, float alpha, T *y, int offy) {
   size_t global = n;
-  EasyCL::Kernel *kernel = Kernel::cl_kernels_["Pow"];
+  auto *kernel = Kernel::cl_kernels_["Pow"];
   kernel->SetArguments(n, *a, offa, alpha, *y, offy);
   kernel->Launch(*Kernel::queue_, {global}, Kernel::event_);
   Kernel::queue_->Finish();
@@ -580,7 +580,7 @@ void BlasSasum(int n, const T *x, int offx, float *y) {
 template <typename T>
 void BlasSgemv(int TA, int M, int N, float alpha, const T *A, int offA,
                const T *x, int offx, float beta, T *y, int offy) {
-  clblasTranspose transA = TA ? clblasTrans : clblasNoTrans;
+  auto transA = TA ? clblasTrans : clblasNoTrans;
   clblasSgemv(clblasRowMajor, transA, M, N, alpha, (*A)(), offA, N, (*x)(),
               offx, 1, beta, (*y)(), offy, 1, 1, Kernel::queue_->pointer(), 0,
               nullptr, nullptr);
@@ -592,8 +592,8 @@ template <typename T>
 void BlasSgemm(int TA, int TB, int M, int N, int K, float alpha, const T *A,
                int offA, const T *B, int offB, float beta, T *C, int offC) {
   int lda = TA ? M : K, ldb = TB ? K : N;
-  clblasTranspose transA = TA ? clblasTrans : clblasNoTrans;
-  clblasTranspose transB = TB ? clblasTrans : clblasNoTrans;
+  auto transA = TA ? clblasTrans : clblasNoTrans;
+  auto transB = TB ? clblasTrans : clblasNoTrans;
   clblasSgemm(clblasRowMajor, transA, transB, M, N, K, alpha, (*A)(), offA, lda,
               (*B)(), offB, ldb, beta, (*C)(), offC, N, 1,
               Kernel::queue_->pointer(), 0, nullptr, nullptr);

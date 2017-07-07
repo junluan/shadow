@@ -4,6 +4,8 @@
 #if defined(USE_CUDA)
 #include "cublas_v2.h"
 #include "cuda_runtime.h"
+#include "device_launch_parameters.h"
+
 #include "cudnn.hpp"
 #elif defined(USE_CL)
 #include "easycl/easycl.hpp"

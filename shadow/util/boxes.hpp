@@ -43,11 +43,11 @@ class Box {
   Dtype xmin, ymin, xmax, ymax;
 };
 
-typedef Box<int> BoxI;
-typedef Box<float> BoxF;
+using BoxI = Box<int>;
+using BoxF = Box<float>;
 
-typedef std::vector<BoxI> VecBoxI;
-typedef std::vector<BoxF> VecBoxF;
+using VecBoxI = std::vector<BoxI>;
+using VecBoxF = std::vector<BoxF>;
 
 namespace Boxes {
 

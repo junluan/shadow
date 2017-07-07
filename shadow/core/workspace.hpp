@@ -4,13 +4,12 @@
 #include "blob.hpp"
 
 #include <map>
+#include <string>
 
 namespace Shadow {
 
 class Workspace {
  public:
-  typedef std::map<std::string, BlobF *> BlobMap;
-
   Workspace() {}
   ~Workspace() {
     for (auto it : blob_map_) {
@@ -35,7 +34,7 @@ class Workspace {
   BlobF *GetBlob(const std::string &name);
 
  private:
-  BlobMap blob_map_;
+  std::map<std::string, BlobF *> blob_map_;
 
   DISABLE_COPY_AND_ASSIGN(Workspace);
 };

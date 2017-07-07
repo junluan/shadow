@@ -179,11 +179,11 @@ class Blob {
   DISABLE_COPY_AND_ASSIGN(Blob<Dtype>);
 };
 
-typedef Blob<int> BlobI;
-typedef Blob<float> BlobF;
+using BlobI = Blob<int>;
+using BlobF = Blob<float>;
 
-typedef std::vector<BlobI *> VecBlobI;
-typedef std::vector<BlobF *> VecBlobF;
+using VecBlobI = std::vector<BlobI *>;
+using VecBlobF = std::vector<BlobF *>;
 
 }  // namespace Shadow
 

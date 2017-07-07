@@ -307,7 +307,7 @@ void DataTransform(const T *in_data, const VecInt &in_shape, float scale,
   int count = in_shape[0] * in_c * spatial_dim;
 
   size_t global = count;
-  EasyCL::Kernel *kernel = Kernel::cl_kernels_["DataTransform"];
+  auto *kernel = Kernel::cl_kernels_["DataTransform"];
   kernel->SetArguments(*in_data, count, in_c, spatial_dim, scale, num_mean,
                        *mean_value, *out_data);
   kernel->Launch(*Kernel::queue_, {global}, Kernel::event_);
@@ -323,7 +323,7 @@ void Im2Col(const T *in_data, const VecInt &in_shape, int offset,
   int count = in_c * out_h * out_w;
 
   size_t global = count;
-  EasyCL::Kernel *kernel = Kernel::cl_kernels_["Im2Col"];
+  auto *kernel = Kernel::cl_kernels_["Im2Col"];
   kernel->SetArguments(*in_data, offset, count, in_c, in_h, in_w, kernel_size,
                        stride, pad, dilation, out_h, out_w, *out_data);
   kernel->Launch(*Kernel::queue_, {global}, Kernel::event_);
@@ -340,7 +340,7 @@ void Pooling(const T *in_data, const VecInt &in_shape, int kernel_size,
   int count = batch * in_c * out_h * out_w;
 
   size_t global = count;
-  EasyCL::Kernel *kernel = Kernel::cl_kernels_["Pooling"];
+  auto *kernel = Kernel::cl_kernels_["Pooling"];
   kernel->SetArguments(*in_data, count, in_c, in_h, in_w, kernel_size, stride,
                        pad, mode, out_h, out_w, *out_data);
   kernel->Launch(*Kernel::queue_, {global}, Kernel::event_);
@@ -352,7 +352,7 @@ void Concat(const T *in_data, int count, int num_concats, int concat_size,
             int top_concat_axis, int bottom_concat_axis, int offset_concat_axis,
             T *out_data) {
   size_t global = count;
-  EasyCL::Kernel *kernel = Kernel::cl_kernels_["Concat"];
+  auto *kernel = Kernel::cl_kernels_["Concat"];
   kernel->SetArguments(*in_data, count, num_concats, concat_size,
                        top_concat_axis, bottom_concat_axis, offset_concat_axis,
                        *out_data);
@@ -365,7 +365,7 @@ void Permute(const T *in_data, int count, int num_axes,
              const Dtype *permute_order, const Dtype *old_steps,
              const Dtype *new_steps, T *out_data) {
   size_t global = count;
-  EasyCL::Kernel *kernel = Kernel::cl_kernels_["Permute"];
+  auto *kernel = Kernel::cl_kernels_["Permute"];
   kernel->SetArguments(*in_data, count, num_axes, *permute_order, *old_steps,
                        *new_steps, *out_data);
   kernel->Launch(*Kernel::queue_, {global}, Kernel::event_);
@@ -376,7 +376,7 @@ template <typename T>
 void Scale(const T *in_data, int count, const T *scale_data, const T *bias_data,
            int scale_dim, int inner_dim, T *out_data) {
   size_t global = count;
-  EasyCL::Kernel *kernel = Kernel::cl_kernels_["Scale"];
+  auto *kernel = Kernel::cl_kernels_["Scale"];
   kernel->SetArguments(*in_data, count, *scale_data, *bias_data, scale_dim,
                        inner_dim, *out_data);
   kernel->Launch(*Kernel::queue_, {global}, Kernel::event_);
@@ -387,7 +387,7 @@ template <typename T>
 void Bias(const T *in_data, int count, const T *bias_data, int bias_dim,
           int inner_dim, T *out_data) {
   size_t global = count;
-  EasyCL::Kernel *kernel = Kernel::cl_kernels_["Bias"];
+  auto *kernel = Kernel::cl_kernels_["Bias"];
   kernel->SetArguments(*in_data, count, *bias_data, bias_dim, inner_dim,
                        *out_data);
   kernel->Launch(*Kernel::queue_, {global}, Kernel::event_);
@@ -403,7 +403,7 @@ void Reorg(const T *in_data, const VecInt &in_shape, int stride, T *out_data) {
   int count = batch * out_c * out_h * out_w;
 
   size_t global = count;
-  EasyCL::Kernel *kernel = Kernel::cl_kernels_["Reorg"];
+  auto *kernel = Kernel::cl_kernels_["Reorg"];
   kernel->SetArguments(*in_data, count, in_c, in_h, in_w, out_c, out_h, out_w,
                        stride, *out_data);
   kernel->Launch(*Kernel::queue_, {global}, Kernel::event_);
@@ -419,7 +419,7 @@ void LRN(const T *in_data, const VecInt &in_shape, int size, float alpha,
   int count = batch * in_h * in_w;
 
   size_t global = count;
-  EasyCL::Kernel *kernel = Kernel::cl_kernels_["LRNFillScale"];
+  auto *kernel = Kernel::cl_kernels_["LRNFillScale"];
   kernel->SetArguments(*in_data, count, in_c, in_h, in_w, size, alpha_over_size,
                        k, *scale_data);
   kernel->Launch(*Kernel::queue_, {global}, Kernel::event_);
@@ -436,7 +436,7 @@ void LRN(const T *in_data, const VecInt &in_shape, int size, float alpha,
 template <typename T>
 void Activate(T *data, int count, int type) {
   size_t global = count;
-  EasyCL::Kernel *kernel = Kernel::cl_kernels_["Activate"];
+  auto *kernel = Kernel::cl_kernels_["Activate"];
   kernel->SetArguments(*data, count, type);
   kernel->Launch(*Kernel::queue_, {global}, Kernel::event_);
   Kernel::queue_->Finish();
@@ -450,7 +450,7 @@ void PRelu(T *data, const VecInt &in_shape, bool channel_shared,
   int div_factor = channel_shared ? channels : 1;
 
   size_t global = count;
-  EasyCL::Kernel *kernel = Kernel::cl_kernels_["PRelu"];
+  auto *kernel = Kernel::cl_kernels_["PRelu"];
   kernel->SetArguments(*data, count, channels, dim, div_factor, *slope_data);
   kernel->Launch(*Kernel::queue_, {global}, Kernel::event_);
   Kernel::queue_->Finish();
