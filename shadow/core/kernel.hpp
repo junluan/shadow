@@ -1,12 +1,18 @@
 #ifndef SHADOW_CORE_KERNEL_HPP
 #define SHADOW_CORE_KERNEL_HPP
 
-#if defined(USE_CUDA)
+#if !defined(USE_CUDA) & !defined(USE_CL)
+#if defined(USE_NNPACK)
+#include "nnpack.h"
+#endif
+
+#elif defined(USE_CUDA)
 #include "cublas_v2.h"
 #include "cuda_runtime.h"
 #include "device_launch_parameters.h"
 
 #include "cudnn.hpp"
+
 #elif defined(USE_CL)
 #include "easycl/easycl.hpp"
 using BufferI = EasyCL::Buffer<int>;
@@ -54,7 +60,14 @@ void CopyBuffer(int size, const T *src, T *des);
 template <typename T>
 void ReleaseBuffer(T *buffer);
 
-#if defined(USE_CUDA)
+#if !defined(USE_CUDA) & !defined(USE_CL)
+#if defined(USE_NNPACK)
+const int NumThreads = 0;
+
+extern pthreadpool_t nnp_pthreadpool_;
+#endif
+
+#elif defined(USE_CUDA)
 extern cublasHandle_t cublas_handle_;
 
 #elif defined(USE_CL)

@@ -76,6 +76,18 @@ void ConvertCommon(const caffe::NetParameter& caffe_model,
   }
 }
 
+void ConvertInput(const caffe::NetParameter& caffe_deploy,
+                  const std::vector<int>& input_shape,
+                  shadow::NetParam* shadow_net) {
+  auto shadow_op = shadow_net->add_op();
+  shadow_op->set_name("data");
+  shadow_op->set_type("Data");
+  for (const auto& top_name : caffe_deploy.input()) {
+    shadow_op->add_top(top_name);
+  }
+  set_v_i(shadow_op, "data_shape", input_shape);
+}
+
 void ConvertData(const caffe::LayerParameter& data_layer,
                  const std::vector<int>& input_shape,
                  shadow::NetParam* shadow_net) {
@@ -487,8 +499,14 @@ void Convert(const caffe::NetParameter& caffe_deploy,
              const std::vector<int>& input_shape,
              shadow::NetParam* shadow_net) {
   shadow_net->set_name(caffe_deploy.name());
-  ConvertData(caffe_deploy.layer(0), input_shape, shadow_net);
-  for (int l = 1; l < caffe_deploy.layer_size(); ++l) {
+  int start_layer = 0;
+  if (caffe_deploy.input_size() > 0) {
+    ConvertInput(caffe_deploy, input_shape, shadow_net);
+  } else {
+    ConvertData(caffe_deploy.layer(0), input_shape, shadow_net);
+    start_layer = 1;
+  }
+  for (int l = start_layer; l < caffe_deploy.layer_size(); ++l) {
     const auto& caffe_layer = caffe_deploy.layer(l);
     const auto& layer_type = caffe_layer.type();
     if (!layer_type.compare("ReLU") || !layer_type.compare("PReLU")) {

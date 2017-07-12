@@ -153,7 +153,7 @@ void ConvolutionOp::Forward() {
         nnp_algorithm_, nnp_transform_, in_c, out_c, nnp_input_size_, nnp_pad_,
         nnp_kernel_size_, nnp_stride_, bottoms_[0]->data(), blobs_[0]->data(),
         blobs_[1]->data(), tops_[0]->mutable_data(), nullptr, nullptr,
-        nnp_activation_identity, nullptr, nullptr, nullptr);
+        nnp_activation_identity, nullptr, Kernel::nnp_pthreadpool_, nullptr);
     CHECK_EQ(nnp_status_success, status);
     return;
   }

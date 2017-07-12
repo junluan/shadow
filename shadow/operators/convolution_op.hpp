@@ -3,10 +3,6 @@
 
 #include "core/operator.hpp"
 
-#if defined(USE_NNPACK)
-#include "nnpack.h"
-#endif
-
 namespace Shadow {
 
 class ConvolutionOp : public Operator {

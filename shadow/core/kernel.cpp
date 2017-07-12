@@ -1,4 +1,5 @@
 #include "kernel.hpp"
+#include "util/log.hpp"
 #include "util/util.hpp"
 
 #if defined(USE_CL)
@@ -9,7 +10,32 @@ namespace Shadow {
 
 namespace Kernel {
 
-#if defined(USE_CL)
+#if !defined(USE_CUDA) & !defined(USE_CL)
+#if defined(USE_NNPACK)
+pthreadpool_t nnp_pthreadpool_ = nullptr;
+#endif
+
+void Setup(int device_id) {
+#if defined(USE_NNPACK)
+  CHECK_EQ(nnp_initialize(), nnp_status_success);
+  if (nnp_pthreadpool_ == nullptr) {
+    nnp_pthreadpool_ = pthreadpool_create(NumThreads);
+    CHECK_NOTNULL(nnp_pthreadpool_);
+  }
+#endif
+}
+
+void Release() {
+#if defined(USE_NNPACK)
+  CHECK_EQ(nnp_deinitialize(), nnp_status_success);
+  if (nnp_pthreadpool_ != nullptr) {
+    pthreadpool_destroy(nnp_pthreadpool_);
+    nnp_pthreadpool_ = nullptr;
+  }
+#endif
+}
+
+#elif defined(USE_CL)
 EasyCL::Device *device_ = nullptr;
 EasyCL::Context *context_ = nullptr;
 EasyCL::Queue *queue_ = nullptr;
