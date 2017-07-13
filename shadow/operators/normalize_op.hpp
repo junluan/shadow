@@ -11,10 +11,10 @@ class NormalizeOp : public Operator {
       : Operator(op_param, ws) {}
   ~NormalizeOp() { Release(); }
 
-  void Setup();
-  void Reshape();
-  void Forward();
-  void Release();
+  virtual void Setup() override;
+  virtual void Reshape() override;
+  virtual void Forward() override;
+  virtual void Release() override;
 
  private:
   bool across_spatial_, channel_shared_;

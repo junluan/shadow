@@ -11,10 +11,10 @@ class ReshapeOp : public Operator {
       : Operator(op_param, ws) {}
   ~ReshapeOp() { Release(); }
 
-  void Setup();
-  void Reshape();
-  void Forward();
-  void Release();
+  virtual void Setup() override;
+  virtual void Reshape() override;
+  virtual void Forward() override;
+  virtual void Release() override;
 
  private:
   int axis_, num_axes_, inferred_axis_, constant_count_;

@@ -9,6 +9,8 @@ void LRNOp::Setup() {
   alpha_ = arg_helper_.GetSingleArgument<float>("alpha", 1);
   beta_ = arg_helper_.GetSingleArgument<float>("beta", 0.75);
   norm_region_ = arg_helper_.GetSingleArgument<int>("norm_region", 0);
+  CHECK_EQ(norm_region_, 0)
+      << "Currently only support norm region method: Across Channels!";
   k_ = arg_helper_.GetSingleArgument<float>("k", 1);
 }
 

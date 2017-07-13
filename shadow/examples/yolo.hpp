@@ -5,21 +5,22 @@
 
 namespace Shadow {
 
-class YOLO : public Method {
+class YOLO final : public Method {
  public:
   YOLO() {}
   ~YOLO() { Release(); }
 
-  void Setup(const std::string &model_file, int classes, int batch);
+  virtual void Setup(const std::string &model_file, int classes,
+                     int batch) override;
 
-  void Predict(const JImage &im_src, const VecRectF &rois,
-               std::vector<VecBoxF> *Bboxes);
+  virtual void Predict(const JImage &im_src, const VecRectF &rois,
+                       std::vector<VecBoxF> *Bboxes) override;
 #if defined(USE_OpenCV)
-  void Predict(const cv::Mat &im_mat, const VecRectF &rois,
-               std::vector<VecBoxF> *Bboxes);
+  virtual void Predict(const cv::Mat &im_mat, const VecRectF &rois,
+                       std::vector<VecBoxF> *Bboxes) override;
 #endif
 
-  void Release();
+  virtual void Release() override;
 
  private:
   void Process(const float *data, std::vector<VecBoxF> *Bboxes);

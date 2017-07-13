@@ -11,10 +11,10 @@ class ConvolutionOp : public Operator {
       : Operator(op_param, ws) {}
   ~ConvolutionOp() { Release(); }
 
-  void Setup();
-  void Reshape();
-  void Forward();
-  void Release();
+  virtual void Setup() override;
+  virtual void Reshape() override;
+  virtual void Forward() override;
+  virtual void Release() override;
 
  private:
   int num_output_, kernel_size_, stride_, pad_, dilation_, group_,

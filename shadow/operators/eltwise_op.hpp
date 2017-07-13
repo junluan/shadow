@@ -11,10 +11,10 @@ class EltwiseOp : public Operator {
       : Operator(op_param, ws) {}
   ~EltwiseOp() { Release(); }
 
-  void Setup();
-  void Reshape();
-  void Forward();
-  void Release();
+  virtual void Setup() override;
+  virtual void Reshape() override;
+  virtual void Forward() override;
+  virtual void Release() override;
 
  private:
   int operation_, coeff_size_;

@@ -21,9 +21,18 @@ class Method {
                        std::vector<VecBoxF> *Bboxes) {
     LOG(INFO) << "Predict for JImage!";
   }
+  virtual void Predict(const JImage &im_src, const VecRectF &rois,
+                       std::vector<VecFloat> *scores) {
+    LOG(INFO) << "Predict for JImage!";
+  }
+
 #if defined(USE_OpenCV)
   virtual void Predict(const cv::Mat &im_mat, const VecRectF &rois,
                        std::vector<VecBoxF> *Bboxes) {
+    LOG(INFO) << "Predict for Mat!";
+  }
+  virtual void Predict(const cv::Mat &im_mat, const VecRectF &rois,
+                       std::vector<VecFloat> *scores) {
     LOG(INFO) << "Predict for Mat!";
   }
 #endif

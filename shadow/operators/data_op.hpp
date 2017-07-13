@@ -11,10 +11,10 @@ class DataOp : public Operator {
       : Operator(op_param, ws) {}
   ~DataOp() { Release(); }
 
-  void Setup();
-  void Reshape();
-  void Forward();
-  void Release();
+  virtual void Setup() override;
+  virtual void Reshape() override;
+  virtual void Forward() override;
+  virtual void Release() override;
 
  private:
   float scale_;

@@ -11,10 +11,10 @@ class ReorgOp : public Operator {
       : Operator(op_param, ws) {}
   ~ReorgOp() { Release(); }
 
-  void Setup();
-  void Reshape();
-  void Forward();
-  void Release();
+  virtual void Setup() override;
+  virtual void Reshape() override;
+  virtual void Forward() override;
+  virtual void Release() override;
 
  private:
   int stride_;
