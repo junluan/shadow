@@ -1,14 +1,14 @@
-#ifndef SHADOW_EXAMPLES_YOLO_HPP
-#define SHADOW_EXAMPLES_YOLO_HPP
+#ifndef SHADOW_EXAMPLES_DETECTION_YOLO_HPP
+#define SHADOW_EXAMPLES_DETECTION_YOLO_HPP
 
 #include "method.hpp"
 
 namespace Shadow {
 
-class YOLO final : public Method {
+class DetectionYOLO final : public Method {
  public:
-  YOLO() {}
-  ~YOLO() { Release(); }
+  DetectionYOLO() {}
+  ~DetectionYOLO() { Release(); }
 
   virtual void Setup(const std::string &model_file, int classes,
                      int batch) override;
@@ -38,4 +38,4 @@ class YOLO final : public Method {
 
 }  // namespace Shadow
 
-#endif  // SHADOW_EXAMPLES_YOLO_HPP
+#endif  // SHADOW_EXAMPLES_DETECTION_YOLO_HPP

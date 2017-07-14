@@ -1,23 +1,23 @@
-#ifndef SHADOW_EXAMPLES_DEMO_HPP
-#define SHADOW_EXAMPLES_DEMO_HPP
+#ifndef SHADOW_EXAMPLES_DEMO_DETECTION_HPP
+#define SHADOW_EXAMPLES_DEMO_DETECTION_HPP
 
-#include "ssd.hpp"
-#include "yolo.hpp"
+#include "detection_ssd.hpp"
+#include "detection_yolo.hpp"
 
 namespace Shadow {
 
-class Demo {
+class DemoDetection {
  public:
-  Demo(const std::string &method_name = "ssd") {
+  DemoDetection(const std::string &method_name = "ssd") {
     if (!method_name.compare("ssd")) {
-      method_ = new SSD();
+      method_ = new DetectionSSD();
     } else if (!method_name.compare("yolo")) {
-      method_ = new YOLO();
+      method_ = new DetectionYOLO();
     } else {
       LOG(FATAL) << "Unknown method " << method_name;
     }
   }
-  ~Demo() { Release(); }
+  ~DemoDetection() { Release(); }
 
   void Setup(const std::string &model_file, int classes, int batch = 1) {
     method_->Setup(model_file, classes, batch);
@@ -37,9 +37,9 @@ class Demo {
   void CameraTest(int camera, bool video_write = false);
 #endif
 
-  void Predict(const JImage &image, const VecRectF &rois,
+  void Predict(const JImage &im_src, const VecRectF &rois,
                std::vector<VecBoxF> *Bboxes) {
-    method_->Predict(image, rois, Bboxes);
+    method_->Predict(im_src, rois, Bboxes);
   }
 
  private:
@@ -61,4 +61,4 @@ class Demo {
 
 }  // namespace Shadow
 
-#endif  // SHADOW_EXAMPLES_DEMO_HPP
+#endif  // SHADOW_EXAMPLES_DEMO_DETECTION_HPP

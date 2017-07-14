@@ -1,9 +1,9 @@
-#include "demo.hpp"
+#include "demo_detection.hpp"
 #include "util/jimage_proc.hpp"
 
 namespace Shadow {
 
-void Demo::Test(const std::string &image_file) {
+void DemoDetection::Test(const std::string &image_file) {
   im_ini_.Read(image_file);
   VecRectF rois{RectF(0, 0, im_ini_.w_, im_ini_.h_)};
   timer_.start();
@@ -27,7 +27,7 @@ void Demo::Test(const std::string &image_file) {
   im_ini_.Show("result");
 }
 
-void Demo::BatchTest(const std::string &list_file, bool image_write) {
+void DemoDetection::BatchTest(const std::string &list_file, bool image_write) {
   const auto &image_list = Util::load_list(list_file);
   int num_im = image_list.size(), count = 0;
   double time_cost = 0;
@@ -64,8 +64,8 @@ void Demo::BatchTest(const std::string &list_file, bool image_write) {
 }
 
 #if defined(USE_OpenCV)
-void Demo::VideoTest(const std::string &video_file, bool video_show,
-                     bool video_write) {
+void DemoDetection::VideoTest(const std::string &video_file, bool video_show,
+                              bool video_write) {
   cv::VideoCapture capture;
   CHECK(capture.open(video_file)) << "Error when opening video file "
                                   << video_file;
@@ -83,7 +83,7 @@ void Demo::VideoTest(const std::string &video_file, bool video_show,
   writer.release();
 }
 
-void Demo::CameraTest(int camera, bool video_write) {
+void DemoDetection::CameraTest(int camera, bool video_write) {
   cv::VideoCapture capture;
   CHECK(capture.open(camera)) << "Error when opening camera!";
   float rate = static_cast<float>(capture.get(CV_CAP_PROP_FPS));
@@ -100,9 +100,9 @@ void Demo::CameraTest(int camera, bool video_write) {
   writer.release();
 }
 
-void Demo::CaptureTest(cv::VideoCapture *capture,
-                       const std::string &window_name, bool video_show,
-                       cv::VideoWriter *writer) {
+void DemoDetection::CaptureTest(cv::VideoCapture *capture,
+                                const std::string &window_name, bool video_show,
+                                cv::VideoWriter *writer) {
   float rate = static_cast<float>(capture->get(CV_CAP_PROP_FPS));
   if (video_show) {
     cv::namedWindow(window_name, cv::WINDOW_NORMAL);
@@ -146,8 +146,8 @@ void Demo::CaptureTest(cv::VideoCapture *capture,
   }
 }
 
-void Demo::DrawDetections(const VecBoxF &boxes, cv::Mat *im_mat,
-                          bool console_show) {
+void DemoDetection::DrawDetections(const VecBoxF &boxes, cv::Mat *im_mat,
+                                   bool console_show) {
   for (const auto &boxF : boxes) {
     const BoxI box(boxF);
     int color_r = (box.label * 100) % 255;
@@ -166,8 +166,8 @@ void Demo::DrawDetections(const VecBoxF &boxes, cv::Mat *im_mat,
 }
 #endif
 
-void Demo::PrintDetections(const std::string &im_name, const VecBoxF &boxes,
-                           std::ostream *os) {
+void DemoDetection::PrintDetections(const std::string &im_name,
+                                    const VecBoxF &boxes, std::ostream *os) {
   *os << im_name << ":" << std::endl;
   *os << "objects:" << std::endl;
   for (const auto &boxF : boxes) {

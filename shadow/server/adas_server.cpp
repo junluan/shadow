@@ -1,6 +1,6 @@
 #include <grpc++/grpc++.h>
 
-#include "examples/demo.hpp"
+#include "examples/demo_detection.hpp"
 #include "server/server.grpc.pb.h"
 #include "util/jimage_proc.hpp"
 
@@ -12,7 +12,7 @@ using grpc::Status;
 class ADASService final : public shadow::ADAS::Service {
  public:
   ADASService(const std::string &model, const std::string &method = "ssd") {
-    demo_ = new Shadow::Demo(method);
+    demo_ = new Shadow::DemoDetection(method);
     demo_->Setup(model, 3, 1);
   }
   ~ADASService() {
@@ -56,7 +56,7 @@ class ADASService final : public shadow::ADAS::Service {
   }
 
  private:
-  Shadow::Demo *demo_;
+  Shadow::DemoDetection *demo_;
   Shadow::JImage im_ini_;
   std::vector<Shadow::VecBoxF> Bboxes_;
 };

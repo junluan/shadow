@@ -1,5 +1,5 @@
-#ifndef SHADOW_EXAMPLES_SSD_HPP
-#define SHADOW_EXAMPLES_SSD_HPP
+#ifndef SHADOW_EXAMPLES_DETECTION_SSD_HPP
+#define SHADOW_EXAMPLES_DETECTION_SSD_HPP
 
 #include "method.hpp"
 
@@ -8,10 +8,10 @@ namespace Shadow {
 using LabelBBox = std::map<int, VecBoxF>;
 using VecLabelBBox = std::vector<LabelBBox>;
 
-class SSD final : public Method {
+class DetectionSSD final : public Method {
  public:
-  SSD() {}
-  ~SSD() { Release(); }
+  DetectionSSD() {}
+  ~DetectionSSD() { Release(); }
 
   virtual void Setup(const std::string &model_file, int classes,
                      int batch) override;
@@ -62,4 +62,4 @@ class SSD final : public Method {
 
 }  // namespace Shadow
 
-#endif  // SHADOW_EXAMPLES_SSD_HPP
+#endif  // SHADOW_EXAMPLES_DETECTION_SSD_HPP

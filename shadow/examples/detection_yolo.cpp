@@ -1,8 +1,9 @@
-#include "yolo.hpp"
+#include "detection_yolo.hpp"
 
 namespace Shadow {
 
-void YOLO::Setup(const std::string &model_file, int classes, int batch) {
+void DetectionYOLO::Setup(const std::string &model_file, int classes,
+                          int batch) {
   net_.Setup();
 
   net_.LoadModel(model_file, batch);
@@ -25,8 +26,8 @@ void YOLO::Setup(const std::string &model_file, int classes, int batch) {
   num_km_ = 5;
 }
 
-void YOLO::Predict(const JImage &im_src, const VecRectF &rois,
-                   std::vector<VecBoxF> *Bboxes) {
+void DetectionYOLO::Predict(const JImage &im_src, const VecRectF &rois,
+                            std::vector<VecBoxF> *Bboxes) {
   CHECK_LE(rois.size(), batch_);
   for (int b = 0; b < rois.size(); ++b) {
     ConvertData(im_src, in_data_.data() + b * in_num_, rois[b], in_h_, in_w_,
@@ -49,20 +50,20 @@ void YOLO::Predict(const JImage &im_src, const VecRectF &rois,
 }
 
 #if defined(USE_OpenCV)
-void YOLO::Predict(const cv::Mat &im_mat, const VecRectF &rois,
-                   std::vector<VecBoxF> *Bboxes) {
+void DetectionYOLO::Predict(const cv::Mat &im_mat, const VecRectF &rois,
+                            std::vector<VecBoxF> *Bboxes) {
   im_ini_.FromMat(im_mat, true);
   Predict(im_ini_, rois, Bboxes);
 }
 #endif
 
-void YOLO::Release() {
+void DetectionYOLO::Release() {
   net_.Release();
 
   in_data_.clear(), out_data_.clear(), biases_.clear();
 }
 
-void YOLO::Process(const float *data, std::vector<VecBoxF> *Bboxes) {
+void DetectionYOLO::Process(const float *data, std::vector<VecBoxF> *Bboxes) {
   net_.Forward(data);
 
   memcpy(out_data_.data(), net_.GetBlobDataByName("out_blob"),
@@ -148,9 +149,9 @@ inline void ConvertRegionBoxes(const float *data, const float *biases,
   }
 }
 
-void YOLO::ConvertDetections(float *data, float *biases, int classes,
-                             int num_km, int side, float threshold,
-                             VecBoxF *boxes) {
+void DetectionYOLO::ConvertDetections(float *data, float *biases, int classes,
+                                      int num_km, int side, float threshold,
+                                      VecBoxF *boxes) {
   ActivateSoftmax(data, classes, num_km, side);
   ConvertRegionBoxes(data, biases, classes, num_km, side, threshold, boxes);
 }

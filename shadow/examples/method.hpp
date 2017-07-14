@@ -22,7 +22,7 @@ class Method {
     LOG(INFO) << "Predict for JImage!";
   }
   virtual void Predict(const JImage &im_src, const VecRectF &rois,
-                       std::vector<VecFloat> *scores) {
+                       std::vector<std::map<std::string, VecFloat>> *scores) {
     LOG(INFO) << "Predict for JImage!";
   }
 
@@ -32,7 +32,7 @@ class Method {
     LOG(INFO) << "Predict for Mat!";
   }
   virtual void Predict(const cv::Mat &im_mat, const VecRectF &rois,
-                       std::vector<VecFloat> *scores) {
+                       std::vector<std::map<std::string, VecFloat>> *scores) {
     LOG(INFO) << "Predict for Mat!";
   }
 #endif
@@ -50,7 +50,9 @@ inline void ConvertData(const JImage &im_src, float *data, const RectF &roi,
   const auto &order_ = im_src.order();
 
   int loc_r = 0, loc_g = 1, loc_b = 2;
-  if (order_ == kRGB) {
+  if (order_ == kGray) {
+    loc_r = loc_g = loc_b = 0;
+  } else if (order_ == kRGB) {
     loc_r = 0, loc_g = 1, loc_b = 2;
   } else if (order_ == kBGR) {
     loc_r = 2, loc_g = 1, loc_b = 0;
@@ -73,16 +75,22 @@ inline void ConvertData(const JImage &im_src, float *data, const RectF &roi,
 
   const auto *data_src = im_src.data();
   float *data_r = nullptr, *data_g = nullptr, *data_b = nullptr;
-  if (flag == 0) {
+  if (order_ == kGray) {
+    // Convert to Gray
+    CHECK_EQ(c_, 1);
+    data_r = data_g = data_b = data;
+  } else if (flag == 0) {
     // Convert to RRRGGGBBB
     data_r = data;
     data_g = data + dst_spatial_dim;
     data_b = data + (dst_spatial_dim << 1);
-  } else {
+  } else if (flag == 1) {
     // Convert to BBBGGGRRR
     data_r = data + (dst_spatial_dim << 1);
     data_g = data + dst_spatial_dim;
     data_b = data;
+  } else {
+    LOG(FATAL) << "Unsupported flag " << flag;
   }
 
   float step_h = (roi.h <= 1 ? roi.h * h_ : roi.h) / static_cast<float>(height);
