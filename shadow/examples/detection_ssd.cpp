@@ -62,7 +62,7 @@ inline void ApplyNMSFast(const VecBoxF &bboxes, VecFloat &scores,
   }
 }
 
-void DetectionSSD::Setup(const std::string &model_file, int classes,
+void DetectionSSD::Setup(const std::string &model_file, const VecInt &classes,
                          int batch) {
   net_.Setup();
 
@@ -77,7 +77,7 @@ void DetectionSSD::Setup(const std::string &model_file, int classes,
   in_data_.resize(batch_ * in_num_);
 
   threshold_ = 0.6;
-  num_classes_ = classes;
+  num_classes_ = classes[0];
   num_priors_ = net_.GetBlobByName("mbox_priorbox")->shape(2) / 4;
   num_loc_classes_ = 1;
   background_label_id_ = 0;
@@ -92,7 +92,8 @@ void DetectionSSD::Predict(const JImage &im_src, const VecRectF &rois,
                            std::vector<VecBoxF> *Bboxes) {
   CHECK_LE(rois.size(), batch_);
   for (int b = 0; b < rois.size(); ++b) {
-    ConvertData(im_src, in_data_.data() + b * in_num_, rois[b], in_h_, in_w_);
+    ConvertData(im_src, in_data_.data() + b * in_num_, rois[b], in_c_, in_h_,
+                in_w_);
   }
 
   Process(in_data_.data(), Bboxes);

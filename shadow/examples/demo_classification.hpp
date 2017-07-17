@@ -16,7 +16,8 @@ class DemoClassification {
   }
   ~DemoClassification() { Release(); }
 
-  void Setup(const std::string &model_file, int classes, int batch = 1) {
+  void Setup(const std::string &model_file, const VecInt &classes,
+             int batch = 1) {
     method_->Setup(model_file, classes, batch);
   }
   void Release() {

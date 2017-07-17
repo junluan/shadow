@@ -13,7 +13,8 @@ class Method {
   Method() {}
   virtual ~Method() {}
 
-  virtual void Setup(const std::string &model_file, int classes, int batch) {
+  virtual void Setup(const std::string &model_file, const VecInt &classes,
+                     int batch) {
     LOG(INFO) << "Setup method!";
   }
 
@@ -41,7 +42,7 @@ class Method {
 };
 
 inline void ConvertData(const JImage &im_src, float *data, const RectF &roi,
-                        int height, int width, int flag = 1) {
+                        int channel, int height, int width, int flag = 1) {
   CHECK_NOTNULL(im_src.data());
   CHECK_NOTNULL(data);
 
@@ -74,21 +75,23 @@ inline void ConvertData(const JImage &im_src, float *data, const RectF &roi,
   }
 
   const auto *data_src = im_src.data();
-  float *data_r = nullptr, *data_g = nullptr, *data_b = nullptr;
-  if (order_ == kGray) {
-    // Convert to Gray
-    CHECK_EQ(c_, 1);
-    data_r = data_g = data_b = data;
-  } else if (flag == 0) {
+  float *data_r = nullptr, *data_g = nullptr, *data_b = nullptr,
+        *data_gray = nullptr;
+  if (channel == 3 && flag == 0) {
     // Convert to RRRGGGBBB
+    CHECK((order_ != kGray));
     data_r = data;
     data_g = data + dst_spatial_dim;
     data_b = data + (dst_spatial_dim << 1);
-  } else if (flag == 1) {
+  } else if (channel == 3 && flag == 1) {
     // Convert to BBBGGGRRR
+    CHECK((order_ != kGray));
     data_r = data + (dst_spatial_dim << 1);
     data_g = data + dst_spatial_dim;
     data_b = data;
+  } else if (channel == 1) {
+    // Convert to Gray
+    data_gray = data;
   } else {
     LOG(FATAL) << "Unsupported flag " << flag;
   }
@@ -99,15 +102,29 @@ inline void ConvertData(const JImage &im_src, float *data, const RectF &roi,
   float w_off = roi.w <= 1 ? roi.x * w_ : roi.x;
   int s_h, s_w, src_offset, dst_offset;
   int src_step = w_ * c_;
-  for (int h = 0; h < height; ++h) {
-    for (int w = 0; w < width; ++w) {
-      s_h = static_cast<int>(h_off + step_h * h);
-      s_w = static_cast<int>(w_off + step_w * w);
-      src_offset = s_h * src_step + s_w * c_;
-      dst_offset = h * width + w;
-      data_r[dst_offset] = data_src[src_offset + loc_r];
-      data_g[dst_offset] = data_src[src_offset + loc_g];
-      data_b[dst_offset] = data_src[src_offset + loc_b];
+  if (channel == 1) {
+    for (int h = 0; h < height; ++h) {
+      for (int w = 0; w < width; ++w) {
+        s_h = static_cast<int>(h_off + step_h * h);
+        s_w = static_cast<int>(w_off + step_w * w);
+        src_offset = s_h * src_step + s_w * c_;
+        dst_offset = h * width + w;
+        data_gray[dst_offset] = 0.299f * data_src[src_offset + loc_r];
+        data_gray[dst_offset] += 0.587f * data_src[src_offset + loc_g];
+        data_gray[dst_offset] += 0.114f * data_src[src_offset + loc_b];
+      }
+    }
+  } else {
+    for (int h = 0; h < height; ++h) {
+      for (int w = 0; w < width; ++w) {
+        s_h = static_cast<int>(h_off + step_h * h);
+        s_w = static_cast<int>(w_off + step_w * w);
+        src_offset = s_h * src_step + s_w * c_;
+        dst_offset = h * width + w;
+        data_r[dst_offset] = data_src[src_offset + loc_r];
+        data_g[dst_offset] = data_src[src_offset + loc_g];
+        data_b[dst_offset] = data_src[src_offset + loc_b];
+      }
     }
   }
 }

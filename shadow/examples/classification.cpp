@@ -2,7 +2,7 @@
 
 namespace Shadow {
 
-void Classification::Setup(const std::string &model_file, int classes,
+void Classification::Setup(const std::string &model_file, const VecInt &classes,
                            int batch) {
   net_.Setup();
 
@@ -17,7 +17,7 @@ void Classification::Setup(const std::string &model_file, int classes,
   in_data_.resize(batch_ * in_num_);
 
   task_names_ = VecString{"score"};
-  task_dims_ = VecInt{classes};
+  task_dims_ = classes;
   CHECK_EQ(task_names_.size(), task_dims_.size());
   int num_dim = 0;
   for (const auto dim : task_dims_) {
@@ -31,7 +31,8 @@ void Classification::Predict(
     std::vector<std::map<std::string, VecFloat>> *scores) {
   CHECK_LE(rois.size(), batch_);
   for (int b = 0; b < rois.size(); ++b) {
-    ConvertData(im_src, in_data_.data() + b * in_num_, rois[b], in_h_, in_w_);
+    ConvertData(im_src, in_data_.data() + b * in_num_, rois[b], in_c_, in_h_,
+                in_w_);
   }
 
   Process(in_data_.data(), scores);
@@ -39,12 +40,14 @@ void Classification::Predict(
   CHECK_EQ(scores->size(), rois.size());
 }
 
+#if defined(USE_OpenCV)
 void Classification::Predict(
     const cv::Mat &im_mat, const VecRectF &rois,
     std::vector<std::map<std::string, VecFloat>> *scores) {
   im_ini_.FromMat(im_mat, true);
   Predict(im_ini_, rois, scores);
 }
+#endif
 
 void Classification::Release() {
   net_.Release();
@@ -62,7 +65,7 @@ void Classification::Process(
   int offset = 0;
   for (int b = 0; b < batch_; ++b) {
     std::map<std::string, VecFloat> score_map;
-    for (int n = 0; n < task_names_.size(); ++n) {
+    for (int n = 0; n < task_dims_.size(); ++n) {
       const auto &name = task_names_[n];
       int dim = task_dims_[n];
       VecFloat task_score(softmax_data + offset, softmax_data + offset + dim);

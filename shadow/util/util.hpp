@@ -33,6 +33,36 @@ inline Dtype constrain(Dtype min, Dtype max, Dtype value) {
   return value;
 }
 
+inline bool pair_ascend(const std::pair<float, int> &lhs,
+                        const std::pair<float, int> &rhs) {
+  return lhs.first < rhs.first;
+}
+
+inline bool pair_descend(const std::pair<float, int> &lhs,
+                         const std::pair<float, int> &rhs) {
+  return lhs.first > rhs.first;
+}
+
+inline std::vector<int> top_k(const std::vector<float> &v, int K,
+                              bool descend = true) {
+  std::vector<std::pair<float, int>> pairs;
+  for (int i = 0; i < v.size(); ++i) {
+    pairs.push_back(std::make_pair(v[i], i));
+  }
+  if (descend) {
+    std::partial_sort(pairs.begin(), pairs.begin() + K, pairs.end(),
+                      pair_descend);
+  } else {
+    std::partial_sort(pairs.begin(), pairs.begin() + K, pairs.end(),
+                      pair_ascend);
+  }
+  std::vector<int> result;
+  for (int k = 0; k < K; ++k) {
+    result.push_back(pairs[k].second);
+  }
+  return result;
+}
+
 template <typename Dtype>
 inline std::string to_string(const Dtype val) {
   std::stringstream ss;

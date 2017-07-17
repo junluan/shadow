@@ -8,4 +8,13 @@ if (${BUILD_SERVICE} AND Protobuf_FOUND AND gRPC_FOUND)
     set_target_properties(grpc_proto PROPERTIES DEBUG_POSTFIX "d")
   endif ()
   install(TARGETS grpc_proto DESTINATION lib)
+
+  file(GLOB_RECURSE tmp *_server.cpp)
+  set(shadow_server_src ${shadow_server_src} ${tmp})
+
+  file(GLOB_RECURSE tmp *_client.cpp)
+  set(shadow_client_src ${shadow_client_src} ${tmp})
+
+  set(shadow_server_src ${shadow_server_src} PARENT_SCOPE)
+  set(shadow_client_src ${shadow_client_src} PARENT_SCOPE)
 endif ()

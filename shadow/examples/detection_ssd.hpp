@@ -13,7 +13,7 @@ class DetectionSSD final : public Method {
   DetectionSSD() {}
   ~DetectionSSD() { Release(); }
 
-  virtual void Setup(const std::string &model_file, int classes,
+  virtual void Setup(const std::string &model_file, const VecInt &classes,
                      int batch) override;
 
   virtual void Predict(const JImage &im_src, const VecRectF &rois,

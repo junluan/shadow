@@ -2,7 +2,7 @@
 
 namespace Shadow {
 
-void DetectionYOLO::Setup(const std::string &model_file, int classes,
+void DetectionYOLO::Setup(const std::string &model_file, const VecInt &classes,
                           int batch) {
   net_.Setup();
 
@@ -22,7 +22,7 @@ void DetectionYOLO::Setup(const std::string &model_file, int classes,
   biases_ = VecFloat{1.08f,  1.19f, 3.42f, 4.41f,  6.63f,
                      11.38f, 9.42f, 5.11f, 16.62f, 10.52f};
   threshold_ = 0.6;
-  num_classes_ = classes;
+  num_classes_ = classes[0];
   num_km_ = 5;
 }
 
@@ -30,8 +30,8 @@ void DetectionYOLO::Predict(const JImage &im_src, const VecRectF &rois,
                             std::vector<VecBoxF> *Bboxes) {
   CHECK_LE(rois.size(), batch_);
   for (int b = 0; b < rois.size(); ++b) {
-    ConvertData(im_src, in_data_.data() + b * in_num_, rois[b], in_h_, in_w_,
-                0);
+    ConvertData(im_src, in_data_.data() + b * in_num_, rois[b], in_c_, in_h_,
+                in_w_, 0);
   }
 
   Process(in_data_.data(), Bboxes);

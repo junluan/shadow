@@ -2,24 +2,6 @@
 
 namespace Shadow {
 
-inline bool PairCompare(const std::pair<float, int> &lhs,
-                        const std::pair<float, int> &rhs) {
-  return lhs.first > rhs.first;
-}
-
-inline std::vector<int> Argmax(const std::vector<float> &v, int K) {
-  std::vector<std::pair<float, int>> pairs;
-  for (int i = 0; i < v.size(); ++i) {
-    pairs.push_back(std::make_pair(v[i], i));
-  }
-  std::partial_sort(pairs.begin(), pairs.begin() + K, pairs.end(), PairCompare);
-  std::vector<int> result;
-  for (int i = 0; i < K; ++i) {
-    result.push_back(pairs[i].second);
-  }
-  return result;
-}
-
 void DemoClassification::Test(const std::string &image_file) {
   im_ini_.Read(image_file);
   VecRectF rois{RectF(0, 0, im_ini_.w_, im_ini_.h_)};
@@ -31,7 +13,7 @@ void DemoClassification::Test(const std::string &image_file) {
     for (const auto &it : score_map) {
       std::cout << it.first << ": ";
       const auto &score = it.second;
-      const auto &max_k = Argmax(it.second, 1);
+      const auto &max_k = Util::top_k(it.second, 1);
       for (const auto idx : max_k) {
         std::cout << idx << " (" << score[idx] << ") ";
       }
@@ -71,7 +53,7 @@ void DemoClassification::PrintDetections(
     for (const auto &it : score_map) {
       *os << it.first << ": ";
       const auto &score = it.second;
-      const auto &max_k = Argmax(it.second, 1);
+      const auto &max_k = Util::top_k(it.second, 1);
       for (const auto idx : max_k) {
         *os << idx << " (" << score[idx] << ") ";
       }
