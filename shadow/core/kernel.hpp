@@ -17,6 +17,7 @@
 #include "easycl/easycl.hpp"
 using BufferI = EasyCL::Buffer<int>;
 using BufferF = EasyCL::Buffer<float>;
+using BufferUC = EasyCL::Buffer<unsigned char>;
 #endif
 
 namespace Shadow {

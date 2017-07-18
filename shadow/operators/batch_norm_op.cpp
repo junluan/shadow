@@ -14,7 +14,8 @@ void BatchNormOp::Setup() {
 
   if (use_global_stats_ && blobs_.size() == 0) {
     for (int i = 0; i < 3; ++i) {
-      blobs_.push_back(new BlobF());
+      blobs_.push_back(
+          op_ws_->CreateBlob<float>(op_name_ + "_param_" + Util::to_string(i)));
     }
     blobs_[0]->reshape(1, channels_);
     blobs_[1]->reshape(1, channels_);

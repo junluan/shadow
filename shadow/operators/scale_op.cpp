@@ -23,7 +23,8 @@ void ScaleOp::Setup() {
     for (int i = axis_; i < end_axis; ++i) {
       scale_shape.push_back(bottoms_[0]->shape(i));
     }
-    blobs_.push_back(new BlobF(scale_shape));
+    blobs_.push_back(
+        op_ws_->CreateBlob<float>(scale_shape, op_name_ + "_param_scale"));
     Blas::Set(blobs_[0]->count(), 1, blobs_[0]->mutable_data(), 0);
     DLOG(WARNING) << "Scale param is initialized with the default value 1";
   }
@@ -34,7 +35,8 @@ void ScaleOp::Setup() {
   } else {
     bias_param_id_ = blobs_.size();
     blobs_.resize(bias_param_id_ + 1);
-    blobs_[bias_param_id_] = new BlobF(scale_->shape());
+    blobs_[bias_param_id_] =
+        op_ws_->CreateBlob<float>(scale_->shape(), op_name_ + "_param_bias");
     Blas::Set(blobs_[bias_param_id_]->count(), 0,
               blobs_[bias_param_id_]->mutable_data(), 0);
     DLOG(WARNING) << "Bias param is initialized with the default value 0";

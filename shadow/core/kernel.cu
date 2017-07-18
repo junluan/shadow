@@ -69,18 +69,29 @@ void ReleaseBuffer(T *buffer) {
 // Explicit instantiation
 template int *MakeBuffer<int, int>(int size, int *host_ptr);
 template float *MakeBuffer<float, float>(int size, float *host_ptr);
+template unsigned char *MakeBuffer<unsigned char, unsigned char>(
+    int size, unsigned char *host_ptr);
 
 template void ReadBuffer<int, int>(int size, const int *src, int *des);
 template void ReadBuffer<float, float>(int size, const float *src, float *des);
+template void ReadBuffer<unsigned char, unsigned char>(int size,
+                                                       const unsigned char *src,
+                                                       unsigned char *des);
 
 template void WriteBuffer<int, int>(int size, const int *src, int *des);
 template void WriteBuffer<float, float>(int size, const float *src, float *des);
+template void WriteBuffer<unsigned char, unsigned char>(
+    int size, const unsigned char *src, unsigned char *des);
 
 template void CopyBuffer<int, int>(int size, const int *src, int *des);
 template void CopyBuffer<float, float>(int size, const float *src, float *des);
+template void CopyBuffer<unsigned char, unsigned char>(int size,
+                                                       const unsigned char *src,
+                                                       unsigned char *des);
 
 template void ReleaseBuffer<int>(int *buffer);
 template void ReleaseBuffer<float>(float *buffer);
+template void ReleaseBuffer<unsigned char>(unsigned char *buffer);
 #endif
 
 }  // namespace Kernel

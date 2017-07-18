@@ -172,7 +172,7 @@ class Blob {
   BACKEND *data_ = nullptr;
   std::vector<Dtype> cpu_data_;
 
-  std::string name_ = "";
+  std::string name_;
   VecInt shape_;
   bool on_gpu_ = false, shared_ = false;
 
@@ -181,9 +181,11 @@ class Blob {
 
 using BlobI = Blob<int>;
 using BlobF = Blob<float>;
+using BlobUC = Blob<unsigned char>;
 
 using VecBlobI = std::vector<BlobI *>;
 using VecBlobF = std::vector<BlobF *>;
+using VecBlobUC = std::vector<BlobUC *>;
 
 }  // namespace Shadow
 

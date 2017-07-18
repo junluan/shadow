@@ -22,7 +22,8 @@ void BiasOp::Setup() {
     for (int i = axis_; i < end_axis; ++i) {
       bias_shape.push_back(bottoms_[0]->shape(i));
     }
-    blobs_.push_back(new BlobF(bias_shape));
+    blobs_.push_back(
+        op_ws_->CreateBlob<float>(bias_shape, op_name_ + "_param"));
     Blas::Set(blobs_[0]->count(), 0, blobs_[0]->mutable_data(), 0);
     DLOG(WARNING) << "Bias param is initialized with the default value 0";
   }

@@ -4,7 +4,7 @@
 namespace Shadow {
 
 void DataOp::Setup() {
-  bottoms_.push_back(op_ws_->GetBlob("in_blob"));
+  bottoms_.push_back(op_ws_->GetBlob<float>("in_blob"));
 
   scale_ = arg_helper_.GetSingleArgument<float>("scale", 1);
   VecFloat mean_value = arg_helper_.GetRepeatedArgument<float>("mean_value");

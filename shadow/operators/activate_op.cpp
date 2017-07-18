@@ -13,10 +13,11 @@ void ActivateOp::Setup() {
     CHECK_GE(bottoms_[0]->num_axes(), 2);
     int channels = bottoms_[0]->shape(1);
     if (blobs_.size() == 0) {
+      blobs_.push_back(op_ws_->CreateBlob<float>(op_name_ + "_param"));
       if (channel_shared_) {
-        blobs_.push_back(new BlobF(VecInt(1, 1)));
+        blobs_[0]->reshape(1);
       } else {
-        blobs_.push_back(new BlobF(VecInt(1, channels)));
+        blobs_[0]->reshape(channels);
       }
       Blas::Set(blobs_[0]->count(), 0.25, blobs_[0]->mutable_data(), 0);
     }

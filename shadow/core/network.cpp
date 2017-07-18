@@ -81,20 +81,6 @@ const Operator *Network::GetOpByName(const std::string &op_name) {
   return nullptr;
 }
 
-const BlobF *Network::GetBlobByName(const std::string &blob_name) {
-  return ws_.GetBlob(blob_name);
-}
-
-const float *Network::GetBlobDataByName(const std::string &blob_name) {
-  auto *blob = ws_.GetBlob(blob_name);
-  if (blob == nullptr) {
-    LOG(FATAL) << "Unknown blob: " + blob_name;
-  } else {
-    return blob->cpu_data();
-  }
-  return nullptr;
-}
-
 void Network::LoadProtoBin(const std::string &proto_bin,
                            shadow::NetParam *net_param) {
 #if defined(USE_Protobuf)
@@ -130,7 +116,7 @@ void Network::Reshape(int batch) {
     in_shape_[0] = batch;
   }
 
-  ws_.CreateBlob(in_shape_, "in_blob");
+  ws_.CreateBlob<float>(in_shape_, "in_blob");
 
   ops_.clear();
   for (const auto &op_param : net_param_.op()) {

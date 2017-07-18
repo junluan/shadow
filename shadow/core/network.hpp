@@ -22,8 +22,20 @@ class Network {
   void Release();
 
   const Operator *GetOpByName(const std::string &op_name);
-  const BlobF *GetBlobByName(const std::string &blob_name);
-  const float *GetBlobDataByName(const std::string &blob_name);
+  template <typename T>
+  const Blob<T> *GetBlobByName(const std::string &blob_name) {
+    return ws_.GetBlob<T>(blob_name);
+  }
+  template <typename T>
+  const T *GetBlobDataByName(const std::string &blob_name) {
+    auto *blob = ws_.GetBlob<T>(blob_name);
+    if (blob == nullptr) {
+      LOG(FATAL) << "Unknown blob: " + blob_name;
+    } else {
+      return blob->cpu_data();
+    }
+    return nullptr;
+  }
 
   const VecInt &in_shape() { return in_shape_; }
 

@@ -13,8 +13,8 @@ void DetectionYOLO::Setup(const std::string &model_file, const VecInt &classes,
   in_h_ = net_.in_shape()[2];
   in_w_ = net_.in_shape()[3];
   in_num_ = in_c_ * in_h_ * in_w_;
-  out_num_ = net_.GetBlobByName("out_blob")->num();
-  out_hw_ = net_.GetBlobByName("out_blob")->shape(2);
+  out_num_ = net_.GetBlobByName<float>("out_blob")->num();
+  out_hw_ = net_.GetBlobByName<float>("out_blob")->shape(2);
 
   in_data_.resize(batch_ * in_num_);
   out_data_.resize(batch_ * out_num_);
@@ -66,7 +66,7 @@ void DetectionYOLO::Release() {
 void DetectionYOLO::Process(const float *data, std::vector<VecBoxF> *Bboxes) {
   net_.Forward(data);
 
-  memcpy(out_data_.data(), net_.GetBlobDataByName("out_blob"),
+  memcpy(out_data_.data(), net_.GetBlobDataByName<float>("out_blob"),
          out_data_.size() * sizeof(float));
 
   Bboxes->clear();

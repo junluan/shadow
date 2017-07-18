@@ -78,7 +78,7 @@ void DetectionSSD::Setup(const std::string &model_file, const VecInt &classes,
 
   threshold_ = 0.6;
   num_classes_ = classes[0];
-  num_priors_ = net_.GetBlobByName("mbox_priorbox")->shape(2) / 4;
+  num_priors_ = net_.GetBlobByName<float>("mbox_priorbox")->shape(2) / 4;
   num_loc_classes_ = 1;
   background_label_id_ = 0;
   top_k_ = 400;
@@ -128,9 +128,9 @@ void DetectionSSD::Release() {
 void DetectionSSD::Process(const float *data, std::vector<VecBoxF> *Bboxes) {
   net_.Forward(data);
 
-  const float *loc_data = net_.GetBlobDataByName("mbox_loc");
-  const float *conf_data = net_.GetBlobDataByName("mbox_conf_flatten");
-  const float *prior_data = net_.GetBlobDataByName("mbox_priorbox");
+  const float *loc_data = net_.GetBlobDataByName<float>("mbox_loc");
+  const float *conf_data = net_.GetBlobDataByName<float>("mbox_conf_flatten");
+  const float *prior_data = net_.GetBlobDataByName<float>("mbox_priorbox");
 
   VecLabelBBox all_loc_preds;
   GetLocPredictions(loc_data, batch_, num_priors_, num_loc_classes_,

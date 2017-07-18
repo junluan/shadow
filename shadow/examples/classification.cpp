@@ -23,7 +23,7 @@ void Classification::Setup(const std::string &model_file, const VecInt &classes,
   for (const auto dim : task_dims_) {
     num_dim += dim;
   }
-  CHECK_EQ(num_dim, net_.GetBlobByName("softmax")->num());
+  CHECK_EQ(num_dim, net_.GetBlobByName<float>("softmax")->num());
 }
 
 void Classification::Predict(
@@ -59,7 +59,7 @@ void Classification::Process(
     const float *data, std::vector<std::map<std::string, VecFloat>> *scores) {
   net_.Forward(data);
 
-  const float *softmax_data = net_.GetBlobDataByName("softmax");
+  const float *softmax_data = net_.GetBlobDataByName<float>("softmax");
 
   scores->clear();
   int offset = 0;

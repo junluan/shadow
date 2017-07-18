@@ -8,7 +8,7 @@ void NormalizeOp::Setup() {
   channel_shared_ = arg_helper_.GetSingleArgument<bool>("channel_shared", true);
 
   if (blobs_.size() == 0) {
-    blobs_.push_back(new BlobF());
+    blobs_.push_back(op_ws_->CreateBlob<float>(op_name_ + "_param"));
     if (channel_shared_) {
       blobs_[0]->reshape(1);
     } else {

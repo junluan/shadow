@@ -8,7 +8,7 @@ Operator::Operator(const shadow::OpParam &op_param, Workspace *ws)
   op_type_ = op_param_.type();
   bottoms_.clear(), tops_.clear(), blobs_.clear();
   for (const auto &bottom_name : op_param_.bottom()) {
-    auto *bottom = ws->GetBlob(bottom_name);
+    auto *bottom = ws->GetBlob<float>(bottom_name);
     if (bottom != nullptr) {
       if (bottom->num()) {
         bottoms_.push_back(bottom);
@@ -23,9 +23,10 @@ Operator::Operator(const shadow::OpParam &op_param, Workspace *ws)
     }
   }
   for (const auto &top_name : op_param_.top()) {
-    auto *top = ws->CreateBlob(top_name);
+    auto *top = ws->CreateBlob<float>(top_name);
     tops_.push_back(top);
   }
+  int blob_count = 0;
   for (const auto &proto_blob : op_param_.blobs()) {
     const auto &dims = proto_blob.shape();
     VecInt shape;
@@ -34,7 +35,9 @@ Operator::Operator(const shadow::OpParam &op_param, Workspace *ws)
       cc *= dim;
       shape.push_back(dim);
     }
-    auto *blob = new BlobF(shape, "params", true);
+    const auto &blob_name =
+        op_name_ + "_" + op_type_ + "_params_" + Util::to_string(blob_count++);
+    auto *blob = ws->CreateBlob<float>(shape, blob_name, true);
     if (data_size > 0) {
       CHECK_EQ(data_size, cc) << "Blob data size and blob shape are mismatch";
       blob->set_data(proto_blob.data().data(), data_size);
@@ -47,10 +50,6 @@ Operator::~Operator() {
   op_param_.Clear();
   bottoms_.clear();
   tops_.clear();
-  for (auto &blob : blobs_) {
-    delete blob;
-    blob = nullptr;
-  }
   blobs_.clear();
 }
 

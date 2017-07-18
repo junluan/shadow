@@ -2,47 +2,32 @@
 
 namespace Shadow {
 
-BlobF *Workspace::CreateBlob(const std::string &name) {
-  if (HasBlob(name)) {
-    DLOG(WARNING) << "Blob " << name << " already exists. Skipping.";
-  } else {
-    blob_map_[name] = new BlobF(name);
-  }
-  return GetBlob(name);
-}
-
-BlobF *Workspace::CreateBlob(const VecInt &shape, const std::string &name,
-                             bool shared) {
-  if (HasBlob(name)) {
-    DLOG(WARNING) << "Blob " << name << " already exists. Skipping.";
-  } else {
-    blob_map_[name] = new BlobF(shape, name, shared);
-  }
-  return GetBlob(name);
-}
-
 bool Workspace::RemoveBlob(const std::string &name) {
-  auto it = blob_map_.find(name);
-  if (it != blob_map_.end()) {
-    blob_map_.erase(it);
+  auto blob_it = blob_map_.find(name);
+  if (blob_it != blob_map_.end()) {
+    const auto &blob_type = blob_map_.at(name).first;
+    auto *blob = blob_map_.at(name).second;
+    ClearBlob(blob_type, blob);
+    blob_map_.erase(blob_it);
     return true;
   }
   DLOG(WARNING) << "Blob " << name << " not exists. Skipping.";
   return false;
 }
 
-const BlobF *Workspace::GetBlob(const std::string &name) const {
-  if (blob_map_.count(name)) {
-    return blob_map_.at(name);
-  } else {
-    DLOG(WARNING) << "Blob " << name << " not in the workspace.";
-    return nullptr;
+void Workspace::ClearBlob(const std::string &blob_type, void *blob) {
+  if (blob != nullptr) {
+    if (!blob_type.compare(int_id)) {
+      delete reinterpret_cast<BlobI *>(blob);
+    } else if (!blob_type.compare(float_id)) {
+      delete reinterpret_cast<BlobF *>(blob);
+    } else if (!blob_type.compare(uchar_id)) {
+      delete reinterpret_cast<BlobUC *>(blob);
+    } else {
+      LOG(FATAL) << "Unknown blob type " << blob_type;
+    }
+    blob = nullptr;
   }
-}
-
-BlobF *Workspace::GetBlob(const std::string &name) {
-  return const_cast<BlobF *>(
-      static_cast<const Workspace *>(this)->GetBlob(name));
 }
 
 }  // namespace Shadow
