@@ -7,7 +7,6 @@
 #else
 #include <io.h>
 #endif
-
 #include <fcntl.h>
 #include <fstream>
 
@@ -25,9 +24,9 @@
 
 namespace Shadow {
 
-#if defined(USE_Protobuf)
 namespace IO {
 
+#if defined(USE_Protobuf)
 using google::protobuf::io::CodedInputStream;
 using google::protobuf::io::CodedOutputStream;
 using google::protobuf::io::FileInputStream;
@@ -102,11 +101,7 @@ void WriteProtoToJsonText(const Message& proto, std::string* json_text,
 }
 #endif
 
-}  // namespace IO
-
 #else
-namespace IO {
-
 bool ReadProtoFromText(const std::string& proto_text, shadow::NetParam* proto) {
   Parser::ParseNet(proto_text, proto);
   return true;
@@ -116,8 +111,8 @@ bool ReadProtoFromTextFile(const std::string& proto_file,
                            shadow::NetParam* proto) {
   return ReadProtoFromText(Util::read_text_from_file(proto_file), proto);
 }
+#endif
 
 }  // namespace IO
-#endif
 
 }  // namespace Shadow

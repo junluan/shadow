@@ -14,9 +14,9 @@
 
 namespace Shadow {
 
-#if defined(USE_Protobuf)
 namespace IO {
 
+#if defined(USE_Protobuf)
 using google::protobuf::Message;
 
 bool ReadProtoFromText(const std::string& proto_text, Message* proto);
@@ -37,18 +37,14 @@ void WriteProtoToJsonText(const Message& proto, std::string* json_text,
                           bool compact = false);
 #endif
 
-}  // namespace IO
-
 #else
-namespace IO {
-
 bool ReadProtoFromText(const std::string& proto_text, shadow::NetParam* proto);
 
 bool ReadProtoFromTextFile(const std::string& proto_file,
                            shadow::NetParam* proto);
+#endif
 
 }  // namespace IO
-#endif
 
 }  // namespace Shadow
 

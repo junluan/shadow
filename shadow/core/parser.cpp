@@ -3,9 +3,9 @@
 
 namespace Shadow {
 
-#if !defined(USE_Protobuf)
 namespace Parser {
 
+#if !defined(USE_Protobuf)
 void ParseNet(const std::string &proto_text, shadow::NetParam *net) {
   const auto &document = Json::GetDocument(proto_text);
 
@@ -623,8 +623,8 @@ const shadow::OpParam ParseSoftmax(const JValue &root) {
 
   return shadow_op;
 }
+#endif
 
 }  // namespace Parser
-#endif
 
 }  // namespace Shadow

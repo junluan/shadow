@@ -6,9 +6,9 @@
 
 namespace Shadow {
 
-#if !defined(USE_Protobuf)
 namespace Parser {
 
+#if !defined(USE_Protobuf)
 void ParseNet(const std::string &proto_text, shadow::NetParam *net);
 
 void ParseCommon(const JValue &root, shadow::OpParam *op);
@@ -31,9 +31,9 @@ const shadow::OpParam ParseReorg(const JValue &root);
 const shadow::OpParam ParseReshape(const JValue &root);
 const shadow::OpParam ParseScale(const JValue &root);
 const shadow::OpParam ParseSoftmax(const JValue &root);
+#endif
 
 }  // namespace Parser
-#endif
 
 }  // namespace Shadow
 
