@@ -18,7 +18,7 @@ const shadow::OpParam ParseBatchNorm(const JValue &root);
 const shadow::OpParam ParseBias(const JValue &root);
 const shadow::OpParam ParseConcat(const JValue &root);
 const shadow::OpParam ParseConnected(const JValue &root);
-const shadow::OpParam ParseConvolution(const JValue &root);
+const shadow::OpParam ParseConv(const JValue &root);
 const shadow::OpParam ParseData(const JValue &root);
 const shadow::OpParam ParseEltwise(const JValue &root);
 const shadow::OpParam ParseFlatten(const JValue &root);

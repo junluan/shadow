@@ -1,16 +1,16 @@
-#include "convolution_op.hpp"
+#include "conv_op.hpp"
 #include "core/blas.hpp"
 #include "core/image.hpp"
 
 namespace Shadow {
 
-inline int convolution_out_size(int dim, int kernel_size, int stride, int pad,
-                                int dilation) {
+inline int conv_out_size(int dim, int kernel_size, int stride, int pad,
+                         int dilation) {
   int kernel_extent = dilation * (kernel_size - 1) + 1;
   return (dim + 2 * pad - kernel_extent) / stride + 1;
 }
 
-void ConvolutionOp::Setup() {
+void ConvOp::Setup() {
   num_output_ = arg_helper_.GetSingleArgument<int>("num_output", 0);
   CHECK(arg_helper_.HasArgument("kernel_size"));
   kernel_size_ = arg_helper_.GetSingleArgument<int>("kernel_size", 0);
@@ -50,16 +50,14 @@ void ConvolutionOp::Setup() {
 #endif
 }
 
-void ConvolutionOp::Reshape() {
+void ConvOp::Reshape() {
   int batch = bottoms_[0]->shape(0), in_c = bottoms_[0]->shape(1),
       in_h = bottoms_[0]->shape(2), in_w = bottoms_[0]->shape(3);
 
   VecInt top_shape = bottoms_[0]->shape();
   top_shape[1] = num_output_;
-  top_shape[2] =
-      convolution_out_size(in_h, kernel_size_, stride_, pad_, dilation_);
-  top_shape[3] =
-      convolution_out_size(in_w, kernel_size_, stride_, pad_, dilation_);
+  top_shape[2] = conv_out_size(in_h, kernel_size_, stride_, pad_, dilation_);
+  top_shape[3] = conv_out_size(in_w, kernel_size_, stride_, pad_, dilation_);
   tops_[0]->reshape(top_shape);
 
   out_spatial_dim_ = tops_[0]->count(2);
@@ -125,7 +123,7 @@ void ConvolutionOp::Reshape() {
              << Util::format_vector(tops_[0]->shape(), ",", "(", ")");
 }
 
-void ConvolutionOp::Forward() {
+void ConvOp::Forward() {
   int batch = bottoms_[0]->shape(0);
   int top_num = tops_[0]->num(), bottom_num = bottoms_[0]->num();
 
@@ -178,7 +176,7 @@ void ConvolutionOp::Forward() {
   }
 }
 
-void ConvolutionOp::Release() {
+void ConvOp::Release() {
   biases_multiplier_.clear();
   col_image_.clear();
 
@@ -210,9 +208,9 @@ void ConvolutionOp::Release() {
   }
 #endif
 
-  // DLOG(INFO) << "Free ConvolutionOp!";
+  // DLOG(INFO) << "Free ConvOp!";
 }
 
-REGISTER_OPERATOR(Convolution, ConvolutionOp);
+REGISTER_OPERATOR(Conv, ConvOp);
 
 }  // namespace Shadow

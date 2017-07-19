@@ -218,7 +218,7 @@ void ConvertConv(const caffe::NetParameter& caffe_model,
                  const caffe::LayerParameter& caffe_layer,
                  shadow::NetParam* shadow_net) {
   auto shadow_op = shadow_net->add_op();
-  shadow_op->set_type("Convolution");
+  shadow_op->set_type("Conv");
   ConvertCommon(caffe_model, caffe_layer, shadow_op);
 
   if (caffe_layer.has_convolution_param()) {

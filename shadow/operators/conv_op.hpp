@@ -1,15 +1,15 @@
-#ifndef SHADOW_OPERATORS_CONVOLUTION_OP_HPP
-#define SHADOW_OPERATORS_CONVOLUTION_OP_HPP
+#ifndef SHADOW_OPERATORS_CONV_OP_HPP
+#define SHADOW_OPERATORS_CONV_OP_HPP
 
 #include "core/operator.hpp"
 
 namespace Shadow {
 
-class ConvolutionOp : public Operator {
+class ConvOp : public Operator {
  public:
-  explicit ConvolutionOp(const shadow::OpParam &op_param, Workspace *ws)
+  explicit ConvOp(const shadow::OpParam &op_param, Workspace *ws)
       : Operator(op_param, ws) {}
-  ~ConvolutionOp() { Release(); }
+  ~ConvOp() { Release(); }
 
   virtual void Setup() override;
   virtual void Reshape() override;
@@ -48,4 +48,4 @@ class ConvolutionOp : public Operator {
 
 }  // namespace Shadow
 
-#endif  // SHADOW_OPERATORS_CONVOLUTION_OP_HPP
+#endif  // SHADOW_OPERATORS_CONV_OP_HPP

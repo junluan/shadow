@@ -28,8 +28,8 @@ void ParseNet(const std::string &proto_text, shadow::NetParam *net) {
       net->add_op(ParseConcat(json_op));
     } else if (!op_type.compare("Connected")) {
       net->add_op(ParseConnected(json_op));
-    } else if (!op_type.compare("Convolution")) {
-      net->add_op(ParseConvolution(json_op));
+    } else if (!op_type.compare("Conv")) {
+      net->add_op(ParseConv(json_op));
     } else if (!op_type.compare("Data")) {
       net->add_op(ParseData(json_op));
     } else if (!op_type.compare("Eltwise")) {
@@ -216,7 +216,7 @@ const shadow::OpParam ParseConnected(const JValue &root) {
   return shadow_op;
 }
 
-const shadow::OpParam ParseConvolution(const JValue &root) {
+const shadow::OpParam ParseConv(const JValue &root) {
   shadow::OpParam shadow_op;
 
   ParseCommon(root, &shadow_op);
