@@ -2,14 +2,17 @@
 #include "kernel.hpp"
 #include "util/log.hpp"
 
+#include "math_functions.h"
+
 namespace Shadow {
 
 namespace Image {
 
 #if defined(USE_CUDA)
-__global__ void KernelDataTransform(const float *in_data, int count, int in_c,
+template <typename T>
+__global__ void KernelDataTransform(const T *in_data, int count, int in_c,
                                     int spatial_dim, float scale, int num_mean,
-                                    const float *mean_value, float *out_data) {
+                                    const T *mean_value, T *out_data) {
   CUDA_KERNEL_LOOP(globalid, count) {
     int c_out = (globalid / spatial_dim) % in_c;
     int s_out = globalid % spatial_dim;
@@ -30,15 +33,16 @@ void DataTransform(const T *in_data, const VecInt &in_shape, float scale,
                    int num_mean, const T *mean_value, T *out_data) {
   int in_c = in_shape[1], spatial_dim = in_shape[2] * in_shape[3];
   int count = in_shape[0] * in_c * spatial_dim;
-  KernelDataTransform<<<GetBlocks(count), NumThreads>>>(
+  KernelDataTransform<T><<<GetBlocks(count), NumThreads>>>(
       in_data, count, in_c, spatial_dim, scale, num_mean, mean_value, out_data);
   CUDA_CHECK(cudaPeekAtLastError());
 }
 
-__global__ void KernelIm2Col(const float *in_data, int offset, int count,
-                             int in_c, int in_h, int in_w, int kernel_size,
-                             int stride, int pad, int dilation, int out_h,
-                             int out_w, float *out_data) {
+template <typename T>
+__global__ void KernelIm2Col(const T *in_data, int offset, int count, int in_c,
+                             int in_h, int in_w, int kernel_size, int stride,
+                             int pad, int dilation, int zero_point, int out_h,
+                             int out_w, T *out_data) {
   CUDA_KERNEL_LOOP(globalid, count) {
     int h_index = globalid / out_w;
     int h_col = h_index % out_h;
@@ -55,7 +59,7 @@ __global__ void KernelIm2Col(const float *in_data, int offset, int count,
         int w_im = w_offset + j * dilation;
         *out_data = (h_im >= 0 && w_im >= 0 && h_im < in_h && w_im < in_w)
                         ? in_data[i * dilation * in_w + j * dilation]
-                        : 0;
+                        : static_cast<T>(zero_point);
         out_data += out_h * out_w;
       }
     }
@@ -64,21 +68,21 @@ __global__ void KernelIm2Col(const float *in_data, int offset, int count,
 
 template <typename T>
 void Im2Col(const T *in_data, const VecInt &in_shape, int offset,
-            int kernel_size, int stride, int pad, int dilation,
+            int kernel_size, int stride, int pad, int dilation, int zero_point,
             const VecInt &out_shape, T *out_data) {
   int in_c = in_shape[1], in_h = in_shape[2], in_w = in_shape[3];
   int out_h = out_shape[2], out_w = out_shape[3];
   int count = in_c * out_h * out_w;
-  KernelIm2Col<<<GetBlocks(count), NumThreads>>>(
+  KernelIm2Col<T><<<GetBlocks(count), NumThreads>>>(
       in_data, offset, count, in_c, in_h, in_w, kernel_size, stride, pad,
-      dilation, out_h, out_w, out_data);
+      dilation, zero_point, out_h, out_w, out_data);
   CUDA_CHECK(cudaPeekAtLastError());
 }
 
-__global__ void KernelPooling(const float *in_data, int count, int in_c,
-                              int in_h, int in_w, int kernel_size, int stride,
-                              int pad, int mode, int out_h, int out_w,
-                              float *out_data) {
+template <typename T>
+__global__ void KernelPooling(const T *in_data, int count, int in_c, int in_h,
+                              int in_w, int kernel_size, int stride, int pad,
+                              int mode, int out_h, int out_w, T *out_data) {
   CUDA_KERNEL_LOOP(globalid, count) {
     int temp = globalid / out_w;
     int j_out = globalid % out_w;
@@ -94,21 +98,17 @@ __global__ void KernelPooling(const float *in_data, int count, int in_c,
     kistart = max(kistart, 0), kjstart = max(kjstart, 0);
     kiend = min(kiend, in_h), kjend = min(kjend, in_w);
 
-    float max = -FLT_MAX;
-    float sum = 0.f;
+    T max = -FLT_MAX;
+    T sum = T(0);
     for (int ki = kistart; ki < kiend; ++ki) {
       for (int kj = kjstart; kj < kjend; ++kj) {
         int index = kj + in_w * (ki + in_h * (c_out + in_c * b_out));
-        float value = in_data[index];
+        T value = in_data[index];
         max = (value > max) ? value : max;
         sum += value;
       }
     }
-    if (mode == 0) {
-      out_data[globalid] = max;
-    } else {
-      out_data[globalid] = sum / pool_size;
-    }
+    out_data[globalid] = (mode == 0) ? max : sum / pool_size;
   }
 }
 
@@ -120,16 +120,17 @@ void Pooling(const T *in_data, const VecInt &in_shape, int kernel_size,
   int in_c = in_shape[1], in_h = in_shape[2], in_w = in_shape[3];
   int out_h = out_shape[2], out_w = out_shape[3];
   int count = batch * in_c * out_h * out_w;
-  KernelPooling<<<GetBlocks(count), NumThreads>>>(
+  KernelPooling<T><<<GetBlocks(count), NumThreads>>>(
       in_data, count, in_c, in_h, in_w, kernel_size, stride, pad, mode, out_h,
       out_w, out_data);
   CUDA_CHECK(cudaPeekAtLastError());
 }
 
-__global__ void KernelConcat(const float *in_data, int count, int num_concats,
+template <typename T>
+__global__ void KernelConcat(const T *in_data, int count, int num_concats,
                              int concat_size, int top_concat_axis,
                              int bottom_concat_axis, int offset_concat_axis,
-                             float *out_data) {
+                             T *out_data) {
   CUDA_KERNEL_LOOP(globalid, count) {
     int total_concat_size = concat_size * bottom_concat_axis;
     int concat_num = globalid / total_concat_size;
@@ -145,15 +146,16 @@ template <typename T>
 void Concat(const T *in_data, int count, int num_concats, int concat_size,
             int top_concat_axis, int bottom_concat_axis, int offset_concat_axis,
             T *out_data) {
-  KernelConcat<<<GetBlocks(count), NumThreads>>>(
+  KernelConcat<T><<<GetBlocks(count), NumThreads>>>(
       in_data, count, num_concats, concat_size, top_concat_axis,
       bottom_concat_axis, offset_concat_axis, out_data);
   CUDA_CHECK(cudaPeekAtLastError());
 }
 
-__global__ void KernelPermute(const float *in_data, int count, int num_axes,
+template <typename T>
+__global__ void KernelPermute(const T *in_data, int count, int num_axes,
                               const int *permute_order, const int *old_steps,
-                              const int *new_steps, float *out_data) {
+                              const int *new_steps, T *out_data) {
   CUDA_KERNEL_LOOP(globalid, count) {
     int old_idx = 0;
     int idx = globalid;
@@ -170,14 +172,15 @@ template <typename T, typename Dtype>
 void Permute(const T *in_data, int count, int num_axes,
              const Dtype *permute_order, const Dtype *old_steps,
              const Dtype *new_steps, T *out_data) {
-  KernelPermute<<<GetBlocks(count), NumThreads>>>(
+  KernelPermute<T><<<GetBlocks(count), NumThreads>>>(
       in_data, count, num_axes, permute_order, old_steps, new_steps, out_data);
   CUDA_CHECK(cudaPeekAtLastError());
 }
 
-__global__ void KernelScale(const float *in_data, int count,
-                            const float *scale_data, const float *bias_data,
-                            int scale_dim, int inner_dim, float *out_data) {
+template <typename T>
+__global__ void KernelScale(const T *in_data, int count, const T *scale_data,
+                            const T *bias_data, int scale_dim, int inner_dim,
+                            T *out_data) {
   CUDA_KERNEL_LOOP(globalid, count) {
     int index = (globalid / inner_dim) % scale_dim;
     out_data[globalid] =
@@ -188,14 +191,14 @@ __global__ void KernelScale(const float *in_data, int count,
 template <typename T>
 void Scale(const T *in_data, int count, const T *scale_data, const T *bias_data,
            int scale_dim, int inner_dim, T *out_data) {
-  KernelScale<<<GetBlocks(count), NumThreads>>>(
+  KernelScale<T><<<GetBlocks(count), NumThreads>>>(
       in_data, count, scale_data, bias_data, scale_dim, inner_dim, out_data);
   CUDA_CHECK(cudaPeekAtLastError());
 }
 
-__global__ void KernelBias(const float *in_data, int count,
-                           const float *bias_data, int bias_dim, int inner_dim,
-                           float *out_data) {
+template <typename T>
+__global__ void KernelBias(const T *in_data, int count, const T *bias_data,
+                           int bias_dim, int inner_dim, T *out_data) {
   CUDA_KERNEL_LOOP(globalid, count) {
     int index = (globalid / inner_dim) % bias_dim;
     out_data[globalid] = in_data[globalid] + bias_data[index];
@@ -205,14 +208,15 @@ __global__ void KernelBias(const float *in_data, int count,
 template <typename T>
 void Bias(const T *in_data, int count, const T *bias_data, int bias_dim,
           int inner_dim, T *out_data) {
-  KernelBias<<<GetBlocks(count), NumThreads>>>(in_data, count, bias_data,
-                                               bias_dim, inner_dim, out_data);
+  KernelBias<T><<<GetBlocks(count), NumThreads>>>(
+      in_data, count, bias_data, bias_dim, inner_dim, out_data);
   CUDA_CHECK(cudaPeekAtLastError());
 }
 
-__global__ void KernelReorg(const float *in_data, int count, int in_c, int in_h,
+template <typename T>
+__global__ void KernelReorg(const T *in_data, int count, int in_c, int in_h,
                             int in_w, int out_c, int out_h, int out_w,
-                            int stride, float *out_data) {
+                            int stride, T *out_data) {
   CUDA_KERNEL_LOOP(globalid, count) {
     int temp = globalid / out_w;
     int w = globalid % out_w;
@@ -238,15 +242,16 @@ void Reorg(const T *in_data, const VecInt &in_shape, int stride, T *out_data) {
   int out_c = in_c * stride * stride;
   int out_h = in_h / stride, out_w = in_w / stride;
   int count = batch * out_c * out_h * out_w;
-  KernelReorg<<<GetBlocks(count), NumThreads>>>(
+  KernelReorg<T><<<GetBlocks(count), NumThreads>>>(
       in_data, count, in_c, in_h, in_w, out_c, out_h, out_w, stride, out_data);
   CUDA_CHECK(cudaPeekAtLastError());
 }
 
-__global__ void KernelLRNFillScale(const float *in_data, int count, int in_c,
+template <typename T>
+__global__ void KernelLRNFillScale(const T *in_data, int count, int in_c,
                                    int in_h, int in_w, int size,
                                    float alpha_over_size, float k,
-                                   float *scale_data) {
+                                   T *scale_data) {
   CUDA_KERNEL_LOOP(globalid, count) {
     int temp = globalid / in_w;
     int w = globalid % in_w;
@@ -254,9 +259,9 @@ __global__ void KernelLRNFillScale(const float *in_data, int count, int in_c,
     int b = temp / in_h;
 
     int offset = (b * in_c * in_h + h) * in_w + w, head = 0;
-    const float *in_off = in_data + offset;
-    float *scale_off = scale_data + offset;
-    float accum_scale = 0;
+    const T *in_off = in_data + offset;
+    T *scale_off = scale_data + offset;
+    T accum_scale = T(0);
     int step = in_h * in_w;
     int pre_pad = (size - 1) / 2, post_pad = size - pre_pad - 1;
     while (head < post_pad && head < in_c) {
@@ -283,12 +288,12 @@ __global__ void KernelLRNFillScale(const float *in_data, int count, int in_c,
   }
 }
 
-__global__ void KernelLRN(const float *in_data, int count,
-                          const float *scale_data, float negative_beta,
-                          float *out_data) {
+template <typename T>
+__global__ void KernelLRN(const T *in_data, int count, const T *scale_data,
+                          float negative_beta, T *out_data) {
   CUDA_KERNEL_LOOP(globalid, count) {
     out_data[globalid] =
-        in_data[globalid] * powf(scale_data[globalid], negative_beta);
+        in_data[globalid] * pow(scale_data[globalid], negative_beta);
   }
 }
 
@@ -298,27 +303,29 @@ void LRN(const T *in_data, const VecInt &in_shape, int size, float alpha,
   int batch = in_shape[0], in_c = in_shape[1];
   int in_h = in_shape[2], in_w = in_shape[3];
   int count = batch * in_h * in_w;
-  KernelLRNFillScale<<<GetBlocks(count), NumThreads>>>(
+  KernelLRNFillScale<T><<<GetBlocks(count), NumThreads>>>(
       in_data, count, in_c, in_h, in_w, size, alpha / size, k, scale_data);
   CUDA_CHECK(cudaPeekAtLastError());
   count *= in_c;
-  KernelLRN<<<GetBlocks(count), NumThreads>>>(in_data, count, scale_data, -beta,
-                                              out_data);
+  KernelLRN<T><<<GetBlocks(count), NumThreads>>>(in_data, count, scale_data,
+                                                 -beta, out_data);
   CUDA_CHECK(cudaPeekAtLastError());
 }
 
-__device__ float ActivateValue(float x, int type) {
+template <typename T>
+__device__ float ActivateValue(T x, int type) {
   switch (type) {
     case 1:
       return x * (x > 0); /*relu*/
     case 2:
-      return (x > 0) ? x : .1f * x; /*leaky*/
+      return (x > 0) ? x : T(.1) * x; /*leaky*/
     default:
       return x;
   }
 }
 
-__global__ void KernelActivate(float *data, int count, int type) {
+template <typename T>
+__global__ void KernelActivate(T *data, int count, int type) {
   CUDA_KERNEL_LOOP(globalid, count) {
     data[globalid] = ActivateValue(data[globalid], type);
   }
@@ -326,15 +333,16 @@ __global__ void KernelActivate(float *data, int count, int type) {
 
 template <typename T>
 void Activate(T *data, int count, int type) {
-  KernelActivate<<<GetBlocks(count), NumThreads>>>(data, count, type);
+  KernelActivate<T><<<GetBlocks(count), NumThreads>>>(data, count, type);
   CUDA_CHECK(cudaPeekAtLastError());
 }
 
-__global__ void KernelPRelu(float *data, int count, int channels, int dim,
-                            int div_factor, const float *slope_data) {
+template <typename T>
+__global__ void KernelPRelu(T *data, int count, int channels, int dim,
+                            int div_factor, const T *slope_data) {
   CUDA_KERNEL_LOOP(globalid, count) {
     int c = (globalid / dim) % channels / div_factor;
-    float value = data[globalid];
+    T value = data[globalid];
     data[globalid] = value > 0 ? value : value * slope_data[c];
   }
 }
@@ -345,8 +353,8 @@ void PRelu(T *data, const VecInt &in_shape, bool channel_shared,
   int channels = in_shape[1], dim = in_shape[2] * in_shape[3];
   int count = in_shape[0] * channels * dim;
   int div_factor = channel_shared ? channels : 1;
-  KernelPRelu<<<GetBlocks(count), NumThreads>>>(data, count, channels, dim,
-                                                div_factor, slope_data);
+  KernelPRelu<T><<<GetBlocks(count), NumThreads>>>(data, count, channels, dim,
+                                                   div_factor, slope_data);
   CUDA_CHECK(cudaPeekAtLastError());
 }
 
@@ -356,7 +364,7 @@ template void DataTransform(const float *in_data, const VecInt &in_shape,
                             float *out_data);
 template void Im2Col(const float *in_data, const VecInt &in_shape, int offset,
                      int kernel_size, int stride, int pad, int dilation,
-                     const VecInt &out_shape, float *out_data);
+                     int zero_point, const VecInt &out_shape, float *out_data);
 template void Pooling(const float *in_data, const VecInt &in_shape,
                       int kernel_size, int stride, int pad, int mode,
                       const VecInt &out_shape, float *out_data);

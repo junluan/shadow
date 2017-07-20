@@ -38,7 +38,7 @@ inline bool check_border(int a, int b) {
 
 template <typename T>
 void Im2Col(const T *in_data, const VecInt &in_shape, int offset,
-            int kernel_size, int stride, int pad, int dilation,
+            int kernel_size, int stride, int pad, int dilation, int zero_point,
             const VecInt &out_shape, T *out_data) {
   in_data += offset;
   int in_c = in_shape[1], in_h = in_shape[2], in_w = in_shape[3];
@@ -56,12 +56,12 @@ void Im2Col(const T *in_data, const VecInt &in_shape, int offset,
             if (check_border(im_col, in_w)) {
               *(out_data++) = in_data[im_row * in_w + im_col];
             } else {
-              *(out_data++) = 0;
+              *(out_data++) = static_cast<T>(zero_point);
             }
           }
         } else {
           for (int w = 0; w < out_w; ++w) {
-            *(out_data++) = 0;
+            *(out_data++) = static_cast<T>(zero_point);
           }
         }
       }
@@ -86,22 +86,18 @@ void Pooling(const T *in_data, const VecInt &in_shape, int kernel_size,
           int pool_size = (kiend - kistart) * (kjend - kjstart);
           kistart = std::max(kistart, 0), kjstart = std::max(kjstart, 0);
           kiend = std::min(kiend, in_h), kjend = std::min(kjend, in_w);
-          float max = -FLT_MAX;
-          float sum = 0.f;
+          T max = std::numeric_limits<T>::lowest();
+          T sum = T(0);
           for (int ki = kistart; ki < kiend; ++ki) {
             for (int kj = kjstart; kj < kjend; ++kj) {
               int index = kj + in_w * (ki + in_h * (c + in_c * b));
-              float value = in_data[index];
+              T value = in_data[index];
               max = (value > max) ? value : max;
               sum += value;
             }
           }
           int out_index = w + out_w * (h + out_h * (c + in_c * b));
-          if (mode == 0) {
-            out_data[out_index] = max;
-          } else {
-            out_data[out_index] = sum / pool_size;
-          }
+          out_data[out_index] = (mode == 0) ? max : sum / pool_size;
         }
       }
     }
@@ -190,7 +186,7 @@ void LRN(const T *in_data, const VecInt &in_shape, int size, float alpha,
         int offset = (b * in_c * in_h + h) * in_w + w, head = 0;
         const T *in_off = in_data + offset;
         T *scale_off = scale_data + offset;
-        float accum_scale = 0;
+        T accum_scale = T(0);
         while (head < post_pad && head < in_c) {
           accum_scale += in_off[head * step] * in_off[head * step];
           head++;
@@ -274,7 +270,11 @@ template void DataTransform(const float *in_data, const VecInt &in_shape,
                             float *out_data);
 template void Im2Col(const float *in_data, const VecInt &in_shape, int offset,
                      int kernel_size, int stride, int pad, int dilation,
-                     const VecInt &out_shape, float *out_data);
+                     int zero_point, const VecInt &out_shape, float *out_data);
+template void Im2Col(const unsigned char *in_data, const VecInt &in_shape,
+                     int offset, int kernel_size, int stride, int pad,
+                     int dilation, int zero_point, const VecInt &out_shape,
+                     unsigned char *out_data);
 template void Pooling(const float *in_data, const VecInt &in_shape,
                       int kernel_size, int stride, int pad, int mode,
                       const VecInt &out_shape, float *out_data);
@@ -316,7 +316,7 @@ void DataTransform(const T *in_data, const VecInt &in_shape, float scale,
 
 template <typename T>
 void Im2Col(const T *in_data, const VecInt &in_shape, int offset,
-            int kernel_size, int stride, int pad, int dilation,
+            int kernel_size, int stride, int pad, int dilation, int zero_point,
             const VecInt &out_shape, T *out_data) {
   int in_c = in_shape[1], in_h = in_shape[2], in_w = in_shape[3];
   int out_h = out_shape[2], out_w = out_shape[3];
@@ -325,7 +325,8 @@ void Im2Col(const T *in_data, const VecInt &in_shape, int offset,
   size_t global = count;
   auto *kernel = Kernel::cl_kernels_["Im2Col"];
   kernel->SetArguments(*in_data, offset, count, in_c, in_h, in_w, kernel_size,
-                       stride, pad, dilation, out_h, out_w, *out_data);
+                       stride, pad, dilation, zero_point, out_h, out_w,
+                       *out_data);
   kernel->Launch(*Kernel::queue_, {global}, Kernel::event_);
   Kernel::queue_->Finish();
 }
@@ -462,7 +463,8 @@ template void DataTransform(const BufferF *in_data, const VecInt &in_shape,
                             const BufferF *mean_value, BufferF *out_data);
 template void Im2Col(const BufferF *in_data, const VecInt &in_shape, int offset,
                      int kernel_size, int stride, int pad, int dilation,
-                     const VecInt &out_shape, BufferF *out_data);
+                     int zero_point, const VecInt &out_shape,
+                     BufferF *out_data);
 template void Pooling(const BufferF *in_data, const VecInt &in_shape,
                       int kernel_size, int stride, int pad, int mode,
                       const VecInt &out_shape, BufferF *out_data);

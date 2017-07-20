@@ -23,7 +23,7 @@ __kernel void DataTransform(__global float *in_data, int count, int in_c,
 
 __kernel void Im2Col(__global float *in_data, int offset, int count, int in_c,
                      int in_h, int in_w, int kernel_size, int stride, int pad,
-                     int dilation, int out_h, int out_w,
+                     int dilation, int zero_point, int out_h, int out_w,
                      __global float *out_data) {
   CL_KERNEL_LOOP(globalid, count)
 
@@ -42,7 +42,7 @@ __kernel void Im2Col(__global float *in_data, int offset, int count, int in_c,
       int w_im = w_offset + j * dilation;
       *out_data = (h_im >= 0 && w_im >= 0 && h_im < in_h && w_im < in_w)
                       ? in_data[i * dilation * in_w + j * dilation]
-                      : 0;
+                      : zero_point;
       out_data += out_h * out_w;
     }
   }
@@ -77,11 +77,7 @@ __kernel void Pooling(__global float *in_data, int count, int in_c, int in_h,
       sum += value;
     }
   }
-  if (mode == 0) {
-    out_data[globalid] = max;
-  } else {
-    out_data[globalid] = sum / pool_size;
-  }
+  out_data[globalid] = (mode == 0) ? max : sum / pool_size;
 }
 
 __kernel void Concat(__global float *in_data, int count, int num_concats,

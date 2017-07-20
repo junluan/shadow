@@ -16,7 +16,7 @@ class ConvOp : public Operator {
   virtual void Forward() override;
   virtual void Release() override;
 
- private:
+ protected:
   int num_output_, kernel_size_, stride_, pad_, dilation_, group_,
       out_spatial_dim_, kernel_dim_;
   int weight_offset_, col_offset_, output_offset_;

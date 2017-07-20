@@ -13,7 +13,7 @@ void DataTransform(const T *in_data, const VecInt &in_shape, float scale,
 
 template <typename T>
 void Im2Col(const T *in_data, const VecInt &in_shape, int offset,
-            int kernel_size, int stride, int pad, int dilation,
+            int kernel_size, int stride, int pad, int dilation, int zero_point,
             const VecInt &out_shape, T *out_data);
 
 template <typename T>
