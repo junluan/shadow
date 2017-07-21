@@ -15,7 +15,7 @@ class Registry {
  public:
   using Creator = std::function<ObjectType*(Args...)>;
 
-  Registry() : registry_() {}
+  Registry() = default;
 
   void Register(const SrcType& key, Creator creator) {
     if (registry_.count(key) != 0) {
@@ -97,7 +97,7 @@ class Register {
 
 #define SHADOW_DEFINE_TYPED_REGISTRY(RegistryName, SrcType, ObjectType, ...) \
   Registry<SrcType, ObjectType, ##__VA_ARGS__>* RegistryName() {             \
-    static Registry<SrcType, ObjectType, ##__VA_ARGS__>* registry =          \
+    static auto* registry =                                                  \
         new Registry<SrcType, ObjectType, ##__VA_ARGS__>();                  \
     return registry;                                                         \
   }

@@ -24,35 +24,12 @@ void Network::LoadModel(const std::string &proto_str, const float *weights_data,
   CopyWeights(weights_data);
 }
 
-void Network::SaveModel(const std::string &proto_bin) {
-#if defined(USE_Protobuf)
-  for (int o = 0; o < ops_.size(); ++o) {
-    net_param_.mutable_op(o)->clear_blobs();
-    for (const auto &blob : ops_[o]->blobs()) {
-      auto op_blob = net_param_.mutable_op(o)->add_blobs();
-      for (const auto &dim : blob->shape()) {
-        op_blob->add_shape(dim);
-      }
-      VecFloat blob_data(blob->count());
-      blob->read_data(blob_data.data(), blob_data.size());
-      for (const auto &data : blob_data) {
-        op_blob->add_data(data);
-      }
-    }
-  }
-  IO::WriteProtoToBinaryFile(net_param_, proto_bin);
-
-#else
-  LOG(FATAL) << "Unsupported save binary model, recompiled with USE_Protobuf";
-#endif
-}
-
 void Network::Forward(const float *data) {
   CHECK_NOTNULL(data);
   if (ops_.size() == 0) return;
   CHECK(!ops_[0]->type().compare("Data"))
       << "The first Op must be Data operator!";
-  auto in_blob = ops_[0]->mutable_bottoms(0);
+  auto in_blob = ops_[0]->mutable_bottoms<float>(0);
   in_blob->set_data(data, in_blob->count());
   for (auto &op : ops_) {
     op->Forward();
@@ -134,8 +111,8 @@ void Network::CopyWeights(const std::vector<const float *> &weights) {
       CHECK_LT(weights_count, weights.size());
       const float *weights_data = weights[weights_count++];
       for (int n = 0; n < op->blobs_size(); ++n) {
-        int blob_count = op->blobs(n)->count();
-        op->set_blob(n, blob_count, weights_data);
+        int blob_count = op->blobs<float>(n)->count();
+        op->set_blobs<float>(n, blob_count, weights_data);
         weights_data += blob_count;
       }
     }
@@ -145,8 +122,8 @@ void Network::CopyWeights(const std::vector<const float *> &weights) {
 void Network::CopyWeights(const float *weights_data) {
   for (auto &op : ops_) {
     for (int n = 0; n < op->blobs_size(); ++n) {
-      int blob_count = op->blobs(n)->count();
-      op->set_blob(n, blob_count, weights_data);
+      int blob_count = op->blobs<float>(n)->count();
+      op->set_blobs<float>(n, blob_count, weights_data);
       weights_data += blob_count;
     }
   }

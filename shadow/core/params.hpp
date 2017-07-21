@@ -27,7 +27,7 @@ namespace shadow {
   const TYPE &NAME(int index) const { return NAME##_[index]; }              \
   TYPE *mutable_##NAME(int index) { return &NAME##_[index]; }               \
   int NAME##_size() const { return NAME##_.size(); }                        \
-  bool has_##NAME() const { return NAME##_.size() > 0; }                    \
+  bool has_##NAME() const { return !NAME##_.empty(); }                      \
   void clear_##NAME() { NAME##_.clear(); }
 
 #define OPTIONAL_FIELD_DEFAULT_FUNC(NAME, TYPE, DEFAULT) \
@@ -66,7 +66,7 @@ namespace shadow {
   }
 
 #define DEFAULT_CONSTRUCTOR_FUNC(NAME)     \
-  NAME() {}                                \
+  NAME() = default;                        \
   NAME(const NAME &from) { *this = from; } \
   ~NAME() { Clear(); }
 
@@ -82,25 +82,36 @@ class Blob {
     if (&from == this) return;
     Clear();
     name_ = from.name_;
+    type_ = from.type_;
     shape_ = from.shape_;
-    data_ = from.data_;
+    data_f_ = from.data_f_;
+    data_i_ = from.data_i_;
+    data_b_ = from.data_b_;
   }
 
   OPTIONAL_FIELD_DEFAULT_FUNC(name, std::string, "");
-  REPEATED_FIELD_FUNC(data, float);
+  OPTIONAL_FIELD_DEFAULT_FUNC(type, std::string, "");
   REPEATED_FIELD_FUNC(shape, int);
+  REPEATED_FIELD_FUNC(data_f, float);
+  REPEATED_FIELD_FUNC(data_i, int);
+  REPEATED_FIELD_FUNC(data_b, unsigned char);
 
   void Clear() {
     clear_name();
+    clear_type();
     clear_shape();
-    clear_data();
+    clear_data_f();
+    clear_data_i();
+    clear_data_b();
   }
 
  private:
-  std::string name_;
+  std::string name_, type_;
   std::vector<int> shape_;
-  std::vector<float> data_;
-  bool has_name_ = false;
+  std::vector<float> data_f_;
+  std::vector<int> data_i_;
+  std::vector<unsigned char> data_b_;
+  bool has_name_ = false, has_type_ = false;
 };
 
 class Argument {
@@ -225,7 +236,7 @@ class NetParam {
 
 class ArgumentHelper {
  public:
-  ArgumentHelper() {}
+  ArgumentHelper() = default;
   explicit ArgumentHelper(const shadow::OpParam &def);
 
   bool HasArgument(const std::string &name) const;

@@ -5,51 +5,55 @@
 namespace Shadow {
 
 void ActivateOp::Setup() {
-  activate_type_ = arg_helper_.GetSingleArgument<int>("type", 1);
+  activate_type_ = get_single_argument<int>("type", 1);
 
   if (activate_type_ == 3) {
-    channel_shared_ =
-        arg_helper_.GetSingleArgument<bool>("channel_shared", false);
-    CHECK_GE(bottoms_[0]->num_axes(), 2);
-    int channels = bottoms_[0]->shape(1);
-    if (blobs_.size() == 0) {
-      blobs_.push_back(op_ws_->CreateBlob<float>(op_name_ + "_param"));
+    channel_shared_ = get_single_argument<bool>("channel_shared", false);
+    CHECK_GE(bottoms<float>(0)->num_axes(), 2);
+    int channels = bottoms<float>(0)->shape(1);
+    if (blobs_size() == 0) {
+      add_blobs<float>(op_name_ + "_param");
+      auto *param_blob = mutable_blobs<float>(0);
       if (channel_shared_) {
-        blobs_[0]->reshape(1);
+        param_blob->reshape(1);
       } else {
-        blobs_[0]->reshape(channels);
+        param_blob->reshape(channels);
       }
-      Blas::Set(blobs_[0]->count(), 0.25, blobs_[0]->mutable_data(), 0);
+      Blas::Set(param_blob->count(), 0.25, param_blob->mutable_data(), 0);
     }
     if (channel_shared_) {
-      CHECK_EQ(blobs_[0]->count(), 1);
+      CHECK_EQ(blobs<float>(0)->count(), 1);
     } else {
-      CHECK_EQ(blobs_[0]->count(), channels);
+      CHECK_EQ(blobs<float>(0)->count(), channels);
     }
   }
 }
 
 void ActivateOp::Reshape() {
-  if (bottoms_[0] != tops_[0]) {
-    tops_[0]->reshape(bottoms_[0]->shape());
+  const auto *bottom = bottoms<float>(0);
+  auto *top = mutable_tops<float>(0);
+
+  if (bottom != top) {
+    top->reshape(bottom->shape());
   }
 
   DLOG(INFO) << op_name_ << ": "
-             << Util::format_vector(bottoms_[0]->shape(), ",", "(", ")")
-             << " -> " << Util::format_vector(tops_[0]->shape(), ",", "(", ")");
+             << Util::format_vector(bottom->shape(), ",", "(", ")") << " -> "
+             << Util::format_vector(top->shape(), ",", "(", ")");
 }
 
 void ActivateOp::Forward() {
-  if (bottoms_[0] != tops_[0]) {
-    Blas::BlasScopy(bottoms_[0]->count(), bottoms_[0]->data(), 0,
-                    tops_[0]->mutable_data(), 0);
+  const auto *bottom = bottoms<float>(0);
+  auto *top = mutable_tops<float>(0);
+
+  if (bottom != top) {
+    Blas::BlasScopy(bottom->count(), bottom->data(), 0, top->mutable_data(), 0);
   }
   if (activate_type_ == 3) {
-    Image::PRelu(tops_[0]->mutable_data(), tops_[0]->shape(), channel_shared_,
-                 blobs_[0]->data());
+    Image::PRelu(top->mutable_data(), top->shape(), channel_shared_,
+                 blobs<float>(0)->data());
   } else {
-    Image::Activate(tops_[0]->mutable_data(), tops_[0]->count(),
-                    activate_type_);
+    Image::Activate(top->mutable_data(), top->count(), activate_type_);
   }
 }
 

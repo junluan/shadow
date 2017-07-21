@@ -3,14 +3,13 @@
 namespace Shadow {
 
 void PriorBoxOp::Setup() {
-  min_sizes_ = arg_helper_.GetRepeatedArgument<float>("min_size");
+  min_sizes_ = get_repeated_argument<float>("min_size");
   CHECK_GT(min_sizes_.size(), 0) << "must provide min_size.";
   for (const auto &min_size : min_sizes_) {
     CHECK_GT(min_size, 0) << "min_size must be positive.";
   }
-  flip_ = arg_helper_.GetSingleArgument<bool>("flip", true);
-  VecFloat aspect_ratios =
-      arg_helper_.GetRepeatedArgument<float>("aspect_ratio");
+  flip_ = get_single_argument<bool>("flip", true);
+  const auto &aspect_ratios = get_repeated_argument<float>("aspect_ratio");
   aspect_ratios_.clear();
   aspect_ratios_.push_back(1.f);
   for (const auto &ratio : aspect_ratios) {
@@ -28,9 +27,9 @@ void PriorBoxOp::Setup() {
       }
     }
   }
-  num_priors_ = aspect_ratios_.size() * min_sizes_.size();
-  max_sizes_ = arg_helper_.GetRepeatedArgument<float>("max_size");
-  if (max_sizes_.size() > 0) {
+  num_priors_ = static_cast<int>(aspect_ratios_.size() * min_sizes_.size());
+  max_sizes_ = get_repeated_argument<float>("max_size");
+  if (!max_sizes_.empty()) {
     CHECK_EQ(min_sizes_.size(), max_sizes_.size());
     for (int i = 0; i < max_sizes_.size(); ++i) {
       CHECK_GT(max_sizes_[i], min_sizes_[i])
@@ -38,46 +37,48 @@ void PriorBoxOp::Setup() {
       num_priors_ += 1;
     }
   }
-  clip_ = arg_helper_.GetSingleArgument<bool>("clip", false);
-  VecFloat variance = arg_helper_.GetRepeatedArgument<float>("variance");
-  if (variance.size() > 1) {
-    CHECK_EQ(variance.size(), 4);
-    variance_ = variance;
-  } else if (variance.size() == 1) {
-    variance_ = variance;
-  } else {
+  clip_ = get_single_argument<bool>("clip", false);
+  variance_ = get_repeated_argument<float>("variance");
+  if (variance_.size() > 1) {
+    CHECK_EQ(variance_.size(), 4);
+  } else if (variance_.empty()) {
     variance_.push_back(0.1);
   }
-  if (arg_helper_.HasArgument("step")) {
-    step_ = arg_helper_.GetSingleArgument<float>("step", 0);
+  if (has_argument("step")) {
+    step_ = get_single_argument<float>("step", 0);
     CHECK_GT(step_, 0);
   } else {
     step_ = 0;
   }
-  offset_ = arg_helper_.GetSingleArgument<float>("offset", 0.5);
+  offset_ = get_single_argument<float>("offset", 0.5);
 }
 
 void PriorBoxOp::Reshape() {
-  VecInt top_shape(3, 1);
-  top_shape[1] = 2;
-  top_shape[2] =
-      bottoms_[0]->shape(2) * bottoms_[0]->shape(3) * num_priors_ * 4;
+  const auto *bottom = bottoms<float>(0);
+  auto *top = mutable_tops<float>(0);
+
+  VecInt top_shape{1, 2, 0};
+  top_shape[2] = bottom->shape(2) * bottom->shape(3) * num_priors_ * 4;
   CHECK_GT(top_shape[2], 0);
-  tops_[0]->reshape(top_shape);
-  top_data_.resize(tops_[0]->count());
+  top->reshape(top_shape);
+  top_data_.resize(top->count());
 
   is_initial_ = false;
 
   DLOG(INFO) << op_name_ << ": "
-             << Util::format_vector(bottoms_[0]->shape(), ",", "(", ")")
-             << " -> " << Util::format_vector(tops_[0]->shape(), ",", "(", ")");
+             << Util::format_vector(bottom->shape(), ",", "(", ")") << " -> "
+             << Util::format_vector(top->shape(), ",", "(", ")");
 }
 
 void PriorBoxOp::Forward() {
+  const auto *bottom = bottoms<float>(0);
+  auto *top = mutable_tops<float>(0);
+
   if (is_initial_) return;
 
-  int height = bottoms_[0]->shape(2), width = bottoms_[0]->shape(3);
-  int img_height = bottoms_[1]->shape(2), img_width = bottoms_[1]->shape(3);
+  int height = bottom->shape(2), width = bottom->shape(3);
+  int img_height = bottoms<float>(1)->shape(2),
+      img_width = bottoms<float>(1)->shape(3);
   float step_h, step_w;
   if (step_ == 0) {
     step_h = static_cast<float>(img_height) / height;
@@ -127,13 +128,13 @@ void PriorBoxOp::Forward() {
     }
   }
   if (clip_) {
-    for (int i = 0; i < tops_[0]->shape(2); ++i) {
+    for (int i = 0; i < top->shape(2); ++i) {
       top_data_[i] = std::min(std::max(top_data_[i], 0.f), 1.f);
     }
   }
-  int top_offset = tops_[0]->shape(2);
+  int top_offset = top->shape(2);
   if (variance_.size() == 1) {
-    for (int i = 0; i < tops_[0]->shape(2); ++i) {
+    for (int i = 0; i < top->shape(2); ++i) {
       top_data_[top_offset + i] = variance_[0];
     }
   } else {
@@ -148,7 +149,7 @@ void PriorBoxOp::Forward() {
       }
     }
   }
-  tops_[0]->set_data(top_data_.data(), top_data_.size());
+  top->set_data(top_data_.data(), top_data_.size());
   is_initial_ = true;
 }
 

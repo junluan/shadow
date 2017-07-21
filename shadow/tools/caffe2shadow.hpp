@@ -68,7 +68,7 @@ void ConvertCommon(const caffe::NetParameter& caffe_model,
           shadow_blob->add_shape(caffe_blob.data_size());
         }
         for (const auto data : caffe_blob.data()) {
-          shadow_blob->add_data(data);
+          shadow_blob->add_data_f(data);
         }
       }
       break;
@@ -568,12 +568,12 @@ void WriteDefines(const shadow::NetParam& shadow_net, const std::string& root,
     if (op_param->blobs_size() == 0) continue;
     int count = 0;
     for (const auto& blob : op_param->blobs()) {
-      count += blob.data_size();
+      count += blob.data_f_size();
     }
     whole_count += count;
     weight_counts.push_back(count);
     for (int n = 0; n < op_param->blobs_size(); ++n) {
-      op_param->mutable_blobs(n)->clear_data();
+      op_param->mutable_blobs(n)->clear_data_f();
     }
   }
 
@@ -738,7 +738,7 @@ void WriteWeights(const shadow::NetParam& shadow_net, const std::string& root,
     file << "const float weight_" << weight_count << "_[] = {\n";
     int count = 0, num_of_line = 10;
     for (const auto& blob : op_param.blobs()) {
-      for (const auto& data : blob.data()) {
+      for (const auto& data : blob.data_f()) {
         if (count > 0) {
           file << ",";
         }

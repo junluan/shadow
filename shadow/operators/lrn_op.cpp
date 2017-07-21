@@ -4,29 +4,35 @@
 namespace Shadow {
 
 void LRNOp::Setup() {
-  size_ = arg_helper_.GetSingleArgument<int>("local_size", 5);
+  size_ = get_single_argument<int>("local_size", 5);
   CHECK_EQ(size_ % 2, 1) << "LRN only supports odd values for local_size";
-  alpha_ = arg_helper_.GetSingleArgument<float>("alpha", 1);
-  beta_ = arg_helper_.GetSingleArgument<float>("beta", 0.75);
-  norm_region_ = arg_helper_.GetSingleArgument<int>("norm_region", 0);
+  alpha_ = get_single_argument<float>("alpha", 1);
+  beta_ = get_single_argument<float>("beta", 0.75);
+  norm_region_ = get_single_argument<int>("norm_region", 0);
   CHECK_EQ(norm_region_, 0)
       << "Currently only support norm region method: Across Channels!";
-  k_ = arg_helper_.GetSingleArgument<float>("k", 1);
+  k_ = get_single_argument<float>("k", 1);
 }
 
 void LRNOp::Reshape() {
-  tops_[0]->reshape(bottoms_[0]->shape());
+  const auto *bottom = bottoms<float>(0);
+  auto *top = mutable_tops<float>(0);
 
-  scale_.reshape(bottoms_[0]->shape());
+  top->reshape(bottom->shape());
+
+  scale_.reshape(bottom->shape());
 
   DLOG(INFO) << op_name_ << ": "
-             << Util::format_vector(bottoms_[0]->shape(), ",", "(", ")")
-             << " -> " << Util::format_vector(tops_[0]->shape(), ",", "(", ")");
+             << Util::format_vector(bottom->shape(), ",", "(", ")") << " -> "
+             << Util::format_vector(top->shape(), ",", "(", ")");
 }
 
 void LRNOp::Forward() {
-  Image::LRN(bottoms_[0]->data(), bottoms_[0]->shape(), size_, alpha_, beta_,
-             k_, scale_.mutable_data(), tops_[0]->mutable_data());
+  const auto *bottom = bottoms<float>(0);
+  auto *top = mutable_tops<float>(0);
+
+  Image::LRN(bottom->data(), bottom->shape(), size_, alpha_, beta_, k_,
+             scale_.mutable_data(), top->mutable_data());
 }
 
 void LRNOp::Release() {

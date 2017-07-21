@@ -4,15 +4,15 @@
 namespace Shadow {
 
 void DataOp::Setup() {
-  bottoms_.push_back(op_ws_->GetBlob<float>("in_blob"));
+  add_bottoms<float>("in_blob");
 
-  scale_ = arg_helper_.GetSingleArgument<float>("scale", 1);
-  VecFloat mean_value = arg_helper_.GetRepeatedArgument<float>("mean_value");
+  scale_ = get_single_argument<float>("scale", 1);
+  VecFloat mean_value = get_repeated_argument<float>("mean_value");
   num_mean_ = 1;
   if (mean_value.size() > 1) {
-    CHECK_EQ(mean_value.size(), bottoms_[0]->shape(1));
-    num_mean_ = mean_value.size();
-  } else if (mean_value.size() == 0) {
+    CHECK_EQ(mean_value.size(), bottoms<float>(0)->shape(1));
+    num_mean_ = static_cast<int>(mean_value.size());
+  } else if (mean_value.empty()) {
     mean_value.push_back(0);
   }
   mean_value_.reshape(num_mean_);
@@ -20,15 +20,21 @@ void DataOp::Setup() {
 }
 
 void DataOp::Reshape() {
-  tops_[0]->reshape(bottoms_[0]->shape());
+  const auto *bottom = bottoms<float>(0);
+  auto *top = mutable_tops<float>(0);
+
+  top->reshape(bottom->shape());
 
   DLOG(INFO) << op_name_ << ": "
-             << Util::format_vector(bottoms_[0]->shape(), ",", "(", ")");
+             << Util::format_vector(bottom->shape(), ",", "(", ")");
 }
 
 void DataOp::Forward() {
-  Image::DataTransform(bottoms_[0]->data(), bottoms_[0]->shape(), scale_,
-                       num_mean_, mean_value_.data(), tops_[0]->mutable_data());
+  const auto *bottom = bottoms<float>(0);
+  auto *top = mutable_tops<float>(0);
+
+  Image::DataTransform(bottom->data(), bottom->shape(), scale_, num_mean_,
+                       mean_value_.data(), top->mutable_data());
 }
 
 void DataOp::Release() {

@@ -5,52 +5,60 @@
 namespace Shadow {
 
 void BiasOp::Setup() {
-  axis_ = arg_helper_.GetSingleArgument<int>("axis", 1);
-  axis_ = bottoms_[0]->canonical_index(axis_);
-  num_axis_ = arg_helper_.GetSingleArgument<int>("num_axis", 1);
+  axis_ = get_single_argument<int>("axis", 1);
+  axis_ = bottoms<float>(0)->canonical_index(axis_);
+  num_axis_ = get_single_argument<int>("num_axis", 1);
   CHECK_GE(num_axis_, -1);
 
-  if (bottoms_.size() == 1 && blobs_.size() == 0) {
+  if (bottoms_size() == 1 && blobs_size() == 0) {
     int end_axis;
     if (num_axis_ == -1) {
-      end_axis = bottoms_[0]->num_axes();
+      end_axis = bottoms<float>(0)->num_axes();
     } else {
       end_axis = axis_ + num_axis_;
-      CHECK_GE(bottoms_[0]->num_axes(), end_axis);
+      CHECK_GE(bottoms<float>(0)->num_axes(), end_axis);
     }
     VecInt bias_shape;
     for (int i = axis_; i < end_axis; ++i) {
-      bias_shape.push_back(bottoms_[0]->shape(i));
+      bias_shape.push_back(bottoms<float>(0)->shape(i));
     }
-    blobs_.push_back(
-        op_ws_->CreateBlob<float>(bias_shape, op_name_ + "_param"));
-    Blas::Set(blobs_[0]->count(), 0, blobs_[0]->mutable_data(), 0);
+    add_blobs<float>(op_name_ + "_param_bias");
+    auto *bias_blob = mutable_blobs<float>(0);
+    bias_blob->reshape(bias_shape);
+    Blas::Set(bias_blob->count(), 0, bias_blob->mutable_data(), 0);
     DLOG(WARNING) << "Bias param is initialized with the default value 0";
   }
-  bias_ = bottoms_.size() > 1 ? bottoms_[1] : blobs_[0];
+  bias_ =
+      bottoms_size() > 1 ? mutable_bottoms<float>(1) : mutable_blobs<float>(0);
 }
 
 void BiasOp::Reshape() {
-  if (bottoms_[0] != tops_[0]) {
-    tops_[0]->reshape(bottoms_[0]->shape());
+  const auto *bottom = bottoms<float>(0);
+  auto *top = mutable_tops<float>(0);
+
+  if (bottom != top) {
+    top->reshape(bottom->shape());
   }
 
   int start_axis = bias_->num_axes() == 0 ? 0 : axis_;
-  CHECK_GE(bottoms_[0]->num_axes(), start_axis + bias_->num_axes());
+  CHECK_GE(bottom->num_axes(), start_axis + bias_->num_axes());
   for (int i = 0; i < bias_->num_axes(); ++i) {
-    CHECK_EQ(bottoms_[0]->shape(start_axis + i), bias_->shape(i));
+    CHECK_EQ(bottom->shape(start_axis + i), bias_->shape(i));
   }
   bias_dim_ = bias_->count();
-  inner_dim_ = bottoms_[0]->count(start_axis + bias_->num_axes());
+  inner_dim_ = bottom->count(start_axis + bias_->num_axes());
 
   DLOG(INFO) << op_name_ << ": "
-             << Util::format_vector(bottoms_[0]->shape(), ",", "(", ")")
-             << " -> " << Util::format_vector(tops_[0]->shape(), ",", "(", ")");
+             << Util::format_vector(bottom->shape(), ",", "(", ")") << " -> "
+             << Util::format_vector(top->shape(), ",", "(", ")");
 }
 
 void BiasOp::Forward() {
-  Image::Bias(bottoms_[0]->data(), bottoms_[0]->count(), bias_->data(),
-              bias_dim_, inner_dim_, tops_[0]->mutable_data());
+  const auto *bottom = bottoms<float>(0);
+  auto *top = mutable_tops<float>(0);
+
+  Image::Bias(bottom->data(), bottom->count(), bias_->data(), bias_dim_,
+              inner_dim_, top->mutable_data());
 }
 
 void BiasOp::Release() {

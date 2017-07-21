@@ -4,8 +4,11 @@ package shadow;
 
 message Blob {
   optional string name = 1;
-  repeated int32 shape = 2;
-  repeated float data = 3 [packed = true];
+  optional string type = 2;
+  repeated int32 shape = 3;
+  repeated float data_f = 4 [packed = true];
+  repeated int32 data_i = 5 [packed = true];
+  repeated bytes data_b = 6;
 }
 
 message Argument {

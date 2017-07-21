@@ -9,7 +9,7 @@ namespace Shadow {
 
 namespace Server {
 
-class ShadowServer final : public shadow::ShadowService::Service {
+class ShadowServer final : public ::shadow::ShadowService::Service {
  public:
   ShadowServer(const std::string &model, const VecInt &classes,
                const std::string &method) {
@@ -38,8 +38,8 @@ class ShadowServer final : public shadow::ShadowService::Service {
   }
 
   grpc::Status Process(grpc::ServerContext *context,
-                       const shadow::ShadowRequest *request,
-                       shadow::ShadowReply *reply) override {
+                       const ::shadow::ShadowRequest *request,
+                       ::shadow::ShadowReply *reply) override {
     const auto &request_name = request->server_name();
     if (request_name.compare(method_name_)) {
       std::stringstream ss;

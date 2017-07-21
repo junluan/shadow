@@ -4,33 +4,36 @@
 namespace Shadow {
 
 void NormalizeOp::Setup() {
-  across_spatial_ = arg_helper_.GetSingleArgument<bool>("across_spatial", true);
-  channel_shared_ = arg_helper_.GetSingleArgument<bool>("channel_shared", true);
+  across_spatial_ = get_single_argument<bool>("across_spatial", true);
+  channel_shared_ = get_single_argument<bool>("channel_shared", true);
 
-  if (blobs_.size() == 0) {
-    blobs_.push_back(op_ws_->CreateBlob<float>(op_name_ + "_param"));
+  if (blobs_size() == 0) {
+    add_blobs<float>(op_name_ + "_param_scale");
+    auto *scale_blob = mutable_blobs<float>(0);
     if (channel_shared_) {
-      blobs_[0]->reshape(1);
+      scale_blob->reshape(1);
     } else {
-      blobs_[0]->reshape(bottoms_[0]->shape(1));
+      scale_blob->reshape(bottoms<float>(0)->shape(1));
     }
-    Blas::Set(blobs_[0]->count(), 1, blobs_[0]->mutable_data(), 0);
+    Blas::Set(scale_blob->count(), 1, scale_blob->mutable_data(), 0);
     DLOG(WARNING) << "Scale param is initialized with the default values 1";
   }
 
-  CHECK_EQ(blobs_.size(), 1);
+  CHECK_EQ(blobs_size(), 1);
   if (channel_shared_) {
-    CHECK_EQ(blobs_[0]->count(), 1);
+    CHECK_EQ(blobs<float>(0)->count(), 1);
   } else {
-    CHECK_EQ(blobs_[0]->count(), bottoms_[0]->shape(1));
+    CHECK_EQ(blobs<float>(0)->count(), bottoms<float>(0)->shape(1));
   }
 }
 
 void NormalizeOp::Reshape() {
-  int in_c = bottoms_[0]->shape(1), in_h = bottoms_[0]->shape(2),
-      in_w = bottoms_[0]->shape(3);
+  const auto *bottom = bottoms<float>(0);
+  auto *top = mutable_tops<float>(0);
 
-  tops_[0]->reshape(bottoms_[0]->shape());
+  int in_c = bottom->shape(1), in_h = bottom->shape(2), in_w = bottom->shape(3);
+
+  top->reshape(bottom->shape());
 
   spatial_dim_ = in_h * in_w;
 
@@ -47,22 +50,25 @@ void NormalizeOp::Reshape() {
   Blas::Set(spatial_dim_, 1, sum_spatial_multiplier_.mutable_data(), 0);
 
   DLOG(INFO) << op_name_ << ": "
-             << Util::format_vector(bottoms_[0]->shape(), ",", "(", ")")
-             << " -> " << Util::format_vector(tops_[0]->shape(), ",", "(", ")");
+             << Util::format_vector(bottom->shape(), ",", "(", ")") << " -> "
+             << Util::format_vector(top->shape(), ",", "(", ")");
 }
 
 void NormalizeOp::Forward() {
-  int batch = bottoms_[0]->shape(0), channels = bottoms_[0]->shape(1);
-  int num = bottoms_[0]->num();
+  const auto *bottom = bottoms<float>(0);
+  auto *top = mutable_tops<float>(0);
+
+  int batch = bottom->shape(0), channels = bottom->shape(1);
+  int num = bottom->num();
   for (int b = 0; b < batch; ++b) {
     int data_offset = b * num;
-    Blas::Sqr(num, bottoms_[0]->data(), data_offset, buffer_.mutable_data(), 0);
+    Blas::Sqr(num, bottom->data(), data_offset, buffer_.mutable_data(), 0);
     if (across_spatial_) {
       float sum = 0;
       Blas::BlasSasum(num, buffer_.data(), 0, &sum);
       float norm = std::sqrt(sum + EPS);
-      Blas::Scale(num, 1.f / norm, bottoms_[0]->data(), data_offset,
-                  tops_[0]->mutable_data(), data_offset);
+      Blas::Scale(num, 1.f / norm, bottom->data(), data_offset,
+                  top->mutable_data(), data_offset);
     } else {
       Blas::Set(norm_.count(), EPS, norm_.mutable_data(), 0);
       Blas::BlasSgemv(1, channels, spatial_dim_, 1, buffer_.data(), 0,
@@ -72,18 +78,18 @@ void NormalizeOp::Forward() {
       Blas::BlasSgemm(0, 0, channels, spatial_dim_, 1, 1,
                       sum_channel_multiplier_.data(), 0, norm_.data(), 0, 0,
                       buffer_.mutable_data(), 0);
-      Blas::Div(num, bottoms_[0]->data(), data_offset, buffer_.data(), 0,
-                tops_[0]->mutable_data(), data_offset);
+      Blas::Div(num, bottom->data(), data_offset, buffer_.data(), 0,
+                top->mutable_data(), data_offset);
     }
     if (channel_shared_) {
-      blobs_[0]->read_data(&scale_, 1);
-      Blas::BlasSscal(num, scale_, tops_[0]->mutable_data(), data_offset);
+      blobs<float>(0)->read_data(&scale_, 1);
+      Blas::BlasSscal(num, scale_, top->mutable_data(), data_offset);
     } else {
-      Blas::BlasSgemm(0, 0, channels, spatial_dim_, 1, 1, blobs_[0]->data(), 0,
-                      sum_spatial_multiplier_.data(), 0, 0,
-                      buffer_.mutable_data(), 0);
-      Blas::Mul(num, tops_[0]->data(), data_offset, buffer_.data(), 0,
-                tops_[0]->mutable_data(), data_offset);
+      Blas::BlasSgemm(
+          0, 0, channels, spatial_dim_, 1, 1, blobs<float>(0)->data(), 0,
+          sum_spatial_multiplier_.data(), 0, 0, buffer_.mutable_data(), 0);
+      Blas::Mul(num, top->data(), data_offset, buffer_.data(), 0,
+                top->mutable_data(), data_offset);
     }
   }
 }

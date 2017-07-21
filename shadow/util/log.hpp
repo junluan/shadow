@@ -19,15 +19,19 @@
 
 #define LOG(severity) LOG_##severity.stream()
 #define LOG_IF(severity, condition) \
-  !(condition) ? (void)0 : LogMessageVoidify() & LOG(severity)
+  if ((condition)) LOG(severity)
+
+#define CHECK_NOTNULL(condition) \
+  if ((condition) == nullptr)    \
+  LOG(FATAL) << "Check Failed: '" #condition << "' Must be non NULL "
 
 #define CHECK(condition) \
-  if (!(condition)) LOG(FATAL) << "Check Failed: " #condition << ' '
+  if (!(condition)) LOG(FATAL) << "Check Failed: " #condition << " "
 
-#define CHECK_OP(condition, val1, val2)                                      \
-  if (!((val1)condition(val2)))                                              \
-  LOG(FATAL) << "Check Failed: " #val1 " " #condition " " #val2 " (" << val1 \
-             << " vs " << val2 << ") "
+#define CHECK_OP(condition, val1, val2)                                        \
+  if (!((val1)condition(val2)))                                                \
+  LOG(FATAL) << "Check Failed: " #val1 " " #condition " " #val2 " (" << (val1) \
+             << " vs " << (val2) << ") "
 
 #define CHECK_EQ(val1, val2) CHECK_OP(==, val1, val2)
 #define CHECK_NE(val1, val2) CHECK_OP(!=, val1, val2)
@@ -36,15 +40,11 @@
 #define CHECK_GE(val1, val2) CHECK_OP(>=, val1, val2)
 #define CHECK_GT(val1, val2) CHECK_OP(>, val1, val2)
 
-#define CHECK_NOTNULL(condition)                                          \
-  ((condition) == nullptr                                                 \
-   ? LOG(FATAL) << "Check failed: '" #condition << "' Must be non NULL ", \
-   (condition) : (condition))
-
 #if defined(NDEBUG)
-#define DLOG(severity) true ? (void)0 : LogMessageVoidify() & LOG(severity)
+#define DLOG(severity) \
+  while (false) LOG(severity)
 #define DLOG_IF(severity, condition) \
-  (true || !(condition)) ? (void)0 : LogMessageVoidify() & LOG(severity)
+  while (false) LOG_IF(severity, condition)
 
 #define DCHECK(condition) \
   while (false) CHECK(condition)
@@ -120,12 +120,6 @@ class LogMessage {
 
   std::string severity_;
   std::stringstream stream_;
-};
-
-class LogMessageVoidify {
- public:
-  LogMessageVoidify() {}
-  void operator&(std::ostream&) {}
 };
 #endif
 

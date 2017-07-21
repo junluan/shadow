@@ -21,25 +21,22 @@ class Operator {
   virtual void Forward() { LOG(INFO) << "Forward Operator!"; }
   virtual void Release() { LOG(INFO) << "Release Operator!"; }
 
-  bool HasArgument(const std::string &name) const {
+  bool has_argument(const std::string &name) const {
     return arg_helper_.HasArgument(name);
   }
   template <typename T>
-  T GetSingleArgument(const std::string &name, const T &default_value) const {
+  T get_single_argument(const std::string &name, const T &default_value) const {
     return arg_helper_.template GetSingleArgument<T>(name, default_value);
   }
   template <typename T>
-  bool HasSingleArgumentOfType(const std::string &name) const {
+  bool has_single_argument_of_type(const std::string &name) const {
     return arg_helper_.template HasSingleArgumentOfType<T>(name);
   }
   template <typename T>
-  std::vector<T> GetRepeatedArgument(
+  const std::vector<T> get_repeated_argument(
       const std::string &name, const std::vector<T> &default_value = {}) const {
     return arg_helper_.template GetRepeatedArgument<T>(name, default_value);
   }
-
-  const shadow::OpParam &param() const { return op_param_; }
-  void set_param(const shadow::OpParam &param) { op_param_ = param; }
 
   const std::string &name() const { return op_name_; }
   void set_name(const std::string &name) { op_name_ = name; }
@@ -47,61 +44,83 @@ class Operator {
   const std::string &type() const { return op_type_; }
   void set_type(const std::string &type) { op_type_ = type; }
 
-  const VecBlobF &bottoms() const { return bottoms_; }
-  VecBlobF *mutable_bottoms() { return &bottoms_; }
-  const BlobF *bottoms(int i) const {
-    CHECK_GE(i, 0);
-    CHECK_LT(i, bottoms_.size());
-    return bottoms_[i];
+  template <typename T>
+  const Blob<T> *bottoms(int i) const {
+    CHECK(check_index(i, bottoms_size()));
+    return op_ws_->GetBlob<T>(bottom_names_[i]);
   }
-  BlobF *mutable_bottoms(int i) {
-    CHECK_GE(i, 0);
-    CHECK_LT(i, bottoms_.size());
-    return bottoms_[i];
+  template <typename T>
+  Blob<T> *mutable_bottoms(int i) {
+    return const_cast<Blob<T> *>(
+        static_cast<const Operator *>(this)->bottoms<T>(i));
   }
-  int bottoms_size() const { return bottoms_.size(); }
+  template <typename T>
+  void add_bottoms(const std::string &bottom_name) {
+    op_ws_->CreateBlob<T>(bottom_name);
+    bottom_names_.push_back(bottom_name);
+  }
+  template <typename T>
+  void set_bottoms(int i, int count, const T *data) {
+    CHECK(check_index(i, bottoms_size()));
+    mutable_bottoms<T>(i)->set_data(data, count);
+  }
+  int bottoms_size() const { return static_cast<int>(bottom_names_.size()); }
 
-  const VecBlobF &tops() const { return tops_; }
-  VecBlobF *mutable_tops() { return &tops_; }
-  const BlobF *tops(int i) const {
-    CHECK_GE(i, 0);
-    CHECK_LT(i, tops_.size());
-    return tops_[i];
+  template <typename T>
+  const Blob<T> *tops(int i) const {
+    CHECK(check_index(i, tops_size()));
+    return op_ws_->GetBlob<T>(top_names_[i]);
   }
-  BlobF *mutable_tops(int i) {
-    CHECK_GE(i, 0);
-    CHECK_LT(i, tops_.size());
-    return tops_[i];
+  template <typename T>
+  Blob<T> *mutable_tops(int i) {
+    return const_cast<Blob<T> *>(
+        static_cast<const Operator *>(this)->tops<T>(i));
   }
-  int tops_size() const { return tops_.size(); }
+  template <typename T>
+  void add_tops(const std::string &top_name) {
+    op_ws_->CreateBlob<T>(top_name);
+    top_names_.push_back(top_name);
+  }
+  template <typename T>
+  void set_tops(int i, int count, const T *data) {
+    CHECK(check_index(i, tops_size()));
+    mutable_tops<T>(i)->set_data(data, count);
+  }
+  int tops_size() const { return static_cast<int>(top_names_.size()); }
 
-  const VecBlobF &blobs() const { return blobs_; }
-  VecBlobF *mutable_blobs() { return &blobs_; }
-  const BlobF *blobs(int i) const {
-    CHECK_GE(i, 0);
-    CHECK_LT(i, blobs_.size());
-    return blobs_[i];
+  template <typename T>
+  const Blob<T> *blobs(int i) const {
+    CHECK(check_index(i, blobs_size()));
+    return op_ws_->GetBlob<T>(blob_names_[i]);
   }
-  BlobF *mutable_blobs(int i) {
-    CHECK_GE(i, 0);
-    CHECK_LT(i, blobs_.size());
-    return blobs_[i];
+  template <typename T>
+  Blob<T> *mutable_blobs(int i) {
+    return const_cast<Blob<T> *>(
+        static_cast<const Operator *>(this)->blobs<T>(i));
   }
-  int blobs_size() const { return blobs_.size(); }
-  void set_blob(int i, int count, const float *data) {
-    CHECK_GE(i, 0);
-    CHECK_LT(i, blobs_.size());
-    blobs_[i]->set_data(data, count);
+  template <typename T>
+  void add_blobs(const std::string &blob_name) {
+    op_ws_->CreateBlob<T>(blob_name);
+    blob_names_.push_back(blob_name);
   }
+  template <typename T>
+  void set_blobs(int i, int count, const T *data) {
+    CHECK(check_index(i, blobs_size()));
+    mutable_blobs<T>(i)->set_data(data, count);
+  }
+  int blobs_size() const { return static_cast<int>(blob_names_.size()); }
 
  protected:
+  std::string op_name_, op_type_;
+
+ private:
+  bool check_index(int i, int size) const { return i >= 0 && i < size; }
+
   shadow::OpParam op_param_;
   ArgumentHelper arg_helper_;
   Workspace *op_ws_ = nullptr;
 
-  std::string op_name_, op_type_;
-
-  VecBlobF bottoms_, tops_, blobs_;
+  VecString bottom_names_, top_names_, blob_names_;
 
   DISABLE_COPY_AND_ASSIGN(Operator);
 };

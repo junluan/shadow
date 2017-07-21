@@ -4,51 +4,57 @@
 namespace Shadow {
 
 void ConcatOp::Setup() {
-  concat_axis_ = arg_helper_.GetSingleArgument<int>("axis", 1);
+  concat_axis_ = get_single_argument<int>("axis", 1);
   CHECK_GE(concat_axis_, 0);
-  CHECK_LT(concat_axis_, bottoms_[0]->num_axes());
-  num_concats_ = bottoms_[0]->count(0, concat_axis_);
-  concat_input_size_ = bottoms_[0]->count(concat_axis_ + 1);
+  CHECK_LT(concat_axis_, bottoms<float>(0)->num_axes());
+  num_concats_ = bottoms<float>(0)->count(0, concat_axis_);
+  concat_input_size_ = bottoms<float>(0)->count(concat_axis_ + 1);
 }
 
 void ConcatOp::Reshape() {
-  int num_axes = bottoms_[0]->num_axes();
-  auto top_shape = bottoms_[0]->shape();
-  for (int i = 1; i < bottoms_.size(); ++i) {
-    CHECK_EQ(num_axes, bottoms_[i]->num_axes())
+  auto *top = mutable_tops<float>(0);
+
+  int num_axes = bottoms<float>(0)->num_axes();
+  auto top_shape = bottoms<float>(0)->shape();
+  for (int i = 1; i < bottoms_size(); ++i) {
+    CHECK_EQ(num_axes, bottoms<float>(i)->num_axes())
         << "Bottoms must have the same axes!";
     for (int j = 0; j < num_axes; ++j) {
       if (j == concat_axis_) continue;
-      CHECK_EQ(top_shape[j], bottoms_[i]->shape(j))
+      CHECK_EQ(top_shape[j], bottoms<float>(i)->shape(j))
           << "Bottoms must have the same shape, except at concat_axis!";
     }
-    top_shape[concat_axis_] += bottoms_[i]->shape(concat_axis_);
+    top_shape[concat_axis_] += bottoms<float>(i)->shape(concat_axis_);
   }
-  tops_[0]->set_shape(top_shape);
-  if (bottoms_.size() > 1) {
-    tops_[0]->reshape(top_shape);
+  top->set_shape(top_shape);
+  if (bottoms_size() > 1) {
+    top->reshape(top_shape);
   }
 
   VecString str;
-  for (const auto &bottom : bottoms_) {
-    str.push_back(Util::format_vector(bottom->shape(), ",", "(", ")"));
+  for (int i = 0; i < bottoms_size(); ++i) {
+    str.push_back(
+        Util::format_vector(bottoms<float>(i)->shape(), ",", "(", ")"));
   }
   DLOG(INFO) << op_name_ << ": " << Util::format_vector(str, " + ") << " -> "
-             << Util::format_vector(tops_[0]->shape(), ",", "(", ")");
+             << Util::format_vector(top->shape(), ",", "(", ")");
 }
 
 void ConcatOp::Forward() {
-  if (bottoms_.size() == 1) {
-    tops_[0]->share_data(*bottoms_[0]);
+  auto *top = mutable_tops<float>(0);
+
+  if (bottoms_size() == 1) {
+    top->share_data(*bottoms<float>(0));
     return;
   }
   int offset_concat_axis = 0;
-  int top_concat_axis = tops_[0]->shape(concat_axis_);
-  for (const auto &bottom : bottoms_) {
+  int top_concat_axis = top->shape(concat_axis_);
+  for (int i = 0; i < bottoms_size(); ++i) {
+    const auto *bottom = bottoms<float>(i);
     int bottom_concat_axis = bottom->shape(concat_axis_);
     Image::Concat(bottom->data(), bottom->count(), num_concats_,
                   concat_input_size_, top_concat_axis, bottom_concat_axis,
-                  offset_concat_axis, tops_[0]->mutable_data());
+                  offset_concat_axis, top->mutable_data());
     offset_concat_axis += bottom_concat_axis;
   }
 }

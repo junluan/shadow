@@ -14,6 +14,8 @@ namespace Shadow {
 #define BACKEND Dtype
 #endif
 
+enum Device { kCPU, kGPU };
+
 template <typename Dtype>
 class Blob {
  public:
@@ -101,6 +103,8 @@ class Blob {
   const std::string &name() const { return name_; }
   void set_name(const std::string &name) { name_ = name; }
 
+  const Device device() const { return device_; }
+
   const VecInt &shape() const { return shape_; }
   int shape(int index) const { return shape_[canonical_index(index)]; }
   void set_shape(int index, int value) {
@@ -162,10 +166,10 @@ class Blob {
 
   void set_device() {
 #if !defined(USE_CUDA) & !defined(USE_CL)
-    on_gpu_ = false;
+    device_ = kCPU;
 
 #else
-    on_gpu_ = true;
+    device_ = kGPU;
 #endif
   }
 
@@ -173,8 +177,9 @@ class Blob {
   std::vector<Dtype> cpu_data_;
 
   std::string name_;
+  Device device_ = kCPU;
   VecInt shape_;
-  bool on_gpu_ = false, shared_ = false;
+  bool shared_ = false;
 
   DISABLE_COPY_AND_ASSIGN(Blob<Dtype>);
 };

@@ -16,8 +16,6 @@ class Network {
   void LoadModel(const std::string &proto_str, const float *weights_data,
                  int batch = 0);
 
-  void SaveModel(const std::string &proto_bin);
-
   void Forward(const float *data = nullptr);
   void Release();
 

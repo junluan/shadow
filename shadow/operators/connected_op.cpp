@@ -4,23 +4,26 @@
 namespace Shadow {
 
 void ConnectedOp::Setup() {
-  CHECK(arg_helper_.HasArgument("num_output"));
-  num_output_ = arg_helper_.GetSingleArgument<int>("num_output", 0);
-  bias_term_ = arg_helper_.GetSingleArgument<bool>("bias_term", true);
-  transpose_ = arg_helper_.GetSingleArgument<bool>("transpose", false);
+  CHECK(has_argument("num_output"));
+  num_output_ = get_single_argument<int>("num_output", 0);
+  bias_term_ = get_single_argument<bool>("bias_term", true);
+  transpose_ = get_single_argument<bool>("transpose", false);
 
   if (bias_term_) {
-    CHECK_EQ(blobs_.size(), 2);
+    CHECK_EQ(blobs_size(), 2);
   } else {
-    CHECK_EQ(blobs_.size(), 1);
+    CHECK_EQ(blobs_size(), 1);
   }
 }
 
 void ConnectedOp::Reshape() {
+  const auto *bottom = bottoms<float>(0);
+  auto *top = mutable_tops<float>(0);
+
   VecInt top_shape;
-  top_shape.push_back(bottoms_[0]->shape(0));
+  top_shape.push_back(bottom->shape(0));
   top_shape.push_back(num_output_);
-  tops_[0]->reshape(top_shape);
+  top->reshape(top_shape);
 
   if (bias_term_) {
     biases_multiplier_.reshape(top_shape[0]);
@@ -28,26 +31,29 @@ void ConnectedOp::Reshape() {
   }
 
   DLOG(INFO) << op_name_ << ": "
-             << Util::format_vector(bottoms_[0]->shape(), ",", "(", ")")
-             << " -> " << Util::format_vector(tops_[0]->shape(), ",", "(", ")");
+             << Util::format_vector(bottom->shape(), ",", "(", ")") << " -> "
+             << Util::format_vector(top->shape(), ",", "(", ")");
 }
 
 void ConnectedOp::Forward() {
-  int batch = bottoms_[0]->shape(0), bottom_num = bottoms_[0]->num();
+  const auto *bottom = bottoms<float>(0);
+  auto *top = mutable_tops<float>(0);
+
+  int batch = bottom->shape(0), bottom_num = bottom->num();
   if (batch == 1) {
-    Blas::BlasSgemv(0, num_output_, bottom_num, 1, blobs_[0]->data(), 0,
-                    bottoms_[0]->data(), 0, 0, tops_[0]->mutable_data(), 0);
+    Blas::BlasSgemv(0, num_output_, bottom_num, 1, blobs<float>(0)->data(), 0,
+                    bottom->data(), 0, 0, top->mutable_data(), 0);
     if (bias_term_) {
-      Blas::BlasSaxpy(num_output_, 1, blobs_[1]->data(), 0,
-                      tops_[0]->mutable_data(), 0);
+      Blas::BlasSaxpy(num_output_, 1, blobs<float>(1)->data(), 0,
+                      top->mutable_data(), 0);
     }
   } else {
     Blas::BlasSgemm(0, !transpose_, batch, num_output_, bottom_num, 1,
-                    bottoms_[0]->data(), 0, blobs_[0]->data(), 0, 0,
-                    tops_[0]->mutable_data(), 0);
+                    bottom->data(), 0, blobs<float>(0)->data(), 0, 0,
+                    top->mutable_data(), 0);
     if (bias_term_) {
       Blas::BlasSgemm(0, 0, batch, num_output_, 1, 1, biases_multiplier_.data(),
-                      0, blobs_[1]->data(), 0, 1, tops_[0]->mutable_data(), 0);
+                      0, blobs<float>(1)->data(), 0, 1, top->mutable_data(), 0);
     }
   }
 }
