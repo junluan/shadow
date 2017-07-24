@@ -9,12 +9,12 @@ class FlattenOp : public Operator {
  public:
   explicit FlattenOp(const shadow::OpParam &op_param, Workspace *ws)
       : Operator(op_param, ws) {}
-  ~FlattenOp() { Release(); }
+  ~FlattenOp() override { Release(); }
 
-  virtual void Setup() override;
-  virtual void Reshape() override;
-  virtual void Forward() override;
-  virtual void Release() override;
+  void Setup() override;
+  void Reshape() override;
+  void Forward() override;
+  void Release() override;
 
  private:
   int axis_, end_axis_;

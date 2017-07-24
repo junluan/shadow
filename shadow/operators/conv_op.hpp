@@ -9,12 +9,12 @@ class ConvOp : public Operator {
  public:
   explicit ConvOp(const shadow::OpParam &op_param, Workspace *ws)
       : Operator(op_param, ws) {}
-  ~ConvOp() { Release(); }
+  ~ConvOp() override { Release(); }
 
-  virtual void Setup() override;
-  virtual void Reshape() override;
-  virtual void Forward() override;
-  virtual void Release() override;
+  void Setup() override;
+  void Reshape() override;
+  void Forward() override;
+  void Release() override;
 
  protected:
   int num_output_, kernel_size_, stride_, pad_, dilation_, group_,

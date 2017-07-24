@@ -9,12 +9,12 @@ class PoolingOp : public Operator {
  public:
   explicit PoolingOp(const shadow::OpParam &op_param, Workspace *ws)
       : Operator(op_param, ws) {}
-  ~PoolingOp() { Release(); }
+  ~PoolingOp() override { Release(); }
 
-  virtual void Setup() override;
-  virtual void Reshape() override;
-  virtual void Forward() override;
-  virtual void Release() override;
+  void Setup() override;
+  void Reshape() override;
+  void Forward() override;
+  void Release() override;
 
  private:
   int pool_type_, kernel_size_, stride_, pad_;

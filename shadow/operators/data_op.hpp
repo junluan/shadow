@@ -9,12 +9,12 @@ class DataOp : public Operator {
  public:
   explicit DataOp(const shadow::OpParam &op_param, Workspace *ws)
       : Operator(op_param, ws) {}
-  ~DataOp() { Release(); }
+  ~DataOp() override { Release(); }
 
-  virtual void Setup() override;
-  virtual void Reshape() override;
-  virtual void Forward() override;
-  virtual void Release() override;
+  void Setup() override;
+  void Reshape() override;
+  void Forward() override;
+  void Release() override;
 
  private:
   float scale_;

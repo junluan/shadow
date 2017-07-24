@@ -9,12 +9,12 @@ class SoftmaxOp : public Operator {
  public:
   explicit SoftmaxOp(const shadow::OpParam &op_param, Workspace *ws)
       : Operator(op_param, ws) {}
-  ~SoftmaxOp() { Release(); }
+  ~SoftmaxOp() override { Release(); }
 
-  virtual void Setup() override;
-  virtual void Reshape() override;
-  virtual void Forward() override;
-  virtual void Release() override;
+  void Setup() override;
+  void Reshape() override;
+  void Forward() override;
+  void Release() override;
 
  private:
   int axis_, outer_num_, inner_num_;

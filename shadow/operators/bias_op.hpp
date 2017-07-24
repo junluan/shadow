@@ -9,12 +9,12 @@ class BiasOp : public Operator {
  public:
   explicit BiasOp(const shadow::OpParam &op_param, Workspace *ws)
       : Operator(op_param, ws) {}
-  ~BiasOp() { Release(); }
+  ~BiasOp() override { Release(); }
 
-  virtual void Setup() override;
-  virtual void Reshape() override;
-  virtual void Forward() override;
-  virtual void Release() override;
+  void Setup() override;
+  void Reshape() override;
+  void Forward() override;
+  void Release() override;
 
  private:
   int axis_, num_axis_, bias_dim_, inner_dim_;

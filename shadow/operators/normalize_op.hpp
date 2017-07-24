@@ -9,12 +9,12 @@ class NormalizeOp : public Operator {
  public:
   explicit NormalizeOp(const shadow::OpParam &op_param, Workspace *ws)
       : Operator(op_param, ws) {}
-  ~NormalizeOp() { Release(); }
+  ~NormalizeOp() override { Release(); }
 
-  virtual void Setup() override;
-  virtual void Reshape() override;
-  virtual void Forward() override;
-  virtual void Release() override;
+  void Setup() override;
+  void Reshape() override;
+  void Forward() override;
+  void Release() override;
 
  private:
   bool across_spatial_, channel_shared_;

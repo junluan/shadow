@@ -9,12 +9,12 @@ class BatchNormOp : public Operator {
  public:
   explicit BatchNormOp(const shadow::OpParam &op_param, Workspace *ws)
       : Operator(op_param, ws) {}
-  ~BatchNormOp() { Release(); }
+  ~BatchNormOp() override { Release(); }
 
-  virtual void Setup() override;
-  virtual void Reshape() override;
-  virtual void Forward() override;
-  virtual void Release() override;
+  void Setup() override;
+  void Reshape() override;
+  void Forward() override;
+  void Release() override;
 
  private:
   bool use_global_stats_;

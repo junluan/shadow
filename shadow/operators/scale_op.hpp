@@ -9,12 +9,12 @@ class ScaleOp : public Operator {
  public:
   explicit ScaleOp(const shadow::OpParam &op_param, Workspace *ws)
       : Operator(op_param, ws) {}
-  ~ScaleOp() { Release(); }
+  ~ScaleOp() override { Release(); }
 
-  virtual void Setup() override;
-  virtual void Reshape() override;
-  virtual void Forward() override;
-  virtual void Release() override;
+  void Setup() override;
+  void Reshape() override;
+  void Forward() override;
+  void Release() override;
 
  private:
   bool bias_term_;

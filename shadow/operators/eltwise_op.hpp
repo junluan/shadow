@@ -9,12 +9,12 @@ class EltwiseOp : public Operator {
  public:
   explicit EltwiseOp(const shadow::OpParam &op_param, Workspace *ws)
       : Operator(op_param, ws) {}
-  ~EltwiseOp() { Release(); }
+  ~EltwiseOp() override { Release(); }
 
-  virtual void Setup() override;
-  virtual void Reshape() override;
-  virtual void Forward() override;
-  virtual void Release() override;
+  void Setup() override;
+  void Reshape() override;
+  void Forward() override;
+  void Release() override;
 
  private:
   int operation_, coeff_size_;

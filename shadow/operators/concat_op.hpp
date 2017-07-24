@@ -9,12 +9,12 @@ class ConcatOp : public Operator {
  public:
   explicit ConcatOp(const shadow::OpParam &op_param, Workspace *ws)
       : Operator(op_param, ws) {}
-  ~ConcatOp() { Release(); }
+  ~ConcatOp() override { Release(); }
 
-  virtual void Setup() override;
-  virtual void Reshape() override;
-  virtual void Forward() override;
-  virtual void Release() override;
+  void Setup() override;
+  void Reshape() override;
+  void Forward() override;
+  void Release() override;
 
  private:
   int concat_axis_, num_concats_, concat_input_size_;
