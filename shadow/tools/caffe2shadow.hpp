@@ -57,12 +57,12 @@ void ConvertCommon(const caffe::NetParameter& caffe_model,
     shadow_op->add_bottom(bottom_name);
   }
   for (const auto& layer : caffe_model.layer()) {
-    if (!layer_name.compare(layer.name())) {
+    if (layer_name == layer.name()) {
       for (const auto& caffe_blob : layer.blobs()) {
         auto shadow_blob = shadow_op->add_blobs();
         if (caffe_blob.shape().dim_size() > 0) {
           for (const auto dim : caffe_blob.shape().dim()) {
-            shadow_blob->add_shape(dim);
+            shadow_blob->add_shape(static_cast<int>(dim));
           }
         } else {
           shadow_blob->add_shape(caffe_blob.data_size());
@@ -132,9 +132,9 @@ void ConvertActivate(const caffe::NetParameter& caffe_model,
   ConvertCommon(caffe_model, caffe_layer, shadow_op);
 
   // Linear: 0, Relu: 1, Leaky: 2, PRelu: 3
-  if (!caffe_layer.type().compare("ReLU")) {
+  if (caffe_layer.type() == "ReLU") {
     set_s_i(shadow_op, "type", 1);
-  } else if (!caffe_layer.type().compare("PReLU")) {
+  } else if (caffe_layer.type() == "PReLU") {
     set_s_i(shadow_op, "type", 3);
     if (caffe_layer.has_prelu_param()) {
       const auto& caffe_param = caffe_layer.prelu_param();
@@ -509,37 +509,37 @@ void Convert(const caffe::NetParameter& caffe_deploy,
   for (int l = start_layer; l < caffe_deploy.layer_size(); ++l) {
     const auto& caffe_layer = caffe_deploy.layer(l);
     const auto& layer_type = caffe_layer.type();
-    if (!layer_type.compare("ReLU") || !layer_type.compare("PReLU")) {
+    if (layer_type == "ReLU" || layer_type == "PReLU") {
       ConvertActivate(caffe_model, caffe_layer, shadow_net);
-    } else if (!layer_type.compare("BatchNorm")) {
+    } else if (layer_type == "BatchNorm") {
       ConvertBatchNorm(caffe_model, caffe_layer, shadow_net);
-    } else if (!layer_type.compare("Bias")) {
+    } else if (layer_type == "Bias") {
       ConvertBias(caffe_model, caffe_layer, shadow_net);
-    } else if (!layer_type.compare("Concat")) {
+    } else if (layer_type == "Concat") {
       ConvertConcat(caffe_model, caffe_layer, shadow_net);
-    } else if (!layer_type.compare("InnerProduct")) {
+    } else if (layer_type == "InnerProduct") {
       ConvertConnected(caffe_model, caffe_layer, shadow_net);
-    } else if (!layer_type.compare("Convolution")) {
+    } else if (layer_type == "Convolution") {
       ConvertConv(caffe_model, caffe_layer, shadow_net);
-    } else if (!layer_type.compare("Eltwise")) {
+    } else if (layer_type == "Eltwise") {
       ConvertEltwise(caffe_model, caffe_layer, shadow_net);
-    } else if (!layer_type.compare("Flatten")) {
+    } else if (layer_type == "Flatten") {
       ConvertFlatten(caffe_model, caffe_layer, shadow_net);
-    } else if (!layer_type.compare("LRN")) {
+    } else if (layer_type == "LRN") {
       ConvertLRN(caffe_model, caffe_layer, shadow_net);
-    } else if (!layer_type.compare("Normalize")) {
+    } else if (layer_type == "Normalize") {
       ConvertNormalize(caffe_model, caffe_layer, shadow_net);
-    } else if (!layer_type.compare("Permute")) {
+    } else if (layer_type == "Permute") {
       ConvertPermute(caffe_model, caffe_layer, shadow_net);
-    } else if (!layer_type.compare("Pooling")) {
+    } else if (layer_type == "Pooling") {
       ConvertPooling(caffe_model, caffe_layer, shadow_net);
-    } else if (!layer_type.compare("PriorBox")) {
+    } else if (layer_type == "PriorBox") {
       ConvertPriorBox(caffe_model, caffe_layer, shadow_net);
-    } else if (!layer_type.compare("Reshape")) {
+    } else if (layer_type == "Reshape") {
       ConvertReshape(caffe_model, caffe_layer, shadow_net);
-    } else if (!layer_type.compare("Scale")) {
+    } else if (layer_type == "Scale") {
       ConvertScale(caffe_model, caffe_layer, shadow_net);
-    } else if (!layer_type.compare("Softmax")) {
+    } else if (layer_type == "Softmax") {
       ConvertSoftmax(caffe_model, caffe_layer, shadow_net);
     } else {
       LOG(WARNING) << "Layer type: " << layer_type << " is not recognized!";
@@ -554,8 +554,11 @@ namespace Caffe2Shadow {
 void WriteDefines(const shadow::NetParam& shadow_net, const std::string& root,
                   const std::string& model_name) {
   auto class_name = model_name;
+  auto weight_prefix = model_name;
   std::transform(model_name.begin(), model_name.end(), class_name.begin(),
                  ::toupper);
+  std::transform(model_name.begin(), model_name.end(), weight_prefix.begin(),
+                 ::tolower);
   const auto& model_name_cpp = model_name + ".cpp";
   const auto& model_name_hpp = model_name + ".hpp";
   const auto& model_name_weights_hpp = model_name + "_weights.hpp";
@@ -607,7 +610,7 @@ void WriteDefines(const shadow::NetParam& shadow_net, const std::string& root,
   }
   for (int n = 0; n < weight_counts.size(); ++n) {
     std::stringstream ss;
-    ss << "weight_" << n << "_";
+    ss << weight_prefix << "_weight_" << n << "_";
     weight_names.push_back(ss.str());
   }
 
@@ -712,8 +715,8 @@ void WriteDefines(const shadow::NetParam& shadow_net, const std::string& root,
   weight_file << "#ifndef SHADOW_" << class_name << "_WEIGHTS_HPP\n"
               << "#define SHADOW_" << class_name << "_WEIGHTS_HPP\n\n";
 
-  for (int n = 0; n < weight_names.size(); ++n) {
-    weight_file << "extern const float " << weight_names[n] << "[];\n";
+  for (const auto& weight_name : weight_names) {
+    weight_file << "extern const float " << weight_name << "[];\n";
   }
   weight_file << "\n";
 
@@ -724,6 +727,9 @@ void WriteDefines(const shadow::NetParam& shadow_net, const std::string& root,
 
 void WriteWeights(const shadow::NetParam& shadow_net, const std::string& root,
                   const std::string& model_name) {
+  auto weight_prefix = model_name;
+  std::transform(model_name.begin(), model_name.end(), weight_prefix.begin(),
+                 ::tolower);
   const auto& model_name_weights_hpp = model_name + "_weights.hpp";
 
   int weight_count = 0;
@@ -735,7 +741,8 @@ void WriteWeights(const shadow::NetParam& shadow_net, const std::string& root,
 
     file << "#include \"" << model_name_weights_hpp << "\"\n\n";
 
-    file << "const float weight_" << weight_count << "_[] = {\n";
+    file << "const float " << weight_prefix << "_weight_" << weight_count
+         << "_[] = {\n";
     int count = 0, num_of_line = 10;
     for (const auto& blob : op_param.blobs()) {
       for (const auto& data : blob.data_f()) {
