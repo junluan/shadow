@@ -350,7 +350,8 @@ __global__ void KernelPRelu(T *data, int count, int channels, int dim,
 template <typename T>
 void PRelu(T *data, const VecInt &in_shape, bool channel_shared,
            const T *slope_data) {
-  int channels = in_shape[1], dim = in_shape[2] * in_shape[3];
+  int channels = in_shape[1], dim = 1;
+  for (int i = 2; i < in_shape.size(); ++i) dim *= in_shape[i];
   int count = in_shape[0] * channels * dim;
   int div_factor = channel_shared ? channels : 1;
   KernelPRelu<T><<<GetBlocks(count), NumThreads>>>(data, count, channels, dim,

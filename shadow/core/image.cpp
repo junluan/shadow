@@ -87,7 +87,7 @@ void Pooling(const T *in_data, const VecInt &in_shape, int kernel_size,
           kistart = std::max(kistart, 0), kjstart = std::max(kjstart, 0);
           kiend = std::min(kiend, in_h), kjend = std::min(kjend, in_w);
           T max = std::numeric_limits<T>::lowest();
-          T sum = T(0);
+          auto sum = T(0);
           for (int ki = kistart; ki < kiend; ++ki) {
             for (int kj = kjstart; kj < kjend; ++kj) {
               int index = kj + in_w * (ki + in_h * (c + in_c * b));
@@ -186,7 +186,7 @@ void LRN(const T *in_data, const VecInt &in_shape, int size, float alpha,
         int offset = (b * in_c * in_h + h) * in_w + w, head = 0;
         const T *in_off = in_data + offset;
         T *scale_off = scale_data + offset;
-        T accum_scale = T(0);
+        auto accum_scale = T(0);
         while (head < post_pad && head < in_c) {
           accum_scale += in_off[head * step] * in_off[head * step];
           head++;
@@ -255,7 +255,8 @@ void Activate(T *data, int count, int type) {
 template <typename T>
 void PRelu(T *data, const VecInt &in_shape, bool channel_shared,
            const T *slope_data) {
-  int channels = in_shape[1], dim = in_shape[2] * in_shape[3];
+  int channels = in_shape[1], dim = 1;
+  for (int i = 2; i < in_shape.size(); ++i) dim *= in_shape[i];
   int count = in_shape[0] * channels * dim;
   int div_factor = channel_shared ? channels : 1;
   for (int i = 0; i < count; ++i) {
@@ -446,7 +447,8 @@ void Activate(T *data, int count, int type) {
 template <typename T>
 void PRelu(T *data, const VecInt &in_shape, bool channel_shared,
            const T *slope_data) {
-  int channels = in_shape[1], dim = in_shape[2] * in_shape[3];
+  int channels = in_shape[1], dim = 1;
+  for (int i = 2; i < in_shape.size(); ++i) dim *= in_shape[i];
   int count = in_shape[0] * channels * dim;
   int div_factor = channel_shared ? channels : 1;
 
