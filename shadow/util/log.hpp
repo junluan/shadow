@@ -90,28 +90,28 @@ class LogMessage {
   ~LogMessage() {
     stream_ << '\n';
 #if defined(__ANDROID__) || defined(ANDROID)
-    if (!severity_.compare("INFO")) {
+    if (severity_ == "INFO") {
       __android_log_print(ANDROID_LOG_INFO, tag_, "%s", stream_.str().c_str());
-    } else if (!severity_.compare("WARNING")) {
+    } else if (severity_ == "WARNING") {
       __android_log_print(ANDROID_LOG_WARN, tag_, "%s", stream_.str().c_str());
-    } else if (!severity_.compare("ERROR")) {
+    } else if (severity_ == "ERROR") {
       __android_log_print(ANDROID_LOG_ERROR, tag_, "%s", stream_.str().c_str());
-    } else if (!severity_.compare("FATAL")) {
+    } else if (severity_ == "FATAL") {
       __android_log_print(ANDROID_LOG_FATAL, tag_, "%s", stream_.str().c_str());
     }
 #else
     std::cerr << stream_.str();
 #endif
-    if (!severity_.compare("FATAL")) {
+    if (severity_ == "FATAL") {
       abort();
     }
   }
   std::stringstream& stream() { return stream_; }
 
- private:
-  LogMessage(const LogMessage&);
-  void operator=(const LogMessage&);
+  LogMessage(const LogMessage&) = delete;
+  void operator=(const LogMessage&) = delete;
 
+ private:
 #if defined(__ANDROID__) || defined(ANDROID)
   const char* tag_ = "native";
 #else

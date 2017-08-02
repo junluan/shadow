@@ -15,7 +15,7 @@ static std::string uchar_id(typeid(unsigned char).name());
 
 class Workspace {
  public:
-  Workspace() {}
+  Workspace() = default;
   ~Workspace() {
     for (auto blob_it : blob_map_) {
       const auto &blob_type = blob_it.second.first;
@@ -55,9 +55,8 @@ class Workspace {
     if (blob_map_.count(name)) {
       const auto &blob_type = blob_map_.at(name).first;
       const auto ask_type = typeid(T).name();
-      CHECK(!blob_type.compare(ask_type)) << "Blob " << name << " has type "
-                                          << blob_type << ", but ask for "
-                                          << ask_type;
+      CHECK(blob_type == ask_type) << "Blob " << name << " has type "
+                                   << blob_type << ", but ask for " << ask_type;
       return reinterpret_cast<const Blob<T> *>(blob_map_.at(name).second);
     } else {
       DLOG(WARNING) << "Blob " << name << " not in the workspace.";

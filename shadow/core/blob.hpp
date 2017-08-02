@@ -89,7 +89,7 @@ class Blob {
     int cou = 1;
     for (const auto dim : shape) cou *= dim;
     CHECK_GT(cou, 0);
-    if (data_ == nullptr || cou != count()) {
+    if (data_ == nullptr || cou > capacity_) {
       clear();
       allocate_data(cou, shared);
     }
@@ -113,7 +113,7 @@ class Blob {
   void set_shape(const VecInt &shape) { shape_ = shape; }
   void add_shape(int value) { shape_.push_back(value); }
 
-  int num_axes() const { return shape_.size(); }
+  int num_axes() const { return static_cast<int>(shape_.size()); }
   int num() const { return count() / shape(0); }
   int count() const { return count(0); }
   int count(int start_axis) const { return count(start_axis, num_axes()); }
@@ -153,6 +153,7 @@ class Blob {
 
  private:
   void allocate_data(int count, bool shared) {
+    capacity_ = count;
 #if !defined(USE_CUDA) & !defined(USE_CL)
     if (!shared) {
       data_ = new Dtype[count];
@@ -179,6 +180,7 @@ class Blob {
   std::string name_;
   Device device_ = kCPU;
   VecInt shape_;
+  int capacity_ = 0;
   bool shared_ = false;
 
   DISABLE_COPY_AND_ASSIGN(Blob<Dtype>);

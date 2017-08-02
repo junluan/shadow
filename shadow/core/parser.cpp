@@ -18,41 +18,41 @@ void ParseNet(const std::string &proto_text, shadow::NetParam *net) {
     const auto &json_op = json_ops[i];
     const auto &op_name = Json::GetString(json_op, "name", "");
     const auto &op_type = Json::GetString(json_op, "type", "");
-    if (!op_type.compare("Activate")) {
+    if (op_type == "Activate") {
       net->add_op(ParseActivate(json_op));
-    } else if (!op_type.compare("BatchNorm")) {
+    } else if (op_type == "BatchNorm") {
       net->add_op(ParseBatchNorm(json_op));
-    } else if (!op_type.compare("Bias")) {
+    } else if (op_type == "Bias") {
       net->add_op(ParseBias(json_op));
-    } else if (!op_type.compare("Concat")) {
+    } else if (op_type == "Concat") {
       net->add_op(ParseConcat(json_op));
-    } else if (!op_type.compare("Connected")) {
+    } else if (op_type == "Connected") {
       net->add_op(ParseConnected(json_op));
-    } else if (!op_type.compare("Conv")) {
+    } else if (op_type == "Conv") {
       net->add_op(ParseConv(json_op));
-    } else if (!op_type.compare("Data")) {
+    } else if (op_type == "Data") {
       net->add_op(ParseData(json_op));
-    } else if (!op_type.compare("Eltwise")) {
+    } else if (op_type == "Eltwise") {
       net->add_op(ParseEltwise(json_op));
-    } else if (!op_type.compare("Flatten")) {
+    } else if (op_type == "Flatten") {
       net->add_op(ParseFlatten(json_op));
-    } else if (!op_type.compare("LRN")) {
+    } else if (op_type == "LRN") {
       net->add_op(ParseLRN(json_op));
-    } else if (!op_type.compare("Normalize")) {
+    } else if (op_type == "Normalize") {
       net->add_op(ParseNormalize(json_op));
-    } else if (!op_type.compare("Permute")) {
+    } else if (op_type == "Permute") {
       net->add_op(ParsePermute(json_op));
-    } else if (!op_type.compare("Pooling")) {
+    } else if (op_type == "Pooling") {
       net->add_op(ParsePooling(json_op));
-    } else if (!op_type.compare("PriorBox")) {
+    } else if (op_type == "PriorBox") {
       net->add_op(ParsePriorBox(json_op));
-    } else if (!op_type.compare("Reorg")) {
+    } else if (op_type == "Reorg") {
       net->add_op(ParseReorg(json_op));
-    } else if (!op_type.compare("Reshape")) {
+    } else if (op_type == "Reshape") {
       net->add_op(ParseReshape(json_op));
-    } else if (!op_type.compare("Scale")) {
+    } else if (op_type == "Scale") {
       net->add_op(ParseScale(json_op));
-    } else if (!op_type.compare("Softmax")) {
+    } else if (op_type == "Softmax") {
       net->add_op(ParseSoftmax(json_op));
     } else {
       LOG(FATAL) << "Error when parsing op: " << op_name
@@ -100,9 +100,9 @@ const shadow::OpParam ParseActivate(const JValue &root) {
       const auto &arg = args[i];
       CHECK(arg.HasMember("name"));
       const auto &arg_name = Json::GetString(arg, "name", "");
-      if (!arg_name.compare("type")) {
+      if (arg_name == "type") {
         type = Json::GetInt(arg, "s_i", 1);
-      } else if (!arg_name.compare("channel_shared")) {
+      } else if (arg_name == "channel_shared") {
         channel_shared = Json::GetInt(arg, "s_i", 0);
       }
     }
@@ -126,7 +126,7 @@ const shadow::OpParam ParseBatchNorm(const JValue &root) {
       const auto &arg = args[i];
       CHECK(arg.HasMember("name"));
       const auto &arg_name = Json::GetString(arg, "name", "");
-      if (!arg_name.compare("use_global_stats")) {
+      if (arg_name == "use_global_stats") {
         use_global_stats = Json::GetInt(arg, "s_i", 1);
       }
     }
@@ -149,9 +149,9 @@ const shadow::OpParam ParseBias(const JValue &root) {
       const auto &arg = args[i];
       CHECK(arg.HasMember("name"));
       const auto &arg_name = Json::GetString(arg, "name", "");
-      if (!arg_name.compare("axis")) {
+      if (arg_name == "axis") {
         axis = Json::GetInt(arg, "s_i", 1);
-      } else if (!arg_name.compare("num_axes")) {
+      } else if (arg_name == "num_axes") {
         num_axes = Json::GetInt(arg, "s_i", 1);
       }
     }
@@ -175,7 +175,7 @@ const shadow::OpParam ParseConcat(const JValue &root) {
       const auto &arg = args[i];
       CHECK(arg.HasMember("name"));
       const auto &arg_name = Json::GetString(arg, "name", "");
-      if (!arg_name.compare("axis")) {
+      if (arg_name == "axis") {
         axis = Json::GetInt(arg, "s_i", 1);
       }
     }
@@ -198,11 +198,11 @@ const shadow::OpParam ParseConnected(const JValue &root) {
       const auto &arg = args[i];
       CHECK(arg.HasMember("name"));
       const auto &arg_name = Json::GetString(arg, "name", "");
-      if (!arg_name.compare("num_output")) {
+      if (arg_name == "num_output") {
         num_output = Json::GetInt(arg, "s_i", -1);
-      } else if (!arg_name.compare("bias_term")) {
+      } else if (arg_name == "bias_term") {
         bias_term = Json::GetInt(arg, "s_i", 1);
-      } else if (!arg_name.compare("transpose")) {
+      } else if (arg_name == "transpose") {
         transpose = Json::GetInt(arg, "s_i", 0);
       }
     }
@@ -229,19 +229,19 @@ const shadow::OpParam ParseConv(const JValue &root) {
       const auto &arg = args[i];
       CHECK(arg.HasMember("name"));
       const auto &arg_name = Json::GetString(arg, "name", "");
-      if (!arg_name.compare("num_output")) {
+      if (arg_name == "num_output") {
         num_output = Json::GetInt(arg, "s_i", -1);
-      } else if (!arg_name.compare("kernel_size")) {
+      } else if (arg_name == "kernel_size") {
         kernel_size = Json::GetInt(arg, "s_i", -1);
-      } else if (!arg_name.compare("stride")) {
+      } else if (arg_name == "stride") {
         stride = Json::GetInt(arg, "s_i", 1);
-      } else if (!arg_name.compare("pad")) {
+      } else if (arg_name == "pad") {
         pad = Json::GetInt(arg, "s_i", 0);
-      } else if (!arg_name.compare("dilation")) {
+      } else if (arg_name == "dilation") {
         dilation = Json::GetInt(arg, "s_i", 1);
-      } else if (!arg_name.compare("group")) {
+      } else if (arg_name == "group") {
         group = Json::GetInt(arg, "s_i", 1);
-      } else if (!arg_name.compare("bias_term")) {
+      } else if (arg_name == "bias_term") {
         bias_term = Json::GetInt(arg, "s_i", 1);
       }
     }
@@ -274,11 +274,11 @@ const shadow::OpParam ParseData(const JValue &root) {
       const auto &arg = args[i];
       CHECK(arg.HasMember("name"));
       const auto &arg_name = Json::GetString(arg, "name", "");
-      if (!arg_name.compare("data_shape")) {
+      if (arg_name == "data_shape") {
         data_shape = Json::GetVecInt(arg, "v_i");
-      } else if (!arg_name.compare("scale")) {
+      } else if (arg_name == "scale") {
         scale = Json::GetFloat(arg, "s_f", 1);
-      } else if (!arg_name.compare("mean_value")) {
+      } else if (arg_name == "mean_value") {
         mean_value = Json::GetVecFloat(arg, "v_f");
       }
     }
@@ -304,9 +304,9 @@ const shadow::OpParam ParseEltwise(const JValue &root) {
       const auto &arg = args[i];
       CHECK(arg.HasMember("name"));
       const auto &arg_name = Json::GetString(arg, "name", "");
-      if (!arg_name.compare("operation")) {
+      if (arg_name == "operation") {
         operation = Json::GetInt(arg, "s_i", 1);
-      } else if (!arg_name.compare("coeff")) {
+      } else if (arg_name == "coeff") {
         coeffs = Json::GetVecFloat(arg, "v_f");
       }
     }
@@ -330,9 +330,9 @@ const shadow::OpParam ParseFlatten(const JValue &root) {
       const auto &arg = args[i];
       CHECK(arg.HasMember("name"));
       const auto &arg_name = Json::GetString(arg, "name", "");
-      if (!arg_name.compare("axis")) {
+      if (arg_name == "axis") {
         axis = Json::GetInt(arg, "s_i", 1);
-      } else if (!arg_name.compare("end_axis")) {
+      } else if (arg_name == "end_axis") {
         end_axis = Json::GetInt(arg, "s_i", -1);
       }
     }
@@ -357,15 +357,15 @@ const shadow::OpParam ParseLRN(const JValue &root) {
       const auto &arg = args[i];
       CHECK(arg.HasMember("name"));
       const auto &arg_name = Json::GetString(arg, "name", "");
-      if (!arg_name.compare("local_size")) {
+      if (arg_name == "local_size") {
         local_size = Json::GetInt(arg, "s_i", 5);
-      } else if (!arg_name.compare("alpha")) {
+      } else if (arg_name == "alpha") {
         alpha = Json::GetFloat(arg, "s_f", -1.f);
-      } else if (!arg_name.compare("beta")) {
+      } else if (arg_name == "beta") {
         beta = Json::GetFloat(arg, "s_f", 0.75f);
-      } else if (!arg_name.compare("k")) {
+      } else if (arg_name == "k") {
         k = Json::GetFloat(arg, "s_f", 1);
-      } else if (!arg_name.compare("norm_region")) {
+      } else if (arg_name == "norm_region") {
         norm_region = Json::GetInt(arg, "s_i", 0);
       }
     }
@@ -393,11 +393,11 @@ const shadow::OpParam ParseNormalize(const JValue &root) {
       const auto &arg = args[i];
       CHECK(arg.HasMember("name"));
       const auto &arg_name = Json::GetString(arg, "name", "");
-      if (!arg_name.compare("across_spatial")) {
+      if (arg_name == "across_spatial") {
         across_spatial = Json::GetInt(arg, "s_i", 1);
-      } else if (!arg_name.compare("channel_shared")) {
+      } else if (arg_name == "channel_shared") {
         channel_shared = Json::GetInt(arg, "s_i", 1);
-      } else if (!arg_name.compare("scale")) {
+      } else if (arg_name == "scale") {
         scale = Json::GetVecFloat(arg, "v_f");
       }
     }
@@ -422,7 +422,7 @@ const shadow::OpParam ParsePermute(const JValue &root) {
       const auto &arg = args[i];
       CHECK(arg.HasMember("name"));
       const auto &arg_name = Json::GetString(arg, "name", "");
-      if (!arg_name.compare("order")) {
+      if (arg_name == "order") {
         order = Json::GetVecInt(arg, "v_i");
       }
     }
@@ -445,15 +445,15 @@ const shadow::OpParam ParsePooling(const JValue &root) {
       const auto &arg = args[i];
       CHECK(arg.HasMember("name"));
       const auto &arg_name = Json::GetString(arg, "name", "");
-      if (!arg_name.compare("pool")) {
+      if (arg_name == "pool") {
         pool = Json::GetInt(arg, "s_i", 0);
-      } else if (!arg_name.compare("kernel_size")) {
+      } else if (arg_name == "kernel_size") {
         kernel_size = Json::GetInt(arg, "s_i", -1);
-      } else if (!arg_name.compare("stride")) {
+      } else if (arg_name == "stride") {
         stride = Json::GetInt(arg, "s_i", 1);
-      } else if (!arg_name.compare("pad")) {
+      } else if (arg_name == "pad") {
         pad = Json::GetInt(arg, "s_i", 0);
-      } else if (!arg_name.compare("global_pooling")) {
+      } else if (arg_name == "global_pooling") {
         global_pooling = Json::GetInt(arg, "s_i", 0);
       }
     }
@@ -485,21 +485,21 @@ const shadow::OpParam ParsePriorBox(const JValue &root) {
       const auto &arg = args[i];
       CHECK(arg.HasMember("name"));
       const auto &arg_name = Json::GetString(arg, "name", "");
-      if (!arg_name.compare("min_size")) {
+      if (arg_name == "min_size") {
         min_size = Json::GetVecFloat(arg, "v_f");
-      } else if (!arg_name.compare("max_size")) {
+      } else if (arg_name == "max_size") {
         max_size = Json::GetVecFloat(arg, "v_f");
-      } else if (!arg_name.compare("aspect_ratio")) {
+      } else if (arg_name == "aspect_ratio") {
         aspect_ratio = Json::GetVecFloat(arg, "v_f");
-      } else if (!arg_name.compare("flip")) {
+      } else if (arg_name == "flip") {
         flip = Json::GetInt(arg, "s_i", 1);
-      } else if (!arg_name.compare("clip")) {
+      } else if (arg_name == "clip") {
         clip = Json::GetInt(arg, "s_i", 0);
-      } else if (!arg_name.compare("variance")) {
+      } else if (arg_name == "variance") {
         variance = Json::GetVecFloat(arg, "v_f");
-      } else if (!arg_name.compare("step")) {
+      } else if (arg_name == "step") {
         step = Json::GetFloat(arg, "s_f", -1);
-      } else if (!arg_name.compare("offset")) {
+      } else if (arg_name == "offset") {
         offset = Json::GetFloat(arg, "s_f", 0.5f);
       }
     }
@@ -531,7 +531,7 @@ const shadow::OpParam ParseReorg(const JValue &root) {
       const auto &arg = args[i];
       CHECK(arg.HasMember("name"));
       const auto &arg_name = Json::GetString(arg, "name", "");
-      if (!arg_name.compare("stride")) {
+      if (arg_name == "stride") {
         stride = Json::GetInt(arg, "s_i", 2);
       }
     }
@@ -555,11 +555,11 @@ const shadow::OpParam ParseReshape(const JValue &root) {
       const auto &arg = args[i];
       CHECK(arg.HasMember("name"));
       const auto &arg_name = Json::GetString(arg, "name", "");
-      if (!arg_name.compare("shape")) {
+      if (arg_name == "shape") {
         shape = Json::GetVecInt(arg, "v_i");
-      } else if (!arg_name.compare("axis")) {
+      } else if (arg_name == "axis") {
         axis = Json::GetInt(arg, "s_i", 0);
-      } else if (!arg_name.compare("num_axes")) {
+      } else if (arg_name == "num_axes") {
         num_axes = Json::GetInt(arg, "s_i", -1);
       }
     }
@@ -584,11 +584,11 @@ const shadow::OpParam ParseScale(const JValue &root) {
       const auto &arg = args[i];
       CHECK(arg.HasMember("name"));
       const auto &arg_name = Json::GetString(arg, "name", "");
-      if (!arg_name.compare("axis")) {
+      if (arg_name == "axis") {
         axis = Json::GetInt(arg, "s_i", 1);
-      } else if (!arg_name.compare("num_axes")) {
+      } else if (arg_name == "num_axes") {
         num_axes = Json::GetInt(arg, "s_i", 0);
-      } else if (!arg_name.compare("bias_term")) {
+      } else if (arg_name == "bias_term") {
         bias_term = Json::GetInt(arg, "s_i", 0);
       }
     }
@@ -613,7 +613,7 @@ const shadow::OpParam ParseSoftmax(const JValue &root) {
       const auto &arg = args[i];
       CHECK(arg.HasMember("name"));
       const auto &arg_name = Json::GetString(arg, "name", "");
-      if (!arg_name.compare("axis")) {
+      if (arg_name == "axis") {
         axis = Json::GetInt(arg, "s_i", 1);
       }
     }

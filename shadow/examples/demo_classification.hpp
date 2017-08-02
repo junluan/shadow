@@ -8,7 +8,7 @@ namespace Shadow {
 class DemoClassification {
  public:
   DemoClassification(const std::string &method_name = "classification") {
-    if (!method_name.compare("classification")) {
+    if (method_name == "classification") {
       method_ = new Classification();
     } else {
       LOG(FATAL) << "Unknown method " << method_name;

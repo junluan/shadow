@@ -9,9 +9,9 @@ namespace Shadow {
 class DemoDetection {
  public:
   DemoDetection(const std::string &method_name = "ssd") {
-    if (!method_name.compare("ssd")) {
+    if (method_name == "ssd") {
       method_ = new DetectionSSD();
-    } else if (!method_name.compare("yolo")) {
+    } else if (method_name == "yolo") {
       method_ = new DetectionYOLO();
     } else {
       LOG(FATAL) << "Unknown method " << method_name;
