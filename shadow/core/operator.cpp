@@ -45,12 +45,8 @@ Operator::Operator(const shadow::OpParam &op_param, Workspace *ws)
     int data_i_size = proto_blob.data_i_size();
     int data_b_size = 0;
     if (proto_blob.data_b_size() > 0) {
-#if defined(USE_Protobuf)
       CHECK_EQ(proto_blob.data_b_size(), 1);
-      data_b_size = static_cast<int>(proto_blob.data_b()[0].size());
-#else
-      data_b_size = proto_blob.data_b_size();
-#endif
+      data_b_size = static_cast<int>(proto_blob.data_b(0).size());
     }
     if (blob_type == "float") {
       auto *blob = ws->CreateBlob<float>(shape, blob_name, true);
@@ -79,12 +75,8 @@ Operator::Operator(const shadow::OpParam &op_param, Workspace *ws)
       if (data_b_size > 0) {
         CHECK_EQ(data_b_size, cc)
             << "Blob unsigned char data size and blob shape are mismatch";
-#if defined(USE_Protobuf)
         auto uc_data_ptr = reinterpret_cast<unsigned char *>(
-            const_cast<char *>((*proto_blob.data_b().data())[0].data()));
-#else
-        auto uc_data_ptr = proto_blob.data_b().data();
-#endif
+            const_cast<char *>(proto_blob.data_b(0).data()));
         blob->set_data(uc_data_ptr, data_b_size);
       }
     } else {

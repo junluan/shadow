@@ -94,7 +94,7 @@ class Blob {
   REPEATED_FIELD_FUNC(shape, int);
   REPEATED_FIELD_FUNC(data_f, float);
   REPEATED_FIELD_FUNC(data_i, int);
-  REPEATED_FIELD_FUNC(data_b, unsigned char);
+  REPEATED_FIELD_FUNC(data_b, std::vector<char>);
 
   void Clear() {
     clear_name();
@@ -110,7 +110,7 @@ class Blob {
   std::vector<int> shape_;
   std::vector<float> data_f_;
   std::vector<int> data_i_;
-  std::vector<unsigned char> data_b_;
+  std::vector<std::vector<char>> data_b_;
   bool has_name_ = false, has_type_ = false;
 };
 
