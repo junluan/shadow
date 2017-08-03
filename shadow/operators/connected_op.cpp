@@ -20,14 +20,14 @@ void ConnectedOp::Reshape() {
   const auto *bottom = bottoms<float>(0);
   auto *top = mutable_tops<float>(0);
 
-  VecInt top_shape;
-  top_shape.push_back(bottom->shape(0));
-  top_shape.push_back(num_output_);
+  int batch = bottom->shape(0);
+
+  VecInt top_shape{batch, num_output_};
   top->reshape(top_shape);
 
   if (bias_term_) {
-    biases_multiplier_.reshape(top_shape[0]);
-    Blas::Set(top_shape[0], 1, biases_multiplier_.mutable_data(), 0);
+    biases_multiplier_.reshape(batch);
+    Blas::Set(batch, 1, biases_multiplier_.mutable_data(), 0);
   }
 
   DLOG(INFO) << op_name_ << ": "

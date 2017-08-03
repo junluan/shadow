@@ -71,8 +71,10 @@ void ConvOp::Reshape() {
   output_offset_ = num_output_ * out_spatial_dim_ / group_;
 
   if (!use_cudnn_ && !use_nnpack_) {
-    biases_multiplier_.reshape(out_spatial_dim_);
-    Blas::Set(out_spatial_dim_, 1, biases_multiplier_.mutable_data(), 0);
+    if (bias_term_) {
+      biases_multiplier_.reshape(out_spatial_dim_);
+      Blas::Set(out_spatial_dim_, 1, biases_multiplier_.mutable_data(), 0);
+    }
     col_image_.reshape(kernel_dim_ * group_, out_spatial_dim_);
   }
 
