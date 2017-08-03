@@ -1,4 +1,4 @@
-file(GLOB_RECURSE tmp *.cpp)
+file(GLOB_RECURSE tmp *.cpp *.hpp)
 set(shadow_tools_src ${shadow_tools_src} ${tmp})
 
 file(GLOB tmp "../util/io.cpp")
