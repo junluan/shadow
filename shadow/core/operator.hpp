@@ -64,6 +64,14 @@ class Operator {
     CHECK(check_index(i, bottoms_size()));
     mutable_bottoms<T>(i)->set_data(data, count);
   }
+  const std::string &bottoms_name(int i) const {
+    CHECK(check_index(i, bottoms_size()));
+    return bottom_names_[i];
+  }
+  const std::string bottoms_type(int i) const {
+    CHECK(check_index(i, bottoms_size()));
+    return op_ws_->GetBlobType(bottom_names_[i]);
+  }
   int bottoms_size() const { return static_cast<int>(bottom_names_.size()); }
 
   template <typename T>
@@ -86,6 +94,14 @@ class Operator {
     CHECK(check_index(i, tops_size()));
     mutable_tops<T>(i)->set_data(data, count);
   }
+  const std::string tops_name(int i) const {
+    CHECK(check_index(i, tops_size()));
+    return top_names_[i];
+  }
+  const std::string tops_type(int i) const {
+    CHECK(check_index(i, tops_size()));
+    return op_ws_->GetBlobType(top_names_[i]);
+  }
   int tops_size() const { return static_cast<int>(top_names_.size()); }
 
   template <typename T>
@@ -107,6 +123,14 @@ class Operator {
   void set_blobs(int i, int count, const T *data) {
     CHECK(check_index(i, blobs_size()));
     mutable_blobs<T>(i)->set_data(data, count);
+  }
+  const std::string blobs_name(int i) const {
+    CHECK(check_index(i, blobs_size()));
+    return blob_names_[i];
+  }
+  const std::string blobs_type(int i) const {
+    CHECK(check_index(i, blobs_size()));
+    return op_ws_->GetBlobType(blob_names_[i]);
   }
   int blobs_size() const { return static_cast<int>(blob_names_.size()); }
 

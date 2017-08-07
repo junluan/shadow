@@ -9,9 +9,9 @@
 
 namespace Shadow {
 
-static std::string int_id(typeid(int).name());
-static std::string float_id(typeid(float).name());
-static std::string uchar_id(typeid(unsigned char).name());
+static const std::string int_id(typeid(int).name());
+static const std::string float_id(typeid(float).name());
+static const std::string uchar_id(typeid(unsigned char).name());
 
 class Workspace {
  public:
@@ -40,7 +40,7 @@ class Workspace {
       DLOG(WARNING) << "Blob " << name << " already exists. Skipping.";
     } else {
       blob_map_[name].first = typeid(T).name();
-      if (shape.size() > 0) {
+      if (!shape.empty()) {
         blob_map_[name].second = new Blob<T>(shape, name, shared);
       } else {
         blob_map_[name].second = new Blob<T>(name);
@@ -57,16 +57,23 @@ class Workspace {
       const auto ask_type = typeid(T).name();
       CHECK(blob_type == ask_type) << "Blob " << name << " has type "
                                    << blob_type << ", but ask for " << ask_type;
-      return reinterpret_cast<const Blob<T> *>(blob_map_.at(name).second);
-    } else {
-      DLOG(WARNING) << "Blob " << name << " not in the workspace.";
-      return nullptr;
+      return static_cast<const Blob<T> *>(blob_map_.at(name).second);
     }
+    DLOG(WARNING) << "Blob " << name << " not in the workspace.";
+    return nullptr;
   }
   template <typename T>
   Blob<T> *GetBlob(const std::string &name) {
     return const_cast<Blob<T> *>(
         static_cast<const Workspace *>(this)->GetBlob<T>(name));
+  }
+
+  const std::string GetBlobType(const std::string &name) const {
+    if (blob_map_.count(name)) {
+      return blob_map_.at(name).first;
+    }
+    DLOG(WARNING) << "Blob " << name << " not in the workspace.";
+    return std::string();
   }
 
  private:

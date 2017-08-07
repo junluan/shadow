@@ -14,20 +14,36 @@ void WriteDefines(const shadow::NetParam& shadow_net, const std::string& root,
   const auto& model_name_hpp = model_name + ".hpp";
   const auto& model_name_weights_hpp = model_name + "_weights.hpp";
 
-  int whole_count = 0;
-  std::vector<int> weight_counts;
+  std::vector<int> blob_counts;
+  std::vector<std::string> blob_names, blob_types;
   shadow::NetParam net(shadow_net);
   for (int o = 0; o < net.op_size(); ++o) {
     auto op_param = net.mutable_op(o);
     if (op_param->blobs_size() == 0) continue;
-    int count = 0;
+    const auto& op_name = Util::find_replace(op_param->name(), "/", "_");
+    int blob_count = 0;
     for (const auto& blob : op_param->blobs()) {
-      count += blob.data_f_size();
+      const auto blob_type = blob.has_type() ? blob.type() : "float";
+      if (blob_type == "float") {
+        blob_counts.push_back(blob.data_f_size());
+      } else if (blob_type == "int") {
+        blob_counts.push_back(blob.data_i_size());
+      } else if (blob_type == "unsigned char") {
+        CHECK_EQ(blob.data_b_size(), 1);
+        blob_counts.push_back(static_cast<int>(blob.data_b(0).size()));
+      } else {
+        LOG(FATAL) << "Unknown blob type " << blob_type;
+      }
+      std::stringstream ss;
+      ss << weight_prefix << "_" << op_name << "_weight_" << blob_count++
+         << "_";
+      blob_names.push_back(ss.str());
+      blob_types.push_back(blob_type);
     }
-    whole_count += count;
-    weight_counts.push_back(count);
     for (int n = 0; n < op_param->blobs_size(); ++n) {
       op_param->mutable_blobs(n)->clear_data_f();
+      op_param->mutable_blobs(n)->clear_data_i();
+      op_param->mutable_blobs(n)->clear_data_b();
     }
   }
 
@@ -48,7 +64,7 @@ void WriteDefines(const shadow::NetParam& shadow_net, const std::string& root,
   auto json_split_num =
       json_str_count / split_count + (json_split_off > 0 ? 1 : 0);
 
-  std::vector<std::string> proto_split_names, json_split_names, weight_names;
+  std::vector<std::string> proto_split_names, json_split_names;
   for (int n = 0; n < proto_split_num; ++n) {
     std::stringstream ss;
     ss << "model_" << n << "_";
@@ -58,11 +74,6 @@ void WriteDefines(const shadow::NetParam& shadow_net, const std::string& root,
     std::stringstream ss;
     ss << "json_model_" << n << "_";
     json_split_names.push_back(ss.str());
-  }
-  for (int n = 0; n < weight_counts.size(); ++n) {
-    std::stringstream ss;
-    ss << weight_prefix << "_weight_" << n << "_";
-    weight_names.push_back(ss.str());
   }
 
   //########## write network proto definition to cpp ##########//
@@ -78,9 +89,9 @@ void WriteDefines(const shadow::NetParam& shadow_net, const std::string& root,
     cpp_file << ")\";\n\n";
     offset += split_count;
   }
-  cpp_file << "const std::string " << class_name
-           << "::model_ = " << Util::format_vector(proto_split_names, " + ")
-           << ";\n\n";
+  cpp_file << "const std::string " << class_name << "::model_{\n"
+           << Util::format_vector(proto_split_names, " + ", "    ")
+           << "\n};\n\n";
 
 #if defined(SUPPORT_JSON)
   offset = 0;
@@ -90,16 +101,21 @@ void WriteDefines(const shadow::NetParam& shadow_net, const std::string& root,
     cpp_file << ")\";\n\n";
     offset += split_count;
   }
-  cpp_file << "const std::string " << class_name
-           << "::json_model_ = " << Util::format_vector(json_split_names, " + ")
-           << ";\n\n";
+  cpp_file << "const std::string " << class_name << "::json_model_{\n"
+           << Util::format_vector(json_split_names, " + ", "    ")
+           << "\n};\n\n";
 #endif
 
-  cpp_file << "const std::vector<int> " << class_name << "::counts_{"
-           << Util::format_vector(weight_counts, ", ") << "};\n\n";
+  cpp_file << "const std::vector<int> " << class_name << "::counts_{\n"
+           << Util::format_vector(blob_counts, ", ", "    ") << "\n};\n\n";
 
-  cpp_file << "const std::vector<const float *> " << class_name << "::weights_{"
-           << Util::format_vector(weight_names, ", ") << "};\n\n";
+  cpp_file << "const std::vector<const void *> " << class_name
+           << "::weights_{\n"
+           << Util::format_vector(blob_names, ",\n    ", "    ") << "\n};\n\n";
+
+  cpp_file << "const std::vector<std::string> " << class_name << "::types_{\n"
+           << Util::format_vector(blob_types, "\",\n    \"", "    \"", "\"")
+           << "\n};\n\n";
 
   cpp_file.close();
 
@@ -122,38 +138,30 @@ void WriteDefines(const shadow::NetParam& shadow_net, const std::string& root,
 #endif
   hpp_file << "\n";
 
-  hpp_file
-      << "  static const std::vector<const float *> get_weights() {\n"
-         "    std::vector<const float *> weights;\n"
-         "    for (int n = 0; n < num(); ++n) {\n"
-         "      weights.push_back(weight(n));\n"
-         "    }\n"
-         "    return weights;\n"
-         "  }\n"
-         "  static void get_weights(float *weights_data) {\n"
-         "    for (int n = 0; n < num(); ++n) {\n"
-         "      memcpy(weights_data, weight(n), count(n) * sizeof(float));\n"
-         "      weights_data += count(n);\n"
-         "    }\n"
-         "  }\n\n";
+  hpp_file << "  static const std::vector<const void *> &weights() { "
+              "return weights_; }\n";
+  hpp_file << "  static const std::vector<std::string> &types() { return "
+              "types_; }\n";
+  hpp_file << "  static const std::vector<int> &counts() { return counts_; "
+              "}\n\n";
 
-  hpp_file << "  static const int count() { return " << whole_count
+  hpp_file << "  static const void *weights(int n) { return weights_[n]; }\n";
+  hpp_file << "  static const std::string types(int n) { return types_[n]; }\n";
+  hpp_file << "  static const int counts(int n) { return counts_[n]; }\n\n";
+
+  hpp_file << "  static const int num() { return " << blob_counts.size()
            << "; }\n\n";
 
   hpp_file << " private:\n";
-  hpp_file << "  static const int num() { return " << weight_counts.size()
-           << "; }\n";
-  hpp_file << "  static const int count(int n) { return counts_[n]; }\n";
-  hpp_file << "  static const float *weight(int n) { return weights_[n]; }\n\n";
-
   hpp_file << "  static const std::string model_;\n";
 #if defined(SUPPORT_JSON)
   hpp_file << "  static const std::string json_model_;\n";
 #endif
   hpp_file << "\n";
 
+  hpp_file << "  static const std::vector<const void *> weights_;\n";
+  hpp_file << "  static const std::vector<std::string> types_;\n";
   hpp_file << "  static const std::vector<int> counts_;\n";
-  hpp_file << "  static const std::vector<const float *> weights_;\n";
   hpp_file << "};\n\n";
 
   hpp_file << "#endif  // SHADOW_" << class_name << "_HPP\n";
@@ -166,8 +174,9 @@ void WriteDefines(const shadow::NetParam& shadow_net, const std::string& root,
   weight_file << "#ifndef SHADOW_" << class_name << "_WEIGHTS_HPP\n"
               << "#define SHADOW_" << class_name << "_WEIGHTS_HPP\n\n";
 
-  for (const auto& weight_name : weight_names) {
-    weight_file << "extern const float " << weight_name << "[];\n";
+  for (int n = 0; n < blob_names.size(); ++n) {
+    const auto &blob_name = blob_names[n], blob_type = blob_types[n];
+    weight_file << "extern const " << blob_type << " " << blob_name << "[];\n";
   }
   weight_file << "\n";
 
@@ -183,35 +192,51 @@ void WriteWeights(const shadow::NetParam& shadow_net, const std::string& root,
                  ::tolower);
   const auto& model_name_weights_hpp = model_name + "_weights.hpp";
 
-  int weight_count = 0;
   for (const auto& op_param : shadow_net.op()) {
     if (op_param.blobs_size() == 0) continue;
-
-    const auto& weight_name = Util::find_replace(op_param.name(), "/", "_");
-    std::ofstream file(root + "/" + model_name + "_" + weight_name + ".cpp");
+    const auto& op_name = Util::find_replace(op_param.name(), "/", "_");
+    std::ofstream file(root + "/" + model_name + "_" + op_name + ".cpp");
 
     file << "#include \"" << model_name_weights_hpp << "\"\n\n";
-
-    file << "const float " << weight_prefix << "_weight_" << weight_count
-         << "_[] = {\n";
-    int count = 0, num_of_line = 10;
+    int blob_count = 0;
     for (const auto& blob : op_param.blobs()) {
-      for (const auto& data : blob.data_f()) {
+      const auto blob_type = blob.has_type() ? blob.type() : "float";
+      file << "const " << blob_type << " " << weight_prefix << "_" << op_name
+           << "_weight_" << blob_count++ << "_[] = {\n";
+      int data_size = 0;
+      int count = 0, num_of_line = 10;
+      if (blob_type == "float") {
+        data_size = blob.data_f_size();
+      } else if (blob_type == "int") {
+        data_size = blob.data_i_size();
+      } else if (blob_type == "unsigned char") {
+        CHECK_EQ(blob.data_b_size(), 1);
+        data_size = static_cast<int>(blob.data_b(0).size());
+      } else {
+        LOG(FATAL) << op_name << ": Failed to write blob " << blob_count
+                   << "weights";
+      }
+      for (int i = 0; i < data_size; ++i) {
         if (count > 0) {
           file << ",";
         }
         if (count > 0 && count % num_of_line == 0) {
           file << "\n";
         }
-        file << data;
+        if (blob_type == "float") {
+          file << blob.data_f(i);
+        } else if (blob_type == "int") {
+          file << blob.data_i(i);
+        } else if (blob_type == "unsigned char") {
+          auto uc_data_ptr = static_cast<unsigned char*>(
+              static_cast<void*>(const_cast<char*>(blob.data_b(0).data())));
+          file << static_cast<int>(uc_data_ptr[i]);
+        }
         count++;
       }
+      file << "};\n\n";
     }
-    file << "};\n";
-
     file.close();
-
-    weight_count++;
   }
 }
 

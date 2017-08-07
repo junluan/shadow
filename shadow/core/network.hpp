@@ -12,7 +12,7 @@ class Network {
 
   void LoadModel(const std::string &proto_bin, int batch = 0);
   void LoadModel(const std::string &proto_str,
-                 const std::vector<const float *> &weights, int batch = 0);
+                 const std::vector<const void *> &weights, int batch = 0);
   void LoadModel(const std::string &proto_str, const float *weights_data,
                  int batch = 0);
 
@@ -44,7 +44,7 @@ class Network {
 
   void Reshape(int batch);
 
-  void CopyWeights(const std::vector<const float *> &weights);
+  void CopyWeights(const std::vector<const void *> &weights);
   void CopyWeights(const float *weights_data);
 
   shadow::NetParam net_param_;

@@ -11,7 +11,7 @@ void Network::LoadModel(const std::string &proto_bin, int batch) {
 }
 
 void Network::LoadModel(const std::string &proto_str,
-                        const std::vector<const float *> &weights, int batch) {
+                        const std::vector<const void *> &weights, int batch) {
   LoadProtoStrOrText(proto_str, &net_param_);
   Reshape(batch);
   CopyWeights(weights);
@@ -103,16 +103,27 @@ void Network::Reshape(int batch) {
   }
 }
 
-void Network::CopyWeights(const std::vector<const float *> &weights) {
+void Network::CopyWeights(const std::vector<const void *> &weights) {
   int weights_count = 0;
   for (auto &op : ops_) {
     if (op->blobs_size() > 0) {
-      CHECK_LT(weights_count, weights.size());
-      const float *weights_data = weights[weights_count++];
       for (int n = 0; n < op->blobs_size(); ++n) {
-        int blob_count = op->blobs<float>(n)->count();
-        op->set_blobs<float>(n, blob_count, weights_data);
-        weights_data += blob_count;
+        CHECK_LT(weights_count, weights.size());
+        const auto &blob_type = op->blobs_type(n);
+        auto *weight = const_cast<void *>(weights[weights_count++]);
+        if (blob_type == int_id) {
+          const auto *weight_data = static_cast<int *>(weight);
+          op->set_blobs<int>(n, op->blobs<int>(n)->count(), weight_data);
+        } else if (blob_type == float_id) {
+          const auto *weight_data = static_cast<float *>(weight);
+          op->set_blobs<float>(n, op->blobs<float>(n)->count(), weight_data);
+        } else if (blob_type == uchar_id) {
+          const auto *weight_data = static_cast<unsigned char *>(weight);
+          op->set_blobs<unsigned char>(n, op->blobs<unsigned char>(n)->count(),
+                                       weight_data);
+        } else {
+          LOG(FATAL) << "Unknown blob type " << blob_type;
+        }
       }
     }
   }

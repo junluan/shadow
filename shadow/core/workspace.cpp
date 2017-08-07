@@ -18,11 +18,11 @@ bool Workspace::RemoveBlob(const std::string &name) {
 void Workspace::ClearBlob(const std::string &blob_type, void *blob) {
   if (blob != nullptr) {
     if (blob_type == int_id) {
-      delete reinterpret_cast<BlobI *>(blob);
+      delete static_cast<BlobI *>(blob);
     } else if (blob_type == float_id) {
-      delete reinterpret_cast<BlobF *>(blob);
+      delete static_cast<BlobF *>(blob);
     } else if (blob_type == uchar_id) {
-      delete reinterpret_cast<BlobUC *>(blob);
+      delete static_cast<BlobUC *>(blob);
     } else {
       LOG(FATAL) << "Unknown blob type " << blob_type;
     }

@@ -75,8 +75,8 @@ Operator::Operator(const shadow::OpParam &op_param, Workspace *ws)
       if (data_b_size > 0) {
         CHECK_EQ(data_b_size, cc)
             << "Blob unsigned char data size and blob shape are mismatch";
-        auto uc_data_ptr = reinterpret_cast<unsigned char *>(
-            const_cast<char *>(proto_blob.data_b(0).data()));
+        auto uc_data_ptr = static_cast<unsigned char *>(static_cast<void *>(
+            const_cast<char *>(proto_blob.data_b(0).data())));
         blob->set_data(uc_data_ptr, data_b_size);
       }
     } else {
