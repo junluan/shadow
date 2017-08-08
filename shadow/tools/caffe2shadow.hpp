@@ -1,9 +1,9 @@
 #ifndef SHADOW_TOOLS_CAFFE2SHADOW_HPP
 #define SHADOW_TOOLS_CAFFE2SHADOW_HPP
 
-#include "transformer.hpp"
-
 #include "proto/caffe.pb.h"
+
+#include "transformer.hpp"
 
 namespace Shadow {
 
