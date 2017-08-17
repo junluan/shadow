@@ -10,8 +10,8 @@ namespace Shadow {
 
 class Method {
  public:
-  Method() {}
-  virtual ~Method() {}
+  Method() = default;
+  virtual ~Method() = default;
 
   virtual void Setup(const std::string &model_file, const VecInt &classes,
                      int batch) {

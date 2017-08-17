@@ -13,6 +13,8 @@ void ReorgOp::Reshape() {
   const auto *bottom = bottoms<float>(0);
   auto *top = mutable_tops<float>(0);
 
+  CHECK_NE(bottom, top);
+
   int in_c = bottom->shape(1), in_h = bottom->shape(2), in_w = bottom->shape(3);
 
   VecInt top_shape = bottom->shape();
@@ -21,9 +23,9 @@ void ReorgOp::Reshape() {
   top_shape[3] = in_w / stride_;
   top->reshape(top_shape);
 
-  DLOG(INFO) << op_name_ << ": "
+  DLOG(INFO) << op_name_ << "(" << op_type_ << "): " << bottom->name()
              << Util::format_vector(bottom->shape(), ",", "(", ")") << " -> "
-             << Util::format_vector(top->shape(), ",", "(", ")");
+             << top->name() << Util::format_vector(top->shape(), ",", "(", ")");
 }
 
 void ReorgOp::Forward() {

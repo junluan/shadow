@@ -7,20 +7,20 @@ namespace Shadow {
 
 class DetectionYOLO final : public Method {
  public:
-  DetectionYOLO() {}
-  ~DetectionYOLO() { Release(); }
+  DetectionYOLO() = default;
+  ~DetectionYOLO() override { Release(); }
 
-  virtual void Setup(const std::string &model_file, const VecInt &classes,
-                     int batch) override;
+  void Setup(const std::string &model_file, const VecInt &classes,
+             int batch) override;
 
-  virtual void Predict(const JImage &im_src, const VecRectF &rois,
-                       std::vector<VecBoxF> *Bboxes) override;
+  void Predict(const JImage &im_src, const VecRectF &rois,
+               std::vector<VecBoxF> *Bboxes) override;
 #if defined(USE_OpenCV)
-  virtual void Predict(const cv::Mat &im_mat, const VecRectF &rois,
-                       std::vector<VecBoxF> *Bboxes) override;
+  void Predict(const cv::Mat &im_mat, const VecRectF &rois,
+               std::vector<VecBoxF> *Bboxes) override;
 #endif
 
-  virtual void Release() override;
+  void Release() override;
 
  private:
   void Process(const float *data, std::vector<VecBoxF> *Bboxes);

@@ -37,8 +37,9 @@ void ActivateOp::Reshape() {
     top->reshape(bottom->shape());
   }
 
-  DLOG(INFO) << op_name_ << ": "
-             << Util::format_vector(bottom->shape(), ",", "(", ")") << " -> "
+  DLOG(INFO) << op_name_ << "(" << op_type_ << "): " << bottom->name()
+             << Util::format_vector(bottom->shape(), ",", "(", ")") << " -> t"
+             << activate_type_ << " -> " << top->name()
              << Util::format_vector(top->shape(), ",", "(", ")");
 }
 

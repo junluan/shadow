@@ -3,8 +3,6 @@
 namespace Shadow {
 
 void ReshapeOp::Setup() {
-  CHECK_NE(tops<float>(0), bottoms<float>(0));
-
   axis_ = get_single_argument<int>("axis", 0);
   num_axes_ = get_single_argument<int>("num_axes", -1);
   CHECK_GE(num_axes_, -1);
@@ -29,6 +27,8 @@ void ReshapeOp::Setup() {
 void ReshapeOp::Reshape() {
   const auto *bottom = bottoms<float>(0);
   auto *top = mutable_tops<float>(0);
+
+  CHECK_NE(bottom, top);
 
   int start_axis = (axis_ >= 0) ? axis_ : (bottom->num_axes() + axis_ + 1);
   CHECK_GE(start_axis, 0);
@@ -67,9 +67,9 @@ void ReshapeOp::Reshape() {
   top->set_shape(top_shape);
   CHECK_EQ(top->count(), bottom->count());
 
-  DLOG(INFO) << op_name_ << ": "
+  DLOG(INFO) << op_name_ << "(" << op_type_ << "): " << bottom->name()
              << Util::format_vector(bottom->shape(), ",", "(", ")") << " -> "
-             << Util::format_vector(top->shape(), ",", "(", ")");
+             << top->name() << Util::format_vector(top->shape(), ",", "(", ")");
 }
 
 void ReshapeOp::Forward() {

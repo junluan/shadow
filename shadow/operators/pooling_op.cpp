@@ -36,6 +36,8 @@ void PoolingOp::Reshape() {
   const auto *bottom = bottoms<float>(0);
   auto *top = mutable_tops<float>(0);
 
+  CHECK_NE(bottom, top);
+
   int batch = bottom->shape(0), in_c = bottom->shape(1);
   int in_h = bottom->shape(2), in_w = bottom->shape(3);
   int out_h = pooling_out_size(in_h, kernel_size_, stride_, pad_);
@@ -55,9 +57,10 @@ void PoolingOp::Reshape() {
   cudnn::setTensor4dDesc<float>(&top_desc_, batch, in_c, out_h, out_w);
 #endif
 
-  DLOG(INFO) << op_name_ << ": "
+  DLOG(INFO) << op_name_ << "(" << op_type_ << "): " << bottom->name()
              << Util::format_vector(bottom->shape(), ",", "(", ")") << " -> "
-             << kernel_size_ << "x" << kernel_size_ << "_s" << stride_ << " -> "
+             << kernel_size_ << "x" << kernel_size_ << "_s" << stride_ << "_p"
+             << pad_ << "_t" << pool_type_ << " -> " << top->name()
              << Util::format_vector(top->shape(), ",", "(", ")");
 }
 

@@ -48,9 +48,9 @@ void BiasOp::Reshape() {
   bias_dim_ = bias_->count();
   inner_dim_ = bottom->count(start_axis + bias_->num_axes());
 
-  DLOG(INFO) << op_name_ << ": "
+  DLOG(INFO) << op_name_ << "(" << op_type_ << "): " << bottom->name()
              << Util::format_vector(bottom->shape(), ",", "(", ")") << " -> "
-             << Util::format_vector(top->shape(), ",", "(", ")");
+             << top->name() << Util::format_vector(top->shape(), ",", "(", ")");
 }
 
 void BiasOp::Forward() {

@@ -33,11 +33,13 @@ void ConcatOp::Reshape() {
 
   VecString str;
   for (int i = 0; i < bottoms_size(); ++i) {
+    const auto *bottom = bottoms<float>(i);
     str.push_back(
-        Util::format_vector(bottoms<float>(i)->shape(), ",", "(", ")"));
+        Util::format_vector(bottom->shape(), ",", bottom->name() + "(", ")"));
   }
-  DLOG(INFO) << op_name_ << ": " << Util::format_vector(str, " + ") << " -> "
-             << Util::format_vector(top->shape(), ",", "(", ")");
+  DLOG(INFO) << op_name_ << "(" << op_type_
+             << "): " << Util::format_vector(str, " + ") << " -> "
+             << top->name() << Util::format_vector(top->shape(), ",", "(", ")");
 }
 
 void ConcatOp::Forward() {

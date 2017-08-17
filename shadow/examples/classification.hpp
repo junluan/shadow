@@ -7,22 +7,20 @@ namespace Shadow {
 
 class Classification final : public Method {
  public:
-  Classification() {}
-  ~Classification() { Release(); }
+  Classification() = default;
+  ~Classification() override { Release(); }
 
-  virtual void Setup(const std::string &model_file, const VecInt &classes,
-                     int batch) override;
+  void Setup(const std::string &model_file, const VecInt &classes,
+             int batch) override;
 
-  virtual void Predict(
-      const JImage &im_src, const VecRectF &rois,
-      std::vector<std::map<std::string, VecFloat>> *scores) override;
+  void Predict(const JImage &im_src, const VecRectF &rois,
+               std::vector<std::map<std::string, VecFloat>> *scores) override;
 #if defined(USE_OpenCV)
-  virtual void Predict(
-      const cv::Mat &im_mat, const VecRectF &rois,
-      std::vector<std::map<std::string, VecFloat>> *scores) override;
+  void Predict(const cv::Mat &im_mat, const VecRectF &rois,
+               std::vector<std::map<std::string, VecFloat>> *scores) override;
 #endif
 
-  virtual void Release() override;
+  void Release() override;
 
  private:
   void Process(const float *data,

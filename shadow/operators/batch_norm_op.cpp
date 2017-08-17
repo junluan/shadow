@@ -56,9 +56,9 @@ void BatchNormOp::Reshape() {
   sum_spatial_multiplier_.reshape(1, 1, in_h, in_w);
   Blas::Set(spatial_dim_, 1, sum_spatial_multiplier_.mutable_data(), 0);
 
-  DLOG(INFO) << op_name_ << ": "
+  DLOG(INFO) << op_name_ << "(" << op_type_ << "): " << bottom->name()
              << Util::format_vector(bottom->shape(), ",", "(", ")") << " -> "
-             << Util::format_vector(top->shape(), ",", "(", ")");
+             << top->name() << Util::format_vector(top->shape(), ",", "(", ")");
 }
 
 void BatchNormOp::Forward() {

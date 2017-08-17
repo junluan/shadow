@@ -3,8 +3,6 @@
 namespace Shadow {
 
 void FlattenOp::Setup() {
-  CHECK_NE(tops<float>(0), bottoms<float>(0));
-
   axis_ = get_single_argument<int>("axis", 1);
   end_axis_ = get_single_argument<int>("end_axis", -1);
   int num_axes = bottoms<float>(0)->num_axes();
@@ -20,6 +18,8 @@ void FlattenOp::Reshape() {
   const auto *bottom = bottoms<float>(0);
   auto *top = mutable_tops<float>(0);
 
+  CHECK_NE(bottom, top);
+
   for (int i = 0; i < axis_; ++i) {
     top->add_shape(bottom->shape(i));
   }
@@ -28,9 +28,9 @@ void FlattenOp::Reshape() {
     top->add_shape(bottom->shape(i));
   }
 
-  DLOG(INFO) << op_name_ << ": "
+  DLOG(INFO) << op_name_ << "(" << op_type_ << "): " << bottom->name()
              << Util::format_vector(bottom->shape(), ",", "(", ")") << " -> "
-             << Util::format_vector(top->shape(), ",", "(", ")");
+             << top->name() << Util::format_vector(top->shape(), ",", "(", ")");
 }
 
 void FlattenOp::Forward() {

@@ -10,8 +10,7 @@ void DemoDetection::Test(const std::string &image_file) {
   Predict(im_ini_, rois, &Bboxes_);
   Boxes::Amend(&Bboxes_, rois);
   const auto &boxes = Boxes::NMS(Bboxes_, 0.5);
-  std::cout << "Predicted in " << timer_.get_millisecond() << " ms"
-            << std::endl;
+  LOG(INFO) << "Predicted in " << timer_.get_millisecond() << " ms";
   for (const auto &boxF : boxes) {
     const BoxI box(boxF);
     int color_r = (box.label * 100) % 255;
@@ -19,17 +18,16 @@ void DemoDetection::Test(const std::string &image_file) {
     int color_b = (color_g + 100) % 255;
     Scalar scalar(color_r, color_g, color_b);
     JImageProc::Rectangle(&im_ini_, box.RectInt(), scalar);
-    std::cout << "xmin = " << box.xmin << ", ymin = " << box.ymin
+    LOG(INFO) << "xmin = " << box.xmin << ", ymin = " << box.ymin
               << ", xmax = " << box.xmax << ", ymax = " << box.ymax
-              << ", label = " << box.label << ", score = " << box.score
-              << std::endl;
+              << ", label = " << box.label << ", score = " << box.score;
   }
   im_ini_.Show("result");
 }
 
 void DemoDetection::BatchTest(const std::string &list_file, bool image_write) {
   const auto &image_list = Util::load_list(list_file);
-  int num_im = image_list.size(), count = 0;
+  int num_im = static_cast<int>(image_list.size()), count = 0;
   double time_cost = 0;
   Process process(20, num_im, "Processing: ");
   const auto &result_file = Util::find_replace_last(list_file, ".", "-result.");
@@ -59,8 +57,8 @@ void DemoDetection::BatchTest(const std::string &list_file, bool image_write) {
     process.update(count++, &std::cout);
   }
   file.close();
-  std::cout << "Processed in: " << time_cost
-            << " ms, each frame: " << time_cost / num_im << " ms" << std::endl;
+  LOG(INFO) << "Processed in: " << time_cost
+            << " ms, each frame: " << time_cost / num_im << " ms";
 }
 
 #if defined(USE_OpenCV)
@@ -69,9 +67,9 @@ void DemoDetection::VideoTest(const std::string &video_file, bool video_show,
   cv::VideoCapture capture;
   CHECK(capture.open(video_file)) << "Error when opening video file "
                                   << video_file;
-  float rate = static_cast<float>(capture.get(CV_CAP_PROP_FPS));
-  int width = static_cast<int>(capture.get(CV_CAP_PROP_FRAME_WIDTH));
-  int height = static_cast<int>(capture.get(CV_CAP_PROP_FRAME_HEIGHT));
+  auto rate = static_cast<float>(capture.get(CV_CAP_PROP_FPS));
+  auto width = static_cast<int>(capture.get(CV_CAP_PROP_FRAME_WIDTH));
+  auto height = static_cast<int>(capture.get(CV_CAP_PROP_FRAME_HEIGHT));
   cv::VideoWriter writer;
   if (video_write) {
     const auto &out_file = Util::change_extension(video_file, "-result.avi");
@@ -86,9 +84,9 @@ void DemoDetection::VideoTest(const std::string &video_file, bool video_show,
 void DemoDetection::CameraTest(int camera, bool video_write) {
   cv::VideoCapture capture;
   CHECK(capture.open(camera)) << "Error when opening camera!";
-  float rate = static_cast<float>(capture.get(CV_CAP_PROP_FPS));
-  int width = static_cast<int>(capture.get(CV_CAP_PROP_FRAME_WIDTH));
-  int height = static_cast<int>(capture.get(CV_CAP_PROP_FRAME_HEIGHT));
+  auto rate = static_cast<float>(capture.get(CV_CAP_PROP_FPS));
+  auto width = static_cast<int>(capture.get(CV_CAP_PROP_FRAME_WIDTH));
+  auto height = static_cast<int>(capture.get(CV_CAP_PROP_FRAME_HEIGHT));
   cv::VideoWriter writer;
   if (video_write) {
     const auto &out_file = "data/demo-result.avi";
@@ -103,7 +101,7 @@ void DemoDetection::CameraTest(int camera, bool video_write) {
 void DemoDetection::CaptureTest(cv::VideoCapture *capture,
                                 const std::string &window_name, bool video_show,
                                 cv::VideoWriter *writer) {
-  float rate = static_cast<float>(capture->get(CV_CAP_PROP_FPS));
+  auto rate = static_cast<float>(capture->get(CV_CAP_PROP_FPS));
   if (video_show) {
     cv::namedWindow(window_name, cv::WINDOW_NORMAL);
   }
@@ -157,10 +155,9 @@ void DemoDetection::DrawDetections(const VecBoxF &boxes, cv::Mat *im_mat,
     cv::rectangle(*im_mat, cv::Point(box.xmin, box.ymin),
                   cv::Point(box.xmax, box.ymax), scalar, 2);
     if (console_show) {
-      std::cout << "xmin = " << box.xmin << ", ymin = " << box.ymin
+      LOG(INFO) << "xmin = " << box.xmin << ", ymin = " << box.ymin
                 << ", xmax = " << box.xmax << ", ymax = " << box.ymax
-                << ", label = " << box.label << ", score = " << box.score
-                << std::endl;
+                << ", label = " << box.label << ", score = " << box.score;
     }
   }
 }

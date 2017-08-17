@@ -5,27 +5,27 @@
 
 namespace Shadow {
 
-using LabelBBox = std::map<int, VecBoxF>;
-using VecLabelBBox = std::vector<LabelBBox>;
-
 class DetectionSSD final : public Method {
  public:
-  DetectionSSD() {}
-  ~DetectionSSD() { Release(); }
+  DetectionSSD() = default;
+  ~DetectionSSD() override { Release(); }
 
-  virtual void Setup(const std::string &model_file, const VecInt &classes,
-                     int batch) override;
+  void Setup(const std::string &model_file, const VecInt &classes,
+             int batch) override;
 
-  virtual void Predict(const JImage &im_src, const VecRectF &rois,
-                       std::vector<VecBoxF> *Bboxes) override;
+  void Predict(const JImage &im_src, const VecRectF &rois,
+               std::vector<VecBoxF> *Bboxes) override;
 #if defined(USE_OpenCV)
-  virtual void Predict(const cv::Mat &im_mat, const VecRectF &rois,
-                       std::vector<VecBoxF> *Bboxes) override;
+  void Predict(const cv::Mat &im_mat, const VecRectF &rois,
+               std::vector<VecBoxF> *Bboxes) override;
 #endif
 
-  virtual void Release() override;
+  void Release() override;
 
  private:
+  using LabelBBox = std::map<int, VecBoxF>;
+  using VecLabelBBox = std::vector<LabelBBox>;
+
   void Process(const float *data, std::vector<VecBoxF> *Bboxes);
 
   void GetLocPredictions(const float *loc_data, int num,

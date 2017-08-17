@@ -54,6 +54,8 @@ void ConvOp::Reshape() {
   const auto *bottom = bottoms<float>(0);
   auto *top = mutable_tops<float>(0);
 
+  CHECK_NE(bottom, top);
+
   int batch = bottom->shape(0), in_c = bottom->shape(1),
       in_h = bottom->shape(2), in_w = bottom->shape(3);
 
@@ -121,10 +123,10 @@ void ConvOp::Reshape() {
   }
 #endif
 
-  DLOG(INFO) << op_name_ << ": "
+  DLOG(INFO) << op_name_ << "(" << op_type_ << "): " << bottom->name()
              << Util::format_vector(bottom->shape(), ",", "(", ")") << " -> "
              << num_output_ << "_" << kernel_size_ << "x" << kernel_size_
-             << "_s" << stride_ << "_p" << pad_ << " -> "
+             << "_s" << stride_ << "_p" << pad_ << " -> " << top->name()
              << Util::format_vector(top->shape(), ",", "(", ")");
 }
 
@@ -142,7 +144,7 @@ void ConvOp::Forward() {
         bottom->data(), filter_desc_, blobs<float>(0)->data(), conv_desc_,
         fwd_algo_, workspace_, workspace_fwd_size_,
         cudnn::dataType<float>::zero, top_desc_, top->mutable_data()));
-    if (this->bias_term_) {
+    if (bias_term_) {
       CUDNN_CHECK(cudnnAddTensor(
           Kernel::cudnn_handle_, cudnn::dataType<float>::one, bias_desc_,
           blobs<float>(1)->data(), cudnn::dataType<float>::one, top_desc_,

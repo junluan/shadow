@@ -30,9 +30,9 @@ void ConnectedOp::Reshape() {
     Blas::Set(batch, 1, biases_multiplier_.mutable_data(), 0);
   }
 
-  DLOG(INFO) << op_name_ << ": "
+  DLOG(INFO) << op_name_ << "(" << op_type_ << "): " << bottom->name()
              << Util::format_vector(bottom->shape(), ",", "(", ")") << " -> "
-             << Util::format_vector(top->shape(), ",", "(", ")");
+             << top->name() << Util::format_vector(top->shape(), ",", "(", ")");
 }
 
 void ConnectedOp::Forward() {

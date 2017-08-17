@@ -61,9 +61,9 @@ void ScaleOp::Reshape() {
   scale_dim_ = scale_->count();
   inner_dim_ = bottom->count(start_axis + scale_->num_axes());
 
-  DLOG(INFO) << op_name_ << ": "
+  DLOG(INFO) << op_name_ << "(" << op_type_ << "): " << bottom->name()
              << Util::format_vector(bottom->shape(), ",", "(", ")") << " -> "
-             << Util::format_vector(top->shape(), ",", "(", ")");
+             << top->name() << Util::format_vector(top->shape(), ",", "(", ")");
 }
 
 void ScaleOp::Forward() {

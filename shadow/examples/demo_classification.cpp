@@ -7,24 +7,24 @@ void DemoClassification::Test(const std::string &image_file) {
   VecRectF rois{RectF(0, 0, im_ini_.w_, im_ini_.h_)};
   timer_.start();
   Predict(im_ini_, rois, &scores_);
-  std::cout << "Predicted in " << timer_.get_millisecond() << " ms"
-            << std::endl;
+  LOG(INFO) << "Predicted in " << timer_.get_millisecond() << " ms";
   for (const auto &score_map : scores_) {
     for (const auto &it : score_map) {
-      std::cout << it.first << ": ";
+      std::stringstream ss;
+      ss << it.first << ": ";
       const auto &score = it.second;
       const auto &max_k = Util::top_k(it.second, 1);
       for (const auto idx : max_k) {
-        std::cout << idx << " (" << score[idx] << ") ";
+        ss << idx << " (" << score[idx] << ") ";
       }
-      std::cout << std::endl;
+      LOG(INFO) << ss.str();
     }
   }
 }
 
 void DemoClassification::BatchTest(const std::string &list_file) {
   const auto &image_list = Util::load_list(list_file);
-  int num_im = image_list.size(), count = 0;
+  int num_im = static_cast<int>(image_list.size()), count = 0;
   double time_cost = 0;
   Process process(20, num_im, "Processing: ");
   const auto &result_file = Util::find_replace_last(list_file, ".", "-result.");
@@ -40,8 +40,8 @@ void DemoClassification::BatchTest(const std::string &list_file) {
     process.update(count++, &std::cout);
   }
   file.close();
-  std::cout << "Processed in: " << time_cost
-            << " ms, each frame: " << time_cost / num_im << " ms" << std::endl;
+  LOG(INFO) << "Processed in: " << time_cost
+            << " ms, each frame: " << time_cost / num_im << " ms";
 }
 
 void DemoClassification::PrintDetections(
@@ -57,7 +57,7 @@ void DemoClassification::PrintDetections(
       for (const auto idx : max_k) {
         *os << idx << " (" << score[idx] << ") ";
       }
-      std::cout << std::endl;
+      *os << std::endl;
     }
   }
   *os << "-------------------------" << std::endl;

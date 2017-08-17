@@ -13,6 +13,8 @@ void PermuteOp::Reshape() {
   const auto *bottom = bottoms<float>(0);
   auto *top = mutable_tops<float>(0);
 
+  CHECK_NE(bottom, top);
+
   VecInt top_shape, old_steps(num_axes_), new_steps(num_axes_);
   for (const auto &order : permute_order_data_) {
     top_shape.push_back(bottom->shape(order));
@@ -37,8 +39,10 @@ void PermuteOp::Reshape() {
   old_steps_.set_data(old_steps.data(), num_axes_);
   new_steps_.set_data(new_steps.data(), num_axes_);
 
-  DLOG(INFO) << op_name_ << ": "
+  DLOG(INFO) << op_name_ << "(" << op_type_ << "): " << bottom->name()
              << Util::format_vector(bottom->shape(), ",", "(", ")") << " -> "
+             << Util::format_vector(permute_order_data_, ",", "(", ")")
+             << " -> " << top->name()
              << Util::format_vector(top->shape(), ",", "(", ")");
 }
 
