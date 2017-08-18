@@ -51,7 +51,7 @@ void Setup(int device_id) {
 
   auto compiler_options = std::vector<std::string>{};
 
-  const std::string cl_blas = "shadow/core/blas.cl";
+  const std::string cl_blas("shadow/core/blas.cl");
   auto program_blas =
       EasyCL::Program(*context_, Util::read_text_from_file(cl_blas));
   program_blas.Build(*device_, compiler_options);
@@ -74,7 +74,7 @@ void Setup(int device_id) {
   cl_kernels_.set_kernel(program_blas, "Abs");
   cl_kernels_.set_kernel(program_blas, "Pow");
 
-  const std::string cl_image = "shadow/core/image.cl";
+  const std::string cl_image("shadow/core/image.cl");
   auto program_image =
       EasyCL::Program(*context_, Util::read_text_from_file(cl_image));
   program_image.Build(*device_, compiler_options);

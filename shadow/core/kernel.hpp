@@ -14,7 +14,7 @@
 #include "cudnn.hpp"
 
 #elif defined(USE_CL)
-#include "easycl/easycl.hpp"
+#include "util/easycl.hpp"
 using BufferI = EasyCL::Buffer<int>;
 using BufferF = EasyCL::Buffer<float>;
 using BufferUC = EasyCL::Buffer<unsigned char>;
