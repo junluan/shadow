@@ -8,7 +8,7 @@ namespace Shadow {
 template <class Dtype>
 class Box {
  public:
-  Box() {}
+  Box() = default;
   Box(Dtype xmin_t, Dtype ymin_t, Dtype xmax_t, Dtype ymax_t)
       : xmin(xmin_t), ymin(ymin_t), xmax(xmax_t), ymax(ymax_t) {}
   Box(const Box<int> &box) { *this = box; }
@@ -38,9 +38,9 @@ class Box {
     return RectF(xmin, ymin, xmax - xmin, ymax - ymin);
   }
 
-  float score;
-  int label;
-  Dtype xmin, ymin, xmax, ymax;
+  Dtype xmin = 0, ymin = 0, xmax = 0, ymax = 0;
+  float score = 0;
+  int label = -1;
 };
 
 using BoxI = Box<int>;

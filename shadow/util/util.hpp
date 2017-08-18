@@ -23,7 +23,10 @@ inline int round(Dtype x) {
 }
 
 inline float rand_uniform(float min, float max) {
-  return (static_cast<float>(std::rand()) / RAND_MAX) * (max - min) + min;
+  static std::default_random_engine generator(
+      static_cast<unsigned long>(time(nullptr)));
+  std::uniform_real_distribution<float> distribute(min, max);
+  return distribute(generator);
 }
 
 template <typename Dtype>
@@ -47,7 +50,7 @@ inline std::vector<int> top_k(const std::vector<float> &v, int K,
                               bool descend = true) {
   std::vector<std::pair<float, int>> pairs;
   for (int i = 0; i < v.size(); ++i) {
-    pairs.push_back(std::make_pair(v[i], i));
+    pairs.emplace_back(v[i], i);
   }
   if (descend) {
     std::partial_sort(pairs.begin(), pairs.begin() + K, pairs.end(),
@@ -77,7 +80,7 @@ inline std::string format_int(int n, int width, char pad = ' ') {
 }
 
 inline std::string format_process(int current, int total) {
-  int digits = total > 0 ? std::log10(total) + 1 : 1;
+  int digits = total > 0 ? static_cast<int>(std::log10(total)) + 1 : 1;
   std::stringstream ss;
   ss << format_int(current, digits) << " / " << total;
   return ss.str();
@@ -104,10 +107,10 @@ inline std::string find_replace(const std::string &str,
                                 const std::string &old_str,
                                 const std::string &new_str) {
   std::string origin(str);
-  size_t index = 0;
-  while ((index = origin.find(old_str, index)) != std::string::npos) {
-    origin.replace(index, old_str.length(), new_str);
-    index += new_str.length();
+  size_t pos = 0;
+  while ((pos = origin.find(old_str, pos)) != std::string::npos) {
+    origin.replace(pos, old_str.length(), new_str);
+    pos += new_str.length();
   }
   return origin;
 }
@@ -116,23 +119,23 @@ inline std::string find_replace_last(const std::string &str,
                                      const std::string &old_str,
                                      const std::string &new_str) {
   std::string origin(str);
-  size_t index = origin.find_last_of(old_str);
-  origin.replace(index, old_str.length(), new_str);
+  auto pos = origin.find_last_of(old_str);
+  origin.replace(pos, old_str.length(), new_str);
   return origin;
 }
 
 inline std::string change_extension(const std::string &str,
                                     const std::string &new_ext) {
   std::string origin(str);
-  size_t index = origin.find_last_of(".");
-  origin.replace(index, origin.length(), new_ext);
+  auto pos = origin.find_last_of('.');
+  origin.replace(pos, origin.length(), new_ext);
   return origin;
 }
 
 inline std::vector<std::string> tokenize(const std::string &str,
                                          const std::string &split) {
   std::string::size_type last_pos = 0;
-  std::string::size_type pos = str.find_first_of(split, last_pos);
+  auto pos = str.find_first_of(split, last_pos);
   std::vector<std::string> tokens;
   while (last_pos != std::string::npos) {
     if (pos != last_pos) {
@@ -148,18 +151,17 @@ inline std::vector<std::string> tokenize(const std::string &str,
 inline std::vector<std::string> load_list(const std::string &list_file) {
   std::ifstream file(list_file);
   if (!file.is_open()) {
-    throw std::runtime_error("Load image list file error!");
+    throw std::runtime_error("Error when loading list file: " + list_file);
   }
-
-  std::vector<std::string> image_list;
-  std::string dir;
-  while (std::getline(file, dir)) {
-    if (dir.length()) {
-      image_list.push_back(dir);
+  std::vector<std::string> list;
+  std::string str;
+  while (std::getline(file, str)) {
+    if (!str.empty()) {
+      list.push_back(str);
     }
   }
   file.close();
-  return image_list;
+  return list;
 }
 
 inline std::string read_text_from_file(const std::string &filename) {
@@ -168,7 +170,6 @@ inline std::string read_text_from_file(const std::string &filename) {
     std::cerr << "Can't open text file " << filename;
     return std::string();
   }
-
   std::stringstream ss;
   std::string tmp;
   while (std::getline(file, tmp)) {
@@ -203,9 +204,8 @@ class Path {
 #endif
   };
 
-  Path() : type_(KNative), absolute_(false) {}
-  Path(const Path &path)
-      : type_(path.type_), path_(path.path_), absolute_(path.absolute_) {}
+  Path() = default;
+  Path(const Path &path) = default;
   explicit Path(const char *str) { set(str); }
   explicit Path(const std::string &str) { set(str); }
 
@@ -213,7 +213,7 @@ class Path {
 
   bool is_exist() const {
 #if defined(__linux)
-    struct stat sb;
+    struct stat sb {};
     return stat(str().c_str(), &sb) == 0;
 #else
     return GetFileAttributesW(wstr().c_str()) != INVALID_FILE_ATTRIBUTES;
@@ -222,8 +222,8 @@ class Path {
 
   bool is_directory() const {
 #if defined(__linux)
-    struct stat sb;
-    if (stat(str().c_str(), &sb)) return false;
+    struct stat sb {};
+    if (stat(str().c_str(), &sb) != 0) return false;
     return S_ISDIR(sb.st_mode);
 #else
     DWORD attr = GetFileAttributesW(wstr().c_str());
@@ -234,8 +234,8 @@ class Path {
 
   bool is_file() const {
 #if defined(__linux)
-    struct stat sb;
-    if (stat(str().c_str(), &sb)) return false;
+    struct stat sb {};
+    if (stat(str().c_str(), &sb) != 0) return false;
     return S_ISREG(sb.st_mode);
 #else
     DWORD attr = GetFileAttributesW(wstr().c_str());
@@ -249,7 +249,7 @@ class Path {
   Path make_absolute() const {
 #if defined(__linux)
     char temp[PATH_MAX];
-    if (realpath(str().c_str(), temp) == NULL) {
+    if (realpath(str().c_str(), temp) == nullptr) {
       throw std::runtime_error("Error in make_absolute(): " +
                                Util::to_string(strerror(errno)));
     }
@@ -267,44 +267,46 @@ class Path {
   }
 
   std::string file_name() const {
-    if (path_.empty() || !is_file()) return "";
+    if (path_.empty() || !is_file()) {
+      return std::string();
+    }
     return path_[path_.size() - 1];
   }
 
   std::string folder_name() const {
-    if (path_.empty() || !is_directory()) return "";
+    if (path_.empty() || !is_directory()) {
+      return std::string();
+    }
     return path_[path_.size() - 1];
   }
 
   std::string name() const {
-    std::string name = file_name();
-    size_t pos = name.find_last_of(".");
-    if (pos == std::string::npos) return "";
-    return name.substr(0, pos);
+    const auto &name = file_name();
+    auto pos = name.find_last_of('.');
+    return pos == std::string::npos ? std::string() : name.substr(0, pos);
   }
 
   std::string extension() const {
-    std::string name = file_name();
-    size_t pos = name.find_last_of(".");
-    if (pos == std::string::npos) return "";
-    return name.substr(pos + 1);
+    const auto &name = file_name();
+    auto pos = name.find_last_of('.');
+    return pos == std::string::npos ? std::string() : name.substr(pos + 1);
   }
 
   size_t length() const { return path_.size(); }
 
   size_t file_size() const {
 #if defined(__linux)
-    struct stat sb;
+    struct stat sb {};
     if (stat(str().c_str(), &sb) != 0) {
       throw std::runtime_error("Error in file_size(): " + str());
     }
 #else
-    struct _stati64 sb;
+    struct _stati64 sb {};
     if (_wstati64(wstr().c_str(), &sb) != 0) {
       throw std::runtime_error("Error in file_size(): " + str());
     }
 #endif
-    return (size_t)sb.st_size;
+    return static_cast<size_t>(sb.st_size);
   }
 
   Path parent_path() const {
@@ -312,7 +314,7 @@ class Path {
     result.absolute_ = absolute_;
     if (path_.empty()) {
       if (!absolute_) {
-        result.path_.push_back("..");
+        result.path_.emplace_back("..");
       }
     } else {
       for (size_t i = 0; i < path_.size() - 1; ++i) {
@@ -341,7 +343,7 @@ class Path {
   }
 
   std::wstring wstr(PathType type = KNative) const {
-    std::string temp = str(type);
+    const auto &temp = str(type);
     return std::wstring(temp.begin(), temp.end());
   }
 
@@ -389,7 +391,7 @@ class Path {
   static Path cwd() {
 #if defined(__linux)
     char temp[PATH_MAX];
-    if (::getcwd(temp, PATH_MAX) == NULL) {
+    if (::getcwd(temp, PATH_MAX) == nullptr) {
       throw std::runtime_error("Error in cwd(): " +
                                Util::to_string(strerror(errno)));
     }
@@ -403,6 +405,8 @@ class Path {
     return Path(std::string(temp.begin(), temp.end()));
 #endif
   }
+
+  Path &operator=(const Path &other) = default;
 
   Path operator/(const Path &other) const {
     if (other.absolute_) {
@@ -420,11 +424,11 @@ class Path {
   }
   Path operator+(const Path &other) const {
     if (other.absolute_) {
-      throw std::runtime_error("Error in operator/: expected a relative path!");
+      throw std::runtime_error("Error in operator+: expected a relative path!");
     }
     if (type_ != other.type_) {
       throw std::runtime_error(
-          "Error in operator/: expected a path of the same type!");
+          "Error in operator+: expected a path of the same type!");
     }
     Path result(*this);
     for (const auto &path : other.path_) {
@@ -433,15 +437,8 @@ class Path {
     return result;
   }
 
-  Path &operator=(const Path &path) {
-    type_ = path.type_;
-    path_ = path.path_;
-    absolute_ = path.absolute_;
-    return *this;
-  }
-
-  bool operator==(const Path &p) const { return p.path_ == path_; }
-  bool operator!=(const Path &p) const { return p.path_ != path_; }
+  bool operator==(const Path &other) const { return other.path_ == path_; }
+  bool operator!=(const Path &other) const { return other.path_ != path_; }
 
   friend std::ostream &operator<<(std::ostream &os, const Path &path) {
     os << path.str();
@@ -449,9 +446,9 @@ class Path {
   }
 
  private:
-  PathType type_;
+  PathType type_{KNative};
   std::vector<std::string> path_;
-  bool absolute_;
+  bool absolute_{false};
 };
 
 namespace Util {
@@ -499,8 +496,8 @@ class Timer {
            tfrequency_.QuadPart;
 #endif
   }
-  double get_second() { return 0.000001 * get_microsecond(); }
   double get_millisecond() { return 0.001 * get_microsecond(); }
+  double get_second() { return 0.000001 * get_microsecond(); }
 
   static tm get_compile_time() {
     int sec, min, hour, day, month, year;
@@ -517,7 +514,7 @@ class Timer {
   }
 
   static tm get_current_time() {
-    time_t now = time(0);
+    time_t now = time(nullptr);
     return *localtime(&now);
   }
 
@@ -560,7 +557,7 @@ class Process {
     slice_ = slice;
     total_ = total;
     prefix_ = prefix;
-    time_start_ = 0;
+    time_start_ = false;
   }
 
   void update(int current, std::ostream *os, int mode = 0) {
@@ -582,7 +579,8 @@ class Process {
       *os << "(" << current + 1 << "/" << total_ << ")";
     }
     if (time_start_) {
-      int left = timer_.get_millisecond() * (total_ - current) / current;
+      auto left = static_cast<int>(timer_.get_millisecond() *
+                                   (total_ - current) / current);
       int left_sec = left / 1000;
       int sec = left_sec % 60;
       int left_min = left_sec / 60;
@@ -593,7 +591,7 @@ class Process {
           << Util::format_int(sec, 2, '0');
     } else {
       timer_.start();
-      time_start_ = 1;
+      time_start_ = true;
     }
 
     if (pos < slice_) {
@@ -605,7 +603,8 @@ class Process {
   }
 
  private:
-  int slice_, total_, time_start_;
+  int slice_, total_;
+  bool time_start_;
   std::string prefix_;
   Timer timer_;
 };

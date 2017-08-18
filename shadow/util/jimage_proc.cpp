@@ -28,7 +28,7 @@ VecPointI GetLinePoints(const PointI &start, const PointI &end, int step,
   }
 
   if (start_p.x > end_p.x) {
-    PointI t = start_p;
+    PointI t(start_p);
     start_p = end_p;
     end_p = t;
   }
@@ -40,9 +40,9 @@ VecPointI GetLinePoints(const PointI &start, const PointI &end, int step,
   for (int x = start_p.x; x <= end_p.x; x += step) {
     int y = Util::round(start_p.y + (x - start_p.x) * step_y);
     if (steep) {
-      points.push_back(PointI(y, x));
+      points.emplace_back(y, x);
     } else {
-      points.push_back(PointI(x, y));
+      points.emplace_back(x, y);
     }
   }
 
