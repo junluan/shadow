@@ -101,7 +101,7 @@ void PriorBoxOp::Forward() {
         top_data_[idx++] = (center_w + box_width / 2.f) / img_width;
         top_data_[idx++] = (center_h + box_height / 2.f) / img_height;
 
-        if (max_sizes_.size() > 0) {
+        if (!max_sizes_.empty()) {
           CHECK_EQ(min_sizes_.size(), max_sizes_.size());
           float max_size = max_sizes_[s];
           // second prior: aspect_ratio = 1, size = sqrt(min_size * max_size)

@@ -44,6 +44,7 @@ void EltwiseOp::Forward() {
 
   int count = bottoms<float>(0)->count();
 
+  // Prod: 0, Sum: 1, Max: 2
   switch (operation_) {
     case 0:
       Blas::Mul(count, bottoms<float>(0)->data(), 0, bottoms<float>(1)->data(),
@@ -69,7 +70,7 @@ void EltwiseOp::Forward() {
       }
       break;
     default:
-      LOG(FATAL) << "Unknown elementwise operation.";
+      LOG(FATAL) << "Unknown elementwise operation " << operation_;
   }
 }
 

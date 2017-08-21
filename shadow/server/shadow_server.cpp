@@ -13,11 +13,11 @@ class ShadowServer final : public ::shadow::ShadowService::Service {
  public:
   ShadowServer(const std::string &model, const VecInt &classes,
                const std::string &method) {
-    if (!method.compare("ssd") || !method.compare("yolo")) {
+    if (method == "ssd" || method == "yolo") {
       detection_ = new DemoDetection(method);
       detection_->Setup(model, classes, 1);
       is_detection_ = true;
-    } else if (!method.compare("classification")) {
+    } else if (method == "classification") {
       classification_ = new DemoClassification(method);
       classification_->Setup(model, classes, 1);
       is_detection_ = false;
@@ -26,7 +26,7 @@ class ShadowServer final : public ::shadow::ShadowService::Service {
     }
     method_name_ = method;
   }
-  ~ShadowServer() {
+  ~ShadowServer() override {
     if (detection_ != nullptr) {
       delete detection_;
       detection_ = nullptr;
@@ -41,7 +41,7 @@ class ShadowServer final : public ::shadow::ShadowService::Service {
                        const ::shadow::ShadowRequest *request,
                        ::shadow::ShadowReply *reply) override {
     const auto &request_name = request->server_name();
-    if (request_name.compare(method_name_)) {
+    if (request_name == method_name_) {
       std::stringstream ss;
       ss << "Current server method name: " << method_name_
          << ", request method name: " << request_name;

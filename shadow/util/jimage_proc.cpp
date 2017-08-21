@@ -140,7 +140,7 @@ void Color2Gray(const JImage &im_src, JImage *im_gray,
       auto r = data_src[index + 0];
       auto g = data_src[index + 1];
       auto b = data_src[index + 2];
-      int val = static_cast<int>(0.299f * r + 0.587f * g + 0.114f * b);
+      auto val = static_cast<int>(0.299f * r + 0.587f * g + 0.114f * b);
       *data_gray++ = (unsigned char)Util::constrain(0, 255, val);
     }
   } else if (transformer == kBGR2Gray) {
@@ -150,7 +150,7 @@ void Color2Gray(const JImage &im_src, JImage *im_gray,
       auto r = data_src[index + 2];
       auto g = data_src[index + 1];
       auto b = data_src[index + 0];
-      int val = static_cast<int>(0.299f * r + 0.587f * g + 0.114f * b);
+      auto val = static_cast<int>(0.299f * r + 0.587f * g + 0.114f * b);
       *data_gray++ = (unsigned char)Util::constrain(0, 255, val);
     }
   } else if (transformer == kI4202Gray) {
@@ -192,7 +192,7 @@ void RGB2BGR(const JImage &im_src, JImage *im_dst,
   }
 }
 
-#define CLIP(x) (unsigned char)((x) & (~255) ? ((-x) >> 31) : (x))
+#define CLIP(x) static_cast<unsigned char>((x) & (~255) ? ((-(x)) >> 31) : (x))
 #define fix(x, n) static_cast<int>((x) * (1 << (n)) + 0.5)
 #define yuvYr fix(0.299, 10)
 #define yuvYg fix(0.587, 10)
@@ -664,14 +664,14 @@ void GaussianBlur(const JImage &im_src, JImage *im_blur, int kernel_size,
   const auto *data_src = im_src.data();
   auto *data_blur = im_blur->data();
 
-  float *kernel = new float[kernel_size];
-  GetGaussianKernel(kernel, kernel_size, sigma);
+  auto kernel = std::vector<float>(kernel_size, 0);
+  GetGaussianKernel(kernel.data(), kernel_size, sigma);
 
   float val_c0, val_c1, val_c2, val_kernel;
   int im_h, im_w, im_index, center = kernel_size >> 1;
 
-  float *data_w = new float[c_ * h_ * w_];
-  float *data_w_index = data_w;
+  auto data_w = std::vector<float>(c_ * h_ * w_, 0);
+  float *data_w_index = data_w.data();
   for (int h = 0; h < h_; ++h) {
     for (int w = 0; w < w_; ++w) {
       val_c0 = 0.f, val_c1 = 0.f, val_c2 = 0.f;
@@ -718,9 +718,6 @@ void GaussianBlur(const JImage &im_src, JImage *im_blur, int kernel_size,
       }
     }
   }
-
-  delete[] data_w;
-  delete[] kernel;
 }
 
 void Canny(const JImage &im_src, JImage *im_canny, float thresh_low,
@@ -742,9 +739,10 @@ void Canny(const JImage &im_src, JImage *im_canny, float thresh_low,
   int h_ = im_canny->h_, w_ = im_canny->w_;
   auto *data_ = im_canny->data();
 
-  int *grad_x = new int[h_ * w_], *grad_y = new int[h_ * w_];
-  int *magnitude = new int[h_ * w_];
-  Gradient(*im_canny, grad_x, grad_y, magnitude, L2);
+  auto grad_x = std::vector<int>(h_ * w_, 0);
+  auto grad_y = std::vector<int>(h_ * w_, 0);
+  auto magnitude = std::vector<int>(h_ * w_, 0);
+  Gradient(*im_canny, grad_x.data(), grad_y.data(), magnitude.data(), L2);
 
   if (L2) {
     if (thresh_low > 0) thresh_low *= thresh_low;
@@ -756,7 +754,7 @@ void Canny(const JImage &im_src, JImage *im_canny, float thresh_low,
 //   2 - the pixel does belong to an edge
 
 #define CANNY_SHIFT 15
-  const int TG22 = static_cast<int>(
+  const auto TG22 = static_cast<int>(
       0.4142135623730950488016887242097 * (1 << CANNY_SHIFT) + 0.5);
 
   memset(im_canny->data(), 0, h_ * w_ * sizeof(unsigned char));
@@ -822,10 +820,6 @@ void Canny(const JImage &im_src, JImage *im_canny, float thresh_low,
   for (int i = 0; i < h_ * w_; ++i, ++data_index) {
     *data_index = (unsigned char)-(*data_index >> 1);
   }
-
-  delete[] grad_x;
-  delete[] grad_y;
-  delete[] magnitude;
 }
 
 void GetGaussianKernel(float *kernel, int n, float sigma) {
@@ -839,7 +833,7 @@ void GetGaussianKernel(float *kernel, int n, float sigma) {
   const float *fixed_kernel =
       n % 2 == 1 && n <= SMALL_GAUSSIAN_SIZE && sigma <= 0
           ? small_gaussian_tab[n >> 1]
-          : 0;
+          : nullptr;
 
   float sigmaX = sigma > 0 ? sigma : ((n - 1) * 0.5f - 1) * 0.3f + 0.8f;
   float scale2X = -0.5f / (sigmaX * sigmaX);
@@ -847,7 +841,8 @@ void GetGaussianKernel(float *kernel, int n, float sigma) {
   float sum = 0;
   for (int i = 0; i < n; ++i) {
     float x = i - (n - 1) * 0.5f;
-    float t = fixed_kernel ? fixed_kernel[i] : std::exp(scale2X * x * x);
+    float t =
+        fixed_kernel != nullptr ? fixed_kernel[i] : std::exp(scale2X * x * x);
     kernel[i] = t;
     sum += kernel[i];
   }

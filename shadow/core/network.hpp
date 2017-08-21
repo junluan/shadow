@@ -19,7 +19,12 @@ class Network {
   void Forward(const float *data = nullptr);
   void Release();
 
-  const Operator *GetOpByName(const std::string &op_name);
+  const Operator *GetOpByName(const std::string &op_name) {
+    for (const auto &op : ops_) {
+      if (op_name == op->name()) return op;
+    }
+    return nullptr;
+  }
   template <typename T>
   const Blob<T> *GetBlobByName(const std::string &blob_name) {
     return ws_.GetBlob<T>(blob_name);

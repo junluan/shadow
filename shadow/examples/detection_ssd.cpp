@@ -47,7 +47,7 @@ inline void ApplyNMSFast(const VecBoxF &bboxes, VecFloat &scores,
 
   // Do nms.
   indices->clear();
-  while (score_index_vec.size()) {
+  while (!score_index_vec.empty()) {
     std::stable_sort(score_index_vec.begin(), score_index_vec.end(),
                      SortScorePairDescend<int>);
     const int idx = score_index_vec.front().second;
@@ -128,9 +128,9 @@ void DetectionSSD::Release() {
 void DetectionSSD::Process(const float *data, std::vector<VecBoxF> *Bboxes) {
   net_.Forward(data);
 
-  const float *loc_data = net_.GetBlobDataByName<float>("mbox_loc");
-  const float *conf_data = net_.GetBlobDataByName<float>("mbox_conf_flatten");
-  const float *prior_data = net_.GetBlobDataByName<float>("mbox_priorbox");
+  const auto *loc_data = net_.GetBlobDataByName<float>("mbox_loc");
+  const auto *conf_data = net_.GetBlobDataByName<float>("mbox_conf_flatten");
+  const auto *prior_data = net_.GetBlobDataByName<float>("mbox_priorbox");
 
   VecLabelBBox all_loc_preds;
   GetLocPredictions(loc_data, batch_, num_priors_, num_loc_classes_,
@@ -183,8 +183,8 @@ void DetectionSSD::Process(const float *data, std::vector<VecBoxF> *Bboxes) {
         const auto &scores = conf_scores.find(label)->second;
         for (const auto &idx : it.second) {
           CHECK_LT(idx, scores.size());
-          score_index_pairs.push_back(
-              std::make_pair(scores[idx], std::make_pair(label, idx)));
+          score_index_pairs.emplace_back(scores[idx],
+                                         std::make_pair(label, idx));
         }
       }
       // Keep top k results per image.

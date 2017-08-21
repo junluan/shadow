@@ -44,14 +44,13 @@ void JImage::Write(const std::string &im_path) const {
   if (order_ == kRGB) {
     is_ok = stbi_write_png(path.c_str(), w_, h_, c_, data_, step);
   } else if (order_ == kBGR) {
-    unsigned char *data_inv = new unsigned char[c_ * h_ * w_];
-    GetInv(data_inv);
-    is_ok = stbi_write_png(path.c_str(), w_, h_, c_, data_inv, step);
-    delete[] data_inv;
+    auto data_inv = std::vector<unsigned char>(c_ * h_ * w_, 0);
+    GetInv(data_inv.data());
+    is_ok = stbi_write_png(path.c_str(), w_, h_, c_, data_inv.data(), step);
   } else {
     LOG(FATAL) << "Unsupported format to disk!";
   }
-  CHECK(is_ok) << "Failed to write image to " + im_path;
+  CHECK(is_ok) << "Failed to write image to " + path;
 
 #else
   LOG(FATAL) << "Not compiled with either OpenCV or STB, could not write image "
@@ -123,11 +122,10 @@ void JImage::GetInv(unsigned char *im_inv) const {
   if (order_ == kRGB || order_ == kBGR) {
     int spatial_dim = h_ * w_;
     unsigned char *data_index = data_;
-    for (int i = 0; i < spatial_dim; ++i) {
+    for (int i = 0; i < spatial_dim; ++i, data_index += c_) {
       *(im_inv++) = *(data_index + c_ - 1);
       *(im_inv++) = *(data_index + 1);
       *(im_inv++) = *data_index;
-      data_index += c_;
     }
   } else {
     LOG(FATAL) << "Unsupported format to get inverse!";

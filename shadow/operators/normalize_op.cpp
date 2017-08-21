@@ -39,15 +39,16 @@ void NormalizeOp::Reshape() {
 
   if (!across_spatial_) {
     norm_.reshape(1, 1, in_h, in_w);
+    sum_channel_multiplier_.reshape(1, in_c, 1, 1);
+    Blas::Set(in_c, 1, sum_channel_multiplier_.mutable_data(), 0);
+  }
+
+  if (!channel_shared_) {
+    sum_spatial_multiplier_.reshape(1, 1, in_h, in_w);
+    Blas::Set(spatial_dim_, 1, sum_spatial_multiplier_.mutable_data(), 0);
   }
 
   buffer_.reshape(1, in_c, in_h, in_w);
-
-  sum_channel_multiplier_.reshape(1, in_c, 1, 1);
-  Blas::Set(in_c, 1, sum_channel_multiplier_.mutable_data(), 0);
-
-  sum_spatial_multiplier_.reshape(1, 1, in_h, in_w);
-  Blas::Set(spatial_dim_, 1, sum_spatial_multiplier_.mutable_data(), 0);
 
   DLOG(INFO) << op_name_ << "(" << op_type_ << "): " << bottom->name()
              << Util::format_vector(bottom->shape(), ",", "(", ")") << " -> "

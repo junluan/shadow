@@ -26,7 +26,7 @@ void Network::LoadModel(const std::string &proto_str, const float *weights_data,
 
 void Network::Forward(const float *data) {
   CHECK_NOTNULL(data);
-  if (ops_.size() == 0) return;
+  if (ops_.empty()) return;
   CHECK(ops_[0]->type() == "Data") << "The first Op must be Data operator!";
   auto in_blob = ops_[0]->mutable_bottoms<float>(0);
   in_blob->set_data(data, in_blob->count());
@@ -48,13 +48,6 @@ void Network::Release() {
   Kernel::Release();
 
   DLOG(INFO) << "Release Network!";
-}
-
-const Operator *Network::GetOpByName(const std::string &op_name) {
-  for (const auto &op : ops_) {
-    if (op_name == op->name()) return op;
-  }
-  return nullptr;
 }
 
 void Network::LoadProtoBin(const std::string &proto_bin,

@@ -13,9 +13,9 @@ class ShadowClient {
   ShadowClient(const std::string& method,
                std::shared_ptr<grpc::Channel> channel)
       : stub_(shadow::ShadowService::NewStub(channel)) {
-    if (!method.compare("ssd") || !method.compare("yolo")) {
+    if (method == "ssd" || method == "yolo") {
       is_detection_ = true;
-    } else if (!method.compare("classification")) {
+    } else if (method == "classification") {
       is_detection_ = false;
     } else {
       LOG(FATAL) << "Unknown method " << method;
