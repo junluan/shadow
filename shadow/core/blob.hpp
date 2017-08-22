@@ -104,6 +104,9 @@ class Blob {
   void set_name(const std::string &name) { name_ = name; }
 
   const Device device() const { return device_; }
+  int capacity() const { return capacity_; }
+
+  int mem_count() const { return capacity_ * sizeof(Dtype); }
 
   const VecInt &shape() const { return shape_; }
   int shape(int index) const { return shape_[canonical_index(index)]; }
@@ -149,6 +152,8 @@ class Blob {
     data_ = nullptr;
     cpu_data_.clear();
     shape_.clear();
+    capacity_ = 0;
+    shared_ = false;
   }
 
  private:
@@ -175,11 +180,11 @@ class Blob {
   }
 
   BACKEND *data_ = nullptr;
-  std::vector<Dtype> cpu_data_;
+  std::vector<Dtype> cpu_data_{};
 
   std::string name_;
   Device device_ = kCPU;
-  VecInt shape_;
+  VecInt shape_{};
   int capacity_ = 0;
   bool shared_ = false;
 

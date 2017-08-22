@@ -21,8 +21,8 @@ class NormalizeOp : public Operator {
   int spatial_dim_;
   float scale_;
 
-  BlobF norm_, buffer_;
-  BlobF sum_channel_multiplier_, sum_spatial_multiplier_;
+  BlobF *norm_ = nullptr, *buffer_ = nullptr;
+  BlobF *sum_channel_multiplier_ = nullptr, *sum_spatial_multiplier_ = nullptr;
 };
 
 }  // namespace Shadow

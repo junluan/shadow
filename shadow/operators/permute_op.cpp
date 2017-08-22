@@ -31,13 +31,14 @@ void PermuteOp::Reshape() {
     }
   }
 
-  permute_order_.reshape(num_axes_);
-  old_steps_.reshape(num_axes_);
-  new_steps_.reshape(num_axes_);
+  permute_order_ =
+      op_ws_->CreateBlob<int>({num_axes_}, op_name_ + "_permute_order");
+  old_steps_ = op_ws_->CreateBlob<int>({num_axes_}, op_name_ + "_old_steps");
+  new_steps_ = op_ws_->CreateBlob<int>({num_axes_}, op_name_ + "_new_steps");
 
-  permute_order_.set_data(permute_order_data_.data(), num_axes_);
-  old_steps_.set_data(old_steps.data(), num_axes_);
-  new_steps_.set_data(new_steps.data(), num_axes_);
+  permute_order_->set_data(permute_order_data_.data(), num_axes_);
+  old_steps_->set_data(old_steps.data(), num_axes_);
+  new_steps_->set_data(new_steps.data(), num_axes_);
 
   DLOG(INFO) << op_name_ << "(" << op_type_ << "): " << bottom->name()
              << Util::format_vector(bottom->shape(), ",", "(", ")") << " -> "
@@ -51,15 +52,11 @@ void PermuteOp::Forward() {
   auto *top = mutable_tops<float>(0);
 
   Image::Permute(bottom->data(), bottom->count(), bottom->num_axes(),
-                 permute_order_.data(), old_steps_.data(), new_steps_.data(),
+                 permute_order_->data(), old_steps_->data(), new_steps_->data(),
                  top->mutable_data());
 }
 
 void PermuteOp::Release() {
-  permute_order_.clear();
-  old_steps_.clear();
-  new_steps_.clear();
-
   // DLOG(INFO) << "Free PermuteOp!";
 }
 

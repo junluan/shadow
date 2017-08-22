@@ -20,7 +20,7 @@ class DataOp : public Operator {
   float scale_;
   int num_mean_;
 
-  BlobF mean_value_;
+  BlobF *mean_value_ = nullptr;
 };
 
 }  // namespace Shadow

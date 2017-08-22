@@ -21,8 +21,9 @@ class BatchNormOp : public Operator {
   float scale_;
   int channels_, spatial_dim_;
 
-  BlobF mean_, variance_, temp_;
-  BlobF sum_batch_multiplier_, sum_spatial_multiplier_, batch_by_channel_;
+  BlobF *mean_ = nullptr, *variance_ = nullptr, *temp_ = nullptr;
+  BlobF *sum_batch_multiplier_ = nullptr, *sum_spatial_multiplier_ = nullptr,
+        *batch_by_channel_ = nullptr;
 };
 
 }  // namespace Shadow

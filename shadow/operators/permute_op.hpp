@@ -20,7 +20,7 @@ class PermuteOp : public Operator {
   int num_axes_;
   VecInt permute_order_data_;
 
-  BlobI permute_order_, old_steps_, new_steps_;
+  BlobI *permute_order_ = nullptr, *old_steps_ = nullptr, *new_steps_ = nullptr;
 };
 
 }  // namespace Shadow

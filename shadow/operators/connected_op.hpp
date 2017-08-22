@@ -20,7 +20,7 @@ class ConnectedOp : public Operator {
   int num_output_;
   bool bias_term_, transpose_;
 
-  BlobF biases_multiplier_;
+  BlobF *biases_multiplier_ = nullptr;
 };
 
 }  // namespace Shadow

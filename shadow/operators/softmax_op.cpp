@@ -24,7 +24,7 @@ void SoftmaxOp::Reshape() {
 
   VecInt scale_dims = bottom->shape();
   scale_dims[axis_] = 1;
-  scale_.reshape(scale_dims);
+  scale_ = op_ws_->CreateBlob<float>({scale_dims}, op_name_ + "_scale");
 
 #if defined(USE_CUDNN)
   cudnn::setTensor4dDesc<float>(&bottom_desc_, outer_num_, bottom->shape(axis_),
@@ -52,20 +52,18 @@ void SoftmaxOp::Forward() {
   int count = bottom->count(), channels = bottom->shape(axis_);
   Blas::BlasScopy(count, bottom->data(), 0, top->mutable_data(), 0);
   Blas::ChannelMax(outer_num_, channels, inner_num_, top->data(),
-                   scale_.mutable_data());
-  Blas::ChannelSub(count, outer_num_, channels, inner_num_, scale_.data(),
+                   scale_->mutable_data());
+  Blas::ChannelSub(count, outer_num_, channels, inner_num_, scale_->data(),
                    top->mutable_data());
   Blas::Exp(count, top->data(), 0, top->mutable_data(), 0);
   Blas::ChannelSum(outer_num_, channels, inner_num_, top->data(),
-                   scale_.mutable_data());
-  Blas::ChannelDiv(count, outer_num_, channels, inner_num_, scale_.data(),
+                   scale_->mutable_data());
+  Blas::ChannelDiv(count, outer_num_, channels, inner_num_, scale_->data(),
                    top->mutable_data());
 #endif
 }
 
 void SoftmaxOp::Release() {
-  scale_.clear();
-
 #if defined(USE_CUDNN)
   if (bottom_desc_ != nullptr) {
     cudnnDestroyTensorDescriptor(bottom_desc_);

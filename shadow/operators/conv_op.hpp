@@ -22,7 +22,7 @@ class ConvOp : public Operator {
   int weight_offset_, col_offset_, output_offset_;
   bool bias_term_, use_cudnn_ = false, use_nnpack_ = false;
 
-  BlobF biases_multiplier_, col_image_;
+  BlobF *biases_multiplier_ = nullptr, *col_image_ = nullptr;
 
 #if defined(USE_CUDNN)
   cudnnConvolutionFwdAlgo_t fwd_algo_ =

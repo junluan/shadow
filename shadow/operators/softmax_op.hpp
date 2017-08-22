@@ -19,7 +19,7 @@ class SoftmaxOp : public Operator {
  private:
   int axis_, outer_num_, inner_num_;
 
-  BlobF scale_;
+  BlobF *scale_ = nullptr;
 
 #if defined(USE_CUDNN)
   cudnnTensorDescriptor_t bottom_desc_ = nullptr, top_desc_ = nullptr;

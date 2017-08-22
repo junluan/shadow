@@ -20,7 +20,7 @@ void LRNOp::Reshape() {
 
   top->reshape(bottom->shape());
 
-  scale_.reshape(bottom->shape());
+  scale_ = op_ws_->CreateBlob<float>(bottom->shape(), op_name_ + "_scale");
 
   DLOG(INFO) << op_name_ << "(" << op_type_ << "): " << bottom->name()
              << Util::format_vector(bottom->shape(), ",", "(", ")") << " -> "
@@ -32,12 +32,10 @@ void LRNOp::Forward() {
   auto *top = mutable_tops<float>(0);
 
   Image::LRN(bottom->data(), bottom->shape(), size_, alpha_, beta_, k_,
-             scale_.mutable_data(), top->mutable_data());
+             scale_->mutable_data(), top->mutable_data());
 }
 
 void LRNOp::Release() {
-  scale_.clear();
-
   // DLOG(INFO) << "Free LRNOp!";
 }
 

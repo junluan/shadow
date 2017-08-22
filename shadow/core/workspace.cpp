@@ -15,6 +15,26 @@ bool Workspace::RemoveBlob(const std::string &name) {
   return false;
 }
 
+int Workspace::GetWorkspaceSize() const {
+  int count = 1;
+  for (const auto &blob_it : blob_map_) {
+    const auto &blob_type = blob_it.second.first;
+    auto *blob = blob_it.second.second;
+    if (blob != nullptr) {
+      if (blob_type == int_id) {
+        count += static_cast<BlobI *>(blob)->mem_count();
+      } else if (blob_type == float_id) {
+        count += static_cast<BlobF *>(blob)->mem_count();
+      } else if (blob_type == uchar_id) {
+        count += static_cast<BlobUC *>(blob)->mem_count();
+      } else {
+        LOG(FATAL) << "Unknown blob type " << blob_type;
+      }
+    }
+  }
+  return count;
+}
+
 void Workspace::ClearBlob(const std::string &blob_type, void *blob) {
   if (blob != nullptr) {
     if (blob_type == int_id) {

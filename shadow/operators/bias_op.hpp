@@ -19,7 +19,7 @@ class BiasOp : public Operator {
  private:
   int axis_, num_axis_, bias_dim_, inner_dim_;
 
-  BlobF *bias_;
+  BlobF *bias_ = nullptr;
 };
 
 }  // namespace Shadow

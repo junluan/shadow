@@ -74,10 +74,12 @@ void ConvOp::Reshape() {
 
   if (!use_cudnn_ && !use_nnpack_) {
     if (bias_term_) {
-      biases_multiplier_.reshape(out_spatial_dim_);
-      Blas::Set(out_spatial_dim_, 1, biases_multiplier_.mutable_data(), 0);
+      biases_multiplier_ = op_ws_->CreateBlob<float>(
+          {out_spatial_dim_}, op_name_ + "_biases_multiplier");
+      Blas::Set(out_spatial_dim_, 1, biases_multiplier_->mutable_data(), 0);
     }
-    col_image_.reshape(kernel_dim_ * group_, out_spatial_dim_);
+    col_image_ = op_ws_->CreateBlob<float>(
+        {kernel_dim_ * group_, out_spatial_dim_}, op_name_ + "_col_image");
   }
 
 #if defined(USE_CUDNN)
@@ -170,25 +172,22 @@ void ConvOp::Forward() {
   for (int b = 0; b < batch; ++b) {
     Image::Im2Col(bottom->data(), bottom->shape(), b * bottom_num, kernel_size_,
                   stride_, pad_, dilation_, 0, top->shape(),
-                  col_image_.mutable_data());
+                  col_image_->mutable_data());
     for (int g = 0; g < group_; ++g) {
       Blas::BlasSgemm(0, 0, num_output_ / group_, out_spatial_dim_, kernel_dim_,
                       1, blobs<float>(0)->data(), weight_offset_ * g,
-                      col_image_.data(), col_offset_ * g, 0,
+                      col_image_->data(), col_offset_ * g, 0,
                       top->mutable_data(), b * top_num + output_offset_ * g);
     }
     if (bias_term_) {
       Blas::BlasSgemm(0, 0, num_output_, out_spatial_dim_, 1, 1,
-                      blobs<float>(1)->data(), 0, biases_multiplier_.data(), 0,
+                      blobs<float>(1)->data(), 0, biases_multiplier_->data(), 0,
                       1, top->mutable_data(), b * top_num);
     }
   }
 }
 
 void ConvOp::Release() {
-  biases_multiplier_.clear();
-  col_image_.clear();
-
 #if defined(USE_CUDNN)
   if (conv_desc_ != nullptr) {
     cudnnDestroyConvolutionDescriptor(conv_desc_);

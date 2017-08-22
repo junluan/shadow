@@ -15,8 +15,9 @@ void DataOp::Setup() {
   } else if (mean_value.empty()) {
     mean_value.push_back(0);
   }
-  mean_value_.reshape(num_mean_);
-  mean_value_.set_data(mean_value.data(), num_mean_);
+  mean_value_ =
+      op_ws_->CreateBlob<float>({num_mean_}, op_name_ + "_mean_value");
+  mean_value_->set_data(mean_value.data(), num_mean_);
 }
 
 void DataOp::Reshape() {
@@ -35,12 +36,10 @@ void DataOp::Forward() {
   auto *top = mutable_tops<float>(0);
 
   Image::DataTransform(bottom->data(), bottom->shape(), scale_, num_mean_,
-                       mean_value_.data(), top->mutable_data());
+                       mean_value_->data(), top->mutable_data());
 }
 
 void DataOp::Release() {
-  mean_value_.clear();
-
   // DLOG(INFO) << "Free DataOp!";
 }
 

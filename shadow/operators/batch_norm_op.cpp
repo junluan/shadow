@@ -45,16 +45,19 @@ void BatchNormOp::Reshape() {
 
   spatial_dim_ = in_h * in_w;
 
-  mean_.reshape(1, channels_);
-  variance_.reshape(1, channels_);
-  temp_.reshape(bottom->shape());
-  batch_by_channel_.reshape(batch, channels_);
+  mean_ = op_ws_->CreateBlob<float>({1, channels_}, op_name_ + "_mean");
+  variance_ = op_ws_->CreateBlob<float>({1, channels_}, op_name_ + "_variance");
+  temp_ = op_ws_->CreateBlob<float>(bottom->shape(), op_name_ + "_temp");
+  batch_by_channel_ = op_ws_->CreateBlob<float>({batch, channels_},
+                                                op_name_ + "_batch_by_channel");
 
-  sum_batch_multiplier_.reshape(batch);
-  Blas::Set(batch, 1, sum_batch_multiplier_.mutable_data(), 0);
+  sum_batch_multiplier_ =
+      op_ws_->CreateBlob<float>({batch}, op_name_ + "_sum_batch_multiplier");
+  Blas::Set(batch, 1, sum_batch_multiplier_->mutable_data(), 0);
 
-  sum_spatial_multiplier_.reshape(1, 1, in_h, in_w);
-  Blas::Set(spatial_dim_, 1, sum_spatial_multiplier_.mutable_data(), 0);
+  sum_spatial_multiplier_ = op_ws_->CreateBlob<float>(
+      {1, 1, in_h, in_w}, op_name_ + "_sum_spatial_multiplier");
+  Blas::Set(spatial_dim_, 1, sum_spatial_multiplier_->mutable_data(), 0);
 
   DLOG(INFO) << op_name_ << "(" << op_type_ << "): " << bottom->name()
              << Util::format_vector(bottom->shape(), ",", "(", ")") << " -> "
@@ -74,55 +77,51 @@ void BatchNormOp::Forward() {
   if (use_global_stats_) {
     blobs<float>(2)->read_data(&scale_, 1);
     float scale_factor = scale_ == 0 ? 0 : 1 / scale_;
-    Blas::Scale(mean_.count(), scale_factor, blobs<float>(0)->data(), 0,
-                mean_.mutable_data(), 0);
-    Blas::Scale(variance_.count(), scale_factor, blobs<float>(1)->data(), 0,
-                variance_.mutable_data(), 0);
+    Blas::Scale(mean_->count(), scale_factor, blobs<float>(0)->data(), 0,
+                mean_->mutable_data(), 0);
+    Blas::Scale(variance_->count(), scale_factor, blobs<float>(1)->data(), 0,
+                variance_->mutable_data(), 0);
   }
 
   if (!use_global_stats_) {
     Blas::BlasSgemv(0, batch * channels_, spatial_dim_,
                     1.f / (batch * spatial_dim_), bottom->data(), 0,
-                    sum_spatial_multiplier_.data(), 0, 0,
-                    batch_by_channel_.mutable_data(), 0);
-    Blas::BlasSgemv(1, batch, channels_, 1, batch_by_channel_.data(), 0,
-                    sum_batch_multiplier_.data(), 0, 0, mean_.mutable_data(),
+                    sum_spatial_multiplier_->data(), 0, 0,
+                    batch_by_channel_->mutable_data(), 0);
+    Blas::BlasSgemv(1, batch, channels_, 1, batch_by_channel_->data(), 0,
+                    sum_batch_multiplier_->data(), 0, 0, mean_->mutable_data(),
                     0);
   }
-  Blas::BlasSgemm(0, 0, batch, channels_, 1, 1, sum_batch_multiplier_.data(), 0,
-                  mean_.data(), 0, 0, batch_by_channel_.mutable_data(), 0);
+  Blas::BlasSgemm(0, 0, batch, channels_, 1, 1, sum_batch_multiplier_->data(),
+                  0, mean_->data(), 0, 0, batch_by_channel_->mutable_data(), 0);
   Blas::BlasSgemm(0, 0, batch * channels_, spatial_dim_, 1, -1,
-                  batch_by_channel_.data(), 0, sum_spatial_multiplier_.data(),
+                  batch_by_channel_->data(), 0, sum_spatial_multiplier_->data(),
                   0, 1, top->mutable_data(), 0);
 
   if (!use_global_stats_) {
-    Blas::Pow(top->count(), top->data(), 0, 2, temp_.mutable_data(), 0);
+    Blas::Pow(top->count(), top->data(), 0, 2, temp_->mutable_data(), 0);
     Blas::BlasSgemv(0, batch * channels_, spatial_dim_,
-                    1.f / (batch * spatial_dim_), temp_.data(), 0,
-                    sum_spatial_multiplier_.data(), 0, 0,
-                    batch_by_channel_.mutable_data(), 0);
-    Blas::BlasSgemv(1, batch, channels_, 1, batch_by_channel_.data(), 0,
-                    sum_batch_multiplier_.data(), 0, 0,
-                    variance_.mutable_data(), 0);
+                    1.f / (batch * spatial_dim_), temp_->data(), 0,
+                    sum_spatial_multiplier_->data(), 0, 0,
+                    batch_by_channel_->mutable_data(), 0);
+    Blas::BlasSgemv(1, batch, channels_, 1, batch_by_channel_->data(), 0,
+                    sum_batch_multiplier_->data(), 0, 0,
+                    variance_->mutable_data(), 0);
   }
-  Blas::Add(variance_.count(), EPS, variance_.mutable_data(), 0);
-  Blas::Pow(variance_.count(), variance_.data(), 0, 0.5,
-            variance_.mutable_data(), 0);
-  Blas::BlasSgemm(0, 0, batch, channels_, 1, 1, sum_batch_multiplier_.data(), 0,
-                  variance_.data(), 0, 0, batch_by_channel_.mutable_data(), 0);
+  Blas::Add(variance_->count(), EPS, variance_->mutable_data(), 0);
+  Blas::Pow(variance_->count(), variance_->data(), 0, 0.5,
+            variance_->mutable_data(), 0);
+  Blas::BlasSgemm(0, 0, batch, channels_, 1, 1, sum_batch_multiplier_->data(),
+                  0, variance_->data(), 0, 0, batch_by_channel_->mutable_data(),
+                  0);
   Blas::BlasSgemm(0, 0, batch * channels_, spatial_dim_, 1, 1,
-                  batch_by_channel_.data(), 0, sum_spatial_multiplier_.data(),
-                  0, 0, temp_.mutable_data(), 0);
-  Blas::Div(top->count(), top->data(), 0, temp_.data(), 0, top->mutable_data(),
+                  batch_by_channel_->data(), 0, sum_spatial_multiplier_->data(),
+                  0, 0, temp_->mutable_data(), 0);
+  Blas::Div(top->count(), top->data(), 0, temp_->data(), 0, top->mutable_data(),
             0);
 }
 
 void BatchNormOp::Release() {
-  mean_.clear(), variance_.clear(), temp_.clear();
-  sum_batch_multiplier_.clear();
-  sum_spatial_multiplier_.clear();
-  batch_by_channel_.clear();
-
   // DLOG(INFO) << "Free BatchNormOp!";
 }
 

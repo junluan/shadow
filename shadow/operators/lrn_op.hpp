@@ -20,7 +20,7 @@ class LRNOp : public Operator {
   int size_, norm_region_;
   float alpha_, beta_, k_;
 
-  BlobF scale_;
+  BlobF *scale_ = nullptr;
 };
 
 }  // namespace Shadow

@@ -76,6 +76,8 @@ class Workspace {
     return std::string();
   }
 
+  int GetWorkspaceSize() const;
+
  private:
   void ClearBlob(const std::string &blob_type, void *blob);
 

@@ -26,8 +26,9 @@ void ConnectedOp::Reshape() {
   top->reshape(top_shape);
 
   if (bias_term_) {
-    biases_multiplier_.reshape(batch);
-    Blas::Set(batch, 1, biases_multiplier_.mutable_data(), 0);
+    biases_multiplier_ =
+        op_ws_->CreateBlob<float>({batch}, op_name_ + "_biases_multiplier");
+    Blas::Set(batch, 1, biases_multiplier_->mutable_data(), 0);
   }
 
   DLOG(INFO) << op_name_ << "(" << op_type_ << "): " << bottom->name()
@@ -52,15 +53,14 @@ void ConnectedOp::Forward() {
                     bottom->data(), 0, blobs<float>(0)->data(), 0, 0,
                     top->mutable_data(), 0);
     if (bias_term_) {
-      Blas::BlasSgemm(0, 0, batch, num_output_, 1, 1, biases_multiplier_.data(),
-                      0, blobs<float>(1)->data(), 0, 1, top->mutable_data(), 0);
+      Blas::BlasSgemm(0, 0, batch, num_output_, 1, 1,
+                      biases_multiplier_->data(), 0, blobs<float>(1)->data(), 0,
+                      1, top->mutable_data(), 0);
     }
   }
 }
 
 void ConnectedOp::Release() {
-  biases_multiplier_.clear();
-
   // DLOG(INFO) << "Free ConnectedOp!";
 }
 

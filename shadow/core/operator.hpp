@@ -136,13 +136,13 @@ class Operator {
 
  protected:
   std::string op_name_, op_type_;
+  Workspace *op_ws_ = nullptr;
 
  private:
   bool check_index(int i, int size) const { return i >= 0 && i < size; }
 
   shadow::OpParam op_param_;
   ArgumentHelper arg_helper_;
-  Workspace *op_ws_ = nullptr;
 
   VecString bottom_names_, top_names_, blob_names_;
 
