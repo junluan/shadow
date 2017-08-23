@@ -161,7 +161,7 @@ class Blob {
     capacity_ = count;
 #if !defined(USE_CUDA) & !defined(USE_CL)
     if (!shared) {
-      data_ = new Dtype[count];
+      data_ = new Dtype[count]();
     }
     shared_ = shared;
 
