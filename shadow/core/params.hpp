@@ -59,16 +59,16 @@ namespace shadow {
     }                                                         \
   }
 
+#define DEFAULT_CONSTRUCTOR_FUNC(NAME)     \
+  NAME() = default;                        \
+  NAME(const NAME &from) { *this = from; } \
+  ~NAME() { Clear(); }
+
 #define EQUAL_OPERATOR_FUNC(NAME)     \
   NAME &operator=(const NAME &from) { \
     CopyFrom(from);                   \
     return *this;                     \
   }
-
-#define DEFAULT_CONSTRUCTOR_FUNC(NAME)     \
-  NAME() = default;                        \
-  NAME(const NAME &from) { *this = from; } \
-  ~NAME() { Clear(); }
 
 #define DEFAULT_CONSTRUCTOR_WITH_EQUAL_OPERATOR_FUNC(NAME) \
   DEFAULT_CONSTRUCTOR_FUNC(NAME)                           \
@@ -87,6 +87,8 @@ class Blob {
     data_f_ = from.data_f_;
     data_i_ = from.data_i_;
     data_b_ = from.data_b_;
+    has_name_ = from.has_name_;
+    has_type_ = from.has_type_;
   }
 
   OPTIONAL_FIELD_DEFAULT_FUNC(name, std::string, "");
@@ -106,12 +108,12 @@ class Blob {
   }
 
  private:
-  std::string name_, type_;
+  std::string name_{"None"}, type_{"None"};
   std::vector<int> shape_;
   std::vector<float> data_f_;
   std::vector<int> data_i_;
   std::vector<std::vector<char>> data_b_;
-  bool has_name_ = false, has_type_ = false;
+  bool has_name_{false}, has_type_{false};
 };
 
 class Argument {
@@ -153,14 +155,14 @@ class Argument {
   }
 
  private:
-  std::string name_;
+  std::string name_{"None"};
   float s_f_;
   int s_i_;
-  std::string s_s_;
+  std::string s_s_{"None"};
   std::vector<float> v_f_;
   std::vector<int> v_i_;
   std::vector<std::string> v_s_;
-  bool has_name_ = false, has_s_f_ = false, has_s_i_ = false, has_s_s_ = false;
+  bool has_name_{false}, has_s_f_{false}, has_s_i_{false}, has_s_s_{false};
 };
 
 class OpParam {
@@ -198,11 +200,11 @@ class OpParam {
   }
 
  private:
-  std::string name_, type_;
+  std::string name_{"None"}, type_{"None"};
   std::vector<std::string> bottom_, top_;
   std::vector<Blob> blobs_;
   std::vector<Argument> arg_;
-  bool has_name_ = false, has_type_ = false;
+  bool has_name_{false}, has_type_{false};
 };
 
 class NetParam {
@@ -226,9 +228,9 @@ class NetParam {
   }
 
  private:
-  std::string name_;
+  std::string name_{"None"};
   std::vector<OpParam> op_;
-  bool has_name_ = false;
+  bool has_name_{false};
 };
 
 }  // namespace shadow

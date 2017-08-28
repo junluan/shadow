@@ -29,6 +29,7 @@ class JImage {
   void Show(const std::string &show_name, int wait_time = 0) const;
   void CopyTo(JImage *im_copy) const;
 
+  void FromRGBA(const unsigned char *data, int h, int w, Order order = kRGB);
 #if defined(USE_OpenCV)
   void FromMat(const cv::Mat &im_mat, bool shared = false);
   cv::Mat ToMat() const;

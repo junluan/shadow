@@ -48,7 +48,7 @@ void JImage::Write(const std::string &im_path) const {
     GetInv(data_inv.data());
     is_ok = stbi_write_png(path.c_str(), w_, h_, c_, data_inv.data(), step);
   } else {
-    LOG(FATAL) << "Unsupported format to disk!";
+    LOG(FATAL) << "Unsupported format " << order_ << " to disk!";
   }
   CHECK(is_ok) << "Failed to write image to " + path;
 
@@ -74,10 +74,47 @@ void JImage::Show(const std::string &show_name, int wait_time) const {
 }
 
 void JImage::CopyTo(JImage *im_copy) const {
+  CHECK_NOTNULL(im_copy);
   CHECK_NOTNULL(data_);
 
   im_copy->Reshape(c_, h_, w_, order_);
-  memcpy(im_copy->data_, data_, c_ * h_ * w_ * sizeof(unsigned char));
+  im_copy->SetData(data_, count());
+}
+
+void JImage::FromRGBA(const unsigned char *data, int h, int w, Order order) {
+  CHECK_NOTNULL(data);
+
+  int loc_r = 0, loc_g = 1, loc_b = 2;
+  if (order == kGray) {
+    loc_r = loc_g = loc_b = 0;
+  } else if (order == kRGB) {
+    loc_r = 0, loc_g = 1, loc_b = 2;
+  } else if (order == kBGR) {
+    loc_r = 2, loc_g = 1, loc_b = 0;
+  } else {
+    LOG(FATAL) << "Unsupported format " << order;
+  }
+
+  int spatial_dim = h * w;
+  if (order == kGray) {
+    Reshape(1, h, w, order);
+    unsigned char *data_index = data_;
+    for (int i = 0; i < spatial_dim; ++i, data_index += c_, data += 4) {
+      auto val = static_cast<int>(0.299f * data[0] + 0.587f * data[1] +
+                                  0.114f * data[2]);
+      *data_index = (unsigned char)Util::constrain(0, 255, val);
+    }
+  } else if (order == kRGB || order == kBGR) {
+    Reshape(3, h, w, order);
+    unsigned char *data_index = data_;
+    for (int i = 0; i < spatial_dim; ++i, data_index += c_, data += 4) {
+      data_index[loc_r] = data[0];
+      data_index[loc_g] = data[1];
+      data_index[loc_b] = data[2];
+    }
+  } else {
+    LOG(FATAL) << "Unsupported format " << order_;
+  }
 }
 
 #if defined(USE_OpenCV)
@@ -103,7 +140,7 @@ cv::Mat JImage::ToMat() const {
   } else if (order_ == kBGR) {
     return cv::Mat(h_, w_, CV_8UC3, data_);
   } else {
-    LOG(FATAL) << "Unsupported format to convert to cv mat!";
+    LOG(FATAL) << "Unsupported format " << order_ << " to convert to cv mat!";
   }
   return cv::Mat();
 }
@@ -128,7 +165,7 @@ void JImage::GetInv(unsigned char *im_inv) const {
       *(im_inv++) = *data_index;
     }
   } else {
-    LOG(FATAL) << "Unsupported format to get inverse!";
+    LOG(FATAL) << "Unsupported format " << order_ << " to get inverse!";
   }
 }
 

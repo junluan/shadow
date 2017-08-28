@@ -50,7 +50,7 @@ void WriteDefines(const shadow::NetParam& shadow_net, const std::string& root,
   std::string proto_str, json_str;
   IO::WriteProtoToText(net, &proto_str);
 #if defined(SUPPORT_JSON)
-  IO::WriteProtoToJsonText(net, &json_str);
+  IO::WriteProtoToJsonText(net, &json_str, true);
 #endif
 
   size_t split_count = 10000;
