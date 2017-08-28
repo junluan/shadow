@@ -4,6 +4,19 @@ set(OpenBLAS_ROOT_DIR ${PROJECT_SOURCE_DIR}/third_party/openblas CACHE PATH "Fol
 
 set(OpenBLAS_DIR ${OpenBLAS_ROOT_DIR} /usr /usr/local)
 
+set(OpenBLAS_PLATFORM)
+set(OpenBLAS_ARC)
+if (MSVC)
+  set(OpenBLAS_PLATFORM windows)
+  set(OpenBLAS_ARC x86_64)
+elseif (ANDROID)
+  set(OpenBLAS_PLATFORM android)
+  set(OpenBLAS_ARC ${ANDROID_ABI})
+else ()
+  set(OpenBLAS_PLATFORM linux)
+  set(OpenBLAS_ARC x86_64)
+endif ()
+
 find_path(OpenBLAS_INCLUDE_DIRS
           NAMES cblas.h
           PATHS ${OpenBLAS_DIR}
@@ -19,7 +32,7 @@ endif ()
 find_library(OpenBLAS_LIBRARIES
              NAMES openblas libopenblas
              PATHS ${OpenBLAS_DIR}
-             PATH_SUFFIXES lib lib64 lib/x86_64 lib/x64 lib/x86
+             PATH_SUFFIXES lib lib/${OpenBLAS_PLATFORM}/${OpenBLAS_ARC} lib64 lib/x86_64 lib/x64 lib/x86
              DOC "OpenBLAS library"
              NO_DEFAULT_PATH)
 

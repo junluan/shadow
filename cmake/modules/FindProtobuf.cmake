@@ -4,10 +4,23 @@ set(Protobuf_ROOT_DIR ${PROJECT_SOURCE_DIR}/third_party/protobuf CACHE PATH "Fol
 
 set(Protobuf_DIR ${Protobuf_ROOT_DIR} /usr /usr/local)
 
+set(Protobuf_PLATFORM)
+set(Protobuf_ARC)
+if (MSVC)
+  set(Protobuf_PLATFORM windows)
+  set(Protobuf_ARC x86_64)
+elseif (ANDROID)
+  set(Protobuf_PLATFORM android)
+  set(Protobuf_ARC ${ANDROID_ABI})
+else ()
+  set(Protobuf_PLATFORM linux)
+  set(Protobuf_ARC x86_64)
+endif ()
+
 find_program(Protoc_EXECUTABLE
              NAMES protoc
              PATHS ${Protobuf_DIR}
-             PATH_SUFFIXES bin
+             PATH_SUFFIXES bin bin/${Protobuf_PLATFORM}/${Protobuf_ARC}
              DOC "Protobuf protoc"
              NO_DEFAULT_PATH)
 
@@ -22,7 +35,7 @@ if (NOT MSVC)
   find_library(Protobuf_LIBRARIES
                NAMES protobuf libprotobuf
                PATHS ${Protobuf_DIR}
-               PATH_SUFFIXES lib lib64 lib/x86_64 lib/x86_64-linux-gnu lib/x64 lib/x86
+               PATH_SUFFIXES lib lib/${Protobuf_PLATFORM}/${Protobuf_ARC} lib64 lib/x86_64 lib/x86_64-linux-gnu lib/x64 lib/x86
                DOC "Protobuf library"
                NO_DEFAULT_PATH)
 else ()
@@ -37,13 +50,13 @@ else ()
   find_library(Protobuf_LIBRARIES_RELEASE
                NAMES libprotobuf
                PATHS ${Protobuf_DIR}
-               PATH_SUFFIXES lib/x64/${Protobuf_RUNTIME}
+               PATH_SUFFIXES lib/${Protobuf_PLATFORM}/${Protobuf_ARC}/${Protobuf_RUNTIME}
                DOC "Protobuf library"
                NO_DEFAULT_PATH)
   find_library(Protobuf_LIBRARIES_DEBUG
                NAMES libprotobufd
                PATHS ${Protobuf_DIR}
-               PATH_SUFFIXES lib/x64/${Protobuf_RUNTIME}
+               PATH_SUFFIXES lib/${Protobuf_PLATFORM}/${Protobuf_ARC}/${Protobuf_RUNTIME}
                DOC "Protobuf library"
                NO_DEFAULT_PATH)
 

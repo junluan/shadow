@@ -6,10 +6,23 @@ set(gRPC_ROOT_DIR ${PROJECT_SOURCE_DIR}/third_party/grpc CACHE PATH "Folder cont
 
 set(gRPC_DIR ${gRPC_ROOT_DIR} /usr /usr/local)
 
+set(gRPC_PLATFORM)
+set(gRPC_ARC)
+if (MSVC)
+  set(gRPC_PLATFORM windows)
+  set(gRPC_ARC x86_64)
+elseif (ANDROID)
+  set(gRPC_PLATFORM android)
+  set(gRPC_ARC ${ANDROID_ABI})
+else ()
+  set(gRPC_PLATFORM linux)
+  set(gRPC_ARC x86_64)
+endif ()
+
 find_program(gRPC_CPP_PLUGIN
              NAMES grpc_cpp_plugin
              PATHS ${gRPC_DIR}
-             PATH_SUFFIXES bin
+             PATH_SUFFIXES bin bin/${gRPC_PLATFORM}/${gRPC_ARC}
              DOC "gRPC cpp plugin"
              NO_DEFAULT_PATH)
 
@@ -32,7 +45,7 @@ if (NOT MSVC)
     find_library(${__grpc_lib_upper}_LIBRARY
                  NAMES ${__grpc_lib}
                  PATHS ${gRPC_DIR}
-                 PATH_SUFFIXES lib lib64 lib/x86_64 lib/x64 lib/x86
+                 PATH_SUFFIXES lib lib/${gRPC_PLATFORM}/${gRPC_ARC} lib64 lib/x86_64 lib/x64 lib/x86
                  DOC "The path to gRPC ${__grpc_lib} library"
                  NO_DEFAULT_PATH)
     mark_as_advanced(${__grpc_lib_upper}_LIBRARY)
@@ -55,14 +68,14 @@ else ()
     find_library(${__grpc_lib_upper}_LIBRARY_RELEASE
                  NAMES ${__grpc_lib_win}
                  PATHS ${gRPC_DIR}
-                 PATH_SUFFIXES lib/x64/${gRPC_RUNTIME}
+                 PATH_SUFFIXES lib/${gRPC_PLATFORM}/${gRPC_ARC}/${gRPC_RUNTIME}
                  DOC "The path to gRPC ${__grpc_lib_win} library"
                  NO_DEFAULT_PATH)
     set(__grpc_lib_win "${__grpc_lib}d.lib")
     find_library(${__grpc_lib_upper}_LIBRARY_DEBUG
                  NAMES ${__grpc_lib_win}
                  PATHS ${gRPC_DIR}
-                 PATH_SUFFIXES lib/x64/${gRPC_RUNTIME}
+                 PATH_SUFFIXES lib/${gRPC_PLATFORM}/${gRPC_ARC}/${gRPC_RUNTIME}
                  DOC "The path to gRPC ${__grpc_lib_win} library"
                  NO_DEFAULT_PATH)
     mark_as_advanced(${__grpc_lib_upper}_LIBRARY_RELEASE ${__grpc_lib_upper}_LIBRARY_DEBUG)

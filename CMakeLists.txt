@@ -25,6 +25,8 @@ set(BLAS "OpenBLAS" CACHE STRING "Selected BLAS library in CPU mode")
 set_property(CACHE BLAS PROPERTY STRINGS OpenBLAS MKL)
 set(OpenCV_DIR "/usr/local/opencv-3.2.0" CACHE PATH "OpenCV root directory")
 
+set(CMAKE_FIND_ROOT_PATH ${PROJECT_SOURCE_DIR})
+set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY BOTH)
 set(CMAKE_INSTALL_PREFIX ${CMAKE_BINARY_DIR}/distribute)
 set(CMAKE_INSTALL_RPATH ${CMAKE_INSTALL_PREFIX}/lib)
 
@@ -34,7 +36,7 @@ if (NOT CMAKE_BUILD_TYPE)
 endif ()
 
 if (NOT MSVC)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -fPIC")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -O2 -fPIC")
 else ()
   set(CMAKE_CONFIGURATION_TYPES "Release;Debug")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP /wd4005 /wd4018 /wd4244 /wd4267 /wd4291 /wd4305 /wd4309 /wd4800 /wd4819 /wd4996")
