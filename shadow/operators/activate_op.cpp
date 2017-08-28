@@ -6,6 +6,8 @@ namespace Shadow {
 
 void ActivateOp::Setup() {
   activate_type_ = get_single_argument<int>("type", 1);
+  CHECK_GE(activate_type_, 0);
+  CHECK_LE(activate_type_, 3);
 
   if (activate_type_ == 3) {
     channel_shared_ = get_single_argument<bool>("channel_shared", false);
@@ -50,11 +52,12 @@ void ActivateOp::Forward() {
   if (bottom != top) {
     Blas::BlasScopy(bottom->count(), bottom->data(), 0, top->mutable_data(), 0);
   }
-  if (activate_type_ == 3) {
+  // Linear: 0, Relu: 1, Leaky: 2, PRelu: 3
+  if (activate_type_ == 1 || activate_type_ == 2) {
+    Image::Activate(top->mutable_data(), top->count(), activate_type_);
+  } else if (activate_type_ == 3) {
     Image::PRelu(top->mutable_data(), top->shape(), channel_shared_,
                  blobs<float>(0)->data());
-  } else {
-    Image::Activate(top->mutable_data(), top->count(), activate_type_);
   }
 }
 

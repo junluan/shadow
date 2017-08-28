@@ -4,12 +4,6 @@
 
 namespace Shadow {
 
-inline int conv_out_size(int dim, int kernel_size, int stride, int pad,
-                         int dilation) {
-  int kernel_extent = dilation * (kernel_size - 1) + 1;
-  return (dim + 2 * pad - kernel_extent) / stride + 1;
-}
-
 void ConvOp::Setup() {
   num_output_ = get_single_argument<int>("num_output", 0);
   CHECK(has_argument("kernel_size"));
@@ -21,6 +15,9 @@ void ConvOp::Setup() {
   CHECK_EQ(bottoms<float>(0)->shape(1) % group_, 0);
   CHECK_EQ(num_output_ % group_, 0);
   bias_term_ = get_single_argument<bool>("bias_term", true);
+  activate_type_ = get_single_argument<int>("type", -1);
+  CHECK((activate_type_ == -1 || activate_type_ == 1))
+      << "Build in activate only support Relu";
 
   if (bias_term_) {
     CHECK_EQ(blobs_size(), 2);
@@ -115,6 +112,8 @@ void ConvOp::Reshape() {
   if (use_nnpack_) {
     nnp_algorithm_ = nnp_convolution_algorithm_auto;
     nnp_transform_ = nnp_convolution_transform_strategy_compute;
+    nnp_activation_ =
+        activate_type_ == 1 ? nnp_activation_relu : nnp_activation_identity;
     nnp_input_size_.height = static_cast<size_t>(in_h);
     nnp_input_size_.width = static_cast<size_t>(in_w);
     nnp_pad_.top = nnp_pad_.bottom = nnp_pad_.left = nnp_pad_.right =
@@ -152,6 +151,9 @@ void ConvOp::Forward() {
           blobs<float>(1)->data(), cudnn::dataType<float>::one, top_desc_,
           top->mutable_data()));
     }
+    if (activate_type_ == 1) {
+      Image::Activate(top->mutable_data(), top->count(), activate_type_);
+    }
     return;
   }
 #endif
@@ -163,7 +165,7 @@ void ConvOp::Forward() {
         nnp_algorithm_, nnp_transform_, in_c, out_c, nnp_input_size_, nnp_pad_,
         nnp_kernel_size_, nnp_stride_, bottom->data(), blobs<float>(0)->data(),
         blobs<float>(1)->data(), top->mutable_data(), nullptr, nullptr,
-        nnp_activation_identity, nullptr, Kernel::nnp_pthreadpool_, nullptr);
+        nnp_activation_, nullptr, Kernel::nnp_pthreadpool_, nullptr);
     CHECK_EQ(nnp_status_success, status);
     return;
   }
@@ -184,6 +186,9 @@ void ConvOp::Forward() {
                       blobs<float>(1)->data(), 0, biases_multiplier_->data(), 0,
                       1, top->mutable_data(), b * top_num);
     }
+  }
+  if (activate_type_ == 1) {
+    Image::Activate(top->mutable_data(), top->count(), activate_type_);
   }
 }
 

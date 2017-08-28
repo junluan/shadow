@@ -27,6 +27,12 @@ class PoolingOp : public Operator {
 #endif
 };
 
+inline int pooling_out_size(int dim, int kernel_size, int stride, int pad) {
+  return static_cast<int>(std::ceil(
+             static_cast<float>(dim + 2 * pad - kernel_size) / stride)) +
+         1;
+}
+
 }  // namespace Shadow
 
 #endif  // SHADOW_OPERATORS_POOLING_OP_HPP

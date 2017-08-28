@@ -18,7 +18,7 @@ class ConvOp : public Operator {
 
  protected:
   int num_output_, kernel_size_, stride_, pad_, dilation_, group_,
-      out_spatial_dim_, kernel_dim_;
+      activate_type_, out_spatial_dim_, kernel_dim_;
   int weight_offset_, col_offset_, output_offset_;
   bool bias_term_, use_cudnn_ = false, use_nnpack_ = false;
 
@@ -41,10 +41,17 @@ class ConvOp : public Operator {
   nnp_convolution_algorithm nnp_algorithm_ = nnp_convolution_algorithm_auto;
   nnp_convolution_transform_strategy nnp_transform_ =
       nnp_convolution_transform_strategy_compute;
+  nnp_activation nnp_activation_ = nnp_activation_identity;
   nnp_size nnp_input_size_, nnp_kernel_size_, nnp_stride_;
   nnp_padding nnp_pad_;
 #endif
 };
+
+inline int conv_out_size(int dim, int kernel_size, int stride, int pad,
+                         int dilation) {
+  int kernel_extent = dilation * (kernel_size - 1) + 1;
+  return (dim + 2 * pad - kernel_extent) / stride + 1;
+}
 
 }  // namespace Shadow
 

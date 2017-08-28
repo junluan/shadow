@@ -3,12 +3,6 @@
 
 namespace Shadow {
 
-inline int pooling_out_size(int dim, int kernel_size, int stride, int pad) {
-  return static_cast<int>(std::ceil(
-             static_cast<float>(dim + 2 * pad - kernel_size) / stride)) +
-         1;
-}
-
 void PoolingOp::Setup() {
   pool_type_ = get_single_argument<int>("pool", 0);
   global_pooling_ = get_single_argument<bool>("global_pooling", false);
