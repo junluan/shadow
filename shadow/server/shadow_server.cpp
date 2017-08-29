@@ -41,7 +41,7 @@ class ShadowServer final : public ::shadow::ShadowService::Service {
                        const ::shadow::ShadowRequest *request,
                        ::shadow::ShadowReply *reply) override {
     const auto &request_name = request->server_name();
-    if (request_name == method_name_) {
+    if (request_name != method_name_) {
       std::stringstream ss;
       ss << "Current server method name: " << method_name_
          << ", request method name: " << request_name;

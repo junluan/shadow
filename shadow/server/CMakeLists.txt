@@ -17,4 +17,6 @@ if (${BUILD_SERVICE} AND Protobuf_FOUND AND gRPC_FOUND)
 
   set(shadow_server_src ${shadow_server_src} PARENT_SCOPE)
   set(shadow_client_src ${shadow_client_src} PARENT_SCOPE)
+
+  set(Shadow_GRPC_PROTO_LIB grpc_proto PARENT_SCOPE)
 endif ()

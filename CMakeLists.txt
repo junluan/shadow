@@ -11,7 +11,6 @@ option(USE_BLAS "Use BLAS library in CPU mode" OFF)
 option(USE_NNPACK "Use NNPACK library in CPU mode" ON)
 
 option(USE_Protobuf "Use Protobuf" ON)
-option(USE_GLog "Use GLog" OFF)
 option(USE_OpenCV "Use OpenCV to read, write and show image" ON)
 
 option(BUILD_EXAMPLES "Build examples" ON)

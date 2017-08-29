@@ -17,13 +17,12 @@ def build(args):
     use_blas = 'openblas' in args.features
     use_nnpack = 'nnpack' in args.features
     use_protobuf = 'protobuf' in args.features
-    use_glog = 'glog' in args.features
     use_opencv = 'opencv' in args.features
-    build_shared_libs = 'shared' in args.features
     build_examples = 'examples' in args.features
     build_tools = 'tools' in args.features
     build_service = 'service' in args.features
     build_test = 'test' in args.features
+    build_shared_libs = 'shared' in args.features
 
     cmake_options = {}
     if use_cuda:
@@ -40,13 +39,12 @@ def build(args):
         cmake_options['USE_BLAS'] = use_blas
         cmake_options['USE_NNPACK'] = use_nnpack
     cmake_options['USE_Protobuf'] = use_protobuf
-    cmake_options['USE_GLog'] = use_glog
     cmake_options['USE_OpenCV'] = use_opencv
-    cmake_options['BUILD_SHARED_LIBS'] = build_shared_libs
     cmake_options['BUILD_EXAMPLES'] = build_examples
     cmake_options['BUILD_TOOLS'] = build_tools
     cmake_options['BUILD_SERVICE'] = build_service
     cmake_options['BUILD_TEST'] = build_test
+    cmake_options['BUILD_SHARED_LIBS'] = build_shared_libs
 
     shadow_root = os.path.dirname(os.path.abspath(__file__)) + '/../..'
     build_root = shadow_root + '/build/' + args.subdir

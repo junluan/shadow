@@ -1,6 +1,6 @@
 include(FindPackageHandleStandardArgs)
 
-set(gRPC_USE_STATIC_LIBS OFF)
+set(gRPC_USE_STATIC_LIBS ON)
 
 set(gRPC_ROOT_DIR ${PROJECT_SOURCE_DIR}/third_party/grpc CACHE PATH "Folder contains gRPC")
 
@@ -37,6 +37,9 @@ set(__looked_for gRPC_CPP_PLUGIN gRPC_INCLUDE_DIRS)
 
 if (NOT MSVC)
   set(__grpc_libs grpc++_unsecure)
+  if (gRPC_USE_STATIC_LIBS)
+    list(APPEND __grpc_libs grpc)
+  endif ()
   foreach (__grpc_lib ${__grpc_libs})
     string(TOUPPER ${__grpc_lib} __grpc_lib_upper)
     if (gRPC_USE_STATIC_LIBS)
