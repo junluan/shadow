@@ -11,9 +11,9 @@ void NormalizeOp::Setup() {
     add_blobs<float>(op_name_ + "_param_scale");
     auto *scale_blob = mutable_blobs<float>(0);
     if (channel_shared_) {
-      scale_blob->reshape(1);
+      scale_blob->reshape({1, 1});
     } else {
-      scale_blob->reshape(bottoms<float>(0)->shape(1));
+      scale_blob->reshape({1, bottoms<float>(0)->shape(1)});
     }
     Blas::Set(scale_blob->count(), 1, scale_blob->mutable_data(), 0);
     DLOG(WARNING) << "Scale param is initialized with the default values 1";

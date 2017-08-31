@@ -18,9 +18,9 @@ void BatchNormOp::Setup() {
     auto *blob_mean = mutable_blobs<float>(0);
     auto *blob_variance = mutable_blobs<float>(1);
     auto *blob_scale = mutable_blobs<float>(2);
-    blob_mean->reshape(1, channels_);
-    blob_variance->reshape(1, channels_);
-    blob_scale->reshape(1);
+    blob_mean->reshape({1, channels_});
+    blob_variance->reshape({1, channels_});
+    blob_scale->reshape({1, 1});
     Blas::Set(blob_mean->count(), 0, blob_mean->mutable_data(), 0);
     Blas::Set(blob_variance->count(), 1, blob_variance->mutable_data(), 0);
     Blas::Set(blob_scale->count(), 1, blob_scale->mutable_data(), 0);

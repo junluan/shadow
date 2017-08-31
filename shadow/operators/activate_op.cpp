@@ -17,9 +17,9 @@ void ActivateOp::Setup() {
       add_blobs<float>(op_name_ + "_param");
       auto *param_blob = mutable_blobs<float>(0);
       if (channel_shared_) {
-        param_blob->reshape(1);
+        param_blob->reshape({1, 1});
       } else {
-        param_blob->reshape(channels);
+        param_blob->reshape({1, channels});
       }
       Blas::Set(param_blob->count(), 0.25, param_blob->mutable_data(), 0);
     }
