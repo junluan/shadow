@@ -1,11 +1,26 @@
 #include "parser.hpp"
 #include "util/log.hpp"
 
+#include <functional>
+
 namespace Shadow {
 
 namespace Parser {
 
 #if !defined(USE_Protobuf)
+using ParseFunc = std::function<const shadow::OpParam(const JValue &)>;
+
+static const std::map<std::string, ParseFunc> parse_func_map{
+    {"Activate", ParseActivate},   {"BatchNorm", ParseBatchNorm},
+    {"Bias", ParseBias},           {"Concat", ParseConcat},
+    {"Connected", ParseConnected}, {"Conv", ParseConv},
+    {"Data", ParseData},           {"Eltwise", ParseEltwise},
+    {"Flatten", ParseFlatten},     {"LRN", ParseLRN},
+    {"Normalize", ParseNormalize}, {"Permute", ParsePermute},
+    {"Pooling", ParsePooling},     {"PriorBox", ParsePriorBox},
+    {"Reorg", ParseReorg},         {"Reshape", ParseReshape},
+    {"Scale", ParseScale},         {"Softmax", ParseSoftmax}};
+
 void ParseNet(const std::string &proto_text, shadow::NetParam *net) {
   const auto &document = Json::GetDocument(proto_text);
 
@@ -18,46 +33,17 @@ void ParseNet(const std::string &proto_text, shadow::NetParam *net) {
     const auto &json_op = json_ops[i];
     const auto &op_name = Json::GetString(json_op, "name", "");
     const auto &op_type = Json::GetString(json_op, "type", "");
-    if (op_type == "Activate") {
-      net->add_op(ParseActivate(json_op));
-    } else if (op_type == "BatchNorm") {
-      net->add_op(ParseBatchNorm(json_op));
-    } else if (op_type == "Bias") {
-      net->add_op(ParseBias(json_op));
-    } else if (op_type == "Concat") {
-      net->add_op(ParseConcat(json_op));
-    } else if (op_type == "Connected") {
-      net->add_op(ParseConnected(json_op));
-    } else if (op_type == "Conv") {
-      net->add_op(ParseConv(json_op));
-    } else if (op_type == "Data") {
-      net->add_op(ParseData(json_op));
-    } else if (op_type == "Eltwise") {
-      net->add_op(ParseEltwise(json_op));
-    } else if (op_type == "Flatten") {
-      net->add_op(ParseFlatten(json_op));
-    } else if (op_type == "LRN") {
-      net->add_op(ParseLRN(json_op));
-    } else if (op_type == "Normalize") {
-      net->add_op(ParseNormalize(json_op));
-    } else if (op_type == "Permute") {
-      net->add_op(ParsePermute(json_op));
-    } else if (op_type == "Pooling") {
-      net->add_op(ParsePooling(json_op));
-    } else if (op_type == "PriorBox") {
-      net->add_op(ParsePriorBox(json_op));
-    } else if (op_type == "Reorg") {
-      net->add_op(ParseReorg(json_op));
-    } else if (op_type == "Reshape") {
-      net->add_op(ParseReshape(json_op));
-    } else if (op_type == "Scale") {
-      net->add_op(ParseScale(json_op));
-    } else if (op_type == "Softmax") {
-      net->add_op(ParseSoftmax(json_op));
-    } else {
-      LOG(FATAL) << "Error when parsing op: " << op_name
-                 << ", op type: " << op_type << " is not recognized!";
+
+    bool find_parser = false;
+    for (const auto &it : parse_func_map) {
+      if (op_type.find(it.first) != std::string::npos) {
+        net->add_op(it.second(json_op));
+        find_parser = true;
+        break;
+      }
     }
+    CHECK(find_parser) << "Error when parsing op: " << op_name
+                       << ", op type: " << op_type << " is not recognized!";
   }
 }
 
