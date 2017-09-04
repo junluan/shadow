@@ -10,11 +10,12 @@ class Network {
  public:
   void Setup(int device_id = 0);
 
-  void LoadModel(const std::string &proto_bin, int batch = 0);
+  void LoadModel(const std::string &proto_bin, const VecInt &in_shape = {});
   void LoadModel(const std::string &proto_str,
-                 const std::vector<const void *> &weights, int batch = 0);
+                 const std::vector<const void *> &weights,
+                 const VecInt &in_shape = {});
   void LoadModel(const std::string &proto_str, const float *weights_data,
-                 int batch = 0);
+                 const VecInt &in_shape = {});
 
   void Forward(const float *data = nullptr);
   void Release();
@@ -47,7 +48,7 @@ class Network {
   void LoadProtoStrOrText(const std::string &proto_str_or_text,
                           shadow::NetParam *net_param);
 
-  void Reshape(int batch);
+  void Reshape(const VecInt &in_shape);
 
   void CopyWeights(const std::vector<const void *> &weights);
   void CopyWeights(const float *weights_data);

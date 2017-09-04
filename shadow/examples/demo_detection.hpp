@@ -8,7 +8,7 @@ namespace Shadow {
 
 class DemoDetection {
  public:
-  DemoDetection(const std::string &method_name = "ssd") {
+  explicit DemoDetection(const std::string &method_name = "ssd") {
     if (method_name == "ssd") {
       method_ = new DetectionSSD();
     } else if (method_name == "yolo") {
@@ -20,8 +20,8 @@ class DemoDetection {
   ~DemoDetection() { Release(); }
 
   void Setup(const std::string &model_file, const VecInt &classes,
-             int batch = 1) {
-    method_->Setup(model_file, classes, batch);
+             const VecInt &in_shape) {
+    method_->Setup(model_file, classes, in_shape);
   }
   void Release() {
     if (method_ != nullptr) {

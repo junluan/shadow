@@ -11,7 +11,7 @@ class Classification final : public Method {
   ~Classification() override { Release(); }
 
   void Setup(const std::string &model_file, const VecInt &classes,
-             int batch) override;
+             const VecInt &in_shape) override;
 
   void Predict(const JImage &im_src, const VecRectF &rois,
                std::vector<std::map<std::string, VecFloat>> *scores) override;

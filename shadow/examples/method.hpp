@@ -14,7 +14,7 @@ class Method {
   virtual ~Method() = default;
 
   virtual void Setup(const std::string &model_file, const VecInt &classes,
-                     int batch) {
+                     const VecInt &in_shape) {
     LOG(INFO) << "Setup method!";
   }
 

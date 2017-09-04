@@ -37,29 +37,29 @@ class JImage {
 
   void Release();
 
-  inline const unsigned char *data() const { return data_; }
-  inline unsigned char *data() { return data_; }
+  const unsigned char *data() const { return data_; }
+  unsigned char *data() { return data_; }
 
-  inline void SetData(const unsigned char *data, int num) {
+  void SetData(const unsigned char *data, int num) {
     CHECK_NOTNULL(data);
     CHECK_NOTNULL(data_);
     CHECK_EQ(num, count()) << "Set data dimension mismatch!";
     memcpy(data_, data, num * sizeof(unsigned char));
   }
 
-  inline void SetZero() {
+  void SetZero() {
     CHECK_NOTNULL(data_);
     memset(data_, 0, count() * sizeof(unsigned char));
   }
 
-  inline void ShareData(unsigned char *data) {
+  void ShareData(unsigned char *data) {
     CHECK_NOTNULL(data);
     Release();
     data_ = data;
     shared_ = true;
   }
 
-  inline void Reshape(int c, int h, int w, Order order, bool shared = false) {
+  void Reshape(int c, int h, int w, Order order, bool shared = false) {
     int num = c * h * w;
     CHECK_GT(num, 0) << "Reshape dimension must be greater than zero!";
     if (!shared) {
@@ -75,10 +75,10 @@ class JImage {
     c_ = c, h_ = h, w_ = w, order_ = order;
   }
 
-  inline const Order &order() const { return order_; }
-  inline Order &order() { return order_; }
+  const Order &order() const { return order_; }
+  Order &order() { return order_; }
 
-  inline int count() const { return c_ * h_ * w_; }
+  int count() const { return c_ * h_ * w_; }
 
   const unsigned char operator()(int c, int h, int w) const {
     if (c >= c_ || h >= h_ || w >= w_) LOG(FATAL) << "Index out of range!";
@@ -89,13 +89,13 @@ class JImage {
     return data_[(c * h_ + h) * w_ + w];
   }
 
-  int c_, h_, w_;
+  int c_ = 0, h_ = 0, w_ = 0;
 
  private:
-  inline void GetInv(unsigned char *im_inv) const;
+  void GetInv(unsigned char *im_inv) const;
 
   unsigned char *data_ = nullptr;
-  Order order_;
+  Order order_ = kRGB;
   bool shared_ = false;
 };
 

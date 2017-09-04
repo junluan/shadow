@@ -7,7 +7,8 @@ namespace Shadow {
 
 class DemoClassification {
  public:
-  DemoClassification(const std::string &method_name = "classification") {
+  explicit DemoClassification(
+      const std::string &method_name = "classification") {
     if (method_name == "classification") {
       method_ = new Classification();
     } else {
@@ -17,8 +18,8 @@ class DemoClassification {
   ~DemoClassification() { Release(); }
 
   void Setup(const std::string &model_file, const VecInt &classes,
-             int batch = 1) {
-    method_->Setup(model_file, classes, batch);
+             const VecInt &in_shape) {
+    method_->Setup(model_file, classes, in_shape);
   }
   void Release() {
     if (method_ != nullptr) {

@@ -11,7 +11,7 @@ class DetectionYOLO final : public Method {
   ~DetectionYOLO() override { Release(); }
 
   void Setup(const std::string &model_file, const VecInt &classes,
-             int batch) override;
+             const VecInt &in_shape) override;
 
   void Predict(const JImage &im_src, const VecRectF &rois,
                std::vector<VecBoxF> *Bboxes) override;
