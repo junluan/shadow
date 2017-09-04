@@ -16,6 +16,8 @@
 #include <CL/cl.h>
 #endif
 
+namespace Shadow {
+
 namespace EasyCL {
 
 enum BufferAccess { kReadOnly, kWriteOnly, kReadWrite, kNotOwned };
@@ -733,5 +735,7 @@ inline EasyCL::Device *CreateForFirstGPUOtherwiseCPU() {
 }
 
 }  // namespace EasyCL
+
+}  // namespace Shadow
 
 #endif  // SHADOW_UTIL_EASYCL_HPP

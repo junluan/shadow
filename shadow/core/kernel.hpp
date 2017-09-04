@@ -15,9 +15,6 @@
 
 #elif defined(USE_CL)
 #include "util/easycl.hpp"
-using BufferI = EasyCL::Buffer<int>;
-using BufferF = EasyCL::Buffer<float>;
-using BufferUC = EasyCL::Buffer<unsigned char>;
 #endif
 
 namespace Shadow {
@@ -39,6 +36,12 @@ inline int GetBlocks(const int N) { return (N + NumThreads - 1) / NumThreads; }
     cudaError_t error = condition;                                    \
     CHECK_EQ(error, cudaSuccess) << " " << cudaGetErrorString(error); \
   } while (0)
+#endif
+
+#if defined(USE_CL)
+using BufferI = EasyCL::Buffer<int>;
+using BufferF = EasyCL::Buffer<float>;
+using BufferUC = EasyCL::Buffer<unsigned char>;
 #endif
 
 namespace Kernel {
