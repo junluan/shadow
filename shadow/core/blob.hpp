@@ -143,7 +143,7 @@ class Blob {
   void clear() {
     if (data_ != nullptr && !shared_) {
 #if !defined(USE_CUDA) & !defined(USE_CL)
-      delete[] data_;
+      fast_free(data_);
 
 #else
       Kernel::ReleaseBuffer(data_);
@@ -152,6 +152,7 @@ class Blob {
     data_ = nullptr;
     cpu_data_.clear();
     shape_.clear();
+    cstep_ = 0;
     capacity_ = 0;
     shared_ = false;
   }
@@ -161,7 +162,7 @@ class Blob {
     capacity_ = count;
 #if !defined(USE_CUDA) & !defined(USE_CL)
     if (!shared) {
-      data_ = new Dtype[count]();
+      data_ = static_cast<Dtype *>(fast_malloc(count * sizeof(Dtype)));
     }
     shared_ = shared;
 
@@ -185,7 +186,7 @@ class Blob {
   std::string name_;
   Device device_ = kCPU;
   VecInt shape_{};
-  int capacity_ = 0;
+  int cstep_ = 0, capacity_ = 0;
   bool shared_ = false;
 
   DISABLE_COPY_AND_ASSIGN(Blob<Dtype>);

@@ -28,8 +28,10 @@ void Network::LoadModel(const std::string &proto_str, const float *weights_data,
 void Network::Forward(const float *data) {
   CHECK_NOTNULL(data);
   if (ops_.empty()) return;
-  CHECK(ops_[0]->type() == "Data") << "The first Op must be Data operator!";
-  auto in_blob = ops_[0]->mutable_bottoms<float>(0);
+  auto *data_op = ops_[0];
+  CHECK(data_op->type().find("Data") != std::string::npos)
+      << "The first Op must be Data operator!";
+  auto *in_blob = data_op->mutable_bottoms<float>(0);
   in_blob->set_data(data, in_blob->count());
   for (auto &op : ops_) {
     op->Forward();
@@ -78,7 +80,8 @@ void Network::LoadProtoStrOrText(const std::string &proto_str_or_text,
 void Network::Reshape(const VecInt &in_shape) {
   CHECK_GT(net_param_.op_size(), 0);
   const auto &data_op = net_param_.op(0);
-  CHECK(data_op.type() == "Data");
+  CHECK(data_op.type().find("Data") != std::string::npos)
+      << "The first Op must be Data operator!";
   ArgumentHelper arg_helper(data_op);
   in_shape_ = arg_helper.GetRepeatedArgument<int>("data_shape", VecInt{});
   CHECK_EQ(in_shape_.size(), 4) << "data_shape dimension must be four!";
