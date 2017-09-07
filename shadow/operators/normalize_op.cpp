@@ -66,7 +66,7 @@ void NormalizeOp::Forward() {
   int num = bottom->num();
   for (int b = 0; b < batch; ++b) {
     int data_offset = b * num;
-    Blas::Sqr(num, bottom->data(), data_offset, buffer_->mutable_data(), 0);
+    Blas::Square(num, bottom->data(), data_offset, buffer_->mutable_data(), 0);
     if (across_spatial_) {
       float sum = 0;
       Blas::BlasSasum(num, buffer_->data(), 0, &sum);

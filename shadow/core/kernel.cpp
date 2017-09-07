@@ -56,41 +56,27 @@ void Setup(int device_id) {
       EasyCL::Program(*context_, Util::read_text_from_file(cl_blas));
   program_blas.Build(*device_, compiler_options);
 
-  cl_kernels_.set_kernel(program_blas, "ChannelMax");
-  cl_kernels_.set_kernel(program_blas, "ChannelSub");
-  cl_kernels_.set_kernel(program_blas, "ChannelSum");
-  cl_kernels_.set_kernel(program_blas, "ChannelDiv");
-  cl_kernels_.set_kernel(program_blas, "Set");
-  cl_kernels_.set_kernel(program_blas, "AddScalar");
-  cl_kernels_.set_kernel(program_blas, "Add");
-  cl_kernels_.set_kernel(program_blas, "Sub");
-  cl_kernels_.set_kernel(program_blas, "Mul");
-  cl_kernels_.set_kernel(program_blas, "Div");
-  cl_kernels_.set_kernel(program_blas, "Max");
-  cl_kernels_.set_kernel(program_blas, "Min");
-  cl_kernels_.set_kernel(program_blas, "Sqr");
-  cl_kernels_.set_kernel(program_blas, "Exp");
-  cl_kernels_.set_kernel(program_blas, "Log");
-  cl_kernels_.set_kernel(program_blas, "Abs");
-  cl_kernels_.set_kernel(program_blas, "Pow");
+  const std::vector<std::string> cl_blas_kernels{
+      "ChannelMax", "ChannelSub", "ChannelSum", "ChannelDiv", "Set",
+      "AddScalar",  "Add",        "Sub",        "Mul",        "Div",
+      "Max",        "Min",        "Abs",        "Square",     "Sqrt",
+      "Log",        "Exp",        "Sin",        "Cos",        "Tan",
+      "Asin",       "Acos",       "Atan",       "Pow",        "Floor",
+      "Ceil"};
+
+  cl_kernels_.set_kernel(program_blas, cl_blas_kernels);
 
   const std::string cl_image("shadow/core/image.cl");
   auto program_image =
       EasyCL::Program(*context_, Util::read_text_from_file(cl_image));
   program_image.Build(*device_, compiler_options);
 
-  cl_kernels_.set_kernel(program_image, "DataTransform");
-  cl_kernels_.set_kernel(program_image, "Im2Col");
-  cl_kernels_.set_kernel(program_image, "Pooling");
-  cl_kernels_.set_kernel(program_image, "Concat");
-  cl_kernels_.set_kernel(program_image, "Permute");
-  cl_kernels_.set_kernel(program_image, "Scale");
-  cl_kernels_.set_kernel(program_image, "Bias");
-  cl_kernels_.set_kernel(program_image, "Reorg");
-  cl_kernels_.set_kernel(program_image, "LRN");
-  cl_kernels_.set_kernel(program_image, "LRNFillScale");
-  cl_kernels_.set_kernel(program_image, "Activate");
-  cl_kernels_.set_kernel(program_image, "PRelu");
+  const std::vector<std::string> cl_image_kernels{
+      "DataTransform", "Im2Col",       "Pooling",  "Concat",
+      "Permute",       "Scale",        "Bias",     "Reorg",
+      "LRN",           "LRNFillScale", "Activate", "PRelu"};
+
+  cl_kernels_.set_kernel(program_image, cl_image_kernels);
 
   clblasSetup();
 }

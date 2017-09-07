@@ -149,14 +149,22 @@ BLAS_BINARY_FUNC(Add, y[i] = a[i] + b[i]);
 BLAS_BINARY_FUNC(Sub, y[i] = a[i] - b[i]);
 BLAS_BINARY_FUNC(Mul, y[i] = a[i] * b[i]);
 BLAS_BINARY_FUNC(Div, y[i] = a[i] / b[i]);
-
 BLAS_BINARY_FUNC(Max, y[i] = fmaxf(a[i], b[i]));
 BLAS_BINARY_FUNC(Min, y[i] = fminf(a[i], b[i]));
 
-BLAS_UNARY_FUNC(Sqr, y[i] = a[i] * a[i]);
-BLAS_UNARY_FUNC(Exp, y[i] = expf(a[i]));
-BLAS_UNARY_FUNC(Log, y[i] = logf(a[i]));
 BLAS_UNARY_FUNC(Abs, y[i] = fabsf(a[i]));
+BLAS_UNARY_FUNC(Square, y[i] = a[i] * a[i]);
+BLAS_UNARY_FUNC(Sqrt, y[i] = sqrtf(a[i]));
+BLAS_UNARY_FUNC(Log, y[i] = logf(a[i]));
+BLAS_UNARY_FUNC(Exp, y[i] = expf(a[i]));
+BLAS_UNARY_FUNC(Sin, y[i] = sinf(a[i]));
+BLAS_UNARY_FUNC(Cos, y[i] = cosf(a[i]));
+BLAS_UNARY_FUNC(Tan, y[i] = tanf(a[i]));
+BLAS_UNARY_FUNC(Asin, y[i] = asinf(a[i]));
+BLAS_UNARY_FUNC(Acos, y[i] = acosf(a[i]));
+BLAS_UNARY_FUNC(Atan, y[i] = atanf(a[i]));
+BLAS_UNARY_FUNC(Floor, y[i] = floorf(a[i]));
+BLAS_UNARY_FUNC(Ceil, y[i] = ceilf(a[i]));
 
 template <typename T>
 __global__ void KernelPow(int n, const T *a, int offa, float alpha, T *y,

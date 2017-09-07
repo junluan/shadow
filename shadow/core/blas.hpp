@@ -32,20 +32,37 @@ template <typename T>
 void Mul(int n, const T *a, int offa, const T *b, int offb, T *y, int offy);
 template <typename T>
 void Div(int n, const T *a, int offa, const T *b, int offb, T *y, int offy);
-
 template <typename T>
 void Max(int n, const T *a, int offa, const T *b, int offb, T *y, int offy);
 template <typename T>
 void Min(int n, const T *a, int offa, const T *b, int offb, T *y, int offy);
 
 template <typename T>
-void Sqr(int n, const T *a, int offa, T *y, int offy);
+void Abs(int n, const T *a, int offa, T *y, int offy);
 template <typename T>
-void Exp(int n, const T *a, int offa, T *y, int offy);
+void Square(int n, const T *a, int offa, T *y, int offy);
+template <typename T>
+void Sqrt(int n, const T *a, int offa, T *y, int offy);
 template <typename T>
 void Log(int n, const T *a, int offa, T *y, int offy);
 template <typename T>
-void Abs(int n, const T *a, int offa, T *y, int offy);
+void Exp(int n, const T *a, int offa, T *y, int offy);
+template <typename T>
+void Sin(int n, const T *a, int offa, T *y, int offy);
+template <typename T>
+void Cos(int n, const T *a, int offa, T *y, int offy);
+template <typename T>
+void Tan(int n, const T *a, int offa, T *y, int offy);
+template <typename T>
+void Asin(int n, const T *a, int offa, T *y, int offy);
+template <typename T>
+void Acos(int n, const T *a, int offa, T *y, int offy);
+template <typename T>
+void Atan(int n, const T *a, int offa, T *y, int offy);
+template <typename T>
+void Floor(int n, const T *a, int offa, T *y, int offy);
+template <typename T>
+void Ceil(int n, const T *a, int offa, T *y, int offy);
 
 template <typename T>
 void Pow(int n, const T *a, int offa, float alpha, T *y, int offy);

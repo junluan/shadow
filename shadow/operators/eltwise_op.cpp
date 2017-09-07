@@ -46,7 +46,7 @@ void EltwiseOp::Forward() {
 
   // Prod: 0, Sum: 1, Max: 2
   switch (operation_) {
-    case 0:
+    case kProd:
       Blas::Mul(count, bottoms<float>(0)->data(), 0, bottoms<float>(1)->data(),
                 0, top->mutable_data(), 0);
       for (int i = 2; i < bottoms_size(); ++i) {
@@ -54,14 +54,14 @@ void EltwiseOp::Forward() {
                   top->mutable_data(), 0);
       }
       break;
-    case 1:
+    case kSum:
       Blas::Set(count, 0, top->mutable_data(), 0);
       for (int i = 0; i < bottoms_size(); ++i) {
         Blas::BlasSaxpy(count, coeff_[i], bottoms<float>(i)->data(), 0,
                         top->mutable_data(), 0);
       }
       break;
-    case 2:
+    case kMax:
       Blas::Max(count, bottoms<float>(0)->data(), 0, bottoms<float>(1)->data(),
                 0, top->mutable_data(), 0);
       for (int i = 2; i < bottoms_size(); ++i) {

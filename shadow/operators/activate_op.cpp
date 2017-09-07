@@ -52,10 +52,11 @@ void ActivateOp::Forward() {
   if (bottom != top) {
     Blas::BlasScopy(bottom->count(), bottom->data(), 0, top->mutable_data(), 0);
   }
+
   // Linear: 0, Relu: 1, Leaky: 2, PRelu: 3
-  if (activate_type_ == 1 || activate_type_ == 2) {
+  if (activate_type_ == kRelu || activate_type_ == kLeaky) {
     Image::Activate(top->mutable_data(), top->count(), activate_type_);
-  } else if (activate_type_ == 3) {
+  } else if (activate_type_ == kPRelu) {
     Image::PRelu(top->mutable_data(), top->shape(), channel_shared_,
                  blobs<float>(0)->data());
   }

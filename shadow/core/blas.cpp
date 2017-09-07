@@ -119,14 +119,22 @@ BLAS_BINARY_FUNC_EIGEN(Add, y_eigen = a_eigen.array() + b_eigen.array());
 BLAS_BINARY_FUNC_EIGEN(Sub, y_eigen = a_eigen.array() - b_eigen.array());
 BLAS_BINARY_FUNC_EIGEN(Mul, y_eigen = a_eigen.array() * b_eigen.array());
 BLAS_BINARY_FUNC_EIGEN(Div, y_eigen = a_eigen.array() / b_eigen.array());
-
 BLAS_BINARY_FUNC_EIGEN(Max, y_eigen = a_eigen.cwiseMax(b_eigen));
 BLAS_BINARY_FUNC_EIGEN(Min, y_eigen = a_eigen.cwiseMin(b_eigen));
 
-BLAS_UNARY_FUNC_EIGEN(Sqr, y_eigen = a_eigen.array() * a_eigen.array());
-BLAS_UNARY_FUNC_EIGEN(Exp, y_eigen = a_eigen.array().exp());
-BLAS_UNARY_FUNC_EIGEN(Log, y_eigen = a_eigen.array().log());
 BLAS_UNARY_FUNC_EIGEN(Abs, y_eigen = a_eigen.array().abs());
+BLAS_UNARY_FUNC_EIGEN(Square, y_eigen = a_eigen.array().square());
+BLAS_UNARY_FUNC_EIGEN(Sqrt, y_eigen = a_eigen.array().sqrt());
+BLAS_UNARY_FUNC_EIGEN(Log, y_eigen = a_eigen.array().log());
+BLAS_UNARY_FUNC_EIGEN(Exp, y_eigen = a_eigen.array().exp());
+BLAS_UNARY_FUNC_EIGEN(Sin, y_eigen = a_eigen.array().sin());
+BLAS_UNARY_FUNC_EIGEN(Cos, y_eigen = a_eigen.array().cos());
+BLAS_UNARY_FUNC_EIGEN(Tan, y_eigen = a_eigen.array().tan());
+BLAS_UNARY_FUNC_EIGEN(Asin, y_eigen = a_eigen.array().asin());
+BLAS_UNARY_FUNC_EIGEN(Acos, y_eigen = a_eigen.array().acos());
+BLAS_UNARY_FUNC_EIGEN(Atan, y_eigen = a_eigen.array().atan());
+BLAS_UNARY_FUNC_EIGEN(Floor, y_eigen = a_eigen.array().floor());
+BLAS_UNARY_FUNC_EIGEN(Ceil, y_eigen = a_eigen.array().ceil());
 
 #else
 #define BLAS_BINARY_FUNC(name, operation)                             \
@@ -155,14 +163,22 @@ BLAS_BINARY_FUNC(Add, y[i] = a[i] + b[i]);
 BLAS_BINARY_FUNC(Sub, y[i] = a[i] - b[i]);
 BLAS_BINARY_FUNC(Mul, y[i] = a[i] * b[i]);
 BLAS_BINARY_FUNC(Div, y[i] = a[i] / b[i]);
-
 BLAS_BINARY_FUNC(Max, y[i] = std::max(a[i], b[i]));
 BLAS_BINARY_FUNC(Min, y[i] = std::min(a[i], b[i]));
 
-BLAS_UNARY_FUNC(Sqr, y[i] = a[i] * a[i]);
-BLAS_UNARY_FUNC(Exp, y[i] = std::exp(a[i]));
-BLAS_UNARY_FUNC(Log, y[i] = std::log(a[i]));
 BLAS_UNARY_FUNC(Abs, y[i] = std::abs(a[i]));
+BLAS_UNARY_FUNC(Square, y[i] = a[i] * a[i]);
+BLAS_UNARY_FUNC(Sqrt, y[i] = std::sqrt(a[i]));
+BLAS_UNARY_FUNC(Log, y[i] = std::log(a[i]));
+BLAS_UNARY_FUNC(Exp, y[i] = std::exp(a[i]));
+BLAS_UNARY_FUNC(Sin, y[i] = std::sin(a[i]));
+BLAS_UNARY_FUNC(Cos, y[i] = std::cos(a[i]));
+BLAS_UNARY_FUNC(Tan, y[i] = std::tan(a[i]));
+BLAS_UNARY_FUNC(Asin, y[i] = std::asin(a[i]));
+BLAS_UNARY_FUNC(Acos, y[i] = std::acos(a[i]));
+BLAS_UNARY_FUNC(Atan, y[i] = std::atan(a[i]));
+BLAS_UNARY_FUNC(Floor, y[i] = std::floor(a[i]));
+BLAS_UNARY_FUNC(Ceil, y[i] = std::ceil(a[i]));
 #endif
 
 template <typename T>
@@ -521,14 +537,22 @@ BLAS_BINARY_FUNC(Add, "Add");
 BLAS_BINARY_FUNC(Sub, "Sub");
 BLAS_BINARY_FUNC(Mul, "Mul");
 BLAS_BINARY_FUNC(Div, "Div");
-
 BLAS_BINARY_FUNC(Max, "Max");
 BLAS_BINARY_FUNC(Min, "Min");
 
-BLAS_UNARY_FUNC(Sqr, "Sqr");
-BLAS_UNARY_FUNC(Exp, "Exp");
-BLAS_UNARY_FUNC(Log, "Log");
 BLAS_UNARY_FUNC(Abs, "Abs");
+BLAS_UNARY_FUNC(Square, "Square");
+BLAS_UNARY_FUNC(Sqrt, "Sqrt");
+BLAS_UNARY_FUNC(Log, "Log");
+BLAS_UNARY_FUNC(Exp, "Exp");
+BLAS_UNARY_FUNC(Sin, "Sin");
+BLAS_UNARY_FUNC(Cos, "Cos");
+BLAS_UNARY_FUNC(Tan, "Tan");
+BLAS_UNARY_FUNC(Asin, "Asin");
+BLAS_UNARY_FUNC(Acos, "Acos");
+BLAS_UNARY_FUNC(Atan, "Atan");
+BLAS_UNARY_FUNC(Floor, "Floor");
+BLAS_UNARY_FUNC(Ceil, "Ceil");
 
 template <typename T>
 void Pow(int n, const T *a, int offa, float alpha, T *y, int offy) {

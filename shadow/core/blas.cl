@@ -78,14 +78,22 @@ BLAS_BINARY_FUNC(Add, y[i] = a[i] + b[i]);
 BLAS_BINARY_FUNC(Sub, y[i] = a[i] - b[i]);
 BLAS_BINARY_FUNC(Mul, y[i] = a[i] * b[i]);
 BLAS_BINARY_FUNC(Div, y[i] = a[i] / b[i]);
-
 BLAS_BINARY_FUNC(Max, y[i] = fmax(a[i], b[i]));
 BLAS_BINARY_FUNC(Min, y[i] = fmin(a[i], b[i]));
 
-BLAS_UNARY_FUNC(Sqr, y[i] = a[i] * a[i]);
-BLAS_UNARY_FUNC(Exp, y[i] = exp(a[i]));
-BLAS_UNARY_FUNC(Log, y[i] = log(a[i]));
 BLAS_UNARY_FUNC(Abs, y[i] = fabs(a[i]));
+BLAS_UNARY_FUNC(Square, y[i] = a[i] * a[i]);
+BLAS_UNARY_FUNC(Sqrt, y[i] = sqrt(a[i]));
+BLAS_UNARY_FUNC(Log, y[i] = log(a[i]));
+BLAS_UNARY_FUNC(Exp, y[i] = exp(a[i]));
+BLAS_UNARY_FUNC(Sin, y[i] = sin(a[i]));
+BLAS_UNARY_FUNC(Cos, y[i] = cos(a[i]));
+BLAS_UNARY_FUNC(Tan, y[i] = tan(a[i]));
+BLAS_UNARY_FUNC(Asin, y[i] = asin(a[i]));
+BLAS_UNARY_FUNC(Acos, y[i] = acos(a[i]));
+BLAS_UNARY_FUNC(Atan, y[i] = atan(a[i]));
+BLAS_UNARY_FUNC(Floor, y[i] = floor(a[i]));
+BLAS_UNARY_FUNC(Ceil, y[i] = ceil(a[i]));
 
 __kernel void Pow(int n, __global float *a, int offa, float alpha,
                   __global float *y, int offy) {

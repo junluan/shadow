@@ -17,6 +17,8 @@ class EltwiseOp : public Operator {
   void Release() override;
 
  private:
+  enum { kProd = 0, kSum = 1, kMax = 2 };
+
   int operation_, coeff_size_;
   VecFloat coeff_;
 };

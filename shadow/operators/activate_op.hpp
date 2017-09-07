@@ -17,6 +17,8 @@ class ActivateOp : public Operator {
   void Release() override;
 
  private:
+  enum { kLinear = 0, kRelu = 1, kLeaky = 2, kPRelu = 3 };
+
   int activate_type_;
   bool channel_shared_;
 };
