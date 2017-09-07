@@ -22,9 +22,6 @@ template <typename T>
 void Set(int n, float val, T *y, int offy);
 
 template <typename T>
-void Add(int n, float val, T *y, int offy);
-
-template <typename T>
 void Add(int n, const T *a, int offa, const T *b, int offb, T *y, int offy);
 template <typename T>
 void Sub(int n, const T *a, int offa, const T *b, int offb, T *y, int offy);
@@ -33,9 +30,26 @@ void Mul(int n, const T *a, int offa, const T *b, int offb, T *y, int offy);
 template <typename T>
 void Div(int n, const T *a, int offa, const T *b, int offb, T *y, int offy);
 template <typename T>
+void Pow(int n, const T *a, int offa, const T *b, int offb, T *y, int offy);
+template <typename T>
 void Max(int n, const T *a, int offa, const T *b, int offb, T *y, int offy);
 template <typename T>
 void Min(int n, const T *a, int offa, const T *b, int offb, T *y, int offy);
+
+template <typename T>
+void Add(int n, const T *a, int offa, float alpha, T *y, int offy);
+template <typename T>
+void Sub(int n, const T *a, int offa, float alpha, T *y, int offy);
+template <typename T>
+void Mul(int n, const T *a, int offa, float alpha, T *y, int offy);
+template <typename T>
+void Div(int n, const T *a, int offa, float alpha, T *y, int offy);
+template <typename T>
+void Pow(int n, const T *a, int offa, float alpha, T *y, int offy);
+template <typename T>
+void Max(int n, const T *a, int offa, float alpha, T *y, int offy);
+template <typename T>
+void Min(int n, const T *a, int offa, float alpha, T *y, int offy);
 
 template <typename T>
 void Abs(int n, const T *a, int offa, T *y, int offy);
@@ -63,12 +77,6 @@ template <typename T>
 void Floor(int n, const T *a, int offa, T *y, int offy);
 template <typename T>
 void Ceil(int n, const T *a, int offa, T *y, int offy);
-
-template <typename T>
-void Pow(int n, const T *a, int offa, float alpha, T *y, int offy);
-
-template <typename T>
-void Scale(int n, float alpha, const T *x, int offx, T *y, int offy);
 
 // Level 1
 template <typename T>

@@ -52,18 +52,20 @@ __kernel void Set(int n, float val, __global float *y, int offy) {
   y[offy + globalid] = val;
 }
 
-__kernel void AddScalar(int n, float val, __global float *y, int offy) {
-  CL_KERNEL_LOOP(globalid, n);
-
-  y[offy + globalid] += val;
-}
-
 #define BLAS_BINARY_FUNC(name, operation)                                   \
   __kernel void name(int n, __global float *a, int offa, __global float *b, \
                      int offb, __global float *y, int offy) {               \
     CL_KERNEL_LOOP(i, n);                                                   \
     a += offa, b += offb, y += offy;                                        \
     operation;                                                              \
+  }
+
+#define BLAS_BINARY_SCALAR_FUNC(name, operation)                      \
+  __kernel void name(int n, __global float *a, int offa, float alpha, \
+                     __global float *y, int offy) {                   \
+    CL_KERNEL_LOOP(i, n);                                             \
+    a += offa, y += offy;                                             \
+    operation;                                                        \
   }
 
 #define BLAS_UNARY_FUNC(name, operation)                                    \
@@ -78,8 +80,17 @@ BLAS_BINARY_FUNC(Add, y[i] = a[i] + b[i]);
 BLAS_BINARY_FUNC(Sub, y[i] = a[i] - b[i]);
 BLAS_BINARY_FUNC(Mul, y[i] = a[i] * b[i]);
 BLAS_BINARY_FUNC(Div, y[i] = a[i] / b[i]);
+BLAS_BINARY_FUNC(Pow, y[i] = pow(a[i], b[i]));
 BLAS_BINARY_FUNC(Max, y[i] = fmax(a[i], b[i]));
 BLAS_BINARY_FUNC(Min, y[i] = fmin(a[i], b[i]));
+
+BLAS_BINARY_SCALAR_FUNC(AddScalar, y[i] = a[i] + alpha);
+BLAS_BINARY_SCALAR_FUNC(SubScalar, y[i] = a[i] - alpha);
+BLAS_BINARY_SCALAR_FUNC(MulScalar, y[i] = a[i] * alpha);
+BLAS_BINARY_SCALAR_FUNC(DivScalar, y[i] = a[i] / alpha);
+BLAS_BINARY_SCALAR_FUNC(PowScalar, y[i] = pow(a[i], alpha));
+BLAS_BINARY_SCALAR_FUNC(MaxScalar, y[i] = fmax(a[i], alpha));
+BLAS_BINARY_SCALAR_FUNC(MinScalar, y[i] = fmin(a[i], alpha));
 
 BLAS_UNARY_FUNC(Abs, y[i] = fabs(a[i]));
 BLAS_UNARY_FUNC(Square, y[i] = a[i] * a[i]);
@@ -94,10 +105,3 @@ BLAS_UNARY_FUNC(Acos, y[i] = acos(a[i]));
 BLAS_UNARY_FUNC(Atan, y[i] = atan(a[i]));
 BLAS_UNARY_FUNC(Floor, y[i] = floor(a[i]));
 BLAS_UNARY_FUNC(Ceil, y[i] = ceil(a[i]));
-
-__kernel void Pow(int n, __global float *a, int offa, float alpha,
-                  __global float *y, int offy) {
-  CL_KERNEL_LOOP(globalid, n);
-
-  y[offy + globalid] = pow(a[offa + globalid], alpha);
-}

@@ -58,11 +58,12 @@ void Setup(int device_id) {
 
   const std::vector<std::string> cl_blas_kernels{
       "ChannelMax", "ChannelSub", "ChannelSum", "ChannelDiv", "Set",
-      "AddScalar",  "Add",        "Sub",        "Mul",        "Div",
-      "Max",        "Min",        "Abs",        "Square",     "Sqrt",
-      "Log",        "Exp",        "Sin",        "Cos",        "Tan",
-      "Asin",       "Acos",       "Atan",       "Pow",        "Floor",
-      "Ceil"};
+      "Add",        "Sub",        "Mul",        "Div",        "Pow",
+      "Max",        "Min",        "AddScalar",  "SubScalar",  "MulScalar",
+      "DivScalar",  "PowScalar",  "MaxScalar",  "MinScalar",  "Abs",
+      "Square",     "Sqrt",       "Log",        "Exp",        "Sin",
+      "Cos",        "Tan",        "Asin",       "Acos",       "Atan",
+      "Floor",      "Ceil"};
 
   cl_kernels_.set_kernel(program_blas, cl_blas_kernels);
 

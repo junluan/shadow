@@ -81,18 +81,6 @@ void Set(int n, float val, T *y, int offy) {
 #endif
 }
 
-template <typename T>
-void Add(int n, float val, T *y, int offy) {
-#if defined(USE_Eigen)
-  auto y_eigen = MapVector<T>(y + offy, n);
-  y_eigen = y_eigen.array() + static_cast<T>(val);
-#else
-  for (int i = 0; i < n; ++i) {
-    y[offy + i] += static_cast<T>(val);
-  }
-#endif
-}
-
 #if defined(USE_Eigen)
 #define BLAS_BINARY_FUNC_EIGEN(name, operation)                       \
   template <typename T>                                               \
@@ -105,6 +93,16 @@ void Add(int n, float val, T *y, int offy) {
   }                                                                   \
   template void name(int n, const float *a, int offa, const float *b, \
                      int offb, float *y, int offy);
+
+#define BLAS_BINARY_SCALAR_FUNC_EIGEN(name, operation)                       \
+  template <typename T>                                                      \
+  void name(int n, const T *a, int offa, float alpha, T *y, int offy) {      \
+    const auto &a_eigen = MapVector<T>(const_cast<T *>(a + offa), n);        \
+    auto y_eigen = MapVector<T>(y + offy, n);                                \
+    operation;                                                               \
+  }                                                                          \
+  template void name(int n, const float *a, int offa, float alpha, float *y, \
+                     int offy);
 
 #define BLAS_UNARY_FUNC_EIGEN(name, operation)                        \
   template <typename T>                                               \
@@ -119,8 +117,17 @@ BLAS_BINARY_FUNC_EIGEN(Add, y_eigen = a_eigen.array() + b_eigen.array());
 BLAS_BINARY_FUNC_EIGEN(Sub, y_eigen = a_eigen.array() - b_eigen.array());
 BLAS_BINARY_FUNC_EIGEN(Mul, y_eigen = a_eigen.array() * b_eigen.array());
 BLAS_BINARY_FUNC_EIGEN(Div, y_eigen = a_eigen.array() / b_eigen.array());
+BLAS_BINARY_FUNC_EIGEN(Pow, y_eigen = a_eigen.array().pow(b_eigen.array()));
 BLAS_BINARY_FUNC_EIGEN(Max, y_eigen = a_eigen.cwiseMax(b_eigen));
 BLAS_BINARY_FUNC_EIGEN(Min, y_eigen = a_eigen.cwiseMin(b_eigen));
+
+BLAS_BINARY_SCALAR_FUNC_EIGEN(Add, y_eigen = a_eigen.array() + alpha);
+BLAS_BINARY_SCALAR_FUNC_EIGEN(Sub, y_eigen = a_eigen.array() - alpha);
+BLAS_BINARY_SCALAR_FUNC_EIGEN(Mul, y_eigen = a_eigen.array() * alpha);
+BLAS_BINARY_SCALAR_FUNC_EIGEN(Div, y_eigen = a_eigen.array() / alpha);
+BLAS_BINARY_SCALAR_FUNC_EIGEN(Pow, y_eigen = a_eigen.array().pow(alpha));
+BLAS_BINARY_SCALAR_FUNC_EIGEN(Max, y_eigen = a_eigen.cwiseMax(alpha));
+BLAS_BINARY_SCALAR_FUNC_EIGEN(Min, y_eigen = a_eigen.cwiseMin(alpha));
 
 BLAS_UNARY_FUNC_EIGEN(Abs, y_eigen = a_eigen.array().abs());
 BLAS_UNARY_FUNC_EIGEN(Square, y_eigen = a_eigen.array().square());
@@ -149,6 +156,17 @@ BLAS_UNARY_FUNC_EIGEN(Ceil, y_eigen = a_eigen.array().ceil());
   template void name(int n, const float *a, int offa, const float *b, \
                      int offb, float *y, int offy);
 
+#define BLAS_BINARY_SCALAR_FUNC(name, operation)                             \
+  template <typename T>                                                      \
+  void name(int n, const T *a, int offa, float alpha, T *y, int offy) {      \
+    a += offa, y += offy;                                                    \
+    for (int i = 0; i < n; ++i) {                                            \
+      operation;                                                             \
+    }                                                                        \
+  }                                                                          \
+  template void name(int n, const float *a, int offa, float alpha, float *y, \
+                     int offy);
+
 #define BLAS_UNARY_FUNC(name, operation)                   \
   template <typename T>                                    \
   void name(int n, const T *a, int offa, T *y, int offy) { \
@@ -163,8 +181,17 @@ BLAS_BINARY_FUNC(Add, y[i] = a[i] + b[i]);
 BLAS_BINARY_FUNC(Sub, y[i] = a[i] - b[i]);
 BLAS_BINARY_FUNC(Mul, y[i] = a[i] * b[i]);
 BLAS_BINARY_FUNC(Div, y[i] = a[i] / b[i]);
+BLAS_BINARY_FUNC(Pow, y[i] = std::pow(a[i], b[i]));
 BLAS_BINARY_FUNC(Max, y[i] = std::max(a[i], b[i]));
 BLAS_BINARY_FUNC(Min, y[i] = std::min(a[i], b[i]));
+
+BLAS_BINARY_SCALAR_FUNC(Add, y[i] = a[i] + alpha);
+BLAS_BINARY_SCALAR_FUNC(Sub, y[i] = a[i] - alpha);
+BLAS_BINARY_SCALAR_FUNC(Mul, y[i] = a[i] * alpha);
+BLAS_BINARY_SCALAR_FUNC(Div, y[i] = a[i] / alpha);
+BLAS_BINARY_SCALAR_FUNC(Pow, y[i] = std::pow(a[i], alpha));
+BLAS_BINARY_SCALAR_FUNC(Max, y[i] = std::max(a[i], alpha));
+BLAS_BINARY_SCALAR_FUNC(Min, y[i] = std::min(a[i], alpha));
 
 BLAS_UNARY_FUNC(Abs, y[i] = std::abs(a[i]));
 BLAS_UNARY_FUNC(Square, y[i] = a[i] * a[i]);
@@ -180,32 +207,6 @@ BLAS_UNARY_FUNC(Atan, y[i] = std::atan(a[i]));
 BLAS_UNARY_FUNC(Floor, y[i] = std::floor(a[i]));
 BLAS_UNARY_FUNC(Ceil, y[i] = std::ceil(a[i]));
 #endif
-
-template <typename T>
-void Pow(int n, const T *a, int offa, float alpha, T *y, int offy) {
-#if defined(USE_Eigen)
-  const auto &a_eigen = MapVector<T>(const_cast<T *>(a + offa), n);
-  auto y_eigen = MapVector<T>(y + offy, n);
-  y_eigen = a_eigen.array().pow(alpha);
-#else
-  for (int i = 0; i < n; ++i) {
-    y[offy + i] = std::pow(a[offa + i], alpha);
-  }
-#endif
-}
-
-template <typename T>
-void Scale(int n, float alpha, const T *x, int offx, T *y, int offy) {
-#if defined(USE_Eigen)
-  const auto &x_eigen = MapVector<T>(const_cast<T *>(x + offx), n);
-  auto y_eigen = MapVector<T>(y + offy, n);
-  y_eigen = static_cast<T>(alpha) * x_eigen;
-#else
-  for (int i = 0; i < n; ++i) {
-    y[offy + i] = static_cast<T>(alpha) * x[offx + i];
-  }
-#endif
-}
 
 // Level 1
 template <typename T>
@@ -430,11 +431,6 @@ template void ChannelDiv(int count, int num, int channels, int spatial_dim,
                          const float *val_div, float *data);
 
 template void Set(int n, float val, float *y, int offy);
-template void Add(int n, float val, float *y, int offy);
-template void Pow(int n, const float *a, int offa, float alpha, float *y,
-                  int offy);
-template void Scale(int n, float alpha, const float *x, int offx, float *y,
-                    int offy);
 
 // Level 1
 template void BlasSscal(int n, float alpha, float *x, int offx);
@@ -500,15 +496,6 @@ void Set(int n, float val, T *y, int offy) {
   Kernel::queue_->Finish();
 }
 
-template <typename T>
-void Add(int n, float val, T *y, int offy) {
-  size_t global = n;
-  auto *kernel = Kernel::cl_kernels_["AddScalar"];
-  kernel->SetArguments(n, val, *y, offy);
-  kernel->Launch(*Kernel::queue_, {global}, Kernel::event_);
-  Kernel::queue_->Finish();
-}
-
 #define BLAS_BINARY_FUNC(name, kname)                                       \
   template <typename T>                                                     \
   inline void name(int n, const T *a, int offa, const T *b, int offb, T *y, \
@@ -521,6 +508,18 @@ void Add(int n, float val, T *y, int offy) {
   }                                                                         \
   template void name(int n, const BufferF *a, int offa, const BufferF *b,   \
                      int offb, BufferF *y, int offy);
+
+#define BLAS_BINARY_SCALAR_FUNC(name, kname)                                   \
+  template <typename T>                                                        \
+  inline void name(int n, const T *a, int offa, float alpha, T *y, int offy) { \
+    size_t global = n;                                                         \
+    auto *kernel = Kernel::cl_kernels_[kname];                                 \
+    kernel->SetArguments(n, *a, offa, alpha, *y, offy);                        \
+    kernel->Launch(*Kernel::queue_, {global}, Kernel::event_);                 \
+    Kernel::queue_->Finish();                                                  \
+  }                                                                            \
+  template void name(int n, const BufferF *a, int offa, float alpha,           \
+                     BufferF *y, int offy);
 
 #define BLAS_UNARY_FUNC(name, kname)                              \
   template <typename T>                                           \
@@ -537,8 +536,17 @@ BLAS_BINARY_FUNC(Add, "Add");
 BLAS_BINARY_FUNC(Sub, "Sub");
 BLAS_BINARY_FUNC(Mul, "Mul");
 BLAS_BINARY_FUNC(Div, "Div");
+BLAS_BINARY_FUNC(Pow, "Pow");
 BLAS_BINARY_FUNC(Max, "Max");
 BLAS_BINARY_FUNC(Min, "Min");
+
+BLAS_BINARY_SCALAR_FUNC(Add, "AddScalar");
+BLAS_BINARY_SCALAR_FUNC(Sub, "SubScalar");
+BLAS_BINARY_SCALAR_FUNC(Mul, "MulScalar");
+BLAS_BINARY_SCALAR_FUNC(Div, "DivScalar");
+BLAS_BINARY_SCALAR_FUNC(Pow, "PowScalar");
+BLAS_BINARY_SCALAR_FUNC(Max, "MaxScalar");
+BLAS_BINARY_SCALAR_FUNC(Min, "MinScalar");
 
 BLAS_UNARY_FUNC(Abs, "Abs");
 BLAS_UNARY_FUNC(Square, "Square");
@@ -553,21 +561,6 @@ BLAS_UNARY_FUNC(Acos, "Acos");
 BLAS_UNARY_FUNC(Atan, "Atan");
 BLAS_UNARY_FUNC(Floor, "Floor");
 BLAS_UNARY_FUNC(Ceil, "Ceil");
-
-template <typename T>
-void Pow(int n, const T *a, int offa, float alpha, T *y, int offy) {
-  size_t global = n;
-  auto *kernel = Kernel::cl_kernels_["Pow"];
-  kernel->SetArguments(n, *a, offa, alpha, *y, offy);
-  kernel->Launch(*Kernel::queue_, {global}, Kernel::event_);
-  Kernel::queue_->Finish();
-}
-
-template <typename T>
-void Scale(int n, float alpha, const T *x, int offx, T *y, int offy) {
-  BlasScopy(n, x, offx, y, offy);
-  BlasSscal(n, alpha, y, offy);
-}
 
 // Level 1
 template <typename T>
@@ -635,11 +628,6 @@ template void ChannelDiv(int count, int num, int channels, int spatial_dim,
                          const BufferF *val_div, BufferF *data);
 
 template void Set(int n, float val, BufferF *y, int offy);
-template void Add(int n, float val, BufferF *y, int offy);
-template void Pow(int n, const BufferF *a, int offa, float alpha, BufferF *y,
-                  int offy);
-template void Scale(int n, float alpha, const BufferF *x, int offx, BufferF *y,
-                    int offy);
 
 // Level 1
 template void BlasSscal(int n, float alpha, BufferF *x, int offx);

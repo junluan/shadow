@@ -71,8 +71,8 @@ void NormalizeOp::Forward() {
       float sum = 0;
       Blas::BlasSasum(num, buffer_->data(), 0, &sum);
       float norm = std::sqrt(sum + EPS);
-      Blas::Scale(num, 1.f / norm, bottom->data(), data_offset,
-                  top->mutable_data(), data_offset);
+      Blas::Mul(num, bottom->data(), data_offset, 1.f / norm,
+                top->mutable_data(), data_offset);
     } else {
       Blas::Set(norm_->count(), EPS, norm_->mutable_data(), 0);
       Blas::BlasSgemv(1, channels, spatial_dim_, 1, buffer_->data(), 0,

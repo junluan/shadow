@@ -100,17 +100,6 @@ void Set(int n, float val, T *y, int offy) {
   CUDA_CHECK(cudaPeekAtLastError());
 }
 
-template <typename T>
-__global__ void KernelAddScalar(int n, float val, T *y, int offy) {
-  CUDA_KERNEL_LOOP(globalid, n) { y[offy + globalid] += val; }
-}
-
-template <typename T>
-void Add(int n, float val, T *y, int offy) {
-  KernelAddScalar<T><<<GetBlocks(n), NumThreads>>>(n, val, y, offy);
-  CUDA_CHECK(cudaPeekAtLastError());
-}
-
 #define BLAS_BINARY_FUNC(name, operation)                                 \
   template <typename T>                                                   \
   __global__ void Kernel##name(int n, const T *a, int offa, const T *b,   \
@@ -129,6 +118,23 @@ void Add(int n, float val, T *y, int offy) {
   }                                                                       \
   template void name(int n, const float *a, int offa, const float *b,     \
                      int offb, float *y, int offy);
+
+#define BLAS_BINARY_SCALAR_FUNC(name, operation)                               \
+  template <typename T>                                                        \
+  __global__ void Kernel##name(int n, const T *a, int offa, float alpha, T *y, \
+                               int offy) {                                     \
+    CUDA_KERNEL_LOOP(i, n) {                                                   \
+      a += offa, y += offy;                                                    \
+      operation;                                                               \
+    }                                                                          \
+  }                                                                            \
+  template <typename T>                                                        \
+  void name(int n, const T *a, int offa, float alpha, T *y, int offy) {        \
+    Kernel##name<T><<<GetBlocks(n), NumThreads>>>(n, a, offa, alpha, y, offy); \
+    CUDA_CHECK(cudaPeekAtLastError());                                         \
+  }                                                                            \
+  template void name(int n, const float *a, int offa, float alpha, float *y,   \
+                     int offy);
 
 #define BLAS_UNARY_FUNC(name, operation)                                      \
   template <typename T>                                                       \
@@ -149,8 +155,17 @@ BLAS_BINARY_FUNC(Add, y[i] = a[i] + b[i]);
 BLAS_BINARY_FUNC(Sub, y[i] = a[i] - b[i]);
 BLAS_BINARY_FUNC(Mul, y[i] = a[i] * b[i]);
 BLAS_BINARY_FUNC(Div, y[i] = a[i] / b[i]);
+BLAS_BINARY_FUNC(Pow, y[i] = powf(a[i], b[i]));
 BLAS_BINARY_FUNC(Max, y[i] = fmaxf(a[i], b[i]));
 BLAS_BINARY_FUNC(Min, y[i] = fminf(a[i], b[i]));
+
+BLAS_BINARY_SCALAR_FUNC(Add, y[i] = a[i] + alpha);
+BLAS_BINARY_SCALAR_FUNC(Sub, y[i] = a[i] - alpha);
+BLAS_BINARY_SCALAR_FUNC(Mul, y[i] = a[i] * alpha);
+BLAS_BINARY_SCALAR_FUNC(Div, y[i] = a[i] / alpha);
+BLAS_BINARY_SCALAR_FUNC(Pow, y[i] = powf(a[i], alpha));
+BLAS_BINARY_SCALAR_FUNC(Max, y[i] = fmaxf(a[i], alpha));
+BLAS_BINARY_SCALAR_FUNC(Min, y[i] = fminf(a[i], alpha));
 
 BLAS_UNARY_FUNC(Abs, y[i] = fabsf(a[i]));
 BLAS_UNARY_FUNC(Square, y[i] = a[i] * a[i]);
@@ -165,26 +180,6 @@ BLAS_UNARY_FUNC(Acos, y[i] = acosf(a[i]));
 BLAS_UNARY_FUNC(Atan, y[i] = atanf(a[i]));
 BLAS_UNARY_FUNC(Floor, y[i] = floorf(a[i]));
 BLAS_UNARY_FUNC(Ceil, y[i] = ceilf(a[i]));
-
-template <typename T>
-__global__ void KernelPow(int n, const T *a, int offa, float alpha, T *y,
-                          int offy) {
-  CUDA_KERNEL_LOOP(globalid, n) {
-    y[offy + globalid] = pow(a[offa + globalid], alpha);
-  }
-}
-
-template <typename T>
-void Pow(int n, const T *a, int offa, float alpha, T *y, int offy) {
-  KernelPow<T><<<GetBlocks(n), NumThreads>>>(n, a, offa, alpha, y, offy);
-  CUDA_CHECK(cudaPeekAtLastError());
-}
-
-template <typename T>
-void Scale(int n, float alpha, const T *x, int offx, T *y, int offy) {
-  BlasScopy(n, x, offx, y, offy);
-  BlasSscal(n, alpha, y, offy);
-}
 
 // Level 1
 template <typename T>
@@ -238,11 +233,6 @@ template void ChannelDiv(int count, int num, int channels, int spatial_dim,
                          const float *val_div, float *data);
 
 template void Set(int n, float val, float *y, int offy);
-template void Add(int n, float val, float *y, int offy);
-template void Pow(int n, const float *a, int offa, float alpha, float *y,
-                  int offy);
-template void Scale(int n, float alpha, const float *x, int offx, float *y,
-                    int offy);
 
 // Level 1
 template void BlasSscal(int n, float alpha, float *x, int offx);

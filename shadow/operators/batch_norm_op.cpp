@@ -77,10 +77,10 @@ void BatchNormOp::Forward() {
   if (use_global_stats_) {
     blobs<float>(2)->read_data(&scale_, 1);
     float scale_factor = scale_ == 0 ? 0 : 1 / scale_;
-    Blas::Scale(mean_->count(), scale_factor, blobs<float>(0)->data(), 0,
-                mean_->mutable_data(), 0);
-    Blas::Scale(variance_->count(), scale_factor, blobs<float>(1)->data(), 0,
-                variance_->mutable_data(), 0);
+    Blas::Mul(mean_->count(), blobs<float>(0)->data(), 0, scale_factor,
+              mean_->mutable_data(), 0);
+    Blas::Mul(variance_->count(), blobs<float>(1)->data(), 0, scale_factor,
+              variance_->mutable_data(), 0);
   }
 
   if (!use_global_stats_) {
@@ -108,7 +108,8 @@ void BatchNormOp::Forward() {
                     sum_batch_multiplier_->data(), 0, 0,
                     variance_->mutable_data(), 0);
   }
-  Blas::Add(variance_->count(), EPS, variance_->mutable_data(), 0);
+  Blas::Add(variance_->count(), variance_->data(), 0, EPS,
+            variance_->mutable_data(), 0);
   Blas::Pow(variance_->count(), variance_->data(), 0, 0.5,
             variance_->mutable_data(), 0);
   Blas::BlasSgemm(0, 0, batch, channels_, 1, 1, sum_batch_multiplier_->data(),
