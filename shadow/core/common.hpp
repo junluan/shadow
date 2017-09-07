@@ -1,6 +1,8 @@
 #ifndef SHADOW_CORE_COMMON_HPP
 #define SHADOW_CORE_COMMON_HPP
 
+#include <cstdlib>
+
 #if defined(USE_Eigen)
 #include "Eigen/Eigen"
 
@@ -25,12 +27,12 @@ static inline int align_size(int sz, int n) { return (sz + n - 1) & -n; }
 
 template <typename T>
 static inline T* align_ptr(T* ptr, int n = sizeof(T)) {
-  return (T*)(((unsigned long)ptr + n - 1) & -n);
+  return (T*)(((size_t)ptr + n - 1) & -n);
 }
 
-static inline void* fast_malloc(int size) {
-  auto* u_data = new unsigned char[size + sizeof(void*) + MALLOC_ALIGN]();
-  unsigned char** a_data = align_ptr((unsigned char**)u_data + 1, MALLOC_ALIGN);
+static inline void* fast_malloc(int size, int align) {
+  auto* u_data = new unsigned char[size + sizeof(void*) + align]();
+  unsigned char** a_data = align_ptr((unsigned char**)u_data + 1, align);
   a_data[-1] = u_data;
   return a_data;
 }

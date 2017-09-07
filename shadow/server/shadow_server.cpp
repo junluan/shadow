@@ -15,11 +15,11 @@ class ShadowServer final : public ::shadow::ShadowService::Service {
                const std::string &method) {
     if (method == "ssd" || method == "yolo") {
       detection_ = new DemoDetection(method);
-      detection_->Setup(model, classes, 1);
+      detection_->Setup(model, classes, {1});
       is_detection_ = true;
     } else if (method == "classification") {
       classification_ = new DemoClassification(method);
-      classification_->Setup(model, classes, 1);
+      classification_->Setup(model, classes, {1});
       is_detection_ = false;
     } else {
       LOG(FATAL) << "Unknown method " << method;

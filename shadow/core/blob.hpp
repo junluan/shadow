@@ -84,29 +84,42 @@ class Blob {
     share_data(from.data_, from.shape_);
   }
 
-  void reshape(const VecInt &shape, bool shared = false) {
+  void reshape(const VecInt &shape, bool shared = false, int align = 1) {
     if (shape.size() == 0) return;
     int cou = 1;
     for (const auto dim : shape) cou *= dim;
     CHECK_GT(cou, 0);
     if (data_ == nullptr || cou > capacity_) {
       clear();
-      allocate_data(cou, shared);
+      allocate_data(cou, shared, align);
     }
     set_shape(shape);
   }
-  void reshape(int num, int channels = 1, int height = 1, int width = 1,
-               bool shared = false) {
-    reshape(VecInt{num, channels, height, width}, shared);
+  void reshape(int batch, int channel, int height, int width,
+               bool shared = false, int align = MALLOC_ALIGN) {
+    int cstep =
+        align_size(height * width * sizeof(Dtype), align) / sizeof(Dtype);
+    int cou = batch * channel * cstep;
+    CHECK_GT(cou, 0);
+    if (data_ == nullptr || cou > capacity_) {
+      clear();
+      allocate_data(cou, shared, align);
+    }
+    set_shape(VecInt{batch, channel, height, width});
+    set_cstep(cstep);
   }
 
   const std::string &name() const { return name_; }
-  void set_name(const std::string &name) { name_ = name; }
-
-  const Device device() const { return device_; }
+  Device device() const { return device_; }
+  int cstep() const { return cstep_; }
   int capacity() const { return capacity_; }
+  bool shared() const { return shared_; }
 
-  int mem_count() const { return capacity_ * sizeof(Dtype); }
+  void set_name(const std::string &name) { name_ = name; }
+  void set_device(Device device) { device_ = device; }
+  void set_cstep(int cstep) { cstep_ = cstep; }
+  void set_capacity(int capacity) { capacity_ = capacity; }
+  void set_shared(bool shared) { shared_ = shared; }
 
   const VecInt &shape() const { return shape_; }
   int shape(int index) const { return shape_[canonical_index(index)]; }
@@ -130,6 +143,8 @@ class Blob {
     for (int i = start_axis; i < end_axis; ++i) cou *= shape(i);
     return cou;
   }
+
+  int mem_count() const { return capacity_ * sizeof(Dtype); }
 
   int canonical_index(int index) const {
     CHECK_GE(index, -num_axes());
@@ -158,11 +173,11 @@ class Blob {
   }
 
  private:
-  void allocate_data(int count, bool shared) {
+  void allocate_data(int count, bool shared, int align) {
     capacity_ = count;
 #if !defined(USE_CUDA) & !defined(USE_CL)
     if (!shared) {
-      data_ = static_cast<Dtype *>(fast_malloc(count * sizeof(Dtype)));
+      data_ = static_cast<Dtype *>(fast_malloc(count * sizeof(Dtype), align));
     }
     shared_ = shared;
 
@@ -184,8 +199,8 @@ class Blob {
   std::vector<Dtype> cpu_data_{};
 
   std::string name_;
-  Device device_ = kCPU;
   VecInt shape_{};
+  Device device_ = kCPU;
   int cstep_ = 0, capacity_ = 0;
   bool shared_ = false;
 
