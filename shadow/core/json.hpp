@@ -3,13 +3,13 @@
 
 #include "util/type.hpp"
 
-#if !defined(USE_Protobuf)
-#include "rapidjson/document.h"
+#if defined(USE_JSON)
+#include "document.h"
 #endif
 
 namespace Shadow {
 
-#if !defined(USE_Protobuf)
+#if defined(USE_JSON)
 using JValue = rapidjson::Value;
 using JDocument = rapidjson::Document;
 

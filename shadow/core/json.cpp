@@ -3,7 +3,7 @@
 
 namespace Shadow {
 
-#if !defined(USE_Protobuf)
+#if defined(USE_JSON)
 namespace Json {
 
 const JDocument GetDocument(const std::string &json_text) {
@@ -116,7 +116,7 @@ const VecString GetVecString(const JValue &root, const std::string &name,
     VecString array;
     for (int i = 0; i < value.Size(); ++i) {
       CHECK(value[i].IsString());
-      array.push_back(value[i].GetString());
+      array.emplace_back(value[i].GetString());
     }
     return array;
   } else {

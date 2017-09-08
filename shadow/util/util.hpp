@@ -151,6 +151,25 @@ inline std::vector<std::string> tokenize(const std::string &str,
   return tokens;
 }
 
+inline std::string ltrim(const std::string &str) {
+  std::string origin(str);
+  origin.erase(origin.begin(),
+               std::find_if(origin.begin(), origin.end(),
+                            [](int ch) { return !std::isspace(ch); }));
+  return origin;
+}
+
+inline std::string rtrim(const std::string &str) {
+  std::string origin(str);
+  origin.erase(std::find_if(origin.rbegin(), origin.rend(),
+                            [](int ch) { return !std::isspace(ch); })
+                   .base(),
+               origin.end());
+  return origin;
+}
+
+inline std::string trim(const std::string &str) { return ltrim(rtrim(str)); }
+
 inline std::vector<std::string> load_list(const std::string &list_file) {
   std::ifstream file(list_file);
   if (!file.is_open()) {

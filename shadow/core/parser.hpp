@@ -8,29 +8,29 @@ namespace Shadow {
 
 namespace Parser {
 
-#if !defined(USE_Protobuf)
-void ParseNet(const std::string &proto_text, shadow::NetParam *net);
-
-void ParseCommon(const JValue &root, shadow::OpParam *op);
-
-const shadow::OpParam ParseActivate(const JValue &root);
-const shadow::OpParam ParseBatchNorm(const JValue &root);
-const shadow::OpParam ParseBias(const JValue &root);
-const shadow::OpParam ParseConcat(const JValue &root);
-const shadow::OpParam ParseConnected(const JValue &root);
-const shadow::OpParam ParseConv(const JValue &root);
-const shadow::OpParam ParseData(const JValue &root);
-const shadow::OpParam ParseEltwise(const JValue &root);
-const shadow::OpParam ParseFlatten(const JValue &root);
-const shadow::OpParam ParseLRN(const JValue &root);
-const shadow::OpParam ParseNormalize(const JValue &root);
-const shadow::OpParam ParsePermute(const JValue &root);
-const shadow::OpParam ParsePooling(const JValue &root);
-const shadow::OpParam ParsePriorBox(const JValue &root);
-const shadow::OpParam ParseReorg(const JValue &root);
-const shadow::OpParam ParseReshape(const JValue &root);
-const shadow::OpParam ParseScale(const JValue &root);
-const shadow::OpParam ParseSoftmax(const JValue &root);
+#if defined(USE_JSON)
+void ParseJsonNet(const std::string &proto_text, shadow::NetParam *net);
+void ParseJsonCommon(const JValue &root, shadow::OpParam *op);
+const shadow::OpParam ParseJsonActivate(const JValue &root);
+const shadow::OpParam ParseJsonBatchNorm(const JValue &root);
+const shadow::OpParam ParseJsonBias(const JValue &root);
+const shadow::OpParam ParseJsonBinary(const JValue &root);
+const shadow::OpParam ParseJsonConcat(const JValue &root);
+const shadow::OpParam ParseJsonConnected(const JValue &root);
+const shadow::OpParam ParseJsonConv(const JValue &root);
+const shadow::OpParam ParseJsonData(const JValue &root);
+const shadow::OpParam ParseJsonEltwise(const JValue &root);
+const shadow::OpParam ParseJsonFlatten(const JValue &root);
+const shadow::OpParam ParseJsonLRN(const JValue &root);
+const shadow::OpParam ParseJsonNormalize(const JValue &root);
+const shadow::OpParam ParseJsonPermute(const JValue &root);
+const shadow::OpParam ParseJsonPooling(const JValue &root);
+const shadow::OpParam ParseJsonPriorBox(const JValue &root);
+const shadow::OpParam ParseJsonReorg(const JValue &root);
+const shadow::OpParam ParseJsonReshape(const JValue &root);
+const shadow::OpParam ParseJsonScale(const JValue &root);
+const shadow::OpParam ParseJsonSoftmax(const JValue &root);
+const shadow::OpParam ParseJsonUnary(const JValue &root);
 #endif
 
 }  // namespace Parser

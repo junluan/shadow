@@ -7,21 +7,22 @@ namespace Shadow {
 
 namespace Parser {
 
-#if !defined(USE_Protobuf)
-using ParseFunc = std::function<const shadow::OpParam(const JValue &)>;
+#if defined(USE_JSON)
+using ParseJsonFunc = std::function<const shadow::OpParam(const JValue &)>;
 
-static const std::map<std::string, ParseFunc> parse_func_map{
-    {"Activate", ParseActivate},   {"BatchNorm", ParseBatchNorm},
-    {"Bias", ParseBias},           {"Concat", ParseConcat},
-    {"Connected", ParseConnected}, {"Conv", ParseConv},
-    {"Data", ParseData},           {"Eltwise", ParseEltwise},
-    {"Flatten", ParseFlatten},     {"LRN", ParseLRN},
-    {"Normalize", ParseNormalize}, {"Permute", ParsePermute},
-    {"Pooling", ParsePooling},     {"PriorBox", ParsePriorBox},
-    {"Reorg", ParseReorg},         {"Reshape", ParseReshape},
-    {"Scale", ParseScale},         {"Softmax", ParseSoftmax}};
+static const std::map<std::string, ParseJsonFunc> parse_json_func_map{
+    {"Activate", ParseJsonActivate}, {"BatchNorm", ParseJsonBatchNorm},
+    {"Bias", ParseJsonBias},         {"Binary", ParseJsonBinary},
+    {"Concat", ParseJsonConcat},     {"Connected", ParseJsonConnected},
+    {"Conv", ParseJsonConv},         {"Data", ParseJsonData},
+    {"Eltwise", ParseJsonEltwise},   {"Flatten", ParseJsonFlatten},
+    {"LRN", ParseJsonLRN},           {"Normalize", ParseJsonNormalize},
+    {"Permute", ParseJsonPermute},   {"Pooling", ParseJsonPooling},
+    {"PriorBox", ParseJsonPriorBox}, {"Reorg", ParseJsonReorg},
+    {"Reshape", ParseJsonReshape},   {"Scale", ParseJsonScale},
+    {"Softmax", ParseJsonSoftmax},   {"Unary", ParseJsonUnary}};
 
-void ParseNet(const std::string &proto_text, shadow::NetParam *net) {
+void ParseJsonNet(const std::string &proto_text, shadow::NetParam *net) {
   const auto &document = Json::GetDocument(proto_text);
 
   const auto &net_name = Json::GetString(document, "name", "");
@@ -35,7 +36,7 @@ void ParseNet(const std::string &proto_text, shadow::NetParam *net) {
     const auto &op_type = Json::GetString(json_op, "type", "");
 
     bool find_parser = false;
-    for (const auto &it : parse_func_map) {
+    for (const auto &it : parse_json_func_map) {
       if (op_type.find(it.first) != std::string::npos) {
         net->add_op(it.second(json_op));
         find_parser = true;
@@ -47,14 +48,14 @@ void ParseNet(const std::string &proto_text, shadow::NetParam *net) {
   }
 }
 
-void ParseCommon(const JValue &root, shadow::OpParam *op) {
+void ParseJsonCommon(const JValue &root, shadow::OpParam *op) {
   op->set_name(Json::GetString(root, "name", ""));
   op->set_type(Json::GetString(root, "type", ""));
-  for (const auto &top : Json::GetVecString(root, "top")) {
-    op->add_top(top);
-  }
   for (const auto &bottom : Json::GetVecString(root, "bottom")) {
     op->add_bottom(bottom);
+  }
+  for (const auto &top : Json::GetVecString(root, "top")) {
+    op->add_top(top);
   }
 
   if (root.HasMember("blobs")) {
@@ -74,10 +75,10 @@ void ParseCommon(const JValue &root, shadow::OpParam *op) {
   }
 }
 
-const shadow::OpParam ParseActivate(const JValue &root) {
+const shadow::OpParam ParseJsonActivate(const JValue &root) {
   shadow::OpParam shadow_op;
 
-  ParseCommon(root, &shadow_op);
+  ParseJsonCommon(root, &shadow_op);
 
   int type = 1, channel_shared = false;
   if (root.HasMember("arg")) {
@@ -100,10 +101,10 @@ const shadow::OpParam ParseActivate(const JValue &root) {
   return shadow_op;
 }
 
-const shadow::OpParam ParseBatchNorm(const JValue &root) {
+const shadow::OpParam ParseJsonBatchNorm(const JValue &root) {
   shadow::OpParam shadow_op;
 
-  ParseCommon(root, &shadow_op);
+  ParseJsonCommon(root, &shadow_op);
 
   int use_global_stats = true;
   if (root.HasMember("arg")) {
@@ -123,10 +124,10 @@ const shadow::OpParam ParseBatchNorm(const JValue &root) {
   return shadow_op;
 }
 
-const shadow::OpParam ParseBias(const JValue &root) {
+const shadow::OpParam ParseJsonBias(const JValue &root) {
   shadow::OpParam shadow_op;
 
-  ParseCommon(root, &shadow_op);
+  ParseJsonCommon(root, &shadow_op);
 
   int axis = 1, num_axes = 1;
   if (root.HasMember("arg")) {
@@ -149,10 +150,41 @@ const shadow::OpParam ParseBias(const JValue &root) {
   return shadow_op;
 }
 
-const shadow::OpParam ParseConcat(const JValue &root) {
+const shadow::OpParam ParseJsonBinary(const JValue &root) {
   shadow::OpParam shadow_op;
 
-  ParseCommon(root, &shadow_op);
+  ParseJsonCommon(root, &shadow_op);
+
+  int operation = -1;
+  float scalar = 0;
+  bool has_scalar = false;
+  if (root.HasMember("arg")) {
+    const auto &args = root["arg"];
+    for (int i = 0; i < args.Size(); ++i) {
+      const auto &arg = args[i];
+      CHECK(arg.HasMember("name"));
+      const auto &arg_name = Json::GetString(arg, "name", "");
+      if (arg_name == "operation") {
+        operation = Json::GetInt(arg, "s_i", -1);
+      } else if (arg_name == "scalar") {
+        scalar = Json::GetFloat(arg, "s_f", 0);
+        has_scalar = true;
+      }
+    }
+  }
+
+  set_s_i(&shadow_op, "operation", operation);
+  if (has_scalar) {
+    set_s_f(&shadow_op, "scalar", scalar);
+  }
+
+  return shadow_op;
+}
+
+const shadow::OpParam ParseJsonConcat(const JValue &root) {
+  shadow::OpParam shadow_op;
+
+  ParseJsonCommon(root, &shadow_op);
 
   int axis = 1;
   if (root.HasMember("arg")) {
@@ -172,10 +204,10 @@ const shadow::OpParam ParseConcat(const JValue &root) {
   return shadow_op;
 }
 
-const shadow::OpParam ParseConnected(const JValue &root) {
+const shadow::OpParam ParseJsonConnected(const JValue &root) {
   shadow::OpParam shadow_op;
 
-  ParseCommon(root, &shadow_op);
+  ParseJsonCommon(root, &shadow_op);
 
   int num_output = -1, bias_term = true, transpose = false;
   if (root.HasMember("arg")) {
@@ -202,10 +234,10 @@ const shadow::OpParam ParseConnected(const JValue &root) {
   return shadow_op;
 }
 
-const shadow::OpParam ParseConv(const JValue &root) {
+const shadow::OpParam ParseJsonConv(const JValue &root) {
   shadow::OpParam shadow_op;
 
-  ParseCommon(root, &shadow_op);
+  ParseJsonCommon(root, &shadow_op);
 
   int num_output = -1, kernel_size = -1, stride = 1, pad = 0, dilation = 1,
       group = 1, bias_term = true;
@@ -246,10 +278,10 @@ const shadow::OpParam ParseConv(const JValue &root) {
   return shadow_op;
 }
 
-const shadow::OpParam ParseData(const JValue &root) {
+const shadow::OpParam ParseJsonData(const JValue &root) {
   shadow::OpParam shadow_op;
 
-  ParseCommon(root, &shadow_op);
+  ParseJsonCommon(root, &shadow_op);
 
   VecInt data_shape;
   float scale = 1;
@@ -277,10 +309,10 @@ const shadow::OpParam ParseData(const JValue &root) {
   return shadow_op;
 }
 
-const shadow::OpParam ParseEltwise(const JValue &root) {
+const shadow::OpParam ParseJsonEltwise(const JValue &root) {
   shadow::OpParam shadow_op;
 
-  ParseCommon(root, &shadow_op);
+  ParseJsonCommon(root, &shadow_op);
 
   int operation = 1;
   VecFloat coeffs;
@@ -304,10 +336,10 @@ const shadow::OpParam ParseEltwise(const JValue &root) {
   return shadow_op;
 }
 
-const shadow::OpParam ParseFlatten(const JValue &root) {
+const shadow::OpParam ParseJsonFlatten(const JValue &root) {
   shadow::OpParam shadow_op;
 
-  ParseCommon(root, &shadow_op);
+  ParseJsonCommon(root, &shadow_op);
 
   int axis = 1, end_axis = -1;
   if (root.HasMember("arg")) {
@@ -330,10 +362,10 @@ const shadow::OpParam ParseFlatten(const JValue &root) {
   return shadow_op;
 }
 
-const shadow::OpParam ParseLRN(const JValue &root) {
+const shadow::OpParam ParseJsonLRN(const JValue &root) {
   shadow::OpParam shadow_op;
 
-  ParseCommon(root, &shadow_op);
+  ParseJsonCommon(root, &shadow_op);
 
   int norm_region = 0, local_size = 5;
   float alpha = 1, beta = 0.75, k = 1;
@@ -366,10 +398,10 @@ const shadow::OpParam ParseLRN(const JValue &root) {
   return shadow_op;
 }
 
-const shadow::OpParam ParseNormalize(const JValue &root) {
+const shadow::OpParam ParseJsonNormalize(const JValue &root) {
   shadow::OpParam shadow_op;
 
-  ParseCommon(root, &shadow_op);
+  ParseJsonCommon(root, &shadow_op);
 
   int across_spatial = true, channel_shared = true;
   VecFloat scale;
@@ -396,10 +428,10 @@ const shadow::OpParam ParseNormalize(const JValue &root) {
   return shadow_op;
 }
 
-const shadow::OpParam ParsePermute(const JValue &root) {
+const shadow::OpParam ParseJsonPermute(const JValue &root) {
   shadow::OpParam shadow_op;
 
-  ParseCommon(root, &shadow_op);
+  ParseJsonCommon(root, &shadow_op);
 
   VecInt order;
   if (root.HasMember("arg")) {
@@ -419,10 +451,10 @@ const shadow::OpParam ParsePermute(const JValue &root) {
   return shadow_op;
 }
 
-const shadow::OpParam ParsePooling(const JValue &root) {
+const shadow::OpParam ParseJsonPooling(const JValue &root) {
   shadow::OpParam shadow_op;
 
-  ParseCommon(root, &shadow_op);
+  ParseJsonCommon(root, &shadow_op);
 
   int pool = 0, kernel_size = -1, stride = 1, pad = 0, global_pooling = false;
   if (root.HasMember("arg")) {
@@ -457,10 +489,10 @@ const shadow::OpParam ParsePooling(const JValue &root) {
   return shadow_op;
 }
 
-const shadow::OpParam ParsePriorBox(const JValue &root) {
+const shadow::OpParam ParseJsonPriorBox(const JValue &root) {
   shadow::OpParam shadow_op;
 
-  ParseCommon(root, &shadow_op);
+  ParseJsonCommon(root, &shadow_op);
 
   VecFloat min_size, max_size, aspect_ratio, variance;
   int flip = true, clip = false;
@@ -505,10 +537,10 @@ const shadow::OpParam ParsePriorBox(const JValue &root) {
   return shadow_op;
 }
 
-const shadow::OpParam ParseReorg(const JValue &root) {
+const shadow::OpParam ParseJsonReorg(const JValue &root) {
   shadow::OpParam shadow_op;
 
-  ParseCommon(root, &shadow_op);
+  ParseJsonCommon(root, &shadow_op);
 
   int stride = 2;
   if (root.HasMember("arg")) {
@@ -528,10 +560,10 @@ const shadow::OpParam ParseReorg(const JValue &root) {
   return shadow_op;
 }
 
-const shadow::OpParam ParseReshape(const JValue &root) {
+const shadow::OpParam ParseJsonReshape(const JValue &root) {
   shadow::OpParam shadow_op;
 
-  ParseCommon(root, &shadow_op);
+  ParseJsonCommon(root, &shadow_op);
 
   VecInt shape;
   int axis = 0, num_axes = -1;
@@ -558,10 +590,10 @@ const shadow::OpParam ParseReshape(const JValue &root) {
   return shadow_op;
 }
 
-const shadow::OpParam ParseScale(const JValue &root) {
+const shadow::OpParam ParseJsonScale(const JValue &root) {
   shadow::OpParam shadow_op;
 
-  ParseCommon(root, &shadow_op);
+  ParseJsonCommon(root, &shadow_op);
 
   int axis = 1, num_axes = 1, bias_term = false;
   if (root.HasMember("arg")) {
@@ -587,10 +619,10 @@ const shadow::OpParam ParseScale(const JValue &root) {
   return shadow_op;
 }
 
-const shadow::OpParam ParseSoftmax(const JValue &root) {
+const shadow::OpParam ParseJsonSoftmax(const JValue &root) {
   shadow::OpParam shadow_op;
 
-  ParseCommon(root, &shadow_op);
+  ParseJsonCommon(root, &shadow_op);
 
   int axis = 1;
   if (root.HasMember("arg")) {
@@ -606,6 +638,29 @@ const shadow::OpParam ParseSoftmax(const JValue &root) {
   }
 
   set_s_i(&shadow_op, "axis", axis);
+
+  return shadow_op;
+}
+
+const shadow::OpParam ParseJsonUnary(const JValue &root) {
+  shadow::OpParam shadow_op;
+
+  ParseJsonCommon(root, &shadow_op);
+
+  int operation = -1;
+  if (root.HasMember("arg")) {
+    const auto &args = root["arg"];
+    for (int i = 0; i < args.Size(); ++i) {
+      const auto &arg = args[i];
+      CHECK(arg.HasMember("name"));
+      const auto &arg_name = Json::GetString(arg, "name", "");
+      if (arg_name == "operation") {
+        operation = Json::GetInt(arg, "s_i", -1);
+      }
+    }
+  }
+
+  set_s_i(&shadow_op, "operation", operation);
 
   return shadow_op;
 }

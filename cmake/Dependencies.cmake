@@ -103,6 +103,17 @@ if (Protobuf_FOUND)
   endif ()
 endif ()
 
+if (NOT ${USE_Protobuf} AND ${USE_JSON})
+  find_package(RapidJSON QUIET)
+  if (RapidJSON_FOUND)
+    include_directories(SYSTEM ${RapidJSON_INCLUDE_DIRS})
+    message(STATUS "Found RapidJSON: ${RapidJSON_INCLUDE_DIRS} (found version ${RapidJSON_VERSION})")
+    add_definitions(-DUSE_JSON)
+  else ()
+    message(WARNING "Could not find RapidJSON, disable it")
+  endif ()
+endif ()
+
 if (${USE_OpenCV})
   find_package(OpenCV PATHS ${OpenCV_DIR} NO_DEFAULT_PATH QUIET COMPONENTS core highgui imgproc imgcodecs videoio)
   if (NOT OpenCV_FOUND) # if not OpenCV 3.x, then try to find OpenCV 2.x in default path
