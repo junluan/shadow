@@ -7,6 +7,7 @@
 #include <cmath>
 #include <cstring>
 #include <fstream>
+#include <functional>
 #include <iomanip>
 #include <iostream>
 #include <map>
@@ -65,6 +66,20 @@ inline std::vector<int> top_k(const std::vector<float> &v, int K,
     result.push_back(pairs[k].second);
   }
   return result;
+}
+
+inline int stoi(const std::string &str) {
+  std::stringstream ss(str);
+  int num;
+  ss >> num;
+  return num;
+}
+
+inline float stof(const std::string &str) {
+  std::stringstream ss(str);
+  float num;
+  ss >> num;
+  return num;
 }
 
 template <typename Dtype>

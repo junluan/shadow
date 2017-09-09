@@ -103,11 +103,7 @@ void WriteProtoToJsonText(const Message& proto, std::string* json_text,
 
 #else
 bool ReadProtoFromText(const std::string& proto_text, shadow::NetParam* proto) {
-#if defined(USE_JSON)
-  Parser::ParseJsonNet(proto_text, proto);
-#else
   Parser::ParseNet(proto_text, proto);
-#endif
   return true;
 }
 

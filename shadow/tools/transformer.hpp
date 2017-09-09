@@ -42,6 +42,8 @@ INSTANTIATE_SET_REPEATED_ARGUMENT(bool, v_i);
 INSTANTIATE_SET_REPEATED_ARGUMENT(std::string, v_s);
 #undef INSTANTIATE_SET_REPEATED_ARGUMENT
 
+const std::string ConvertCustom(const shadow::NetParam& shadow_net);
+
 void WriteDefines(const shadow::NetParam& shadow_net, const std::string& root,
                   const std::string& model_name);
 
