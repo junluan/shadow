@@ -2,7 +2,7 @@
 #define SHADOW_UTIL_LOG_HPP
 
 #if defined(USE_GLog)
-#if !defined(__linux)
+#if defined(_WIN32)
 #define GOOGLE_GLOG_DLL_DECL
 #define GLOG_NO_ABBREVIATED_SEVERITIES
 #endif

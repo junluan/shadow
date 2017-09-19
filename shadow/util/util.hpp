@@ -218,12 +218,12 @@ inline std::string read_text_from_file(const std::string &filename) {
 
 }  // namespace Util
 
-#if defined(__linux)
-#include <linux/limits.h>
+#if defined(__linux__) || defined(__APPLE__)
 #include <unistd.h>
 #include <chrono>
+#include <climits>
 using namespace std::chrono;
-#else
+#elif defined(_WIN32)
 #define NOMINMAX
 #include <windows.h>
 #endif
@@ -234,9 +234,9 @@ class Path {
   enum PathType {
     kPosix = 0,
     kWindows = 1,
-#if defined(__linux)
+#if defined(__linux__) || defined(__APPLE__)
     KNative = kPosix
-#else
+#elif defined(_WIN32)
     KNative = kWindows
 #endif
   };
@@ -249,20 +249,20 @@ class Path {
   bool is_empty() const { return path_.empty(); }
 
   bool is_exist() const {
-#if defined(__linux)
+#if defined(__linux__) || defined(__APPLE__)
     struct stat sb {};
     return stat(str().c_str(), &sb) == 0;
-#else
+#elif defined(_WIN32)
     return GetFileAttributesW(wstr().c_str()) != INVALID_FILE_ATTRIBUTES;
 #endif
   }
 
   bool is_directory() const {
-#if defined(__linux)
+#if defined(__linux__) || defined(__APPLE__)
     struct stat sb {};
     if (stat(str().c_str(), &sb) != 0) return false;
     return S_ISDIR(sb.st_mode);
-#else
+#elif defined(_WIN32)
     DWORD attr = GetFileAttributesW(wstr().c_str());
     return attr != INVALID_FILE_ATTRIBUTES &&
            (attr & FILE_ATTRIBUTE_DIRECTORY) != 0;
@@ -270,11 +270,11 @@ class Path {
   }
 
   bool is_file() const {
-#if defined(__linux)
+#if defined(__linux__) || defined(__APPLE__)
     struct stat sb {};
     if (stat(str().c_str(), &sb) != 0) return false;
     return S_ISREG(sb.st_mode);
-#else
+#elif defined(_WIN32)
     DWORD attr = GetFileAttributesW(wstr().c_str());
     return attr != INVALID_FILE_ATTRIBUTES &&
            (attr & FILE_ATTRIBUTE_DIRECTORY) == 0;
@@ -284,14 +284,14 @@ class Path {
   bool is_absolute() const { return absolute_; }
 
   Path make_absolute() const {
-#if defined(__linux)
+#if defined(__linux__) || defined(__APPLE__)
     char temp[PATH_MAX];
     if (realpath(str().c_str(), temp) == nullptr) {
       throw std::runtime_error("Error in make_absolute(): " +
                                Util::to_string(strerror(errno)));
     }
     return Path(temp);
-#else
+#elif defined(_WIN32)
     std::wstring value = wstr(), out(MAX_PATH, '\0');
     DWORD length = GetFullPathNameW(value.c_str(), MAX_PATH, &out[0], NULL);
     if (length == 0) {
@@ -332,12 +332,12 @@ class Path {
   size_t length() const { return path_.size(); }
 
   size_t file_size() const {
-#if defined(__linux)
+#if defined(__linux__) || defined(__APPLE__)
     struct stat sb {};
     if (stat(str().c_str(), &sb) != 0) {
       throw std::runtime_error("Error in file_size(): " + str());
     }
-#else
+#elif defined(_WIN32)
     struct _stati64 sb {};
     if (_wstati64(wstr().c_str(), &sb) != 0) {
       throw std::runtime_error("Error in file_size(): " + str());
@@ -396,17 +396,17 @@ class Path {
   }
 
   bool remove_file() {
-#if defined(__linux)
+#if defined(__linux__) || defined(__APPLE__)
     return std::remove(str().c_str()) == 0;
-#else
+#elif defined(_WIN32)
     return DeleteFileW(wstr().c_str()) != 0;
 #endif
   }
 
   bool resize_file(size_t target_length) {
-#if defined(__linux)
+#if defined(__linux__) || defined(__APPLE__)
     return ::truncate(str().c_str(), (off_t)target_length) == 0;
-#else
+#elif defined(_WIN32)
     HANDLE handle = CreateFileW(wstr().c_str(), GENERIC_WRITE, 0, nullptr, 0,
                                 FILE_ATTRIBUTE_NORMAL, nullptr);
     if (handle == INVALID_HANDLE_VALUE) return false;
@@ -426,14 +426,14 @@ class Path {
   }
 
   static Path cwd() {
-#if defined(__linux)
+#if defined(__linux__) || defined(__APPLE__)
     char temp[PATH_MAX];
     if (::getcwd(temp, PATH_MAX) == nullptr) {
       throw std::runtime_error("Error in cwd(): " +
                                Util::to_string(strerror(errno)));
     }
     return Path(temp);
-#else
+#elif defined(_WIN32)
     std::wstring temp(MAX_PATH, '\0');
     if (!_wgetcwd(&temp[0], MAX_PATH)) {
       throw std::runtime_error("Error in cwd(): " +
@@ -491,9 +491,9 @@ class Path {
 namespace Util {
 
 inline bool make_directory(const Path &path) {
-#if defined(__linux)
+#if defined(__linux__) || defined(__APPLE__)
   return mkdir(path.str().c_str(), S_IRUSR | S_IWUSR | S_IXUSR) == 0;
-#else
+#elif defined(_WIN32)
   return CreateDirectoryW(path.wstr().c_str(), NULL) != 0;
 #endif
 }
@@ -507,27 +507,27 @@ inline bool make_directory(const std::string &path) {
 class Timer {
  public:
   Timer() {
-#if defined(__linux)
+#if defined(__linux__) || defined(__APPLE__)
     tstart_ = system_clock::now();
-#else
+#elif defined(_WIN32)
     QueryPerformanceFrequency(&tfrequency_);
     QueryPerformanceCounter(&tstart_);
 #endif
   }
 
   void start() {
-#if defined(__linux)
+#if defined(__linux__) || defined(__APPLE__)
     tstart_ = system_clock::now();
-#else
+#elif defined(_WIN32)
     QueryPerformanceCounter(&tstart_);
 #endif
   }
 
   double get_microsecond() {
-#if defined(__linux)
+#if defined(__linux__) || defined(__APPLE__)
     tend_ = system_clock::now();
     return duration_cast<microseconds>(tend_ - tstart_).count();
-#else
+#elif defined(_WIN32)
     QueryPerformanceCounter(&tend_);
     return 1000000.0 * (tend_.QuadPart - tstart_.QuadPart) /
            tfrequency_.QuadPart;
@@ -581,9 +581,9 @@ class Timer {
   }
 
  private:
-#if defined(__linux)
+#if defined(__linux__) || defined(__APPLE__)
   time_point<system_clock> tstart_, tend_;
-#else
+#elif defined(_WIN32)
   LARGE_INTEGER tstart_, tend_, tfrequency_;
 #endif
 };

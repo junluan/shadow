@@ -2,9 +2,9 @@
 #include "log.hpp"
 
 #if defined(USE_Protobuf)
-#if defined(__linux)
+#if defined(__linux__) || defined(__APPLE__)
 #include <unistd.h>
-#else
+#elif defined(_WIN32)
 #include <io.h>
 #endif
 #include <fcntl.h>
@@ -50,7 +50,7 @@ bool ReadProtoFromTextFile(const std::string& proto_file, Message* proto) {
 }
 
 bool ReadProtoFromBinaryFile(const std::string& proto_file, Message* proto) {
-#if !defined(__linux)
+#if defined(_WIN32)
   int fd = open(proto_file.c_str(), O_RDONLY | O_BINARY);
 #else
   int fd = open(proto_file.c_str(), O_RDONLY);

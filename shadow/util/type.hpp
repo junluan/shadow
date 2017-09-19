@@ -1,7 +1,7 @@
 #ifndef SHADOW_UTIL_TYPE_HPP
 #define SHADOW_UTIL_TYPE_HPP
 
-#if !defined(__linux)
+#if defined(_WIN32)
 #define _USE_MATH_DEFINES
 #endif
 
