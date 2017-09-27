@@ -95,11 +95,11 @@ void ConvertActivate(const caffe::NetParameter& caffe_model,
   shadow_op->set_type("Activate");
   ConvertCommon(caffe_model, caffe_layer, shadow_op);
 
-  // Linear: 0, Relu: 1, Leaky: 2, PRelu: 3
+  // PRelu: 0, Relu: 1, Leaky: 2, Sigmoid: 3, SoftPlus: 4, Tanh: 5
   if (caffe_layer.type() == "ReLU") {
     set_s_i(shadow_op, "type", 1);
   } else if (caffe_layer.type() == "PReLU") {
-    set_s_i(shadow_op, "type", 3);
+    set_s_i(shadow_op, "type", 0);
     if (caffe_layer.has_prelu_param()) {
       const auto& caffe_param = caffe_layer.prelu_param();
       if (caffe_param.has_channel_shared()) {

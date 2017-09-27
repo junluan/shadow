@@ -43,20 +43,25 @@ class Shadow(object):
         for top in tops:
             op_param.top.append(top)
 
-    def add_activate(self, name, bottoms, tops, activate_type='Relu', channel_shared=False):
+    def add_activate(self, name, bottoms, tops, activate_type='Relu', slope=0.1, channel_shared=False):
         op_param = self.net_param.op.add()
         self.add_common(op_param, name, 'Activate', bottoms, tops)
 
-        if activate_type == 'Linear':
+        if activate_type == 'PRelu':
             self.set_arg(op_param, 'type', 0, 's_i')
+            if channel_shared:
+                self.set_arg(op_param, 'channel_shared', channel_shared, 's_i')
         elif activate_type == 'Relu':
             self.set_arg(op_param, 'type', 1, 's_i')
         elif activate_type == 'Leaky':
             self.set_arg(op_param, 'type', 2, 's_i')
-        elif activate_type == 'PRelu':
+            self.set_arg(op_param, 'slope', slope, 's_f')
+        elif activate_type == 'Sigmoid':
             self.set_arg(op_param, 'type', 3, 's_i')
-            if channel_shared:
-                self.set_arg(op_param, 'channel_shared', channel_shared, 's_i')
+        elif activate_type == 'SoftPlus':
+            self.set_arg(op_param, 'type', 4, 's_i')
+        elif activate_type == 'Tanh':
+            self.set_arg(op_param, 'type', 5, 's_i')
         else:
             raise ValueError('Unsupported activate type', activate_type)
 
@@ -95,6 +100,32 @@ class Shadow(object):
             bias_blob = op_param.blobs.add()
             bias_blob.shape.append(in_shape[axis])
 
+    def add_binary(self, name, bottoms, tops, operation, scalar=None):
+        op_param = self.net_param.op.add()
+        self.add_common(op_param, name, 'Binary', bottoms, tops)
+
+        if operation == 'Add':
+            self.set_arg(op_param, 'operation', 0, 's_i')
+        elif operation == 'Sub':
+            self.set_arg(op_param, 'operation', 1, 's_i')
+        elif operation == 'Mul':
+            self.set_arg(op_param, 'operation', 2, 's_i')
+        elif operation == 'Div':
+            self.set_arg(op_param, 'operation', 3, 's_i')
+        elif operation == 'Pow':
+            self.set_arg(op_param, 'operation', 4, 's_i')
+        elif operation == 'Max':
+            self.set_arg(op_param, 'operation', 5, 's_i')
+        elif operation == 'Min':
+            self.set_arg(op_param, 'operation', 6, 's_i')
+        else:
+            raise ValueError('Unsupported operation type', operation)
+        if scalar is not None:
+            self.set_arg(op_param, 'scalar', scalar, 's_f')
+
+        in_shape = self.blobs[bottoms[0]]['shape']
+        self.blobs[tops[0]] = {'shape': in_shape}
+
     def add_concat(self, name, bottoms, tops, axis=1):
         op_param = self.net_param.op.add()
         self.add_common(op_param, name, 'Concat', bottoms, tops)
@@ -123,7 +154,9 @@ class Shadow(object):
         in_shape = self.blobs[bottoms[0]]['shape']
         out_shape = [in_shape[0], num_output]
         self.blobs[tops[0]] = {'shape': out_shape}
-        bottom_num = in_shape[1] * in_shape[2] * in_shape[3]
+        bottom_num = 1
+        for i in range(1, len(in_shape)):
+            bottom_num *= in_shape[i]
         if self.blob_shape:
             weight_blob = op_param.blobs.add()
             weight_blob.shape.append(num_output)
@@ -132,9 +165,9 @@ class Shadow(object):
                 bias_blob = op_param.blobs.add()
                 bias_blob.shape.append(num_output)
 
-    def add_convolution(self, name, bottoms, tops, num_output, kernel_size, stride=1, pad=0, dilation=1, bias_term=True, group=1):
+    def add_conv(self, name, bottoms, tops, num_output, kernel_size, stride=1, pad=0, dilation=1, bias_term=True, group=1):
         op_param = self.net_param.op.add()
-        self.add_common(op_param, name, 'Convolution', bottoms, tops)
+        self.add_common(op_param, name, 'Conv', bottoms, tops)
 
         self.set_arg(op_param, 'num_output', num_output, 's_i')
         self.set_arg(op_param, 'kernel_size', kernel_size, 's_i')
@@ -428,6 +461,42 @@ class Shadow(object):
 
         if axis != 1:
             self.set_arg(op_param, 'axis', axis, 's_i')
+
+        in_shape = self.blobs[bottoms[0]]['shape']
+        self.blobs[tops[0]] = {'shape': in_shape}
+
+    def add_unary(self, name, bottoms, tops, operation):
+        op_param = self.net_param.op.add()
+        self.add_common(op_param, name, 'Binary', bottoms, tops)
+
+        if operation == 'Abs':
+            self.set_arg(op_param, 'operation', 0, 's_i')
+        elif operation == 'Square':
+            self.set_arg(op_param, 'operation', 1, 's_i')
+        elif operation == 'Sqrt':
+            self.set_arg(op_param, 'operation', 2, 's_i')
+        elif operation == 'Log':
+            self.set_arg(op_param, 'operation', 3, 's_i')
+        elif operation == 'Exp':
+            self.set_arg(op_param, 'operation', 4, 's_i')
+        elif operation == 'Sin':
+            self.set_arg(op_param, 'operation', 5, 's_i')
+        elif operation == 'Cos':
+            self.set_arg(op_param, 'operation', 6, 's_i')
+        elif operation == 'Tan':
+            self.set_arg(op_param, 'operation', 7, 's_i')
+        elif operation == 'Asin':
+            self.set_arg(op_param, 'operation', 8, 's_i')
+        elif operation == 'Acos':
+            self.set_arg(op_param, 'operation', 9, 's_i')
+        elif operation == 'Atan':
+            self.set_arg(op_param, 'operation', 10, 's_i')
+        elif operation == 'Floor':
+            self.set_arg(op_param, 'operation', 11, 's_i')
+        elif operation == 'Ceil':
+            self.set_arg(op_param, 'operation', 12, 's_i')
+        else:
+            raise ValueError('Unsupported operation type', operation)
 
         in_shape = self.blobs[bottoms[0]]['shape']
         self.blobs[tops[0]] = {'shape': in_shape}

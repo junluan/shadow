@@ -14,6 +14,7 @@
 
 #include <algorithm>
 #include <cfloat>
+#include <cmath>
 
 namespace Shadow {
 

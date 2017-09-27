@@ -17,9 +17,17 @@ class ActivateOp : public Operator {
   void Release() override;
 
  private:
-  enum { kLinear = 0, kRelu = 1, kLeaky = 2, kPRelu = 3 };
+  enum {
+    kPRelu = 0,
+    kRelu = 1,
+    kLeaky = 2,
+    kSigmoid = 3,
+    kSoftPlus = 4,
+    kTanh = 5
+  };
 
   int activate_type_;
+  float slope_;
   bool channel_shared_;
 };
 

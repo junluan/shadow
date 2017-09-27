@@ -4,7 +4,7 @@
 namespace Shadow {
 
 void BatchNormOp::Setup() {
-  use_global_stats_ = get_single_argument<bool>("use_global_stats", true);
+  use_global_stats_ = get_single_argument<bool>("use_global_stats", false);
   if (bottoms<float>(0)->num_axes() == 1) {
     channels_ = 1;
   } else {

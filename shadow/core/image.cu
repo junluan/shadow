@@ -313,27 +313,36 @@ void LRN(const T *in_data, const VecInt &in_shape, int size, float alpha,
 }
 
 template <typename T>
-__device__ float ActivateValue(T x, int type) {
+__device__ float ActivateValue(T x, int type, float slope) {
+  // PRelu: 0, Relu: 1, Leaky: 2, Sigmoid: 3, SoftPlus: 4, Tanh: 5
   switch (type) {
     case 1:
-      return x * (x > 0); /*relu*/
+      return x * (x > 0);
     case 2:
-      return (x > 0) ? x : T(.1) * x; /*leaky*/
+      return x > 0 ? x : T(slope * x);
+    case 3:
+      return 1 / (1 + expf(-x));
+    case 4:
+      return logf(1 + expf(x));
+    case 5: {
+      T exp_2x = expf(2 * x);
+      return (exp_2x - 1) / (exp_2x + 1);
+    }
     default:
       return x;
   }
 }
 
 template <typename T>
-__global__ void KernelActivate(T *data, int count, int type) {
+__global__ void KernelActivate(T *data, int count, int type, float slope) {
   CUDA_KERNEL_LOOP(globalid, count) {
-    data[globalid] = ActivateValue(data[globalid], type);
+    data[globalid] = ActivateValue(data[globalid], type, slope);
   }
 }
 
 template <typename T>
-void Activate(T *data, int count, int type) {
-  KernelActivate<T><<<GetBlocks(count), NumThreads>>>(data, count, type);
+void Activate(T *data, int count, int type, float slope) {
+  KernelActivate<T><<<GetBlocks(count), NumThreads>>>(data, count, type, slope);
   CUDA_CHECK(cudaPeekAtLastError());
 }
 
@@ -386,7 +395,7 @@ template void Reorg(const float *in_data, const VecInt &in_shape, int stride,
 template void LRN(const float *in_data, const VecInt &in_shape, int size,
                   float alpha, float beta, float k, float *scale_data,
                   float *out_data);
-template void Activate(float *data, int count, int type);
+template void Activate(float *data, int count, int type, float slope);
 template void PRelu(float *data, const VecInt &in_shape, bool channel_shared,
                     const float *slope_data);
 #endif

@@ -197,23 +197,30 @@ __kernel void LRN(__global float *in_data, int count,
       in_data[globalid] * pow(scale_data[globalid], negative_beta);
 }
 
-inline float ActivateValue(float x, int type) {
+inline float ActivateValue(float x, int type, float slope) {
+  // PRelu: 0, Relu: 1, Leaky: 2, Sigmoid: 3, SoftPlus: 4, Tanh: 5
   switch (type) {
-    case 0:
-      return x; /*linear*/
     case 1:
-      return x * (x > 0); /*relu*/
+      return x * (x > 0);
     case 2:
-      return (x > 0) ? x : .1f * x; /*leaky*/
+      return x > 0 ? x : slope * x;
+    case 3:
+      return 1 / (1 + exp(-x));
+    case 4:
+      return log(1 + exp(x));
+    case 5: {
+      float exp_2x = exp(2 * x);
+      return (exp_2x - 1) / (exp_2x + 1);
+    }
     default:
       return x;
   }
 }
 
-__kernel void Activate(__global float *data, int count, int type) {
+__kernel void Activate(__global float *data, int count, int type, float slope) {
   CL_KERNEL_LOOP(globalid, count)
 
-  data[globalid] = ActivateValue(data[globalid], type);
+  data[globalid] = ActivateValue(data[globalid], type, slope);
 }
 
 __kernel void PRelu(__global float *data, int count, int channels, int dim,

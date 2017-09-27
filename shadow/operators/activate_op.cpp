@@ -6,11 +6,12 @@ namespace Shadow {
 
 void ActivateOp::Setup() {
   activate_type_ = get_single_argument<int>("type", 1);
+  slope_ = get_single_argument<float>("slope", 0.1);
+  channel_shared_ = get_single_argument<bool>("channel_shared", false);
   CHECK_GE(activate_type_, 0);
-  CHECK_LE(activate_type_, 3);
+  CHECK_LE(activate_type_, 5);
 
-  if (activate_type_ == 3) {
-    channel_shared_ = get_single_argument<bool>("channel_shared", false);
+  if (activate_type_ == kPRelu) {
     CHECK_GE(bottoms<float>(0)->num_axes(), 2);
     int channels = bottoms<float>(0)->shape(1);
     if (blobs_size() == 0) {
@@ -53,9 +54,11 @@ void ActivateOp::Forward() {
     Blas::BlasScopy(bottom->count(), bottom->data(), 0, top->mutable_data(), 0);
   }
 
-  // Linear: 0, Relu: 1, Leaky: 2, PRelu: 3
-  if (activate_type_ == kRelu || activate_type_ == kLeaky) {
-    Image::Activate(top->mutable_data(), top->count(), activate_type_);
+  // PRelu: 0, Relu: 1, Leaky: 2, Sigmoid: 3, SoftPlus: 4, Tanh: 5
+  if (activate_type_ == kRelu || activate_type_ == kLeaky ||
+      activate_type_ == kSigmoid || activate_type_ == kSoftPlus ||
+      activate_type_ == kTanh) {
+    Image::Activate(top->mutable_data(), top->count(), activate_type_, slope_);
   } else if (activate_type_ == kPRelu) {
     Image::PRelu(top->mutable_data(), top->shape(), channel_shared_,
                  blobs<float>(0)->data());
