@@ -68,12 +68,13 @@ class Shadow(object):
         in_shape = self.blobs[bottoms[0]]['shape']
         self.blobs[tops[0]] = {'shape': in_shape}
 
-    def add_batch_norm(self, name, bottoms, tops, use_global_stats=True):
+    def add_batch_norm(self, name, bottoms, tops, use_global_stats=True, eps=1e-5):
         op_param = self.net_param.op.add()
         self.add_common(op_param, name, 'BatchNorm', bottoms, tops)
 
         if not use_global_stats:
             self.set_arg(op_param, 'use_global_stats', use_global_stats, 's_i')
+        self.set_arg(op_param, 'eps', eps, 's_f')
 
         in_shape = self.blobs[bottoms[0]]['shape']
         self.blobs[tops[0]] = {'shape': in_shape}
@@ -308,7 +309,7 @@ class Shadow(object):
             out_shape.append(in_shape[o])
         self.blobs[tops[0]] = {'shape': out_shape}
 
-    def add_pooling(self, name, bottoms, tops, pool, kernel_size, stride=1, pad=0, global_pooling=False):
+    def add_pooling(self, name, bottoms, tops, pool, kernel_size, stride=1, pad=0, global_pooling=False, full_pooling=True):
         op_param = self.net_param.op.add()
         self.add_common(op_param, name, 'Pooling', bottoms, tops)
 
@@ -321,9 +322,14 @@ class Shadow(object):
         self.set_arg(op_param, 'pad', pad, 's_i')
         if global_pooling:
             self.set_arg(op_param, 'global_pooling', global_pooling, 's_i')
+        if not full_pooling:
+            self.set_arg(op_param, 'full_pooling', full_pooling, 's_i')
 
         def pooling_out_size(dim, ks, sd, pa):
-            return int(math.ceil(float(dim + 2 * pa - ks) / sd)) + 1
+            if full_pooling:
+                return int(math.ceil(float(dim + 2 * pa - ks) / sd)) + 1
+            else:
+                return int(math.floor(float(dim + 2 * pa - ks) / sd)) + 1
 
         in_shape = self.blobs[bottoms[0]]['shape']
         out_shape = in_shape[:]

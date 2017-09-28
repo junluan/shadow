@@ -92,8 +92,8 @@ __global__ void KernelPooling(const T *in_data, int count, int in_c, int in_h,
     int b_out = temp / in_c;
 
     int kistart = i_out * stride - pad, kjstart = j_out * stride - pad;
-    int kiend = min(kistart + kernel_size, in_h);
-    int kjend = min(kjstart + kernel_size, in_w);
+    int kiend = min(kistart + kernel_size, in_h + pad);
+    int kjend = min(kjstart + kernel_size, in_w + pad);
     int pool_size = (kiend - kistart) * (kjend - kjstart);
     kistart = max(kistart, 0), kjstart = max(kjstart, 0);
     kiend = min(kiend, in_h), kjend = min(kjend, in_w);

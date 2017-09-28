@@ -18,7 +18,7 @@ class PoolingOp : public Operator {
 
  private:
   int pool_type_, kernel_size_, stride_, pad_;
-  bool global_pooling_;
+  bool global_pooling_, full_pooling_;
 
 #if defined(USE_CUDNN)
   cudnnPoolingDescriptor_t pooling_desc_ = nullptr;
@@ -27,10 +27,15 @@ class PoolingOp : public Operator {
 #endif
 };
 
-inline int pooling_out_size(int dim, int kernel_size, int stride, int pad) {
-  return static_cast<int>(std::ceil(
-             static_cast<float>(dim + 2 * pad - kernel_size) / stride)) +
-         1;
+inline int pooling_out_size(int dim, int kernel_size, int stride, int pad,
+                            bool full_pooling = true) {
+  if (full_pooling) {
+    return static_cast<int>(
+        std::ceil((dim + 2.f * pad - kernel_size) / stride) + 1);
+  } else {
+    return static_cast<int>(
+        std::floor((dim + 2.f * pad - kernel_size) / stride) + 1);
+  }
 }
 
 }  // namespace Shadow

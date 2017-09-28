@@ -4,7 +4,8 @@
 namespace Shadow {
 
 void BatchNormOp::Setup() {
-  use_global_stats_ = get_single_argument<bool>("use_global_stats", false);
+  use_global_stats_ = get_single_argument<bool>("use_global_stats", true);
+  eps_ = get_single_argument<float>("eps", 1e-5);
   if (bottoms<float>(0)->num_axes() == 1) {
     channels_ = 1;
   } else {
@@ -108,7 +109,7 @@ void BatchNormOp::Forward() {
                     sum_batch_multiplier_->data(), 0, 0,
                     variance_->mutable_data(), 0);
   }
-  Blas::Add(variance_->count(), variance_->data(), 0, EPS,
+  Blas::Add(variance_->count(), variance_->data(), 0, eps_,
             variance_->mutable_data(), 0);
   Blas::Pow(variance_->count(), variance_->data(), 0, 0.5,
             variance_->mutable_data(), 0);

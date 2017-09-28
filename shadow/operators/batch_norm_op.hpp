@@ -18,7 +18,7 @@ class BatchNormOp : public Operator {
 
  private:
   bool use_global_stats_;
-  float scale_;
+  float eps_, scale_;
   int channels_, spatial_dim_;
 
   BlobF *mean_ = nullptr, *variance_ = nullptr, *temp_ = nullptr;

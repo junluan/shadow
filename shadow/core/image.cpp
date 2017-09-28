@@ -83,8 +83,8 @@ void Pooling(const T *in_data, const VecInt &in_shape, int kernel_size,
       for (int h = 0; h < out_h; ++h) {
         for (int w = 0; w < out_w; ++w) {
           int kistart = h * stride - pad, kjstart = w * stride - pad;
-          int kiend = std::min(kistart + kernel_size, in_h);
-          int kjend = std::min(kjstart + kernel_size, in_w);
+          int kiend = std::min(kistart + kernel_size, in_h + pad);
+          int kjend = std::min(kjstart + kernel_size, in_w + pad);
           int pool_size = (kiend - kistart) * (kjend - kjstart);
           kistart = std::max(kistart, 0), kjstart = std::max(kjstart, 0);
           kiend = std::min(kiend, in_h), kjend = std::min(kjend, in_w);

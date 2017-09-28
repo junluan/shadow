@@ -16,6 +16,7 @@ void PoolingOp::Setup() {
     stride_ = 1;
     pad_ = 0;
   }
+  full_pooling_ = get_single_argument<bool>("full_pooling", true);
 
 #if defined(USE_CUDNN)
   cudnn::createPoolingDesc<float>(&pooling_desc_, pool_type_, &mode_,
@@ -34,8 +35,10 @@ void PoolingOp::Reshape() {
 
   int batch = bottom->shape(0), in_c = bottom->shape(1);
   int in_h = bottom->shape(2), in_w = bottom->shape(3);
-  int out_h = pooling_out_size(in_h, kernel_size_, stride_, pad_);
-  int out_w = pooling_out_size(in_w, kernel_size_, stride_, pad_);
+  int out_h =
+      pooling_out_size(in_h, kernel_size_, stride_, pad_, full_pooling_);
+  int out_w =
+      pooling_out_size(in_w, kernel_size_, stride_, pad_, full_pooling_);
   if (pad_) {
     if ((out_h - 1) * stride_ >= in_h + pad_) out_h--;
     if ((out_w - 1) * stride_ >= in_w + pad_) out_w--;

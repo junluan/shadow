@@ -121,6 +121,9 @@ void ConvertBatchNorm(const caffe::NetParameter& caffe_model,
     if (caffe_param.has_use_global_stats()) {
       set_s_i(shadow_op, "use_global_stats", caffe_param.use_global_stats());
     }
+    if (caffe_param.has_eps()) {
+      set_s_f(shadow_op, "eps", caffe_param.eps());
+    }
   }
 }
 
