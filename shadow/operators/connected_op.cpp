@@ -27,7 +27,8 @@ void ConnectedOp::Reshape() {
 
   if (bias_term_) {
     biases_multiplier_ =
-        op_ws_->CreateBlob<float>({batch}, op_name_ + "_biases_multiplier");
+        op_ws_->CreateBlob<float>(op_name_ + "_biases_multiplier");
+    biases_multiplier_->reshape({batch});
     Blas::Set(batch, 1, biases_multiplier_->mutable_data(), 0);
   }
 

@@ -31,10 +31,13 @@ void PermuteOp::Reshape() {
     }
   }
 
-  permute_order_ =
-      op_ws_->CreateBlob<int>({num_axes_}, op_name_ + "_permute_order");
-  old_steps_ = op_ws_->CreateBlob<int>({num_axes_}, op_name_ + "_old_steps");
-  new_steps_ = op_ws_->CreateBlob<int>({num_axes_}, op_name_ + "_new_steps");
+  permute_order_ = op_ws_->CreateBlob<int>(op_name_ + "_permute_order");
+  old_steps_ = op_ws_->CreateBlob<int>(op_name_ + "_old_steps");
+  new_steps_ = op_ws_->CreateBlob<int>(op_name_ + "_new_steps");
+
+  permute_order_->reshape({num_axes_});
+  old_steps_->reshape({num_axes_});
+  new_steps_->reshape({num_axes_});
 
   permute_order_->set_data(permute_order_data_.data(), num_axes_);
   old_steps_->set_data(old_steps.data(), num_axes_);

@@ -37,7 +37,10 @@ class Workspace {
   Blob<T> *CreateBlob(const VecInt &shape, const std::string &name,
                       bool shared = false) {
     if (HasBlob(name)) {
-      DLOG(WARNING) << "Blob " << name << " already exists. Skipping.";
+      if (!shape.empty()) {
+        CHECK(shape == GetBlob<T>(name)->shape()) << "Blob " << name
+                                                  << " shape mismatch";
+      }
     } else {
       blob_map_[name].first = typeid(T).name();
       if (!shape.empty()) {

@@ -38,20 +38,23 @@ void NormalizeOp::Reshape() {
   spatial_dim_ = in_h * in_w;
 
   if (!across_spatial_) {
-    norm_ = op_ws_->CreateBlob<float>({1, 1, in_h, in_w}, op_name_ + "_norm");
-    sum_channel_multiplier_ = op_ws_->CreateBlob<float>(
-        {1, in_c, 1, 1}, op_name_ + "_sum_channel_multiplier");
+    norm_ = op_ws_->CreateBlob<float>(op_name_ + "_norm");
+    norm_->reshape({1, 1, in_h, in_w});
+    sum_channel_multiplier_ =
+        op_ws_->CreateBlob<float>(op_name_ + "_sum_channel_multiplier");
+    sum_channel_multiplier_->reshape({1, in_c, 1, 1});
     Blas::Set(in_c, 1, sum_channel_multiplier_->mutable_data(), 0);
   }
 
   if (!channel_shared_) {
-    sum_spatial_multiplier_ = op_ws_->CreateBlob<float>(
-        {1, 1, in_h, in_w}, op_name_ + "_sum_spatial_multiplier");
+    sum_spatial_multiplier_ =
+        op_ws_->CreateBlob<float>(op_name_ + "_sum_spatial_multiplier");
+    sum_spatial_multiplier_->reshape({1, 1, in_h, in_w});
     Blas::Set(spatial_dim_, 1, sum_spatial_multiplier_->mutable_data(), 0);
   }
 
-  buffer_ =
-      op_ws_->CreateBlob<float>({1, in_c, in_h, in_w}, op_name_ + "_buffer");
+  buffer_ = op_ws_->CreateBlob<float>(op_name_ + "_buffer");
+  buffer_->reshape({1, in_c, in_h, in_w});
 
   DLOG(INFO) << op_name_ << "(" << op_type_ << "): " << bottom->name()
              << Util::format_vector(bottom->shape(), ",", "(", ")") << " -> "

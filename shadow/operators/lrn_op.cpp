@@ -20,7 +20,8 @@ void LRNOp::Reshape() {
 
   top->reshape(bottom->shape());
 
-  scale_ = op_ws_->CreateBlob<float>(bottom->shape(), op_name_ + "_scale");
+  scale_ = op_ws_->CreateBlob<float>(op_name_ + "_scale");
+  scale_->reshape(bottom->shape());
 
   DLOG(INFO) << op_name_ << "(" << op_type_ << "): " << bottom->name()
              << Util::format_vector(bottom->shape(), ",", "(", ")") << " -> "

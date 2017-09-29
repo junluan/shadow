@@ -24,7 +24,8 @@ void SoftmaxOp::Reshape() {
 
   VecInt scale_dims = bottom->shape();
   scale_dims[axis_] = 1;
-  scale_ = op_ws_->CreateBlob<float>({scale_dims}, op_name_ + "_scale");
+  scale_ = op_ws_->CreateBlob<float>(op_name_ + "_scale");
+  scale_->reshape(scale_dims);
 
 #if defined(USE_CUDNN)
   cudnn::setTensor4dDesc<float>(&bottom_desc_, outer_num_, bottom->shape(axis_),
