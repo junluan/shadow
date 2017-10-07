@@ -17,6 +17,7 @@ class Network {
   void LoadModel(const std::string &proto_str, const float *weights_data,
                  const VecInt &in_shape = {});
 
+  void Reshape(const VecInt &in_shape);
   void Forward(const float *data = nullptr);
   void Release();
 
@@ -48,7 +49,7 @@ class Network {
   void LoadProtoStrOrText(const std::string &proto_str_or_text,
                           shadow::NetParam *net_param);
 
-  void Reshape(const VecInt &in_shape);
+  void Initial(const VecInt &in_shape);
 
   void CopyWeights(const std::vector<const void *> &weights);
   void CopyWeights(const float *weights_data);

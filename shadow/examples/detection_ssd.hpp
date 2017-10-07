@@ -10,7 +10,7 @@ class DetectionSSD final : public Method {
   DetectionSSD() = default;
   ~DetectionSSD() override { Release(); }
 
-  void Setup(const std::string &model_file, const VecInt &classes,
+  void Setup(const VecString &model_files, const VecInt &classes,
              const VecInt &in_shape) override;
 
   void Predict(const JImage &im_src, const VecRectF &rois,

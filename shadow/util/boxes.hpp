@@ -67,11 +67,14 @@ template <typename Dtype>
 float IoU(const Box<Dtype> &box_a, const Box<Dtype> &box_b);
 
 template <typename Dtype>
+std::vector<Box<Dtype>> NMS(const std::vector<Box<Dtype>> &boxes,
+                            float iou_threshold);
+template <typename Dtype>
 std::vector<Box<Dtype>> NMS(const std::vector<std::vector<Box<Dtype>>> &Bboxes,
                             float iou_threshold);
 
 template <typename Dtype>
-void Smooth(const Box<Dtype> &old_boxes, Box<Dtype> *new_boxes, float smooth);
+void Smooth(const Box<Dtype> &old_box, Box<Dtype> *new_box, float smooth);
 template <typename Dtype>
 void Smooth(const std::vector<Box<Dtype>> &old_boxes,
             std::vector<Box<Dtype>> *new_boxes, float smooth);

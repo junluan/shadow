@@ -1,6 +1,7 @@
 #ifndef SHADOW_EXAMPLES_DEMO_DETECTION_HPP
 #define SHADOW_EXAMPLES_DEMO_DETECTION_HPP
 
+#include "detection_mtcnn.hpp"
 #include "detection_ssd.hpp"
 #include "detection_yolo.hpp"
 
@@ -11,6 +12,8 @@ class DemoDetection {
   explicit DemoDetection(const std::string &method_name = "ssd") {
     if (method_name == "ssd") {
       method_ = new DetectionSSD();
+    } else if (method_name == "mtcnn") {
+      method_ = new DetectionMTCNN();
     } else if (method_name == "yolo") {
       method_ = new DetectionYOLO();
     } else {
@@ -19,9 +22,9 @@ class DemoDetection {
   }
   ~DemoDetection() { Release(); }
 
-  void Setup(const std::string &model_file, const VecInt &classes,
+  void Setup(const VecString &model_files, const VecInt &classes,
              const VecInt &in_shape) {
-    method_->Setup(model_file, classes, in_shape);
+    method_->Setup(model_files, classes, in_shape);
   }
   void Release() {
     if (method_ != nullptr) {

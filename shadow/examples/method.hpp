@@ -13,7 +13,7 @@ class Method {
   Method() = default;
   virtual ~Method() = default;
 
-  virtual void Setup(const std::string &model_file, const VecInt &classes,
+  virtual void Setup(const VecString &model_files, const VecInt &classes,
                      const VecInt &in_shape) {
     LOG(INFO) << "Setup method!";
   }
@@ -42,7 +42,8 @@ class Method {
 };
 
 inline void ConvertData(const JImage &im_src, float *data, const RectF &roi,
-                        int channel, int height, int width, int flag = 1) {
+                        int channel, int height, int width, int flag = 1,
+                        bool transpose = false) {
   CHECK_NOTNULL(im_src.data());
   CHECK_NOTNULL(data);
 
@@ -120,7 +121,11 @@ inline void ConvertData(const JImage &im_src, float *data, const RectF &roi,
         s_h = static_cast<int>(h_off + step_h * h);
         s_w = static_cast<int>(w_off + step_w * w);
         src_offset = s_h * src_step + s_w * c_;
-        dst_offset = h * width + w;
+        if (transpose) {
+          dst_offset = w * height + h;
+        } else {
+          dst_offset = h * width + w;
+        }
         data_r[dst_offset] = data_src[src_offset + loc_r];
         data_g[dst_offset] = data_src[src_offset + loc_g];
         data_b[dst_offset] = data_src[src_offset + loc_b];

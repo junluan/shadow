@@ -7,22 +7,44 @@ void Network::Setup(int device_id) { Kernel::Setup(device_id); }
 
 void Network::LoadModel(const std::string &proto_bin, const VecInt &in_shape) {
   LoadProtoBin(proto_bin, &net_param_);
-  Reshape(in_shape);
+  Initial(in_shape);
 }
 
 void Network::LoadModel(const std::string &proto_str,
                         const std::vector<const void *> &weights,
                         const VecInt &in_shape) {
   LoadProtoStrOrText(proto_str, &net_param_);
-  Reshape(in_shape);
+  Initial(in_shape);
   CopyWeights(weights);
 }
 
 void Network::LoadModel(const std::string &proto_str, const float *weights_data,
                         const VecInt &in_shape) {
   LoadProtoStrOrText(proto_str, &net_param_);
-  Reshape(in_shape);
+  Initial(in_shape);
   CopyWeights(weights_data);
+}
+
+void Network::Reshape(const VecInt &in_shape) {
+  CHECK_EQ(in_shape.size(), 4) << "in_shape dimension must be four!";
+  if (in_shape != in_shape_) {
+    if (ops_.empty()) return;
+    auto *data_op = ops_[0];
+    CHECK(data_op->type().find("Data") != std::string::npos)
+        << "The first Op must be Data operator!";
+    auto *in_blob = data_op->mutable_bottoms<float>(0);
+    if (in_blob != nullptr) {
+      in_blob->reshape(in_shape);
+      for (auto &op : ops_) {
+        op->Reshape();
+      }
+      in_shape_ = in_shape;
+    } else {
+      LOG(FATAL) << "in_blob is nullptr";
+    }
+  } else {
+    DLOG(INFO) << "in_shape is the same, skip Reshape";
+  }
 }
 
 void Network::Forward(const float *data) {
@@ -77,7 +99,7 @@ void Network::LoadProtoStrOrText(const std::string &proto_str_or_text,
                                                << proto_str_or_text;
 }
 
-void Network::Reshape(const VecInt &in_shape) {
+void Network::Initial(const VecInt &in_shape) {
   CHECK_GT(net_param_.op_size(), 0);
   const auto &data_op = net_param_.op(0);
   CHECK(data_op.type().find("Data") != std::string::npos)

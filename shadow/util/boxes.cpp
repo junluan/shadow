@@ -20,15 +20,14 @@ Dtype Size(const Box<Dtype> &box) {
 
 template <typename Dtype>
 inline Dtype BorderOverlap(Dtype a1, Dtype a2, Dtype b1, Dtype b2) {
-  Dtype left = a1 > b1 ? a1 : b1;
-  Dtype right = a2 < b2 ? a2 : b2;
+  auto left = a1 > b1 ? a1 : b1, right = a2 < b2 ? a2 : b2;
   return right - left;
 }
 
 template <typename Dtype>
 float Intersection(const Box<Dtype> &box_a, const Box<Dtype> &box_b) {
-  Dtype width = BorderOverlap(box_a.xmin, box_a.xmax, box_b.xmin, box_b.xmax);
-  Dtype height = BorderOverlap(box_a.ymin, box_a.ymax, box_b.ymin, box_b.ymax);
+  auto width = BorderOverlap(box_a.xmin, box_a.xmax, box_b.xmin, box_b.xmax);
+  auto height = BorderOverlap(box_a.ymin, box_a.ymax, box_b.ymin, box_b.ymax);
   if (width < 0 || height < 0) return 0;
   return width * height;
 }
@@ -54,22 +53,15 @@ inline bool SortBoxesDescend(const Box<Dtype> &box_a, const Box<Dtype> &box_b) {
 }
 
 template <typename Dtype>
-std::vector<Box<Dtype>> NMS(const std::vector<std::vector<Box<Dtype>>> &Bboxes,
+std::vector<Box<Dtype>> NMS(const std::vector<Box<Dtype>> &boxes,
                             float iou_threshold) {
-  std::vector<Box<Dtype>> all_boxes;
-  for (const auto &boxes : Bboxes) {
-    for (const auto &box : boxes) {
-      if (box.label != -1) {
-        all_boxes.push_back(box);
-      }
-    }
-  }
+  auto all_boxes = boxes;
   std::stable_sort(all_boxes.begin(), all_boxes.end(), SortBoxesDescend<Dtype>);
   for (int i = 0; i < all_boxes.size(); ++i) {
-    Box<Dtype> &box_i = all_boxes[i];
+    auto &box_i = all_boxes[i];
     if (box_i.label == -1) continue;
     for (int j = i + 1; j < all_boxes.size(); ++j) {
-      Box<Dtype> &box_j = all_boxes[j];
+      auto &box_j = all_boxes[j];
       if (box_j.label == -1 || box_i.label != box_j.label) continue;
       if (IoU(box_i, box_j) > iou_threshold) {
         float smooth = box_i.score / (box_i.score + box_j.score);
@@ -91,6 +83,20 @@ std::vector<Box<Dtype>> NMS(const std::vector<std::vector<Box<Dtype>>> &Bboxes,
   }
   all_boxes.clear();
   return out_boxes;
+}
+
+template <typename Dtype>
+std::vector<Box<Dtype>> NMS(const std::vector<std::vector<Box<Dtype>>> &Bboxes,
+                            float iou_threshold) {
+  std::vector<Box<Dtype>> all_boxes;
+  for (const auto &boxes : Bboxes) {
+    for (const auto &box : boxes) {
+      if (box.label != -1) {
+        all_boxes.push_back(box);
+      }
+    }
+  }
+  return NMS(all_boxes, iou_threshold);
 }
 
 template <typename Dtype>
@@ -119,8 +125,8 @@ void Amend(std::vector<std::vector<Box<Dtype>>> *Bboxes, const VecRectF &crops,
            int height, int width) {
   CHECK_EQ(Bboxes->size(), crops.size());
   for (int i = 0; i < crops.size(); ++i) {
-    std::vector<Box<Dtype>> &boxes = Bboxes->at(i);
-    const RectF &crop = crops[i];
+    auto &boxes = Bboxes->at(i);
+    const auto &crop = crops[i];
     bool normalize = crop.h <= 1 || crop.w <= 1;
     if (normalize) {
       CHECK_GT(height, 1);
@@ -152,6 +158,9 @@ template float Union(const BoxF &box_a, const BoxF &box_b);
 
 template float IoU(const BoxI &box_a, const BoxI &box_b);
 template float IoU(const BoxF &box_a, const BoxF &box_b);
+
+template VecBoxI NMS(const VecBoxI &boxes, float iou_threshold);
+template VecBoxF NMS(const VecBoxF &boxes, float iou_threshold);
 
 template VecBoxI NMS(const std::vector<VecBoxI> &Bboxes, float iou_threshold);
 template VecBoxF NMS(const std::vector<VecBoxF> &Bboxes, float iou_threshold);

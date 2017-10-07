@@ -2,11 +2,11 @@
 
 namespace Shadow {
 
-void DetectionYOLO::Setup(const std::string &model_file, const VecInt &classes,
+void DetectionYOLO::Setup(const VecString &model_files, const VecInt &classes,
                           const VecInt &in_shape) {
   net_.Setup();
 
-  net_.LoadModel(model_file, in_shape);
+  net_.LoadModel(model_files[0], in_shape);
 
   batch_ = net_.in_shape()[0];
   in_c_ = net_.in_shape()[1];

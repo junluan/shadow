@@ -49,7 +49,15 @@ void ConvertInput(const caffe::NetParameter& caffe_deploy,
   for (const auto& top_name : caffe_deploy.input()) {
     shadow_op->add_top(top_name);
   }
-  set_v_i(shadow_op, "data_shape", input_shape);
+  if (caffe_deploy.input_dim_size() > 0) {
+    std::vector<int> shape;
+    for (const auto dim : caffe_deploy.input_dim()) {
+      shape.push_back(dim);
+    }
+    set_v_i(shadow_op, "data_shape", shape);
+  } else {
+    set_v_i(shadow_op, "data_shape", input_shape);
+  }
 }
 
 void ConvertData(const caffe::LayerParameter& data_layer,

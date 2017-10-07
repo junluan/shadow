@@ -62,11 +62,11 @@ inline void ApplyNMSFast(const VecBoxF &bboxes, VecFloat &scores,
   }
 }
 
-void DetectionSSD::Setup(const std::string &model_file, const VecInt &classes,
+void DetectionSSD::Setup(const VecString &model_files, const VecInt &classes,
                          const VecInt &in_shape) {
   net_.Setup();
 
-  net_.LoadModel(model_file, in_shape);
+  net_.LoadModel(model_files[0], in_shape);
 
   batch_ = net_.in_shape()[0];
   in_c_ = net_.in_shape()[1];
