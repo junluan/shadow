@@ -14,10 +14,12 @@ class DetectionSSD final : public Method {
              const VecInt &in_shape) override;
 
   void Predict(const JImage &im_src, const VecRectF &rois,
-               std::vector<VecBoxF> *Bboxes) override;
+               std::vector<VecBoxF> *Gboxes,
+               std::vector<VecPointF> *Gpoints) override;
 #if defined(USE_OpenCV)
   void Predict(const cv::Mat &im_mat, const VecRectF &rois,
-               std::vector<VecBoxF> *Bboxes) override;
+               std::vector<VecBoxF> *Gboxes,
+               std::vector<VecPointF> *Gpoints) override;
 #endif
 
   void Release() override;
@@ -26,7 +28,7 @@ class DetectionSSD final : public Method {
   using LabelBBox = std::map<int, VecBoxF>;
   using VecLabelBBox = std::vector<LabelBBox>;
 
-  void Process(const float *data, std::vector<VecBoxF> *Bboxes);
+  void Process(const float *data, std::vector<VecBoxF> *Gboxes);
 
   void GetLocPredictions(const float *loc_data, int num,
                          int num_preds_per_class, int num_loc_classes,

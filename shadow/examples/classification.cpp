@@ -2,7 +2,7 @@
 
 namespace Shadow {
 
-`void Classification::Setup(const VecString &model_files, const VecInt &classes,
+void Classification::Setup(const VecString &model_files, const VecInt &classes,
                            const VecInt &in_shape) {
   net_.Setup();
 

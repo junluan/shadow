@@ -14,10 +14,12 @@ class DetectionMTCNN final : public Method {
              const VecInt &in_shape) override;
 
   void Predict(const JImage &im_src, const VecRectF &rois,
-               std::vector<VecBoxF> *Bboxes) override;
+               std::vector<VecBoxF> *Gboxes,
+               std::vector<VecPointF> *Gpoints) override;
 #if defined(USE_OpenCV)
   void Predict(const cv::Mat &im_mat, const VecRectF &rois,
-               std::vector<VecBoxF> *Bboxes) override;
+               std::vector<VecBoxF> *Gboxes,
+               std::vector<VecPointF> *Gpoints) override;
 #endif
 
   void Release() override;
@@ -31,7 +33,7 @@ class DetectionMTCNN final : public Method {
                       VecBoxF *boxes);
   void Process_net_48(const float *data, const VecInt &in_shape, float height,
                       float width, float threshold, const VecBoxF &net_24_boxes,
-                      VecBoxF *boxes);
+                      VecBoxF *boxes, VecPointF *points);
 
   void CalculateScales(float height, float width, float factor, float max_side,
                        float min_side, VecFloat *scales);
@@ -43,6 +45,7 @@ class DetectionMTCNN final : public Method {
       nms_thresholds_, scales_;
   VecInt net_12_in_shape_, net_24_in_shape_, net_48_in_shape_;
   VecBoxF net_12_boxes_, net_24_boxes_, net_48_boxes_;
+  VecPointF net_48_points_;
   int net_24_in_c_, net_24_in_h_, net_24_in_w_, net_24_in_num_;
   int net_48_in_c_, net_48_in_h_, net_48_in_w_, net_48_in_num_;
   float factor_, max_side_, min_side_;

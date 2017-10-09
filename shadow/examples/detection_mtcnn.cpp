@@ -30,8 +30,9 @@ void DetectionMTCNN::Setup(const VecString &model_files, const VecInt &classes,
 }
 
 void DetectionMTCNN::Predict(const JImage &im_src, const VecRectF &rois,
-                             std::vector<VecBoxF> *Bboxes) {
-  Bboxes->clear();
+                             std::vector<VecBoxF> *Gboxes,
+                             std::vector<VecPointF> *Gpoints) {
+  Gboxes->clear();
   net_12_boxes_.clear(), net_24_boxes_.clear(), net_48_boxes_.clear();
   for (const auto &roi : rois) {
     float crop_h = roi.h <= 1 ? roi.h * im_src.h_ : roi.h;
@@ -52,7 +53,7 @@ void DetectionMTCNN::Predict(const JImage &im_src, const VecRectF &rois,
     }
     net_12_boxes_ = Boxes::NMS(net_12_boxes_, nms_thresholds_[0]);
     if (net_12_boxes_.empty()) {
-      Bboxes->push_back(net_12_boxes_);
+      Gboxes->push_back(net_12_boxes_);
       continue;
     }
 
@@ -68,7 +69,7 @@ void DetectionMTCNN::Predict(const JImage &im_src, const VecRectF &rois,
                    thresholds_[1], net_12_boxes_, &net_24_boxes_);
     net_24_boxes_ = Boxes::NMS(net_24_boxes_, nms_thresholds_[1]);
     if (net_24_boxes_.empty()) {
-      Bboxes->push_back(net_24_boxes_);
+      Gboxes->push_back(net_24_boxes_);
       continue;
     }
 
@@ -81,17 +82,19 @@ void DetectionMTCNN::Predict(const JImage &im_src, const VecRectF &rois,
                   net_48_in_w_, 1, true);
     }
     Process_net_48(net_48_in_data_.data(), net_48_in_shape_, crop_h, crop_w,
-                   thresholds_[2], net_24_boxes_, &net_48_boxes_);
+                   thresholds_[2], net_24_boxes_, &net_48_boxes_,
+                   &net_48_points_);
     net_48_boxes_ = Boxes::NMS(net_48_boxes_, nms_thresholds_[2]);
-    Bboxes->push_back(net_48_boxes_);
+    Gboxes->push_back(net_48_boxes_);
   }
 }
 
 #if defined(USE_OpenCV)
 void DetectionMTCNN::Predict(const cv::Mat &im_mat, const VecRectF &rois,
-                             std::vector<VecBoxF> *Bboxes) {
+                             std::vector<VecBoxF> *Gboxes,
+                             std::vector<VecPointF> *Gpoints) {
   im_ini_.FromMat(im_mat, true);
-  Predict(im_ini_, rois, Bboxes);
+  Predict(im_ini_, rois, Gboxes, Gpoints);
 }
 #endif
 
@@ -199,15 +202,16 @@ void DetectionMTCNN::Process_net_24(const float *data, const VecInt &in_shape,
 
 void DetectionMTCNN::Process_net_48(const float *data, const VecInt &in_shape,
                                     float height, float width, float threshold,
-                                    const VecBoxF &net_24_boxes,
-                                    VecBoxF *boxes) {
+                                    const VecBoxF &net_24_boxes, VecBoxF *boxes,
+                                    VecPointF *points) {
   net_48_.Reshape(in_shape);
   net_48_.Forward(data);
 
   const auto *loc_data = net_48_.GetBlobDataByName<float>("conv6-2");
+  const auto *mark_data = net_48_.GetBlobDataByName<float>("conv6-3");
   const auto *conf_data = net_48_.GetBlobDataByName<float>("prob1");
 
-  boxes->clear();
+  boxes->clear(), points->clear();
   for (int b = 0; b < in_shape[0]; ++b) {
     int loc_offset = 4 * b, conf_offset = 2 * b;
     float conf = conf_data[conf_offset + 1];

@@ -70,7 +70,7 @@ template <typename Dtype>
 std::vector<Box<Dtype>> NMS(const std::vector<Box<Dtype>> &boxes,
                             float iou_threshold);
 template <typename Dtype>
-std::vector<Box<Dtype>> NMS(const std::vector<std::vector<Box<Dtype>>> &Bboxes,
+std::vector<Box<Dtype>> NMS(const std::vector<std::vector<Box<Dtype>>> &Gboxes,
                             float iou_threshold);
 
 template <typename Dtype>
@@ -80,7 +80,7 @@ void Smooth(const std::vector<Box<Dtype>> &old_boxes,
             std::vector<Box<Dtype>> *new_boxes, float smooth);
 
 template <typename Dtype>
-void Amend(std::vector<std::vector<Box<Dtype>>> *Bboxes, const VecRectF &crops,
+void Amend(std::vector<std::vector<Box<Dtype>>> *Gboxes, const VecRectF &crops,
            int height = 1, int width = 1);
 
 }  // namespace Boxes

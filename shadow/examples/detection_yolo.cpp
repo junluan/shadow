@@ -27,19 +27,20 @@ void DetectionYOLO::Setup(const VecString &model_files, const VecInt &classes,
 }
 
 void DetectionYOLO::Predict(const JImage &im_src, const VecRectF &rois,
-                            std::vector<VecBoxF> *Bboxes) {
+                            std::vector<VecBoxF> *Gboxes,
+                            std::vector<VecPointF> *Gpoints) {
   CHECK_LE(rois.size(), batch_);
   for (int b = 0; b < rois.size(); ++b) {
     ConvertData(im_src, in_data_.data() + b * in_num_, rois[b], in_c_, in_h_,
                 in_w_, 0);
   }
 
-  Process(in_data_.data(), Bboxes);
+  Process(in_data_.data(), Gboxes);
 
-  CHECK_EQ(Bboxes->size(), rois.size());
-  for (int b = 0; b < Bboxes->size(); ++b) {
+  CHECK_EQ(Gboxes->size(), rois.size());
+  for (int b = 0; b < Gboxes->size(); ++b) {
     float height = rois[b].h, width = rois[b].w;
-    VecBoxF &boxes = Bboxes->at(b);
+    auto &boxes = Gboxes->at(b);
     for (auto &box : boxes) {
       box.xmin *= width;
       box.xmax *= width;
@@ -51,9 +52,10 @@ void DetectionYOLO::Predict(const JImage &im_src, const VecRectF &rois,
 
 #if defined(USE_OpenCV)
 void DetectionYOLO::Predict(const cv::Mat &im_mat, const VecRectF &rois,
-                            std::vector<VecBoxF> *Bboxes) {
+                            std::vector<VecBoxF> *Gboxes,
+                            std::vector<VecPointF> *Gpoints) {
   im_ini_.FromMat(im_mat, true);
-  Predict(im_ini_, rois, Bboxes);
+  Predict(im_ini_, rois, Gboxes, Gpoints);
 }
 #endif
 
@@ -63,18 +65,18 @@ void DetectionYOLO::Release() {
   in_data_.clear(), out_data_.clear(), biases_.clear();
 }
 
-void DetectionYOLO::Process(const float *data, std::vector<VecBoxF> *Bboxes) {
+void DetectionYOLO::Process(const float *data, std::vector<VecBoxF> *Gboxes) {
   net_.Forward(data);
 
   memcpy(out_data_.data(), net_.GetBlobDataByName<float>("out_blob"),
          out_data_.size() * sizeof(float));
 
-  Bboxes->clear();
+  Gboxes->clear();
   for (int b = 0; b < batch_; ++b) {
     VecBoxF boxes;
     ConvertDetections(out_data_.data() + b * out_num_, biases_.data(),
                       num_classes_, num_km_, out_hw_, threshold_, &boxes);
-    Bboxes->push_back(boxes);
+    Gboxes->push_back(boxes);
   }
 }
 

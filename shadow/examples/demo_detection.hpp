@@ -42,8 +42,8 @@ class DemoDetection {
 #endif
 
   void Predict(const JImage &im_src, const VecRectF &rois,
-               std::vector<VecBoxF> *Bboxes) {
-    method_->Predict(im_src, rois, Bboxes);
+               std::vector<VecBoxF> *Gboxes, std::vector<VecPointF> *Gpoints) {
+    method_->Predict(im_src, rois, Gboxes, Gpoints);
   }
 
  private:
@@ -59,7 +59,8 @@ class DemoDetection {
 
   Method *method_;
   JImage im_ini_;
-  std::vector<VecBoxF> Bboxes_;
+  std::vector<VecBoxF> Gboxes_;
+  std::vector<VecPointF> Gpoints_;
   Timer timer_;
 };
 

@@ -86,10 +86,10 @@ std::vector<Box<Dtype>> NMS(const std::vector<Box<Dtype>> &boxes,
 }
 
 template <typename Dtype>
-std::vector<Box<Dtype>> NMS(const std::vector<std::vector<Box<Dtype>>> &Bboxes,
+std::vector<Box<Dtype>> NMS(const std::vector<std::vector<Box<Dtype>>> &Gboxes,
                             float iou_threshold) {
   std::vector<Box<Dtype>> all_boxes;
-  for (const auto &boxes : Bboxes) {
+  for (const auto &boxes : Gboxes) {
     for (const auto &box : boxes) {
       if (box.label != -1) {
         all_boxes.push_back(box);
@@ -121,11 +121,11 @@ void Smooth(const std::vector<Box<Dtype>> &old_boxes,
 }
 
 template <typename Dtype>
-void Amend(std::vector<std::vector<Box<Dtype>>> *Bboxes, const VecRectF &crops,
+void Amend(std::vector<std::vector<Box<Dtype>>> *Gboxes, const VecRectF &crops,
            int height, int width) {
-  CHECK_EQ(Bboxes->size(), crops.size());
+  CHECK_EQ(Gboxes->size(), crops.size());
   for (int i = 0; i < crops.size(); ++i) {
-    auto &boxes = Bboxes->at(i);
+    auto &boxes = Gboxes->at(i);
     const auto &crop = crops[i];
     bool normalize = crop.h <= 1 || crop.w <= 1;
     if (normalize) {
@@ -162,8 +162,8 @@ template float IoU(const BoxF &box_a, const BoxF &box_b);
 template VecBoxI NMS(const VecBoxI &boxes, float iou_threshold);
 template VecBoxF NMS(const VecBoxF &boxes, float iou_threshold);
 
-template VecBoxI NMS(const std::vector<VecBoxI> &Bboxes, float iou_threshold);
-template VecBoxF NMS(const std::vector<VecBoxF> &Bboxes, float iou_threshold);
+template VecBoxI NMS(const std::vector<VecBoxI> &Gboxes, float iou_threshold);
+template VecBoxF NMS(const std::vector<VecBoxF> &Gboxes, float iou_threshold);
 
 template void Smooth(const BoxI &old_boxes, BoxI *new_boxes, float smooth);
 template void Smooth(const BoxF &old_boxes, BoxF *new_boxes, float smooth);
@@ -173,9 +173,9 @@ template void Smooth(const VecBoxI &old_boxes, VecBoxI *new_boxes,
 template void Smooth(const VecBoxF &old_boxes, VecBoxF *new_boxes,
                      float smooth);
 
-template void Amend(std::vector<VecBoxI> *Bboxes, const VecRectF &crops,
+template void Amend(std::vector<VecBoxI> *Gboxes, const VecRectF &crops,
                     int height, int width);
-template void Amend(std::vector<VecBoxF> *Bboxes, const VecRectF &crops,
+template void Amend(std::vector<VecBoxF> *Gboxes, const VecRectF &crops,
                     int height, int width);
 
 }  // namespace Boxes

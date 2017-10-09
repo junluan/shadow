@@ -89,19 +89,20 @@ void DetectionSSD::Setup(const VecString &model_files, const VecInt &classes,
 }
 
 void DetectionSSD::Predict(const JImage &im_src, const VecRectF &rois,
-                           std::vector<VecBoxF> *Bboxes) {
+                           std::vector<VecBoxF> *Gboxes,
+                           std::vector<VecPointF> *Gpoints) {
   CHECK_LE(rois.size(), batch_);
   for (int b = 0; b < rois.size(); ++b) {
     ConvertData(im_src, in_data_.data() + b * in_num_, rois[b], in_c_, in_h_,
                 in_w_);
   }
 
-  Process(in_data_.data(), Bboxes);
+  Process(in_data_.data(), Gboxes);
 
-  CHECK_EQ(Bboxes->size(), rois.size());
-  for (int b = 0; b < Bboxes->size(); ++b) {
+  CHECK_EQ(Gboxes->size(), rois.size());
+  for (int b = 0; b < Gboxes->size(); ++b) {
     float height = rois[b].h, width = rois[b].w;
-    auto &boxes = Bboxes->at(b);
+    auto &boxes = Gboxes->at(b);
     for (auto &box : boxes) {
       box.xmin *= width;
       box.xmax *= width;
@@ -113,9 +114,10 @@ void DetectionSSD::Predict(const JImage &im_src, const VecRectF &rois,
 
 #if defined(USE_OpenCV)
 void DetectionSSD::Predict(const cv::Mat &im_mat, const VecRectF &rois,
-                           std::vector<VecBoxF> *Bboxes) {
+                           std::vector<VecBoxF> *Gboxes,
+                           std::vector<VecPointF> *Gpoints) {
   im_ini_.FromMat(im_mat, true);
-  Predict(im_ini_, rois, Bboxes);
+  Predict(im_ini_, rois, Gboxes, Gpoints);
 }
 #endif
 
@@ -125,7 +127,7 @@ void DetectionSSD::Release() {
   in_data_.clear();
 }
 
-void DetectionSSD::Process(const float *data, std::vector<VecBoxF> *Bboxes) {
+void DetectionSSD::Process(const float *data, std::vector<VecBoxF> *Gboxes) {
   net_.Forward(data);
 
   const auto *loc_data = net_.GetBlobDataByName<float>("mbox_loc");
@@ -206,7 +208,7 @@ void DetectionSSD::Process(const float *data, std::vector<VecBoxF> *Bboxes) {
     }
   }
 
-  Bboxes->clear();
+  Gboxes->clear();
   for (int b = 0; b < batch_; ++b) {
     VecBoxF boxes;
     const auto &conf_scores = all_conf_scores[b];
@@ -233,7 +235,7 @@ void DetectionSSD::Process(const float *data, std::vector<VecBoxF> *Bboxes) {
         }
       }
     }
-    Bboxes->push_back(boxes);
+    Gboxes->push_back(boxes);
   }
 }
 

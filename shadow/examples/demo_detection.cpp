@@ -7,9 +7,9 @@ void DemoDetection::Test(const std::string &image_file) {
   im_ini_.Read(image_file);
   VecRectF rois{RectF(0, 0, im_ini_.w_, im_ini_.h_)};
   timer_.start();
-  Predict(im_ini_, rois, &Bboxes_);
-  Boxes::Amend(&Bboxes_, rois);
-  const auto &boxes = Boxes::NMS(Bboxes_, 0.5);
+  Predict(im_ini_, rois, &Gboxes_, nullptr);
+  Boxes::Amend(&Gboxes_, rois);
+  const auto &boxes = Boxes::NMS(Gboxes_, 0.5);
   LOG(INFO) << "Predicted in " << timer_.get_millisecond() << " ms";
   for (const auto &boxF : boxes) {
     const BoxI box(boxF);
@@ -37,9 +37,9 @@ void DemoDetection::BatchTest(const std::string &list_file, bool image_write) {
     im_ini_.Read(im_path);
     VecRectF rois{RectF(0, 0, im_ini_.w_, im_ini_.h_)};
     timer_.start();
-    Predict(im_ini_, rois, &Bboxes_);
-    Boxes::Amend(&Bboxes_, rois);
-    const auto &boxes = Boxes::NMS(Bboxes_, 0.5);
+    Predict(im_ini_, rois, &Gboxes_, nullptr);
+    Boxes::Amend(&Gboxes_, rois);
+    const auto &boxes = Boxes::NMS(Gboxes_, 0.5);
     time_cost += timer_.get_millisecond();
     if (image_write) {
       const auto &out_file = Util::find_replace_last(im_path, ".", "-result.");
@@ -115,9 +115,9 @@ void DemoDetection::CaptureTest(cv::VideoCapture *capture,
     im_ini_.FromMat(im_mat);
     VecRectF rois{RectF(0, 0, im_ini_.w_, im_ini_.h_)};
     timer_.start();
-    Predict(im_ini_, rois, &Bboxes_);
-    Boxes::Amend(&Bboxes_, rois);
-    boxes = Boxes::NMS(Bboxes_, 0.5);
+    Predict(im_ini_, rois, &Gboxes_, nullptr);
+    Boxes::Amend(&Gboxes_, rois);
+    boxes = Boxes::NMS(Gboxes_, 0.5);
     Boxes::Smooth(old_boxes, &boxes, 0.3);
     time_cost = timer_.get_millisecond();
     old_boxes = boxes;

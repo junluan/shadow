@@ -14,16 +14,18 @@ class DetectionYOLO final : public Method {
              const VecInt &in_shape) override;
 
   void Predict(const JImage &im_src, const VecRectF &rois,
-               std::vector<VecBoxF> *Bboxes) override;
+               std::vector<VecBoxF> *Gboxes,
+               std::vector<VecPointF> *Gpoints) override;
 #if defined(USE_OpenCV)
   void Predict(const cv::Mat &im_mat, const VecRectF &rois,
-               std::vector<VecBoxF> *Bboxes) override;
+               std::vector<VecBoxF> *Gboxes,
+               std::vector<VecPointF> *Gpoints) override;
 #endif
 
   void Release() override;
 
  private:
-  void Process(const float *data, std::vector<VecBoxF> *Bboxes);
+  void Process(const float *data, std::vector<VecBoxF> *Gboxes);
 
   void ConvertDetections(float *data, float *biases, int classes, int num_km,
                          int side, float threshold, VecBoxF *boxes);
