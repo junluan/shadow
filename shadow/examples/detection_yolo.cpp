@@ -28,7 +28,7 @@ void DetectionYOLO::Setup(const VecString &model_files, const VecInt &classes,
 
 void DetectionYOLO::Predict(const JImage &im_src, const VecRectF &rois,
                             std::vector<VecBoxF> *Gboxes,
-                            std::vector<VecPointF> *Gpoints) {
+                            std::vector<std::vector<VecPointF>> *Gpoints) {
   CHECK_LE(rois.size(), batch_);
   for (int b = 0; b < rois.size(); ++b) {
     ConvertData(im_src, in_data_.data() + b * in_num_, rois[b], in_c_, in_h_,
@@ -53,7 +53,7 @@ void DetectionYOLO::Predict(const JImage &im_src, const VecRectF &rois,
 #if defined(USE_OpenCV)
 void DetectionYOLO::Predict(const cv::Mat &im_mat, const VecRectF &rois,
                             std::vector<VecBoxF> *Gboxes,
-                            std::vector<VecPointF> *Gpoints) {
+                            std::vector<std::vector<VecPointF>> *Gpoints) {
   im_ini_.FromMat(im_mat, true);
   Predict(im_ini_, rois, Gboxes, Gpoints);
 }

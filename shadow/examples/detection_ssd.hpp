@@ -15,11 +15,11 @@ class DetectionSSD final : public Method {
 
   void Predict(const JImage &im_src, const VecRectF &rois,
                std::vector<VecBoxF> *Gboxes,
-               std::vector<VecPointF> *Gpoints) override;
+               std::vector<std::vector<VecPointF>> *Gpoints) override;
 #if defined(USE_OpenCV)
   void Predict(const cv::Mat &im_mat, const VecRectF &rois,
                std::vector<VecBoxF> *Gboxes,
-               std::vector<VecPointF> *Gpoints) override;
+               std::vector<std::vector<VecPointF>> *Gpoints) override;
 #endif
 
   void Release() override;

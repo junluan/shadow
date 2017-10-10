@@ -20,7 +20,7 @@ class Method {
 
   virtual void Predict(const JImage &im_src, const VecRectF &rois,
                        std::vector<VecBoxF> *Gboxes,
-                       std::vector<VecPointF> *Gpoints) {
+                       std::vector<std::vector<VecPointF>> *Gpoints) {
     LOG(INFO) << "Predict for JImage!";
   }
   virtual void Predict(const JImage &im_src, const VecRectF &rois,
@@ -31,7 +31,7 @@ class Method {
 #if defined(USE_OpenCV)
   virtual void Predict(const cv::Mat &im_mat, const VecRectF &rois,
                        std::vector<VecBoxF> *Gboxes,
-                       std::vector<VecPointF> *Gpoints) {
+                       std::vector<std::vector<VecPointF>> *Gpoints) {
     LOG(INFO) << "Predict for Mat!";
   }
   virtual void Predict(const cv::Mat &im_mat, const VecRectF &rois,

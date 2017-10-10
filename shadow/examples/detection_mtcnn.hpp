@@ -5,6 +5,13 @@
 
 namespace Shadow {
 
+struct BoxInfo {
+  BoxF box;
+  float box_reg[4], landmark[10];
+};
+
+using VecBoxInfo = std::vector<BoxInfo>;
+
 class DetectionMTCNN final : public Method {
  public:
   DetectionMTCNN() = default;
@@ -15,39 +22,38 @@ class DetectionMTCNN final : public Method {
 
   void Predict(const JImage &im_src, const VecRectF &rois,
                std::vector<VecBoxF> *Gboxes,
-               std::vector<VecPointF> *Gpoints) override;
+               std::vector<std::vector<VecPointF>> *Gpoints) override;
 #if defined(USE_OpenCV)
   void Predict(const cv::Mat &im_mat, const VecRectF &rois,
                std::vector<VecBoxF> *Gboxes,
-               std::vector<VecPointF> *Gpoints) override;
+               std::vector<std::vector<VecPointF>> *Gpoints) override;
 #endif
 
   void Release() override;
 
  private:
-  void Process_net_12(const float *data, const VecInt &in_shape, float height,
-                      float width, float threshold, float scale,
-                      VecBoxF *boxes);
-  void Process_net_24(const float *data, const VecInt &in_shape, float height,
-                      float width, float threshold, const VecBoxF &net_12_boxes,
-                      VecBoxF *boxes);
-  void Process_net_48(const float *data, const VecInt &in_shape, float height,
-                      float width, float threshold, const VecBoxF &net_24_boxes,
-                      VecBoxF *boxes, VecPointF *points);
+  void Process_net_p(const float *data, const VecInt &in_shape, float threshold,
+                     float scale, VecBoxInfo *boxes);
+  void Process_net_r(const float *data, const VecInt &in_shape, float threshold,
+                     const VecBoxInfo &net_12_boxes, VecBoxInfo *boxes);
+  void Process_net_o(const float *data, const VecInt &in_shape, float threshold,
+                     const VecBoxInfo &net_24_boxes, VecBoxInfo *boxes);
 
   void CalculateScales(float height, float width, float factor, float max_side,
                        float min_side, VecFloat *scales);
 
-  BoxF Rect2SquareWithConstrain(const BoxF &box, float height, float width);
+  void BoxRegression(VecBoxInfo &boxes);
 
-  Network net_12_, net_24_, net_48_;
-  VecFloat net_12_in_data_, net_24_in_data_, net_48_in_data_, thresholds_,
-      nms_thresholds_, scales_;
-  VecInt net_12_in_shape_, net_24_in_shape_, net_48_in_shape_;
-  VecBoxF net_12_boxes_, net_24_boxes_, net_48_boxes_;
-  VecPointF net_48_points_;
-  int net_24_in_c_, net_24_in_h_, net_24_in_w_, net_24_in_num_;
-  int net_48_in_c_, net_48_in_h_, net_48_in_w_, net_48_in_num_;
+  void Box2SquareWithConstrain(VecBoxInfo &boxes, float height, float width);
+  void BoxWithConstrain(VecBoxInfo &boxes, float height, float width);
+
+  Network net_p_, net_r_, net_o_;
+  VecFloat net_p_in_data_, net_r_in_data_, net_o_in_data_, thresholds_, scales_;
+  VecInt net_p_in_shape_, net_r_in_shape_, net_o_in_shape_;
+  VecBoxInfo net_p_boxes_, net_r_boxes_, net_o_boxes_;
+  int net_p_stride_, net_p_cell_size_;
+  int net_r_in_c_, net_r_in_h_, net_r_in_w_, net_r_in_num_;
+  int net_o_in_c_, net_o_in_h_, net_o_in_w_, net_o_in_num_;
   float factor_, max_side_, min_side_;
   JImage im_ini_;
 };
