@@ -12,6 +12,8 @@
 #include <string>
 #include <vector>
 
+namespace Shadow {
+
 const float EPS = 0.000001f;
 
 class Scalar {
@@ -86,5 +88,7 @@ using ListInt = std::list<int>;
 using ListFloat = std::list<float>;
 using ListDouble = std::list<double>;
 using ListString = std::list<std::string>;
+
+}  // namespace Shadow
 
 #endif  // SHADOW_UTIL_TYPE_HPP

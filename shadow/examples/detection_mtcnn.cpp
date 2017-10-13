@@ -65,7 +65,7 @@ void DetectionMTCNN::Setup(const VecString &model_files, const VecInt &classes,
   net_o_in_w_ = net_o_in_shape_[3];
   net_o_in_num_ = net_o_in_c_ * net_o_in_h_ * net_o_in_w_;
 
-  factor_ = 0.709f, max_side_ = 360, min_side_ = 20;
+  factor_ = 0.709f, max_side_ = 360, min_side_ = 40;
   thresholds_ = {0.6f, 0.6f, 0.7f};
 }
 

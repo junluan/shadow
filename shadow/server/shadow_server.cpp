@@ -11,15 +11,15 @@ namespace Server {
 
 class ShadowServer final : public ::shadow::ShadowService::Service {
  public:
-  ShadowServer(const std::string &model, const VecInt &classes,
+  ShadowServer(const VecString &models, const VecInt &classes,
                const std::string &method) {
     if (method == "ssd" || method == "yolo") {
       detection_ = new DemoDetection(method);
-      detection_->Setup(model, classes, {1});
+      detection_->Setup(models, classes, {1});
       is_detection_ = true;
     } else if (method == "classification") {
       classification_ = new DemoClassification(method);
-      classification_->Setup(model, classes, {1});
+      classification_->Setup(models, classes, {1});
       is_detection_ = false;
     } else {
       LOG(FATAL) << "Unknown method " << method;
@@ -56,9 +56,9 @@ class ShadowServer final : public ::shadow::ShadowService::Service {
     im_ini_.Read(image_path);
     VecRectF rois{RectF(0, 0, im_ini_.w_, im_ini_.h_)};
     if (is_detection_) {
-      detection_->Predict(im_ini_, rois, &Bboxes_);
-      Boxes::Amend(&Bboxes_, rois);
-      const auto &boxes = Boxes::NMS(Bboxes_, 0.5);
+      detection_->Predict(im_ini_, rois, &Gboxes_, &Gpoints_);
+      Boxes::Amend(&Gboxes_, rois);
+      const auto &boxes = Boxes::NMS(Gboxes_, 0.5);
       reply->clear_objects();
       for (const auto &boxF : boxes) {
         const BoxI box(boxF);
@@ -102,7 +102,8 @@ class ShadowServer final : public ::shadow::ShadowService::Service {
   std::string method_name_;
   bool is_detection_ = true;
   JImage im_ini_;
-  std::vector<VecBoxF> Bboxes_;
+  std::vector<VecBoxF> Gboxes_;
+  std::vector<std::vector<VecPointF>> Gpoints_;
   std::vector<std::map<std::string, VecFloat>> scores_;
 };
 
@@ -114,7 +115,7 @@ int main(int argc, char **argv) {
   std::string server_address("localhost:50051");
   std::string model("models/ssd/adas/adas_model_finetune_reduce_3.shadowmodel");
 
-  Shadow::Server::ShadowServer service(model, {3}, "ssd");
+  Shadow::Server::ShadowServer service({model}, {3}, "ssd");
 
   grpc::ServerBuilder builder;
   builder.AddListeningPort(server_address, grpc::InsecureServerCredentials());
