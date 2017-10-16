@@ -1,5 +1,7 @@
 set(Shadow_LINKER_LIBS)
 
+shadow_find_os_arch(Shadow_Platform Shadow_Arch)
+
 if (${USE_CUDA})
   find_package(CUDA QUIET)
   if (CUDA_FOUND)

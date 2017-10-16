@@ -7,7 +7,7 @@ if (${BUILD_SERVICE} AND Protobuf_FOUND AND gRPC_FOUND)
     target_compile_definitions(grpc_proto PUBLIC -D_WIN32_WINNT=0x0600)
     set_target_properties(grpc_proto PROPERTIES DEBUG_POSTFIX "d")
   endif ()
-  install(TARGETS grpc_proto DESTINATION lib)
+  install(TARGETS grpc_proto DESTINATION lib/${Shadow_Platform}/${Shadow_Arch})
 
   file(GLOB_RECURSE tmp *_server.cpp)
   set(shadow_server_src ${shadow_server_src} ${tmp})
