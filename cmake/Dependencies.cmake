@@ -2,6 +2,12 @@ set(Shadow_LINKER_LIBS)
 
 shadow_find_os_arch(Shadow_Platform Shadow_Arch)
 
+set(Shadow_INSTALL_INCLUDE_PREFIX include/shadow)
+set(Shadow_INSTALL_LIB_PREFIX lib/${Shadow_Platform}/${Shadow_Arch})
+set(Shadow_INSTALL_BIN_PREFIX bin)
+
+set(CMAKE_INSTALL_RPATH ${CMAKE_INSTALL_PREFIX}/${Shadow_INSTALL_LIB_PREFIX})
+
 if (${USE_CUDA})
   find_package(CUDA QUIET)
   if (CUDA_FOUND)
@@ -47,7 +53,7 @@ elseif (${USE_CL})
   endif ()
 endif ()
 
-if (NOT CUDA_FOUND AND NOT OpenCL_FOUND)
+if ((${USE_CUDA} AND NOT CUDA_FOUND) AND (${USE_CL} AND NOT OpenCL_FOUND))
   if (${USE_Eigen})
     find_package(Eigen QUIET)
     if (Eigen_FOUND)
