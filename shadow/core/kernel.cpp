@@ -17,8 +17,8 @@ pthreadpool_t nnp_pthreadpool_ = nullptr;
 
 void Setup(int device_id) {
 #if defined(USE_NNPACK)
-  CHECK_EQ(nnp_initialize(), nnp_status_success);
-  if (nnp_pthreadpool_ == nullptr) {
+`  if (nnp_pthreadpool_ == nullptr) {
+    CHECK_EQ(nnp_initialize(), nnp_status_success);
     nnp_pthreadpool_ = pthreadpool_create(NumThreads);
     CHECK_NOTNULL(nnp_pthreadpool_);
   }
@@ -27,8 +27,8 @@ void Setup(int device_id) {
 
 void Release() {
 #if defined(USE_NNPACK)
-  CHECK_EQ(nnp_deinitialize(), nnp_status_success);
   if (nnp_pthreadpool_ != nullptr) {
+    CHECK_EQ(nnp_deinitialize(), nnp_status_success);
     pthreadpool_destroy(nnp_pthreadpool_);
     nnp_pthreadpool_ = nullptr;
   }

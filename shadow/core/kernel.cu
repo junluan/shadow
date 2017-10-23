@@ -9,13 +9,22 @@ namespace Kernel {
 
 #if defined(USE_CUDA)
 cublasHandle_t cublas_handle_ = nullptr;
+#if defined(USE_CUDNN)
+cudnnHandle_t cudnn_handle_ = nullptr;
+#endif
 
 void Setup(int device_id) {
-  CUDA_CHECK(cudaSetDevice(device_id));
-  cublasCreate(&cublas_handle_);
+  if (cublas_handle_ == nullptr) {
+    CUDA_CHECK(cudaSetDevice(device_id));
+    cublasCreate(&cublas_handle_);
+    CHECK_NOTNULL(cublas_handle_);
+  }
 
 #if defined(USE_CUDNN)
-  CUDNN_CHECK(cudnnCreate(&cudnn_handle_));
+  if (cudnn_handle_ == nullptr) {
+    CUDNN_CHECK(cudnnCreate(&cudnn_handle_));
+    CHECK_NOTNULL(cudnn_handle_);
+  }
 #endif
 }
 

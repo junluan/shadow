@@ -10,6 +10,12 @@ void Network::LoadModel(const std::string &proto_bin, const VecInt &in_shape) {
   Initial(in_shape);
 }
 
+void Network::LoadModel(const shadow::NetParam &net_param,
+                        const std::vector<int> &in_shape) {
+  net_param_ = net_param;
+  Initial(in_shape);
+}
+
 void Network::LoadModel(const std::string &proto_str,
                         const std::vector<const void *> &weights,
                         const VecInt &in_shape) {

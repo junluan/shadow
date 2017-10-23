@@ -267,7 +267,7 @@ void DetectionMTCNN::CalculateScales(float height, float width, float factor,
                                      float max_side, float min_side,
                                      VecFloat *scales) {
   scales->clear();
-  float pr_scale = max_side / std::max(height, width);  // 12.f / min_side
+  float pr_scale = 12.f / min_side;  // max_side / std::max(height, width);
   float pr_min = pr_scale * std::min(height, width);
   while (pr_min > 12) {
     scales->push_back(pr_scale);

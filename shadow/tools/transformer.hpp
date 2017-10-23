@@ -9,6 +9,20 @@
 
 namespace Shadow {
 
+struct NetInfo {
+  std::vector<int> num_class;
+  std::vector<int> input_shape;
+  std::vector<float> mean_value;
+  float scale = 1;
+  std::vector<std::string> out_blob;
+};
+
+struct MetaNetInfo {
+  std::string version, method;
+  std::vector<std::string> model_name;
+  std::vector<NetInfo> network;
+};
+
 #define INSTANTIATE_SET_SINGLE_ARGUMENT(T, fieldname)                    \
   static void set_##fieldname(shadow::OpParam* op_param,                 \
                               const std::string& name, const T& value) { \

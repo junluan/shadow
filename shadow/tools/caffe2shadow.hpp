@@ -41,8 +41,7 @@ void ConvertCommon(const caffe::NetParameter& caffe_model,
 }
 
 void ConvertInput(const caffe::NetParameter& caffe_deploy,
-                  const std::vector<int>& input_shape,
-                  shadow::NetParam* shadow_net) {
+                  const NetInfo& net_info, shadow::NetParam* shadow_net) {
   auto shadow_op = shadow_net->add_op();
   shadow_op->set_name("data");
   shadow_op->set_type("Data");
@@ -56,13 +55,16 @@ void ConvertInput(const caffe::NetParameter& caffe_deploy,
     }
     set_v_i(shadow_op, "data_shape", shape);
   } else {
-    set_v_i(shadow_op, "data_shape", input_shape);
+    set_v_i(shadow_op, "data_shape", net_info.input_shape);
+  }
+  set_s_f(shadow_op, "scale", net_info.scale);
+  if (!net_info.mean_value.empty()) {
+    set_v_f(shadow_op, "mean_value", net_info.mean_value);
   }
 }
 
 void ConvertData(const caffe::LayerParameter& data_layer,
-                 const std::vector<int>& input_shape,
-                 shadow::NetParam* shadow_net) {
+                 const NetInfo& net_info, shadow::NetParam* shadow_net) {
   auto shadow_op = shadow_net->add_op();
   shadow_op->set_name(data_layer.name());
   shadow_op->set_type("Data");
@@ -78,7 +80,7 @@ void ConvertData(const caffe::LayerParameter& data_layer,
     }
     set_v_i(shadow_op, "data_shape", shape);
   } else {
-    set_v_i(shadow_op, "data_shape", input_shape);
+    set_v_i(shadow_op, "data_shape", net_info.input_shape);
   }
 
   if (data_layer.has_transform_param()) {
@@ -92,6 +94,11 @@ void ConvertData(const caffe::LayerParameter& data_layer,
         mean_value.push_back(mean_val);
       }
       set_v_f(shadow_op, "mean_value", mean_value);
+    }
+  } else {
+    set_s_f(shadow_op, "scale", net_info.scale);
+    if (!net_info.mean_value.empty()) {
+      set_v_f(shadow_op, "mean_value", net_info.mean_value);
     }
   }
 }
@@ -469,55 +476,74 @@ void ConvertSoftmax(const caffe::NetParameter& caffe_model,
   }
 }
 
-void ConvertCaffe(const caffe::NetParameter& caffe_deploy,
-                  const caffe::NetParameter& caffe_model,
-                  const std::vector<int>& input_shape,
-                  shadow::NetParam* shadow_net) {
-  shadow_net->set_name(caffe_deploy.name());
-  int start_layer = 0;
-  if (caffe_deploy.input_size() > 0) {
-    ConvertInput(caffe_deploy, input_shape, shadow_net);
-  } else {
-    ConvertData(caffe_deploy.layer(0), input_shape, shadow_net);
-    start_layer = 1;
-  }
-  for (int l = start_layer; l < caffe_deploy.layer_size(); ++l) {
-    const auto& caffe_layer = caffe_deploy.layer(l);
-    const auto& layer_type = caffe_layer.type();
-    if (layer_type == "ReLU" || layer_type == "PReLU") {
-      ConvertActivate(caffe_model, caffe_layer, shadow_net);
-    } else if (layer_type == "BatchNorm") {
-      ConvertBatchNorm(caffe_model, caffe_layer, shadow_net);
-    } else if (layer_type == "Bias") {
-      ConvertBias(caffe_model, caffe_layer, shadow_net);
-    } else if (layer_type == "Concat") {
-      ConvertConcat(caffe_model, caffe_layer, shadow_net);
-    } else if (layer_type == "InnerProduct") {
-      ConvertConnected(caffe_model, caffe_layer, shadow_net);
-    } else if (layer_type == "Convolution") {
-      ConvertConv(caffe_model, caffe_layer, shadow_net);
-    } else if (layer_type == "Eltwise") {
-      ConvertEltwise(caffe_model, caffe_layer, shadow_net);
-    } else if (layer_type == "Flatten") {
-      ConvertFlatten(caffe_model, caffe_layer, shadow_net);
-    } else if (layer_type == "LRN") {
-      ConvertLRN(caffe_model, caffe_layer, shadow_net);
-    } else if (layer_type == "Normalize") {
-      ConvertNormalize(caffe_model, caffe_layer, shadow_net);
-    } else if (layer_type == "Permute") {
-      ConvertPermute(caffe_model, caffe_layer, shadow_net);
-    } else if (layer_type == "Pooling") {
-      ConvertPooling(caffe_model, caffe_layer, shadow_net);
-    } else if (layer_type == "PriorBox") {
-      ConvertPriorBox(caffe_model, caffe_layer, shadow_net);
-    } else if (layer_type == "Reshape") {
-      ConvertReshape(caffe_model, caffe_layer, shadow_net);
-    } else if (layer_type == "Scale") {
-      ConvertScale(caffe_model, caffe_layer, shadow_net);
-    } else if (layer_type == "Softmax") {
-      ConvertSoftmax(caffe_model, caffe_layer, shadow_net);
+void ConvertCaffe(const std::vector<caffe::NetParameter>& caffe_deploys,
+                  const std::vector<caffe::NetParameter>& caffe_models,
+                  const MetaNetInfo& meta_net_info,
+                  shadow::MetaNetParam* shadow_nets) {
+  auto* model_info = shadow_nets->mutable_model_info();
+  model_info->set_version(meta_net_info.version);
+  model_info->set_method(meta_net_info.method);
+
+  for (int n = 0; n < caffe_deploys.size(); ++n) {
+    const auto& caffe_deploy = caffe_deploys[n];
+    const auto& caffe_model = caffe_models[n];
+    const auto& net_info = meta_net_info.network[n];
+
+    auto* shadow_net = shadow_nets->add_network();
+
+    shadow_net->set_name(caffe_deploy.name());
+    for (const auto& dim : net_info.num_class) {
+      shadow_net->add_num_class(dim);
+    }
+    for (const auto& blob_name : net_info.out_blob) {
+      shadow_net->add_out_blob(blob_name);
+    }
+
+    int start_layer = 0;
+    if (caffe_deploy.input_size() > 0) {
+      ConvertInput(caffe_deploy, net_info, shadow_net);
     } else {
-      LOG(WARNING) << "Layer type: " << layer_type << " is not recognized!";
+      ConvertData(caffe_deploy.layer(0), net_info, shadow_net);
+      start_layer = 1;
+    }
+    for (int l = start_layer; l < caffe_deploy.layer_size(); ++l) {
+      const auto& caffe_layer = caffe_deploy.layer(l);
+      const auto& layer_type = caffe_layer.type();
+      if (layer_type == "ReLU" || layer_type == "PReLU") {
+        ConvertActivate(caffe_model, caffe_layer, shadow_net);
+      } else if (layer_type == "BatchNorm") {
+        ConvertBatchNorm(caffe_model, caffe_layer, shadow_net);
+      } else if (layer_type == "Bias") {
+        ConvertBias(caffe_model, caffe_layer, shadow_net);
+      } else if (layer_type == "Concat") {
+        ConvertConcat(caffe_model, caffe_layer, shadow_net);
+      } else if (layer_type == "InnerProduct") {
+        ConvertConnected(caffe_model, caffe_layer, shadow_net);
+      } else if (layer_type == "Convolution") {
+        ConvertConv(caffe_model, caffe_layer, shadow_net);
+      } else if (layer_type == "Eltwise") {
+        ConvertEltwise(caffe_model, caffe_layer, shadow_net);
+      } else if (layer_type == "Flatten") {
+        ConvertFlatten(caffe_model, caffe_layer, shadow_net);
+      } else if (layer_type == "LRN") {
+        ConvertLRN(caffe_model, caffe_layer, shadow_net);
+      } else if (layer_type == "Normalize") {
+        ConvertNormalize(caffe_model, caffe_layer, shadow_net);
+      } else if (layer_type == "Permute") {
+        ConvertPermute(caffe_model, caffe_layer, shadow_net);
+      } else if (layer_type == "Pooling") {
+        ConvertPooling(caffe_model, caffe_layer, shadow_net);
+      } else if (layer_type == "PriorBox") {
+        ConvertPriorBox(caffe_model, caffe_layer, shadow_net);
+      } else if (layer_type == "Reshape") {
+        ConvertReshape(caffe_model, caffe_layer, shadow_net);
+      } else if (layer_type == "Scale") {
+        ConvertScale(caffe_model, caffe_layer, shadow_net);
+      } else if (layer_type == "Softmax") {
+        ConvertSoftmax(caffe_model, caffe_layer, shadow_net);
+      } else {
+        LOG(WARNING) << "Layer type: " << layer_type << " is not recognized!";
+      }
     }
   }
 }
