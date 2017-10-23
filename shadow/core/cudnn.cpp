@@ -21,12 +21,6 @@ const void* dataType<double>::zero =
 
 }  // namespace cudnn
 
-namespace Kernel {
-
-cudnnHandle_t cudnn_handle_ = nullptr;
-
-}  // namespace Kernel
-
 #endif
 
 }  // namespace Shadow
