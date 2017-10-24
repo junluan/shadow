@@ -1,5 +1,5 @@
 #include "pooling_op.hpp"
-#include "core/image.hpp"
+#include "core/vision.hpp"
 
 namespace Shadow {
 
@@ -72,8 +72,8 @@ void PoolingOp::Forward() {
                                   top_desc_, top->mutable_data()));
 
 #else
-  Image::Pooling(bottom->data(), bottom->shape(), kernel_size_, stride_, pad_,
-                 pool_type_, top->shape(), top->mutable_data());
+  Vision::Pooling(bottom->data(), bottom->shape(), kernel_size_, stride_, pad_,
+                  pool_type_, top->shape(), top->mutable_data());
 #endif
 }
 

@@ -1,6 +1,6 @@
 #include "scale_op.hpp"
 #include "core/blas.hpp"
-#include "core/image.hpp"
+#include "core/vision.hpp"
 
 namespace Shadow {
 
@@ -70,8 +70,8 @@ void ScaleOp::Forward() {
   const auto *bottom = bottoms<float>(0);
   auto *top = mutable_tops<float>(0);
 
-  Image::Scale(bottom->data(), bottom->count(), scale_->data(), bias_->data(),
-               scale_dim_, inner_dim_, top->mutable_data());
+  Vision::Scale(bottom->data(), bottom->count(), scale_->data(), bias_->data(),
+                scale_dim_, inner_dim_, top->mutable_data());
 }
 
 void ScaleOp::Release() {

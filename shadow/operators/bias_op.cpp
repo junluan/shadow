@@ -1,6 +1,6 @@
 #include "bias_op.hpp"
 #include "core/blas.hpp"
-#include "core/image.hpp"
+#include "core/vision.hpp"
 
 namespace Shadow {
 
@@ -57,8 +57,8 @@ void BiasOp::Forward() {
   const auto *bottom = bottoms<float>(0);
   auto *top = mutable_tops<float>(0);
 
-  Image::Bias(bottom->data(), bottom->count(), bias_->data(), bias_dim_,
-              inner_dim_, top->mutable_data());
+  Vision::Bias(bottom->data(), bottom->count(), bias_->data(), bias_dim_,
+               inner_dim_, top->mutable_data());
 }
 
 void BiasOp::Release() {

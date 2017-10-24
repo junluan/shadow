@@ -1,5 +1,5 @@
 #include "permute_op.hpp"
-#include "core/image.hpp"
+#include "core/vision.hpp"
 
 namespace Shadow {
 
@@ -54,9 +54,9 @@ void PermuteOp::Forward() {
   const auto *bottom = bottoms<float>(0);
   auto *top = mutable_tops<float>(0);
 
-  Image::Permute(bottom->data(), bottom->count(), bottom->num_axes(),
-                 permute_order_->data(), old_steps_->data(), new_steps_->data(),
-                 top->mutable_data());
+  Vision::Permute(bottom->data(), bottom->count(), bottom->num_axes(),
+                  permute_order_->data(), old_steps_->data(),
+                  new_steps_->data(), top->mutable_data());
 }
 
 void PermuteOp::Release() {

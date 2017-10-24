@@ -1,6 +1,6 @@
 #include "activate_op.hpp"
 #include "core/blas.hpp"
-#include "core/image.hpp"
+#include "core/vision.hpp"
 
 namespace Shadow {
 
@@ -58,10 +58,10 @@ void ActivateOp::Forward() {
   if (activate_type_ == kRelu || activate_type_ == kLeaky ||
       activate_type_ == kSigmoid || activate_type_ == kSoftPlus ||
       activate_type_ == kTanh) {
-    Image::Activate(top->mutable_data(), top->count(), activate_type_, slope_);
+    Vision::Activate(top->mutable_data(), top->count(), activate_type_, slope_);
   } else if (activate_type_ == kPRelu) {
-    Image::PRelu(top->mutable_data(), top->shape(), channel_shared_,
-                 blobs<float>(0)->data());
+    Vision::PRelu(top->mutable_data(), top->shape(), channel_shared_,
+                  blobs<float>(0)->data());
   }
 }
 

@@ -1,5 +1,5 @@
 #include "concat_op.hpp"
-#include "core/image.hpp"
+#include "core/vision.hpp"
 
 namespace Shadow {
 
@@ -54,9 +54,9 @@ void ConcatOp::Forward() {
   for (int i = 0; i < bottoms_size(); ++i) {
     const auto *bottom = bottoms<float>(i);
     int bottom_concat_axis = bottom->shape(concat_axis_);
-    Image::Concat(bottom->data(), bottom->count(), num_concats_,
-                  concat_input_size_, top_concat_axis, bottom_concat_axis,
-                  offset_concat_axis, top->mutable_data());
+    Vision::Concat(bottom->data(), bottom->count(), num_concats_,
+                   concat_input_size_, top_concat_axis, bottom_concat_axis,
+                   offset_concat_axis, top->mutable_data());
     offset_concat_axis += bottom_concat_axis;
   }
 }

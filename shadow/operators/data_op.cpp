@@ -1,5 +1,5 @@
 #include "data_op.hpp"
-#include "core/image.hpp"
+#include "core/vision.hpp"
 
 namespace Shadow {
 
@@ -35,8 +35,8 @@ void DataOp::Forward() {
   const auto *bottom = bottoms<float>(0);
   auto *top = mutable_tops<float>(0);
 
-  Image::DataTransform(bottom->data(), bottom->shape(), scale_, num_mean_,
-                       mean_value_->data(), top->mutable_data());
+  Vision::DataTransform(bottom->data(), bottom->shape(), scale_, num_mean_,
+                        mean_value_->data(), top->mutable_data());
 }
 
 void DataOp::Release() {

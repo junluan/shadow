@@ -1,6 +1,6 @@
 #include "conv_op.hpp"
 #include "core/blas.hpp"
-#include "core/image.hpp"
+#include "core/vision.hpp"
 
 namespace Shadow {
 
@@ -153,7 +153,7 @@ void ConvOp::Forward() {
           top->mutable_data()));
     }
     if (activate_type_ == 1) {
-      Image::Activate(top->mutable_data(), top->count(), activate_type_);
+      Vision::Activate(top->mutable_data(), top->count(), activate_type_);
     }
     return;
   }
@@ -173,9 +173,9 @@ void ConvOp::Forward() {
 #endif
 
   for (int b = 0; b < batch; ++b) {
-    Image::Im2Col(bottom->data(), bottom->shape(), b * bottom_num, kernel_size_,
-                  stride_, pad_, dilation_, 0, top->shape(),
-                  col_image_->mutable_data());
+    Vision::Im2Col(bottom->data(), bottom->shape(), b * bottom_num,
+                   kernel_size_, stride_, pad_, dilation_, 0, top->shape(),
+                   col_image_->mutable_data());
     for (int g = 0; g < group_; ++g) {
       Blas::BlasSgemm(0, 0, num_output_ / group_, out_spatial_dim_, kernel_dim_,
                       1, blobs<float>(0)->data(), weight_offset_ * g,
@@ -189,7 +189,7 @@ void ConvOp::Forward() {
     }
   }
   if (activate_type_ == 1) {
-    Image::Activate(top->mutable_data(), top->count(), activate_type_);
+    Vision::Activate(top->mutable_data(), top->count(), activate_type_);
   }
 }
 

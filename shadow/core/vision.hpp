@@ -1,11 +1,11 @@
-#ifndef SHADOW_CORE_IMAGE_HPP
-#define SHADOW_CORE_IMAGE_HPP
+#ifndef SHADOW_CORE_VISION_HPP
+#define SHADOW_CORE_VISION_HPP
 
 #include "util/type.hpp"
 
 namespace Shadow {
 
-namespace Image {
+namespace Vision {
 
 template <typename T>
 void DataTransform(const T *in_data, const VecInt &in_shape, float scale,
@@ -53,8 +53,8 @@ template <typename T>
 void PRelu(T *data, const VecInt &in_shape, bool channel_shared,
            const T *slope_data);
 
-}  // namespace Image
+}  // namespace Vision
 
 }  // namespace Shadow
 
-#endif  // SHADOW_CORE_IMAGE_HPP
+#endif  // SHADOW_CORE_VISION_HPP

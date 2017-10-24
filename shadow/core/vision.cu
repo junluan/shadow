@@ -1,12 +1,12 @@
-#include "image.hpp"
 #include "kernel.hpp"
 #include "util/log.hpp"
+#include "vision.hpp"
 
 #include "math_functions.h"
 
 namespace Shadow {
 
-namespace Image {
+namespace Vision {
 
 #if defined(USE_CUDA)
 template <typename T>
@@ -400,6 +400,6 @@ template void PRelu(float *data, const VecInt &in_shape, bool channel_shared,
                     const float *slope_data);
 #endif
 
-}  // namespace Image
+}  // namespace Vision
 
 }  // namespace Shadow

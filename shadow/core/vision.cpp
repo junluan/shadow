@@ -1,4 +1,4 @@
-#include "image.hpp"
+#include "vision.hpp"
 #include "common.hpp"
 #include "kernel.hpp"
 
@@ -6,7 +6,7 @@
 
 namespace Shadow {
 
-namespace Image {
+namespace Vision {
 
 #if !defined(USE_CUDA) & !defined(USE_CL)
 template <typename T>
@@ -518,6 +518,6 @@ template void PRelu(BufferF *data, const VecInt &in_shape, bool channel_shared,
                     const BufferF *slope_data);
 #endif
 
-}  // namespace Image
+}  // namespace Vision
 
 }  // namespace Shadow

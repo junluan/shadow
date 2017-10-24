@@ -1,5 +1,5 @@
 #include "reorg_op.hpp"
-#include "core/image.hpp"
+#include "core/vision.hpp"
 
 namespace Shadow {
 
@@ -32,7 +32,7 @@ void ReorgOp::Forward() {
   const auto *bottom = bottoms<float>(0);
   auto *top = mutable_tops<float>(0);
 
-  Image::Reorg(bottom->data(), bottom->shape(), stride_, top->mutable_data());
+  Vision::Reorg(bottom->data(), bottom->shape(), stride_, top->mutable_data());
 }
 
 void ReorgOp::Release() {

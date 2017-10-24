@@ -1,5 +1,5 @@
 #include "lrn_op.hpp"
-#include "core/image.hpp"
+#include "core/vision.hpp"
 
 namespace Shadow {
 
@@ -32,8 +32,8 @@ void LRNOp::Forward() {
   const auto *bottom = bottoms<float>(0);
   auto *top = mutable_tops<float>(0);
 
-  Image::LRN(bottom->data(), bottom->shape(), size_, alpha_, beta_, k_,
-             scale_->mutable_data(), top->mutable_data());
+  Vision::LRN(bottom->data(), bottom->shape(), size_, alpha_, beta_, k_,
+              scale_->mutable_data(), top->mutable_data());
 }
 
 void LRNOp::Release() {
