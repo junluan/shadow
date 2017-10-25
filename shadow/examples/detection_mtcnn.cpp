@@ -46,20 +46,20 @@ void DetectionMTCNN::Setup(const VecString &model_files, const VecInt &classes,
                            const VecInt &in_shape) {
   net_p_.Setup();
 
-  net_p_.LoadModel(model_files[0], VecInt{1, 3, 360, 360});
-  net_r_.LoadModel(model_files[1], VecInt{50});
-  net_o_.LoadModel(model_files[2], VecInt{20});
+  net_p_.LoadModel(model_files[0]);
+  net_r_.LoadModel(model_files[1]);
+  net_o_.LoadModel(model_files[2]);
 
-  net_p_in_shape_ = net_p_.in_shape();
+  net_p_in_shape_ = net_p_.GetBlobByName<float>("data")->shape();
   net_p_stride_ = 2, net_p_cell_size_ = 12;
 
-  net_r_in_shape_ = net_r_.in_shape();
+  net_r_in_shape_ = net_r_.GetBlobByName<float>("data")->shape();
   net_r_in_c_ = net_r_in_shape_[1];
   net_r_in_h_ = net_r_in_shape_[2];
   net_r_in_w_ = net_r_in_shape_[3];
   net_r_in_num_ = net_r_in_c_ * net_r_in_h_ * net_r_in_w_;
 
-  net_o_in_shape_ = net_o_.in_shape();
+  net_o_in_shape_ = net_o_.GetBlobByName<float>("data")->shape();
   net_o_in_c_ = net_o_in_shape_[1];
   net_o_in_h_ = net_o_in_shape_[2];
   net_o_in_w_ = net_o_in_shape_[3];
@@ -167,8 +167,13 @@ void DetectionMTCNN::Release() {
 void DetectionMTCNN::Process_net_p(const float *data, const VecInt &in_shape,
                                    float threshold, float scale,
                                    VecBoxInfo *boxes) {
-  net_p_.Reshape(in_shape);
-  net_p_.Forward(data);
+  std::map<std::string, VecInt> shape_map;
+  std::map<std::string, float *> data_map;
+  shape_map["data"] = in_shape;
+  data_map["data"] = const_cast<float *>(data);
+
+  net_p_.Reshape(shape_map);
+  net_p_.Forward(data_map);
 
   const auto *loc_blob = net_p_.GetBlobByName<float>("conv4-2");
   const auto *loc_data = const_cast<BlobF *>(loc_blob)->cpu_data();
@@ -204,8 +209,13 @@ void DetectionMTCNN::Process_net_r(const float *data, const VecInt &in_shape,
                                    float threshold,
                                    const VecBoxInfo &net_12_boxes,
                                    VecBoxInfo *boxes) {
-  net_r_.Reshape(in_shape);
-  net_r_.Forward(data);
+  std::map<std::string, VecInt> shape_map;
+  std::map<std::string, float *> data_map;
+  shape_map["data"] = in_shape;
+  data_map["data"] = const_cast<float *>(data);
+
+  net_r_.Reshape(shape_map);
+  net_r_.Forward(data_map);
 
   const auto *loc_data = net_r_.GetBlobDataByName<float>("conv5-2");
   const auto *conf_data = net_r_.GetBlobDataByName<float>("prob1");
@@ -231,8 +241,13 @@ void DetectionMTCNN::Process_net_o(const float *data, const VecInt &in_shape,
                                    float threshold,
                                    const VecBoxInfo &net_24_boxes,
                                    VecBoxInfo *boxes) {
-  net_o_.Reshape(in_shape);
-  net_o_.Forward(data);
+  std::map<std::string, VecInt> shape_map;
+  std::map<std::string, float *> data_map;
+  shape_map["data"] = in_shape;
+  data_map["data"] = const_cast<float *>(data);
+
+  net_o_.Reshape(shape_map);
+  net_o_.Forward(data_map);
 
   const auto *loc_data = net_o_.GetBlobDataByName<float>("conv6-2");
   const auto *mark_data = net_o_.GetBlobDataByName<float>("conv6-3");

@@ -4,8 +4,6 @@
 namespace Shadow {
 
 void DataOp::Setup() {
-  add_bottoms<float>("in_blob");
-
   scale_ = get_single_argument<float>("scale", 1);
   VecFloat mean_value = get_repeated_argument<float>("mean_value");
   num_mean_ = 1;

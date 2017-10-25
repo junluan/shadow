@@ -10,18 +10,14 @@ class Network {
  public:
   void Setup(int device_id = 0);
 
-  void LoadModel(const std::string &proto_bin,
-                 const std::vector<int> &in_shape = {});
-  void LoadModel(const shadow::NetParam &net_param,
-                 const std::vector<int> &in_shape = {});
+  void LoadModel(const std::string &proto_bin);
+  void LoadModel(const shadow::NetParam &net_param);
   void LoadModel(const std::string &proto_str,
-                 const std::vector<const void *> &weights,
-                 const std::vector<int> &in_shape = {});
-  void LoadModel(const std::string &proto_str, const float *weights_data,
-                 const std::vector<int> &in_shape = {});
+                 const std::vector<const void *> &weights);
+  void LoadModel(const std::string &proto_str, const float *weights_data);
 
-  void Reshape(const std::vector<int> &in_shape);
-  void Forward(const float *data = nullptr);
+  void Reshape(const std::map<std::string, std::vector<int>> &shape_map = {});
+  void Forward(const std::map<std::string, float *> &data_map = {});
   void Release();
 
   const Operator *GetOpByName(const std::string &op_name) {
@@ -31,7 +27,11 @@ class Network {
     return nullptr;
   }
   template <typename T>
-  const Blob<T> *GetBlobByName(const std::string &blob_name) {
+  const Blob<T> *GetBlobByName(const std::string &blob_name) const {
+    return ws_.GetBlob<T>(blob_name);
+  }
+  template <typename T>
+  Blob<T> *GetBlobByName(const std::string &blob_name) {
     return ws_.GetBlob<T>(blob_name);
   }
   template <typename T>
@@ -45,7 +45,6 @@ class Network {
     return nullptr;
   }
 
-  const std::vector<int> in_shape() { return in_shape_; }
   const std::vector<int> num_class() {
     VecInt num_classes;
     for (const auto dim : net_param_.num_class()) {
@@ -66,14 +65,13 @@ class Network {
   void LoadProtoStrOrText(const std::string &proto_str_or_text,
                           shadow::NetParam *net_param);
 
-  void Initial(const VecInt &in_shape);
+  void Initial();
 
   void CopyWeights(const std::vector<const void *> &weights);
   void CopyWeights(const float *weights_data);
 
   shadow::NetParam net_param_;
 
-  VecInt in_shape_;
   VecOp ops_;
   Workspace ws_;
 };

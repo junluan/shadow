@@ -28,7 +28,7 @@ class DetectionSSD final : public Method {
   using LabelBBox = std::map<int, VecBoxF>;
   using VecLabelBBox = std::vector<LabelBBox>;
 
-  void Process(const float *data, std::vector<VecBoxF> *Gboxes);
+  void Process(const VecFloat &in_data, std::vector<VecBoxF> *Gboxes);
 
   void GetLocPredictions(const float *loc_data, int num,
                          int num_preds_per_class, int num_loc_classes,

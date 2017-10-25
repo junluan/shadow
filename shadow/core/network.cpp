@@ -5,70 +5,69 @@ namespace Shadow {
 
 void Network::Setup(int device_id) { Kernel::Setup(device_id); }
 
-void Network::LoadModel(const std::string &proto_bin, const VecInt &in_shape) {
+void Network::LoadModel(const std::string &proto_bin) {
   LoadProtoBin(proto_bin, &net_param_);
-  Initial(in_shape);
+  Initial();
 }
 
-void Network::LoadModel(const shadow::NetParam &net_param,
-                        const std::vector<int> &in_shape) {
+void Network::LoadModel(const shadow::NetParam &net_param) {
   net_param_ = net_param;
-  Initial(in_shape);
+  Initial();
 }
 
 void Network::LoadModel(const std::string &proto_str,
-                        const std::vector<const void *> &weights,
-                        const VecInt &in_shape) {
+                        const std::vector<const void *> &weights) {
   LoadProtoStrOrText(proto_str, &net_param_);
-  Initial(in_shape);
+  Initial();
   CopyWeights(weights);
 }
 
-void Network::LoadModel(const std::string &proto_str, const float *weights_data,
-                        const VecInt &in_shape) {
+void Network::LoadModel(const std::string &proto_str,
+                        const float *weights_data) {
   LoadProtoStrOrText(proto_str, &net_param_);
-  Initial(in_shape);
+  Initial();
   CopyWeights(weights_data);
 }
 
-void Network::Reshape(const VecInt &in_shape) {
-  CHECK_EQ(in_shape.size(), 4) << "in_shape dimension must be four!";
-  if (in_shape != in_shape_) {
-    if (ops_.empty()) return;
-    auto *data_op = ops_[0];
-    CHECK(data_op->type().find("Data") != std::string::npos)
-        << "The first Op must be Data operator!";
-    auto *in_blob = data_op->mutable_bottoms<float>(0);
+void Network::Reshape(
+    const std::map<std::string, std::vector<int>> &shape_map) {
+  if (ops_.empty()) return;
+  for (const auto &in_map : shape_map) {
+    CHECK(!in_map.second.empty()) << in_map.first << " has empty shape";
+    auto *in_blob = GetBlobByName<float>(in_map.first);
     if (in_blob != nullptr) {
-      in_blob->reshape(in_shape);
-      for (auto &op : ops_) {
-        op->Reshape();
-      }
-      in_shape_ = in_shape;
+      in_blob->reshape(in_map.second);
     } else {
-      LOG(FATAL) << "in_blob is nullptr";
+      LOG(FATAL) << "Can not find blob " << in_map.first;
     }
-  } else {
-    DLOG(INFO) << "in_shape is the same, skip Reshape";
   }
+  for (auto &op : ops_) {
+    op->Reshape();
+  }
+
+  DLOG(INFO) << "Reshape Network!";
 }
 
-void Network::Forward(const float *data) {
-  CHECK_NOTNULL(data);
+void Network::Forward(const std::map<std::string, float *> &data_map) {
   if (ops_.empty()) return;
-  auto *data_op = ops_[0];
-  CHECK(data_op->type().find("Data") != std::string::npos)
-      << "The first Op must be Data operator!";
-  auto *in_blob = data_op->mutable_bottoms<float>(0);
-  in_blob->set_data(data, in_blob->count());
+  for (const auto &in_map : data_map) {
+    CHECK_NOTNULL(in_map.second) << in_map.first << " has null data";
+    auto *in_blob = GetBlobByName<float>(in_map.first);
+    if (in_blob != nullptr) {
+      in_blob->set_data(in_map.second, in_blob->count());
+    } else {
+      LOG(FATAL) << "Can not find blob " << in_map.first;
+    }
+  }
   for (auto &op : ops_) {
     op->Forward();
   }
+
+  DLOG(INFO) << "Forward Network!";
 }
 
 void Network::Release() {
   net_param_.Clear();
-  in_shape_.clear();
 
   for (auto &op : ops_) {
     delete op;
@@ -105,25 +104,17 @@ void Network::LoadProtoStrOrText(const std::string &proto_str_or_text,
                                                << proto_str_or_text;
 }
 
-void Network::Initial(const VecInt &in_shape) {
+void Network::Initial() {
   CHECK_GT(net_param_.op_size(), 0);
-  const auto &data_op = net_param_.op(0);
-  CHECK(data_op.type().find("Data") != std::string::npos)
-      << "The first Op must be Data operator!";
-  ArgumentHelper arg_helper(data_op);
-  in_shape_ = arg_helper.GetRepeatedArgument<int>("data_shape", VecInt{});
-  CHECK_EQ(in_shape_.size(), 4) << "data_shape dimension must be four!";
-  if (!in_shape.empty()) {
-    CHECK_LE(in_shape.size(), 4);
-    for (int i = 0; i < in_shape.size(); ++i) {
-      int dim = in_shape[i];
-      if (dim > 0) {
-        in_shape_[i] = dim;
-      }
-    }
+  const auto &input_op_param = net_param_.op(0);
+  CHECK(input_op_param.type().find("Input") != std::string::npos)
+      << "The first Op must be Input operator!";
+  ArgumentHelper arg_helper(input_op_param);
+  for (const auto &input_name : input_op_param.top()) {
+    const auto &input_shape =
+        arg_helper.GetRepeatedArgument<int>(input_name, VecInt{});
+    ws_.CreateBlob<float>(input_shape, input_name);
   }
-
-  ws_.CreateBlob<float>(in_shape_, "in_blob");
 
   ops_.clear();
   for (const auto &op_param : net_param_.op()) {
@@ -132,6 +123,8 @@ void Network::Initial(const VecInt &in_shape) {
     op->Reshape();
     ops_.push_back(op);
   }
+
+  DLOG(INFO) << "Initial Network!";
 }
 
 void Network::CopyWeights(const std::vector<const void *> &weights) {

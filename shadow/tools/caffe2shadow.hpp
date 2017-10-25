@@ -40,67 +40,101 @@ void ConvertCommon(const caffe::NetParameter& caffe_model,
   }
 }
 
-void ConvertInput(const caffe::NetParameter& caffe_deploy,
-                  const NetInfo& net_info, shadow::NetParam* shadow_net) {
-  auto shadow_op = shadow_net->add_op();
-  shadow_op->set_name("data");
-  shadow_op->set_type("Data");
-  for (const auto& top_name : caffe_deploy.input()) {
-    shadow_op->add_top(top_name);
-  }
-  if (caffe_deploy.input_dim_size() > 0) {
-    std::vector<int> shape;
-    for (const auto dim : caffe_deploy.input_dim()) {
-      shape.push_back(dim);
-    }
-    set_v_i(shadow_op, "data_shape", shape);
-  } else {
-    set_v_i(shadow_op, "data_shape", net_info.input_shape);
-  }
-  set_s_f(shadow_op, "scale", net_info.scale);
-  if (!net_info.mean_value.empty()) {
-    set_v_f(shadow_op, "mean_value", net_info.mean_value);
-  }
-}
-
-void ConvertData(const caffe::LayerParameter& data_layer,
+int ConvertInput(const caffe::NetParameter& caffe_deploy,
                  const NetInfo& net_info, shadow::NetParam* shadow_net) {
-  auto shadow_op = shadow_net->add_op();
-  shadow_op->set_name(data_layer.name());
-  shadow_op->set_type("Data");
-  for (const auto& top_name : data_layer.top()) {
-    shadow_op->add_top(top_name);
-  }
+  int start_layer = 0;
 
-  if (data_layer.has_input_param()) {
-    std::vector<int> shape;
-    const auto& caffe_param = data_layer.input_param();
-    for (const auto dim : caffe_param.shape(0).dim()) {
-      shape.push_back(dim);
+  std::vector<std::string> shadow_inputs;
+  std::vector<std::vector<int>> shadow_shapes;
+  if (caffe_deploy.input_size() > 0) {
+    for (const auto& input_name : caffe_deploy.input()) {
+      shadow_inputs.push_back(input_name);
     }
-    set_v_i(shadow_op, "data_shape", shape);
-  } else {
-    set_v_i(shadow_op, "data_shape", net_info.input_shape);
-  }
-
-  if (data_layer.has_transform_param()) {
-    const auto& caffe_param = data_layer.transform_param();
-    if (caffe_param.has_scale()) {
-      set_s_f(shadow_op, "scale", caffe_param.scale());
-    }
-    if (caffe_param.mean_value_size() > 0) {
-      std::vector<float> mean_value;
-      for (const auto mean_val : caffe_param.mean_value()) {
-        mean_value.push_back(mean_val);
+    if (net_info.input_shape.empty()) {
+      if (caffe_deploy.input_shape_size() > 0) {
+        for (const auto& caffe_shape : caffe_deploy.input_shape()) {
+          std::vector<int> shadow_shape;
+          for (const auto dim : caffe_shape.dim()) {
+            shadow_shape.push_back(dim);
+          }
+          shadow_shapes.push_back(shadow_shape);
+        }
+      } else if (caffe_deploy.input_dim_size() > 0) {
+        CHECK_EQ(caffe_deploy.input_dim_size() % 4, 0);
+        for (int n = 0; n < caffe_deploy.input_dim_size() / 4; ++n) {
+          std::vector<int> shadow_shape;
+          for (int i = 4 * n; i < 4 * (n + 1); ++i) {
+            shadow_shape.push_back(caffe_deploy.input_dim(i));
+          }
+          shadow_shapes.push_back(shadow_shape);
+        }
       }
-      set_v_f(shadow_op, "mean_value", mean_value);
+    } else {
+      shadow_shapes = net_info.input_shape;
     }
-  } else {
-    set_s_f(shadow_op, "scale", net_info.scale);
-    if (!net_info.mean_value.empty()) {
-      set_v_f(shadow_op, "mean_value", net_info.mean_value);
+    start_layer = 0;
+  } else if (caffe_deploy.layer(0).type() == "Input") {
+    const auto& caffe_input_layer = caffe_deploy.layer(0);
+    for (const auto& input_name : caffe_input_layer.top()) {
+      shadow_inputs.push_back(input_name);
+    }
+    if (net_info.input_shape.empty()) {
+      if (caffe_input_layer.has_input_param()) {
+        const auto& caffe_param = caffe_input_layer.input_param();
+        for (const auto& caffe_shape : caffe_param.shape()) {
+          std::vector<int> shadow_shape;
+          for (const auto dim : caffe_shape.dim()) {
+            shadow_shape.push_back(dim);
+          }
+          shadow_shapes.push_back(shadow_shape);
+        }
+      }
+    } else {
+      shadow_shapes = net_info.input_shape;
+    }
+    start_layer = 1;
+  }
+
+  CHECK_GT(shadow_inputs.size(), 0) << "Must supply input";
+
+  std::string data_blob_name;
+
+  auto shadow_input_op = shadow_net->add_op();
+  shadow_input_op->set_name("input");
+  shadow_input_op->set_type("Input");
+  for (int n = 0; n < shadow_inputs.size(); ++n) {
+    const auto& input_name = shadow_inputs[n];
+    if (input_name.find("data") != std::string::npos) {
+      data_blob_name = input_name;
+    }
+    shadow_input_op->add_top(input_name);
+    if (shadow_shapes.size() == shadow_inputs.size()) {
+      set_v_i(shadow_input_op, input_name, shadow_shapes[n]);
+    } else if (shadow_shapes.size() == 1) {
+      set_v_i(shadow_input_op, input_name, shadow_shapes[0]);
+    } else {
+      LOG(WARNING) << "No input shape, must be supplied manually";
     }
   }
+
+  if (net_info.scale != 1 || !net_info.mean_value.empty()) {
+    if (data_blob_name.empty()) {
+      LOG(FATAL) << "Data blob does not has \"data\" keyword";
+    }
+    auto shadow_data_op = shadow_net->add_op();
+    shadow_data_op->set_name("data_transform");
+    shadow_data_op->set_type("Data");
+    shadow_data_op->add_bottom(data_blob_name);
+    shadow_data_op->add_top(data_blob_name);
+    if (net_info.scale != 1) {
+      set_s_f(shadow_data_op, "scale", net_info.scale);
+    }
+    if (!net_info.mean_value.empty()) {
+      set_v_f(shadow_data_op, "mean_value", net_info.mean_value);
+    }
+  }
+
+  return start_layer;
 }
 
 void ConvertActivate(const caffe::NetParameter& caffe_model,
@@ -499,13 +533,8 @@ void ConvertCaffe(const std::vector<caffe::NetParameter>& caffe_deploys,
       shadow_net->add_out_blob(blob_name);
     }
 
-    int start_layer = 0;
-    if (caffe_deploy.input_size() > 0) {
-      ConvertInput(caffe_deploy, net_info, shadow_net);
-    } else {
-      ConvertData(caffe_deploy.layer(0), net_info, shadow_net);
-      start_layer = 1;
-    }
+    int start_layer = ConvertInput(caffe_deploy, net_info, shadow_net);
+
     for (int l = start_layer; l < caffe_deploy.layer_size(); ++l) {
       const auto& caffe_layer = caffe_deploy.layer(l);
       const auto& layer_type = caffe_layer.type();

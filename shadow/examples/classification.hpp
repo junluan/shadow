@@ -23,7 +23,7 @@ class Classification final : public Method {
   void Release() override;
 
  private:
-  void Process(const float *data,
+  void Process(const VecFloat &in_data,
                std::vector<std::map<std::string, VecFloat>> *scores);
 
   Network net_;

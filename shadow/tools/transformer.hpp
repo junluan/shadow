@@ -11,7 +11,7 @@ namespace Shadow {
 
 struct NetInfo {
   std::vector<int> num_class;
-  std::vector<int> input_shape;
+  std::vector<std::vector<int>> input_shape;
   std::vector<float> mean_value;
   float scale = 1;
   std::vector<std::string> out_blob;

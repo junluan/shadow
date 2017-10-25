@@ -20,13 +20,15 @@ void FlattenOp::Reshape() {
 
   CHECK_NE(bottom, top);
 
+  VecInt top_shape;
   for (int i = 0; i < axis_; ++i) {
-    top->add_shape(bottom->shape(i));
+    top_shape.push_back(bottom->shape(i));
   }
-  top->add_shape(bottom->count(axis_, end_axis_ + 1));
+  top_shape.push_back(bottom->count(axis_, end_axis_ + 1));
   for (int i = end_axis_ + 1; i < bottom->num_axes(); ++i) {
-    top->add_shape(bottom->shape(i));
+    top_shape.push_back(bottom->shape(i));
   }
+  top->set_shape(top_shape);
 
   DLOG(INFO) << op_name_ << "(" << op_type_ << "): " << bottom->name()
              << Util::format_vector(bottom->shape(), ",", "(", ")") << " -> "

@@ -66,12 +66,22 @@ void DetectionSSD::Setup(const VecString &model_files, const VecInt &classes,
                          const VecInt &in_shape) {
   net_.Setup();
 
-  net_.LoadModel(model_files[0], in_shape);
+  net_.LoadModel(model_files[0]);
 
-  batch_ = net_.in_shape()[0];
-  in_c_ = net_.in_shape()[1];
-  in_h_ = net_.in_shape()[2];
-  in_w_ = net_.in_shape()[3];
+  auto data_shape = net_.GetBlobByName<float>("data")->shape();
+  CHECK_EQ(data_shape.size(), 4);
+  CHECK_EQ(in_shape.size(), 1);
+  if (data_shape[0] != in_shape[0]) {
+    data_shape[0] = in_shape[0];
+    std::map<std::string, VecInt> shape_map;
+    shape_map["data"] = data_shape;
+    net_.Reshape(shape_map);
+  }
+
+  batch_ = data_shape[0];
+  in_c_ = data_shape[1];
+  in_h_ = data_shape[2];
+  in_w_ = data_shape[3];
   in_num_ = in_c_ * in_h_ * in_w_;
 
   in_data_.resize(batch_ * in_num_);
@@ -97,7 +107,7 @@ void DetectionSSD::Predict(const JImage &im_src, const VecRectF &rois,
                 in_w_);
   }
 
-  Process(in_data_.data(), Gboxes);
+  Process(in_data_, Gboxes);
 
   CHECK_EQ(Gboxes->size(), rois.size());
   for (int b = 0; b < Gboxes->size(); ++b) {
@@ -121,14 +131,14 @@ void DetectionSSD::Predict(const cv::Mat &im_mat, const VecRectF &rois,
 }
 #endif
 
-void DetectionSSD::Release() {
-  net_.Release();
+void DetectionSSD::Release() { net_.Release(); }
 
-  in_data_.clear();
-}
+void DetectionSSD::Process(const VecFloat &in_data,
+                           std::vector<VecBoxF> *Gboxes) {
+  std::map<std::string, float *> data_map;
+  data_map["data"] = const_cast<float *>(in_data.data());
 
-void DetectionSSD::Process(const float *data, std::vector<VecBoxF> *Gboxes) {
-  net_.Forward(data);
+  net_.Forward(data_map);
 
   const auto *loc_data = net_.GetBlobDataByName<float>("mbox_loc");
   const auto *conf_data = net_.GetBlobDataByName<float>("mbox_conf_flatten");

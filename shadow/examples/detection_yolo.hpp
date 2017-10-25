@@ -25,7 +25,7 @@ class DetectionYOLO final : public Method {
   void Release() override;
 
  private:
-  void Process(const float *data, std::vector<VecBoxF> *Gboxes);
+  void Process(const VecFloat &in_data, std::vector<VecBoxF> *Gboxes);
 
   void ConvertDetections(float *data, float *biases, int classes, int num_km,
                          int side, float threshold, VecBoxF *boxes);

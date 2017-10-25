@@ -6,12 +6,22 @@ void Classification::Setup(const VecString &model_files, const VecInt &classes,
                            const VecInt &in_shape) {
   net_.Setup();
 
-  net_.LoadModel(model_files[0], in_shape);
+  net_.LoadModel(model_files[0]);
 
-  batch_ = net_.in_shape()[0];
-  in_c_ = net_.in_shape()[1];
-  in_h_ = net_.in_shape()[2];
-  in_w_ = net_.in_shape()[3];
+  auto data_shape = net_.GetBlobByName<float>("data")->shape();
+  CHECK_EQ(data_shape.size(), 4);
+  CHECK_EQ(in_shape.size(), 1);
+  if (data_shape[0] != in_shape[0]) {
+    data_shape[0] = in_shape[0];
+    std::map<std::string, VecInt> shape_map;
+    shape_map["data"] = data_shape;
+    net_.Reshape(shape_map);
+  }
+
+  batch_ = data_shape[0];
+  in_c_ = data_shape[1];
+  in_h_ = data_shape[2];
+  in_w_ = data_shape[3];
   in_num_ = in_c_ * in_h_ * in_w_;
 
   in_data_.resize(batch_ * in_num_);
@@ -35,7 +45,7 @@ void Classification::Predict(
                 in_w_);
   }
 
-  Process(in_data_.data(), scores);
+  Process(in_data_, scores);
 
   CHECK_EQ(scores->size(), rois.size());
 }
@@ -49,15 +59,15 @@ void Classification::Predict(
 }
 #endif
 
-void Classification::Release() {
-  net_.Release();
-
-  in_data_.clear();
-}
+void Classification::Release() { net_.Release(); }
 
 void Classification::Process(
-    const float *data, std::vector<std::map<std::string, VecFloat>> *scores) {
-  net_.Forward(data);
+    const VecFloat &in_data,
+    std::vector<std::map<std::string, VecFloat>> *scores) {
+  std::map<std::string, float *> data_map;
+  data_map["data"] = const_cast<float *>(in_data.data());
+
+  net_.Forward(data_map);
 
   const auto *softmax_data = net_.GetBlobDataByName<float>("softmax");
 
