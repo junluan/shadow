@@ -11,15 +11,14 @@ namespace Server {
 
 class ShadowServer final : public ::shadow::ShadowService::Service {
  public:
-  ShadowServer(const VecString &models, const VecInt &classes,
-               const std::string &method) {
+  ShadowServer(const VecString &models, const std::string &method) {
     if (method == "ssd" || method == "yolo") {
       detection_ = new DemoDetection(method);
-      detection_->Setup(models, classes, {1});
+      detection_->Setup(models, {1});
       is_detection_ = true;
     } else if (method == "classification") {
       classification_ = new DemoClassification(method);
-      classification_->Setup(models, classes, {1});
+      classification_->Setup(models, {1});
       is_detection_ = false;
     } else {
       LOG(FATAL) << "Unknown method " << method;
@@ -115,7 +114,7 @@ int main(int argc, char **argv) {
   std::string server_address("localhost:50051");
   std::string model("models/ssd/adas/adas_model_finetune_reduce_3.shadowmodel");
 
-  Shadow::Server::ShadowServer service({model}, {3}, "ssd");
+  Shadow::Server::ShadowServer service({model}, "ssd");
 
   grpc::ServerBuilder builder;
   builder.AddListeningPort(server_address, grpc::InsecureServerCredentials());

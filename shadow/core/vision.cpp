@@ -1,6 +1,7 @@
 #include "vision.hpp"
 #include "common.hpp"
 #include "kernel.hpp"
+#include "util/util.hpp"
 
 #include <cmath>
 
@@ -221,6 +222,54 @@ void LRN(const T *in_data, const VecInt &in_shape, int size, float alpha,
 }
 
 template <typename T>
+void ROIPooling(const T *in_data, const VecInt &in_shape, const T *roi_data,
+                int num_rois, int pooled_h, int pooled_w, float spatial_scale,
+                T *out_data) {
+  int batch = in_shape[0];
+  int in_c = in_shape[1], in_h = in_shape[2], in_w = in_shape[3];
+  int in_num = in_c * in_h * in_w;
+  for (int n = 0; n < num_rois; ++n) {
+    int roi_offset = 5 * n;
+    int roi_batch_id = roi_data[roi_offset];
+    int roi_start_w = Util::round(roi_data[roi_offset + 1] * spatial_scale);
+    int roi_start_h = Util::round(roi_data[roi_offset + 2] * spatial_scale);
+    int roi_end_w = Util::round(roi_data[roi_offset + 3] * spatial_scale);
+    int roi_end_h = Util::round(roi_data[roi_offset + 4] * spatial_scale);
+    assert(roi_batch_id >= 0);
+    assert(roi_batch_id < batch);
+    int roi_height = std::max(roi_end_h - roi_start_h + 1, 1);
+    int roi_width = std::max(roi_end_w - roi_start_w + 1, 1);
+    float bin_size_h = roi_height / static_cast<float>(pooled_h);
+    float bin_size_w = roi_width / static_cast<float>(pooled_w);
+    const T *batch_data = in_data + roi_batch_id * in_num;
+    for (int c = 0; c < in_c; ++c) {
+      for (int ph = 0; ph < pooled_h; ++ph) {
+        for (int pw = 0; pw < pooled_w; ++pw) {
+          auto hstart = static_cast<int>(std::floor(ph * bin_size_h));
+          auto wstart = static_cast<int>(std::floor(pw * bin_size_w));
+          auto hend = static_cast<int>(std::ceil((ph + 1) * bin_size_h));
+          auto wend = static_cast<int>(std::ceil((pw + 1) * bin_size_w));
+          hstart = std::min(std::max(hstart + roi_start_h, 0), in_h);
+          hend = std::min(std::max(hend + roi_start_h, 0), in_h);
+          wstart = std::min(std::max(wstart + roi_start_w, 0), in_w);
+          wend = std::min(std::max(wend + roi_start_w, 0), in_w);
+          bool is_empty = (hend <= hstart) || (wend <= wstart);
+          T max =
+              is_empty ? T(0) : batch_data[(c * in_h + hstart) * in_w + wstart];
+          for (int h = hstart; h < hend; ++h) {
+            for (int w = wstart; w < wend; ++w) {
+              max = std::max(max, batch_data[(c * in_h + h) * in_w + w]);
+            }
+          }
+          int pool_index = ((n * in_c + c) * pooled_h + ph) * pooled_w + pw;
+          out_data[pool_index] = max;
+        }
+      }
+    }
+  }
+}
+
+template <typename T>
 inline T Activate(T x, int type, float slope) {
   switch (type) {
     case 1:
@@ -321,6 +370,9 @@ template void Reorg(const float *in_data, const VecInt &in_shape, int stride,
 template void LRN(const float *in_data, const VecInt &in_shape, int size,
                   float alpha, float beta, float k, float *scale_data,
                   float *out_data);
+template void ROIPooling(const float *in_data, const VecInt &in_shape,
+                         const float *roi_data, int num_rois, int pooled_h,
+                         int pooled_w, float spatial_scale, float *out_data);
 template void Activate(float *data, int count, int type, float slope);
 template void PRelu(float *data, const VecInt &in_shape, bool channel_shared,
                     const float *slope_data);
@@ -461,6 +513,21 @@ void LRN(const T *in_data, const VecInt &in_shape, int size, float alpha,
 }
 
 template <typename T>
+void ROIPooling(const T *in_data, const VecInt &in_shape, const T *roi_data,
+                int num_rois, int pooled_h, int pooled_w, float spatial_scale,
+                T *out_data) {
+  int in_c = in_shape[1], in_h = in_shape[2], in_w = in_shape[3];
+  int count = num_rois * in_c * pooled_h * pooled_w;
+
+  size_t global = count;
+  auto *kernel = Kernel::cl_kernels_["POIPooling"];
+  kernel->SetArguments(*in_data, count, *roi_data, in_c, in_h, in_w, pooled_h,
+                       pooled_w, spatial_scale, *out_data);
+  kernel->Launch(*Kernel::queue_, {global}, Kernel::event_);
+  Kernel::queue_->Finish();
+}
+
+template <typename T>
 void Activate(T *data, int count, int type, float slope) {
   size_t global = count;
   auto *kernel = Kernel::cl_kernels_["Activate"];
@@ -512,7 +579,9 @@ template void Reorg(const BufferF *in_data, const VecInt &in_shape, int stride,
 template void LRN(const BufferF *in_data, const VecInt &in_shape, int size,
                   float alpha, float beta, float k, BufferF *scale_data,
                   BufferF *out_data);
-
+template void ROIPooling(const BufferF *in_data, const VecInt &in_shape,
+                         const BufferF *roi_data, int num_rois, int pooled_h,
+                         int pooled_w, float spatial_scale, BufferF *out_data);
 template void Activate(BufferF *data, int count, int type, float slope);
 template void PRelu(BufferF *data, const VecInt &in_shape, bool channel_shared,
                     const BufferF *slope_data);

@@ -47,6 +47,11 @@ void LRN(const T *in_data, const VecInt &in_shape, int size, float alpha,
          float beta, float k, T *scale_data, T *out_data);
 
 template <typename T>
+void ROIPooling(const T *in_data, const VecInt &in_shape, const T *roi_data,
+                int num_rois, int pooled_h, int pooled_w, float spatial_scale,
+                T *out_data);
+
+template <typename T>
 void Activate(T *data, int count, int type, float slope = 0.1);
 
 template <typename T>

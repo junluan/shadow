@@ -5,7 +5,6 @@ using namespace Shadow;
 int main(int argc, char const* argv[]) {
   std::string model_root("models/ssd");
   std::string save_path(model_root + "/shadow");
-  std::string save_name("adas_model_finetune_reduce_3");
 
   // ssd info
   NetInfo net_ssd;
@@ -19,6 +18,7 @@ int main(int argc, char const* argv[]) {
   meta_net_ssd_info.version = "0.0.1";
   meta_net_ssd_info.method = "ssd";
   meta_net_ssd_info.model_name = {"adas_model_finetune_reduce_3"};
+  meta_net_ssd_info.save_name = "adas_model_finetune_reduce_3";
   meta_net_ssd_info.network = {net_ssd};
 
   // mtcnn info
@@ -46,7 +46,23 @@ int main(int argc, char const* argv[]) {
   meta_net_mtcnn_info.version = "0.0.1";
   meta_net_mtcnn_info.method = "mtcnn";
   meta_net_mtcnn_info.model_name = {"det1", "det2", "det3"};
+  meta_net_mtcnn_info.save_name = "mtcnn";
   meta_net_mtcnn_info.network = {net_mtcnn_r, net_mtcnn_p, net_mtcnn_o};
+
+  // faster rcnn info
+  NetInfo net_faster;
+  MetaNetInfo meta_net_faster_info;
+
+  net_faster.num_class = {21};
+  net_faster.input_shape = {{1, 3, 224, 224}, {1, 3}};
+  net_faster.mean_value = {102.9801f, 115.9465f, 122.7717f};
+  net_faster.out_blob = {"bbox_pred", "cls_prob"};
+
+  meta_net_faster_info.version = "0.0.1";
+  meta_net_faster_info.method = "faster";
+  meta_net_faster_info.model_name = {"VGG16_faster_rcnn_final"};
+  meta_net_faster_info.save_name = "VGG16_faster_rcnn_final";
+  meta_net_faster_info.network = {net_faster};
 
   const auto& meta_net_info = meta_net_ssd_info;
 
@@ -65,7 +81,7 @@ int main(int argc, char const* argv[]) {
   Caffe2Shadow::ConvertCaffe(caffe_deploys, caffe_models, meta_net_info,
                              &shadow_net);
 
-  WriteProtoToBinary(shadow_net, save_path, save_name);
+  WriteProtoToBinary(shadow_net, save_path, meta_net_info.save_name);
 
   return 0;
 }

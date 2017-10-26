@@ -451,6 +451,24 @@ void ConvertPriorBox(const caffe::NetParameter& caffe_model,
   }
 }
 
+void ConvertPython(const caffe::NetParameter& caffe_model,
+                   const caffe::LayerParameter& caffe_layer,
+                   shadow::NetParam* shadow_net) {
+  auto shadow_op = shadow_net->add_op();
+  ConvertCommon(caffe_model, caffe_layer, shadow_op);
+
+  if (caffe_layer.has_python_param()) {
+    const auto& caffe_param = caffe_layer.python_param();
+    if (caffe_param.layer() == "ProposalLayer") {
+      shadow_op->set_type("Proposal");
+      LOG(WARNING) << "Can not parse python param, please check "
+                   << caffe_param.param_str();
+    }
+  } else {
+    LOG(FATAL) << "Must have python param";
+  }
+}
+
 void ConvertReshape(const caffe::NetParameter& caffe_model,
                     const caffe::LayerParameter& caffe_layer,
                     shadow::NetParam* shadow_net) {
@@ -470,6 +488,27 @@ void ConvertReshape(const caffe::NetParameter& caffe_model,
     }
     if (caffe_param.has_num_axes()) {
       set_s_i(shadow_op, "num_axes", caffe_param.num_axes());
+    }
+  }
+}
+
+void ConvertROIPooling(const caffe::NetParameter& caffe_model,
+                       const caffe::LayerParameter& caffe_layer,
+                       shadow::NetParam* shadow_net) {
+  auto shadow_op = shadow_net->add_op();
+  shadow_op->set_type("ROIPooling");
+  ConvertCommon(caffe_model, caffe_layer, shadow_op);
+
+  if (caffe_layer.has_roi_pooling_param()) {
+    const auto& caffe_param = caffe_layer.roi_pooling_param();
+    if (caffe_param.has_pooled_h()) {
+      set_s_i(shadow_op, "pooled_h", caffe_param.pooled_h());
+    }
+    if (caffe_param.has_pooled_w()) {
+      set_s_i(shadow_op, "pooled_w", caffe_param.pooled_w());
+    }
+    if (caffe_param.has_spatial_scale()) {
+      set_s_f(shadow_op, "spatial_scale", caffe_param.spatial_scale());
     }
   }
 }
@@ -564,8 +603,12 @@ void ConvertCaffe(const std::vector<caffe::NetParameter>& caffe_deploys,
         ConvertPooling(caffe_model, caffe_layer, shadow_net);
       } else if (layer_type == "PriorBox") {
         ConvertPriorBox(caffe_model, caffe_layer, shadow_net);
+      } else if (layer_type == "Python") {
+        ConvertPython(caffe_model, caffe_layer, shadow_net);
       } else if (layer_type == "Reshape") {
         ConvertReshape(caffe_model, caffe_layer, shadow_net);
+      } else if (layer_type == "ROIPooling") {
+        ConvertROIPooling(caffe_model, caffe_layer, shadow_net);
       } else if (layer_type == "Scale") {
         ConvertScale(caffe_model, caffe_layer, shadow_net);
       } else if (layer_type == "Softmax") {
