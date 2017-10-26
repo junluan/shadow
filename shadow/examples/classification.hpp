@@ -10,8 +10,7 @@ class Classification final : public Method {
   Classification() = default;
   ~Classification() override { Release(); }
 
-  void Setup(const VecString &model_files, const VecInt &classes,
-             const VecInt &in_shape) override;
+  void Setup(const VecString &model_files, const VecInt &in_shape) override;
 
   void Predict(const JImage &im_src, const VecRectF &rois,
                std::vector<std::map<std::string, VecFloat>> *scores) override;

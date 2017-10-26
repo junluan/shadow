@@ -42,7 +42,7 @@ inline VecBoxInfo NMS(const VecBoxInfo &boxes, float threshold,
   return out_boxes;
 }
 
-void DetectionMTCNN::Setup(const VecString &model_files, const VecInt &classes,
+void DetectionMTCNN::Setup(const VecString &model_files,
                            const VecInt &in_shape) {
   net_p_.Setup();
 
@@ -73,8 +73,8 @@ void DetectionMTCNN::Predict(const JImage &im_src, const VecRectF &rois,
                              std::vector<VecBoxF> *Gboxes,
                              std::vector<std::vector<VecPointF>> *Gpoints) {
   Gboxes->clear(), Gpoints->clear();
-  net_p_boxes_.clear(), net_r_boxes_.clear(), net_o_boxes_.clear();
   for (const auto &roi : rois) {
+    net_p_boxes_.clear(), net_r_boxes_.clear(), net_o_boxes_.clear();
     float crop_h = roi.h <= 1 ? roi.h * im_src.h_ : roi.h;
     float crop_w = roi.w <= 1 ? roi.w * im_src.w_ : roi.w;
     CalculateScales(crop_h, crop_w, factor_, max_side_, min_side_, &scales_);

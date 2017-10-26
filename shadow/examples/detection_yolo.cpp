@@ -2,7 +2,7 @@
 
 namespace Shadow {
 
-void DetectionYOLO::Setup(const VecString &model_files, const VecInt &classes,
+void DetectionYOLO::Setup(const VecString &model_files,
                           const VecInt &in_shape) {
   net_.Setup();
 
@@ -32,7 +32,7 @@ void DetectionYOLO::Setup(const VecString &model_files, const VecInt &classes,
   biases_ = VecFloat{1.08f,  1.19f, 3.42f, 4.41f,  6.63f,
                      11.38f, 9.42f, 5.11f, 16.62f, 10.52f};
   threshold_ = 0.6;
-  num_classes_ = classes[0];
+  num_classes_ = net_.num_class()[0];
   num_km_ = 5;
 }
 

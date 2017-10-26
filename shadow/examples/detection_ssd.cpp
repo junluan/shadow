@@ -62,8 +62,7 @@ inline void ApplyNMSFast(const VecBoxF &bboxes, VecFloat &scores,
   }
 }
 
-void DetectionSSD::Setup(const VecString &model_files, const VecInt &classes,
-                         const VecInt &in_shape) {
+void DetectionSSD::Setup(const VecString &model_files, const VecInt &in_shape) {
   net_.Setup();
 
   net_.LoadModel(model_files[0]);
@@ -87,7 +86,7 @@ void DetectionSSD::Setup(const VecString &model_files, const VecInt &classes,
   in_data_.resize(batch_ * in_num_);
 
   threshold_ = 0.6;
-  num_classes_ = classes[0];
+  num_classes_ = net_.num_class()[0];
   num_priors_ = net_.GetBlobByName<float>("mbox_priorbox")->shape(2) / 4;
   num_loc_classes_ = 1;
   background_label_id_ = 0;

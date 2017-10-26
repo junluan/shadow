@@ -2,7 +2,7 @@
 
 namespace Shadow {
 
-void Classification::Setup(const VecString &model_files, const VecInt &classes,
+void Classification::Setup(const VecString &model_files,
                            const VecInt &in_shape) {
   net_.Setup();
 
@@ -27,7 +27,7 @@ void Classification::Setup(const VecString &model_files, const VecInt &classes,
   in_data_.resize(batch_ * in_num_);
 
   task_names_ = VecString{"score"};
-  task_dims_ = classes;
+  task_dims_ = net_.num_class();
   CHECK_EQ(task_names_.size(), task_dims_.size());
   int num_dim = 0;
   for (const auto dim : task_dims_) {

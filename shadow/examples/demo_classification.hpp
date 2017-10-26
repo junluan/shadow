@@ -17,9 +17,8 @@ class DemoClassification {
   }
   ~DemoClassification() { Release(); }
 
-  void Setup(const VecString &model_files, const VecInt &classes,
-             const VecInt &in_shape) {
-    method_->Setup(model_files, classes, in_shape);
+  void Setup(const VecString &model_files, const VecInt &in_shape) {
+    method_->Setup(model_files, in_shape);
   }
   void Release() {
     if (method_ != nullptr) {

@@ -13,34 +13,33 @@ class Method {
   Method() = default;
   virtual ~Method() = default;
 
-  virtual void Setup(const VecString &model_files, const VecInt &classes,
-                     const VecInt &in_shape) {
-    LOG(INFO) << "Setup method!";
+  virtual void Setup(const VecString &model_files, const VecInt &in_shape) {
+    LOG(FATAL) << "Setup method!";
   }
 
   virtual void Predict(const JImage &im_src, const VecRectF &rois,
                        std::vector<VecBoxF> *Gboxes,
                        std::vector<std::vector<VecPointF>> *Gpoints) {
-    LOG(INFO) << "Predict for JImage!";
+    LOG(FATAL) << "Predict for JImage!";
   }
   virtual void Predict(const JImage &im_src, const VecRectF &rois,
                        std::vector<std::map<std::string, VecFloat>> *scores) {
-    LOG(INFO) << "Predict for JImage!";
+    LOG(FATAL) << "Predict for JImage!";
   }
 
 #if defined(USE_OpenCV)
   virtual void Predict(const cv::Mat &im_mat, const VecRectF &rois,
                        std::vector<VecBoxF> *Gboxes,
                        std::vector<std::vector<VecPointF>> *Gpoints) {
-    LOG(INFO) << "Predict for Mat!";
+    LOG(FATAL) << "Predict for Mat!";
   }
   virtual void Predict(const cv::Mat &im_mat, const VecRectF &rois,
                        std::vector<std::map<std::string, VecFloat>> *scores) {
-    LOG(INFO) << "Predict for Mat!";
+    LOG(FATAL) << "Predict for Mat!";
   }
 #endif
 
-  virtual void Release() { LOG(INFO) << "Release method!"; }
+  virtual void Release() { LOG(FATAL) << "Release method!"; }
 };
 
 inline void ConvertData(const JImage &im_src, float *data, const RectF &roi,
