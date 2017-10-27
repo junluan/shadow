@@ -43,8 +43,8 @@ void DetectionFasterRCNN::Setup(const VecString &model_files,
   im_info_.resize(3, 0);
   num_classes_ = net_.num_class()[0];
   max_side_ = 1000, min_side_ = {600};
+  threshold_ = 0.8;
   nms_threshold_ = 0.3;
-  confidence_threshold_ = 0.05;
 }
 
 void DetectionFasterRCNN::Predict(
@@ -56,8 +56,8 @@ void DetectionFasterRCNN::Predict(
     float crop_w = roi.w <= 1 ? roi.w * im_src.w_ : roi.w;
     CalculateScales(crop_h, crop_w, max_side_, min_side_, &scales_);
 
-    auto scale_h = static_cast<int>(std::ceil(crop_h * scales_[0]));
-    auto scale_w = static_cast<int>(std::ceil(crop_w * scales_[0]));
+    auto scale_h = static_cast<int>(crop_h * scales_[0]);
+    auto scale_w = static_cast<int>(crop_w * scales_[0]);
     in_shape_[2] = scale_h, in_shape_[3] = scale_w;
     im_info_[0] = scale_h, im_info_[1] = scale_w, im_info_[2] = scales_[0];
     in_data_.resize(1 * 3 * scale_h * scale_w);
@@ -111,25 +111,26 @@ void DetectionFasterRCNN::Process(const VecFloat &in_data,
         max_score = score;
       }
     }
-    if (label == 0 || max_score < confidence_threshold_) continue;
+    if (label == 0 || max_score < threshold_) continue;
 
-    float xmin = roi_data[n * 5 + 1] / im_info[2];
-    float ymin = roi_data[n * 5 + 2] / im_info[2];
-    float xmax = roi_data[n * 5 + 3] / im_info[2];
-    float ymax = roi_data[n * 5 + 4] / im_info[2];
+    float pb_xmin = roi_data[n * 5 + 1] / im_info[2];
+    float pb_ymin = roi_data[n * 5 + 2] / im_info[2];
+    float pb_xmax = roi_data[n * 5 + 3] / im_info[2];
+    float pb_ymax = roi_data[n * 5 + 4] / im_info[2];
 
-    float pb_w = xmax - xmin + 1;
-    float pb_h = ymax - ymin + 1;
-    float cx = xmin + pb_w * 0.5f;
-    float cy = ymin + pb_h * 0.5f;
+    float pb_w = pb_xmax - pb_xmin + 1;
+    float pb_h = pb_ymax - pb_ymin + 1;
+    float pb_cx = pb_xmin + pb_w * 0.5f;
+    float pb_cy = pb_ymin + pb_h * 0.5f;
 
-    float dx = delta_data[label * 4 + 0];
-    float dy = delta_data[label * 4 + 1];
-    float dw = delta_data[label * 4 + 2];
-    float dh = delta_data[label * 4 + 3];
+    int delta_offset = (n * num_classes_ + label) * 4;
+    float dx = delta_data[delta_offset + 0];
+    float dy = delta_data[delta_offset + 1];
+    float dw = delta_data[delta_offset + 2];
+    float dh = delta_data[delta_offset + 3];
 
-    float pred_cx = cx + pb_w * dx;
-    float pred_cy = cy + pb_h * dy;
+    float pred_cx = pb_cx + pb_w * dx;
+    float pred_cy = pb_cy + pb_h * dy;
     float pred_w = pb_w * std::exp(dw);
     float pred_h = pb_h * std::exp(dh);
 
@@ -142,10 +143,10 @@ void DetectionFasterRCNN::Process(const VecFloat &in_data,
     box.xmax = pred_cx + pred_w * 0.5f;
     box.ymax = pred_cy + pred_h * 0.5f;
 
-    box.xmin = std::max(std::min(box.xmin, width - 1), 0.f);
-    box.ymin = std::max(std::min(box.ymin, height - 1), 0.f);
-    box.xmax = std::max(std::min(box.xmax, width - 1), 0.f);
-    box.ymax = std::max(std::min(box.ymax, height - 1), 0.f);
+    box.xmin = std::min(std::max(box.xmin, 0.f), width - 1);
+    box.ymin = std::min(std::max(box.ymin, 0.f), height - 1);
+    box.xmax = std::min(std::max(box.xmax, 0.f), width - 1);
+    box.ymax = std::min(std::max(box.ymax, 0.f), height - 1);
 
     boxes->push_back(box);
   }

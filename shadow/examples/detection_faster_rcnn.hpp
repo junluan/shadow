@@ -35,7 +35,7 @@ class DetectionFasterRCNN final : public Method {
   VecFloat in_data_, min_side_, scales_, im_info_;
   VecInt in_shape_;
   int num_classes_;
-  float max_side_, nms_threshold_, confidence_threshold_;
+  float max_side_, threshold_, nms_threshold_;
   JImage im_ini_;
 };
 

@@ -243,6 +243,58 @@ __kernel void POIPooling(__global float *in_data, int count,
   out_data[globalid] = max_val;
 }
 
+__kernel void Proposal(int count, __global float *anchor_data,
+                       __global float *score_data, __global float *delta_data,
+                       __global float *info_data, int in_h, int in_w,
+                       int num_anchors, int feat_stride, int min_size,
+                       __global float *proposal_data) {
+  CL_KERNEL_LOOP(globalid, count)
+
+  int n_out = globalid % num_anchors;
+  int w_out = (globalid / num_anchors) % in_w;
+  int h_out = globalid / num_anchors / in_w;
+
+  int spatial_dim = in_h * in_w;
+  int spatial_offset = h_out * in_w + w_out;
+  int delta_offset = n_out * 4 * spatial_dim + spatial_offset;
+  float min_box_size = min_size * info_data[2];
+
+  anchor_data += n_out * 4;
+  proposal_data += globalid * 6;
+
+  float score =
+      score_data[(num_anchors + n_out) * spatial_dim + spatial_offset];
+
+  float anchor_x = anchor_data[0] + w_out * feat_stride;
+  float anchor_y = anchor_data[1] + h_out * feat_stride;
+  float anchor_w = anchor_data[2] - anchor_data[0] + 1;
+  float anchor_h = anchor_data[3] - anchor_data[1] + 1;
+  float anchor_cx = anchor_x + anchor_w * 0.5f;
+  float anchor_cy = anchor_y + anchor_h * 0.5f;
+
+  float dx = delta_data[delta_offset];
+  float dy = delta_data[delta_offset + spatial_dim];
+  float dw = delta_data[delta_offset + spatial_dim * 2];
+  float dh = delta_data[delta_offset + spatial_dim * 3];
+
+  float pb_cx = anchor_cx + anchor_w * dx, pb_cy = anchor_cy + anchor_h * dy;
+  float pb_w = anchor_w * exp(dw), pb_h = anchor_h * exp(dh);
+
+  float pb_xmin = pb_cx - pb_w * 0.5f;
+  float pb_ymin = pb_cy - pb_h * 0.5f;
+  float pb_xmax = pb_cx + pb_w * 0.5f;
+  float pb_ymax = pb_cy + pb_h * 0.5f;
+
+  proposal_data[0] = fmin(fmax(pb_xmin, 0.f), info_data[1] - 1);
+  proposal_data[1] = fmin(fmax(pb_ymin, 0.f), info_data[0] - 1);
+  proposal_data[2] = fmin(fmax(pb_xmin, 0.f), info_data[1] - 1);
+  proposal_data[3] = fmin(fmax(pb_ymin, 0.f), info_data[0] - 1);
+  proposal_data[4] = score;
+  pb_w = proposal_data[2] - proposal_data[0] + 1;
+  pb_h = proposal_data[3] - proposal_data[1] + 1;
+  proposal_data[5] = (pb_w >= min_box_size) && (pb_h >= min_box_size);
+}
+
 inline float ActivateValue(float x, int type, float slope) {
   // PRelu: 0, Relu: 1, Leaky: 2, Sigmoid: 3, SoftPlus: 4, Tanh: 5
   switch (type) {

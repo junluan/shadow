@@ -270,6 +270,53 @@ void ROIPooling(const T *in_data, const VecInt &in_shape, const T *roi_data,
 }
 
 template <typename T>
+void Proposal(const T *anchor_data, const T *score_data, const T *delta_data,
+              const T *info_data, const VecInt &in_shape, int num_anchors,
+              int feat_stride, int min_size, T *proposal_data) {
+  int in_h = in_shape[2], in_w = in_shape[3], spatial_dim = in_h * in_w;
+  int num_proposals = spatial_dim * num_anchors;
+  T im_h = info_data[0], im_w = info_data[1], im_scale = info_data[2];
+  T min_box_size = min_size * im_scale;
+  for (int n = 0; n < num_anchors; ++n) {
+    const auto *anchor_ptr = anchor_data + n * 4;
+    const auto *score_ptr = score_data + num_proposals + n * spatial_dim;
+    const auto *dx_ptr = delta_data + (n * 4 + 0) * spatial_dim;
+    const auto *dy_ptr = delta_data + (n * 4 + 1) * spatial_dim;
+    const auto *dw_ptr = delta_data + (n * 4 + 2) * spatial_dim;
+    const auto *dh_ptr = delta_data + (n * 4 + 3) * spatial_dim;
+    T anchor_w = anchor_ptr[2] - anchor_ptr[0] + 1;
+    T anchor_h = anchor_ptr[3] - anchor_ptr[1] + 1;
+    for (int h = 0; h < in_h; ++h) {
+      for (int w = 0; w < in_w; ++w) {
+        int spatial_offset = h * in_w + w;
+        T anchor_x = anchor_ptr[0] + w * feat_stride;
+        T anchor_y = anchor_ptr[1] + h * feat_stride;
+        T anchor_cx = anchor_x + anchor_w * T(0.5);
+        T anchor_cy = anchor_y + anchor_h * T(0.5);
+        T dx = dx_ptr[spatial_offset], dy = dy_ptr[spatial_offset];
+        T dw = dw_ptr[spatial_offset], dh = dh_ptr[spatial_offset];
+        T pb_cx = anchor_cx + anchor_w * dx;
+        T pb_cy = anchor_cy + anchor_h * dy;
+        T pb_w = anchor_w * std::exp(dw), pb_h = anchor_h * std::exp(dh);
+        T pb_xmin = pb_cx - pb_w * T(0.5);
+        T pb_ymin = pb_cy - pb_h * T(0.5);
+        T pb_xmax = pb_cx + pb_w * T(0.5);
+        T pb_ymax = pb_cy + pb_h * T(0.5);
+        auto *prop_ptr = proposal_data + (spatial_offset * num_anchors + n) * 6;
+        prop_ptr[0] = std::min(std::max(pb_xmin, T(0)), im_w - 1);
+        prop_ptr[1] = std::min(std::max(pb_ymin, T(0)), im_h - 1);
+        prop_ptr[2] = std::min(std::max(pb_xmax, T(0)), im_w - 1);
+        prop_ptr[3] = std::min(std::max(pb_ymax, T(0)), im_h - 1);
+        prop_ptr[4] = score_ptr[spatial_offset];
+        pb_w = prop_ptr[2] - prop_ptr[0] + 1;
+        pb_h = prop_ptr[3] - prop_ptr[1] + 1;
+        prop_ptr[5] = (pb_w >= min_box_size) && (pb_h >= min_box_size);
+      }
+    }
+  }
+}
+
+template <typename T>
 inline T Activate(T x, int type, float slope) {
   switch (type) {
     case 1:
@@ -373,6 +420,10 @@ template void LRN(const float *in_data, const VecInt &in_shape, int size,
 template void ROIPooling(const float *in_data, const VecInt &in_shape,
                          const float *roi_data, int num_rois, int pooled_h,
                          int pooled_w, float spatial_scale, float *out_data);
+template void Proposal(const float *anchor_data, const float *score_data,
+                       const float *delta_data, const float *info_data,
+                       const VecInt &in_shape, int num_anchors, int feat_stride,
+                       int min_size, float *proposal_data);
 template void Activate(float *data, int count, int type, float slope);
 template void PRelu(float *data, const VecInt &in_shape, bool channel_shared,
                     const float *slope_data);
@@ -528,6 +579,22 @@ void ROIPooling(const T *in_data, const VecInt &in_shape, const T *roi_data,
 }
 
 template <typename T>
+void Proposal(const T *anchor_data, const T *score_data, const T *delta_data,
+              const T *info_data, const VecInt &in_shape, int num_anchors,
+              int feat_stride, int min_size, T *proposal_data) {
+  int in_h = in_shape[2], in_w = in_shape[3];
+  int count = in_h * in_w * num_anchors;
+
+  size_t global = count;
+  auto *kernel = Kernel::cl_kernels_["Proposal"];
+  kernel->SetArguments(count, *anchor_data, *score_data, *delta_data,
+                       *info_data, in_h, in_w, num_anchors, feat_stride,
+                       min_size, *proposal_data);
+  kernel->Launch(*Kernel::queue_, {global}, Kernel::event_);
+  Kernel::queue_->Finish();
+}
+
+template <typename T>
 void Activate(T *data, int count, int type, float slope) {
   size_t global = count;
   auto *kernel = Kernel::cl_kernels_["Activate"];
@@ -582,6 +649,10 @@ template void LRN(const BufferF *in_data, const VecInt &in_shape, int size,
 template void ROIPooling(const BufferF *in_data, const VecInt &in_shape,
                          const BufferF *roi_data, int num_rois, int pooled_h,
                          int pooled_w, float spatial_scale, BufferF *out_data);
+template void Proposal(const BufferF *anchor_data, const BufferF *score_data,
+                       const BufferF *delta_data, const BufferF *info_data,
+                       const VecInt &in_shape, int num_anchors, int feat_stride,
+                       int min_size, BufferF *proposal_data);
 template void Activate(BufferF *data, int count, int type, float slope);
 template void PRelu(BufferF *data, const VecInt &in_shape, bool channel_shared,
                     const BufferF *slope_data);

@@ -52,6 +52,11 @@ void ROIPooling(const T *in_data, const VecInt &in_shape, const T *roi_data,
                 T *out_data);
 
 template <typename T>
+void Proposal(const T *anchor_data, const T *score_data, const T *delta_data,
+              const T *info_data, const VecInt &in_shape, int num_anchors,
+              int feat_stride, int min_size, T *proposal_data);
+
+template <typename T>
 void Activate(T *data, int count, int type, float slope = 0.1);
 
 template <typename T>

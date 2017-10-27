@@ -18,9 +18,11 @@ class ProposalOp : public Operator {
 
  private:
   int feat_stride_, pre_nms_topN_, post_nms_topN_, min_size_, base_size_,
-      num_anchors_, spatial_dim_, num_proposals_;
+      num_anchors_;
   float nms_thresh_;
-  VecFloat ratios_, scales_, anchors_, proposals_, selected_rois_;
+  VecFloat ratios_, scales_, selected_rois_;
+
+  BlobF *anchors_ = nullptr, *proposals_ = nullptr;
 };
 
 }  // namespace Shadow

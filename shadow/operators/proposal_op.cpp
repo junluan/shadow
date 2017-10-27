@@ -1,4 +1,5 @@
 #include "proposal_op.hpp"
+#include "core/vision.hpp"
 
 namespace Shadow {
 
@@ -79,8 +80,11 @@ void ProposalOp::Setup() {
   nms_thresh_ = 0.7;
   ratios_ = {0.5f, 1.f, 2.f};
   scales_ = {8.f, 16.f, 32.f};
-  anchors_ = generate_anchors(base_size_, ratios_, scales_);
+  const auto &anchors = generate_anchors(base_size_, ratios_, scales_);
   num_anchors_ = static_cast<int>(ratios_.size() * scales_.size());
+  anchors_ =
+      op_ws_->CreateBlob<float>({num_anchors_, 4}, op_name_ + "_anchors");
+  anchors_->set_data(anchors.data(), anchors_->count());
 }
 
 void ProposalOp::Reshape() {
@@ -101,9 +105,8 @@ void ProposalOp::Reshape() {
 
   top->reshape({post_nms_topN_, 5});
 
-  spatial_dim_ = in_h * in_w;
-  num_proposals_ = num_anchors_ * spatial_dim_;
-  proposals_.resize(num_proposals_ * 4, 0);
+  proposals_ = op_ws_->CreateBlob<float>(op_name_ + "_proposals");
+  proposals_->reshape({in_h * in_w * num_anchors_, 6});
 
   VecString str;
   for (int i = 0; i < bottoms_size(); ++i) {
@@ -117,115 +120,50 @@ void ProposalOp::Reshape() {
 }
 
 void ProposalOp::Forward() {
-  auto *bottom_score = mutable_bottoms<float>(0);
-  auto *bottom_delta = mutable_bottoms<float>(1);
-  auto *bottom_info = mutable_bottoms<float>(2);
+  const auto *bottom_score = bottoms<float>(0);
+  const auto *bottom_delta = bottoms<float>(1);
+  const auto *bottom_info = bottoms<float>(2);
   auto *top = mutable_tops<float>(0);
 
-  int in_h = bottom_score->shape(2), in_w = bottom_score->shape(3);
+  Vision::Proposal(anchors_->data(), bottom_score->data(), bottom_delta->data(),
+                   bottom_info->data(), bottom_score->shape(), num_anchors_,
+                   feat_stride_, min_size_, proposals_->mutable_data());
 
-  const auto *score_data = bottom_score->cpu_data();
-  const auto *delta_data = bottom_delta->cpu_data();
-  const auto *info_data = bottom_info->cpu_data();
-  float im_h = info_data[0], im_w = info_data[1], im_scale = info_data[2];
+  const auto *proposal_data = proposals_->cpu_data();
 
-  const auto *anchors_data = anchors_.data();
-  auto *prop_data = proposals_.data();
-
-  // generate proposals from bbox deltas and shifted anchors
-  for (int n = 0; n < num_anchors_; ++n) {
-    const auto *dx_ptr = delta_data + (n * 4 + 0) * spatial_dim_;
-    const auto *dy_ptr = delta_data + (n * 4 + 1) * spatial_dim_;
-    const auto *dw_ptr = delta_data + (n * 4 + 2) * spatial_dim_;
-    const auto *dh_ptr = delta_data + (n * 4 + 3) * spatial_dim_;
-
-    const auto *anchor_ptr = anchors_data + n * 4;
-
-    float anchor_w = anchor_ptr[2] - anchor_ptr[0] + 1;
-    float anchor_h = anchor_ptr[3] - anchor_ptr[1] + 1;
-
-    float anchor_y = anchor_ptr[1];
-    for (int h = 0; h < in_h; ++h) {
-      float anchor_x = anchor_ptr[0];
-      for (int w = 0; w < in_w; ++w) {
-        auto *prop_ptr = prop_data + ((n * in_h + h) * in_w + w) * 4;
-
-        float cx = anchor_x + anchor_w * 0.5f;
-        float cy = anchor_y + anchor_h * 0.5f;
-
-        float dx = dx_ptr[h * in_w + w];
-        float dy = dy_ptr[h * in_w + w];
-        float dw = dw_ptr[h * in_w + w];
-        float dh = dh_ptr[h * in_w + w];
-
-        float pb_cx = cx + anchor_w * dx;
-        float pb_cy = cy + anchor_h * dy;
-        float pb_w = anchor_w * std::exp(dw);
-        float pb_h = anchor_h * std::exp(dh);
-
-        prop_ptr[0] = pb_cx - pb_w * 0.5f;
-        prop_ptr[1] = pb_cy - pb_h * 0.5f;
-        prop_ptr[2] = pb_cx + pb_w * 0.5f;
-        prop_ptr[3] = pb_cy + pb_h * 0.5f;
-
-        anchor_x += feat_stride_;
-      }
-      anchor_y += feat_stride_;
-    }
-  }
-
-  // clip predicted boxes to image
-  for (int n = 0; n < num_proposals_; ++n) {
-    auto *prop_ptr = prop_data + n * 4;
-    prop_ptr[0] = std::max(std::min(prop_ptr[0], im_w - 1), 0.f);
-    prop_ptr[1] = std::max(std::min(prop_ptr[1], im_h - 1), 0.f);
-    prop_ptr[2] = std::max(std::min(prop_ptr[2], im_w - 1), 0.f);
-    prop_ptr[3] = std::max(std::min(prop_ptr[3], im_h - 1), 0.f);
-  }
-
-  float min_box_size = min_size_ * im_scale;
-
-  std::vector<RectInfo> rects;
-  const auto *score_ptr = score_data + num_proposals_;
-  for (int n = 0; n < num_proposals_; ++n) {
-    int index = n % spatial_dim_;
-    auto *prop_ptr = prop_data + n * 4;
-    float pb_w = prop_ptr[2] - prop_ptr[0] + 1;
-    float pb_h = prop_ptr[3] - prop_ptr[1] + 1;
-    if (pb_w >= min_box_size && pb_h >= min_box_size) {
+  std::vector<RectInfo> rectangles;
+  for (int n = 0; n < proposals_->shape(0); ++n) {
+    const auto *proposal_ptr = proposal_data + n * 6;
+    if (proposal_ptr[5] > 0) {
       RectInfo rect = {};
-      rect.xmin = prop_ptr[0];
-      rect.ymin = prop_ptr[1];
-      rect.xmax = prop_ptr[2];
-      rect.ymax = prop_ptr[3];
-      rect.score = score_ptr[index];
-      rects.push_back(rect);
+      rect.xmin = proposal_ptr[0];
+      rect.ymin = proposal_ptr[1];
+      rect.xmax = proposal_ptr[2];
+      rect.ymax = proposal_ptr[3];
+      rect.score = proposal_ptr[4];
+      rectangles.push_back(rect);
     }
   }
 
-  // sort all (proposal, score) pairs by score from highest to lowest
-  std::stable_sort(rects.begin(), rects.end(), compare_descend);
+  std::stable_sort(rectangles.begin(), rectangles.end(), compare_descend);
 
-  // take top pre_nms_topN
-  if (pre_nms_topN_ > 0 && pre_nms_topN_ < rects.size()) {
-    rects.resize(pre_nms_topN_);
+  if (pre_nms_topN_ > 0 && pre_nms_topN_ < rectangles.size()) {
+    rectangles.resize(pre_nms_topN_);
   }
 
-  // apply nms with nms_thresh
-  const auto &picked = nms_sorted(rects, nms_thresh_);
+  const auto &picked = nms_sorted(rectangles, nms_thresh_);
 
-  // take post_nms_topN_
   int picked_count = std::min(static_cast<int>(picked.size()), post_nms_topN_);
 
   selected_rois_.resize(picked_count * 5, 0);
   for (int n = 0; n < picked_count; ++n) {
     int selected_offset = n * 5;
-    const auto &rect = rects[picked[n]];
+    const auto &rect = rectangles[picked[n]];
     selected_rois_[selected_offset + 0] = 0;
     selected_rois_[selected_offset + 1] = rect.xmin;
     selected_rois_[selected_offset + 2] = rect.ymin;
     selected_rois_[selected_offset + 3] = rect.xmax;
-    selected_rois_[selected_offset + 4] = rect.xmax;
+    selected_rois_[selected_offset + 4] = rect.ymax;
   }
 
   top->reshape({picked_count, 5});

@@ -324,11 +324,11 @@ __global__ void KernelPOIPooling(const T *in_data, int count, const T *roi_data,
     int n = globalid / pooled_w / pooled_h / in_c;
 
     roi_data += n * 5;
-    int roi_batch_id = roi_data[0];
-    int roi_start_w = round(roi_data[1] * spatial_scale);
-    int roi_start_h = round(roi_data[2] * spatial_scale);
-    int roi_end_w = round(roi_data[3] * spatial_scale);
-    int roi_end_h = round(roi_data[4] * spatial_scale);
+    int roi_batch_id = static_cast<int>(roi_data[0]);
+    int roi_start_w = static_cast<int>(round(roi_data[1] * spatial_scale));
+    int roi_start_h = static_cast<int>(round(roi_data[2] * spatial_scale));
+    int roi_end_w = static_cast<int>(round(roi_data[3] * spatial_scale));
+    int roi_end_h = static_cast<int>(round(roi_data[4] * spatial_scale));
 
     int roi_height = max(roi_end_h - roi_start_h + 1, 1);
     int roi_width = max(roi_end_w - roi_start_w + 1, 1);
@@ -368,6 +368,70 @@ void ROIPooling(const T *in_data, const VecInt &in_shape, const T *roi_data,
   KernelPOIPooling<T><<<GetBlocks(count), NumThreads>>>(
       in_data, count, roi_data, in_c, in_h, in_w, pooled_h, pooled_w,
       spatial_scale, out_data);
+  CUDA_CHECK(cudaPeekAtLastError());
+}
+
+template <typename T>
+__global__ void KernelProposal(int count, const T *anchor_data,
+                               const T *score_data, const T *delta_data,
+                               const T *info_data, int in_h, int in_w,
+                               int num_anchors, int feat_stride, int min_size,
+                               T *proposal_data) {
+  CUDA_KERNEL_LOOP(globalid, count) {
+    int n_out = globalid % num_anchors;
+    int w_out = (globalid / num_anchors) % in_w;
+    int h_out = globalid / num_anchors / in_w;
+
+    int spatial_dim = in_h * in_w;
+    int spatial_offset = h_out * in_w + w_out;
+    int delta_offset = n_out * 4 * spatial_dim + spatial_offset;
+    T min_box_size = min_size * info_data[2];
+
+    anchor_data += n_out * 4;
+    proposal_data += globalid * 6;
+
+    T score = score_data[(num_anchors + n_out) * spatial_dim + spatial_offset];
+
+    T anchor_x = anchor_data[0] + w_out * feat_stride;
+    T anchor_y = anchor_data[1] + h_out * feat_stride;
+    T anchor_w = anchor_data[2] - anchor_data[0] + 1;
+    T anchor_h = anchor_data[3] - anchor_data[1] + 1;
+    T anchor_cx = anchor_x + anchor_w * T(0.5);
+    T anchor_cy = anchor_y + anchor_h * T(0.5);
+
+    T dx = delta_data[delta_offset];
+    T dy = delta_data[delta_offset + spatial_dim];
+    T dw = delta_data[delta_offset + spatial_dim * 2];
+    T dh = delta_data[delta_offset + spatial_dim * 3];
+
+    T pb_cx = anchor_cx + anchor_w * dx, pb_cy = anchor_cy + anchor_h * dy;
+    T pb_w = anchor_w * std::exp(dw), pb_h = anchor_h * std::exp(dh);
+
+    T pb_xmin = pb_cx - pb_w * T(0.5);
+    T pb_ymin = pb_cy - pb_h * T(0.5);
+    T pb_xmax = pb_cx + pb_w * T(0.5);
+    T pb_ymax = pb_cy + pb_h * T(0.5);
+
+    proposal_data[0] = min(max(pb_xmin, T(0)), info_data[1] - 1);
+    proposal_data[1] = min(max(pb_ymin, T(0)), info_data[0] - 1);
+    proposal_data[2] = min(max(pb_xmax, T(0)), info_data[1] - 1);
+    proposal_data[3] = min(max(pb_ymax, T(0)), info_data[0] - 1);
+    proposal_data[4] = score;
+    pb_w = proposal_data[2] - proposal_data[0] + 1;
+    pb_h = proposal_data[3] - proposal_data[1] + 1;
+    proposal_data[5] = (pb_w >= min_box_size) && (pb_h >= min_box_size);
+  }
+}
+
+template <typename T>
+void Proposal(const T *anchor_data, const T *score_data, const T *delta_data,
+              const T *info_data, const VecInt &in_shape, int num_anchors,
+              int feat_stride, int min_size, T *proposal_data) {
+  int in_h = in_shape[2], in_w = in_shape[3];
+  int count = in_h * in_w * num_anchors;
+  KernelProposal<T><<<GetBlocks(count), NumThreads>>>(
+      count, anchor_data, score_data, delta_data, info_data, in_h, in_w,
+      num_anchors, feat_stride, min_size, proposal_data);
   CUDA_CHECK(cudaPeekAtLastError());
 }
 
@@ -457,6 +521,10 @@ template void LRN(const float *in_data, const VecInt &in_shape, int size,
 template void ROIPooling(const float *in_data, const VecInt &in_shape,
                          const float *roi_data, int num_rois, int pooled_h,
                          int pooled_w, float spatial_scale, float *out_data);
+template void Proposal(const float *anchor_data, const float *score_data,
+                       const float *delta_data, const float *info_data,
+                       const VecInt &in_shape, int num_anchors, int feat_stride,
+                       int min_size, float *proposal_data);
 template void Activate(float *data, int count, int type, float slope);
 template void PRelu(float *data, const VecInt &in_shape, bool channel_shared,
                     const float *slope_data);
