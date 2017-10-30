@@ -105,6 +105,7 @@ void Network::LoadProtoStrOrText(const std::string &proto_str_or_text,
 }
 
 void Network::Initial() {
+  arg_helper_ = ArgumentHelper(net_param_);
   CHECK_GT(net_param_.op_size(), 0);
   const auto &input_op_param = net_param_.op(0);
   CHECK(input_op_param.type().find("Input") != std::string::npos)

@@ -60,6 +60,23 @@ class Network {
     return out_blobs;
   }
 
+  bool has_argument(const std::string &name) const {
+    return arg_helper_.HasArgument(name);
+  }
+  template <typename T>
+  T get_single_argument(const std::string &name, const T &default_value) const {
+    return arg_helper_.template GetSingleArgument<T>(name, default_value);
+  }
+  template <typename T>
+  bool has_single_argument_of_type(const std::string &name) const {
+    return arg_helper_.template HasSingleArgumentOfType<T>(name);
+  }
+  template <typename T>
+  const std::vector<T> get_repeated_argument(
+      const std::string &name, const std::vector<T> &default_value = {}) const {
+    return arg_helper_.template GetRepeatedArgument<T>(name, default_value);
+  }
+
  private:
   void LoadProtoBin(const std::string &proto_bin, shadow::NetParam *net_param);
   void LoadProtoStrOrText(const std::string &proto_str_or_text,
@@ -71,6 +88,7 @@ class Network {
   void CopyWeights(const float *weights_data);
 
   shadow::NetParam net_param_;
+  ArgumentHelper arg_helper_;
 
   VecOp ops_;
   Workspace ws_;

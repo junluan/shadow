@@ -239,6 +239,7 @@ class NetParam {
 class ArgumentHelper {
  public:
   ArgumentHelper() = default;
+  explicit ArgumentHelper(const shadow::NetParam &def);
   explicit ArgumentHelper(const shadow::OpParam &def);
 
   bool HasArgument(const std::string &name) const;
@@ -254,7 +255,7 @@ class ArgumentHelper {
       const std::vector<T> &default_value = std::vector<T>()) const;
 
  private:
-  std::map<std::string, const shadow::Argument *> arg_map_;
+  std::map<std::string, shadow::Argument> arg_map_;
 };
 
 #define INSTANTIATE_SET_SINGLE_ARGUMENT(T, fieldname)                    \

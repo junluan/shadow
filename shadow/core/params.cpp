@@ -3,12 +3,21 @@
 
 namespace Shadow {
 
+ArgumentHelper::ArgumentHelper(const shadow::NetParam& def) {
+  for (auto& arg : def.arg()) {
+    CHECK(!arg_map_.count(arg.name()))
+        << "Duplicated argument name: " << arg.name()
+        << " found in network def: " << def.name();
+    arg_map_[arg.name()] = arg;
+  }
+}
+
 ArgumentHelper::ArgumentHelper(const shadow::OpParam& def) {
   for (auto& arg : def.arg()) {
     CHECK(!arg_map_.count(arg.name()))
         << "Duplicated argument name: " << arg.name()
         << " found in operator def: " << def.name();
-    arg_map_[arg.name()] = &arg;
+    arg_map_[arg.name()] = arg;
   }
 }
 
@@ -23,8 +32,8 @@ bool ArgumentHelper::HasArgument(const std::string& name) const {
     if (arg_map_.count(name) == 0) {                                       \
       return default_value;                                                \
     }                                                                      \
-    CHECK(arg_map_.at(name)->has_##fieldname());                           \
-    return arg_map_.at(name)->fieldname();                                 \
+    CHECK(arg_map_.at(name).has_##fieldname());                            \
+    return arg_map_.at(name).fieldname();                                  \
   }                                                                        \
   template <>                                                              \
   bool ArgumentHelper::HasSingleArgumentOfType<T>(const std::string& name) \
@@ -32,7 +41,7 @@ bool ArgumentHelper::HasArgument(const std::string& name) const {
     if (arg_map_.count(name) == 0) {                                       \
       return false;                                                        \
     }                                                                      \
-    return arg_map_.at(name)->has_##fieldname();                           \
+    return arg_map_.at(name).has_##fieldname();                            \
   }
 
 INSTANTIATE_GET_SINGLE_ARGUMENT(float, s_f);
@@ -49,7 +58,7 @@ INSTANTIATE_GET_SINGLE_ARGUMENT(std::string, s_s);
       return default_value;                                                 \
     }                                                                       \
     std::vector<T> values;                                                  \
-    for (const auto v : arg_map_.at(name)->fieldname()) {                   \
+    for (const auto v : arg_map_.at(name).fieldname()) {                    \
       values.push_back(v);                                                  \
     }                                                                       \
     return values;                                                          \
