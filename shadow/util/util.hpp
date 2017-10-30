@@ -2,6 +2,7 @@
 #define SHADOW_UTIL_UTIL_HPP
 
 #include <algorithm>
+#include <cassert>
 #include <cctype>
 #include <cfloat>
 #include <cmath>
@@ -21,7 +22,11 @@ namespace Util {
 
 template <typename Dtype>
 inline int round(Dtype x) {
+#if defined(__linux__) || defined(__APPLE__)
+  return std::round(x);
+#elif defined(_WIN32)
   return static_cast<int>(std::floor(x + 0.5));
+#endif
 }
 
 inline float rand_uniform(float min, float max) {
@@ -222,7 +227,6 @@ inline std::string read_text_from_file(const std::string &filename) {
 #include <unistd.h>
 #include <chrono>
 #include <climits>
-using namespace std::chrono;
 #elif defined(_WIN32)
 #define NOMINMAX
 #include <windows.h>
@@ -508,7 +512,7 @@ class Timer {
  public:
   Timer() {
 #if defined(__linux__) || defined(__APPLE__)
-    tstart_ = system_clock::now();
+    tstart_ = std::chrono::system_clock::now();
 #elif defined(_WIN32)
     QueryPerformanceFrequency(&tfrequency_);
     QueryPerformanceCounter(&tstart_);
@@ -517,7 +521,7 @@ class Timer {
 
   void start() {
 #if defined(__linux__) || defined(__APPLE__)
-    tstart_ = system_clock::now();
+    tstart_ = std::chrono::system_clock::now();
 #elif defined(_WIN32)
     QueryPerformanceCounter(&tstart_);
 #endif
@@ -525,8 +529,10 @@ class Timer {
 
   double get_microsecond() {
 #if defined(__linux__) || defined(__APPLE__)
-    tend_ = system_clock::now();
-    return duration_cast<microseconds>(tend_ - tstart_).count();
+    tend_ = std::chrono::system_clock::now();
+    return std::chrono::duration_cast<std::chrono::microseconds>(tend_ -
+                                                                 tstart_)
+        .count();
 #elif defined(_WIN32)
     QueryPerformanceCounter(&tend_);
     return 1000000.0 * (tend_.QuadPart - tstart_.QuadPart) /
@@ -582,7 +588,7 @@ class Timer {
 
  private:
 #if defined(__linux__) || defined(__APPLE__)
-  time_point<system_clock> tstart_, tend_;
+  std::chrono::time_point<std::chrono::system_clock> tstart_, tend_;
 #elif defined(_WIN32)
   LARGE_INTEGER tstart_, tend_, tfrequency_;
 #endif
