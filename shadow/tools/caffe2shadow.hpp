@@ -463,6 +463,8 @@ void ConvertPython(const caffe::NetParameter& caffe_model,
       shadow_op->set_type("Proposal");
       LOG(WARNING) << "Can not parse python param, please check "
                    << caffe_param.param_str();
+    } else {
+      LOG(FATAL) << "Layer not support " << caffe_param.layer();
     }
   } else {
     LOG(FATAL) << "Must have python param";

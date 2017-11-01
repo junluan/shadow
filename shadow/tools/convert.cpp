@@ -6,21 +6,6 @@ int main(int argc, char const* argv[]) {
   std::string model_root("models/ssd");
   std::string save_path(model_root + "/shadow");
 
-  // ssd info
-  NetInfo net_ssd;
-  MetaNetInfo meta_net_ssd_info;
-
-  net_ssd.num_class = {3};
-  net_ssd.input_shape = {{1, 3, 300, 300}};
-  net_ssd.mean_value = {103.94f, 116.78f, 123.68f};
-  net_ssd.out_blob = {"mbox_loc", "mbox_conf_flatten", "mbox_priorbox"};
-
-  meta_net_ssd_info.version = "0.0.1";
-  meta_net_ssd_info.method = "ssd";
-  meta_net_ssd_info.model_name = {"adas_model_finetune_reduce_3"};
-  meta_net_ssd_info.save_name = "adas_model_finetune_reduce_3";
-  meta_net_ssd_info.network = {net_ssd};
-
   // mtcnn info
   NetInfo net_mtcnn_r, net_mtcnn_p, net_mtcnn_o;
   MetaNetInfo meta_net_mtcnn_info;
@@ -48,6 +33,21 @@ int main(int argc, char const* argv[]) {
   meta_net_mtcnn_info.model_name = {"det1", "det2", "det3"};
   meta_net_mtcnn_info.save_name = "mtcnn";
   meta_net_mtcnn_info.network = {net_mtcnn_r, net_mtcnn_p, net_mtcnn_o};
+
+  // ssd info
+  NetInfo net_ssd;
+  MetaNetInfo meta_net_ssd_info;
+
+  net_ssd.num_class = {3};
+  net_ssd.input_shape = {{1, 3, 300, 300}};
+  net_ssd.mean_value = {103.94f, 116.78f, 123.68f};
+  net_ssd.out_blob = {"mbox_loc", "mbox_conf_flatten", "mbox_priorbox"};
+
+  meta_net_ssd_info.version = "0.0.1";
+  meta_net_ssd_info.method = "ssd";
+  meta_net_ssd_info.model_name = {"adas_model_finetune_reduce_3"};
+  meta_net_ssd_info.save_name = "adas_model_finetune_reduce_3";
+  meta_net_ssd_info.network = {net_ssd};
 
   // faster rcnn info
   NetInfo net_faster;

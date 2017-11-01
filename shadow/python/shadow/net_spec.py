@@ -1,15 +1,23 @@
+from __future__ import print_function
+
 import math
-
 import shadow_pb2
-
 from google.protobuf import text_format
 
 
 class Shadow(object):
-    def __init__(self, name, blob_shape=True):
-        self.net_param = shadow_pb2.NetParam()
-        self.net_param.name = name
-        self.blobs = {}
+    def __init__(self, name, model_info, blob_shape=True):
+        self.meta_net_param = shadow_pb2.MetaNetParam()
+        self.meta_net_param.name = name
+        if 'project' in model_info:
+            self.meta_net_param.model_info.project = model_info['project']
+        if 'version' in model_info:
+            self.meta_net_param.model_info.version = model_info['version']
+        if 'method' in model_info:
+            self.meta_net_param.model_info.method = model_info['method']
+        self.net_param = {}
+        self.net_index = -1
+        self.blobs = []
         self.blob_shape = blob_shape
 
     @staticmethod
@@ -38,10 +46,54 @@ class Shadow(object):
     def add_common(op_param, op_name, op_type, bottoms, tops):
         op_param.name = op_name
         op_param.type = op_type
-        for bottom in bottoms:
-            op_param.bottom.append(bottom)
-        for top in tops:
-            op_param.top.append(top)
+        op_param.bottom.extend(bottoms)
+        op_param.top.extend(tops)
+
+    def get_net(self, index):
+        assert index >= 0
+        assert len(self.meta_net_param.network) > index
+        return self.meta_net_param.network[index]
+
+    def get_net_name(self):
+        return self.get_net(self.net_index).name
+
+    def get_net_num_class(self):
+        return self.get_net(self.net_index).num_class
+
+    def get_net_out_blob(self):
+        return self.get_net(self.net_index).out_blob
+
+    def set_net(self, index):
+        for i in range(len(self.meta_net_param.network), index + 1):
+            self.meta_net_param.network.add()
+        self.net_param = self.meta_net_param.network[index]
+        for i in range(len(self.blobs), index + 1):
+            self.blobs.append({})
+        self.net_index = index
+
+    def set_net_name(self, name):
+        self.get_net(self.net_index).name = name
+
+    def set_net_num_class(self, num_class):
+        self.get_net(self.net_index).num_class.extend(num_class)
+
+    def set_net_out_blob(self, out_blob):
+        self.get_net(self.net_index).out_blob.extend(out_blob)
+
+    def add_input(self, name, bottoms, tops, shapes):
+        op_param = self.net_param.op.add()
+        self.add_common(op_param, name, 'Input', bottoms, tops)
+
+        if len(tops) == len(shapes):
+            for n in range(0, len(tops)):
+                self.set_arg(op_param, tops[n], shapes[n], 'v_i')
+                self.blobs[self.net_index][tops[n]] = {'shape': shapes[n]}
+        elif len(shapes) == 1:
+            for n in range(0, len(tops)):
+                self.set_arg(op_param, tops[n], shapes[0], 'v_i')
+                self.blobs[self.net_index][tops[n]] = {'shape': shapes[0]}
+        else:
+            print('No input shape, must be supplied manually')
 
     def add_activate(self, name, bottoms, tops, activate_type='Relu', slope=0.1, channel_shared=False):
         op_param = self.net_param.op.add()
@@ -65,8 +117,14 @@ class Shadow(object):
         else:
             raise ValueError('Unsupported activate type', activate_type)
 
-        in_shape = self.blobs[bottoms[0]]['shape']
-        self.blobs[tops[0]] = {'shape': in_shape}
+        in_shape = self.blobs[self.net_index][bottoms[0]]['shape']
+        self.blobs[self.net_index][tops[0]] = {'shape': in_shape}
+        if activate_type == 'PRelu' and self.blob_shape:
+            slope_blob = op_param.blobs.add()
+            if channel_shared:
+                slope_blob.shape.extend([1, 1])
+            else:
+                slope_blob.shape.extend([1, in_shape[1]])
 
     def add_batch_norm(self, name, bottoms, tops, use_global_stats=True, eps=1e-5):
         op_param = self.net_param.op.add()
@@ -76,15 +134,15 @@ class Shadow(object):
             self.set_arg(op_param, 'use_global_stats', use_global_stats, 's_i')
         self.set_arg(op_param, 'eps', eps, 's_f')
 
-        in_shape = self.blobs[bottoms[0]]['shape']
-        self.blobs[tops[0]] = {'shape': in_shape}
+        in_shape = self.blobs[self.net_index][bottoms[0]]['shape']
+        self.blobs[self.net_index][tops[0]] = {'shape': in_shape}
         if use_global_stats and self.blob_shape:
             mean_blob = op_param.blobs.add()
-            mean_blob.shape.append(in_shape[1])
+            mean_blob.shape.extend([in_shape[1]])
             variance_blob = op_param.blobs.add()
-            variance_blob.shape.append(in_shape[1])
+            variance_blob.shape.extend([in_shape[1]])
             factor_blob = op_param.blobs.add()
-            factor_blob.shape.append(1)
+            factor_blob.shape.extend([1])
 
     def add_bias(self, name, bottoms, tops, axis=1, num_axes=1):
         op_param = self.net_param.op.add()
@@ -95,11 +153,11 @@ class Shadow(object):
         if num_axes != 1:
             self.set_arg(op_param, 'num_axes', num_axes, 's_i')
 
-        in_shape = self.blobs[bottoms[0]]['shape']
-        self.blobs[tops[0]] = {'shape': in_shape}
+        in_shape = self.blobs[self.net_index][bottoms[0]]['shape']
+        self.blobs[self.net_index][tops[0]] = {'shape': in_shape}
         if self.blob_shape:
             bias_blob = op_param.blobs.add()
-            bias_blob.shape.append(in_shape[axis])
+            bias_blob.shape.extend([in_shape[axis]])
 
     def add_binary(self, name, bottoms, tops, operation, scalar=None):
         op_param = self.net_param.op.add()
@@ -124,8 +182,8 @@ class Shadow(object):
         if scalar is not None:
             self.set_arg(op_param, 'scalar', scalar, 's_f')
 
-        in_shape = self.blobs[bottoms[0]]['shape']
-        self.blobs[tops[0]] = {'shape': in_shape}
+        in_shape = self.blobs[self.net_index][bottoms[0]]['shape']
+        self.blobs[self.net_index][tops[0]] = {'shape': in_shape}
 
     def add_concat(self, name, bottoms, tops, axis=1):
         op_param = self.net_param.op.add()
@@ -134,13 +192,13 @@ class Shadow(object):
         if axis != 1:
             self.set_arg(op_param, 'axis', axis, 's_i')
 
-        in_shape = self.blobs[bottoms[0]]['shape']
+        in_shape = self.blobs[self.net_index][bottoms[0]]['shape']
         out_shape = in_shape[:]
         out_shape[axis] = 0
         for bottom in bottoms:
-            in_shape = self.blobs[bottom]['shape']
+            in_shape = self.blobs[self.net_index][bottom]['shape']
             out_shape[axis] += in_shape[axis]
-        self.blobs[tops[0]] = {'shape': out_shape}
+        self.blobs[self.net_index][tops[0]] = {'shape': out_shape}
 
     def add_connected(self, name, bottoms, tops, num_output, bias_term=True, transpose=False):
         op_param = self.net_param.op.add()
@@ -152,19 +210,18 @@ class Shadow(object):
         if transpose:
             self.set_arg(op_param, 'transpose', transpose, 's_i')
 
-        in_shape = self.blobs[bottoms[0]]['shape']
+        in_shape = self.blobs[self.net_index][bottoms[0]]['shape']
         out_shape = [in_shape[0], num_output]
-        self.blobs[tops[0]] = {'shape': out_shape}
+        self.blobs[self.net_index][tops[0]] = {'shape': out_shape}
         bottom_num = 1
         for i in range(1, len(in_shape)):
             bottom_num *= in_shape[i]
         if self.blob_shape:
             weight_blob = op_param.blobs.add()
-            weight_blob.shape.append(num_output)
-            weight_blob.shape.append(bottom_num)
+            weight_blob.shape.extend([num_output, bottom_num])
             if bias_term:
                 bias_blob = op_param.blobs.add()
-                bias_blob.shape.append(num_output)
+                bias_blob.shape.extend([num_output])
 
     def add_conv(self, name, bottoms, tops, num_output, kernel_size, stride=1, pad=0, dilation=1, bias_term=True, group=1):
         op_param = self.net_param.op.add()
@@ -185,36 +242,32 @@ class Shadow(object):
             kernel_extent = dila * (ks - 1) + 1
             return (dim + 2 * pa - kernel_extent) / sd + 1
 
-        in_shape = self.blobs[bottoms[0]]['shape']
+        in_shape = self.blobs[self.net_index][bottoms[0]]['shape']
         out_shape = in_shape[:]
         out_shape[1] = num_output
         out_shape[2] = convolution_out_size(
             in_shape[2], kernel_size, stride, pad, dilation)
         out_shape[3] = convolution_out_size(
             in_shape[3], kernel_size, stride, pad, dilation)
-        self.blobs[tops[0]] = {'shape': out_shape}
+        self.blobs[self.net_index][tops[0]] = {'shape': out_shape}
         if self.blob_shape:
             weight_blob = op_param.blobs.add()
-            weight_blob.shape.append(num_output)
-            weight_blob.shape.append(in_shape[1])
-            weight_blob.shape.append(kernel_size)
-            weight_blob.shape.append(kernel_size)
+            weight_blob.shape.extend([num_output, in_shape[1], kernel_size, kernel_size])
             if bias_term:
                 bias_blob = op_param.blobs.add()
-                bias_blob.shape.append(num_output)
+                bias_blob.shape.extend([num_output])
 
-    def add_data(self, name, bottoms, tops, input_shape=None, scale=1, mean_value=None):
+    def add_data(self, name, bottoms, tops, scale=1, mean_value=None):
         op_param = self.net_param.op.add()
         self.add_common(op_param, name, 'Data', bottoms, tops)
 
-        if input_shape is not None:
-            self.set_arg(op_param, 'data_shape', input_shape, 'v_i')
         if scale != 1:
             self.set_arg(op_param, 'scale', scale, 's_f')
         if mean_value is not None:
             self.set_arg(op_param, 'mean_value', mean_value, 'v_f')
 
-        self.blobs[tops[0]] = {'shape': input_shape}
+        in_shape = self.blobs[self.net_index][bottoms[0]]['shape']
+        self.blobs[self.net_index][tops[0]] = {'shape': in_shape}
 
     def add_eltwise(self, name, bottoms, tops, operation, coeff=None):
         op_param = self.net_param.op.add()
@@ -231,8 +284,8 @@ class Shadow(object):
         if coeff is not None:
             self.set_arg(op_param, 'coeff', coeff, 'v_f')
 
-        in_shape = self.blobs[bottoms[0]]['shape']
-        self.blobs[tops[0]] = {'shape': in_shape}
+        in_shape = self.blobs[self.net_index][bottoms[0]]['shape']
+        self.blobs[self.net_index][tops[0]] = {'shape': in_shape}
 
     def add_flatten(self, name, bottoms, tops, axis=1, end_axis=-1):
         op_param = self.net_param.op.add()
@@ -243,7 +296,7 @@ class Shadow(object):
         if end_axis != -1:
             self.set_arg(op_param, 'end_axis', end_axis, 's_i')
 
-        in_shape = self.blobs['in_blob']['shape']
+        in_shape = self.blobs[self.net_index][bottoms[0]]['shape']
         out_shape = []
         num_axes = len(in_shape)
         if end_axis == -1:
@@ -256,7 +309,7 @@ class Shadow(object):
         out_shape.append(count)
         for i in range(end_axis + 1, num_axes):
             out_shape.append(in_shape[i])
-        self.blobs[tops[0]] = {'shape': out_shape}
+        self.blobs[self.net_index][tops[0]] = {'shape': out_shape}
 
     def add_lrn(self, name, bottoms, tops, local_size=5, alpha=1, beta=0.75, norm_region='AcrossChannels', k=1):
         op_param = self.net_param.op.add()
@@ -275,8 +328,8 @@ class Shadow(object):
         if k != 1:
             self.set_arg(op_param, 'k', k, 's_f')
 
-        in_shape = self.blobs[bottoms[0]]['shape']
-        self.blobs[tops[0]] = {'shape': in_shape}
+        in_shape = self.blobs[self.net_index][bottoms[0]]['shape']
+        self.blobs[self.net_index][tops[0]] = {'shape': in_shape}
 
     def add_normalize(self, name, bottoms, tops, across_spatial=True, channel_shared=True):
         op_param = self.net_param.op.add()
@@ -287,14 +340,14 @@ class Shadow(object):
         if not channel_shared:
             self.set_arg(op_param, 'channel_shared', channel_shared, 's_i')
 
-        in_shape = self.blobs['in_blob']['shape']
-        self.blobs[tops[0]] = {'shape': in_shape}
+        in_shape = self.blobs[self.net_index][bottoms[0]]['shape']
+        self.blobs[self.net_index][tops[0]] = {'shape': in_shape}
         if self.blob_shape:
             scale_blob = op_param.blobs.add()
             if channel_shared:
-                scale_blob.shape.append(1)
+                scale_blob.shape.extend([1])
             else:
-                scale_blob.shape.append(in_shape[1])
+                scale_blob.shape.extend([in_shape[1]])
 
     def add_permute(self, name, bottoms, tops, order=None):
         op_param = self.net_param.op.add()
@@ -303,11 +356,11 @@ class Shadow(object):
         if order is not None:
             self.set_arg(op_param, 'order', order, 'v_i')
 
-        in_shape = self.blobs[bottoms[0]]['shape']
+        in_shape = self.blobs[self.net_index][bottoms[0]]['shape']
         out_shape = []
         for o in order:
             out_shape.append(in_shape[o])
-        self.blobs[tops[0]] = {'shape': out_shape}
+        self.blobs[self.net_index][tops[0]] = {'shape': out_shape}
 
     def add_pooling(self, name, bottoms, tops, pool, kernel_size, stride=1, pad=0, global_pooling=False, full_pooling=True):
         op_param = self.net_param.op.add()
@@ -331,7 +384,7 @@ class Shadow(object):
             else:
                 return int(math.floor(float(dim + 2 * pa - ks) / sd)) + 1
 
-        in_shape = self.blobs[bottoms[0]]['shape']
+        in_shape = self.blobs[self.net_index][bottoms[0]]['shape']
         out_shape = in_shape[:]
         out_shape[2] = pooling_out_size(in_shape[2], kernel_size, stride, pad)
         out_shape[3] = pooling_out_size(in_shape[3], kernel_size, stride, pad)
@@ -340,7 +393,7 @@ class Shadow(object):
                 out_shape[2] = out_shape[2] - 1
             if (out_shape[3] - 1) * stride >= in_shape[3] + pad:
                 out_shape[3] = out_shape[3] - 1
-        self.blobs[tops[0]] = {'shape': out_shape}
+        self.blobs[self.net_index][tops[0]] = {'shape': out_shape}
 
     def add_prior_box(self, name, bottoms, tops, min_size=None, max_size=None, aspect_ratio=None, flip=True, clip=True, variance=None, step=0, offset=0.5):
         op_param = self.net_param.op.add()
@@ -363,7 +416,7 @@ class Shadow(object):
         if offset != 0.5:
             self.set_arg(op_param, 'offset', offset, 's_f')
 
-        in_shape = self.blobs['in_blob']['shape']
+        in_shape = self.blobs[self.net_index][bottoms[0]]['shape']
         num_asp = len(aspect_ratio)
         if 1 in aspect_ratio:
             num_asp -= 1
@@ -371,7 +424,29 @@ class Shadow(object):
             num_asp *= 2
         num_priors = 1 + num_asp
         out_shape = [1, 2, in_shape[2] * in_shape[3] * num_priors * 4]
-        self.blobs[tops[0]] = {'shape': out_shape}
+        self.blobs[self.net_index][tops[0]] = {'shape': out_shape}
+
+    def add_proposal(self, name, bottoms, tops, feat_stride=16, pre_nms_topN=6000, post_nms_topN=300):
+        op_param = self.net_param.op.add()
+        self.add_common(op_param, name, 'Proposal', bottoms, tops)
+
+        self.set_arg(op_param, 'feat_stride', feat_stride, 's_i')
+        self.set_arg(op_param, 'pre_nms_topN', pre_nms_topN, 's_i')
+        self.set_arg(op_param, 'post_nms_topN', post_nms_topN, 's_i')
+
+        self.blobs[self.net_index][tops[0]] = {'shape': [post_nms_topN, 5]}
+
+    def add_psroi_pooling(self, name, bottoms, tops, output_dim, group_size, spatial_scale):
+        op_param = self.net_param.op.add()
+        self.add_common(op_param, name, 'PSROIPooling', bottoms, tops)
+
+        self.set_arg(op_param, 'output_dim', output_dim, 's_i')
+        self.set_arg(op_param, 'group_size', group_size, 's_i')
+        self.set_arg(op_param, 'spatial_scale', spatial_scale, 's_f')
+
+        roi_shape = self.blobs[self.net_index][bottoms[1]]['shape']
+        out_shape = [roi_shape[0], output_dim, group_size, group_size]
+        self.blobs[self.net_index][tops[0]] = {'shape': out_shape}
 
     def add_reorg(self, name, bottoms, tops, stride=2):
         op_param = self.net_param.op.add()
@@ -379,12 +454,12 @@ class Shadow(object):
 
         self.set_arg(op_param, 'stride', stride, 's_i')
 
-        in_shape = self.blobs[bottoms[0]]['shape']
+        in_shape = self.blobs[self.net_index][bottoms[0]]['shape']
         out_shape = in_shape[:]
         out_shape[1] = in_shape[1] * stride * stride
         out_shape[2] = in_shape[2] / stride
         out_shape[3] = in_shape[3] / stride
-        self.blobs[tops[0]] = {'shape': out_shape}
+        self.blobs[self.net_index][tops[0]] = {'shape': out_shape}
 
     def add_reshape(self, name, bottoms, tops, shape=None, axis=0, num_axes=-1):
         op_param = self.net_param.op.add()
@@ -397,7 +472,7 @@ class Shadow(object):
         if num_axes != -1:
             self.set_arg(op_param, 'num_axes', num_axes, 's_i')
 
-        in_shape = self.blobs[bottoms[0]]['shape']
+        in_shape = self.blobs[self.net_index][bottoms[0]]['shape']
         out_shape = []
         inferred_axis = -1
         copy_axes = []
@@ -438,7 +513,20 @@ class Shadow(object):
             for dim in in_shape:
                 bottom_count *= dim
             out_shape[start_axis + inferred_axis] = bottom_count / explicit_count
-        self.blobs[tops[0]] = {'shape': out_shape}
+        self.blobs[self.net_index][tops[0]] = {'shape': out_shape}
+
+    def add_roi_pooling(self, name, bottoms, tops, pooled_h, pooled_w, spatial_scale):
+        op_param = self.net_param.op.add()
+        self.add_common(op_param, name, 'ROIPooling', bottoms, tops)
+
+        self.set_arg(op_param, 'pooled_h', pooled_h, 's_i')
+        self.set_arg(op_param, 'pooled_w', pooled_w, 's_i')
+        self.set_arg(op_param, 'spatial_scale', spatial_scale, 's_f')
+
+        fea_shape = self.blobs[self.net_index][bottoms[0]]['shape']
+        roi_shape = self.blobs[self.net_index][bottoms[1]]['shape']
+        out_shape = [roi_shape[0], fea_shape[1], pooled_h, pooled_w]
+        self.blobs[self.net_index][tops[0]] = {'shape': out_shape}
 
     def add_scale(self, name, bottoms, tops, axis=1, num_axes=1, bias_term=False):
         op_param = self.net_param.op.add()
@@ -451,15 +539,14 @@ class Shadow(object):
         if bias_term:
             self.set_arg(op_param, 'bias_term', bias_term, 's_i')
 
-        in_shape = self.blobs[bottoms[0]]['shape']
-        self.blobs[tops[0]] = {'shape': in_shape}
+        in_shape = self.blobs[self.net_index][bottoms[0]]['shape']
+        self.blobs[self.net_index][tops[0]] = {'shape': in_shape}
         if self.blob_shape:
             scale_blob = op_param.blobs.add()
-            scale_blob.shape.append(in_shape[axis])
-
+            scale_blob.shape.extend([in_shape[axis]])
             if bias_term:
                 bias_blob = op_param.blobs.add()
-                bias_blob.shape.append(in_shape[axis])
+                bias_blob.shape.extend([in_shape[axis]])
 
     def add_softmax(self, name, bottoms, tops, axis=1):
         op_param = self.net_param.op.add()
@@ -468,8 +555,8 @@ class Shadow(object):
         if axis != 1:
             self.set_arg(op_param, 'axis', axis, 's_i')
 
-        in_shape = self.blobs[bottoms[0]]['shape']
-        self.blobs[tops[0]] = {'shape': in_shape}
+        in_shape = self.blobs[self.net_index][bottoms[0]]['shape']
+        self.blobs[self.net_index][tops[0]] = {'shape': in_shape}
 
     def add_unary(self, name, bottoms, tops, operation):
         op_param = self.net_param.op.add()
@@ -504,21 +591,24 @@ class Shadow(object):
         else:
             raise ValueError('Unsupported operation type', operation)
 
-        in_shape = self.blobs[bottoms[0]]['shape']
-        self.blobs[tops[0]] = {'shape': in_shape}
+        in_shape = self.blobs[self.net_index][bottoms[0]]['shape']
+        self.blobs[self.net_index][tops[0]] = {'shape': in_shape}
 
     def find_op_by_name(self, name):
-        for op in self.net_param.op:
+        for op in self.get_net(self.net_index).op:
             if op.name == name:
                 return op
 
-    def find_blob_by_name(self, name):
-        return self.blobs[name]
-
-    def write_proto_to_txt(self, file_path):
+    def write_proto_to_txt(self, file_path, net_index=-1):
         with open(file_path, 'w') as proto_file:
-            text_format.PrintMessage(self.net_param, proto_file)
+            if net_index >= 0:
+                text_format.PrintMessage(self.get_net(net_index), proto_file)
+            else:
+                text_format.PrintMessage(self.meta_net_param, proto_file)
 
-    def write_proto_to_binary(self, file_path):
+    def write_proto_to_binary(self, file_path, net_index=-1):
         with open(file_path, 'wb') as proto_file:
-            proto_file.write(self.net_param.SerializeToString())
+            if net_index >= 0:
+                proto_file.write(self.get_net(net_index).SerializeToString())
+            else:
+                proto_file.write(self.meta_net_param.SerializeToString())
