@@ -252,7 +252,7 @@ class Shadow(object):
         self.blobs[self.net_index][tops[0]] = {'shape': out_shape}
         if self.blob_shape:
             weight_blob = op_param.blobs.add()
-            weight_blob.shape.extend([num_output, in_shape[1], kernel_size, kernel_size])
+            weight_blob.shape.extend([num_output, in_shape[1] / group, kernel_size, kernel_size])
             if bias_term:
                 bias_blob = op_param.blobs.add()
                 bias_blob.shape.extend([num_output])
