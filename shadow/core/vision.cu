@@ -372,6 +372,77 @@ void ROIPooling(const T *in_data, const VecInt &in_shape, const T *roi_data,
 }
 
 template <typename T>
+__global__ void KernelPSROIPooling(const T *in_data, int count,
+                                   const T *roi_data, int in_c, int in_h,
+                                   int in_w, int output_dim, int group_size,
+                                   int pooled_h, int pooled_w,
+                                   float spatial_scale, T *out_data) {
+  CUDA_KERNEL_LOOP(globalid, count) {
+    int pw = globalid % pooled_w;
+    int ph = (globalid / pooled_w) % pooled_h;
+    int c_out = (globalid / pooled_w / pooled_h) % output_dim;
+    int n = globalid / pooled_w / pooled_h / output_dim;
+
+    const T *offset_bottom_rois = roi_data + n * 5;
+    int roi_batch_id = offset_bottom_rois[0];
+    T roi_start_w =
+        static_cast<T>(round(offset_bottom_rois[1])) * spatial_scale;
+    T roi_start_h =
+        static_cast<T>(round(offset_bottom_rois[2])) * spatial_scale;
+    T roi_end_w =
+        static_cast<T>(round(offset_bottom_rois[3]) + 1) * spatial_scale;
+    T roi_end_h =
+        static_cast<T>(round(offset_bottom_rois[4]) + 1) * spatial_scale;
+
+    T roi_height = max(roi_end_h - roi_start_h, T(0.1));
+    T roi_width = max(roi_end_w - roi_start_w, T(0.1));
+    T bin_size_h = roi_height / static_cast<T>(pooled_h);
+    T bin_size_w = roi_width / static_cast<T>(pooled_w);
+
+    int hstart = static_cast<int>(floor(ph * bin_size_h + roi_start_h));
+    int wstart = static_cast<int>(floor(pw * bin_size_w + roi_start_w));
+    int hend = static_cast<int>(ceil((ph + 1) * bin_size_h + roi_start_h));
+    int wend = static_cast<int>(ceil((pw + 1) * bin_size_w + roi_start_w));
+
+    hstart = min(max(hstart, 0), in_h);
+    hend = min(max(hend, 0), in_h);
+    wstart = min(max(wstart, 0), in_w);
+    wend = min(max(wend, 0), in_w);
+
+    bool is_empty = (hend <= hstart) || (wend <= wstart);
+
+    int gh = static_cast<int>(floor(static_cast<T>(ph) * group_size / in_h));
+    int gw = static_cast<int>(floor(static_cast<T>(pw) * group_size / in_w));
+    gh = min(max(gh, 0), group_size - 1);
+    gw = min(max(gw, 0), group_size - 1);
+    int c_in = (c_out * group_size + gh) * group_size + gw;
+    const T *offset_bottom_data =
+        in_data + (roi_batch_id * in_c + c_in) * in_h * in_w;
+
+    auto sum_val = T(0);
+    for (int h = hstart; h < hend; ++h) {
+      for (int w = wstart; w < wend; ++w) {
+        sum_val += offset_bottom_data[h * in_w + w];
+      }
+    }
+    T bin_area = (hend - hstart) * (wend - wstart);
+    out_data[globalid] = is_empty ? T(0) : sum_val / bin_area;
+  }
+}
+
+template <typename T>
+void PSROIPooling(const T *in_data, const VecInt &in_shape, const T *roi_data,
+                  int num_rois, int output_dim, int group_size, int pooled_h,
+                  int pooled_w, float spatial_scale, T *out_data) {
+  int in_c = in_shape[1], in_h = in_shape[2], in_w = in_shape[3];
+  int count = num_rois * output_dim * pooled_h * pooled_w;
+  KernelPSROIPooling<T><<<GetBlocks(count), NumThreads>>>(
+      in_data, count, roi_data, in_c, in_h, in_w, output_dim, group_size,
+      pooled_h, pooled_w, spatial_scale, out_data);
+  CUDA_CHECK(cudaPeekAtLastError());
+}
+
+template <typename T>
 __global__ void KernelProposal(int count, const T *anchor_data,
                                const T *score_data, const T *delta_data,
                                const T *info_data, int in_h, int in_w,
@@ -432,6 +503,58 @@ void Proposal(const T *anchor_data, const T *score_data, const T *delta_data,
   KernelProposal<T><<<GetBlocks(count), NumThreads>>>(
       count, anchor_data, score_data, delta_data, info_data, in_h, in_w,
       num_anchors, feat_stride, min_size, proposal_data);
+  CUDA_CHECK(cudaPeekAtLastError());
+}
+
+template <typename T>
+__global__ void KernelDepthwiseConv(const T *in_data, int count,
+                                    const T *weight_data, const T *bias_data,
+                                    int in_c, int in_h, int in_w, int out_h,
+                                    int out_w, int kernel_size, int stride,
+                                    int pad, int bias_term, T *out_data) {
+  CUDA_KERNEL_LOOP(globalid, count) {
+    int w = globalid % out_w;
+    int h = (globalid / out_w) % out_h;
+    int c = (globalid / out_w / out_h) % in_c;
+    int n = globalid / out_w / out_h / in_c;
+
+    const T *in_offset_data = in_data + (n * in_c + c) * in_h * in_w;
+    const T *weight_offset_data = weight_data + c * kernel_size * kernel_size;
+
+    int hstart = h * stride - pad, wstart = w * stride - pad;
+    int hend = min(hstart + kernel_size, in_h + pad);
+    int wend = min(wstart + kernel_size, in_w + pad);
+    hstart = max(hstart, 0), wstart = max(wstart, 0);
+    hend = min(hend, in_h), wend = min(wend, in_w);
+    int khstart = hend < kernel_size ? (kernel_size - hend) : 0;
+    int kwstart = wend < kernel_size ? (kernel_size - wend) : 0;
+    auto sum_val = T(0);
+    for (int kh = hstart; kh < hend; ++kh) {
+      for (int kw = wstart; kw < wend; ++kw) {
+        sum_val += in_offset_data[kh * in_w + kw] *
+                   weight_offset_data[(khstart + kh - hstart) * kernel_size +
+                                      kwstart + kw - wstart];
+      }
+    }
+    if (bias_term) {
+      sum_val += bias_data[c];
+    }
+    out_data[globalid] = sum_val;
+  }
+}
+
+template <typename T>
+void DepthwiseConv(const T *in_data, const VecInt &in_shape,
+                   const T *weight_data, const T *bias_data, int kernel_size,
+                   int stride, int pad, int bias_term, const VecInt &out_shape,
+                   T *out_data) {
+  int batch = in_shape[0];
+  int in_c = in_shape[1], in_h = in_shape[2], in_w = in_shape[3];
+  int out_h = out_shape[2], out_w = out_shape[3];
+  int count = batch * in_c * out_h * out_w;
+  KernelDepthwiseConv<T><<<GetBlocks(count), NumThreads>>>(
+      in_data, count, weight_data, bias_data, in_c, in_h, in_w, out_h, out_w,
+      kernel_size, stride, pad, bias_term, out_data);
   CUDA_CHECK(cudaPeekAtLastError());
 }
 
@@ -521,10 +644,18 @@ template void LRN(const float *in_data, const VecInt &in_shape, int size,
 template void ROIPooling(const float *in_data, const VecInt &in_shape,
                          const float *roi_data, int num_rois, int pooled_h,
                          int pooled_w, float spatial_scale, float *out_data);
+template void PSROIPooling(const float *in_data, const VecInt &in_shape,
+                           const float *roi_data, int num_rois, int output_dim,
+                           int group_size, int pooled_h, int pooled_w,
+                           float spatial_scale, float *out_data);
 template void Proposal(const float *anchor_data, const float *score_data,
                        const float *delta_data, const float *info_data,
                        const VecInt &in_shape, int num_anchors, int feat_stride,
                        int min_size, float *proposal_data);
+template void DepthwiseConv(const float *in_data, const VecInt &in_shape,
+                            const float *weight_data, const float *bias_data,
+                            int kernel_size, int stride, int pad, int bias_term,
+                            const VecInt &out_shape, float *out_data);
 template void Activate(float *data, int count, int type, float slope);
 template void PRelu(float *data, const VecInt &in_shape, bool channel_shared,
                     const float *slope_data);

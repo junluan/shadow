@@ -52,9 +52,20 @@ void ROIPooling(const T *in_data, const VecInt &in_shape, const T *roi_data,
                 T *out_data);
 
 template <typename T>
+void PSROIPooling(const T *in_data, const VecInt &in_shape, const T *roi_data,
+                  int num_rois, int output_dim, int group_size, int pooled_h,
+                  int pooled_w, float spatial_scale, T *out_data);
+
+template <typename T>
 void Proposal(const T *anchor_data, const T *score_data, const T *delta_data,
               const T *info_data, const VecInt &in_shape, int num_anchors,
               int feat_stride, int min_size, T *proposal_data);
+
+template <typename T>
+void DepthwiseConv(const T *in_data, const VecInt &in_shape,
+                   const T *weight_data, const T *bias_data, int kernel_size,
+                   int stride, int pad, int bias_term, const VecInt &out_shape,
+                   T *out_data);
 
 template <typename T>
 void Activate(T *data, int count, int type, float slope = 0.1);

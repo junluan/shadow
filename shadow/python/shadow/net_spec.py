@@ -225,7 +225,10 @@ class Shadow(object):
 
     def add_conv(self, name, bottoms, tops, num_output, kernel_size, stride=1, pad=0, dilation=1, bias_term=True, group=1):
         op_param = self.net_param.op.add()
-        self.add_common(op_param, name, 'Conv', bottoms, tops)
+        if num_output != group:
+            self.add_common(op_param, name, 'Conv', bottoms, tops)
+        else:
+            self.add_common(op_param, name, 'DepthwiseConv', bottoms, tops)
 
         self.set_arg(op_param, 'num_output', num_output, 's_i')
         self.set_arg(op_param, 'kernel_size', kernel_size, 's_i')

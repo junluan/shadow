@@ -227,7 +227,7 @@ void ROIPooling(const T *in_data, const VecInt &in_shape, const T *roi_data,
                 T *out_data) {
   int batch = in_shape[0];
   int in_c = in_shape[1], in_h = in_shape[2], in_w = in_shape[3];
-  int in_num = in_c * in_h * in_w;
+  int in_num = in_c * in_h * in_w, out_num = in_c * pooled_h * pooled_w;
   for (int n = 0; n < num_rois; ++n) {
     int roi_offset = 5 * n;
     int roi_batch_id = roi_data[roi_offset];
@@ -241,7 +241,8 @@ void ROIPooling(const T *in_data, const VecInt &in_shape, const T *roi_data,
     int roi_width = std::max(roi_end_w - roi_start_w + 1, 1);
     float bin_size_h = roi_height / static_cast<float>(pooled_h);
     float bin_size_w = roi_width / static_cast<float>(pooled_w);
-    const T *batch_data = in_data + roi_batch_id * in_num;
+    const T *batch_in_data = in_data + roi_batch_id * in_num;
+    T *batch_out_data = out_data + n * out_num;
     for (int c = 0; c < in_c; ++c) {
       for (int ph = 0; ph < pooled_h; ++ph) {
         for (int pw = 0; pw < pooled_w; ++pw) {
@@ -254,15 +255,77 @@ void ROIPooling(const T *in_data, const VecInt &in_shape, const T *roi_data,
           wstart = std::min(std::max(wstart + roi_start_w, 0), in_w);
           wend = std::min(std::max(wend + roi_start_w, 0), in_w);
           bool is_empty = (hend <= hstart) || (wend <= wstart);
-          T max =
-              is_empty ? T(0) : batch_data[(c * in_h + hstart) * in_w + wstart];
+          T max_val = is_empty
+                          ? T(0)
+                          : batch_in_data[(c * in_h + hstart) * in_w + wstart];
           for (int h = hstart; h < hend; ++h) {
             for (int w = wstart; w < wend; ++w) {
-              max = std::max(max, batch_data[(c * in_h + h) * in_w + w]);
+              max_val =
+                  std::max(max_val, batch_in_data[(c * in_h + h) * in_w + w]);
             }
           }
-          int pool_index = ((n * in_c + c) * pooled_h + ph) * pooled_w + pw;
-          out_data[pool_index] = max;
+          int pool_index = (c * pooled_h + ph) * pooled_w + pw;
+          batch_out_data[pool_index] = max_val;
+        }
+      }
+    }
+  }
+}
+
+template <typename T>
+void PSROIPooling(const T *in_data, const VecInt &in_shape, const T *roi_data,
+                  int num_rois, int output_dim, int group_size, int pooled_h,
+                  int pooled_w, float spatial_scale, T *out_data) {
+  int batch = in_shape[0];
+  int in_c = in_shape[1], in_h = in_shape[2], in_w = in_shape[3];
+  int in_num = in_c * in_h * in_w, out_num = output_dim * pooled_h * pooled_w;
+  for (int n = 0; n < num_rois; ++n) {
+    int roi_offset = 5 * n;
+    int roi_batch_id = roi_data[roi_offset];
+    float roi_start_w = Util::round(roi_data[roi_offset + 1]) * spatial_scale;
+    float roi_start_h = Util::round(roi_data[roi_offset + 2]) * spatial_scale;
+    float roi_end_w =
+        (Util::round(roi_data[roi_offset + 3]) + 1) * spatial_scale;
+    float roi_end_h =
+        (Util::round(roi_data[roi_offset + 4]) + 1) * spatial_scale;
+    assert(roi_batch_id >= 0);
+    assert(roi_batch_id < batch);
+    float roi_height = std::max(roi_end_h - roi_start_h, 0.1f);
+    float roi_width = std::max(roi_end_w - roi_start_w, 0.1f);
+    float bin_size_h = roi_height / static_cast<float>(pooled_h);
+    float bin_size_w = roi_width / static_cast<float>(pooled_w);
+    const T *batch_in_data = in_data + roi_batch_id * in_num;
+    T *batch_out_data = out_data + n * out_num;
+    for (int c = 0; c < output_dim; ++c) {
+      for (int ph = 0; ph < pooled_h; ++ph) {
+        for (int pw = 0; pw < pooled_w; ++pw) {
+          auto hstart =
+              static_cast<int>(std::floor(ph * bin_size_h + roi_start_h));
+          auto wstart =
+              static_cast<int>(std::floor(pw * bin_size_w + roi_start_w));
+          auto hend =
+              static_cast<int>(std::ceil((ph + 1) * bin_size_h + roi_start_h));
+          auto wend =
+              static_cast<int>(std::ceil((pw + 1) * bin_size_w) + roi_start_w);
+          hstart = std::min(std::max(hstart, 0), in_h);
+          hend = std::min(std::max(hend, 0), in_h);
+          wstart = std::min(std::max(wstart, 0), in_w);
+          wend = std::min(std::max(wend, 0), in_w);
+          bool is_empty = (hend <= hstart) || (wend <= wstart);
+          int gh = ph * group_size / pooled_h;
+          int gw = pw * group_size / pooled_w;
+          gh = std::min(std::max(gh, 0), group_size - 1);
+          gw = std::min(std::max(gw, 0), group_size - 1);
+          int c_in = (c * group_size + gh) * group_size + gw;
+          T sum_val = T(0);
+          for (int h = hstart; h < hend; ++h) {
+            for (int w = wstart; w < wend; ++w) {
+              sum_val += batch_in_data[(c_in * in_h + h) * in_w + w];
+            }
+          }
+          float bin_area = (hend - hstart) * (wend - wstart);
+          int pool_index = (c * pooled_h + ph) * pooled_w + pw;
+          batch_out_data[pool_index] = is_empty ? T(0) : sum_val / bin_area;
         }
       }
     }
@@ -311,6 +374,47 @@ void Proposal(const T *anchor_data, const T *score_data, const T *delta_data,
         pb_w = prop_ptr[2] - prop_ptr[0] + 1;
         pb_h = prop_ptr[3] - prop_ptr[1] + 1;
         prop_ptr[5] = (pb_w >= min_box_size) && (pb_h >= min_box_size);
+      }
+    }
+  }
+}
+
+template <typename T>
+void DepthwiseConv(const T *in_data, const VecInt &in_shape,
+                   const T *weight_data, const T *bias_data, int kernel_size,
+                   int stride, int pad, int bias_term, const VecInt &out_shape,
+                   T *out_data) {
+  int batch = in_shape[0];
+  int in_c = in_shape[1], in_h = in_shape[2], in_w = in_shape[3];
+  int out_h = out_shape[2], out_w = out_shape[3];
+  for (int b = 0; b < batch; ++b) {
+    for (int c = 0; c < in_c; ++c) {
+      const T *in_offset_data = in_data + (b * in_c + c) * in_h * in_w;
+      const T *weight_offset_data = weight_data + c * kernel_size * kernel_size;
+      T *out_offset_data = out_data + (b * in_c + c) * out_h * out_w;
+      for (int h = 0; h < out_h; ++h) {
+        for (int w = 0; w < out_w; ++w) {
+          int hstart = h * stride - pad, wstart = w * stride - pad;
+          int hend = std::min(hstart + kernel_size, in_h + pad);
+          int wend = std::min(wstart + kernel_size, in_w + pad);
+          hstart = std::max(hstart, 0), wstart = std::max(wstart, 0);
+          hend = std::min(hend, in_h), wend = std::min(wend, in_w);
+          int khstart = hend < kernel_size ? (kernel_size - hend) : 0;
+          int kwstart = wend < kernel_size ? (kernel_size - wend) : 0;
+          auto sum_val = T(0);
+          for (int kh = hstart; kh < hend; ++kh) {
+            for (int kw = wstart; kw < wend; ++kw) {
+              sum_val +=
+                  in_offset_data[kh * in_w + kw] *
+                  weight_offset_data[(khstart + kh - hstart) * kernel_size +
+                                     kwstart + kw - wstart];
+            }
+          }
+          if (bias_term) {
+            sum_val += bias_data[c];
+          }
+          out_offset_data[h * out_w + w] = sum_val;
+        }
       }
     }
   }
@@ -420,10 +524,18 @@ template void LRN(const float *in_data, const VecInt &in_shape, int size,
 template void ROIPooling(const float *in_data, const VecInt &in_shape,
                          const float *roi_data, int num_rois, int pooled_h,
                          int pooled_w, float spatial_scale, float *out_data);
+template void PSROIPooling(const float *in_data, const VecInt &in_shape,
+                           const float *roi_data, int num_rois, int output_dim,
+                           int group_size, int pooled_h, int pooled_w,
+                           float spatial_scale, float *out_data);
 template void Proposal(const float *anchor_data, const float *score_data,
                        const float *delta_data, const float *info_data,
                        const VecInt &in_shape, int num_anchors, int feat_stride,
                        int min_size, float *proposal_data);
+template void DepthwiseConv(const float *in_data, const VecInt &in_shape,
+                            const float *weight_data, const float *bias_data,
+                            int kernel_size, int stride, int pad, int bias_term,
+                            const VecInt &out_shape, float *out_data);
 template void Activate(float *data, int count, int type, float slope);
 template void PRelu(float *data, const VecInt &in_shape, bool channel_shared,
                     const float *slope_data);

@@ -72,7 +72,7 @@ def convert_activate(caffe_layer, shadow_net):
     bottom_names = caffe_layer.bottom
     top_names = caffe_layer.top
 
-    if layer_type == 'ReLU': 
+    if layer_type == 'ReLU':
         act_type = 'Relu'
     elif layer_type == 'PReLU':
         act_type = 'PRelu'
@@ -512,7 +512,7 @@ def caffe2shadow(model_root, meta_net_info, copy_params=False):
                 convert_concat(caffe_layer, shadow_net)
             elif layer_type == 'InnerProduct':
                 convert_connected(caffe_layer, shadow_net)
-            elif layer_type == 'Convolution':
+            elif layer_type == 'Convolution' or layer_type == 'DepthwiseConvolution':
                 convert_conv(caffe_layer, shadow_net)
             elif layer_type == 'Eltwise':
                 convert_eltwise(caffe_layer, shadow_net)
