@@ -8,13 +8,31 @@ namespace Shadow {
 class DepthwiseConvOp : public Operator {
  public:
   explicit DepthwiseConvOp(const shadow::OpParam &op_param, Workspace *ws)
-      : Operator(op_param, ws) {}
-  ~DepthwiseConvOp() override { Release(); }
+      : Operator(op_param, ws) {
+    num_output_ = get_single_argument<int>("num_output", 0);
+    CHECK(has_argument("kernel_size"));
+    kernel_size_ = get_single_argument<int>("kernel_size", 0);
+    stride_ = get_single_argument<int>("stride", 1);
+    pad_ = get_single_argument<int>("pad", 0);
+    dilation_ = get_single_argument<int>("dilation", 1);
+    CHECK_EQ(dilation_, 1);
+    group_ = get_single_argument<int>("group", 1);
+    CHECK_EQ(bottoms<float>(0)->shape(1), group_);
+    CHECK_EQ(num_output_, group_);
+    bias_term_ = get_single_argument<bool>("bias_term", true);
+    activate_type_ = get_single_argument<int>("type", -1);
+    CHECK((activate_type_ == -1 || activate_type_ == 1))
+        << "Build in activate only support Relu";
 
-  void Setup() override;
+    if (bias_term_) {
+      CHECK_EQ(blobs_size(), 2);
+    } else {
+      CHECK_EQ(blobs_size(), 1);
+    }
+  }
+
   void Reshape() override;
   void Forward() override;
-  void Release() override;
 
  protected:
   int num_output_, kernel_size_, stride_, pad_, dilation_, group_,

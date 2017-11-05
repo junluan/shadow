@@ -1,36 +1,7 @@
 #include "activate_op.hpp"
-#include "core/blas.hpp"
 #include "core/vision.hpp"
 
 namespace Shadow {
-
-void ActivateOp::Setup() {
-  activate_type_ = get_single_argument<int>("type", 1);
-  slope_ = get_single_argument<float>("slope", 0.1);
-  channel_shared_ = get_single_argument<bool>("channel_shared", false);
-  CHECK_GE(activate_type_, 0);
-  CHECK_LE(activate_type_, 5);
-
-  if (activate_type_ == kPRelu) {
-    CHECK_GE(bottoms<float>(0)->num_axes(), 2);
-    int channels = bottoms<float>(0)->shape(1);
-    if (blobs_size() == 0) {
-      add_blobs<float>(op_name_ + "_param");
-      auto *param_blob = mutable_blobs<float>(0);
-      if (channel_shared_) {
-        param_blob->reshape({1, 1});
-      } else {
-        param_blob->reshape({1, channels});
-      }
-      Blas::Set(param_blob->count(), 0.25, param_blob->mutable_data(), 0);
-    }
-    if (channel_shared_) {
-      CHECK_EQ(blobs<float>(0)->count(), 1);
-    } else {
-      CHECK_EQ(blobs<float>(0)->count(), channels);
-    }
-  }
-}
 
 void ActivateOp::Reshape() {
   const auto *bottom = bottoms<float>(0);
@@ -63,10 +34,6 @@ void ActivateOp::Forward() {
     Vision::PRelu(top->mutable_data(), top->shape(), channel_shared_,
                   blobs<float>(0)->data());
   }
-}
-
-void ActivateOp::Release() {
-  // DLOG(INFO) << "Free ActivateOp!";
 }
 
 REGISTER_OPERATOR(Activate, ActivateOp);

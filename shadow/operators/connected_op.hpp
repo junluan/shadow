@@ -8,13 +8,21 @@ namespace Shadow {
 class ConnectedOp : public Operator {
  public:
   explicit ConnectedOp(const shadow::OpParam &op_param, Workspace *ws)
-      : Operator(op_param, ws) {}
-  ~ConnectedOp() override { Release(); }
+      : Operator(op_param, ws) {
+    CHECK(has_argument("num_output"));
+    num_output_ = get_single_argument<int>("num_output", 0);
+    bias_term_ = get_single_argument<bool>("bias_term", true);
+    transpose_ = get_single_argument<bool>("transpose", false);
 
-  void Setup() override;
+    if (bias_term_) {
+      CHECK_EQ(blobs_size(), 2);
+    } else {
+      CHECK_EQ(blobs_size(), 1);
+    }
+  }
+
   void Reshape() override;
   void Forward() override;
-  void Release() override;
 
  private:
   int num_output_;

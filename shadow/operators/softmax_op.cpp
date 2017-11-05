@@ -3,16 +3,6 @@
 
 namespace Shadow {
 
-void SoftmaxOp::Setup() {
-  axis_ = get_single_argument<int>("axis", 1);
-  axis_ = bottoms<float>(0)->canonical_index(axis_);
-
-#if defined(USE_CUDNN)
-  cudnn::createTensor4dDesc<float>(&bottom_desc_);
-  cudnn::createTensor4dDesc<float>(&top_desc_);
-#endif
-}
-
 void SoftmaxOp::Reshape() {
   const auto *bottom = bottoms<float>(0);
   auto *top = mutable_tops<float>(0);
@@ -62,21 +52,6 @@ void SoftmaxOp::Forward() {
   Blas::ChannelDiv(count, outer_num_, channels, inner_num_, scale_->data(),
                    top->mutable_data());
 #endif
-}
-
-void SoftmaxOp::Release() {
-#if defined(USE_CUDNN)
-  if (bottom_desc_ != nullptr) {
-    cudnnDestroyTensorDescriptor(bottom_desc_);
-    bottom_desc_ = nullptr;
-  }
-  if (top_desc_ != nullptr) {
-    cudnnDestroyTensorDescriptor(top_desc_);
-    top_desc_ = nullptr;
-  }
-#endif
-
-  // DLOG(INFO) << "Free SoftmaxOp!";
 }
 
 REGISTER_OPERATOR(Softmax, SoftmaxOp);

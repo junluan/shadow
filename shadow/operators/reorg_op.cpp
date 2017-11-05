@@ -3,12 +3,6 @@
 
 namespace Shadow {
 
-void ReorgOp::Setup() {
-  stride_ = get_single_argument<int>("stride", 2);
-  CHECK_EQ(bottoms<float>(0)->shape(2) % stride_, 0);
-  CHECK_EQ(bottoms<float>(0)->shape(3) % stride_, 0);
-}
-
 void ReorgOp::Reshape() {
   const auto *bottom = bottoms<float>(0);
   auto *top = mutable_tops<float>(0);
@@ -33,10 +27,6 @@ void ReorgOp::Forward() {
   auto *top = mutable_tops<float>(0);
 
   Vision::Reorg(bottom->data(), bottom->shape(), stride_, top->mutable_data());
-}
-
-void ReorgOp::Release() {
-  // DLOG(INFO) << "Free ReorgOp!";
 }
 
 REGISTER_OPERATOR(Reorg, ReorgOp);

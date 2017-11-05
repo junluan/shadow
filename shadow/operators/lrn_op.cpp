@@ -3,17 +3,6 @@
 
 namespace Shadow {
 
-void LRNOp::Setup() {
-  size_ = get_single_argument<int>("local_size", 5);
-  CHECK_EQ(size_ % 2, 1) << "LRN only supports odd values for local_size";
-  alpha_ = get_single_argument<float>("alpha", 1);
-  beta_ = get_single_argument<float>("beta", 0.75);
-  norm_region_ = get_single_argument<int>("norm_region", 0);
-  CHECK_EQ(norm_region_, 0)
-      << "Currently only support norm region method: Across Channels!";
-  k_ = get_single_argument<float>("k", 1);
-}
-
 void LRNOp::Reshape() {
   const auto *bottom = bottoms<float>(0);
   auto *top = mutable_tops<float>(0);
@@ -34,10 +23,6 @@ void LRNOp::Forward() {
 
   Vision::LRN(bottom->data(), bottom->shape(), size_, alpha_, beta_, k_,
               scale_->mutable_data(), top->mutable_data());
-}
-
-void LRNOp::Release() {
-  // DLOG(INFO) << "Free LRNOp!";
 }
 
 REGISTER_OPERATOR(LRN, LRNOp);

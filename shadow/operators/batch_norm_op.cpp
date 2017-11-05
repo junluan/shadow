@@ -1,39 +1,6 @@
 #include "batch_norm_op.hpp"
-#include "core/blas.hpp"
 
 namespace Shadow {
-
-void BatchNormOp::Setup() {
-  use_global_stats_ = get_single_argument<bool>("use_global_stats", true);
-  eps_ = get_single_argument<float>("eps", 1e-5);
-  if (bottoms<float>(0)->num_axes() == 1) {
-    channels_ = 1;
-  } else {
-    channels_ = bottoms<float>(0)->shape(1);
-  }
-
-  if (use_global_stats_ && blobs_size() == 0) {
-    for (int i = 0; i < 3; ++i) {
-      add_blobs<float>(op_name_ + "_param_" + Util::to_string(i));
-    }
-    auto *blob_mean = mutable_blobs<float>(0);
-    auto *blob_variance = mutable_blobs<float>(1);
-    auto *blob_scale = mutable_blobs<float>(2);
-    blob_mean->reshape({1, channels_});
-    blob_variance->reshape({1, channels_});
-    blob_scale->reshape({1, 1});
-    Blas::Set(blob_mean->count(), 0, blob_mean->mutable_data(), 0);
-    Blas::Set(blob_variance->count(), 1, blob_variance->mutable_data(), 0);
-    Blas::Set(blob_scale->count(), 1, blob_scale->mutable_data(), 0);
-    DLOG(WARNING) << "Mean, variance and scale params are initialized with the "
-                     "default values 0, 1 and 1";
-  }
-
-  if (use_global_stats_) {
-    CHECK_EQ(blobs_size(), 3);
-    CHECK_EQ(blobs<float>(2)->count(), 1);
-  }
-}
 
 void BatchNormOp::Reshape() {
   const auto *bottom = bottoms<float>(0);
@@ -127,10 +94,6 @@ void BatchNormOp::Forward() {
                   0, 0, temp_->mutable_data(), 0);
   Blas::Div(top->count(), top->data(), 0, temp_->data(), 0, top->mutable_data(),
             0);
-}
-
-void BatchNormOp::Release() {
-  // DLOG(INFO) << "Free BatchNormOp!";
 }
 
 REGISTER_OPERATOR(BatchNorm, BatchNormOp);

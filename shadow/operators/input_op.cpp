@@ -2,8 +2,6 @@
 
 namespace Shadow {
 
-void InputOp::Setup() {}
-
 void InputOp::Reshape() {
   VecString str;
   for (int i = 0; i < tops_size(); ++i) {
@@ -16,10 +14,6 @@ void InputOp::Reshape() {
 }
 
 void InputOp::Forward() {}
-
-void InputOp::Release() {
-  // DLOG(INFO) << "Free InputOp!";
-}
 
 REGISTER_OPERATOR(Input, InputOp);
 

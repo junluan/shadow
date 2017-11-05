@@ -8,13 +8,20 @@ namespace Shadow {
 class NormalizeOp : public Operator {
  public:
   explicit NormalizeOp(const shadow::OpParam &op_param, Workspace *ws)
-      : Operator(op_param, ws) {}
-  ~NormalizeOp() override { Release(); }
+      : Operator(op_param, ws) {
+    across_spatial_ = get_single_argument<bool>("across_spatial", true);
+    channel_shared_ = get_single_argument<bool>("channel_shared", true);
 
-  void Setup() override;
+    CHECK_EQ(blobs_size(), 1);
+    if (channel_shared_) {
+      CHECK_EQ(blobs<float>(0)->count(), 1);
+    } else {
+      CHECK_EQ(blobs<float>(0)->count(), bottoms<float>(0)->shape(1));
+    }
+  }
+
   void Reshape() override;
   void Forward() override;
-  void Release() override;
 
  private:
   bool across_spatial_, channel_shared_;

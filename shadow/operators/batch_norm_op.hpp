@@ -8,13 +8,23 @@ namespace Shadow {
 class BatchNormOp : public Operator {
  public:
   explicit BatchNormOp(const shadow::OpParam &op_param, Workspace *ws)
-      : Operator(op_param, ws) {}
-  ~BatchNormOp() override { Release(); }
+      : Operator(op_param, ws) {
+    use_global_stats_ = get_single_argument<bool>("use_global_stats", true);
+    eps_ = get_single_argument<float>("eps", 1e-5);
+    if (bottoms<float>(0)->num_axes() == 1) {
+      channels_ = 1;
+    } else {
+      channels_ = bottoms<float>(0)->shape(1);
+    }
 
-  void Setup() override;
+    if (use_global_stats_) {
+      CHECK_EQ(blobs_size(), 3);
+      CHECK_EQ(blobs<float>(2)->count(), 1);
+    }
+  }
+
   void Reshape() override;
   void Forward() override;
-  void Release() override;
 
  private:
   bool use_global_stats_;

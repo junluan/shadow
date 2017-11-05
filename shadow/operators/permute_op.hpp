@@ -8,13 +8,14 @@ namespace Shadow {
 class PermuteOp : public Operator {
  public:
   explicit PermuteOp(const shadow::OpParam &op_param, Workspace *ws)
-      : Operator(op_param, ws) {}
-  ~PermuteOp() override { Release(); }
+      : Operator(op_param, ws) {
+    permute_order_data_ = get_repeated_argument<int>("order");
+    num_axes_ = static_cast<int>(permute_order_data_.size());
+    CHECK_EQ(num_axes_, bottoms<float>(0)->num_axes());
+  }
 
-  void Setup() override;
   void Reshape() override;
   void Forward() override;
-  void Release() override;
 
  private:
   int num_axes_;

@@ -8,13 +8,18 @@ namespace Shadow {
 class PSROIPoolingOp : public Operator {
  public:
   explicit PSROIPoolingOp(const shadow::OpParam &op_param, Workspace *ws)
-      : Operator(op_param, ws) {}
-  ~PSROIPoolingOp() override { Release(); }
+      : Operator(op_param, ws) {
+    output_dim_ = get_single_argument<int>("output_dim", 0);
+    group_size_ = get_single_argument<int>("group_size", 0);
+    CHECK_GT(output_dim_, 0) << "output_dim must be > 0";
+    CHECK_GT(group_size_, 0) << "group_size must be > 0";
+    spatial_scale_ = get_single_argument<float>("spatial_scale", 1.f / 16);
+    CHECK_EQ(bottoms_size(), 2);
+    pooled_h_ = group_size_, pooled_w_ = group_size_;
+  }
 
-  void Setup() override;
   void Reshape() override;
   void Forward() override;
-  void Release() override;
 
  private:
   int output_dim_, group_size_, pooled_h_, pooled_w_;

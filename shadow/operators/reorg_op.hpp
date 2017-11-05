@@ -8,13 +8,14 @@ namespace Shadow {
 class ReorgOp : public Operator {
  public:
   explicit ReorgOp(const shadow::OpParam &op_param, Workspace *ws)
-      : Operator(op_param, ws) {}
-  ~ReorgOp() override { Release(); }
+      : Operator(op_param, ws) {
+    stride_ = get_single_argument<int>("stride", 2);
+    CHECK_EQ(bottoms<float>(0)->shape(2) % stride_, 0);
+    CHECK_EQ(bottoms<float>(0)->shape(3) % stride_, 0);
+  }
 
-  void Setup() override;
   void Reshape() override;
   void Forward() override;
-  void Release() override;
 
  private:
   int stride_;

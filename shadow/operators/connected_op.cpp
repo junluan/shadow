@@ -1,20 +1,6 @@
 #include "connected_op.hpp"
-#include "core/blas.hpp"
 
 namespace Shadow {
-
-void ConnectedOp::Setup() {
-  CHECK(has_argument("num_output"));
-  num_output_ = get_single_argument<int>("num_output", 0);
-  bias_term_ = get_single_argument<bool>("bias_term", true);
-  transpose_ = get_single_argument<bool>("transpose", false);
-
-  if (bias_term_) {
-    CHECK_EQ(blobs_size(), 2);
-  } else {
-    CHECK_EQ(blobs_size(), 1);
-  }
-}
 
 void ConnectedOp::Reshape() {
   const auto *bottom = bottoms<float>(0);
@@ -59,10 +45,6 @@ void ConnectedOp::Forward() {
                       1, top->mutable_data(), 0);
     }
   }
-}
-
-void ConnectedOp::Release() {
-  // DLOG(INFO) << "Free ConnectedOp!";
 }
 
 REGISTER_OPERATOR(Connected, ConnectedOp);

@@ -8,13 +8,48 @@ namespace Shadow {
 class PoolingOp : public Operator {
  public:
   explicit PoolingOp(const shadow::OpParam &op_param, Workspace *ws)
-      : Operator(op_param, ws) {}
-  ~PoolingOp() override { Release(); }
+      : Operator(op_param, ws) {
+    pool_type_ = get_single_argument<int>("pool", 0);
+    global_pooling_ = get_single_argument<bool>("global_pooling", false);
+    if (!global_pooling_) {
+      CHECK(has_argument("kernel_size"));
+      kernel_size_ = get_single_argument<int>("kernel_size", 2);
+      stride_ = get_single_argument<int>("stride", 1);
+      pad_ = get_single_argument<int>("pad", 0);
+    } else {
+      kernel_size_ = bottoms<float>(0)->shape(2);
+      stride_ = 1;
+      pad_ = 0;
+    }
+    full_pooling_ = get_single_argument<bool>("full_pooling", true);
 
-  void Setup() override;
+#if defined(USE_CUDNN)
+    cudnn::createPoolingDesc<float>(&pooling_desc_, pool_type_, &mode_,
+                                    kernel_size_, kernel_size_, pad_, pad_,
+                                    stride_, stride_);
+    cudnn::createTensor4dDesc<float>(&bottom_desc_);
+    cudnn::createTensor4dDesc<float>(&top_desc_);
+#endif
+  }
+  ~PoolingOp() override {
+#if defined(USE_CUDNN)
+    if (pooling_desc_ != nullptr) {
+      cudnnDestroyPoolingDescriptor(pooling_desc_);
+      pooling_desc_ = nullptr;
+    }
+    if (bottom_desc_ != nullptr) {
+      cudnnDestroyTensorDescriptor(bottom_desc_);
+      bottom_desc_ = nullptr;
+    }
+    if (top_desc_ != nullptr) {
+      cudnnDestroyTensorDescriptor(top_desc_);
+      top_desc_ = nullptr;
+    }
+#endif
+  }
+
   void Reshape() override;
   void Forward() override;
-  void Release() override;
 
  private:
   int pool_type_, kernel_size_, stride_, pad_;

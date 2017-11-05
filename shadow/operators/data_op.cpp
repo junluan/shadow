@@ -3,21 +3,6 @@
 
 namespace Shadow {
 
-void DataOp::Setup() {
-  scale_ = get_single_argument<float>("scale", 1);
-  VecFloat mean_value = get_repeated_argument<float>("mean_value");
-  num_mean_ = 1;
-  if (mean_value.size() > 1) {
-    CHECK_EQ(mean_value.size(), bottoms<float>(0)->shape(1));
-    num_mean_ = static_cast<int>(mean_value.size());
-  } else if (mean_value.empty()) {
-    mean_value.push_back(0);
-  }
-  mean_value_ =
-      op_ws_->CreateBlob<float>({num_mean_}, op_name_ + "_mean_value");
-  mean_value_->set_data(mean_value.data(), num_mean_);
-}
-
 void DataOp::Reshape() {
   const auto *bottom = bottoms<float>(0);
   auto *top = mutable_tops<float>(0);
@@ -35,10 +20,6 @@ void DataOp::Forward() {
 
   Vision::DataTransform(bottom->data(), bottom->shape(), scale_, num_mean_,
                         mean_value_->data(), top->mutable_data());
-}
-
-void DataOp::Release() {
-  // DLOG(INFO) << "Free DataOp!";
 }
 
 REGISTER_OPERATOR(Data, DataOp);

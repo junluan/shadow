@@ -3,14 +3,6 @@
 
 namespace Shadow {
 
-void ConcatOp::Setup() {
-  concat_axis_ = get_single_argument<int>("axis", 1);
-  CHECK_GE(concat_axis_, 0);
-  CHECK_LT(concat_axis_, bottoms<float>(0)->num_axes());
-  num_concats_ = bottoms<float>(0)->count(0, concat_axis_);
-  concat_input_size_ = bottoms<float>(0)->count(concat_axis_ + 1);
-}
-
 void ConcatOp::Reshape() {
   auto *top = mutable_tops<float>(0);
 
@@ -59,10 +51,6 @@ void ConcatOp::Forward() {
                    offset_concat_axis, top->mutable_data());
     offset_concat_axis += bottom_concat_axis;
   }
-}
-
-void ConcatOp::Release() {
-  // DLOG(INFO) << "Free ConcatOp!";
 }
 
 REGISTER_OPERATOR(Concat, ConcatOp);

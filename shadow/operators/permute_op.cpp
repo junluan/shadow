@@ -3,12 +3,6 @@
 
 namespace Shadow {
 
-void PermuteOp::Setup() {
-  permute_order_data_ = get_repeated_argument<int>("order");
-  num_axes_ = static_cast<int>(permute_order_data_.size());
-  CHECK_EQ(num_axes_, bottoms<float>(0)->num_axes());
-}
-
 void PermuteOp::Reshape() {
   const auto *bottom = bottoms<float>(0);
   auto *top = mutable_tops<float>(0);
@@ -57,10 +51,6 @@ void PermuteOp::Forward() {
   Vision::Permute(bottom->data(), bottom->count(), bottom->num_axes(),
                   permute_order_->data(), old_steps_->data(),
                   new_steps_->data(), top->mutable_data());
-}
-
-void PermuteOp::Release() {
-  // DLOG(INFO) << "Free PermuteOp!";
 }
 
 REGISTER_OPERATOR(Permute, PermuteOp);

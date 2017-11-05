@@ -3,15 +3,6 @@
 
 namespace Shadow {
 
-void ROIPoolingOp::Setup() {
-  pooled_h_ = get_single_argument<int>("pooled_h", 0);
-  pooled_w_ = get_single_argument<int>("pooled_w", 0);
-  CHECK_GT(pooled_h_, 0) << "pooled_h must be > 0";
-  CHECK_GT(pooled_w_, 0) << "pooled_w must be > 0";
-  spatial_scale_ = get_single_argument<float>("spatial_scale", 1.f / 16);
-  CHECK_EQ(bottoms_size(), 2);
-}
-
 void ROIPoolingOp::Reshape() {
   const auto *bottom_fea = bottoms<float>(0);
   const auto *bottom_roi = bottoms<float>(1);
@@ -44,10 +35,6 @@ void ROIPoolingOp::Forward() {
   Vision::ROIPooling(bottom_fea->data(), bottom_fea->shape(),
                      bottom_roi->data(), num_rois, pooled_h_, pooled_w_,
                      spatial_scale_, top->mutable_data());
-}
-
-void ROIPoolingOp::Release() {
-  // DLOG(INFO) << "Free ROIPoolingOp!";
 }
 
 REGISTER_OPERATOR(ROIPooling, ROIPoolingOp);

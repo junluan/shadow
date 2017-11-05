@@ -8,13 +8,19 @@ namespace Shadow {
 class LRNOp : public Operator {
  public:
   explicit LRNOp(const shadow::OpParam &op_param, Workspace *ws)
-      : Operator(op_param, ws) {}
-  ~LRNOp() override { Release(); }
+      : Operator(op_param, ws) {
+    size_ = get_single_argument<int>("local_size", 5);
+    CHECK_EQ(size_ % 2, 1) << "LRN only supports odd values for local_size";
+    alpha_ = get_single_argument<float>("alpha", 1);
+    beta_ = get_single_argument<float>("beta", 0.75);
+    norm_region_ = get_single_argument<int>("norm_region", 0);
+    CHECK_EQ(norm_region_, 0)
+        << "Currently only support norm region method: Across Channels!";
+    k_ = get_single_argument<float>("k", 1);
+  }
 
-  void Setup() override;
   void Reshape() override;
   void Forward() override;
-  void Release() override;
 
  private:
   int size_, norm_region_;

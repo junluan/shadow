@@ -8,13 +8,30 @@ namespace Shadow {
 class SoftmaxOp : public Operator {
  public:
   explicit SoftmaxOp(const shadow::OpParam &op_param, Workspace *ws)
-      : Operator(op_param, ws) {}
-  ~SoftmaxOp() override { Release(); }
+      : Operator(op_param, ws) {
+    axis_ = get_single_argument<int>("axis", 1);
+    axis_ = bottoms<float>(0)->canonical_index(axis_);
 
-  void Setup() override;
+#if defined(USE_CUDNN)
+    cudnn::createTensor4dDesc<float>(&bottom_desc_);
+    cudnn::createTensor4dDesc<float>(&top_desc_);
+#endif
+  }
+  ~SoftmaxOp() override {
+#if defined(USE_CUDNN)
+    if (bottom_desc_ != nullptr) {
+      cudnnDestroyTensorDescriptor(bottom_desc_);
+      bottom_desc_ = nullptr;
+    }
+    if (top_desc_ != nullptr) {
+      cudnnDestroyTensorDescriptor(top_desc_);
+      top_desc_ = nullptr;
+    }
+#endif
+  }
+
   void Reshape() override;
   void Forward() override;
-  void Release() override;
 
  private:
   int axis_, outer_num_, inner_num_;

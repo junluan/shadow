@@ -1,6 +1,7 @@
 #ifndef SHADOW_CORE_OPERATOR_HPP
 #define SHADOW_CORE_OPERATOR_HPP
 
+#include "blas.hpp"
 #include "blob.hpp"
 #include "params.hpp"
 #include "registry.hpp"
@@ -16,10 +17,8 @@ class Operator {
   explicit Operator(const shadow::OpParam &op_param, Workspace *ws);
   virtual ~Operator();
 
-  virtual void Setup() { LOG(INFO) << "Setup Operator!"; }
   virtual void Reshape() { LOG(INFO) << "Reshape Operator!"; }
   virtual void Forward() { LOG(INFO) << "Forward Operator!"; }
-  virtual void Release() { LOG(INFO) << "Release Operator!"; }
 
   bool has_argument(const std::string &name) const {
     return arg_helper_.HasArgument(name);

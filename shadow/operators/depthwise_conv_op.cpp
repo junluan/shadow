@@ -3,29 +3,6 @@
 
 namespace Shadow {
 
-void DepthwiseConvOp::Setup() {
-  num_output_ = get_single_argument<int>("num_output", 0);
-  CHECK(has_argument("kernel_size"));
-  kernel_size_ = get_single_argument<int>("kernel_size", 0);
-  stride_ = get_single_argument<int>("stride", 1);
-  pad_ = get_single_argument<int>("pad", 0);
-  dilation_ = get_single_argument<int>("dilation", 1);
-  CHECK_EQ(dilation_, 1);
-  group_ = get_single_argument<int>("group", 1);
-  CHECK_EQ(bottoms<float>(0)->shape(1), group_);
-  CHECK_EQ(num_output_, group_);
-  bias_term_ = get_single_argument<bool>("bias_term", true);
-  activate_type_ = get_single_argument<int>("type", -1);
-  CHECK((activate_type_ == -1 || activate_type_ == 1))
-      << "Build in activate only support Relu";
-
-  if (bias_term_) {
-    CHECK_EQ(blobs_size(), 2);
-  } else {
-    CHECK_EQ(blobs_size(), 1);
-  }
-}
-
 void DepthwiseConvOp::Reshape() {
   const auto *bottom = bottoms<float>(0);
   auto *top = mutable_tops<float>(0);
@@ -66,10 +43,6 @@ void DepthwiseConvOp::Forward() {
   if (activate_type_ == 1) {
     Vision::Activate(top->mutable_data(), top->count(), activate_type_);
   }
-}
-
-void DepthwiseConvOp::Release() {
-  // DLOG(INFO) << "Free DepthwiseConvOp!";
 }
 
 REGISTER_OPERATOR(DepthwiseConv, DepthwiseConvOp);

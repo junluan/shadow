@@ -1,13 +1,6 @@
 #include "unary_op.hpp"
-#include "core/blas.hpp"
 
 namespace Shadow {
-
-void UnaryOp::Setup() {
-  operation_ = get_single_argument<int>("operation", -1);
-  CHECK_GE(operation_, 0);
-  CHECK_LE(operation_, 12);
-}
 
 void UnaryOp::Reshape() {
   const auto *bottom = bottoms<float>(0);
@@ -58,10 +51,6 @@ void UnaryOp::Forward() {
     default:
       LOG(FATAL) << "Unknown unary operation " << operation_;
   }
-}
-
-void UnaryOp::Release() {
-  // DLOG(INFO) << "Free UnaryOp!";
 }
 
 REGISTER_OPERATOR(Unary, UnaryOp);

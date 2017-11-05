@@ -8,13 +8,23 @@ namespace Shadow {
 class DataOp : public Operator {
  public:
   explicit DataOp(const shadow::OpParam &op_param, Workspace *ws)
-      : Operator(op_param, ws) {}
-  ~DataOp() override { Release(); }
+      : Operator(op_param, ws) {
+    scale_ = get_single_argument<float>("scale", 1);
+    auto mean_value = get_repeated_argument<float>("mean_value");
+    num_mean_ = 1;
+    if (mean_value.size() > 1) {
+      CHECK_EQ(mean_value.size(), bottoms<float>(0)->shape(1));
+      num_mean_ = static_cast<int>(mean_value.size());
+    } else if (mean_value.empty()) {
+      mean_value.push_back(0);
+    }
+    mean_value_ =
+        op_ws_->CreateBlob<float>({num_mean_}, op_name_ + "_mean_value");
+    mean_value_->set_data(mean_value.data(), num_mean_);
+  }
 
-  void Setup() override;
   void Reshape() override;
   void Forward() override;
-  void Release() override;
 
  private:
   float scale_;

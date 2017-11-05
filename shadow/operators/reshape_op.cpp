@@ -2,28 +2,6 @@
 
 namespace Shadow {
 
-void ReshapeOp::Setup() {
-  axis_ = get_single_argument<int>("axis", 0);
-  num_axes_ = get_single_argument<int>("num_axes", -1);
-  CHECK_GE(num_axes_, -1);
-  shape_ = get_repeated_argument<int>("shape");
-
-  inferred_axis_ = -1;
-  copy_axes_.clear();
-  constant_count_ = 1;
-  for (int i = 0; i < shape_.size(); ++i) {
-    int top_dim = shape_[i];
-    if (top_dim == 0) {
-      copy_axes_.push_back(i);
-    } else if (top_dim == -1) {
-      CHECK_EQ(inferred_axis_, -1);
-      inferred_axis_ = i;
-    } else {
-      constant_count_ *= top_dim;
-    }
-  }
-}
-
 void ReshapeOp::Reshape() {
   const auto *bottom = bottoms<float>(0);
   auto *top = mutable_tops<float>(0);
@@ -74,10 +52,6 @@ void ReshapeOp::Reshape() {
 
 void ReshapeOp::Forward() {
   mutable_tops<float>(0)->share_data(*bottoms<float>(0));
-}
-
-void ReshapeOp::Release() {
-  // DLOG(INFO) << "Free ReshapeOp!";
 }
 
 REGISTER_OPERATOR(Reshape, ReshapeOp);

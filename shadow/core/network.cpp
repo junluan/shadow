@@ -120,7 +120,6 @@ void Network::Initial() {
   ops_.clear();
   for (const auto &op_param : net_param_.op()) {
     auto *op = CreateOperator(op_param, &ws_);
-    op->Setup();
     op->Reshape();
     ops_.push_back(op);
   }
