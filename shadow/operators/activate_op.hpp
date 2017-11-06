@@ -45,6 +45,17 @@ class ActivateOp : public Operator {
   bool channel_shared_;
 };
 
+namespace Vision {
+
+template <typename T>
+void Activate(T *data, int count, int type, float slope = 0.1);
+
+template <typename T>
+void PRelu(T *data, const VecInt &in_shape, bool channel_shared,
+           const T *slope_data);
+
+}  // namespace Vision
+
 }  // namespace Shadow
 
 #endif  // SHADOW_OPERATORS_ACTIVATE_OP_HPP

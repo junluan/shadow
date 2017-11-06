@@ -24,6 +24,15 @@ class PermuteOp : public Operator {
   BlobI *permute_order_ = nullptr, *old_steps_ = nullptr, *new_steps_ = nullptr;
 };
 
+namespace Vision {
+
+template <typename T, typename Dtype>
+void Permute(const T *in_data, int count, int num_axes,
+             const Dtype *permute_order, const Dtype *old_steps,
+             const Dtype *new_steps, T *out_data);
+
+}  // namespace Vision
+
 }  // namespace Shadow
 
 #endif  // SHADOW_OPERATORS_PERMUTE_OP_HPP

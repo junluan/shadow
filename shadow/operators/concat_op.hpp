@@ -23,6 +23,15 @@ class ConcatOp : public Operator {
   int concat_axis_, num_concats_, concat_input_size_;
 };
 
+namespace Vision {
+
+template <typename T>
+void Concat(const T *in_data, int count, int num_concats, int concat_size,
+            int top_concat_axis, int bottom_concat_axis, int offset_concat_axis,
+            T *out_data);
+
+}  // namespace Vision
+
 }  // namespace Shadow
 
 #endif  // SHADOW_OPERATORS_CONCAT_OP_HPP

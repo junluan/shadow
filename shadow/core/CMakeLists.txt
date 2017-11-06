@@ -1,4 +1,4 @@
-file(GLOB_RECURSE tmp *.cpp *hpp)
+file(GLOB_RECURSE tmp *.cpp *.hpp)
 set(shadow_cpu_src ${shadow_cpu_src} ${tmp})
 
 file(GLOB_RECURSE tmp *.cu)

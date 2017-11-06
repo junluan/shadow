@@ -26,6 +26,15 @@ class PSROIPoolingOp : public Operator {
   float spatial_scale_;
 };
 
+namespace Vision {
+
+template <typename T>
+void PSROIPooling(const T *in_data, const VecInt &in_shape, const T *roi_data,
+                  int num_rois, int output_dim, int group_size, int pooled_h,
+                  int pooled_w, float spatial_scale, T *out_data);
+
+}  // namespace Vision
+
 }  // namespace Shadow
 
 #endif  // SHADOW_OPERATORS_PSROI_POOLING_OP_HPP

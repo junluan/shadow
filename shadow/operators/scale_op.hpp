@@ -45,6 +45,14 @@ class ScaleOp : public Operator {
   BlobF *scale_ = nullptr, *bias_ = nullptr;
 };
 
+namespace Vision {
+
+template <typename T>
+void Scale(const T *in_data, int count, const T *scale_data, const T *bias_data,
+           int scale_dim, int inner_dim, T *out_data);
+
+}  // namespace Vision
+
 }  // namespace Shadow
 
 #endif  // SHADOW_OPERATORS_SCALE_OP_HPP

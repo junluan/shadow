@@ -40,11 +40,21 @@ class DepthwiseConvOp : public Operator {
   bool bias_term_;
 };
 
-inline int conv_out_size(int dim, int kernel_size, int stride, int pad,
-                         int dilation) {
+static inline int depthwise_conv_out_size(int dim, int kernel_size, int stride,
+                                          int pad, int dilation) {
   int kernel_extent = dilation * (kernel_size - 1) + 1;
   return (dim + 2 * pad - kernel_extent) / stride + 1;
 }
+
+namespace Vision {
+
+template <typename T>
+void DepthwiseConv(const T *in_data, const VecInt &in_shape,
+                   const T *weight_data, const T *bias_data, int kernel_size,
+                   int stride, int pad, int bias_term, const VecInt &out_shape,
+                   T *out_data);
+
+}  // namespace Vision
 
 }  // namespace Shadow
 

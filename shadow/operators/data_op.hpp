@@ -33,6 +33,14 @@ class DataOp : public Operator {
   BlobF *mean_value_ = nullptr;
 };
 
+namespace Vision {
+
+template <typename T>
+void DataTransform(const T *in_data, const VecInt &in_shape, float scale,
+                   int num_mean, const T *mean_value, T *out_data);
+
+}  // namespace Vision
+
 }  // namespace Shadow
 
 #endif  // SHADOW_OPERATORS_DATA_OP_HPP

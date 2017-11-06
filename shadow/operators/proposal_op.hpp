@@ -59,6 +59,15 @@ class ProposalOp : public Operator {
   BlobF *anchors_ = nullptr, *proposals_ = nullptr;
 };
 
+namespace Vision {
+
+template <typename T>
+void Proposal(const T *anchor_data, const T *score_data, const T *delta_data,
+              const T *info_data, const VecInt &in_shape, int num_anchors,
+              int feat_stride, int min_size, T *proposal_data);
+
+}  // namespace Vision
+
 }  // namespace Shadow
 
 #endif  // SHADOW_OPERATORS_PROPOSAL_OP_HPP

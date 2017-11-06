@@ -1,5 +1,6 @@
 #include "conv_op.hpp"
-#include "core/vision.hpp"
+
+#include "activate_op.hpp"
 
 namespace Shadow {
 
@@ -150,5 +151,80 @@ void ConvOp::Forward() {
 }
 
 REGISTER_OPERATOR(Conv, ConvOp);
+
+namespace Vision {
+
+#if !defined(USE_CUDA) & !defined(USE_CL)
+// check for 0 <= a < b
+inline bool check_border(int a, int b) {
+  return static_cast<unsigned>(a) < static_cast<unsigned>(b);
+}
+
+template <typename T>
+void Im2Col(const T *in_data, const VecInt &in_shape, int offset,
+            int kernel_size, int stride, int pad, int dilation, int zero_point,
+            const VecInt &out_shape, T *out_data) {
+  in_data += offset;
+  int in_c = in_shape[1], in_h = in_shape[2], in_w = in_shape[3];
+  int out_h = out_shape[2], out_w = out_shape[3];
+  int spatial_dim = in_h * in_w;
+  for (int k_c = 0; k_c < in_c; ++k_c, in_data += spatial_dim) {
+    for (int k_s = 0; k_s < kernel_size * kernel_size; ++k_s) {
+      int k_h = k_s / kernel_size;
+      int k_w = k_s % kernel_size;
+      int im_row = -pad + k_h * dilation;
+      for (int h = 0; h < out_h; ++h, im_row += stride) {
+        if (check_border(im_row, in_h)) {
+          int im_col = -pad + k_w * dilation;
+          for (int w = 0; w < out_w; ++w, im_col += stride) {
+            if (check_border(im_col, in_w)) {
+              *(out_data++) = in_data[im_row * in_w + im_col];
+            } else {
+              *(out_data++) = static_cast<T>(zero_point);
+            }
+          }
+        } else {
+          for (int w = 0; w < out_w; ++w) {
+            *(out_data++) = static_cast<T>(zero_point);
+          }
+        }
+      }
+    }
+  }
+}
+
+template void Im2Col(const float *in_data, const VecInt &in_shape, int offset,
+                     int kernel_size, int stride, int pad, int dilation,
+                     int zero_point, const VecInt &out_shape, float *out_data);
+template void Im2Col(const unsigned char *in_data, const VecInt &in_shape,
+                     int offset, int kernel_size, int stride, int pad,
+                     int dilation, int zero_point, const VecInt &out_shape,
+                     unsigned char *out_data);
+
+#elif defined(USE_CL)
+template <typename T>
+void Im2Col(const T *in_data, const VecInt &in_shape, int offset,
+            int kernel_size, int stride, int pad, int dilation, int zero_point,
+            const VecInt &out_shape, T *out_data) {
+  int in_c = in_shape[1], in_h = in_shape[2], in_w = in_shape[3];
+  int out_h = out_shape[2], out_w = out_shape[3];
+  int count = in_c * out_h * out_w;
+
+  size_t global = count;
+  auto *kernel = Kernel::cl_kernels_["Im2Col"];
+  kernel->SetArguments(*in_data, offset, count, in_c, in_h, in_w, kernel_size,
+                       stride, pad, dilation, zero_point, out_h, out_w,
+                       *out_data);
+  kernel->Launch(*Kernel::queue_, {global}, Kernel::event_);
+  Kernel::queue_->Finish();
+}
+
+template void Im2Col(const BufferF *in_data, const VecInt &in_shape, int offset,
+                     int kernel_size, int stride, int pad, int dilation,
+                     int zero_point, const VecInt &out_shape,
+                     BufferF *out_data);
+#endif
+
+}  // namespace Vision
 
 }  // namespace Shadow

@@ -62,8 +62,8 @@ class PoolingOp : public Operator {
 #endif
 };
 
-inline int pooling_out_size(int dim, int kernel_size, int stride, int pad,
-                            bool full_pooling = true) {
+static inline int pooling_out_size(int dim, int kernel_size, int stride,
+                                   int pad, bool full_pooling = true) {
   if (full_pooling) {
     return static_cast<int>(
         std::ceil((dim + 2.f * pad - kernel_size) / stride) + 1);
@@ -72,6 +72,15 @@ inline int pooling_out_size(int dim, int kernel_size, int stride, int pad,
         std::floor((dim + 2.f * pad - kernel_size) / stride) + 1);
   }
 }
+
+namespace Vision {
+
+template <typename T>
+void Pooling(const T *in_data, const VecInt &in_shape, int kernel_size,
+             int stride, int pad, int mode, const VecInt &out_shape,
+             T *out_data);
+
+}  // namespace Vision
 
 }  // namespace Shadow
 

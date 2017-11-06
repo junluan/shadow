@@ -29,6 +29,14 @@ class LRNOp : public Operator {
   BlobF *scale_ = nullptr;
 };
 
+namespace Vision {
+
+template <typename T>
+void LRN(const T *in_data, const VecInt &in_shape, int size, float alpha,
+         float beta, float k, T *scale_data, T *out_data);
+
+}  // namespace Vision
+
 }  // namespace Shadow
 
 #endif  // SHADOW_OPERATORS_LRN_OP_HPP

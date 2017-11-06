@@ -1,5 +1,4 @@
 #include "bias_op.hpp"
-#include "core/vision.hpp"
 
 namespace Shadow {
 
@@ -33,5 +32,38 @@ void BiasOp::Forward() {
 }
 
 REGISTER_OPERATOR(Bias, BiasOp);
+
+namespace Vision {
+
+#if !defined(USE_CUDA) & !defined(USE_CL)
+template <typename T>
+void Bias(const T *in_data, int count, const T *bias_data, int bias_dim,
+          int inner_dim, T *out_data) {
+  for (int i = 0; i < count; ++i) {
+    int index = (i / inner_dim) % bias_dim;
+    out_data[i] = in_data[i] + bias_data[index];
+  }
+}
+
+template void Bias(const float *in_data, int count, const float *bias_data,
+                   int bias_dim, int inner_dim, float *out_data);
+
+#elif defined(USE_CL)
+template <typename T>
+void Bias(const T *in_data, int count, const T *bias_data, int bias_dim,
+          int inner_dim, T *out_data) {
+  size_t global = count;
+  auto *kernel = Kernel::cl_kernels_["Bias"];
+  kernel->SetArguments(*in_data, count, *bias_data, bias_dim, inner_dim,
+                       *out_data);
+  kernel->Launch(*Kernel::queue_, {global}, Kernel::event_);
+  Kernel::queue_->Finish();
+}
+
+template void Bias(const BufferF *in_data, int count, const BufferF *bias_data,
+                   int bias_dim, int inner_dim, BufferF *out_data);
+#endif
+
+}  // namespace Vision
 
 }  // namespace Shadow

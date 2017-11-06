@@ -21,6 +21,13 @@ class ReorgOp : public Operator {
   int stride_;
 };
 
+namespace Vision {
+
+template <typename T>
+void Reorg(const T *in_data, const VecInt &in_shape, int stride, T *out_data);
+
+}  // namespace Vision
+
 }  // namespace Shadow
 
 #endif  // SHADOW_OPERATORS_REORG_OP_HPP

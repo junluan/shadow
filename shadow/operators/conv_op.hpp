@@ -114,11 +114,20 @@ class ConvOp : public Operator {
 #endif
 };
 
-inline int conv_out_size(int dim, int kernel_size, int stride, int pad,
-                         int dilation) {
+static inline int conv_out_size(int dim, int kernel_size, int stride, int pad,
+                                int dilation) {
   int kernel_extent = dilation * (kernel_size - 1) + 1;
   return (dim + 2 * pad - kernel_extent) / stride + 1;
 }
+
+namespace Vision {
+
+template <typename T>
+void Im2Col(const T *in_data, const VecInt &in_shape, int offset,
+            int kernel_size, int stride, int pad, int dilation, int zero_point,
+            const VecInt &out_shape, T *out_data);
+
+}  // namespace Vision
 
 }  // namespace Shadow
 

@@ -31,6 +31,14 @@ class BiasOp : public Operator {
   BlobF *bias_ = nullptr;
 };
 
+namespace Vision {
+
+template <typename T>
+void Bias(const T *in_data, int count, const T *bias_data, int bias_dim,
+          int inner_dim, T *out_data);
+
+}  // namespace Vision
+
 }  // namespace Shadow
 
 #endif  // SHADOW_OPERATORS_BIAS_OP_HPP
