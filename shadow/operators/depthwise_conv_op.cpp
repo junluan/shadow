@@ -37,10 +37,10 @@ void DepthwiseConvOp::Forward() {
                           kernel_size_, stride_, pad_, bias_term_, top->shape(),
                           top->mutable_data());
   } else {
-    Vision::DepthwiseConv(bottom->data(), bottom->shape(),
-                          blobs<float>(0)->data(), blobs<float>(0)->data(),
-                          kernel_size_, stride_, pad_, bias_term_, top->shape(),
-                          top->mutable_data());
+    Vision::DepthwiseConv(
+        bottom->data(), bottom->shape(), blobs<float>(0)->data(),
+        static_cast<decltype(blobs<float>(0)->data())>(nullptr), kernel_size_,
+        stride_, pad_, bias_term_, top->shape(), top->mutable_data());
   }
 
   if (activate_type_ == 1) {

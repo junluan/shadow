@@ -87,7 +87,7 @@ void PSROIPooling(const T *in_data, const VecInt &in_shape, const T *roi_data,
           gh = std::min(std::max(gh, 0), group_size - 1);
           gw = std::min(std::max(gw, 0), group_size - 1);
           int c_in = (c * group_size + gh) * group_size + gw;
-          T sum_val = T(0);
+          auto sum_val = static_cast<T>(0);
           for (int h = hstart; h < hend; ++h) {
             for (int w = wstart; w < wend; ++w) {
               sum_val += batch_in_data[(c_in * in_h + h) * in_w + w];
