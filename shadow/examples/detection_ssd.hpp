@@ -53,12 +53,12 @@ class DetectionSSD final : public Method {
 
   Network net_;
   VecFloat in_data_;
+  std::string mbox_loc_str_, mbox_conf_flatten_str_, mbox_priorbox_str_;
   int batch_, in_num_, in_c_, in_h_, in_w_;
   int num_classes_, num_priors_, num_loc_classes_, background_label_id_, top_k_,
       keep_top_k_;
   float threshold_, nms_threshold_, confidence_threshold_;
   bool share_location_;
-  JImage im_ini_;
 };
 
 }  // namespace Shadow

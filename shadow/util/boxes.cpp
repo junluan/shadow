@@ -64,15 +64,8 @@ std::vector<Box<Dtype>> NMS(const std::vector<Box<Dtype>> &boxes,
       auto &box_j = all_boxes[j];
       if (box_j.label == -1 || box_i.label != box_j.label) continue;
       if (IoU(box_i, box_j) > iou_threshold) {
-        float smooth = box_i.score / (box_i.score + box_j.score);
-        Smooth(box_j, &box_i, smooth);
         box_j.label = -1;
-        continue;
       }
-      float in = Intersection(box_i, box_j);
-      float cover_i = in / Size(box_i), cover_j = in / Size(box_j);
-      if (cover_i > cover_j && cover_i > 0.7) box_i.label = -1;
-      if (cover_i < cover_j && cover_j > 0.7) box_j.label = -1;
     }
   }
   std::vector<Box<Dtype>> out_boxes;

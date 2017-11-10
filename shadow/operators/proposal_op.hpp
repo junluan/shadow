@@ -5,11 +5,11 @@
 
 namespace Shadow {
 
-inline VecFloat generate_anchors(int base_size, const VecFloat &ratios,
-                                 const VecFloat &scales) {
+static inline VecFloat generate_anchors(int base_size, const VecFloat &ratios,
+                                        const VecFloat &scales) {
   auto num_ratio = static_cast<int>(ratios.size());
   auto num_scale = static_cast<int>(scales.size());
-  VecFloat anchors(4 * num_ratio * num_scale, 0);
+  VecFloat anchors(4 * num_ratio * num_scale);
   float cx = (base_size - 1) * 0.5f, cy = (base_size - 1) * 0.5f;
   for (int i = 0; i < num_ratio; ++i) {
     float ar = ratios[i];
@@ -33,14 +33,13 @@ class ProposalOp : public Operator {
   explicit ProposalOp(const shadow::OpParam &op_param, Workspace *ws)
       : Operator(op_param, ws) {
     feat_stride_ = get_single_argument<int>("feat_stride", 16);
-    pre_nms_topN_ = 6000;
-    post_nms_topN_ = 300;
-    min_size_ = 16;
-    base_size_ = 16;
-    nms_thresh_ = 0.7;
-    ratios_ = {0.5f, 1.f, 2.f};
-    scales_ = {8.f, 16.f, 32.f};
-    const auto &anchors = generate_anchors(base_size_, ratios_, scales_);
+    pre_nms_top_n_ = get_single_argument<int>("pre_nms_top_n", 6000);
+    post_nms_top_n_ = get_single_argument<int>("post_nms_top_n", 300);
+    min_size_ = get_single_argument<int>("min_size", 16);
+    nms_thresh_ = get_single_argument<float>("nms_thresh", 0.7f);
+    ratios_ = get_repeated_argument<float>("ratios", {0.5f, 1.f, 2.f});
+    scales_ = get_repeated_argument<float>("scales", {8.f, 16.f, 32.f});
+    const auto &anchors = generate_anchors(16, ratios_, scales_);
     num_anchors_ = static_cast<int>(ratios_.size() * scales_.size());
     anchors_ =
         op_ws_->CreateBlob<float>({num_anchors_, 4}, op_name_ + "_anchors");
@@ -51,8 +50,7 @@ class ProposalOp : public Operator {
   void Forward() override;
 
  private:
-  int feat_stride_, pre_nms_topN_, post_nms_topN_, min_size_, base_size_,
-      num_anchors_;
+  int feat_stride_, pre_nms_top_n_, post_nms_top_n_, min_size_, num_anchors_;
   float nms_thresh_;
   VecFloat ratios_, scales_, selected_rois_;
 

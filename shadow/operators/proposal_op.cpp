@@ -63,7 +63,7 @@ void ProposalOp::Reshape() {
   CHECK_EQ(num_regs, 4 * num_anchors_);
   CHECK_EQ(num_info, 3);
 
-  top->reshape({post_nms_topN_, 5});
+  top->reshape({post_nms_top_n_, 5});
 
   proposals_ = op_ws_->CreateBlob<float>(op_name_ + "_proposals");
   proposals_->reshape({in_h * in_w * num_anchors_, 6});
@@ -107,13 +107,13 @@ void ProposalOp::Forward() {
 
   std::stable_sort(rectangles.begin(), rectangles.end(), compare_descend);
 
-  if (pre_nms_topN_ > 0 && pre_nms_topN_ < rectangles.size()) {
-    rectangles.resize(pre_nms_topN_);
+  if (pre_nms_top_n_ > 0 && pre_nms_top_n_ < rectangles.size()) {
+    rectangles.resize(pre_nms_top_n_);
   }
 
   const auto &picked = nms_sorted(rectangles, nms_thresh_);
 
-  int picked_count = std::min(static_cast<int>(picked.size()), post_nms_topN_);
+  int picked_count = std::min(static_cast<int>(picked.size()), post_nms_top_n_);
 
   selected_rois_.resize(picked_count * 5, 0);
   for (int n = 0; n < picked_count; ++n) {

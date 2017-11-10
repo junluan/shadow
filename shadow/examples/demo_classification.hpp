@@ -34,6 +34,12 @@ class DemoClassification {
                std::vector<std::map<std::string, VecFloat>> *scores) {
     method_->Predict(im_src, rois, scores);
   }
+#if defined(USE_OpenCV)
+  void Predict(const cv::Mat &im_mat, const VecRectF &rois,
+               std::vector<std::map<std::string, VecFloat>> *scores) {
+    method_->Predict(im_mat, rois, scores);
+  }
+#endif
 
  private:
   void PrintDetections(

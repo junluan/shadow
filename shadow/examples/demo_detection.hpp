@@ -48,6 +48,13 @@ class DemoDetection {
                std::vector<std::vector<VecPointF>> *Gpoints) {
     method_->Predict(im_src, rois, Gboxes, Gpoints);
   }
+#if defined(USE_OpenCV)
+  void Predict(const cv::Mat &im_mat, const VecRectF &rois,
+               std::vector<VecBoxF> *Gboxes,
+               std::vector<std::vector<VecPointF>> *Gpoints) {
+    method_->Predict(im_mat, rois, Gboxes, Gpoints);
+  }
+#endif
 
  private:
 #if defined(USE_OpenCV)

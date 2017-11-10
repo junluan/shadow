@@ -50,6 +50,14 @@ void DetectionMTCNN::Setup(const VecString &model_files,
   net_r_.LoadModel(model_files[1]);
   net_o_.LoadModel(model_files[2]);
 
+  net_p_conv4_2_ = net_p_.out_blob()[0];
+  net_p_prob1_ = net_p_.out_blob()[1];
+  net_r_conv5_2_ = net_r_.out_blob()[0];
+  net_r_prob1_ = net_r_.out_blob()[1];
+  net_o_conv6_2_ = net_o_.out_blob()[0];
+  net_o_conv6_3_ = net_o_.out_blob()[1];
+  net_o_prob1_ = net_o_.out_blob()[2];
+
   net_p_in_shape_ = net_p_.GetBlobByName<float>("data")->shape();
   net_p_stride_ = 2, net_p_cell_size_ = 12;
 
@@ -153,8 +161,81 @@ void DetectionMTCNN::Predict(const JImage &im_src, const VecRectF &rois,
 void DetectionMTCNN::Predict(const cv::Mat &im_mat, const VecRectF &rois,
                              std::vector<VecBoxF> *Gboxes,
                              std::vector<std::vector<VecPointF>> *Gpoints) {
-  im_ini_.FromMat(im_mat, true);
-  Predict(im_ini_, rois, Gboxes, Gpoints);
+  Gboxes->clear(), Gpoints->clear();
+  for (const auto &roi : rois) {
+    net_p_boxes_.clear(), net_r_boxes_.clear(), net_o_boxes_.clear();
+    float crop_h = roi.h <= 1 ? roi.h * im_mat.rows : roi.h;
+    float crop_w = roi.w <= 1 ? roi.w * im_mat.cols : roi.w;
+    CalculateScales(crop_h, crop_w, factor_, max_side_, min_side_, &scales_);
+
+    for (auto scale : scales_) {
+      auto scale_h = static_cast<int>(std::ceil(crop_h * scale));
+      auto scale_w = static_cast<int>(std::ceil(crop_w * scale));
+      net_p_in_shape_[2] = scale_w, net_p_in_shape_[3] = scale_h;
+      net_p_in_data_.resize(1 * 3 * scale_w * scale_h);
+      ConvertData(im_mat, net_p_in_data_.data(), roi, 3, scale_h, scale_w, 1,
+                  true);
+      VecBoxInfo boxes;
+      Process_net_p(net_p_in_data_.data(), net_p_in_shape_, thresholds_[0],
+                    scale, &boxes);
+      net_p_boxes_.insert(net_p_boxes_.end(), boxes.begin(), boxes.end());
+    }
+    net_p_boxes_ = NMS(net_p_boxes_, 0.7);
+    BoxRegression(net_p_boxes_);
+    Box2SquareWithConstrain(net_p_boxes_, crop_h, crop_w);
+    if (net_p_boxes_.empty()) {
+      Gboxes->push_back({});
+      Gpoints->push_back({});
+      continue;
+    }
+
+    net_r_in_shape_[0] = static_cast<int>(net_p_boxes_.size());
+    net_r_in_data_.resize(net_r_in_shape_[0] * net_r_in_num_);
+    for (int n = 0; n < net_p_boxes_.size(); ++n) {
+      const auto &net_12_box = net_p_boxes_[n].box;
+      ConvertData(im_mat, net_r_in_data_.data() + n * net_r_in_num_,
+                  net_12_box.RectFloat(), net_r_in_c_, net_r_in_h_, net_r_in_w_,
+                  1, true);
+    }
+    Process_net_r(net_r_in_data_.data(), net_r_in_shape_, thresholds_[1],
+                  net_p_boxes_, &net_r_boxes_);
+    net_r_boxes_ = NMS(net_r_boxes_, 0.7);
+    BoxRegression(net_r_boxes_);
+    Box2SquareWithConstrain(net_r_boxes_, crop_h, crop_w);
+    if (net_r_boxes_.empty()) {
+      Gboxes->push_back({});
+      Gpoints->push_back({});
+      continue;
+    }
+
+    net_o_in_shape_[0] = static_cast<int>(net_r_boxes_.size());
+    net_o_in_data_.resize(net_o_in_shape_[0] * net_o_in_num_);
+    for (int n = 0; n < net_r_boxes_.size(); ++n) {
+      const auto &net_24_box = net_r_boxes_[n].box;
+      ConvertData(im_mat, net_o_in_data_.data() + n * net_o_in_num_,
+                  net_24_box.RectFloat(), net_o_in_c_, net_o_in_h_, net_o_in_w_,
+                  1, true);
+    }
+    Process_net_o(net_o_in_data_.data(), net_o_in_shape_, thresholds_[2],
+                  net_r_boxes_, &net_o_boxes_);
+    BoxRegression(net_o_boxes_);
+    net_o_boxes_ = NMS(net_o_boxes_, 0.7, true);
+    BoxWithConstrain(net_o_boxes_, crop_h, crop_w);
+
+    VecBoxF boxes;
+    std::vector<VecPointF> points;
+    for (const auto &box_info : net_o_boxes_) {
+      boxes.push_back(box_info.box);
+      VecPointF mark_points;
+      for (int k = 0; k < 5; ++k) {
+        mark_points.emplace_back(box_info.landmark[2 * k],
+                                 box_info.landmark[2 * k + 1]);
+      }
+      points.push_back(mark_points);
+    }
+    Gboxes->push_back(boxes);
+    Gpoints->push_back(points);
+  }
 }
 #endif
 
@@ -175,9 +256,9 @@ void DetectionMTCNN::Process_net_p(const float *data, const VecInt &in_shape,
   net_p_.Reshape(shape_map);
   net_p_.Forward(data_map);
 
-  const auto *loc_blob = net_p_.GetBlobByName<float>("conv4-2");
+  const auto *loc_blob = net_p_.GetBlobByName<float>(net_p_conv4_2_);
   const auto *loc_data = const_cast<BlobF *>(loc_blob)->cpu_data();
-  const auto *conf_data = net_p_.GetBlobDataByName<float>("prob1");
+  const auto *conf_data = net_p_.GetBlobDataByName<float>(net_p_prob1_);
 
   int out_h = loc_blob->shape(2), out_w = loc_blob->shape(3);
   int out_spatial_dim = out_h * out_w;
@@ -217,8 +298,8 @@ void DetectionMTCNN::Process_net_r(const float *data, const VecInt &in_shape,
   net_r_.Reshape(shape_map);
   net_r_.Forward(data_map);
 
-  const auto *loc_data = net_r_.GetBlobDataByName<float>("conv5-2");
-  const auto *conf_data = net_r_.GetBlobDataByName<float>("prob1");
+  const auto *loc_data = net_r_.GetBlobDataByName<float>(net_r_conv5_2_);
+  const auto *conf_data = net_r_.GetBlobDataByName<float>(net_r_prob1_);
 
   boxes->clear();
   for (int b = 0; b < in_shape[0]; ++b) {
@@ -249,9 +330,9 @@ void DetectionMTCNN::Process_net_o(const float *data, const VecInt &in_shape,
   net_o_.Reshape(shape_map);
   net_o_.Forward(data_map);
 
-  const auto *loc_data = net_o_.GetBlobDataByName<float>("conv6-2");
-  const auto *mark_data = net_o_.GetBlobDataByName<float>("conv6-3");
-  const auto *conf_data = net_o_.GetBlobDataByName<float>("prob1");
+  const auto *loc_data = net_o_.GetBlobDataByName<float>(net_o_conv6_2_);
+  const auto *mark_data = net_o_.GetBlobDataByName<float>(net_o_conv6_3_);
+  const auto *conf_data = net_o_.GetBlobDataByName<float>(net_o_prob1_);
 
   boxes->clear();
   for (int b = 0; b < in_shape[0]; ++b) {

@@ -18,13 +18,17 @@ void DetectionYOLO::Setup(const VecString &model_files,
     net_.Reshape(shape_map);
   }
 
+  const auto &out_blob = net_.out_blob();
+  CHECK_EQ(out_blob.size(), 1);
+  out_str_ = out_blob[0];
+
   batch_ = data_shape[0];
   in_c_ = data_shape[1];
   in_h_ = data_shape[2];
   in_w_ = data_shape[3];
   in_num_ = in_c_ * in_h_ * in_w_;
-  out_num_ = net_.GetBlobByName<float>("out_blob")->num();
-  out_hw_ = net_.GetBlobByName<float>("out_blob")->shape(2);
+  out_num_ = net_.GetBlobByName<float>(out_str_)->num();
+  out_hw_ = net_.GetBlobByName<float>(out_str_)->shape(2);
 
   in_data_.resize(batch_ * in_num_);
   out_data_.resize(batch_ * out_num_);
@@ -50,8 +54,7 @@ void DetectionYOLO::Predict(const JImage &im_src, const VecRectF &rois,
   CHECK_EQ(Gboxes->size(), rois.size());
   for (int b = 0; b < Gboxes->size(); ++b) {
     float height = rois[b].h, width = rois[b].w;
-    auto &boxes = Gboxes->at(b);
-    for (auto &box : boxes) {
+    for (auto &box : Gboxes->at(b)) {
       box.xmin *= width;
       box.xmax *= width;
       box.ymin *= height;
@@ -64,8 +67,24 @@ void DetectionYOLO::Predict(const JImage &im_src, const VecRectF &rois,
 void DetectionYOLO::Predict(const cv::Mat &im_mat, const VecRectF &rois,
                             std::vector<VecBoxF> *Gboxes,
                             std::vector<std::vector<VecPointF>> *Gpoints) {
-  im_ini_.FromMat(im_mat, true);
-  Predict(im_ini_, rois, Gboxes, Gpoints);
+  CHECK_LE(rois.size(), batch_);
+  for (int b = 0; b < rois.size(); ++b) {
+    ConvertData(im_mat, in_data_.data() + b * in_num_, rois[b], in_c_, in_h_,
+                in_w_, 0);
+  }
+
+  Process(in_data_, Gboxes);
+
+  CHECK_EQ(Gboxes->size(), rois.size());
+  for (int b = 0; b < Gboxes->size(); ++b) {
+    float height = rois[b].h, width = rois[b].w;
+    for (auto &box : Gboxes->at(b)) {
+      box.xmin *= width;
+      box.xmax *= width;
+      box.ymin *= height;
+      box.ymax *= height;
+    }
+  }
 }
 #endif
 
@@ -78,7 +97,7 @@ void DetectionYOLO::Process(const VecFloat &in_data,
 
   net_.Forward(data_map);
 
-  memcpy(out_data_.data(), net_.GetBlobDataByName<float>("out_blob"),
+  memcpy(out_data_.data(), net_.GetBlobDataByName<float>(out_str_),
          out_data_.size() * sizeof(float));
 
   Gboxes->clear();

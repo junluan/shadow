@@ -29,8 +29,8 @@ class Classification final : public Method {
   VecFloat in_data_;
   VecInt task_dims_;
   VecString task_names_;
+  std::string prob_str_;
   int batch_, in_num_, in_c_, in_h_, in_w_;
-  JImage im_ini_;
 };
 
 }  // namespace Shadow

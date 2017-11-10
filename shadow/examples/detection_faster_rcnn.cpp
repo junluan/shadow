@@ -40,11 +40,18 @@ void DetectionFasterRCNN::Setup(const VecString &model_files,
   in_shape_ = net_.GetBlobByName<float>("data")->shape();
   CHECK_EQ(in_shape_[0], 1);
 
+  const auto &out_blob = net_.out_blob();
+  CHECK_EQ(out_blob.size(), 3);
+  rois_str_ = out_blob[0];
+  cls_prob_str_ = out_blob[1];
+  bbox_pred_str_ = out_blob[2];
+
   im_info_.resize(3, 0);
   num_classes_ = net_.num_class()[0];
   max_side_ = 1000, min_side_ = {600};
-  threshold_ = 0.8;
+  threshold_ = 0.6;
   nms_threshold_ = 0.3;
+  class_agnostic_ = net_.get_single_argument<bool>("class_agnostic", false);
 }
 
 void DetectionFasterRCNN::Predict(
@@ -61,7 +68,7 @@ void DetectionFasterRCNN::Predict(
     in_shape_[2] = scale_h, in_shape_[3] = scale_w;
     im_info_[0] = scale_h, im_info_[1] = scale_w, im_info_[2] = scales_[0];
     in_data_.resize(1 * 3 * scale_h * scale_w);
-    ConvertData(im_src, in_data_.data(), roi, 3, scale_h, scale_w, 1);
+    ConvertData(im_src, in_data_.data(), roi, 3, scale_h, scale_w);
 
     VecBoxF boxes;
     Process(in_data_, in_shape_, im_info_, crop_h, crop_w, &boxes);
@@ -74,8 +81,24 @@ void DetectionFasterRCNN::Predict(
 void DetectionFasterRCNN::Predict(
     const cv::Mat &im_mat, const VecRectF &rois, std::vector<VecBoxF> *Gboxes,
     std::vector<std::vector<VecPointF>> *Gpoints) {
-  im_ini_.FromMat(im_mat, true);
-  Predict(im_ini_, rois, Gboxes, Gpoints);
+  Gboxes->clear();
+  for (const auto &roi : rois) {
+    float crop_h = roi.h <= 1 ? roi.h * im_mat.rows : roi.h;
+    float crop_w = roi.w <= 1 ? roi.w * im_mat.cols : roi.w;
+    CalculateScales(crop_h, crop_w, max_side_, min_side_, &scales_);
+
+    auto scale_h = static_cast<int>(crop_h * scales_[0]);
+    auto scale_w = static_cast<int>(crop_w * scales_[0]);
+    in_shape_[2] = scale_h, in_shape_[3] = scale_w;
+    im_info_[0] = scale_h, im_info_[1] = scale_w, im_info_[2] = scales_[0];
+    in_data_.resize(1 * 3 * scale_h * scale_w);
+    ConvertData(im_mat, in_data_.data(), roi, 3, scale_h, scale_w);
+
+    VecBoxF boxes;
+    Process(in_data_, in_shape_, im_info_, crop_h, crop_w, &boxes);
+
+    Gboxes->push_back(boxes);
+  }
 }
 #endif
 
@@ -94,10 +117,10 @@ void DetectionFasterRCNN::Process(const VecFloat &in_data,
   net_.Reshape(shape_map);
   net_.Forward(data_map);
 
-  const auto *roi_blob = net_.GetBlobByName<float>("rois");
-  const auto *roi_data = net_.GetBlobDataByName<float>("rois");
-  const auto *score_data = net_.GetBlobDataByName<float>("cls_prob");
-  const auto *delta_data = net_.GetBlobDataByName<float>("bbox_pred");
+  const auto *roi_blob = net_.GetBlobByName<float>(rois_str_);
+  const auto *roi_data = net_.GetBlobDataByName<float>(rois_str_);
+  const auto *score_data = net_.GetBlobDataByName<float>(cls_prob_str_);
+  const auto *delta_data = net_.GetBlobDataByName<float>(bbox_pred_str_);
 
   boxes->clear();
   int num_rois = roi_blob->shape(0);
@@ -123,7 +146,12 @@ void DetectionFasterRCNN::Process(const VecFloat &in_data,
     float pb_cx = pb_xmin + pb_w * 0.5f;
     float pb_cy = pb_ymin + pb_h * 0.5f;
 
-    int delta_offset = (n * num_classes_ + label) * 4;
+    int delta_offset;
+    if (class_agnostic_) {
+      delta_offset = (n * 2 + 1) * 4;
+    } else {
+      delta_offset = (n * num_classes_ + label) * 4;
+    }
     float dx = delta_data[delta_offset + 0];
     float dy = delta_data[delta_offset + 1];
     float dw = delta_data[delta_offset + 2];

@@ -18,6 +18,10 @@ void Classification::Setup(const VecString &model_files,
     net_.Reshape(shape_map);
   }
 
+  const auto &out_blob = net_.out_blob();
+  CHECK_EQ(out_blob.size(), 1);
+  prob_str_ = out_blob[0];
+
   batch_ = data_shape[0];
   in_c_ = data_shape[1];
   in_h_ = data_shape[2];
@@ -33,7 +37,7 @@ void Classification::Setup(const VecString &model_files,
   for (const auto dim : task_dims_) {
     num_dim += dim;
   }
-  CHECK_EQ(num_dim, net_.GetBlobByName<float>("softmax")->num());
+  CHECK_EQ(num_dim, net_.GetBlobByName<float>(prob_str_)->num());
 }
 
 void Classification::Predict(
@@ -54,8 +58,15 @@ void Classification::Predict(
 void Classification::Predict(
     const cv::Mat &im_mat, const VecRectF &rois,
     std::vector<std::map<std::string, VecFloat>> *scores) {
-  im_ini_.FromMat(im_mat, true);
-  Predict(im_ini_, rois, scores);
+  CHECK_LE(rois.size(), batch_);
+  for (int b = 0; b < rois.size(); ++b) {
+    ConvertData(im_mat, in_data_.data() + b * in_num_, rois[b], in_c_, in_h_,
+                in_w_);
+  }
+
+  Process(in_data_, scores);
+
+  CHECK_EQ(scores->size(), rois.size());
 }
 #endif
 
@@ -69,7 +80,7 @@ void Classification::Process(
 
   net_.Forward(data_map);
 
-  const auto *softmax_data = net_.GetBlobDataByName<float>("softmax");
+  const auto *softmax_data = net_.GetBlobDataByName<float>(prob_str_);
 
   scores->clear();
   int offset = 0;
