@@ -197,7 +197,7 @@ __kernel void LRN(__global float *in_data, int count,
       in_data[globalid] * pow(scale_data[globalid], negative_beta);
 }
 
-__kernel void POIPooling(__global float *in_data, int count,
+__kernel void ROIPooling(__global float *in_data, int count,
                          __global float *roi_data, int in_c, int in_h, int in_w,
                          int pooled_h, int pooled_w, float spatial_scale,
                          __global float *out_data) {
@@ -269,8 +269,8 @@ __kernel void Proposal(int count, __global float *anchor_data,
   float anchor_y = anchor_data[1] + h_out * feat_stride;
   float anchor_w = anchor_data[2] - anchor_data[0] + 1;
   float anchor_h = anchor_data[3] - anchor_data[1] + 1;
-  float anchor_cx = anchor_x + anchor_w * 0.5f;
-  float anchor_cy = anchor_y + anchor_h * 0.5f;
+  float anchor_cx = anchor_x + (anchor_w - 1) * 0.5f;
+  float anchor_cy = anchor_y + (anchor_h - 1) * 0.5f;
 
   float dx = delta_data[delta_offset];
   float dy = delta_data[delta_offset + spatial_dim];
@@ -280,10 +280,10 @@ __kernel void Proposal(int count, __global float *anchor_data,
   float pb_cx = anchor_cx + anchor_w * dx, pb_cy = anchor_cy + anchor_h * dy;
   float pb_w = anchor_w * exp(dw), pb_h = anchor_h * exp(dh);
 
-  float pb_xmin = pb_cx - pb_w * 0.5f;
-  float pb_ymin = pb_cy - pb_h * 0.5f;
-  float pb_xmax = pb_cx + pb_w * 0.5f;
-  float pb_ymax = pb_cy + pb_h * 0.5f;
+  float pb_xmin = pb_cx - (pb_w - 1) * 0.5f;
+  float pb_ymin = pb_cy - (pb_h - 1) * 0.5f;
+  float pb_xmax = pb_cx + (pb_w - 1) * 0.5f;
+  float pb_ymax = pb_cy + (pb_h - 1) * 0.5f;
 
   proposal_data[0] = fmin(fmax(pb_xmin, 0.f), info_data[1] - 1);
   proposal_data[1] = fmin(fmax(pb_ymin, 0.f), info_data[0] - 1);

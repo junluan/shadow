@@ -51,6 +51,7 @@ void DetectionFasterRCNN::Setup(const VecString &model_files,
   max_side_ = 1000, min_side_ = {600};
   threshold_ = 0.6;
   nms_threshold_ = 0.3;
+  is_bgr_ = net_.get_single_argument<bool>("is_bgr", true);
   class_agnostic_ = net_.get_single_argument<bool>("class_agnostic", false);
 }
 
@@ -92,7 +93,11 @@ void DetectionFasterRCNN::Predict(
     in_shape_[2] = scale_h, in_shape_[3] = scale_w;
     im_info_[0] = scale_h, im_info_[1] = scale_w, im_info_[2] = scales_[0];
     in_data_.resize(1 * 3 * scale_h * scale_w);
-    ConvertData(im_mat, in_data_.data(), roi, 3, scale_h, scale_w);
+    if (is_bgr_) {
+      ConvertData(im_mat, in_data_.data(), roi, 3, scale_h, scale_w, 1);
+    } else {
+      ConvertData(im_mat, in_data_.data(), roi, 3, scale_h, scale_w, 0);
+    }
 
     VecBoxF boxes;
     Process(in_data_, in_shape_, im_info_, crop_h, crop_w, &boxes);
@@ -143,8 +148,8 @@ void DetectionFasterRCNN::Process(const VecFloat &in_data,
 
     float pb_w = pb_xmax - pb_xmin + 1;
     float pb_h = pb_ymax - pb_ymin + 1;
-    float pb_cx = pb_xmin + pb_w * 0.5f;
-    float pb_cy = pb_ymin + pb_h * 0.5f;
+    float pb_cx = pb_xmin + (pb_w - 1) * 0.5f;
+    float pb_cy = pb_ymin + (pb_h - 1) * 0.5f;
 
     int delta_offset;
     if (class_agnostic_) {
@@ -166,10 +171,10 @@ void DetectionFasterRCNN::Process(const VecFloat &in_data,
     box.label = label;
     box.score = max_score;
 
-    box.xmin = pred_cx - pred_w * 0.5f;
-    box.ymin = pred_cy - pred_h * 0.5f;
-    box.xmax = pred_cx + pred_w * 0.5f;
-    box.ymax = pred_cy + pred_h * 0.5f;
+    box.xmin = pred_cx - (pred_w - 1) * 0.5f;
+    box.ymin = pred_cy - (pred_h - 1) * 0.5f;
+    box.xmax = pred_cx + (pred_w - 1) * 0.5f;
+    box.ymax = pred_cy + (pred_h - 1) * 0.5f;
 
     box.xmin = std::min(std::max(box.xmin, 0.f), width - 1);
     box.ymin = std::min(std::max(box.ymin, 0.f), height - 1);

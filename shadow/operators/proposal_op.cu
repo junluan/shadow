@@ -30,8 +30,8 @@ __global__ void KernelProposal(int count, const T *anchor_data,
     T anchor_y = anchor_data[1] + h_out * feat_stride;
     T anchor_w = anchor_data[2] - anchor_data[0] + 1;
     T anchor_h = anchor_data[3] - anchor_data[1] + 1;
-    T anchor_cx = anchor_x + anchor_w * T(0.5);
-    T anchor_cy = anchor_y + anchor_h * T(0.5);
+    T anchor_cx = anchor_x + (anchor_w - 1) * T(0.5);
+    T anchor_cy = anchor_y + (anchor_h - 1) * T(0.5);
 
     T dx = delta_data[delta_offset];
     T dy = delta_data[delta_offset + spatial_dim];
@@ -41,10 +41,10 @@ __global__ void KernelProposal(int count, const T *anchor_data,
     T pb_cx = anchor_cx + anchor_w * dx, pb_cy = anchor_cy + anchor_h * dy;
     T pb_w = anchor_w * std::exp(dw), pb_h = anchor_h * std::exp(dh);
 
-    T pb_xmin = pb_cx - pb_w * T(0.5);
-    T pb_ymin = pb_cy - pb_h * T(0.5);
-    T pb_xmax = pb_cx + pb_w * T(0.5);
-    T pb_ymax = pb_cy + pb_h * T(0.5);
+    T pb_xmin = pb_cx - (pb_w - 1) * T(0.5);
+    T pb_ymin = pb_cy - (pb_h - 1) * T(0.5);
+    T pb_xmax = pb_cx + (pb_w - 1) * T(0.5);
+    T pb_ymax = pb_cy + (pb_h - 1) * T(0.5);
 
     proposal_data[0] = min(max(pb_xmin, T(0)), info_data[1] - 1);
     proposal_data[1] = min(max(pb_ymin, T(0)), info_data[0] - 1);

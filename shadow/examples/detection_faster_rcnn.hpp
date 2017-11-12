@@ -37,7 +37,7 @@ class DetectionFasterRCNN final : public Method {
   std::string rois_str_, bbox_pred_str_, cls_prob_str_;
   int num_classes_;
   float max_side_, threshold_, nms_threshold_;
-  bool class_agnostic_;
+  bool is_bgr_, class_agnostic_;
 };
 
 }  // namespace Shadow

@@ -104,7 +104,7 @@ void ROIPooling(const T *in_data, const VecInt &in_shape, const T *roi_data,
   int count = num_rois * in_c * pooled_h * pooled_w;
 
   size_t global = count;
-  auto *kernel = Kernel::cl_kernels_["POIPooling"];
+  auto *kernel = Kernel::cl_kernels_["ROIPooling"];
   kernel->SetArguments(*in_data, count, *roi_data, in_c, in_h, in_w, pooled_h,
                        pooled_w, spatial_scale, *out_data);
   kernel->Launch(*Kernel::queue_, {global}, Kernel::event_);
