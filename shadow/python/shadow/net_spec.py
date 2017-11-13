@@ -80,6 +80,10 @@ class Shadow(object):
     def set_net_out_blob(self, out_blob):
         self.get_net(self.net_index).out_blob.extend(out_blob)
 
+    def set_net_arg(self, args):
+        for arg_name in args:
+            self.set_arg(self.net_param, arg_name[:-4], args[arg_name], arg_name[-3:])
+
     def add_input(self, name, bottoms, tops, shapes):
         op_param = self.net_param.op.add()
         self.add_common(op_param, name, 'Input', bottoms, tops)
@@ -241,16 +245,16 @@ class Shadow(object):
         if group != 1:
             self.set_arg(op_param, 'group', group, 's_i')
 
-        def convolution_out_size(dim, ks, sd, pa, dila):
+        def conv_out_size(dim, ks, sd, pa, dila):
             kernel_extent = dila * (ks - 1) + 1
             return (dim + 2 * pa - kernel_extent) / sd + 1
 
         in_shape = self.blobs[self.net_index][bottoms[0]]['shape']
         out_shape = in_shape[:]
         out_shape[1] = num_output
-        out_shape[2] = convolution_out_size(
+        out_shape[2] = conv_out_size(
             in_shape[2], kernel_size, stride, pad, dilation)
-        out_shape[3] = convolution_out_size(
+        out_shape[3] = conv_out_size(
             in_shape[3], kernel_size, stride, pad, dilation)
         self.blobs[self.net_index][tops[0]] = {'shape': out_shape}
         if self.blob_shape:
@@ -271,6 +275,61 @@ class Shadow(object):
 
         in_shape = self.blobs[self.net_index][bottoms[0]]['shape']
         self.blobs[self.net_index][tops[0]] = {'shape': in_shape}
+
+    def add_deformable_conv(self, name, bottoms, tops, num_output, kernel_size, stride=1, pad=0, dilation=1, bias_term=True, group=1, deformable_group=1):
+        op_param = self.net_param.op.add()
+        self.add_common(op_param, name, 'DeformableConv', bottoms, tops)
+
+        self.set_arg(op_param, 'num_output', num_output, 's_i')
+        self.set_arg(op_param, 'kernel_size', kernel_size, 's_i')
+        self.set_arg(op_param, 'stride', stride, 's_i')
+        self.set_arg(op_param, 'pad', pad, 's_i')
+        if dilation != 1:
+            self.set_arg(op_param, 'dilation', dilation, 's_i')
+        if not bias_term:
+            self.set_arg(op_param, 'bias_term', bias_term, 's_i')
+        if group != 1:
+            self.set_arg(op_param, 'group', group, 's_i')
+        if deformable_group != 1:
+            self.set_arg(op_param, 'deformable_group', deformable_group, 's_i')
+
+        def deformable_conv_out_size(dim, ks, sd, pa, dila):
+            kernel_extent = dila * (ks - 1) + 1
+            return (dim + 2 * pa - kernel_extent) / sd + 1
+
+        in_shape = self.blobs[self.net_index][bottoms[0]]['shape']
+        out_shape = in_shape[:]
+        out_shape[1] = num_output
+        out_shape[2] = deformable_conv_out_size(
+            in_shape[2], kernel_size, stride, pad, dilation)
+        out_shape[3] = deformable_conv_out_size(
+            in_shape[3], kernel_size, stride, pad, dilation)
+        self.blobs[self.net_index][tops[0]] = {'shape': out_shape}
+        if self.blob_shape:
+            weight_blob = op_param.blobs.add()
+            weight_blob.shape.extend(
+                [num_output, in_shape[1] / group, kernel_size, kernel_size])
+            if bias_term:
+                bias_blob = op_param.blobs.add()
+                bias_blob.shape.extend([num_output])
+
+    def add_deformable_psroi_pooling(self, name, bottoms, tops, output_dim, group_size, pooled_size, part_size, sample_per_part, spatial_scale, trans_std, no_trans=False):
+        op_param = self.net_param.op.add()
+        self.add_common(
+            op_param, name, 'DeformablePSROIPooling', bottoms, tops)
+
+        self.set_arg(op_param, 'output_dim', output_dim, 's_i')
+        self.set_arg(op_param, 'group_size', group_size, 's_i')
+        self.set_arg(op_param, 'pooled_size', pooled_size, 's_i')
+        self.set_arg(op_param, 'part_size', part_size, 's_i')
+        self.set_arg(op_param, 'sample_per_part', sample_per_part, 's_i')
+        self.set_arg(op_param, 'spatial_scale', spatial_scale, 's_f')
+        self.set_arg(op_param, 'trans_std', trans_std, 's_f')
+        self.set_arg(op_param, 'no_trans', no_trans, 's_i')
+
+        roi_shape = self.blobs[self.net_index][bottoms[1]]['shape']
+        out_shape = [roi_shape[0], output_dim, pooled_size, pooled_size]
+        self.blobs[self.net_index][tops[0]] = {'shape': out_shape}
 
     def add_eltwise(self, name, bottoms, tops, operation, coeff=None):
         op_param = self.net_param.op.add()
@@ -429,15 +488,19 @@ class Shadow(object):
         out_shape = [1, 2, in_shape[2] * in_shape[3] * num_priors * 4]
         self.blobs[self.net_index][tops[0]] = {'shape': out_shape}
 
-    def add_proposal(self, name, bottoms, tops, feat_stride=16, pre_nms_topN=6000, post_nms_topN=300):
+    def add_proposal(self, name, bottoms, tops, feat_stride=16, pre_nms_top_n=6000, post_nms_top_n=300, min_size=16, nms_thresh=0.7, ratios=[0.5, 1, 2], scales=[8, 16, 32]):
         op_param = self.net_param.op.add()
         self.add_common(op_param, name, 'Proposal', bottoms, tops)
 
         self.set_arg(op_param, 'feat_stride', feat_stride, 's_i')
-        self.set_arg(op_param, 'pre_nms_topN', pre_nms_topN, 's_i')
-        self.set_arg(op_param, 'post_nms_topN', post_nms_topN, 's_i')
+        self.set_arg(op_param, 'pre_nms_top_n', pre_nms_top_n, 's_i')
+        self.set_arg(op_param, 'post_nms_top_n', post_nms_top_n, 's_i')
+        self.set_arg(op_param, 'min_size', min_size, 's_i')
+        self.set_arg(op_param, 'nms_thresh', nms_thresh, 's_f')
+        self.set_arg(op_param, 'ratios', ratios, 'v_f')
+        self.set_arg(op_param, 'scales', scales, 'v_f')
 
-        self.blobs[self.net_index][tops[0]] = {'shape': [post_nms_topN, 5]}
+        self.blobs[self.net_index][tops[0]] = {'shape': [post_nms_top_n, 5]}
 
     def add_psroi_pooling(self, name, bottoms, tops, output_dim, group_size, spatial_scale):
         op_param = self.net_param.op.add()
