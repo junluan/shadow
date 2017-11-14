@@ -40,17 +40,3 @@ message NetParam {
   repeated OpParam op = 11;
   repeated Argument arg = 12;
 }
-
-message ModelInfo {
-  optional string project = 1;
-  optional string version = 2;
-  optional string method = 3;
-}
-
-message MetaNetParam {
-  optional string name = 1;
-  optional ModelInfo model_info = 2;
-
-  repeated NetParam network = 11;
-  repeated Argument arg = 12;
-}
