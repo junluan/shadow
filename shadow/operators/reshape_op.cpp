@@ -42,6 +42,7 @@ void ReshapeOp::Reshape() {
     CHECK_EQ(0, (bottom->count() % explicit_count));
     top_shape[start_axis + inferred_axis_] = bottom->count() / explicit_count;
   }
+  top->clear();
   top->set_shape(top_shape);
   CHECK_EQ(top->count(), bottom->count());
 
