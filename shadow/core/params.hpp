@@ -220,7 +220,10 @@ class NetParam {
   }
 
   OPTIONAL_FIELD_DEFAULT_FUNC(name, std::string, "");
+  REPEATED_FIELD_FUNC(num_class, int);
+  REPEATED_FIELD_FUNC(out_blob, std::string);
   REPEATED_FIELD_FUNC(op, OpParam);
+  REPEATED_FIELD_FUNC(arg, Argument);
 
   void Clear() {
     clear_name();
@@ -229,7 +232,10 @@ class NetParam {
 
  private:
   std::string name_{"None"};
+  std::vector<int> num_class_;
+  std::vector<std::string> out_blob_;
   std::vector<OpParam> op_;
+  std::vector<Argument> arg_;
   bool has_name_{false};
 };
 

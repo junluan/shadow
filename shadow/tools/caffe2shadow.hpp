@@ -554,71 +554,69 @@ void ConvertSoftmax(const caffe::NetParameter& caffe_model,
 void ConvertCaffe(const std::vector<caffe::NetParameter>& caffe_deploys,
                   const std::vector<caffe::NetParameter>& caffe_models,
                   const MetaNetInfo& meta_net_info,
-                  shadow::MetaNetParam* shadow_nets) {
-  auto* model_info = shadow_nets->mutable_model_info();
-  model_info->set_version(meta_net_info.version);
-  model_info->set_method(meta_net_info.method);
-
+                  std::vector<shadow::NetParam>* shadow_nets) {
   for (int n = 0; n < caffe_deploys.size(); ++n) {
     const auto& caffe_deploy = caffe_deploys[n];
     const auto& caffe_model = caffe_models[n];
     const auto& net_info = meta_net_info.network[n];
 
-    auto* shadow_net = shadow_nets->add_network();
+    shadow::NetParam shadow_net;
 
-    shadow_net->set_name(caffe_deploy.name());
+    shadow_net.set_name(caffe_deploy.name());
     for (const auto& dim : net_info.num_class) {
-      shadow_net->add_num_class(dim);
+      shadow_net.add_num_class(dim);
     }
     for (const auto& blob_name : net_info.out_blob) {
-      shadow_net->add_out_blob(blob_name);
+      shadow_net.add_out_blob(blob_name);
     }
 
-    int start_layer = ConvertInput(caffe_deploy, net_info, shadow_net);
+    int start_layer = ConvertInput(caffe_deploy, net_info, &shadow_net);
 
     for (int l = start_layer; l < caffe_deploy.layer_size(); ++l) {
       const auto& caffe_layer = caffe_deploy.layer(l);
       const auto& layer_type = caffe_layer.type();
       if (layer_type == "ReLU" || layer_type == "PReLU") {
-        ConvertActivate(caffe_model, caffe_layer, shadow_net);
+        ConvertActivate(caffe_model, caffe_layer, &shadow_net);
       } else if (layer_type == "BatchNorm") {
-        ConvertBatchNorm(caffe_model, caffe_layer, shadow_net);
+        ConvertBatchNorm(caffe_model, caffe_layer, &shadow_net);
       } else if (layer_type == "Bias") {
-        ConvertBias(caffe_model, caffe_layer, shadow_net);
+        ConvertBias(caffe_model, caffe_layer, &shadow_net);
       } else if (layer_type == "Concat") {
-        ConvertConcat(caffe_model, caffe_layer, shadow_net);
+        ConvertConcat(caffe_model, caffe_layer, &shadow_net);
       } else if (layer_type == "InnerProduct") {
-        ConvertConnected(caffe_model, caffe_layer, shadow_net);
+        ConvertConnected(caffe_model, caffe_layer, &shadow_net);
       } else if (layer_type == "Convolution") {
-        ConvertConv(caffe_model, caffe_layer, shadow_net);
+        ConvertConv(caffe_model, caffe_layer, &shadow_net);
       } else if (layer_type == "Eltwise") {
-        ConvertEltwise(caffe_model, caffe_layer, shadow_net);
+        ConvertEltwise(caffe_model, caffe_layer, &shadow_net);
       } else if (layer_type == "Flatten") {
-        ConvertFlatten(caffe_model, caffe_layer, shadow_net);
+        ConvertFlatten(caffe_model, caffe_layer, &shadow_net);
       } else if (layer_type == "LRN") {
-        ConvertLRN(caffe_model, caffe_layer, shadow_net);
+        ConvertLRN(caffe_model, caffe_layer, &shadow_net);
       } else if (layer_type == "Normalize") {
-        ConvertNormalize(caffe_model, caffe_layer, shadow_net);
+        ConvertNormalize(caffe_model, caffe_layer, &shadow_net);
       } else if (layer_type == "Permute") {
-        ConvertPermute(caffe_model, caffe_layer, shadow_net);
+        ConvertPermute(caffe_model, caffe_layer, &shadow_net);
       } else if (layer_type == "Pooling") {
-        ConvertPooling(caffe_model, caffe_layer, shadow_net);
+        ConvertPooling(caffe_model, caffe_layer, &shadow_net);
       } else if (layer_type == "PriorBox") {
-        ConvertPriorBox(caffe_model, caffe_layer, shadow_net);
+        ConvertPriorBox(caffe_model, caffe_layer, &shadow_net);
       } else if (layer_type == "Python") {
-        ConvertPython(caffe_model, caffe_layer, shadow_net);
+        ConvertPython(caffe_model, caffe_layer, &shadow_net);
       } else if (layer_type == "Reshape") {
-        ConvertReshape(caffe_model, caffe_layer, shadow_net);
+        ConvertReshape(caffe_model, caffe_layer, &shadow_net);
       } else if (layer_type == "ROIPooling") {
-        ConvertROIPooling(caffe_model, caffe_layer, shadow_net);
+        ConvertROIPooling(caffe_model, caffe_layer, &shadow_net);
       } else if (layer_type == "Scale") {
-        ConvertScale(caffe_model, caffe_layer, shadow_net);
+        ConvertScale(caffe_model, caffe_layer, &shadow_net);
       } else if (layer_type == "Softmax") {
-        ConvertSoftmax(caffe_model, caffe_layer, shadow_net);
+        ConvertSoftmax(caffe_model, caffe_layer, &shadow_net);
       } else {
         LOG(WARNING) << "Layer type: " << layer_type << " is not recognized!";
       }
     }
+
+    shadow_nets->push_back(shadow_net);
   }
 }
 

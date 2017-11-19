@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <cassert>
 #include <cctype>
+#include <cerrno>
 #include <cfloat>
 #include <cmath>
 #include <cstring>
@@ -22,9 +23,9 @@ namespace Util {
 
 template <typename Dtype>
 inline int round(Dtype x) {
-#if defined(__linux__) || defined(__APPLE__)
+#if (defined(__linux__) && !defined(ANDROID)) || defined(__APPLE__)
   return std::round(x);
-#elif defined(_WIN32)
+#elif defined(_WIN32) || defined(ANDROID)
   return static_cast<int>(std::floor(x + 0.5));
 #endif
 }

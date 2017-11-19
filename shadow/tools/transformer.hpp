@@ -18,9 +18,7 @@ struct NetInfo {
 };
 
 struct MetaNetInfo {
-  std::string version, method;
   std::vector<std::string> model_name;
-  std::string save_name;
   std::vector<NetInfo> network;
 };
 

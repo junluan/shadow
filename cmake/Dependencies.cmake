@@ -158,7 +158,7 @@ if (ANDROID)
 endif ()
 
 if (UNIX)
-  if (NOT APPLE)
+  if (NOT APPLE AND NOT ANDROID)
     find_package(Threads QUIET)
     if (CMAKE_THREAD_LIBS_INIT)
       list(APPEND Shadow_LINKER_LIBS ${CMAKE_THREAD_LIBS_INIT})
