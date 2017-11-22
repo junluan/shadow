@@ -14,7 +14,7 @@ int main(int argc, char const* argv[]) {
   net_faster.input_shape = {{1, 3, 224, 224}, {1, 3}};
   net_faster.mean_value = {102.9801f, 115.9465f, 122.7717f};
   net_faster.scale = 1.f;
-  net_faster.out_blob = {"bbox_pred", "cls_prob"};
+  net_faster.out_blob = {"rois", "cls_prob", "bbox_pred"};
 
   meta_net_faster_info.model_name = {"VGG16_faster_rcnn_final"};
   meta_net_faster_info.network = {net_faster};

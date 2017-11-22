@@ -58,7 +58,7 @@ bool ReadProtoFromBinaryFile(const std::string& proto_file, Message* proto) {
   CHECK_NE(fd, -1) << "File not found: " << proto_file;
   auto* raw_input = new FileInputStream(fd);
   auto* coded_input = new CodedInputStream(raw_input);
-  coded_input->SetTotalBytesLimit(INT_MAX, 536870912);
+  coded_input->SetTotalBytesLimit(INT_MAX, 1073741824);
   bool success = proto->ParseFromCodedStream(coded_input);
   delete coded_input;
   delete raw_input;
