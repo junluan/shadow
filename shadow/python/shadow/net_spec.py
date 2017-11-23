@@ -1,20 +1,13 @@
 from __future__ import print_function
 
 import math
-import shadow_pb2
 from google.protobuf import text_format
+from proto import shadow_pb2
 
 
 class Shadow(object):
-    def __init__(self, name, model_info, blob_shape=True):
-        self.meta_net_param = shadow_pb2.MetaNetParam()
-        self.meta_net_param.name = name
-        if 'project' in model_info:
-            self.meta_net_param.model_info.project = model_info['project']
-        if 'version' in model_info:
-            self.meta_net_param.model_info.version = model_info['version']
-        if 'method' in model_info:
-            self.meta_net_param.model_info.method = model_info['method']
+    def __init__(self, blob_shape=True):
+        self.meta_net_param = []
         self.net_param = {}
         self.net_index = -1
         self.blobs = []
@@ -49,10 +42,13 @@ class Shadow(object):
         op_param.bottom.extend(bottoms)
         op_param.top.extend(tops)
 
+    def get_nets(self):
+        return self.meta_net_param
+
     def get_net(self, index):
         assert index >= 0
-        assert len(self.meta_net_param.network) > index
-        return self.meta_net_param.network[index]
+        assert len(self.meta_net_param) > index
+        return self.meta_net_param[index]
 
     def get_net_name(self):
         return self.get_net(self.net_index).name
@@ -63,10 +59,16 @@ class Shadow(object):
     def get_net_out_blob(self):
         return self.get_net(self.net_index).out_blob
 
+    def get_net_op(self):
+        return self.get_net(self.net_index).op
+
+    def get_net_arg(self):
+        return self.get_net(self.net_index).arg
+
     def set_net(self, index):
-        for i in range(len(self.meta_net_param.network), index + 1):
-            self.meta_net_param.network.add()
-        self.net_param = self.meta_net_param.network[index]
+        for i in range(len(self.meta_net_param), index + 1):
+            self.meta_net_param.append(shadow_pb2.NetParam())
+        self.net_param = self.meta_net_param[index]
         for i in range(len(self.blobs), index + 1):
             self.blobs.append({})
         self.net_index = index
@@ -82,7 +84,14 @@ class Shadow(object):
 
     def set_net_arg(self, args):
         for arg_name in args:
-            self.set_arg(self.net_param, arg_name[:-4], args[arg_name], arg_name[-3:])
+            self.set_arg(self.get_net(self.net_index), arg_name[:-4], args[arg_name], arg_name[-3:])
+
+    def copy_net_arg(self, arg):
+        for ar in arg:
+            self.get_net(self.net_index).arg.add().CopyFrom(ar)
+
+    def add_op(self):
+        return self.get_net(self.net_index).op.add()
 
     def add_input(self, name, bottoms, tops, shapes):
         op_param = self.net_param.op.add()
@@ -667,14 +676,8 @@ class Shadow(object):
 
     def write_proto_to_txt(self, file_path, net_index=-1):
         with open(file_path, 'w') as proto_file:
-            if net_index >= 0:
-                text_format.PrintMessage(self.get_net(net_index), proto_file)
-            else:
-                text_format.PrintMessage(self.meta_net_param, proto_file)
+            text_format.PrintMessage(self.get_net(net_index), proto_file)
 
     def write_proto_to_binary(self, file_path, net_index=-1):
         with open(file_path, 'wb') as proto_file:
-            if net_index >= 0:
-                proto_file.write(self.get_net(net_index).SerializeToString())
-            else:
-                proto_file.write(self.meta_net_param.SerializeToString())
+            proto_file.write(self.get_net(net_index).SerializeToString())

@@ -1,11 +1,8 @@
 from __future__ import print_function
 
 import json
-
 import mxnet as mx
-
-from shadow.net_spec import Shadow
-from google.protobuf import text_format
+from net_spec import Shadow
 
 
 def copy_weights(arg_params, aux_params, param_dict, shadow_net):
@@ -135,7 +132,7 @@ def convert_batch_norm(mxnet_nodes, index, param_dict, shadow_net):
         var_name = json_name + '_moving_var'
         scale_name = json_name + '_bn_scale'
         gamma_name = json_name + '_gamma'
-        beta_name = json_name + '_beta'    
+        beta_name = json_name + '_beta'
         param_dict[json_name] = [mean_name, var_name, scale_name]
         param_dict[json_name + '_scale'] = [gamma_name, beta_name]
 
@@ -346,11 +343,13 @@ def mxnet2shadow(model_root, meta_net_info, copy_params=False):
     for index, model_name in enumerate(meta_net_info['model_name']):
         model_epoch = meta_net_info['model_epoch'][index]
         sym, arg_params, aux_params = mx.model.load_checkpoint(model_root + '/' + model_name, model_epoch)
+        arg_params['rfcn_bbox_weight'] = arg_params['rfcn_bbox_weight_test']
+        arg_params['rfcn_bbox_bias'] = arg_params['rfcn_bbox_bias_test']
         mxnet_symbols.append(json.loads(sym.tojson()))
         mxnet_arg_params.append(arg_params)
         mxnet_aux_params.append(aux_params)
 
-    shadow_net = Shadow(meta_net_info['save_name'], meta_net_info)
+    shadow_net = Shadow()
 
     for n in range(0, len(mxnet_symbols)):
         mxnet_symbol = mxnet_symbols[n]
@@ -359,7 +358,7 @@ def mxnet2shadow(model_root, meta_net_info, copy_params=False):
         net_info = meta_net_info['network'][n]
 
         shadow_net.set_net(n)
-        shadow_net.set_net_name(meta_net_info['save_name'] + '_' + str(n))
+        shadow_net.set_net_name(meta_net_info['model_name'][n])
         shadow_net.set_net_num_class(net_info['num_class'])
         shadow_net.set_net_arg(net_info['arg'])
         shadow_net.set_net_out_blob(find_nodes(mxnet_nodes, mxnet_heads))

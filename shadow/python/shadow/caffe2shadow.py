@@ -1,8 +1,8 @@
 from __future__ import print_function
 
-from shadow import caffe_pb2
-from shadow.net_spec import Shadow
 from google.protobuf import text_format
+from proto import caffe_pb2
+from net_spec import Shadow
 
 
 def copy_weights(caffe_model, shadow_net):
@@ -485,7 +485,7 @@ def caffe2shadow(model_root, meta_net_info, copy_params=False):
                 caffe_model.ParseFromString(caffe_file.read())
                 caffe_models.append(caffe_model)
 
-    shadow_net = Shadow(meta_net_info['save_name'], meta_net_info)
+    shadow_net = Shadow()
 
     for n in range(0, len(caffe_deploys)):
         caffe_deploy = caffe_deploys[n]
@@ -494,6 +494,7 @@ def caffe2shadow(model_root, meta_net_info, copy_params=False):
         shadow_net.set_net(n)
         shadow_net.set_net_name(caffe_deploy.name)
         shadow_net.set_net_num_class(net_info['num_class'])
+        shadow_net.set_net_arg(net_info['arg'])
         shadow_net.set_net_out_blob(net_info['out_blob'])
 
         start_layer = convert_input(caffe_deploy, net_info, shadow_net)
