@@ -343,8 +343,6 @@ def mxnet2shadow(model_root, meta_net_info, copy_params=False):
     for index, model_name in enumerate(meta_net_info['model_name']):
         model_epoch = meta_net_info['model_epoch'][index]
         sym, arg_params, aux_params = mx.model.load_checkpoint(model_root + '/' + model_name, model_epoch)
-        arg_params['rfcn_bbox_weight'] = arg_params['rfcn_bbox_weight_test']
-        arg_params['rfcn_bbox_bias'] = arg_params['rfcn_bbox_bias_test']
         mxnet_symbols.append(json.loads(sym.tojson()))
         mxnet_arg_params.append(arg_params)
         mxnet_aux_params.append(aux_params)
