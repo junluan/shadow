@@ -6,12 +6,11 @@ void BatchNormOp::Reshape() {
   const auto *bottom = bottoms<float>(0);
   auto *top = mutable_tops<float>(0);
 
-  int batch = bottom->shape(0), in_h = bottom->shape(2),
-      in_w = bottom->shape(3);
+  int batch = bottom->shape(0);
 
   top->reshape(bottom->shape());
 
-  spatial_dim_ = in_h * in_w;
+  spatial_dim_ = bottom->count(2);
 
   mean_ = op_ws_->CreateBlob<float>(op_name_ + "_mean");
   variance_ = op_ws_->CreateBlob<float>(op_name_ + "_variance");
@@ -30,7 +29,7 @@ void BatchNormOp::Reshape() {
 
   sum_spatial_multiplier_ =
       op_ws_->CreateBlob<float>(op_name_ + "_sum_spatial_multiplier");
-  sum_spatial_multiplier_->reshape({1, 1, in_h, in_w});
+  sum_spatial_multiplier_->reshape({1, 1, spatial_dim_});
   Blas::Set(spatial_dim_, 1, sum_spatial_multiplier_->mutable_data(), 0);
 
   DLOG(INFO) << op_name_ << "(" << op_type_ << "): " << bottom->name()
