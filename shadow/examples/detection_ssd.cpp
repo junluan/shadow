@@ -2,13 +2,6 @@
 
 namespace Shadow {
 
-inline void ClipBBox(const BoxF &bbox, BoxF *clip_bbox) {
-  clip_bbox->xmin = std::max(std::min(bbox.xmin, 1.f), 0.f);
-  clip_bbox->ymin = std::max(std::min(bbox.ymin, 1.f), 0.f);
-  clip_bbox->xmax = std::max(std::min(bbox.xmax, 1.f), 0.f);
-  clip_bbox->ymax = std::max(std::min(bbox.ymax, 1.f), 0.f);
-}
-
 template <typename T>
 inline bool SortScorePairDescend(const std::pair<float, T> &pair1,
                                  const std::pair<float, T> &pair2) {
@@ -262,7 +255,7 @@ void DetectionSSD::Process(const VecFloat &in_data,
         float score = scores[idx];
         if (score > threshold_) {
           BoxF clip_bbox;
-          ClipBBox(bboxes[idx], &clip_bbox);
+          Boxes::Clip(bboxes[idx], &clip_bbox, 0.f, 1.f);
           clip_bbox.score = score;
           clip_bbox.label = label;
           boxes.push_back(clip_bbox);

@@ -285,6 +285,40 @@ class Shadow(object):
         in_shape = self.blobs[self.net_index][bottoms[0]]['shape']
         self.blobs[self.net_index][tops[0]] = {'shape': in_shape}
 
+    def add_deconv(self, name, bottoms, tops, num_output, kernel_size, stride=1, pad=0, dilation=1, bias_term=True, group=1):
+        op_param = self.net_param.op.add()
+        self.add_common(op_param, name, 'Deconv', bottoms, tops)
+
+        self.set_arg(op_param, 'num_output', num_output, 's_i')
+        self.set_arg(op_param, 'kernel_size', kernel_size, 's_i')
+        self.set_arg(op_param, 'stride', stride, 's_i')
+        self.set_arg(op_param, 'pad', pad, 's_i')
+        if dilation != 1:
+            self.set_arg(op_param, 'dilation', dilation, 's_i')
+        if not bias_term:
+            self.set_arg(op_param, 'bias_term', bias_term, 's_i')
+        if group != 1:
+            self.set_arg(op_param, 'group', group, 's_i')
+
+        def deconv_out_size(dim, ks, sd, pa, dila):
+            kernel_extent = dila * (ks - 1) + 1
+            return sd * (dim - 1) + kernel_extent - 2 * pa
+
+        in_shape = self.blobs[self.net_index][bottoms[0]]['shape']
+        out_shape = in_shape[:]
+        out_shape[1] = num_output
+        out_shape[2] = deconv_out_size(
+            in_shape[2], kernel_size, stride, pad, dilation)
+        out_shape[3] = deconv_out_size(
+            in_shape[3], kernel_size, stride, pad, dilation)
+        self.blobs[self.net_index][tops[0]] = {'shape': out_shape}
+        if self.blob_shape:
+            weight_blob = op_param.blobs.add()
+            weight_blob.shape.extend([in_shape[1], num_output / group, kernel_size, kernel_size])
+            if bias_term:
+                bias_blob = op_param.blobs.add()
+                bias_blob.shape.extend([num_output])
+
     def add_deformable_conv(self, name, bottoms, tops, num_output, kernel_size, stride=1, pad=0, dilation=1, bias_term=True, group=1, deformable_group=1):
         op_param = self.net_param.op.add()
         self.add_common(op_param, name, 'DeformableConv', bottoms, tops)
@@ -316,8 +350,7 @@ class Shadow(object):
         self.blobs[self.net_index][tops[0]] = {'shape': out_shape}
         if self.blob_shape:
             weight_blob = op_param.blobs.add()
-            weight_blob.shape.extend(
-                [num_output, in_shape[1] / group, kernel_size, kernel_size])
+            weight_blob.shape.extend([num_output, in_shape[1] / group, kernel_size, kernel_size])
             if bias_term:
                 bias_blob = op_param.blobs.add()
                 bias_blob.shape.extend([num_output])

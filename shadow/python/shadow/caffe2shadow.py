@@ -185,6 +185,40 @@ def convert_conv(caffe_layer, shadow_net):
     shadow_net.add_conv(layer_name, bottom_names, top_names, num_output, kernel_size, stride, pad, dilation, bias_term, group)
 
 
+def convert_deconv(caffe_layer, shadow_net):
+    layer_name = caffe_layer.name
+    bottom_names = caffe_layer.bottom
+    top_names = caffe_layer.top
+
+    stride = 1
+    pad = 0
+    dilation = 1
+    bias_term = True
+    group = 1
+    if caffe_layer.HasField('convolution_param'):
+        caffe_param = caffe_layer.convolution_param
+        if caffe_param.HasField('num_output'):
+            num_output = caffe_param.num_output
+        else:
+            raise ValueError('num_output must be supplied')
+        if len(caffe_param.kernel_size) > 0:
+            kernel_size = caffe_param.kernel_size[0]
+        else:
+            raise ValueError('kernel_size must be supplied')
+        if len(caffe_param.stride) > 0:
+            stride = caffe_param.stride[0]
+        if len(caffe_param.pad) > 0:
+            pad = caffe_param.pad[0]
+        if len(caffe_param.dilation) > 0:
+            dilation = caffe_param.dilation[0]
+        if caffe_param.HasField('bias_term'):
+            bias_term = caffe_param.bias_term
+        if caffe_param.HasField('group'):
+            group = caffe_param.group
+
+    shadow_net.add_deconv(layer_name, bottom_names, top_names, num_output, kernel_size, stride, pad, dilation, bias_term, group)
+
+
 def convert_eltwise(caffe_layer, shadow_net):
     layer_name = caffe_layer.name
     bottom_names = caffe_layer.bottom
@@ -515,6 +549,8 @@ def caffe2shadow(model_root, meta_net_info, copy_params=False):
                 convert_connected(caffe_layer, shadow_net)
             elif layer_type == 'Convolution' or layer_type == 'DepthwiseConvolution':
                 convert_conv(caffe_layer, shadow_net)
+            elif layer_type == 'Deconvolution':
+                convert_deconv(caffe_layer, shadow_net)
             elif layer_type == 'Eltwise':
                 convert_eltwise(caffe_layer, shadow_net)
             elif layer_type == 'Flatten':
