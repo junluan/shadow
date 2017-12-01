@@ -139,6 +139,20 @@ inline std::string find_replace(const std::string &str,
   return origin;
 }
 
+inline std::string find_replace(const std::string &str,
+                                const std::vector<std::string> &old_strs,
+                                const std::string &new_str) {
+  std::string origin(str);
+  for (const auto &old_str : old_strs) {
+    size_t pos = 0;
+    while ((pos = origin.find(old_str, pos)) != std::string::npos) {
+      origin.replace(pos, old_str.length(), new_str);
+      pos += new_str.length();
+    }
+  }
+  return origin;
+}
+
 inline std::string find_replace_last(const std::string &str,
                                      const std::string &old_str,
                                      const std::string &new_str) {

@@ -263,6 +263,39 @@ void ConvertConv(const caffe::NetParameter& caffe_model,
   }
 }
 
+void ConvertDeconv(const caffe::NetParameter& caffe_model,
+                   const caffe::LayerParameter& caffe_layer,
+                   shadow::NetParam* shadow_net) {
+  auto shadow_op = shadow_net->add_op();
+  shadow_op->set_type("Deconv");
+  ConvertCommon(caffe_model, caffe_layer, shadow_op);
+
+  if (caffe_layer.has_convolution_param()) {
+    const auto& caffe_param = caffe_layer.convolution_param();
+    if (caffe_param.has_num_output()) {
+      set_s_i(shadow_op, "num_output", caffe_param.num_output());
+    }
+    if (caffe_param.kernel_size_size() > 0) {
+      set_s_i(shadow_op, "kernel_size", caffe_param.kernel_size(0));
+    }
+    if (caffe_param.stride_size() > 0) {
+      set_s_i(shadow_op, "stride", caffe_param.stride(0));
+    }
+    if (caffe_param.pad_size() > 0) {
+      set_s_i(shadow_op, "pad", caffe_param.pad(0));
+    }
+    if (caffe_param.dilation_size() > 0) {
+      set_s_i(shadow_op, "dilation", caffe_param.dilation(0));
+    }
+    if (caffe_param.has_bias_term() && !caffe_param.bias_term()) {
+      set_s_i(shadow_op, "bias_term", false);
+    }
+    if (caffe_param.has_group() && caffe_param.group() != 1) {
+      set_s_i(shadow_op, "group", caffe_param.group());
+    }
+  }
+}
+
 void ConvertEltwise(const caffe::NetParameter& caffe_model,
                     const caffe::LayerParameter& caffe_layer,
                     shadow::NetParam* shadow_net) {
@@ -288,7 +321,9 @@ void ConvertEltwise(const caffe::NetParameter& caffe_model,
     for (const auto coe : caffe_param.coeff()) {
       coeff.push_back(coe);
     }
-    set_v_f(shadow_op, "coeff", coeff);
+    if (!coeff.empty()) {
+      set_v_f(shadow_op, "coeff", coeff);
+    }
   }
 }
 
@@ -374,7 +409,9 @@ void ConvertPermute(const caffe::NetParameter& caffe_model,
     for (const auto o : caffe_param.order()) {
       order.push_back(o);
     }
-    set_v_i(shadow_op, "order", order);
+    if (!order.empty()) {
+      set_v_i(shadow_op, "order", order);
+    }
   }
 }
 
@@ -423,15 +460,21 @@ void ConvertPriorBox(const caffe::NetParameter& caffe_model,
     for (const auto ms : caffe_param.min_size()) {
       min_size.push_back(ms);
     }
-    set_v_f(shadow_op, "min_size", min_size);
+    if (!min_size.empty()) {
+      set_v_f(shadow_op, "min_size", min_size);
+    }
     for (const auto ms : caffe_param.max_size()) {
       max_size.push_back(ms);
     }
-    set_v_f(shadow_op, "max_size", max_size);
+    if (!max_size.empty()) {
+      set_v_f(shadow_op, "max_size", max_size);
+    }
     for (const auto ar : caffe_param.aspect_ratio()) {
       aspect_ratio.push_back(ar);
     }
-    set_v_f(shadow_op, "aspect_ratio", aspect_ratio);
+    if (!aspect_ratio.empty()) {
+      set_v_f(shadow_op, "aspect_ratio", aspect_ratio);
+    }
     if (caffe_param.has_flip()) {
       set_s_i(shadow_op, "flip", caffe_param.flip());
     }
@@ -441,7 +484,9 @@ void ConvertPriorBox(const caffe::NetParameter& caffe_model,
     for (const auto v : caffe_param.variance()) {
       variance.push_back(v);
     }
-    set_v_f(shadow_op, "variance", variance);
+    if (!variance.empty()) {
+      set_v_f(shadow_op, "variance", variance);
+    }
     if (caffe_param.has_step()) {
       set_s_f(shadow_op, "step", caffe_param.step());
     }
@@ -484,7 +529,9 @@ void ConvertReshape(const caffe::NetParameter& caffe_model,
     for (const auto dim : caffe_param.shape().dim()) {
       shape.push_back(dim);
     }
-    set_v_i(shadow_op, "shape", shape);
+    if (!shape.empty()) {
+      set_v_i(shadow_op, "shape", shape);
+    }
     if (caffe_param.has_axis()) {
       set_s_i(shadow_op, "axis", caffe_param.axis());
     }
@@ -551,6 +598,32 @@ void ConvertSoftmax(const caffe::NetParameter& caffe_model,
   }
 }
 
+using ConvertFunc =
+    std::function<void(const caffe::NetParameter&, const caffe::LayerParameter&,
+                       shadow::NetParam*)>;
+
+static const std::map<std::string, ConvertFunc> convert_func_map{
+    {"ReLU", ConvertActivate},
+    {"PReLU", ConvertActivate},
+    {"BatchNorm", ConvertBatchNorm},
+    {"Bias", ConvertBias},
+    {"Concat", ConvertConcat},
+    {"InnerProduct", ConvertConnected},
+    {"Convolution", ConvertConv},
+    {"Deconvolution", ConvertDeconv},
+    {"Eltwise", ConvertEltwise},
+    {"Flatten", ConvertFlatten},
+    {"LRN", ConvertLRN},
+    {"Normalize", ConvertNormalize},
+    {"Permute", ConvertPermute},
+    {"Pooling", ConvertPooling},
+    {"PriorBox", ConvertPriorBox},
+    {"Python", ConvertPython},
+    {"Reshape", ConvertReshape},
+    {"ROIPooling", ConvertROIPooling},
+    {"Scale", ConvertScale},
+    {"Softmax", ConvertSoftmax}};
+
 void ConvertCaffe(const std::vector<caffe::NetParameter>& caffe_deploys,
                   const std::vector<caffe::NetParameter>& caffe_models,
                   const MetaNetInfo& meta_net_info,
@@ -575,42 +648,8 @@ void ConvertCaffe(const std::vector<caffe::NetParameter>& caffe_deploys,
     for (int l = start_layer; l < caffe_deploy.layer_size(); ++l) {
       const auto& caffe_layer = caffe_deploy.layer(l);
       const auto& layer_type = caffe_layer.type();
-      if (layer_type == "ReLU" || layer_type == "PReLU") {
-        ConvertActivate(caffe_model, caffe_layer, &shadow_net);
-      } else if (layer_type == "BatchNorm") {
-        ConvertBatchNorm(caffe_model, caffe_layer, &shadow_net);
-      } else if (layer_type == "Bias") {
-        ConvertBias(caffe_model, caffe_layer, &shadow_net);
-      } else if (layer_type == "Concat") {
-        ConvertConcat(caffe_model, caffe_layer, &shadow_net);
-      } else if (layer_type == "InnerProduct") {
-        ConvertConnected(caffe_model, caffe_layer, &shadow_net);
-      } else if (layer_type == "Convolution") {
-        ConvertConv(caffe_model, caffe_layer, &shadow_net);
-      } else if (layer_type == "Eltwise") {
-        ConvertEltwise(caffe_model, caffe_layer, &shadow_net);
-      } else if (layer_type == "Flatten") {
-        ConvertFlatten(caffe_model, caffe_layer, &shadow_net);
-      } else if (layer_type == "LRN") {
-        ConvertLRN(caffe_model, caffe_layer, &shadow_net);
-      } else if (layer_type == "Normalize") {
-        ConvertNormalize(caffe_model, caffe_layer, &shadow_net);
-      } else if (layer_type == "Permute") {
-        ConvertPermute(caffe_model, caffe_layer, &shadow_net);
-      } else if (layer_type == "Pooling") {
-        ConvertPooling(caffe_model, caffe_layer, &shadow_net);
-      } else if (layer_type == "PriorBox") {
-        ConvertPriorBox(caffe_model, caffe_layer, &shadow_net);
-      } else if (layer_type == "Python") {
-        ConvertPython(caffe_model, caffe_layer, &shadow_net);
-      } else if (layer_type == "Reshape") {
-        ConvertReshape(caffe_model, caffe_layer, &shadow_net);
-      } else if (layer_type == "ROIPooling") {
-        ConvertROIPooling(caffe_model, caffe_layer, &shadow_net);
-      } else if (layer_type == "Scale") {
-        ConvertScale(caffe_model, caffe_layer, &shadow_net);
-      } else if (layer_type == "Softmax") {
-        ConvertSoftmax(caffe_model, caffe_layer, &shadow_net);
+      if (convert_func_map.count(layer_type)) {
+        convert_func_map.at(layer_type)(caffe_model, caffe_layer, &shadow_net);
       } else {
         LOG(WARNING) << "Layer type: " << layer_type << " is not recognized!";
       }

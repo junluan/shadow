@@ -4,7 +4,17 @@ namespace Shadow {
 
 const std::string ConvertCustom(const shadow::NetParam& shadow_net) {
   std::stringstream ss;
+  std::vector<int> num_class_vec;
+  std::vector<std::string> out_blob_vec;
+  for (const auto dim : shadow_net.num_class()) {
+    num_class_vec.push_back(dim);
+  }
+  for (const auto& blob : shadow_net.out_blob()) {
+    out_blob_vec.push_back(blob);
+  }
   ss << "[" << shadow_net.name() << "]" << std::endl;
+  ss << Util::format_vector(num_class_vec, " ", "[", "]") << std::endl;
+  ss << Util::format_vector(out_blob_vec, ", ", "[", "]") << std::endl;
   for (const auto& op_param : shadow_net.op()) {
     const auto& op_type = op_param.type();
     int bottom_size = op_param.bottom_size();
@@ -86,7 +96,9 @@ void WriteDefines(const shadow::NetParam& shadow_net, const std::string& root,
   for (int o = 0; o < net.op_size(); ++o) {
     auto op_param = net.mutable_op(o);
     if (op_param->blobs_size() == 0) continue;
-    const auto& op_name = Util::find_replace(op_param->name(), "/", "_");
+    const std::vector<std::string>& illegal_chars{"/", "-"};
+    const auto& op_name =
+        Util::find_replace(op_param->name(), illegal_chars, "_");
     int blob_count = 0;
     for (const auto& blob : op_param->blobs()) {
       const auto blob_type = blob.has_type() ? blob.type() : "float";
@@ -288,7 +300,9 @@ void WriteWeights(const shadow::NetParam& shadow_net, const std::string& root,
 
   for (const auto& op_param : shadow_net.op()) {
     if (op_param.blobs_size() == 0) continue;
-    const auto& op_name = Util::find_replace(op_param.name(), "/", "_");
+    const std::vector<std::string>& illegal_chars{"/", "-"};
+    const auto& op_name =
+        Util::find_replace(op_param.name(), illegal_chars, "_");
     std::ofstream file(root + "/" + model_name + "_" + op_name + ".cpp");
 
     file << "#include \"" << model_name_weights_hpp << "\"\n\n";
@@ -337,8 +351,10 @@ void WriteWeights(const shadow::NetParam& shadow_net, const std::string& root,
 void WriteProtoToFiles(const shadow::NetParam& shadow_net,
                        const std::string& root, const std::string& model_name) {
   Util::make_directory(root);
-  WriteDefines(shadow_net, root, model_name);
-  WriteWeights(shadow_net, root, model_name);
+  const std::vector<std::string>& illegal_chars{".", "-"};
+  const auto& code_name = Util::find_replace(model_name, illegal_chars, "_");
+  WriteDefines(shadow_net, root, code_name);
+  WriteWeights(shadow_net, root, code_name);
 }
 
 void WriteProtoToBinary(const IO::Message& proto, const std::string& root,
