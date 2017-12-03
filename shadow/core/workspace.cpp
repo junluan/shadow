@@ -16,7 +16,7 @@ bool Workspace::RemoveBlob(const std::string &name) {
 }
 
 int Workspace::GetWorkspaceSize() const {
-  int count = 1;
+  int count = 0;
   for (const auto &blob_it : blob_map_) {
     const auto &blob_type = blob_it.second.first;
     auto *blob = blob_it.second.second;
@@ -35,6 +35,14 @@ int Workspace::GetWorkspaceSize() const {
   return count;
 }
 
+int Workspace::GetWorkspaceTempSize() const {
+  int count = 0;
+  for (const auto &blob_it : blob_temp_) {
+    count += blob_it->mem_count();
+  }
+  return count;
+}
+
 void Workspace::ClearBlob(const std::string &blob_type, void *blob) {
   if (blob != nullptr) {
     if (blob_type == int_id) {
@@ -48,6 +56,23 @@ void Workspace::ClearBlob(const std::string &blob_type, void *blob) {
     }
     blob = nullptr;
   }
+}
+
+void *Workspace::GetTempPtr(int required) {
+  int sufficient_id = -1;
+  for (int n = 0; n < blob_temp_.size(); ++n) {
+    if (required <= blob_temp_[n]->capacity()) {
+      sufficient_id = n;
+      break;
+    }
+  }
+  if (sufficient_id == -1) {
+    sufficient_id = static_cast<int>(blob_temp_.size());
+    blob_temp_.push_back(new Blob<unsigned char>(VecInt{required}));
+    DLOG(WARNING) << "New temp buffer allocated: " << required / 1024 / 1024
+                  << " MB.";
+  }
+  return blob_temp_[sufficient_id]->mutable_data();
 }
 
 }  // namespace Shadow

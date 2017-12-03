@@ -23,10 +23,41 @@ class Workspace {
       ClearBlob(blob_type, blob);
     }
     blob_map_.clear();
+    for (auto blob_it : blob_temp_) {
+      delete blob_it;
+      blob_it = nullptr;
+    }
+    blob_temp_.clear();
   }
 
   bool HasBlob(const std::string &name) const {
     return static_cast<bool>(blob_map_.count(name));
+  }
+
+  const std::string GetBlobType(const std::string &name) const {
+    if (blob_map_.count(name)) {
+      return blob_map_.at(name).first;
+    }
+    DLOG(WARNING) << "Blob " << name << " not in the workspace.";
+    return std::string();
+  }
+
+  template <typename T>
+  const Blob<T> *GetBlob(const std::string &name) const {
+    if (blob_map_.count(name)) {
+      const auto &blob_type = blob_map_.at(name).first;
+      const auto ask_type = typeid(T).name();
+      CHECK(blob_type == ask_type) << "Blob " << name << " has type "
+                                   << blob_type << ", but ask for " << ask_type;
+      return static_cast<const Blob<T> *>(blob_map_.at(name).second);
+    }
+    DLOG(WARNING) << "Blob " << name << " not in the workspace.";
+    return nullptr;
+  }
+  template <typename T>
+  Blob<T> *GetBlob(const std::string &name) {
+    return const_cast<Blob<T> *>(
+        static_cast<const Workspace *>(this)->GetBlob<T>(name));
   }
 
   template <typename T>
@@ -51,40 +82,37 @@ class Workspace {
     }
     return GetBlob<T>(name);
   }
+
+  template <typename Dtype>
+  Blob<Dtype> *CreateTempBlob(const VecInt &shape, const std::string &name) {
+    Blob<Dtype> *blob = nullptr;
+    if (!HasBlob(name)) {
+      blob_map_[name].first = typeid(Dtype).name();
+      blob_map_[name].second = new Blob<Dtype>(name);
+    }
+    blob = GetBlob<Dtype>(name);
+    CHECK_NOTNULL(blob);
+    blob->clear();
+    blob->set_shape(shape);
+    int cou = 1;
+    for (const auto dim : shape) cou *= dim;
+    int required = cou * sizeof(Dtype) / sizeof(unsigned char);
+    blob->share_data(reinterpret_cast<BACKEND *>(GetTempPtr(required)), shape);
+    return blob;
+  }
+
   bool RemoveBlob(const std::string &name);
 
-  template <typename T>
-  const Blob<T> *GetBlob(const std::string &name) const {
-    if (blob_map_.count(name)) {
-      const auto &blob_type = blob_map_.at(name).first;
-      const auto ask_type = typeid(T).name();
-      CHECK(blob_type == ask_type) << "Blob " << name << " has type "
-                                   << blob_type << ", but ask for " << ask_type;
-      return static_cast<const Blob<T> *>(blob_map_.at(name).second);
-    }
-    DLOG(WARNING) << "Blob " << name << " not in the workspace.";
-    return nullptr;
-  }
-  template <typename T>
-  Blob<T> *GetBlob(const std::string &name) {
-    return const_cast<Blob<T> *>(
-        static_cast<const Workspace *>(this)->GetBlob<T>(name));
-  }
-
-  const std::string GetBlobType(const std::string &name) const {
-    if (blob_map_.count(name)) {
-      return blob_map_.at(name).first;
-    }
-    DLOG(WARNING) << "Blob " << name << " not in the workspace.";
-    return std::string();
-  }
-
   int GetWorkspaceSize() const;
+  int GetWorkspaceTempSize() const;
 
  private:
   void ClearBlob(const std::string &blob_type, void *blob);
 
+  void *GetTempPtr(int required);
+
   std::map<std::string, std::pair<std::string, void *>> blob_map_;
+  std::vector<BlobUC *> blob_temp_;
 
   DISABLE_COPY_AND_ASSIGN(Workspace);
 };

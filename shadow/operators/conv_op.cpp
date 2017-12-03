@@ -33,8 +33,8 @@ void ConvOp::Reshape() {
       biases_multiplier_->reshape({out_spatial_dim_});
       Blas::Set(out_spatial_dim_, 1, biases_multiplier_->mutable_data(), 0);
     }
-    col_image_ = op_ws_->CreateBlob<float>(op_name_ + "_col_image");
-    col_image_->reshape({kernel_dim_ * group_, out_spatial_dim_});
+    col_image_ = op_ws_->CreateTempBlob<float>(
+        {kernel_dim_ * group_, out_spatial_dim_}, op_name_ + "_col_image");
   }
 
 #if defined(USE_CUDNN)
