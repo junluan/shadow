@@ -4,6 +4,16 @@ import json
 import mxnet as mx
 from net_spec import Shadow
 
+mx_ver = [int(v) for v in mx.__version__.split('.')]
+mx_ver_int = 10000 * mx_ver[0] + 100 * mx_ver[1] + mx_ver[2]
+
+if mx_ver_int <= 900:
+    params_str = 'param'
+elif mx_ver_int <= 1300:
+    params_str = 'attr'
+else:
+    params_str = 'attrs'
+
 
 def copy_weights(arg_params, aux_params, param_dict, shadow_net):
     net_param = shadow_net.net_param
@@ -97,8 +107,8 @@ def convert_activate(mxnet_nodes, index, param_dict, shadow_net):
     json_node = mxnet_nodes[index]
     json_name = json_node['name']
     json_inputs = json_node['inputs']
-    if 'attr' in json_node:
-        json_attr = json_node['attr']
+    if params_str in json_node:
+        json_attr = json_node[params_str]
     else:
         json_attr = {}
     bottom_names, param_names = find_inputs(mxnet_nodes, json_name, json_inputs)
@@ -122,8 +132,8 @@ def convert_batch_norm(mxnet_nodes, index, param_dict, shadow_net):
     json_node = mxnet_nodes[index]
     json_name = json_node['name']
     json_inputs = json_node['inputs']
-    if 'attr' in json_node:
-        json_attr = json_node['attr']
+    if params_str in json_node:
+        json_attr = json_node[params_str]
     else:
         json_attr = {}
     bottom_names, param_names = find_inputs(mxnet_nodes, json_name, json_inputs)
@@ -149,8 +159,8 @@ def convert_concat(mxnet_nodes, index, param_dict, shadow_net):
     json_node = mxnet_nodes[index]
     json_name = json_node['name']
     json_inputs = json_node['inputs']
-    if 'attr' in json_node:
-        json_attr = json_node['attr']
+    if params_str in json_node:
+        json_attr = json_node[params_str]
     else:
         json_attr = {}
     bottom_names, param_names = find_inputs(mxnet_nodes, json_name, json_inputs)
@@ -165,8 +175,8 @@ def convert_connected(mxnet_nodes, index, param_dict, shadow_net):
     json_node = mxnet_nodes[index]
     json_name = json_node['name']
     json_inputs = json_node['inputs']
-    if 'attr' in json_node:
-        json_attr = json_node['attr']
+    if params_str in json_node:
+        json_attr = json_node[params_str]
     else:
         json_attr = {}
     bottom_names, param_names = find_inputs(mxnet_nodes, json_name, json_inputs)
@@ -183,8 +193,8 @@ def convert_conv(mxnet_nodes, index, param_dict, shadow_net):
     json_node = mxnet_nodes[index]
     json_name = json_node['name']
     json_inputs = json_node['inputs']
-    if 'attr' in json_node:
-        json_attr = json_node['attr']
+    if params_str in json_node:
+        json_attr = json_node[params_str]
     else:
         json_attr = {}
     bottom_names, param_names = find_inputs(mxnet_nodes, json_name, json_inputs)
@@ -206,8 +216,8 @@ def convert_deformable_conv(mxnet_nodes, index, param_dict, shadow_net):
     json_node = mxnet_nodes[index]
     json_name = json_node['name']
     json_inputs = json_node['inputs']
-    if 'attr' in json_node:
-        json_attr = json_node['attr']
+    if params_str in json_node:
+        json_attr = json_node[params_str]
     else:
         json_attr = {}
     bottom_names, param_names = find_inputs(mxnet_nodes, json_name, json_inputs)
@@ -230,8 +240,8 @@ def convert_deformable_psroi_pooling(mxnet_nodes, index, param_dict, shadow_net)
     json_node = mxnet_nodes[index]
     json_name = json_node['name']
     json_inputs = json_node['inputs']
-    if 'attr' in json_node:
-        json_attr = json_node['attr']
+    if params_str in json_node:
+        json_attr = json_node[params_str]
     else:
         json_attr = {}
     bottom_names, param_names = find_inputs(mxnet_nodes, json_name, json_inputs)
@@ -252,8 +262,8 @@ def convert_eltwise(mxnet_nodes, index, param_dict, shadow_net, operation):
     json_node = mxnet_nodes[index]
     json_name = json_node['name']
     json_inputs = json_node['inputs']
-    if 'attr' in json_node:
-        json_attr = json_node['attr']
+    if params_str in json_node:
+        json_attr = json_node[params_str]
     else:
         json_attr = {}
     bottom_names, param_names = find_inputs(mxnet_nodes, json_name, json_inputs)
@@ -265,8 +275,8 @@ def convert_pooling(mxnet_nodes, index, param_dict, shadow_net):
     json_node = mxnet_nodes[index]
     json_name = json_node['name']
     json_inputs = json_node['inputs']
-    if 'attr' in json_node:
-        json_attr = json_node['attr']
+    if params_str in json_node:
+        json_attr = json_node[params_str]
     else:
         json_attr = {}
     bottom_names, param_names = find_inputs(mxnet_nodes, json_name, json_inputs)
@@ -293,8 +303,8 @@ def convert_proposal(mxnet_nodes, index, param_dict, shadow_net):
     json_node = mxnet_nodes[index]
     json_name = json_node['name']
     json_inputs = json_node['inputs']
-    if 'attr' in json_node:
-        json_attr = json_node['attr']
+    if params_str in json_node:
+        json_attr = json_node[params_str]
     else:
         json_attr = {}
     bottom_names, param_names = find_inputs(mxnet_nodes, json_name, json_inputs)
