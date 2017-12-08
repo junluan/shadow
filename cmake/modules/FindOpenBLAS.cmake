@@ -46,9 +46,9 @@ endif ()
 find_package_handle_standard_args(OpenBLAS DEFAULT_MSG OpenBLAS_INCLUDE_DIRS OpenBLAS_LIBRARIES)
 
 if (OpenBLAS_FOUND)
-  shadow_parse_header_single_define(${OpenBLAS_INCLUDE_DIRS}/openblas_config.h
-                                    OPENBLAS_VERSION
-                                    "[0-9]+\\.[0-9]+\\.[0-9]+.[a-z]+")
+  parse_header_single_define(${OpenBLAS_INCLUDE_DIRS}/openblas_config.h
+                             OPENBLAS_VERSION
+                             "[0-9]+\\.[0-9]+\\.[0-9]+.[a-z]+")
   if (NOT OPENBLAS_VERSION)
     set(OpenBLAS_VERSION "?")
   else ()

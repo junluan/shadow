@@ -1,6 +1,6 @@
 set(Shadow_LINKER_LIBS)
 
-shadow_find_os_arch(Shadow_Platform Shadow_Arch)
+find_os_arch(Shadow_Platform Shadow_Arch)
 
 set(Shadow_INSTALL_INCLUDE_PREFIX include/shadow)
 set(Shadow_INSTALL_LIB_PREFIX lib/${Shadow_Platform}/${Shadow_Arch})
@@ -12,7 +12,7 @@ if (${USE_CUDA})
   find_package(CUDA QUIET)
   if (CUDA_FOUND)
     include(cmake/Cuda.cmake)
-    shadow_select_nvcc_arch_flags(NVCC_FLAGS_EXTRA)
+    select_nvcc_arch_flags(NVCC_FLAGS_EXTRA)
     set(CUDA_PROPAGATE_HOST_FLAGS ON)
     list(APPEND CUDA_NVCC_FLAGS ${NVCC_FLAGS_EXTRA})
     include_directories(SYSTEM ${CUDA_TOOLKIT_INCLUDE})

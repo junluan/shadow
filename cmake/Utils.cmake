@@ -9,8 +9,8 @@ endfunction ()
 ####################################################################
 # Removes duplicates from list(s)
 # Usage:
-#   shadow_list_unique(<list_variable> [<list_variable>] [...])
-macro (shadow_list_unique)
+#   list_unique(<list_variable> [<list_variable>] [...])
+macro (list_unique)
   foreach (__lst ${ARGN})
     if (${__lst})
       list(REMOVE_DUPLICATES ${__lst})
@@ -21,8 +21,8 @@ endmacro ()
 ####################################################################
 # Clears variables from list
 # Usage:
-#   shadow_clear_vars(<variables_list>)
-macro (shadow_clear_vars)
+#   clear_vars(<variables_list>)
+macro (clear_vars)
   foreach (_var ${ARGN})
     unset(${_var})
   endforeach ()
@@ -31,8 +31,8 @@ endmacro ()
 ####################################################################
 # Removes duplicates from string
 # Usage:
-#   shadow_string_unique(<string_variable>)
-function (shadow_string_unique __string)
+#   string_unique(<string_variable>)
+function (string_unique __string)
   if (${__string})
     set(__list ${${__string}})
     separate_arguments(__list)
@@ -47,8 +47,8 @@ endfunction ()
 ####################################################################
 # Prints list element per line
 # Usage:
-#   shadow_print_list(<list>)
-function (shadow_print_list)
+#   print_list(<list>)
+function (print_list)
   foreach (e ${ARGN})
     message(STATUS ${e})
   endforeach ()
@@ -57,8 +57,8 @@ endfunction ()
 ####################################################################
 # Reads set of version defines from the header file
 # Usage:
-#   shadow_parse_header(<file> <define1> <define2> <define3> ..)
-function (shadow_parse_header FILENAME)
+#   parse_header(<file> <define1> <define2> <define3> ..)
+function (parse_header FILENAME)
   set(vars_regex "")
   foreach (name ${ARGN})
     if (vars_regex)
@@ -83,8 +83,8 @@ endfunction ()
 ####################################################################
 # Reads set of version defines from the header file
 # Usage:
-#   shadow_parse_header_single_define(<file> <define> <regex>)
-function (shadow_parse_header_single_define FILENAME VARNAME REGEX)
+#   parse_header_single_define(<file> <define> <regex>)
+function (parse_header_single_define FILENAME VARNAME REGEX)
   set(HEADER_CONTENTS "")
   if (EXISTS ${FILENAME})
     file(STRINGS ${FILENAME} HEADER_CONTENTS REGEX "#define[ \t]+${VARNAME}[ \t]+\".+\"")
@@ -99,8 +99,8 @@ endfunction ()
 ####################################################################
 # Add whole archive when build static library
 # Usage:
-#   shadow_add_whole_archive_flag(<lib> <output_var>)
-function (shadow_add_whole_archive_flag lib output_var)
+#   add_whole_archive_flag(<lib> <output_var>)
+function (add_whole_archive_flag lib output_var)
   if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "MSVC")
     if (MSVC_VERSION GREATER 1900)
       set(${output_var} -WHOLEARCHIVE:$<TARGET_FILE:${lib}> PARENT_SCOPE)
@@ -119,8 +119,8 @@ endfunction ()
 ####################################################################
 # Find current os platform and architecture
 # Usage:
-#   shadow_find_os_arch(<output_var>)
-function (shadow_find_os_arch platform_var arch_var)
+#   find_os_arch(<output_var>)
+function (find_os_arch platform_var arch_var)
   set(${platform_var})
   set(${arch_var})
   if (MSVC)

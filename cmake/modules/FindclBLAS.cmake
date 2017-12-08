@@ -37,8 +37,8 @@ find_library(clBLAS_LIBRARIES
 find_package_handle_standard_args(clBLAS DEFAULT_MSG clBLAS_INCLUDE_DIRS clBLAS_LIBRARIES)
 
 if (clBLAS_FOUND)
-  shadow_parse_header(${clBLAS_INCLUDE_DIRS}/clBLAS.version.h
-                      clblasVersionMajor clblasVersionMinor clblasVersionPatch)
+  parse_header(${clBLAS_INCLUDE_DIRS}/clBLAS.version.h
+               clblasVersionMajor clblasVersionMinor clblasVersionPatch)
   if (NOT clblasVersionMajor)
     set(clBLAS_VERSION "?")
   else ()

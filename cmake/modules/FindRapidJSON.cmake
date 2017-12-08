@@ -14,8 +14,8 @@ find_path(RapidJSON_INCLUDE_DIRS
 find_package_handle_standard_args(RapidJSON DEFAULT_MSG RapidJSON_INCLUDE_DIRS)
 
 if (RapidJSON_FOUND)
-  shadow_parse_header(${RapidJSON_INCLUDE_DIRS}/rapidjson.h
-                      RAPIDJSON_MAJOR_VERSION RAPIDJSON_MINOR_VERSION RAPIDJSON_PATCH_VERSION)
+  parse_header(${RapidJSON_INCLUDE_DIRS}/rapidjson.h
+               RAPIDJSON_MAJOR_VERSION RAPIDJSON_MINOR_VERSION RAPIDJSON_PATCH_VERSION)
   if (NOT RAPIDJSON_MAJOR_VERSION)
     set(RapidJSON_VERSION "?")
   else ()

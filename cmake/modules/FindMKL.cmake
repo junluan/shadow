@@ -78,8 +78,8 @@ endif ()
 find_package_handle_standard_args(MKL DEFAULT_MSG ${__looked_for})
 
 if (MKL_FOUND)
-  shadow_parse_header(${MKL_INCLUDE_DIRS}/mkl_version.h
-                      INTEL_MKL_VERSION)
+  parse_header(${MKL_INCLUDE_DIRS}/mkl_version.h
+               INTEL_MKL_VERSION)
   if (NOT INTEL_MKL_VERSION)
     set(MKL_VERSION "?")
   else ()

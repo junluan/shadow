@@ -14,8 +14,8 @@ find_path(Eigen_INCLUDE_DIRS
 find_package_handle_standard_args(Eigen DEFAULT_MSG Eigen_INCLUDE_DIRS)
 
 if (Eigen_FOUND)
-  shadow_parse_header(${Eigen_INCLUDE_DIRS}/Eigen/src/Core/util/Macros.h
-                      EIGEN_WORLD_VERSION EIGEN_MAJOR_VERSION EIGEN_MINOR_VERSION)
+  parse_header(${Eigen_INCLUDE_DIRS}/Eigen/src/Core/util/Macros.h
+               EIGEN_WORLD_VERSION EIGEN_MAJOR_VERSION EIGEN_MINOR_VERSION)
   if (NOT EIGEN_WORLD_VERSION)
     set(Eigen_VERSION "?")
   else ()

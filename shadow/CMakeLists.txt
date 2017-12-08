@@ -41,7 +41,7 @@ endif ()
 if (BUILD_SHARED_LIBS)
   set(Shadow_LIB shadow)
 else ()
-  shadow_add_whole_archive_flag(shadow Shadow_LIB)
+  add_whole_archive_flag(shadow Shadow_LIB)
 endif ()
 
 if (${BUILD_EXAMPLES})

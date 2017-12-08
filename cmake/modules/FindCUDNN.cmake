@@ -19,8 +19,8 @@ find_library(CUDNN_LIBRARIES
 find_package_handle_standard_args(CUDNN DEFAULT_MSG CUDNN_INCLUDE_DIRS CUDNN_LIBRARIES)
 
 if (CUDNN_FOUND)
-  shadow_parse_header(${CUDNN_INCLUDE_DIRS}/cudnn.h
-                      CUDNN_MAJOR CUDNN_MINOR CUDNN_PATCHLEVEL)
+  parse_header(${CUDNN_INCLUDE_DIRS}/cudnn.h
+               CUDNN_MAJOR CUDNN_MINOR CUDNN_PATCHLEVEL)
   if (NOT CUDNN_MAJOR)
     set(CUDNN_VERSION "?")
   else ()

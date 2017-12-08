@@ -24,8 +24,8 @@ if (OpenCL_FOUND)
   else ()
     set(CL_HEADER_FILE "${OpenCL_INCLUDE_DIRS}/CL/cl.h")
   endif ()
-  shadow_parse_header(${CL_HEADER_FILE}
-                      CL_VERSION_2_0 CL_VERSION_1_2 CL_VERSION_1_1 CL_VERSION_1_0)
+  parse_header(${CL_HEADER_FILE}
+               CL_VERSION_2_0 CL_VERSION_1_2 CL_VERSION_1_1 CL_VERSION_1_0)
   if (CL_VERSION_2_0 EQUAL 1)
     set(OpenCL_VERSION_STRING "2.0")
   elseif (CL_VERSION_1_2 EQUAL 1)
