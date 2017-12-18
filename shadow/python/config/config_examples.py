@@ -7,7 +7,7 @@ def get_config_squeezenet():
         'input_name': ['data'],
         'input_shape': [[1, 3, 224, 224]],
         'mean_value': [],
-        'scale': 1,
+        'scale_value': [],
         'arg': {},
         'out_blob': []
     }
@@ -31,7 +31,7 @@ def get_config_mtcnn():
         'input_name': ['data'],
         'input_shape': [[1, 3, 360, 360]],
         'mean_value': [127.5],
-        'scale': 0.0078125,
+        'scale_value': 0.0078125,
         'arg': {},
         'out_blob': ['conv4-2', 'prob1']
     }
@@ -41,7 +41,7 @@ def get_config_mtcnn():
         'input_name': ['data'],
         'input_shape': [[50, 3, 24, 24]],
         'mean_value': [127.5],
-        'scale': 0.0078125,
+        'scale_value': 0.0078125,
         'arg': {},
         'out_blob': ['conv5-2', 'prob1']
     }
@@ -51,7 +51,7 @@ def get_config_mtcnn():
         'input_name': ['data'],
         'input_shape': [[20, 3, 48, 48]],
         'mean_value': [127.5],
-        'scale': 0.0078125,
+        'scale_value': 0.0078125,
         'arg': {},
         'out_blob': ['conv6-2', 'conv6-3', 'prob1']
     }
@@ -75,7 +75,7 @@ def get_config_ssd():
         'input_name': ['data'],
         'input_shape': [[1, 3, 300, 300]],
         'mean_value': [103.94, 116.78, 123.68],
-        'scale': 1,
+        'scale_value': [],
         'arg': {},
         'out_blob': ['mbox_loc', 'mbox_conf_flatten', 'mbox_priorbox']
     }
@@ -99,7 +99,7 @@ def get_config_faster():
         'input_name': ['data'],
         'input_shape': [[1, 3, 224, 224], [1, 3]],
         'mean_value': [102.9801, 115.9465, 122.7717],
-        'scale': 1,
+        'scale_value': [],
         'arg': {
             'is_bgr_s_i': True,
             'class_agnostic_s_i': False

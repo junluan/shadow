@@ -13,7 +13,7 @@ int main(int argc, char const* argv[]) {
   net_faster.num_class = {21};
   net_faster.input_shape = {{1, 3, 224, 224}, {1, 3}};
   net_faster.mean_value = {102.9801f, 115.9465f, 122.7717f};
-  net_faster.scale = 1.f;
+  net_faster.scale_value = {};
   net_faster.out_blob = {"rois", "cls_prob", "bbox_pred"};
 
   meta_net_faster_info.model_name = {"VGG16_faster_rcnn_final"};
@@ -26,19 +26,19 @@ int main(int argc, char const* argv[]) {
   net_mtcnn_r.num_class = {0};
   net_mtcnn_r.input_shape = {{1, 3, 360, 360}};
   net_mtcnn_r.mean_value = {127.5f};
-  net_mtcnn_r.scale = 0.0078125f;
+  net_mtcnn_r.scale_value = {0.0078125f};
   net_mtcnn_r.out_blob = {"conv4-2", "prob1"};
 
   net_mtcnn_p.num_class = {0};
   net_mtcnn_p.input_shape = {{50, 3, 24, 24}};
   net_mtcnn_p.mean_value = {127.5f};
-  net_mtcnn_p.scale = 0.0078125f;
+  net_mtcnn_p.scale_value = {0.0078125f};
   net_mtcnn_p.out_blob = {"conv5-2", "prob1"};
 
   net_mtcnn_o.num_class = {0};
   net_mtcnn_o.input_shape = {{20, 3, 48, 48}};
   net_mtcnn_o.mean_value = {127.5f};
-  net_mtcnn_o.scale = 0.0078125f;
+  net_mtcnn_o.scale_value = {0.0078125f};
   net_mtcnn_o.out_blob = {"conv6-2", "conv6-3", "prob1"};
 
   meta_net_mtcnn_info.model_name = {"det1", "det2", "det3"};
@@ -51,7 +51,7 @@ int main(int argc, char const* argv[]) {
   net_ssd.num_class = {3};
   net_ssd.input_shape = {{1, 3, 300, 300}};
   net_ssd.mean_value = {103.94f, 116.78f, 123.68f};
-  net_ssd.scale = 1.f;
+  net_ssd.scale_value = {};
   net_ssd.out_blob = {"mbox_loc", "mbox_conf_flatten", "mbox_priorbox"};
 
   meta_net_ssd_info.model_name = {"adas_model_finetune_reduce_3"};

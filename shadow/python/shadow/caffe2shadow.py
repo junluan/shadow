@@ -324,11 +324,14 @@ def convert_pooling(caffe_layer, shadow_net):
     top_names = caffe_layer.top
 
     pool = 'Max'
+    kernel_size = 0
     stride = 1
     pad = 0
     global_pooling = False
     if caffe_layer.HasField('pooling_param'):
         caffe_param = caffe_layer.pooling_param
+        if caffe_param.HasField('global_pooling'):
+            global_pooling = caffe_param.global_pooling
         if caffe_param.HasField('pool'):
             if caffe_param.pool == 0:
                 pool = 'Max'
@@ -337,13 +340,12 @@ def convert_pooling(caffe_layer, shadow_net):
         if caffe_param.HasField('kernel_size'):
             kernel_size = caffe_param.kernel_size
         else:
-            raise ValueError('kernel_size must be supplied')
+            if not global_pooling:
+                raise ValueError('kernel_size must be supplied')
         if caffe_param.HasField('stride'):
             stride = caffe_param.stride
         if caffe_param.HasField('pad'):
             pad = caffe_param.pad
-        if caffe_param.HasField('global_pooling'):
-            global_pooling = caffe_param.global_pooling
 
     shadow_net.add_pooling(layer_name, bottom_names, top_names, pool, kernel_size, stride, pad, global_pooling)
 

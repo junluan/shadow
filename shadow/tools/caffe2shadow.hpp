@@ -117,7 +117,7 @@ int ConvertInput(const caffe::NetParameter& caffe_deploy,
     }
   }
 
-  if (net_info.scale != 1 || !net_info.mean_value.empty()) {
+  if (!net_info.scale_value.empty() || !net_info.mean_value.empty()) {
     if (data_blob_name.empty()) {
       LOG(FATAL) << "Data blob does not has \"data\" keyword";
     }
@@ -126,11 +126,11 @@ int ConvertInput(const caffe::NetParameter& caffe_deploy,
     shadow_data_op->set_type("Data");
     shadow_data_op->add_bottom(data_blob_name);
     shadow_data_op->add_top(data_blob_name);
-    if (net_info.scale != 1) {
-      set_s_f(shadow_data_op, "scale", net_info.scale);
-    }
     if (!net_info.mean_value.empty()) {
       set_v_f(shadow_data_op, "mean_value", net_info.mean_value);
+    }
+    if (!net_info.mean_value.empty()) {
+      set_v_f(shadow_data_op, "scale_value", net_info.scale_value);
     }
   }
 

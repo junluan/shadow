@@ -13,10 +13,8 @@ class BinaryOp : public Operator {
     CHECK_GE(operation_, 0);
     CHECK_LE(operation_, 6);
     if (has_argument("scalar")) {
-      auto scalar_data = get_single_argument<float>("scalar", 0);
-      scalar_ = op_ws_->CreateBlob<float>(bottoms<float>(0)->shape(),
-                                          op_name_ + "_param_scalar");
-      Blas::Set(scalar_->count(), scalar_data, scalar_->mutable_data(), 0);
+      scalar_data_ = get_single_argument<float>("scalar", 0);
+      has_scalar_arg_ = true;
     } else if (bottoms_size() > 1) {
       scalar_ = const_cast<BlobF *>(bottoms<float>(1));
     } else if (blobs_size() > 0) {
@@ -33,6 +31,8 @@ class BinaryOp : public Operator {
   enum { kAdd = 0, kSub = 1, kMul = 2, kDiv = 3, kPow = 4, kMax = 5, kMin = 6 };
 
   int operation_;
+  float scalar_data_;
+  bool has_scalar_arg_ = false;
 
   BlobF *scalar_ = nullptr;
 };

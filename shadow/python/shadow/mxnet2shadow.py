@@ -97,10 +97,17 @@ def convert_input(net_info, shadow_net):
             data_blob_name = input_name
             break
 
-    if float(net_info['scale']) != 1 or len(net_info['mean_value']) > 0:
+    num_mean = len(net_info['mean_value'])
+    num_scale = len(net_info['scale_value'])
+    mean_value, scale_value = None, None
+    if num_mean > 0:
+        mean_value = net_info['mean_value']
+    if num_scale > 0:
+        scale_value = net_info['scale_value']
+    if num_mean > 0 or num_scale > 0:
         if data_blob_name == '':
             raise ValueError('"Data blob does not has \"data\" keyword')
-        shadow_net.add_data('data_transform', [data_blob_name], [data_blob_name], float(net_info['scale']), net_info['mean_value'])
+        shadow_net.add_data('data_transform', [data_blob_name], [data_blob_name], mean_value, scale_value)
 
 
 def convert_activate(mxnet_nodes, index, param_dict, shadow_net):
@@ -271,6 +278,21 @@ def convert_eltwise(mxnet_nodes, index, param_dict, shadow_net, operation):
     shadow_net.add_eltwise(json_name, bottom_names, [json_name], operation)
 
 
+def convert_mul_scalar(mxnet_nodes, index, param_dict, shadow_net):
+    json_node = mxnet_nodes[index]
+    json_name = json_node['name']
+    json_inputs = json_node['inputs']
+    if params_str in json_node:
+        json_attr = json_node[params_str]
+    else:
+        json_attr = {}
+    bottom_names, param_names = find_inputs(mxnet_nodes, json_name, json_inputs)
+
+    scalar = parse_param(json_attr, 'scalar', 's_f', 1)
+
+    shadow_net.add_binary(json_name, bottom_names, [json_name], 'Mul', scalar)
+
+
 def convert_pooling(mxnet_nodes, index, param_dict, shadow_net):
     json_node = mxnet_nodes[index]
     json_name = json_node['name']
@@ -324,8 +346,8 @@ def convert_reshape(mxnet_nodes, index, param_dict, shadow_net):
     json_node = mxnet_nodes[index]
     json_name = json_node['name']
     json_inputs = json_node['inputs']
-    if 'attr' in json_node:
-        json_attr = json_node['attr']
+    if params_str in json_node:
+        json_attr = json_node[params_str]
     else:
         json_attr = {}
     bottom_names, param_names = find_inputs(mxnet_nodes, json_name, json_inputs)
@@ -335,12 +357,28 @@ def convert_reshape(mxnet_nodes, index, param_dict, shadow_net):
     shadow_net.add_reshape(json_name, bottom_names, [json_name], shape)
 
 
+def convert_roi_pooling(mxnet_nodes, index, param_dict, shadow_net):
+    json_node = mxnet_nodes[index]
+    json_name = json_node['name']
+    json_inputs = json_node['inputs']
+    if params_str in json_node:
+        json_attr = json_node[params_str]
+    else:
+        json_attr = {}
+    bottom_names, param_names = find_inputs(mxnet_nodes, json_name, json_inputs)
+
+    pooled_size = parse_param(json_attr, 'pooled_size', 'v_i', [14, 14])
+    spatial_scale = parse_param(json_attr, 'spatial_scale', 's_f', 0.0625)
+
+    shadow_net.add_roi_pooling(json_name, bottom_names, [json_name], pooled_size[0], pooled_size[1], spatial_scale)
+
+
 def convert_softmax(mxnet_nodes, index, param_dict, shadow_net):
     json_node = mxnet_nodes[index]
     json_name = json_node['name']
     json_inputs = json_node['inputs']
-    if 'attr' in json_node:
-        json_attr = json_node['attr']
+    if params_str in json_node:
+        json_attr = json_node[params_str]
     else:
         json_attr = {}
     bottom_names, param_names = find_inputs(mxnet_nodes, json_name, json_inputs)
@@ -396,13 +434,17 @@ def mxnet2shadow(model_root, meta_net_info, copy_params=False):
                 convert_deformable_psroi_pooling(mxnet_nodes, index, param_dict, shadow_net)
             elif json_op == 'elemwise_add' or json_op == 'broadcast_add':
                 convert_eltwise(mxnet_nodes, index, param_dict, shadow_net, 'Sum')
+            elif json_op == '_mul_scalar':
+                convert_mul_scalar(mxnet_nodes, index, param_dict, shadow_net)
             elif json_op == 'Pooling':
                 convert_pooling(mxnet_nodes, index, param_dict, shadow_net)
             elif json_op == '_contrib_Proposal':
                 convert_proposal(mxnet_nodes, index, param_dict, shadow_net)
             elif json_op == 'Reshape':
                 convert_reshape(mxnet_nodes, index, param_dict, shadow_net)
-            elif json_op == 'SoftmaxOutput' or json_op == 'SoftmaxActivation':
+            elif json_op == 'ROIPooling':
+                convert_roi_pooling(mxnet_nodes, index, param_dict, shadow_net)
+            elif json_op == 'SoftmaxOutput' or json_op == 'SoftmaxActivation' or 'softmax':
                 convert_softmax(mxnet_nodes, index, param_dict, shadow_net)
             else:
                 print('Skipping ' + json_op, ' please check!')

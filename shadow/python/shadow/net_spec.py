@@ -273,14 +273,14 @@ class Shadow(object):
                 bias_blob = op_param.blobs.add()
                 bias_blob.shape.extend([num_output])
 
-    def add_data(self, name, bottoms, tops, scale=1, mean_value=None):
+    def add_data(self, name, bottoms, tops, mean_value=None, scale_value=None):
         op_param = self.net_param.op.add()
         self.add_common(op_param, name, 'Data', bottoms, tops)
 
-        if scale != 1:
-            self.set_arg(op_param, 'scale', scale, 's_f')
         if mean_value is not None:
             self.set_arg(op_param, 'mean_value', mean_value, 'v_f')
+        if scale_value is not None:
+            self.set_arg(op_param, 'scale_value', scale_value, 'v_f')
 
         in_shape = self.blobs[self.net_index][bottoms[0]]['shape']
         self.blobs[self.net_index][tops[0]] = {'shape': in_shape}
@@ -490,6 +490,10 @@ class Shadow(object):
 
         in_shape = self.blobs[self.net_index][bottoms[0]]['shape']
         out_shape = in_shape[:]
+        if global_pooling:
+            kernel_size = in_shape[2]
+            stride = 1
+            pad = 0
         out_shape[2] = pooling_out_size(in_shape[2], kernel_size, stride, pad)
         out_shape[3] = pooling_out_size(in_shape[3], kernel_size, stride, pad)
         if pad:
