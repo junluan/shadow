@@ -41,7 +41,8 @@ void DataTransform(const T *in_data, const VecInt &in_shape, int num_mean,
 }
 
 template void DataTransform(const float *in_data, const VecInt &in_shape,
-                            float scale, int num_mean, const float *mean_value,
+                            int num_mean, const float *mean_value,
+                            int num_scale, const float *scale_value,
                             float *out_data);
 #endif
 
