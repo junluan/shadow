@@ -7,8 +7,10 @@ def get_config_custom():
         'input_name': ['data'],  # net input blob names
         'input_shape': [[1, 3, 224, 224]],  # net input blob shapes
         'mean_value': [],  # data mean values
-        'scale_value': [],  # data scale values
-        'arg': {},  # net arguments, must end with one of 's_i, s_f, s_s, v_i, v_f, v_s'
+        'scale_value': [1],  # data scale values
+        'arg': {  # net arguments, must end with one of 's_i, s_f, s_s, v_i, v_f, v_s'
+            'is_bgr_s_i': True
+        },
         'out_blob': []  # net output blob names
     }
 
