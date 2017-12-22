@@ -316,7 +316,7 @@ def convert_pooling(mxnet_nodes, index, param_dict, shadow_net):
     stride = parse_param(json_attr, 'stride', 'v_i', [1, 1])
     pad = parse_param(json_attr, 'pad', 'v_i', [1, 1])
     global_pooling = parse_param(json_attr, 'global_pool', 's_s', 'False') == 'True'
-    full_pooling = parse_param(json_attr, 'pooling_convention', 's_s', 'full') == 'full'
+    full_pooling = parse_param(json_attr, 'pooling_convention', 's_s', 'valid') == 'full'
 
     shadow_net.add_pooling(json_name, bottom_names, [json_name], pool, kernel_size[0], stride[0], pad[0], global_pooling, full_pooling)
 

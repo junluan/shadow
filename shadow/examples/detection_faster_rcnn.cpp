@@ -2,35 +2,6 @@
 
 namespace Shadow {
 
-inline bool SortBoxesDescend(const BoxF &box_a, const BoxF &box_b) {
-  return box_a.score > box_b.score;
-}
-
-inline VecBoxF NMS(const VecBoxF &boxes, float threshold) {
-  auto all_boxes = boxes;
-  std::stable_sort(all_boxes.begin(), all_boxes.end(), SortBoxesDescend);
-  for (int i = 0; i < all_boxes.size(); ++i) {
-    auto &box_i = all_boxes[i];
-    if (box_i.label == -1) continue;
-    for (int j = i + 1; j < all_boxes.size(); ++j) {
-      auto &box_j = all_boxes[j];
-      if (box_j.label == -1 || box_i.label != box_j.label) continue;
-      if (Boxes::IoU(box_i, box_j) > threshold) {
-        box_j.label = -1;
-        continue;
-      }
-    }
-  }
-  VecBoxF out_boxes;
-  for (const auto &box : all_boxes) {
-    if (box.label != -1) {
-      out_boxes.push_back(box);
-    }
-  }
-  all_boxes.clear();
-  return out_boxes;
-}
-
 void DetectionFasterRCNN::Setup(const VecString &model_files,
                                 const VecInt &in_shape) {
   net_.Setup();
@@ -183,7 +154,7 @@ void DetectionFasterRCNN::Process(const VecFloat &in_data,
 
     boxes->push_back(box);
   }
-  *boxes = NMS(*boxes, nms_threshold_);
+  *boxes = Boxes::NMS(*boxes, nms_threshold_);
 }
 
 void DetectionFasterRCNN::CalculateScales(float height, float width,

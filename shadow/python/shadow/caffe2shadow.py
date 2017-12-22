@@ -58,10 +58,17 @@ def convert_input(caffe_deploy, net_info, shadow_net):
             data_blob_name = input_name
             break
 
-    if float(net_info['scale']) != 1 or len(net_info['mean_value']) > 0:
+    num_mean = len(net_info['mean_value'])
+    num_scale = len(net_info['scale_value'])
+    mean_value, scale_value = None, None
+    if num_mean > 0:
+        mean_value = net_info['mean_value']
+    if num_scale > 0:
+        scale_value = net_info['scale_value']
+    if num_mean > 0 or num_scale > 0:
         if data_blob_name == '':
             raise ValueError('"Data blob does not has \"data\" keyword')
-        shadow_net.add_data('data_transform', [data_blob_name], [data_blob_name], float(net_info['scale']), net_info['mean_value'])
+        shadow_net.add_data('data_transform', [data_blob_name], [data_blob_name], mean_value, scale_value)
 
     return start_layer
 
@@ -72,14 +79,25 @@ def convert_activate(caffe_layer, shadow_net):
     bottom_names = caffe_layer.bottom
     top_names = caffe_layer.top
 
-    if layer_type == 'ReLU':
-        act_type = 'Relu'
-    elif layer_type == 'PReLU':
+    if layer_type == 'PReLU':
         act_type = 'PRelu'
+    elif layer_type == 'ReLU':
+        act_type = 'Relu'
+    elif layer_type == 'Sigmoid':
+        act_type = 'Sigmoid'
     else:
         raise ValueError('Unsupported activate type', layer_type)
 
     shadow_net.add_activate(layer_name, bottom_names, top_names, act_type)
+
+
+def convert_axpy(caffe_layer, shadow_net):
+    layer_name = caffe_layer.name
+    layer_type = caffe_layer.type
+    bottom_names = caffe_layer.bottom
+    top_names = caffe_layer.top
+
+    shadow_net.add_axpy(layer_name, bottom_names, top_names)
 
 
 def convert_batch_norm(caffe_layer, shadow_net):
@@ -539,8 +557,10 @@ def caffe2shadow(model_root, meta_net_info, copy_params=False):
             caffe_layer = caffe_deploy.layer[l]
             layer_type = caffe_layer.type
 
-            if layer_type == 'ReLU' or layer_type == 'PReLU':
+            if layer_type == 'PReLU' or layer_type == 'ReLU' or layer_type == 'Sigmoid':
                 convert_activate(caffe_layer, shadow_net)
+            elif layer_type == 'Axpy':
+                convert_axpy(caffe_layer, shadow_net)
             elif layer_type == 'BatchNorm':
                 convert_batch_norm(caffe_layer, shadow_net)
             elif layer_type == 'Bias':

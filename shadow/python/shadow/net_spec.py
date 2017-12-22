@@ -139,6 +139,13 @@ class Shadow(object):
             else:
                 slope_blob.shape.extend([1, in_shape[1]])
 
+    def add_axpy(self, name, bottoms, tops):
+        op_param = self.net_param.op.add()
+        self.add_common(op_param, name, 'Axpy', bottoms, tops)
+
+        in_shape = self.blobs[self.net_index][bottoms[1]]['shape']
+        self.blobs[self.net_index][tops[0]] = {'shape': in_shape}
+
     def add_batch_norm(self, name, bottoms, tops, use_global_stats=True, eps=1e-5):
         op_param = self.net_param.op.add()
         self.add_common(op_param, name, 'BatchNorm', bottoms, tops)
