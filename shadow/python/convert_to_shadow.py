@@ -7,19 +7,20 @@ from config.config_examples import *
 import argparse
 
 
-if __name__ == '__main__':
+def parse_args():
     parser = argparse.ArgumentParser(description='Convert model to shadow!')
-    parser.add_argument('--model_root', '-d', help='The root folder of the models to be converted.',
-                        required=True, type=str)
-    parser.add_argument('--config_name', '-c',
-                        help='The suffix name of the model config function.', required=True, type=str)
-    parser.add_argument('--save_root', '-s', default='model_shadow',
-                        help='The root folder to save the shadow model.', type=str)
-    parser.add_argument('--copy_params', '-p', nargs='?', const=True,
-                        default=False, help='Copy source model weights.')
-    parser.add_argument('--merge_op', '-m', nargs='?',
-                        const=True, default=False, help='Merge operators.')
-    args = parser.parse_args()
+    parser.add_argument('--model_root', '-d', required=True, help='The root folder of the models to be converted.')
+    parser.add_argument('--config_name', '-c', required=True, help='The suffix name of the model config function.')
+    parser.add_argument('--save_root', '-s', default='model_shadow', help='The root folder to save the shadow model.')
+    parser.add_argument('--copy_params', '-p', action='store_true', help='Copy source model weights.')
+    parser.add_argument('--merge_op', '-m', action='store_true', help='Merge operators.')
+    arguments = parser.parse_args()
+
+    return arguments
+
+
+if __name__ == '__main__':
+    args = parse_args()
 
     meta_net_info = eval('get_config_' + args.config_name)()
 
