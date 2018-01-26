@@ -3,7 +3,7 @@
 set -e
 set -x
 
-SHADOW_ROOT="$(cd "$(dirname "$0")/../" && pwd)"
+SHADOW_ROOT="$(cd "$(dirname "$0")/../../" && pwd)"
 SHADOW_BUILD_ROOT=$SHADOW_ROOT/build
 
 ######################### Building Shadow #########################

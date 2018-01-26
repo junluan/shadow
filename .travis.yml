@@ -1,5 +1,5 @@
 os: linux
-dist: xenial
+dist: trusty
 sudo: required
 language: cpp
 compiler: gcc
@@ -17,11 +17,11 @@ matrix:
       env: BUILD=osx
 
 before_install:
-  - source .travis/setup.sh
+  - source scripts/travis/setup.sh
 
 install:
-  - ./.travis/install.sh
-  - ./.travis/build.sh
+  - ./scripts/travis/install.sh
+  - ./scripts/travis/build.sh
 
 script:
   - echo $TRAVIS_BUILD_DIR

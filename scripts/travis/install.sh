@@ -18,10 +18,10 @@ if [ "$TRAVIS_OS_NAME" = 'linux' ]; then
         protobuf-compiler
 
     if [ "$BUILD_CUDA" = 'true' ]; then
-        CUDA_REPO_PKG='cuda-repo-ubuntu1604_9.0.176-1_amd64.deb'
-        CUDA_PKG_VERSION='9-0'
-        CUDA_VERSION='9.0'
-        wget "https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1604/x86_64/${CUDA_REPO_PKG}"
+        CUDA_REPO_PKG='cuda-repo-ubuntu1404_8.0.61-1_amd64.deb'
+        CUDA_PKG_VERSION='8-0'
+        CUDA_VERSION='8.0'
+        wget "https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1404/x86_64/${CUDA_REPO_PKG}"
         sudo dpkg -i "$CUDA_REPO_PKG"
         rm -f "$CUDA_REPO_PKG"
         sudo apt-get update
@@ -35,9 +35,9 @@ if [ "$TRAVIS_OS_NAME" = 'linux' ]; then
         sudo ln -sf /usr/local/cuda-$CUDA_VERSION /usr/local/cuda
     fi
     if [ "$BUILD_CUDNN" = 'true' ]; then
-        CUDNN_REPO_PKG='nvidia-machine-learning-repo-ubuntu1604_1.0.0-1_amd64.deb'
-        CUDNN_PKG_VERSION='7.0.5.15-1+cuda9.0'
-        wget "https://developer.download.nvidia.com/compute/machine-learning/repos/ubuntu1604/x86_64/${CUDNN_REPO_PKG}"
+        CUDNN_REPO_PKG='nvidia-machine-learning-repo-ubuntu1404_4.0-2_amd64.deb'
+        CUDNN_PKG_VERSION='7.0.5.15-1+cuda8.0'
+        wget "https://developer.download.nvidia.com/compute/machine-learning/repos/ubuntu1404/x86_64/${CUDNN_REPO_PKG}"
         sudo dpkg -i "$CUDNN_REPO_PKG"
         rm -f "$CUDNN_REPO_PKG"
         sudo apt-get update
