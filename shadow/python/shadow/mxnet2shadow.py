@@ -2,7 +2,7 @@ from __future__ import print_function
 
 import json
 import mxnet as mx
-from net_spec import Shadow
+from shadow.net_spec import Shadow
 
 mx_ver = [int(v) for v in mx.__version__.split('.')]
 mx_ver_int = 10000 * mx_ver[0] + 100 * mx_ver[1] + mx_ver[2]

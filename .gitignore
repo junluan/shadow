@@ -3,6 +3,8 @@ build
 data
 models
 third_party
+__pycache__
+*.py[cod]
 *_pb2.py
 *.pb.cc
 *.pb.h

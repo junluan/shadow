@@ -3,7 +3,7 @@ from __future__ import division
 
 import copy
 import math
-from net_spec import Shadow
+from shadow.net_spec import Shadow
 
 
 def get_arg(shadow_op, arg_name, arg_type, default_value):

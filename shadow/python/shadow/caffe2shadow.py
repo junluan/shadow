@@ -2,7 +2,7 @@ from __future__ import print_function
 
 from google.protobuf import text_format
 from proto import caffe_pb2
-from net_spec import Shadow
+from shadow.net_spec import Shadow
 
 
 def copy_weights(caffe_model, shadow_net):

@@ -263,7 +263,7 @@ class Shadow(object):
 
         def conv_out_size(dim, ks, sd, pa, dila):
             kernel_extent = dila * (ks - 1) + 1
-            return (dim + 2 * pa - kernel_extent) / sd + 1
+            return int((dim + 2 * pa - kernel_extent) / sd) + 1
 
         in_shape = self.blobs[self.net_index][bottoms[0]]['shape']
         out_shape = in_shape[:]
@@ -275,7 +275,7 @@ class Shadow(object):
         self.blobs[self.net_index][tops[0]] = {'shape': out_shape}
         if self.blob_shape:
             weight_blob = op_param.blobs.add()
-            weight_blob.shape.extend([num_output, in_shape[1] / group, kernel_size, kernel_size])
+            weight_blob.shape.extend([num_output, int(in_shape[1] / group), kernel_size, kernel_size])
             if bias_term:
                 bias_blob = op_param.blobs.add()
                 bias_blob.shape.extend([num_output])
@@ -321,7 +321,7 @@ class Shadow(object):
         self.blobs[self.net_index][tops[0]] = {'shape': out_shape}
         if self.blob_shape:
             weight_blob = op_param.blobs.add()
-            weight_blob.shape.extend([in_shape[1], num_output / group, kernel_size, kernel_size])
+            weight_blob.shape.extend([in_shape[1], int(num_output / group), kernel_size, kernel_size])
             if bias_term:
                 bias_blob = op_param.blobs.add()
                 bias_blob.shape.extend([num_output])
@@ -345,7 +345,7 @@ class Shadow(object):
 
         def deformable_conv_out_size(dim, ks, sd, pa, dila):
             kernel_extent = dila * (ks - 1) + 1
-            return (dim + 2 * pa - kernel_extent) / sd + 1
+            return int((dim + 2 * pa - kernel_extent) / sd) + 1
 
         in_shape = self.blobs[self.net_index][bottoms[0]]['shape']
         out_shape = in_shape[:]
@@ -357,7 +357,7 @@ class Shadow(object):
         self.blobs[self.net_index][tops[0]] = {'shape': out_shape}
         if self.blob_shape:
             weight_blob = op_param.blobs.add()
-            weight_blob.shape.extend([num_output, in_shape[1] / group, kernel_size, kernel_size])
+            weight_blob.shape.extend([num_output, (in_shape[1] / group), kernel_size, kernel_size])
             if bias_term:
                 bias_blob = op_param.blobs.add()
                 bias_blob.shape.extend([num_output])
