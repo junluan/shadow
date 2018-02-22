@@ -49,7 +49,6 @@ elif [ "$TRAVIS_OS_NAME" = 'osx' ]; then
     brew update
     brew install python || brew upgrade python
     pip uninstall -y numpy  # use brew version (opencv dependency)
-    brew tap homebrew/science  # for opencv
     brew install opencv || brew upgrade opencv
     brew install protobuf || brew upgrade protobuf
 else
