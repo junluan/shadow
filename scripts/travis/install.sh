@@ -47,10 +47,8 @@ if [ "$TRAVIS_OS_NAME" = 'linux' ]; then
     fi
 elif [ "$TRAVIS_OS_NAME" = 'osx' ]; then
     brew update
-    brew install python || brew upgrade python
     pip uninstall -y numpy  # use brew version (opencv dependency)
-    brew install opencv || brew upgrade opencv
-    brew install protobuf || brew upgrade protobuf
+    brew install opencv protobuf
 else
     echo "OS \"$TRAVIS_OS_NAME\" is unknown"
     exit 1
