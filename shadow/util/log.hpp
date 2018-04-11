@@ -1,17 +1,17 @@
 #ifndef SHADOW_UTIL_LOG_HPP
 #define SHADOW_UTIL_LOG_HPP
 
-#if defined(USE_GLog)
-#if defined(_WIN32)
-#define GOOGLE_GLOG_DLL_DECL
-#define GLOG_NO_ABBREVIATED_SEVERITIES
-#endif
-#include <glog/logging.h>
-
-#else
+#include <cstdlib>
 #include <iostream>
 #include <sstream>
 #include <string>
+
+#if defined(__ANDROID__) || defined(ANDROID)
+#include <android/log.h>
+#endif
+
+namespace Shadow {
+
 #define LOG_INFO LogMessage("INFO", __FILE__, __LINE__)
 #define LOG_WARNING LogMessage("WARNING", __FILE__, __LINE__)
 #define LOG_ERROR LogMessage("ERROR", __FILE__, __LINE__)
@@ -74,11 +74,6 @@
 #define DCHECK_GT(val1, val2) CHECK_GT(val1, val2)
 #endif
 
-#if defined(__ANDROID__) || defined(ANDROID)
-#include <android/log.h>
-#endif
-
-#include <cstdlib>
 class LogMessage {
  public:
   LogMessage(const std::string& severity, const char* file, int line)
@@ -121,6 +116,7 @@ class LogMessage {
   std::string severity_;
   std::stringstream stream_;
 };
-#endif
+
+}  // namespace Shadow
 
 #endif  // SHADOW_UTIL_LOG_HPP

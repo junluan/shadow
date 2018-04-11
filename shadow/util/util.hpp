@@ -19,6 +19,18 @@
 #include <string>
 #include <vector>
 
+#if defined(__linux__) || defined(__APPLE__)
+#include <unistd.h>
+#include <chrono>
+#include <climits>
+#elif defined(_WIN32)
+#define NOMINMAX
+#include <windows.h>
+#endif
+#include <sys/stat.h>
+
+namespace Shadow {
+
 namespace Util {
 
 template <typename Dtype>
@@ -238,16 +250,6 @@ inline std::string read_text_from_file(const std::string &filename) {
 
 }  // namespace Util
 
-#if defined(__linux__) || defined(__APPLE__)
-#include <unistd.h>
-#include <chrono>
-#include <climits>
-#elif defined(_WIN32)
-#define NOMINMAX
-#include <windows.h>
-#endif
-
-#include <sys/stat.h>
 class Path {
  public:
   enum PathType {
@@ -609,6 +611,50 @@ class Timer {
 #endif
 };
 
+class Profiler {
+ public:
+  explicit Profiler(bool enable = true) : enable_(enable) {}
+
+  void set_enable(bool enable) { enable_ = enable; }
+
+  void tic(const std::string &profile_name) {
+    if (!enable_) return;
+    if (timers_.count(profile_name)) {
+      timers_.at(profile_name).start();
+    } else {
+      timers_[profile_name] = Timer();
+    }
+  }
+  void toc(const std::string &profile_name) {
+    if (!enable_) return;
+    assert(timers_.count(profile_name));
+    auto time_cost = timers_.at(profile_name).get_millisecond();
+    if (stats_.count(profile_name)) {
+      auto &state = stats_.at(profile_name);
+      state.first++;
+      state.second += time_cost;
+    } else {
+      stats_[profile_name] = std::make_pair(1, time_cost);
+    }
+  }
+
+  const std::string get_stats_str() {
+    std::stringstream ss;
+    for (const auto &state : stats_) {
+      int sum_count = state.second.first;
+      double sum_cost = state.second.second;
+      ss << state.first << ": " << sum_cost << " / " << sum_count << " = "
+         << sum_cost / sum_count << " ms; ";
+    }
+    return ss.str();
+  }
+
+ private:
+  bool enable_ = true;
+  std::map<std::string, Timer> timers_;
+  std::map<std::string, std::pair<int, double>> stats_;
+};
+
 class Process {
  public:
   Process(int slice, int total, const std::string &prefix = "") {
@@ -666,5 +712,7 @@ class Process {
   std::string prefix_;
   Timer timer_;
 };
+
+}  // namespace Shadow
 
 #endif  // SHADOW_UTIL_UTIL_HPP

@@ -1,5 +1,5 @@
-#ifndef SHADOW_CORE_UTIL_IO_HPP
-#define SHADOW_CORE_UTIL_IO_HPP
+#ifndef SHADOW_UTIL_IO_HPP
+#define SHADOW_UTIL_IO_HPP
 
 #if defined(USE_Protobuf)
 #include <google/protobuf/message.h>
@@ -48,4 +48,4 @@ bool ReadProtoFromTextFile(const std::string& proto_file,
 
 }  // namespace Shadow
 
-#endif  // SHADOW_CORE_UTIL_IO_HPP
+#endif  // SHADOW_UTIL_IO_HPP

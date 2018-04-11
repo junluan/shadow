@@ -21,10 +21,9 @@ before_install:
 
 install:
   - ./scripts/travis/install.sh
-  - ./scripts/travis/build.sh
 
 script:
-  - echo $TRAVIS_BUILD_DIR
+  - ./scripts/travis/build.sh
 
 cache:
   apt: true

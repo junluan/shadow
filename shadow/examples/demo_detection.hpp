@@ -3,6 +3,7 @@
 
 #include "detection_faster_rcnn.hpp"
 #include "detection_mtcnn.hpp"
+#include "detection_refinedet.hpp"
 #include "detection_ssd.hpp"
 #include "detection_yolo.hpp"
 
@@ -11,12 +12,14 @@ namespace Shadow {
 class DemoDetection {
  public:
   explicit DemoDetection(const std::string &method_name = "ssd") {
-    if (method_name == "ssd") {
-      method_ = new DetectionSSD();
+    if (method_name == "faster") {
+      method_ = new DetectionFasterRCNN();
     } else if (method_name == "mtcnn") {
       method_ = new DetectionMTCNN();
-    } else if (method_name == "faster") {
-      method_ = new DetectionFasterRCNN();
+    } else if (method_name == "ssd") {
+      method_ = new DetectionSSD();
+    } else if (method_name == "refinedet") {
+      method_ = new DetectionRefineDet();
     } else if (method_name == "yolo") {
       method_ = new DetectionYOLO();
     } else {

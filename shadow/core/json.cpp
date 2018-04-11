@@ -1,4 +1,5 @@
 #include "json.hpp"
+
 #include "util/log.hpp"
 
 namespace Shadow {

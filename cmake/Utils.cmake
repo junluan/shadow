@@ -119,7 +119,7 @@ endfunction ()
 ####################################################################
 # Find current os platform and architecture
 # Usage:
-#   find_os_arch(<output_var>)
+#   find_os_arch(<platform_var> <arch_var>)
 function (find_os_arch platform_var arch_var)
   set(${platform_var})
   set(${arch_var})
@@ -136,4 +136,16 @@ function (find_os_arch platform_var arch_var)
     set(${platform_var} linux PARENT_SCOPE)
     set(${arch_var} x86_64 PARENT_SCOPE)
   endif ()
+endfunction ()
+
+####################################################################
+# Download external process
+# Usage:
+#   download_external(<download_config_file> <process_dir>)
+function (download_external download_config_file process_dir)
+  configure_file(${download_config_file} "${process_dir}/CMakeLists.txt")
+  execute_process(COMMAND "${CMAKE_COMMAND}" -G "${CMAKE_GENERATOR}" .
+                  WORKING_DIRECTORY "${process_dir}")
+  execute_process(COMMAND "${CMAKE_COMMAND}" --build .
+                  WORKING_DIRECTORY "${process_dir}")
 endfunction ()

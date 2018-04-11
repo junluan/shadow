@@ -1,4 +1,5 @@
 #include "params.hpp"
+
 #include "util/log.hpp"
 
 namespace Shadow {

@@ -8,7 +8,7 @@ find_path(CUDNN_INCLUDE_DIRS
           NAMES cudnn.h
           PATHS ${CUDNN_DIR}
           PATH_SUFFIXES include include/x86_64 include/x64
-          DOC "CUDNN include header cudnn.h" )
+          DOC "CUDNN include header cudnn.h")
 
 find_library(CUDNN_LIBRARIES
              NAMES cudnn

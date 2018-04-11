@@ -1,4 +1,5 @@
 #include "network.hpp"
+
 #include "util/io.hpp"
 
 namespace Shadow {
