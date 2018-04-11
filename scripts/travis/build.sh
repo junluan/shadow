@@ -1,7 +1,6 @@
 #!/bin/bash
 
-set -e
-set -x
+set -ex
 
 SHADOW_ROOT="$(cd "$(dirname "$0")/../../" && pwd)"
 SHADOW_BUILD_ROOT=$SHADOW_ROOT/build
@@ -17,20 +16,30 @@ fi
 cd $SHADOW_BUILD_ROOT
 SHADOW_CMAKE_ARGS=('-DCMAKE_INSTALL_PREFIX=.')
 SHADOW_CMAKE_ARGS+=('-DCMAKE_BUILD_TYPE=Release')
-if [ "$BUILD_CUDA" = 'true' ]; then
+if [ "$USE_CUDA" = 'true' ]; then
     SHADOW_CMAKE_ARGS+=('-DUSE_CUDA=ON')
 else
     SHADOW_CMAKE_ARGS+=('-DUSE_CUDA=OFF')
 fi
-if [ "$BUILD_CUDNN" = 'true' ]; then
+if [ "$USE_CUDNN" = 'true' ]; then
     SHADOW_CMAKE_ARGS+=('-DUSE_CUDNN=ON')
 else
     SHADOW_CMAKE_ARGS+=('-DUSE_CUDNN=OFF')
 fi
-if [ "$BUILD_OpenCV" = 'true' ]; then
-    SHADOW_CMAKE_ARGS+=('-DUSE_OpenCV=ON')
+if [ "$USE_Eigen" = 'true' ]; then
+    SHADOW_CMAKE_ARGS+=('-DUSE_Eigen=ON')
 else
-    SHADOW_CMAKE_ARGS+=('-DUSE_OpenCV=OFF')
+    SHADOW_CMAKE_ARGS+=('-DUSE_Eigen=OFF')
+fi
+if [ "$USE_BLAS" = 'true' ]; then
+    SHADOW_CMAKE_ARGS+=('-DUSE_BLAS=ON')
+else
+    SHADOW_CMAKE_ARGS+=('-DUSE_BLAS=OFF')
+fi
+if [ "$USE_NNPACK" = 'true' ]; then
+    SHADOW_CMAKE_ARGS+=('-DUSE_NNPACK=ON')
+else
+    SHADOW_CMAKE_ARGS+=('-DUSE_NNPACK=OFF')
 fi
 if [ "$BUILD_SHARED_LIBS" = 'true' ]; then
     SHADOW_CMAKE_ARGS+=('-DBUILD_SHARED_LIBS=ON')

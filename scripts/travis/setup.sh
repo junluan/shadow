@@ -3,23 +3,23 @@
 
 set -e
 
-export BUILD_CUDA=false
-export BUILD_CUDNN=false
-export BUILD_Eigen=false
-export BUILD_BLAS=false
-export BUILD_NNPACK=false
-export BUILD_Protobuf=true
-export BUILD_OpenCV=true
-export BUILD_TEST=false
+export USE_CUDA=true
+export USE_CUDNN=false
+export USE_Eigen=true
+export USE_BLAS=false
+export USE_NNPACK=true
+export USE_Protobuf=true
+export USE_JSON=false
+export USE_OpenCV=true
 export BUILD_SHARED_LIBS=true
 
 if [ "$BUILD" = 'linux' ]; then
-    :
+    export USE_CUDA=false
+    export USE_NNPACK=false
 elif [ "$BUILD" = 'linux-cuda' ]; then
-    export BUILD_CUDA=true
+    :
 elif [ "$BUILD" = 'linux-cuda-cudnn' ]; then
-    export BUILD_CUDA=true
-    export BUILD_CUDNN=true
+    export USE_CUDNN=true
 elif [ "$BUILD" = 'osx' ]; then
     # Since Python 2.7.14, HomeBrew does not link python and pip in /usr/local/bin/,
     # but they are available in /usr/local/opt/python/libexec/bin/
