@@ -50,6 +50,10 @@ void DetectionMTCNN::Setup(const VecString &model_files,
   net_r_.LoadModel(model_files[1]);
   net_o_.LoadModel(model_files[2]);
 
+  in_p_str_ = net_p_.out_blob()[0];
+  in_r_str_ = net_r_.out_blob()[0];
+  in_o_str_ = net_o_.out_blob()[0];
+
   net_p_conv4_2_ = net_p_.out_blob()[0];
   net_p_prob1_ = net_p_.out_blob()[1];
   net_r_conv5_2_ = net_r_.out_blob()[0];
@@ -58,16 +62,16 @@ void DetectionMTCNN::Setup(const VecString &model_files,
   net_o_conv6_3_ = net_o_.out_blob()[1];
   net_o_prob1_ = net_o_.out_blob()[2];
 
-  net_p_in_shape_ = net_p_.GetBlobByName<float>("data")->shape();
+  net_p_in_shape_ = net_p_.GetBlobByName<float>(in_p_str_)->shape();
   net_p_stride_ = 2, net_p_cell_size_ = 12;
 
-  net_r_in_shape_ = net_r_.GetBlobByName<float>("data")->shape();
+  net_r_in_shape_ = net_r_.GetBlobByName<float>(in_r_str_)->shape();
   net_r_in_c_ = net_r_in_shape_[1];
   net_r_in_h_ = net_r_in_shape_[2];
   net_r_in_w_ = net_r_in_shape_[3];
   net_r_in_num_ = net_r_in_c_ * net_r_in_h_ * net_r_in_w_;
 
-  net_o_in_shape_ = net_o_.GetBlobByName<float>("data")->shape();
+  net_o_in_shape_ = net_o_.GetBlobByName<float>(in_o_str_)->shape();
   net_o_in_c_ = net_o_in_shape_[1];
   net_o_in_h_ = net_o_in_shape_[2];
   net_o_in_w_ = net_o_in_shape_[3];
@@ -250,8 +254,8 @@ void DetectionMTCNN::Process_net_p(const float *data, const VecInt &in_shape,
                                    VecBoxInfo *boxes) {
   std::map<std::string, VecInt> shape_map;
   std::map<std::string, float *> data_map;
-  shape_map["data"] = in_shape;
-  data_map["data"] = const_cast<float *>(data);
+  shape_map[in_p_str_] = in_shape;
+  data_map[in_p_str_] = const_cast<float *>(data);
 
   net_p_.Reshape(shape_map);
   net_p_.Forward(data_map);
@@ -292,8 +296,8 @@ void DetectionMTCNN::Process_net_r(const float *data, const VecInt &in_shape,
                                    VecBoxInfo *boxes) {
   std::map<std::string, VecInt> shape_map;
   std::map<std::string, float *> data_map;
-  shape_map["data"] = in_shape;
-  data_map["data"] = const_cast<float *>(data);
+  shape_map[in_r_str_] = in_shape;
+  data_map[in_r_str_] = const_cast<float *>(data);
 
   net_r_.Reshape(shape_map);
   net_r_.Forward(data_map);
@@ -324,8 +328,8 @@ void DetectionMTCNN::Process_net_o(const float *data, const VecInt &in_shape,
                                    VecBoxInfo *boxes) {
   std::map<std::string, VecInt> shape_map;
   std::map<std::string, float *> data_map;
-  shape_map["data"] = in_shape;
-  data_map["data"] = const_cast<float *>(data);
+  shape_map[in_o_str_] = in_shape;
+  data_map[in_o_str_] = const_cast<float *>(data);
 
   net_o_.Reshape(shape_map);
   net_o_.Forward(data_map);

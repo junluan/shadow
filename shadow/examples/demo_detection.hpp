@@ -7,35 +7,30 @@
 #include "detection_ssd.hpp"
 #include "detection_yolo.hpp"
 
+#include <memory>
+
 namespace Shadow {
 
 class DemoDetection {
  public:
   explicit DemoDetection(const std::string &method_name = "ssd") {
     if (method_name == "faster") {
-      method_ = new DetectionFasterRCNN();
+      method_ = std::make_shared<DetectionFasterRCNN>();
     } else if (method_name == "mtcnn") {
-      method_ = new DetectionMTCNN();
+      method_ = std::make_shared<DetectionMTCNN>();
     } else if (method_name == "ssd") {
-      method_ = new DetectionSSD();
+      method_ = std::make_shared<DetectionSSD>();
     } else if (method_name == "refinedet") {
-      method_ = new DetectionRefineDet();
+      method_ = std::make_shared<DetectionRefineDet>();
     } else if (method_name == "yolo") {
-      method_ = new DetectionYOLO();
+      method_ = std::make_shared<DetectionYOLO>();
     } else {
       LOG(FATAL) << "Unknown method " << method_name;
     }
   }
-  ~DemoDetection() { Release(); }
 
   void Setup(const VecString &model_files, const VecInt &in_shape) {
     method_->Setup(model_files, in_shape);
-  }
-  void Release() {
-    if (method_ != nullptr) {
-      delete method_;
-      method_ = nullptr;
-    }
   }
 
   void Test(const std::string &image_file);
@@ -70,7 +65,7 @@ class DemoDetection {
   void PrintDetections(const std::string &im_name, const VecBoxF &boxes,
                        std::ostream *os);
 
-  Method *method_;
+  std::shared_ptr<Method> method_ = nullptr;
   JImage im_ini_;
   std::vector<VecBoxF> Gboxes_;
   std::vector<std::vector<VecPointF>> Gpoints_;

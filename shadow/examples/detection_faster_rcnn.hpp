@@ -34,7 +34,7 @@ class DetectionFasterRCNN final : public Method {
   Network net_;
   VecFloat in_data_, min_side_, scales_, im_info_;
   VecInt in_shape_;
-  std::string rois_str_, bbox_pred_str_, cls_prob_str_;
+  std::string in_str_, im_info_str_, rois_str_, bbox_pred_str_, cls_prob_str_;
   int num_classes_;
   float max_side_, threshold_, nms_threshold_;
   bool is_bgr_, class_agnostic_;

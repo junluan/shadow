@@ -8,14 +8,19 @@ void DetectionFasterRCNN::Setup(const VecString &model_files,
 
   net_.LoadModel(model_files[0]);
 
-  in_shape_ = net_.GetBlobByName<float>("data")->shape();
-  CHECK_EQ(in_shape_[0], 1);
+  const auto &in_blob = net_.in_blob();
+  CHECK_EQ(in_blob.size(), 2);
+  in_str_ = in_blob[0];
+  im_info_str_ = in_blob[1];
 
   const auto &out_blob = net_.out_blob();
   CHECK_EQ(out_blob.size(), 3);
   rois_str_ = out_blob[0];
   cls_prob_str_ = out_blob[1];
   bbox_pred_str_ = out_blob[2];
+
+  in_shape_ = net_.GetBlobByName<float>(in_str_)->shape();
+  CHECK_EQ(in_shape_[0], 1);
 
   im_info_.resize(3, 0);
   num_classes_ = net_.num_class()[0];
@@ -40,7 +45,11 @@ void DetectionFasterRCNN::Predict(
     in_shape_[2] = scale_h, in_shape_[3] = scale_w;
     im_info_[0] = scale_h, im_info_[1] = scale_w, im_info_[2] = scales_[0];
     in_data_.resize(1 * 3 * scale_h * scale_w);
-    ConvertData(im_src, in_data_.data(), roi, 3, scale_h, scale_w);
+    if (is_bgr_) {
+      ConvertData(im_src, in_data_.data(), roi, 3, scale_h, scale_w, 1);
+    } else {
+      ConvertData(im_src, in_data_.data(), roi, 3, scale_h, scale_w, 0);
+    }
 
     VecBoxF boxes;
     Process(in_data_, in_shape_, im_info_, crop_h, crop_w, &boxes);
@@ -86,9 +95,9 @@ void DetectionFasterRCNN::Process(const VecFloat &in_data,
                                   float width, VecBoxF *boxes) {
   std::map<std::string, VecInt> shape_map;
   std::map<std::string, float *> data_map;
-  shape_map["data"] = in_shape;
-  data_map["data"] = const_cast<float *>(in_data.data());
-  data_map["im_info"] = const_cast<float *>(im_info.data());
+  shape_map[in_str_] = in_shape;
+  data_map[in_str_] = const_cast<float *>(in_data.data());
+  data_map[im_info_str_] = const_cast<float *>(im_info.data());
 
   net_.Reshape(shape_map);
   net_.Forward(data_map);

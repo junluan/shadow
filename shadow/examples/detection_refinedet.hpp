@@ -55,7 +55,7 @@ class DetectionRefineDet final : public Method {
 
   Network net_;
   VecFloat in_data_;
-  std::string odm_loc_str_, odm_conf_flatten_str_, arm_priorbox_str_,
+  std::string in_str_, odm_loc_str_, odm_conf_flatten_str_, arm_priorbox_str_,
       arm_conf_flatten_str_, arm_loc_str_;
   int batch_, in_num_, in_c_, in_h_, in_w_;
   int num_classes_, num_priors_, num_loc_classes_, background_label_id_, top_k_,

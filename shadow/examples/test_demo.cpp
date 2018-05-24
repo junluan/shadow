@@ -11,7 +11,6 @@ int main(int argc, char const *argv[]) {
   demo.Test(test_image);
   //demo.BatchTest(test_list, false);
   //demo.CameraTest(0);
-  demo.Release();
 
   return 0;
 }

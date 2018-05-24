@@ -59,6 +59,13 @@ class Network {
     }
     return out_blobs;
   }
+  const std::vector<std::string> in_blob() {
+    VecString in_blobs;
+    for (const auto &blob : net_param_.op(0).top()) {
+      in_blobs.push_back(blob);
+    }
+    return in_blobs;
+  }
 
   bool has_argument(const std::string &name) const {
     return arg_helper_.HasArgument(name);

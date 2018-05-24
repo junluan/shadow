@@ -31,7 +31,7 @@ class DetectionYOLO final : public Method {
 
   Network net_;
   VecFloat in_data_, out_data_, biases_;
-  std::string out_str_;
+  std::string in_str_, out_str_;
   int batch_, in_num_, in_c_, in_h_, in_w_, out_num_, out_hw_;
   int num_classes_, num_km_;
   float threshold_;

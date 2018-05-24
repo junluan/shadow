@@ -3,6 +3,8 @@
 
 #include "classification.hpp"
 
+#include <memory>
+
 namespace Shadow {
 
 class DemoClassification {
@@ -10,21 +12,14 @@ class DemoClassification {
   explicit DemoClassification(
       const std::string &method_name = "classification") {
     if (method_name == "classification") {
-      method_ = new Classification();
+      method_ = std::make_shared<Classification>();
     } else {
       LOG(FATAL) << "Unknown method " << method_name;
     }
   }
-  ~DemoClassification() { Release(); }
 
   void Setup(const VecString &model_files, const VecInt &in_shape) {
     method_->Setup(model_files, in_shape);
-  }
-  void Release() {
-    if (method_ != nullptr) {
-      delete method_;
-      method_ = nullptr;
-    }
   }
 
   void Test(const std::string &image_file);
@@ -47,7 +42,7 @@ class DemoClassification {
       const std::vector<std::map<std::string, VecFloat>> &scores,
       std::ostream *os);
 
-  Method *method_;
+  std::shared_ptr<Method> method_ = nullptr;
   JImage im_ini_;
   std::vector<std::map<std::string, VecFloat>> scores_;
   Timer timer_;

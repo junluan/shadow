@@ -63,21 +63,25 @@ void DetectionSSD::Setup(const VecString &model_files, const VecInt &in_shape) {
 
   net_.LoadModel(model_files[0]);
 
-  auto data_shape = net_.GetBlobByName<float>("data")->shape();
-  CHECK_EQ(data_shape.size(), 4);
-  CHECK_EQ(in_shape.size(), 1);
-  if (data_shape[0] != in_shape[0]) {
-    data_shape[0] = in_shape[0];
-    std::map<std::string, VecInt> shape_map;
-    shape_map["data"] = data_shape;
-    net_.Reshape(shape_map);
-  }
+  const auto &in_blob = net_.in_blob();
+  CHECK_EQ(in_blob.size(), 1);
+  in_str_ = in_blob[0];
 
   const auto &out_blob = net_.out_blob();
   CHECK_EQ(out_blob.size(), 3);
   mbox_loc_str_ = out_blob[0];
   mbox_conf_flatten_str_ = out_blob[1];
   mbox_priorbox_str_ = out_blob[2];
+
+  auto data_shape = net_.GetBlobByName<float>(in_str_)->shape();
+  CHECK_EQ(data_shape.size(), 4);
+  CHECK_EQ(in_shape.size(), 1);
+  if (data_shape[0] != in_shape[0]) {
+    data_shape[0] = in_shape[0];
+    std::map<std::string, VecInt> shape_map;
+    shape_map[in_str_] = data_shape;
+    net_.Reshape(shape_map);
+  }
 
   batch_ = data_shape[0];
   in_c_ = data_shape[1];
@@ -152,7 +156,7 @@ void DetectionSSD::Release() { net_.Release(); }
 void DetectionSSD::Process(const VecFloat &in_data,
                            std::vector<VecBoxF> *Gboxes) {
   std::map<std::string, float *> data_map;
-  data_map["data"] = const_cast<float *>(in_data.data());
+  data_map[in_str_] = const_cast<float *>(in_data.data());
 
   net_.Forward(data_map);
 
