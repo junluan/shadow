@@ -26,6 +26,10 @@ void ConvOp::Reshape() {
   col_offset_ = kernel_dim_ * out_spatial_dim_;
   output_offset_ = num_output_ * out_spatial_dim_ / group_;
 
+#if defined(USE_NNPACK)
+  use_nnpack_ = batch == 1 && group_ == 1 && dilation_ == 1 && bias_term_;
+#endif
+
   if (!use_cudnn_ && !use_nnpack_) {
     if (bias_term_) {
       biases_multiplier_ =

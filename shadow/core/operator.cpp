@@ -26,8 +26,8 @@ Operator::Operator(const shadow::OpParam &op_param, Workspace *ws)
       LOG(FATAL) << op_name_ << ": Failed to create top blob " << top_name
                  << ", asked for type " << top_type;
     }
-    CHECK_NOTNULL(top_blob) << op_name_ << ": Failed to create top blob "
-                            << top_name;
+    CHECK_NOTNULL(top_blob)
+        << op_name_ << ": Failed to create top blob " << top_name;
     top_names_.push_back(top_name);
   }
   int blob_count = 0;

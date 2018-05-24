@@ -44,11 +44,6 @@ class ConvOp : public Operator {
       }
     }
 #endif
-
-#if defined(USE_NNPACK)
-    use_nnpack_ = bottoms<float>(0)->shape(0) == 1 && group_ == 1 &&
-                  dilation_ == 1 && bias_term_;
-#endif
   }
   ~ConvOp() override {
 #if defined(USE_CUDNN)

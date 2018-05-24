@@ -27,13 +27,13 @@ namespace Shadow {
 namespace IO {
 
 #if defined(USE_Protobuf)
+using google::protobuf::TextFormat;
 using google::protobuf::io::CodedInputStream;
 using google::protobuf::io::CodedOutputStream;
 using google::protobuf::io::FileInputStream;
 using google::protobuf::io::FileOutputStream;
 using google::protobuf::io::ZeroCopyInputStream;
 using google::protobuf::io::ZeroCopyOutputStream;
-using google::protobuf::TextFormat;
 
 bool ReadProtoFromText(const std::string& proto_text, Message* proto) {
   return TextFormat::ParseFromString(proto_text, proto);

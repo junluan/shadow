@@ -101,8 +101,8 @@ void Network::LoadProtoStrOrText(const std::string &proto_str_or_text,
   } else {
     success = IO::ReadProtoFromText(proto_str_or_text, net_param);
   }
-  CHECK(!proto_str_or_text.empty() && success) << "Error when loading proto: "
-                                               << proto_str_or_text;
+  CHECK(!proto_str_or_text.empty() && success)
+      << "Error when loading proto: " << proto_str_or_text;
 }
 
 void Network::Initial() {

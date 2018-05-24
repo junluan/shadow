@@ -8,7 +8,7 @@ namespace Shadow {
 /**
  * @param Formulation:
  *            F = a * X + Y
- *	  Shape info:
+ *        Shape info:
  *            a:  N x C          --> bottoms[0]
  *            X:  N x C x H x W  --> bottoms[1]
  *            Y:  N x C x H x W  --> bottoms[2]

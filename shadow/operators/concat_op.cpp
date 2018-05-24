@@ -45,8 +45,10 @@ void ConcatOp::Forward() {
   for (int i = 0; i < bottoms_size(); ++i) {
     const auto *bottom = bottoms<float>(i);
     int bottom_concat_axis = bottom->shape(concat_axis_);
-    Vision::Concat(bottom->data(), bottom->count(), num_concats_,
-                   concat_input_size_, top_concat_axis, bottom_concat_axis,
+    int num_concats = bottom->count(0, concat_axis_);
+    int concat_input_size = bottom->count(concat_axis_ + 1);
+    Vision::Concat(bottom->data(), bottom->count(), num_concats,
+                   concat_input_size, top_concat_axis, bottom_concat_axis,
                    offset_concat_axis, top->mutable_data());
     offset_concat_axis += bottom_concat_axis;
   }
@@ -92,6 +94,7 @@ template void Concat(const BufferF *in_data, int count, int num_concats,
                      int bottom_concat_axis, int offset_concat_axis,
                      BufferF *out_data);
 #endif
-}
+
+}  // namespace Vision
 
 }  // namespace Shadow

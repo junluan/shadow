@@ -11,11 +11,6 @@ class BatchNormOp : public Operator {
       : Operator(op_param, ws) {
     use_global_stats_ = get_single_argument<bool>("use_global_stats", true);
     eps_ = get_single_argument<float>("eps", 1e-5);
-    if (bottoms<float>(0)->num_axes() == 1) {
-      channels_ = 1;
-    } else {
-      channels_ = bottoms<float>(0)->shape(1);
-    }
 
     if (use_global_stats_) {
       CHECK_EQ(blobs_size(), 3);

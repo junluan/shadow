@@ -10,6 +10,12 @@ void BatchNormOp::Reshape() {
 
   top->reshape(bottom->shape());
 
+  if (bottom->num_axes() == 1) {
+    channels_ = 1;
+  } else {
+    channels_ = bottom->shape(1);
+  }
+
   spatial_dim_ = bottom->count(2);
 
   mean_ = op_ws_->CreateBlob<float>(op_name_ + "_mean");
