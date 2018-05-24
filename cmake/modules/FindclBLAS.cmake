@@ -4,22 +4,6 @@ set(clBLAS_ROOT_DIR ${PROJECT_SOURCE_DIR}/third_party/clblas CACHE PATH "Folder 
 
 set(clBLAS_DIR ${clBLAS_ROOT_DIR} /usr /usr/local)
 
-set(clBLAS_PLATFORM)
-set(clBLAS_ARC)
-if (MSVC)
-  set(clBLAS_PLATFORM windows)
-  set(clBLAS_ARC x86_64)
-elseif (ANDROID)
-  set(clBLAS_PLATFORM android)
-  set(clBLAS_ARC ${ANDROID_ABI})
-elseif (APPLE)
-  set(clBLAS_PLATFORM darwin)
-  set(clBLAS_ARC x86_64)
-elseif (UNIX AND NOT APPLE)
-  set(clBLAS_PLATFORM linux)
-  set(clBLAS_ARC x86_64)
-endif ()
-
 find_path(clBLAS_INCLUDE_DIRS
           NAMES clBLAS.h
           PATHS ${clBLAS_DIR}
@@ -30,7 +14,7 @@ find_path(clBLAS_INCLUDE_DIRS
 find_library(clBLAS_LIBRARIES
              NAMES clBLAS
              PATHS ${clBLAS_DIR}
-             PATH_SUFFIXES lib lib/${clBLAS_PLATFORM}/${clBLAS_ARC} lib64 lib/x86_64 lib/x64 lib/x86
+             PATH_SUFFIXES lib lib64 lib/x86_64 lib/x64 lib/x86
              DOC "clBLAS library"
              NO_DEFAULT_PATH)
 

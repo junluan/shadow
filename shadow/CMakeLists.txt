@@ -77,6 +77,6 @@ endif ()
 
 if (${BUILD_TEST})
   add_executable(test_shadow ${shadow_test_src})
-  target_link_libraries(test_shadow ${Shadow_LIB})
+  target_link_libraries(test_shadow ${Shadow_LIB} ${GoogleTest_LIBRARIES})
   install(TARGETS test_shadow DESTINATION ${Shadow_INSTALL_BIN_PREFIX})
 endif ()
