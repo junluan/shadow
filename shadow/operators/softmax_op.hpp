@@ -13,8 +13,8 @@ class SoftmaxOp : public Operator {
     axis_ = bottoms<float>(0)->canonical_index(axis_);
 
 #if defined(USE_CUDNN)
-    cudnn::createTensor4dDesc<float>(&bottom_desc_);
-    cudnn::createTensor4dDesc<float>(&top_desc_);
+    cudnn::createTensorDesc<float>(&bottom_desc_);
+    cudnn::createTensorDesc<float>(&top_desc_);
 #endif
   }
   ~SoftmaxOp() override {

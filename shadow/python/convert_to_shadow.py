@@ -57,4 +57,4 @@ if __name__ == '__main__':
             if args.merge_op:
                 save_path = args.save_root + '/' + model_name + '_merged.shadowtxt'
                 merged_net.write_proto_to_txt(save_path, n)
-                print('Convert successful, merged model has been written to ' + save_path)
+                print('Merge successful, merged model has been written to ' + save_path)

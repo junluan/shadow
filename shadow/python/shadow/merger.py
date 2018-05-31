@@ -52,7 +52,7 @@ def convert_batch_norm(conv_op, bn_op, scale_op, merged_net, copy_params):
         bn_scale = 1 / bn_scale
     for i in range(0, len(bn_mean)):
         bn_mean[i] *= bn_scale
-        bn_var[i] = 1 / math.sqrt(bn_var[i] * bn_scale + 0.000001)
+        bn_var[i] = 1 / math.sqrt(abs(bn_var[i]) * bn_scale + 0.000001)
 
     scale_scale = copy.deepcopy(scale_op.blobs[0].data_f)
     scale_bias = copy.deepcopy(scale_op.blobs[1].data_f)

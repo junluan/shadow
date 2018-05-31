@@ -30,17 +30,18 @@ class ConvOp : public Operator {
     }
 
 #if defined(USE_CUDNN)
-    use_cudnn_ = dilation_ == 1 && group_ == 1;
+#if CUDNN_VERSION_MIN(7, 0, 1)
+    use_cudnn_ = true;
+#else
+    use_cudnn_ = group_ == 1;
+#endif
     if (use_cudnn_) {
       cudnn::createConvolutionDesc<float>(&conv_desc_);
-      cudnn::createTensor4dDesc<float>(&bottom_desc_);
-      cudnn::createTensor4dDesc<float>(&top_desc_);
-      cudnn::createFilterDesc<float>(&filter_desc_, num_output_,
-                                     bottoms<float>(0)->shape(1), kernel_size_,
-                                     kernel_size_);
+      cudnn::createTensorDesc<float>(&bottom_desc_);
+      cudnn::createTensorDesc<float>(&top_desc_);
+      cudnn::createFilterDesc<float>(&filter_desc_);
       if (bias_term_) {
-        cudnn::createTensor4dDesc<float>(&bias_desc_);
-        cudnn::setTensor4dDesc<float>(&bias_desc_, 1, num_output_, 1, 1);
+        cudnn::createTensorDesc<float>(&bias_desc_);
       }
     }
 #endif
@@ -82,7 +83,8 @@ class ConvOp : public Operator {
   int num_output_, kernel_size_, stride_, pad_, dilation_, group_,
       activate_type_, out_spatial_dim_, kernel_dim_;
   int weight_offset_, col_offset_, output_offset_;
-  bool bias_term_, use_cudnn_ = false, use_nnpack_ = false;
+  bool bias_term_, use_cudnn_ = false, use_nnpack_ = false,
+                   use_depthwise_ = false;
 
   BlobF *biases_multiplier_ = nullptr, *col_image_ = nullptr;
 
@@ -121,6 +123,11 @@ template <typename T>
 void Im2Col(const T *in_data, const VecInt &in_shape, int offset,
             int kernel_size, int stride, int pad, int dilation, int zero_point,
             const VecInt &out_shape, T *col_data);
+
+template <typename T>
+void Depthwise(const T *in_data, const VecInt &in_shape, const T *weight_data,
+               const T *bias_data, int kernel_size, int stride, int pad,
+               int bias_term, const VecInt &out_shape, T *out_data);
 
 }  // namespace Vision
 

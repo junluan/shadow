@@ -4,6 +4,7 @@ import json
 import mxnet as mx
 from shadow.net_spec import Shadow
 
+
 mx_ver = [int(v) for v in mx.__version__.split('.')]
 mx_ver_int = 10000 * mx_ver[0] + 100 * mx_ver[1] + mx_ver[2]
 
@@ -22,11 +23,8 @@ def copy_weights(arg_params, aux_params, param_dict, shadow_net):
         if op_name not in param_dict:
             continue
         param_names = param_dict[op_name]
-        assert(len(param_names) == len(shadow_op.blobs))
+        assert len(param_names) == len(shadow_op.blobs)
         for index in range(0, len(param_names)):
-            num_data = 1
-            for dim in shadow_op.blobs[index].shape:
-                num_data *= dim
             param_name = param_names[index]
             if param_name in arg_params:
                 param_data = arg_params[param_name].asnumpy().flatten()
@@ -36,6 +34,9 @@ def copy_weights(arg_params, aux_params, param_dict, shadow_net):
                 param_data = [1]
             else:
                 raise ValueError(param_name + ' not found in arg_params or aux_params')
+            num_data = 1
+            for dim in shadow_op.blobs[index].shape:
+                num_data *= dim
             if len(param_data) != num_data:
                 raise ValueError('param_data\'s length is not match num_data', param_name, len(param_data), num_data)
             shadow_op.blobs[index].data_f.extend(param_data)
@@ -62,7 +63,7 @@ def parse_param(params, name, type, default_value):
 def find_inputs(json_nodes, json_name, json_inputs):
     bottom_names, param_names = [], []
     for input_index in json_inputs:
-        assert(input_index[1] == 0)
+        assert input_index[1] == 0
         input_node = json_nodes[input_index[0]]
         node_op = input_node['op']
         node_name = input_node['name']
@@ -79,7 +80,7 @@ def find_inputs(json_nodes, json_name, json_inputs):
 def find_nodes(json_nodes, json_indexes):
     node_names = []
     for indexes in json_indexes:
-        assert(indexes[1] == 0)
+        assert indexes[1] == 0
         json_node = json_nodes[indexes[0]]
         node_names.append(json_node['name'])
     return node_names
@@ -89,25 +90,17 @@ def convert_input(net_info, shadow_net):
     shadow_inputs = net_info['input_name']
     shadow_shapes = net_info['input_shape']
 
+    assert len(shadow_inputs) == len(shadow_shapes)
     shadow_net.add_input('input', [], shadow_inputs, shadow_shapes)
-
-    data_blob_name = ''
-    for input_name in shadow_inputs:
-        if 'data' in input_name:
-            data_blob_name = input_name
-            break
 
     num_mean = len(net_info['mean_value'])
     num_scale = len(net_info['scale_value'])
-    mean_value, scale_value = None, None
-    if num_mean > 0:
-        mean_value = net_info['mean_value']
-    if num_scale > 0:
-        scale_value = net_info['scale_value']
+    mean_value = net_info['mean_value'] if num_mean > 0 else None
+    scale_value = net_info['scale_value'] if num_scale > 0 else None
     if num_mean > 0 or num_scale > 0:
-        if data_blob_name == '':
-            raise ValueError('"Data blob does not has \"data\" keyword')
-        shadow_net.add_data('data_transform', [data_blob_name], [data_blob_name], mean_value, scale_value)
+        for input_name in shadow_inputs:
+            if 'data' in input_name:
+                shadow_net.add_data('data_transform_' + input_name, [input_name], [input_name], mean_value, scale_value)
 
 
 def convert_activate(mxnet_nodes, index, param_dict, shadow_net):
@@ -120,7 +113,7 @@ def convert_activate(mxnet_nodes, index, param_dict, shadow_net):
         json_attr = {}
     bottom_names, param_names = find_inputs(mxnet_nodes, json_name, json_inputs)
 
-    act_type = json_attr['act_type']
+    act_type = parse_param(json_attr, 'act_type', 's_s', 'relu')
     if act_type == 'relu':
         act_type = 'Relu'
     elif act_type == 'sigmoid':
@@ -160,6 +153,33 @@ def convert_batch_norm(mxnet_nodes, index, param_dict, shadow_net):
 
     shadow_net.add_batch_norm(json_name, bottom_names, [json_name], use_global_stats, eps)
     shadow_net.add_scale(json_name + '_scale', [json_name], [json_name], 1, 1, scale_bias_term)
+
+
+def convert_binary(mxnet_nodes, index, param_dict, shadow_net):
+    json_node = mxnet_nodes[index]
+    json_name = json_node['name']
+    json_inputs = json_node['inputs']
+    if params_str in json_node:
+        json_attr = json_node[params_str]
+    else:
+        json_attr = {}
+    bottom_names, param_names = find_inputs(mxnet_nodes, json_name, json_inputs)
+
+    json_op = json_node['op']
+    if json_op == '_plus_scalar':
+        operation_type = 'Add'
+    elif json_op == '_minus_scalar':
+        operation_type = 'Sub'
+    elif json_op == '_mul_scalar':
+        operation_type = 'Mul'
+    elif json_op == '_div_scalar':
+        operation_type = 'Div'
+    else:
+        raise ValueError('Unsupported binary type', json_op)
+
+    scalar = parse_param(json_attr, 'scalar', 's_f', 1)
+
+    shadow_net.add_binary(json_name, bottom_names, [json_name], operation_type, scalar)
 
 
 def convert_concat(mxnet_nodes, index, param_dict, shadow_net):
@@ -278,7 +298,7 @@ def convert_eltwise(mxnet_nodes, index, param_dict, shadow_net, operation):
     shadow_net.add_eltwise(json_name, bottom_names, [json_name], operation)
 
 
-def convert_mul_scalar(mxnet_nodes, index, param_dict, shadow_net):
+def convert_leakyrelu(mxnet_nodes, index, param_dict, shadow_net):
     json_node = mxnet_nodes[index]
     json_name = json_node['name']
     json_inputs = json_node['inputs']
@@ -287,10 +307,26 @@ def convert_mul_scalar(mxnet_nodes, index, param_dict, shadow_net):
     else:
         json_attr = {}
     bottom_names, param_names = find_inputs(mxnet_nodes, json_name, json_inputs)
+    if len(param_names) > 0:
+        param_dict[json_name] = param_names
 
-    scalar = parse_param(json_attr, 'scalar', 's_f', 1)
+    act_type = parse_param(json_attr, 'act_type', 's_s', 'leaky')
+    slope = parse_param(json_attr, 'slope', 's_f', 0.25)
+    lower_bound = parse_param(json_attr, 'lower_bound', 's_f', 0.125)
+    upper_bound = parse_param(json_attr, 'upper_bound', 's_f', 0.334)
+    if act_type == 'elu':
+        raise ValueError('Unsupported activate type', act_type)
+    elif act_type == 'leaky':
+        act_type = 'Leaky'
+    elif act_type == 'prelu':
+        act_type = 'PRelu'
+    elif act_type == 'rrelu':
+        act_type = 'Leaky'
+        slope = (lower_bound + upper_bound) / 2.0
+    else:
+        raise ValueError('Unsupported activate type', act_type)
 
-    shadow_net.add_binary(json_name, bottom_names, [json_name], 'Mul', scalar)
+    shadow_net.add_activate(json_name, bottom_names, [json_name], act_type, slope=slope)
 
 
 def convert_pooling(mxnet_nodes, index, param_dict, shadow_net):
@@ -314,7 +350,7 @@ def convert_pooling(mxnet_nodes, index, param_dict, shadow_net):
         raise ValueError('Unsupported pool type', pool)
     kernel_size = parse_param(json_attr, 'kernel', 'v_i', [3, 3])
     stride = parse_param(json_attr, 'stride', 'v_i', [1, 1])
-    pad = parse_param(json_attr, 'pad', 'v_i', [1, 1])
+    pad = parse_param(json_attr, 'pad', 'v_i', [0, 0])
     global_pooling = parse_param(json_attr, 'global_pool', 's_s', 'False') == 'True'
     full_pooling = parse_param(json_attr, 'pooling_convention', 's_s', 'valid') == 'full'
 
@@ -422,6 +458,8 @@ def mxnet2shadow(model_root, meta_net_info, copy_params=False):
                 convert_activate(mxnet_nodes, index, param_dict, shadow_net)
             elif json_op == 'BatchNorm':
                 convert_batch_norm(mxnet_nodes, index, param_dict, shadow_net)
+            elif json_op == '_plus_scalar' or json_op == '_minus_scalar' or json_op == '_mul_scalar' or json_op == '_div_scalar':
+                convert_binary(mxnet_nodes, index, param_dict, shadow_net)
             elif json_op == 'Concat':
                 convert_concat(mxnet_nodes, index, param_dict, shadow_net)
             elif json_op == 'FullyConnected':
@@ -434,8 +472,8 @@ def mxnet2shadow(model_root, meta_net_info, copy_params=False):
                 convert_deformable_psroi_pooling(mxnet_nodes, index, param_dict, shadow_net)
             elif json_op == 'elemwise_add' or json_op == 'broadcast_add':
                 convert_eltwise(mxnet_nodes, index, param_dict, shadow_net, 'Sum')
-            elif json_op == '_mul_scalar':
-                convert_mul_scalar(mxnet_nodes, index, param_dict, shadow_net)
+            elif json_op == 'LeakyReLU':
+                convert_leakyrelu(mxnet_nodes, index, param_dict, shadow_net)
             elif json_op == 'Pooling':
                 convert_pooling(mxnet_nodes, index, param_dict, shadow_net)
             elif json_op == '_contrib_Proposal':
@@ -444,7 +482,7 @@ def mxnet2shadow(model_root, meta_net_info, copy_params=False):
                 convert_reshape(mxnet_nodes, index, param_dict, shadow_net)
             elif json_op == 'ROIPooling':
                 convert_roi_pooling(mxnet_nodes, index, param_dict, shadow_net)
-            elif json_op == 'SoftmaxOutput' or json_op == 'SoftmaxActivation' or 'softmax':
+            elif json_op == 'SoftmaxOutput' or json_op == 'SoftmaxActivation' or json_op == 'softmax':
                 convert_softmax(mxnet_nodes, index, param_dict, shadow_net)
             else:
                 print('Skipping ' + json_op, ' please check!')

@@ -25,6 +25,8 @@ void PoolingOp::Reshape() {
   top->reshape(top_shape);
 
 #if defined(USE_CUDNN)
+  cudnn::setPooling2dDesc<float>(&pooling_desc_, pool_type_, kernel_size_,
+                                 kernel_size_, pad_, pad_, stride_, stride_);
   cudnn::setTensor4dDesc<float>(&bottom_desc_, batch, in_c, in_h, in_w);
   cudnn::setTensor4dDesc<float>(&top_desc_, batch, in_c, out_h, out_w);
 #endif

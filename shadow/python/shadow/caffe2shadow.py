@@ -8,9 +8,9 @@ from shadow.net_spec import Shadow
 def copy_weights(caffe_model, shadow_net):
     net_param = shadow_net.net_param
     for shadow_op in net_param.op:
-        layer_name = shadow_op.name
+        op_name = shadow_op.name
         for caffe_layer in caffe_model.layer:
-            if caffe_layer.name == layer_name:
+            if caffe_layer.name == op_name:
                 assert len(shadow_op.blobs) == len(caffe_layer.blobs)
                 for n in range(0, len(shadow_op.blobs)):
                     shadow_blob = shadow_op.blobs[n]
@@ -42,7 +42,7 @@ def convert_input(caffe_deploy, net_info, shadow_net):
         caffe_input_layer = caffe_deploy.layer[0]
         shadow_inputs.extend(caffe_input_layer.top)
         if len(net_info['input_shape']) == 0:
-            if caffe_input_layer.input_param is not None:
+            if caffe_input_layer.HasField('input_param'):
                 caffe_param = caffe_input_layer.input_param
                 for caffe_shape in caffe_param.shape:
                     shadow_shapes.append(caffe_shape.dim)
@@ -50,25 +50,17 @@ def convert_input(caffe_deploy, net_info, shadow_net):
             shadow_shapes = net_info['input_shape']
         start_layer = 1
 
+    assert len(shadow_inputs) == len(shadow_shapes)
     shadow_net.add_input('input', [], shadow_inputs, shadow_shapes)
-
-    data_blob_name = ''
-    for input_name in shadow_inputs:
-        if 'data' in input_name:
-            data_blob_name = input_name
-            break
 
     num_mean = len(net_info['mean_value'])
     num_scale = len(net_info['scale_value'])
-    mean_value, scale_value = None, None
-    if num_mean > 0:
-        mean_value = net_info['mean_value']
-    if num_scale > 0:
-        scale_value = net_info['scale_value']
+    mean_value = net_info['mean_value'] if num_mean > 0 else None
+    scale_value = net_info['scale_value'] if num_scale > 0 else None
     if num_mean > 0 or num_scale > 0:
-        if data_blob_name == '':
-            raise ValueError('"Data blob does not has \"data\" keyword')
-        shadow_net.add_data('data_transform', [data_blob_name], [data_blob_name], mean_value, scale_value)
+        for input_name in shadow_inputs:
+            if 'data' in input_name:
+                shadow_net.add_data('data_transform_' + input_name, [input_name], [input_name], mean_value, scale_value)
 
     return start_layer
 

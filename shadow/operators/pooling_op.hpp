@@ -24,11 +24,9 @@ class PoolingOp : public Operator {
     full_pooling_ = get_single_argument<bool>("full_pooling", true);
 
 #if defined(USE_CUDNN)
-    cudnn::createPoolingDesc<float>(&pooling_desc_, pool_type_, &mode_,
-                                    kernel_size_, kernel_size_, pad_, pad_,
-                                    stride_, stride_);
-    cudnn::createTensor4dDesc<float>(&bottom_desc_);
-    cudnn::createTensor4dDesc<float>(&top_desc_);
+    cudnn::createPoolingDesc<float>(&pooling_desc_);
+    cudnn::createTensorDesc<float>(&bottom_desc_);
+    cudnn::createTensorDesc<float>(&top_desc_);
 #endif
   }
   ~PoolingOp() override {
@@ -58,7 +56,6 @@ class PoolingOp : public Operator {
 #if defined(USE_CUDNN)
   cudnnPoolingDescriptor_t pooling_desc_ = nullptr;
   cudnnTensorDescriptor_t bottom_desc_ = nullptr, top_desc_ = nullptr;
-  cudnnPoolingMode_t mode_;
 #endif
 };
 
