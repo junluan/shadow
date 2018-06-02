@@ -31,6 +31,12 @@ def convert_batch_norm(conv_op, bn_op, scale_op, merged_net, copy_params):
     merged_op.top.extend(scale_op.top)
     merged_op.bottom.extend(conv_op.bottom)
 
+    merge_weight_blob = merged_op.blobs.add()
+    merge_bias_blob = merged_op.blobs.add()
+
+    merge_weight_blob.shape.extend(conv_op.blobs[0].shape)
+    merge_bias_blob.shape.append(conv_op.blobs[0].shape[0])
+
     for arg in conv_op.arg:
         if arg.name != 'bias_term':
             merged_op.arg.add().CopyFrom(arg)
@@ -41,10 +47,11 @@ def convert_batch_norm(conv_op, bn_op, scale_op, merged_net, copy_params):
     has_bias = get_arg(conv_op, 'bias_term', 's_i', 1)
     weight = copy.deepcopy(conv_op.blobs[0].data_f)
     out_c = conv_op.blobs[0].shape[0]
-    bias = [0 for i in range(0, out_c)]
+    bias = [0] * out_c
     if has_bias:
         bias = copy.deepcopy(conv_op.blobs[1].data_f)
 
+    eps = get_arg(bn_op, 'eps', 's_f', 1e-5)
     bn_mean = copy.deepcopy(bn_op.blobs[0].data_f)
     bn_var = copy.deepcopy(bn_op.blobs[1].data_f)
     bn_scale = bn_op.blobs[2].data_f[0]
@@ -52,7 +59,7 @@ def convert_batch_norm(conv_op, bn_op, scale_op, merged_net, copy_params):
         bn_scale = 1 / bn_scale
     for i in range(0, len(bn_mean)):
         bn_mean[i] *= bn_scale
-        bn_var[i] = 1 / math.sqrt(abs(bn_var[i]) * bn_scale + 0.000001)
+        bn_var[i] = 1 / math.sqrt(abs(bn_var[i]) * bn_scale + eps)
 
     scale_scale = copy.deepcopy(scale_op.blobs[0].data_f)
     scale_bias = copy.deepcopy(scale_op.blobs[1].data_f)
@@ -63,11 +70,7 @@ def convert_batch_norm(conv_op, bn_op, scale_op, merged_net, copy_params):
     for i in range(0, len(bias)):
         bias[i] = (bias[i] - bn_mean[i]) * bn_var[i] * scale_scale[i] + scale_bias[i]
 
-    merge_weight_blob = merged_op.blobs.add()
-    merge_bias_blob = merged_op.blobs.add()
-    merge_weight_blob.shape.extend(conv_op.blobs[0].shape)
     merge_weight_blob.data_f.extend(weight)
-    merge_bias_blob.shape.append(out_c)
     merge_bias_blob.data_f.extend(bias)
 
 
