@@ -2,7 +2,7 @@
 #include "demo_detection.hpp"
 
 int main(int argc, char const *argv[]) {
-  std::string model("models/ssd/shadow/adas_model_finetune_reduce_3.shadowmodel");
+  std::string model("models/ssd/adas_model_finetune_reduce_3_merged.shadowmodel");
   std::string test_image("data/static/demo_6.png");
   std::string test_list("data/static/demo_list.txt");
 

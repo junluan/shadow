@@ -7,8 +7,8 @@ APT_INSTALL_CMD='sudo apt-get install -y --no-install-recommends --allow-unauthe
 if [ "$TRAVIS_OS_NAME" = 'linux' ]; then
     sudo apt-get update
     $APT_INSTALL_CMD \
-        build-essential \
         cmake \
+        build-essential \
         libopencv-dev \
         libprotobuf-dev \
         protobuf-compiler
@@ -30,7 +30,7 @@ if [ "$TRAVIS_OS_NAME" = 'linux' ]; then
     sudo ln -sf /usr/local/cuda-$CUDA_VERSION /usr/local/cuda
 
     CUDNN_REPO_PKG='nvidia-machine-learning-repo-ubuntu1404_4.0-2_amd64.deb'
-    CUDNN_PKG_VERSION='7.0.5.15-1+cuda8.0'
+    CUDNN_PKG_VERSION='7.1.4.18-1+cuda8.0'
     wget "https://developer.download.nvidia.com/compute/machine-learning/repos/ubuntu1404/x86_64/${CUDNN_REPO_PKG}"
     sudo dpkg -i "$CUDNN_REPO_PKG"
     rm -f "$CUDNN_REPO_PKG"

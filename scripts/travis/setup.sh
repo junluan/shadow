@@ -7,7 +7,7 @@ export USE_CUDA=true
 export USE_CUDNN=false
 export USE_Eigen=true
 export USE_BLAS=false
-export USE_NNPACK=true
+export USE_NNPACK=false
 export USE_Protobuf=true
 export USE_JSON=false
 export USE_OpenCV=true
@@ -15,7 +15,6 @@ export BUILD_SHARED_LIBS=true
 
 if [ "$BUILD" = 'linux' ]; then
     export USE_CUDA=false
-    export USE_NNPACK=false
 elif [ "$BUILD" = 'linux-cuda' ]; then
     :
 elif [ "$BUILD" = 'linux-cuda-cudnn' ]; then
