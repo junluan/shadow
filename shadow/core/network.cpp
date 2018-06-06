@@ -63,6 +63,7 @@ void Network::Forward(const std::map<std::string, float *> &data_map) {
   for (auto &op : ops_) {
     op->Forward();
   }
+  Kernel::Synchronize();
 
   DLOG(INFO) << "Forward Network!";
 }

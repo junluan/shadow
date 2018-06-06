@@ -42,6 +42,8 @@ void Release() {
 #endif
 }
 
+void Synchronize() { CUDA_CHECK(cudaDeviceSynchronize()); }
+
 template <typename T, typename Dtype>
 T *MakeBuffer(int size, Dtype *host_ptr) {
   T *buffer;

@@ -98,7 +98,7 @@ class ConvOp : public Operator {
   cudnnTensorDescriptor_t bias_desc_ = nullptr;
 
   size_t workspace_fwd_size_ = 0;
-  void *workspace_ = nullptr;
+  BlobUC *workspace_ = nullptr;
 #endif
 
 #if defined(USE_NNPACK)

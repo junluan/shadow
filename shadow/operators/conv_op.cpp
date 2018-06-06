@@ -51,12 +51,8 @@ void ConvOp::Reshape() {
         top_desc_, fwd_algo_, &workspace_fwd_size_));
 
     if (workspace_fwd_size_ > 0) {
-      cudaFree(workspace_);
-      if (cudaMalloc(&workspace_, workspace_fwd_size_) != cudaSuccess) {
-        fwd_algo_ = CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_GEMM;
-        workspace_fwd_size_ = 0;
-        workspace_ = nullptr;
-      }
+      workspace_ = op_ws_->CreateTempBlob<unsigned char>(
+          {static_cast<int>(workspace_fwd_size_)}, op_name_ + "_workspace");
     }
   }
 #endif
@@ -106,10 +102,12 @@ void ConvOp::Forward() {
 
 #if defined(USE_CUDNN)
   if (use_cudnn_) {
+    auto *workspace_ptr =
+        workspace_fwd_size_ > 0 ? workspace_->mutable_data() : nullptr;
     CUDNN_CHECK(cudnnConvolutionForward(
         Kernel::cudnn_handle_, cudnn::dataType<float>::one, bottom_desc_,
         bottom->data(), filter_desc_, blobs<float>(0)->data(), conv_desc_,
-        fwd_algo_, workspace_, workspace_fwd_size_,
+        fwd_algo_, workspace_ptr, workspace_fwd_size_,
         cudnn::dataType<float>::zero, top_desc_, top->mutable_data()));
     if (bias_term_) {
       CUDNN_CHECK(cudnnAddTensor(

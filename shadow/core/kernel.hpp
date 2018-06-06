@@ -49,6 +49,8 @@ namespace Kernel {
 void Setup(int device_id = 0);
 void Release();
 
+void Synchronize();
+
 template <typename T, typename Dtype>
 T *MakeBuffer(int size, Dtype *host_ptr);
 

@@ -36,6 +36,8 @@ void Release() {
 #endif
 }
 
+void Synchronize() {}
+
 #elif defined(USE_CL)
 EasyCL::Device *device_ = nullptr;
 EasyCL::Context *context_ = nullptr;
@@ -91,6 +93,8 @@ void Release() {
 
   clblasTeardown();
 }
+
+void Synchronize() {}
 
 template <typename T, typename Dtype>
 T *MakeBuffer(int size, Dtype *host_ptr) {
