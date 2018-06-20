@@ -48,8 +48,6 @@ list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake/modules)
 include(cmake/Utils.cmake)
 include(cmake/Dependencies.cmake)
 
-include_directories("third_party")
-
 add_subdirectory(shadow)
 
 set(CPACK_GENERATOR "ZIP")
