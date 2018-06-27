@@ -23,7 +23,7 @@ option(BUILD_SHARED_LIBS "Build shared library" ON)
 
 set(BLAS "OpenBLAS" CACHE STRING "Selected BLAS library in CPU mode")
 set_property(CACHE BLAS PROPERTY STRINGS OpenBLAS MKL)
-set(OpenCV_DIR "/usr/local/opencv-3.3.0" CACHE PATH "OpenCV root directory")
+set(OpenCV_DIR "/usr/local" CACHE PATH "OpenCV root directory")
 
 set(CMAKE_FIND_ROOT_PATH ${PROJECT_SOURCE_DIR})
 set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY BOTH)

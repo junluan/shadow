@@ -1,9 +1,7 @@
 set(Shadow_LINKER_LIBS)
 
-find_os_arch(Shadow_Platform Shadow_Arch)
-
 set(Shadow_INSTALL_INCLUDE_PREFIX include)
-set(Shadow_INSTALL_LIB_PREFIX lib/${Shadow_Platform}/${Shadow_Arch})
+set(Shadow_INSTALL_LIB_PREFIX lib)
 set(Shadow_INSTALL_BIN_PREFIX bin)
 
 if (${USE_CUDA})
