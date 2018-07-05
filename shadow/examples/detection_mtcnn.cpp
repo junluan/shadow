@@ -50,9 +50,9 @@ void DetectionMTCNN::Setup(const VecString &model_files,
   net_r_.LoadModel(model_files[1]);
   net_o_.LoadModel(model_files[2]);
 
-  in_p_str_ = net_p_.out_blob()[0];
-  in_r_str_ = net_r_.out_blob()[0];
-  in_o_str_ = net_o_.out_blob()[0];
+  in_p_str_ = net_p_.in_blob()[0];
+  in_r_str_ = net_r_.in_blob()[0];
+  in_o_str_ = net_o_.in_blob()[0];
 
   net_p_conv4_2_ = net_p_.out_blob()[0];
   net_p_prob1_ = net_p_.out_blob()[1];
