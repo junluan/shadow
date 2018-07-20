@@ -112,7 +112,7 @@ def convert_input(net_info, shadow_net):
             mean_value[i] *= -scale_value[i]
         for input_name in shadow_inputs:
             if 'data' in input_name:
-                shadow_net.add_scale(input_name, [input_name], [input_name], 1, 1, scale_value=scale_value, bias_value=mean_value)
+                shadow_net.add_scale(input_name, [input_name], [input_name], 1, 1, False, False, scale_value, mean_value)
 
 
 def convert_activate(mxnet_nodes, index, param_dict, shadow_net):
@@ -164,7 +164,7 @@ def convert_batch_norm(mxnet_nodes, index, param_dict, shadow_net):
     eps = parse_param(json_attr, 'eps', 's_f', 1e-5)
 
     shadow_net.add_batch_norm(json_name, bottom_names, [json_name], use_global_stats, eps)
-    shadow_net.add_scale(json_name + '_scale', [json_name], [json_name], 1, 1, scale_bias_term)
+    shadow_net.add_scale(json_name + '_scale', [json_name], [json_name], 1, 1, True, scale_bias_term)
 
 
 def convert_binary(mxnet_nodes, index, param_dict, shadow_net):

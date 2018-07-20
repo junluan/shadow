@@ -164,21 +164,6 @@ class Shadow(object):
             factor_blob = op_param.blobs.add()
             factor_blob.shape.extend([1])
 
-    def add_bias(self, name, bottoms, tops, axis=1, num_axes=1):
-        op_param = self.net_param.op.add()
-        self.add_common(op_param, name, 'Bias', bottoms, tops)
-
-        if axis != 1:
-            self.set_arg(op_param, 'axis', axis, 's_i')
-        if num_axes != 1:
-            self.set_arg(op_param, 'num_axes', num_axes, 's_i')
-
-        in_shape = self.blobs[self.net_index][bottoms[0]]['shape']
-        self.blobs[self.net_index][tops[0]] = {'shape': in_shape}
-        if self.blob_shape:
-            bias_blob = op_param.blobs.add()
-            bias_blob.shape.extend([in_shape[axis]])
-
     def add_binary(self, name, bottoms, tops, operation, scalar=None):
         op_param = self.net_param.op.add()
         self.add_common(op_param, name, 'Binary', bottoms, tops)
@@ -632,23 +617,32 @@ class Shadow(object):
         out_shape = [roi_shape[0], fea_shape[1], pooled_h, pooled_w]
         self.blobs[self.net_index][tops[0]] = {'shape': out_shape}
 
-    def add_scale(self, name, bottoms, tops, axis=1, num_axes=1, bias_term=False, scale_value=None, bias_value=None):
+    def add_scale(self, name, bottoms, tops, axis=1, num_axes=1, has_scale=True, has_bias=True, scale_value=None, bias_value=None):
         op_param = self.net_param.op.add()
         self.add_common(op_param, name, 'Scale', bottoms, tops)
 
         if axis != 1:
             self.set_arg(op_param, 'axis', axis, 's_i')
+        if not has_scale:
+            self.set_arg(op_param, 'has_scale', has_scale, 's_i')
+        if not has_bias:
+            self.set_arg(op_param, 'has_bias', has_bias, 's_i')
         if scale_value is not None:
             self.set_arg(op_param, 'scale_value', scale_value, 'v_f')
         if bias_value is not None:
             self.set_arg(op_param, 'bias_value', bias_value, 'v_f')
 
+        has_blob = has_scale or has_bias
+        has_scalar = scale_value is not None or bias_value is not None
+        assert has_blob != has_scalar
+
         in_shape = self.blobs[self.net_index][bottoms[0]]['shape']
         self.blobs[self.net_index][tops[0]] = {'shape': in_shape}
-        if self.blob_shape and scale_value is None and bias_value is None:
-            scale_blob = op_param.blobs.add()
-            scale_blob.shape.extend(in_shape[axis:axis+num_axes])
-            if bias_term:
+        if self.blob_shape and has_blob:
+            if has_scale:
+                scale_blob = op_param.blobs.add()
+                scale_blob.shape.extend(in_shape[axis:axis+num_axes])
+            if has_bias:
                 bias_blob = op_param.blobs.add()
                 bias_blob.shape.extend(in_shape[axis:axis+num_axes])
 

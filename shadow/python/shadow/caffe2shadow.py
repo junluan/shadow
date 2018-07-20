@@ -72,7 +72,7 @@ def convert_input(caffe_deploy, net_info, shadow_net):
             mean_value[i] *= -scale_value[i]
         for input_name in shadow_inputs:
             if 'data' in input_name:
-                shadow_net.add_scale(input_name, [input_name], [input_name], 1, 1, scale_value=scale_value, bias_value=mean_value)
+                shadow_net.add_scale(input_name, [input_name], [input_name], 1, 1, False, False, scale_value, mean_value)
 
     return start_layer
 
@@ -135,7 +135,7 @@ def convert_bias(caffe_layer, shadow_net):
         if caffe_param.HasField('num_axes'):
             num_axes = caffe_param.num_axes
 
-    shadow_net.add_bias(layer_name, bottom_names, top_names, axis, num_axes)
+    shadow_net.add_scale(layer_name, bottom_names, top_names, axis, num_axes, False, True)
 
 
 def convert_concat(caffe_layer, shadow_net):
@@ -510,7 +510,7 @@ def convert_scale(caffe_layer, shadow_net):
         if caffe_param.HasField('bias_term'):
             bias_term = caffe_param.bias_term
 
-    shadow_net.add_scale(layer_name, bottom_names, top_names, axis, num_axes, bias_term)
+    shadow_net.add_scale(layer_name, bottom_names, top_names, axis, num_axes, True, bias_term)
 
 
 def convert_softmax(caffe_layer, shadow_net):
