@@ -277,18 +277,6 @@ class Shadow(object):
                 bias_blob = op_param.blobs.add()
                 bias_blob.shape.extend([num_output])
 
-    def add_data(self, name, bottoms, tops, mean_value=None, scale_value=None):
-        op_param = self.net_param.op.add()
-        self.add_common(op_param, name, 'Data', bottoms, tops)
-
-        if mean_value is not None:
-            self.set_arg(op_param, 'mean_value', mean_value, 'v_f')
-        if scale_value is not None:
-            self.set_arg(op_param, 'scale_value', scale_value, 'v_f')
-
-        in_shape = self.blobs[self.net_index][bottoms[0]]['shape']
-        self.blobs[self.net_index][tops[0]] = {'shape': in_shape}
-
     def add_deconv(self, name, bottoms, tops, num_output, kernel_size, stride=1, pad=0, dilation=1, bias_term=True, group=1):
         op_param = self.net_param.op.add()
         self.add_common(op_param, name, 'Deconv', bottoms, tops)
@@ -644,25 +632,25 @@ class Shadow(object):
         out_shape = [roi_shape[0], fea_shape[1], pooled_h, pooled_w]
         self.blobs[self.net_index][tops[0]] = {'shape': out_shape}
 
-    def add_scale(self, name, bottoms, tops, axis=1, num_axes=1, bias_term=False):
+    def add_scale(self, name, bottoms, tops, axis=1, num_axes=1, bias_term=False, scale_value=None, bias_value=None):
         op_param = self.net_param.op.add()
         self.add_common(op_param, name, 'Scale', bottoms, tops)
 
         if axis != 1:
             self.set_arg(op_param, 'axis', axis, 's_i')
-        if num_axes != 1:
-            self.set_arg(op_param, 'num_axes', num_axes, 's_i')
-        if bias_term:
-            self.set_arg(op_param, 'bias_term', bias_term, 's_i')
+        if scale_value is not None:
+            self.set_arg(op_param, 'scale_value', scale_value, 'v_f')
+        if bias_value is not None:
+            self.set_arg(op_param, 'bias_value', bias_value, 'v_f')
 
         in_shape = self.blobs[self.net_index][bottoms[0]]['shape']
         self.blobs[self.net_index][tops[0]] = {'shape': in_shape}
-        if self.blob_shape:
+        if self.blob_shape and scale_value is None and bias_value is None:
             scale_blob = op_param.blobs.add()
-            scale_blob.shape.extend([in_shape[axis]])
+            scale_blob.shape.extend(in_shape[axis:axis+num_axes])
             if bias_term:
                 bias_blob = op_param.blobs.add()
-                bias_blob.shape.extend([in_shape[axis]])
+                bias_blob.shape.extend(in_shape[axis:axis+num_axes])
 
     def add_softmax(self, name, bottoms, tops, axis=1):
         op_param = self.net_param.op.add()

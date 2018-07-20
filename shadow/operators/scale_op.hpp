@@ -10,37 +10,48 @@ class ScaleOp : public Operator {
   explicit ScaleOp(const shadow::OpParam &op_param, Workspace *ws)
       : Operator(op_param, ws) {
     axis_ = get_single_argument<int>("axis", 1);
-    axis_ = bottoms<float>(0)->canonical_index(axis_);
-    num_axis_ = get_single_argument<int>("num_axis", 1);
-    CHECK_GE(num_axis_, -1);
-    bias_term_ = get_single_argument<bool>("bias_term", false);
+    auto scale_value = get_repeated_argument<float>("scale_value");
+    auto bias_value = get_repeated_argument<float>("bias_value");
 
-    if (bottoms_size() == 1) {
+    if (scale_value.empty() && bias_value.empty()) {
       CHECK_GE(blobs_size(), 1);
       scale_ = const_cast<BlobF *>(blobs<float>(0));
+      if (blobs_size() > 1) {
+        bias_ = const_cast<BlobF *>(blobs<float>(1));
+      } else {
+        bias_ = op_ws_->CreateBlob<float>(scale_->shape(),
+                                          op_name_ + "_bias_value");
+        Blas::Set(bias_->count(), 0, bias_->mutable_data(), 0);
+      }
     } else {
-      scale_ = const_cast<BlobF *>(bottoms<float>(1));
+      axis_ = 1;
+      int dim = bottoms<float>(0)->shape(axis_);
+      if (scale_value.size() > 1) {
+        CHECK_EQ(scale_value.size(), dim);
+      } else if (scale_value.size() == 1) {
+        scale_value = std::vector<float>(dim, scale_value[0]);
+      } else {
+        scale_value = std::vector<float>(dim, 1);
+      }
+      if (bias_value.size() > 1) {
+        CHECK_EQ(bias_value.size(), dim);
+      } else if (bias_value.size() == 1) {
+        bias_value = std::vector<float>(dim, bias_value[0]);
+      } else {
+        bias_value = std::vector<float>(dim, 1);
+      }
+      scale_ = op_ws_->CreateBlob<float>({dim}, op_name_ + "_scale_value");
+      bias_ = op_ws_->CreateBlob<float>({dim}, op_name_ + "_bias_value");
+      scale_->set_data(scale_value.data(), dim);
+      bias_->set_data(bias_value.data(), dim);
     }
-
-    if (bias_term_ && (bottoms_size() + blobs_size() > 2)) {
-      bias_param_id_ = blobs_size() - 1;
-    } else {
-      bias_param_id_ = blobs_size();
-      add_blobs<float>(op_name_ + "_param_bias");
-      auto *bias_blob = mutable_blobs<float>(bias_param_id_);
-      bias_blob->reshape(scale_->shape());
-      Blas::Set(bias_blob->count(), 0, bias_blob->mutable_data(), 0);
-      DLOG(WARNING) << "Bias param is initialized with the default value 0";
-    }
-    bias_ = const_cast<BlobF *>(blobs<float>(bias_param_id_));
   }
 
   void Reshape() override;
   void Forward() override;
 
  private:
-  bool bias_term_;
-  int axis_, num_axis_, scale_dim_, inner_dim_, bias_param_id_;
+  int axis_, scale_dim_, inner_dim_;
 
   BlobF *scale_ = nullptr, *bias_ = nullptr;
 };

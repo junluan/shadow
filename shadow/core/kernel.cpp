@@ -76,9 +76,9 @@ void Setup(int device_id) {
   program_vision.Build(*device_, compiler_options);
 
   const std::vector<std::string> cl_vision_kernels{
-      "DataTransform", "Im2Col",   "Pooling",  "Concat",       "Permute",
-      "Scale",         "Bias",     "Reorg",    "LRNFillScale", "LRN",
-      "ROIPooling",    "Proposal", "Activate", "PRelu"};
+      "Im2Col",   "Pooling",  "Concat",       "Permute", "Scale",
+      "Bias",     "Reorg",    "LRNFillScale", "LRN",     "ROIPooling",
+      "Proposal", "Activate", "PRelu"};
 
   cl_kernels_.set_kernel(program_vision, cl_vision_kernels);
 

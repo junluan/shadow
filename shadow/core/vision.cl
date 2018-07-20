@@ -2,29 +2,6 @@
   const int globalid = get_global_id(0); \
   if (globalid >= count) return;
 
-__kernel void DataTransform(__global float *in_data, int count, int in_c,
-                            int spatial_dim, int num_mean,
-                            __global float *mean_value, int num_scale,
-                            __global float *scale_value,
-                            __global float *out_data) {
-  CL_KERNEL_LOOP(globalid, count)
-
-  int c_out = (globalid / spatial_dim) % in_c;
-
-  if (num_mean == 1 && num_scale == 1) {
-    out_data[globalid] = (in_data[globalid] - mean_value[0]) * scale_value[0];
-  } else if (num_mean == in_c && num_scale == 1) {
-    out_data[globalid] =
-        (in_data[globalid] - mean_value[c_out]) * scale_value[0];
-  } else if (num_mean == 1 && num_scale == in_c) {
-    out_data[globalid] =
-        (in_data[globalid] - mean_value[0]) * scale_value[c_out];
-  } else if (num_mean == in_c && num_scale == in_c) {
-    out_data[globalid] =
-        (in_data[globalid] - mean_value[c_out]) * scale_value[c_out];
-  }
-}
-
 __kernel void Im2Col(__global float *in_data, int offset, int count, int in_c,
                      int in_h, int in_w, int kernel_size, int stride, int pad,
                      int dilation, int zero_point, int out_h, int out_w,

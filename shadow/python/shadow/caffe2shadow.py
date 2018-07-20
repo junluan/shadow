@@ -58,9 +58,21 @@ def convert_input(caffe_deploy, net_info, shadow_net):
     mean_value = net_info['mean_value'] if num_mean > 0 else None
     scale_value = net_info['scale_value'] if num_scale > 0 else None
     if num_mean > 0 or num_scale > 0:
+        max_dim = max(num_mean, num_scale)
+        if num_mean == 0 and num_scale > 0:
+            mean_value = [0] * max_dim
+        elif num_scale == 0 and num_mean > 0:
+            scale_value = [1] * max_dim
+        elif num_mean == 1 and num_scale > 1:
+            mean_value *= max_dim
+        elif num_scale == 1 and num_mean > 1:
+            scale_value *= max_dim
+        assert len(mean_value) == len(scale_value)
+        for i in range(0, len(mean_value)):
+            mean_value[i] *= -scale_value[i]
         for input_name in shadow_inputs:
             if 'data' in input_name:
-                shadow_net.add_data('data_transform_' + input_name, [input_name], [input_name], mean_value, scale_value)
+                shadow_net.add_scale(input_name, [input_name], [input_name], 1, 1, scale_value=scale_value, bias_value=mean_value)
 
     return start_layer
 
