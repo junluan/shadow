@@ -11,21 +11,12 @@ find_path(OpenBLAS_INCLUDE_DIRS
           DOC "OpenBLAS include header cblas.h"
           NO_DEFAULT_PATH)
 
-if (MSVC)
-  set(TMP ${CMAKE_FIND_LIBRARY_SUFFIXES})
-  set(CMAKE_FIND_LIBRARY_SUFFIXES ${CMAKE_FIND_LIBRARY_SUFFIXES} .dll.a)
-endif ()
-
 find_library(OpenBLAS_LIBRARIES
              NAMES openblas libopenblas
              PATHS ${OpenBLAS_DIR}
              PATH_SUFFIXES lib lib64 lib/x86_64 lib/x64 lib/x86
              DOC "OpenBLAS library"
              NO_DEFAULT_PATH)
-
-if (MSVC)
-  set(CMAKE_FIND_LIBRARY_SUFFIXES ${TMP})
-endif ()
 
 find_package_handle_standard_args(OpenBLAS DEFAULT_MSG OpenBLAS_INCLUDE_DIRS OpenBLAS_LIBRARIES)
 

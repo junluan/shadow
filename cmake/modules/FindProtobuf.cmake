@@ -18,29 +18,12 @@ find_path(Protobuf_INCLUDE_DIRS
           DOC "Protobuf include"
           NO_DEFAULT_PATH)
 
-if (NOT MSVC)
-  find_library(Protobuf_LIBRARIES
-               NAMES protobuf libprotobuf
-               PATHS ${Protobuf_DIR}
-               PATH_SUFFIXES lib lib64 lib/x86_64 lib/x86_64-linux-gnu lib/x64 lib/x86
-               DOC "Protobuf library"
-               NO_DEFAULT_PATH)
-else ()
-  find_library(Protobuf_LIBRARIES_RELEASE
-               NAMES libprotobuf
-               PATHS ${Protobuf_DIR}
-               PATH_SUFFIXES lib
-               DOC "Protobuf library"
-               NO_DEFAULT_PATH)
-  find_library(Protobuf_LIBRARIES_DEBUG
-               NAMES libprotobufd
-               PATHS ${Protobuf_DIR}
-               PATH_SUFFIXES lib
-               DOC "Protobuf library"
-               NO_DEFAULT_PATH)
-
-  set(Protobuf_LIBRARIES optimized ${Protobuf_LIBRARIES_RELEASE} debug ${Protobuf_LIBRARIES_DEBUG})
-endif ()
+find_library(Protobuf_LIBRARIES
+             NAMES protobuf libprotobuf
+             PATHS ${Protobuf_DIR}
+             PATH_SUFFIXES lib lib64 lib/x86_64 lib/x86_64-linux-gnu lib/x64 lib/x86
+             DOC "Protobuf library"
+             NO_DEFAULT_PATH)
 
 find_package_handle_standard_args(Protobuf DEFAULT_MSG Protobuf_INCLUDE_DIRS Protobuf_LIBRARIES Protoc_EXECUTABLE)
 

@@ -62,14 +62,6 @@ if (NOT MKL_USE_SINGLE_DYNAMIC_LIBRARY)
   else ()
     set(__iomp5_libs iomp5 libiomp5md.lib)
   endif ()
-  if (MSVC)
-    find_path(INTEL_INCLUDE_DIRS
-              NAMES omp.h
-              PATHS ${INTEL_ROOT_DIR}
-              PATH_SUFFIXES include
-              NO_DEFAULT_PATH)
-    list(APPEND __looked_for INTEL_INCLUDE_DIRS)
-  endif ()
   find_library(MKL_RTL_LIBRARY ${__iomp5_libs}
                PATHS ${INTEL_ROOT_DIR} ${INTEL_ROOT_DIR}/compiler
                PATH_SUFFIXES lib lib/intel64

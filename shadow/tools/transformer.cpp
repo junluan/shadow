@@ -357,11 +357,4 @@ void WriteProtoToFiles(const shadow::NetParam& shadow_net,
   WriteWeights(shadow_net, root, code_name);
 }
 
-void WriteProtoToBinary(const IO::Message& proto, const std::string& root,
-                        const std::string& model_name) {
-  Util::make_directory(root);
-  std::string filename = root + "/" + model_name + ".shadowmodel";
-  IO::WriteProtoToBinaryFile(proto, filename);
-}
-
 }  // namespace Shadow

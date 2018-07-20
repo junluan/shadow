@@ -8,8 +8,6 @@ __pycache__
 *_pb2.py
 *.pb.cc
 *.pb.h
-caffe.proto
-shadow/test
 
 # IntelliJ project files
 .idea
