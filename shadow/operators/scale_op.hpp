@@ -12,7 +12,6 @@ class ScaleOp : public Operator {
     axis_ = get_single_argument<int>("axis", 1);
     auto has_scale = get_single_argument<bool>("has_scale", true);
     auto has_bias = get_single_argument<bool>("has_bias", true);
-    CHECK(has_scale || has_bias);
     auto scale_value = get_repeated_argument<float>("scale_value");
     auto bias_value = get_repeated_argument<float>("bias_value");
 
