@@ -84,32 +84,6 @@ const shadow::OpParam ParseBatchNorm(const JValue &root) {
   return shadow_op;
 }
 
-const shadow::OpParam ParseBias(const JValue &root) {
-  shadow::OpParam shadow_op;
-
-  ParseCommon(root, &shadow_op);
-
-  int axis = 1, num_axes = 1;
-  if (root.HasMember("arg")) {
-    const auto &args = root["arg"];
-    for (int i = 0; i < args.Size(); ++i) {
-      const auto &arg = args[i];
-      CHECK(arg.HasMember("name"));
-      const auto &arg_name = Json::GetString(arg, "name", "");
-      if (arg_name == "axis") {
-        axis = Json::GetInt(arg, "s_i", 1);
-      } else if (arg_name == "num_axes") {
-        num_axes = Json::GetInt(arg, "s_i", 1);
-      }
-    }
-  }
-
-  set_s_i(&shadow_op, "axis", axis);
-  set_s_i(&shadow_op, "num_axes", num_axes);
-
-  return shadow_op;
-}
-
 const shadow::OpParam ParseBinary(const JValue &root) {
   shadow::OpParam shadow_op;
 
@@ -619,33 +593,34 @@ const shadow::OpParam ParseUnary(const JValue &root) {
 using ParseFunc = std::function<const shadow::OpParam(const JValue &)>;
 
 static const std::map<std::string, ParseFunc> parse_func_map{
-    {"Activate", ParseActivate},   {"BatchNorm", ParseBatchNorm},
-    {"Bias", ParseBias},           {"Binary", ParseBinary},
-    {"Concat", ParseConcat},       {"Connected", ParseConnected},
-    {"Conv", ParseConv},           {"Deconv", ParseConv},
-    {"Eltwise", ParseEltwise},     {"Flatten", ParseFlatten},
-    {"Input", ParseInput},         {"LRN", ParseLRN},
-    {"Normalize", ParseNormalize}, {"Permute", ParsePermute},
-    {"Pooling", ParsePooling},     {"PriorBox", ParsePriorBox},
-    {"Reorg", ParseReorg},         {"Reshape", ParseReshape},
-    {"Scale", ParseScale},         {"Softmax", ParseSoftmax},
+    {"Activate", ParseActivate},
+    {"BatchNorm", ParseBatchNorm},
+    {"Binary", ParseBinary},
+    {"Concat", ParseConcat},
+    {"Connected", ParseConnected},
+    {"Conv", ParseConv},
+    {"Deconv", ParseConv},
+    {"Eltwise", ParseEltwise},
+    {"Flatten", ParseFlatten},
+    {"Input", ParseInput},
+    {"LRN", ParseLRN},
+    {"Normalize", ParseNormalize},
+    {"Permute", ParsePermute},
+    {"Pooling", ParsePooling},
+    {"PriorBox", ParsePriorBox},
+    {"Reorg", ParseReorg},
+    {"Reshape", ParseReshape},
+    {"Scale", ParseScale},
+    {"Softmax", ParseSoftmax},
     {"Unary", ParseUnary}};
 
 void ParseNet(const std::string &proto_text, shadow::NetParam *net) {
   const auto &document = Json::GetDocument(proto_text);
 
   const auto &net_name = Json::GetString(document, "name", "");
-  const auto &net_num_class = Json::GetVecInt(document, "num_class");
-  const auto &net_out_blob = Json::GetVecString(document, "out_blob");
   const auto &json_ops = Json::GetValue(document, "op");
 
   net->set_name(net_name);
-  for (const auto &num_class : net_num_class) {
-    net->add_num_class(num_class);
-  }
-  for (const auto &out_blob : net_out_blob) {
-    net->add_out_blob(out_blob);
-  }
 
   for (int i = 0; i < json_ops.Size(); ++i) {
     const auto &json_op = json_ops[i];
@@ -773,25 +748,6 @@ const shadow::OpParam ParseBatchNorm(const std::vector<std::string> &params) {
   }
 
   set_s_i(&shadow_op, "use_global_stats", use_global_stats);
-
-  return shadow_op;
-}
-
-const shadow::OpParam ParseBias(const std::vector<std::string> &params) {
-  shadow::OpParam shadow_op;
-
-  const auto &argument = ParseCommon(params, &shadow_op);
-
-  int axis = 1, num_axes = 1;
-  if (argument.count("axis")) {
-    axis = argument.at("axis").s_i;
-  }
-  if (argument.count("num_axes")) {
-    num_axes = argument.at("num_axes").s_i;
-  }
-
-  set_s_i(&shadow_op, "axis", axis);
-  set_s_i(&shadow_op, "num_axes", num_axes);
 
   return shadow_op;
 }
@@ -1204,16 +1160,25 @@ using ParseFunc =
     std::function<const shadow::OpParam(const std::vector<std::string> &)>;
 
 static const std::map<std::string, ParseFunc> parse_func_map{
-    {"Activate", ParseActivate},   {"BatchNorm", ParseBatchNorm},
-    {"Bias", ParseBias},           {"Binary", ParseBinary},
-    {"Concat", ParseConcat},       {"Connected", ParseConnected},
-    {"Conv", ParseConv},           {"Deconv", ParseConv},
-    {"Eltwise", ParseEltwise},     {"Flatten", ParseFlatten},
-    {"Input", ParseInput},         {"LRN", ParseLRN},
-    {"Normalize", ParseNormalize}, {"Permute", ParsePermute},
-    {"Pooling", ParsePooling},     {"PriorBox", ParsePriorBox},
-    {"Reorg", ParseReorg},         {"Reshape", ParseReshape},
-    {"Scale", ParseScale},         {"Softmax", ParseSoftmax},
+    {"Activate", ParseActivate},
+    {"BatchNorm", ParseBatchNorm},
+    {"Binary", ParseBinary},
+    {"Concat", ParseConcat},
+    {"Connected", ParseConnected},
+    {"Conv", ParseConv},
+    {"Deconv", ParseConv},
+    {"Eltwise", ParseEltwise},
+    {"Flatten", ParseFlatten},
+    {"Input", ParseInput},
+    {"LRN", ParseLRN},
+    {"Normalize", ParseNormalize},
+    {"Permute", ParsePermute},
+    {"Pooling", ParsePooling},
+    {"PriorBox", ParsePriorBox},
+    {"Reorg", ParseReorg},
+    {"Reshape", ParseReshape},
+    {"Scale", ParseScale},
+    {"Softmax", ParseSoftmax},
     {"Unary", ParseUnary}};
 
 void ParseNet(const std::string &proto_text, shadow::NetParam *net) {
@@ -1222,18 +1187,6 @@ void ParseNet(const std::string &proto_text, shadow::NetParam *net) {
 
   const auto &net_name = ops[0];
   net->set_name(net_name.substr(1, net_name.size() - 2));
-
-  const auto &net_num_class = ops[1];
-  for (const auto &dim :
-       Util::tokenize(net_num_class.substr(1, net_num_class.size() - 2), " ")) {
-    net->add_num_class(Util::stoi(dim));
-  }
-
-  const auto &net_out_blob = ops[2];
-  for (const auto &blob :
-       Util::tokenize(net_out_blob.substr(1, net_out_blob.size() - 2), ",")) {
-    net->add_out_blob(Util::trim(blob));
-  }
 
   for (int i = 3; i < ops.size(); ++i) {
     auto params = Util::tokenize(ops[i], "|");

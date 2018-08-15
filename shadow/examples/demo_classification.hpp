@@ -18,8 +18,8 @@ class DemoClassification {
     }
   }
 
-  void Setup(const VecString &model_files, const VecInt &in_shape) {
-    method_->Setup(model_files, in_shape);
+  void Setup(const std::string &model_file, const VecInt &in_shape) {
+    method_->Setup(model_file, in_shape);
   }
 
   void Test(const std::string &image_file);

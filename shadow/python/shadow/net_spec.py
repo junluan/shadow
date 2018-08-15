@@ -1,13 +1,13 @@
 from __future__ import print_function
 
-import math
 from google.protobuf import text_format
 from proto import shadow_pb2
 
 
 class Shadow(object):
-    def __init__(self):
-        self.meta_net_param = []
+    def __init__(self, name):
+        self.meta_net_param = shadow_pb2.MetaNetParam()
+        self.meta_net_param.name = name
         self.net_param = {}
         self.net_index = -1
 
@@ -40,22 +40,25 @@ class Shadow(object):
         op_param.bottom.extend(bottoms)
         op_param.top.extend(tops)
 
-    def get_nets(self):
-        return self.meta_net_param
+    def get_meta_net_name(self):
+        if self.meta_net_param.HasField('name'):
+            return self.meta_net_param.name
+        else:
+            return ''
+
+    def get_meta_net_network(self):
+        return self.meta_net_param.network
+
+    def get_meta_net_arg(self):
+        return self.meta_net_param.arg
 
     def get_net(self, index):
         assert index >= 0
-        assert len(self.meta_net_param) > index
-        return self.meta_net_param[index]
+        assert len(self.meta_net_param.network) > index
+        return self.meta_net_param.network[index]
 
     def get_net_name(self):
         return self.get_net(self.net_index).name
-
-    def get_net_num_class(self):
-        return self.get_net(self.net_index).num_class
-
-    def get_net_out_blob(self):
-        return self.get_net(self.net_index).out_blob
 
     def get_net_op(self):
         return self.get_net(self.net_index).op
@@ -64,23 +67,21 @@ class Shadow(object):
         return self.get_net(self.net_index).arg
 
     def set_net(self, index):
-        for i in range(len(self.meta_net_param), index + 1):
-            self.meta_net_param.append(shadow_pb2.NetParam())
-        self.net_param = self.meta_net_param[index]
+        for i in range(len(self.meta_net_param.network), index + 1):
+            self.meta_net_param.network.add()
+        self.net_param = self.meta_net_param.network[index]
         self.net_index = index
 
     def set_net_name(self, name):
         self.get_net(self.net_index).name = name
 
-    def set_net_num_class(self, num_class):
-        self.get_net(self.net_index).num_class.extend(num_class)
-
-    def set_net_out_blob(self, out_blob):
-        self.get_net(self.net_index).out_blob.extend(out_blob)
-
     def set_net_arg(self, args):
         for arg_name in args:
             self.set_arg(self.get_net(self.net_index), arg_name[:-4], args[arg_name], arg_name[-3:])
+
+    def copy_meta_net_arg(self, arg):
+        for ar in arg:
+            self.meta_net_param.arg.add().CopyFrom(ar)
 
     def copy_net_arg(self, arg):
         for ar in arg:
@@ -441,8 +442,14 @@ class Shadow(object):
 
     def write_proto_to_txt(self, file_path, net_index=-1):
         with open(file_path, 'w') as proto_file:
-            text_format.PrintMessage(self.get_net(net_index), proto_file)
+            if net_index >= 0:
+                text_format.PrintMessage(self.get_net(net_index), proto_file)
+            else:
+                text_format.PrintMessage(self.meta_net_param, proto_file)
 
     def write_proto_to_binary(self, file_path, net_index=-1):
         with open(file_path, 'wb') as proto_file:
-            proto_file.write(self.get_net(net_index).SerializeToString())
+            if net_index >= 0:
+                proto_file.write(self.get_net(net_index).SerializeToString())
+            else:
+                proto_file.write(self.meta_net_param.SerializeToString())

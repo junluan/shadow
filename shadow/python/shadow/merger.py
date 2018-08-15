@@ -34,8 +34,11 @@ def convert_batch_norm(conv_op, bn_op, scale_op, merged_net, copy_params):
     merge_weight_blob = merged_op.blobs.add()
     merge_bias_blob = merged_op.blobs.add()
 
+    out_c = get_arg(conv_op, 'num_output', 's_i', 0)
+    assert out_c > 0
+
     merge_weight_blob.shape.extend(conv_op.blobs[0].shape)
-    merge_bias_blob.shape.append(conv_op.blobs[0].shape[0])
+    merge_bias_blob.shape.append(out_c)
 
     for arg in conv_op.arg:
         if arg.name != 'bias_term':
@@ -44,12 +47,11 @@ def convert_batch_norm(conv_op, bn_op, scale_op, merged_net, copy_params):
     if not copy_params:
         return
 
-    has_bias = get_arg(conv_op, 'bias_term', 's_i', 1)
     weight = copy.deepcopy(conv_op.blobs[0].data_f)
-    out_c = conv_op.blobs[0].shape[0]
-    bias = [0] * out_c
-    if has_bias:
+    if get_arg(conv_op, 'bias_term', 's_i', 1):
         bias = copy.deepcopy(conv_op.blobs[1].data_f)
+    else:
+        bias = [0] * out_c
 
     eps = get_arg(bn_op, 'eps', 's_f', 1e-5)
     bn_mean = copy.deepcopy(bn_op.blobs[0].data_f)
@@ -92,13 +94,11 @@ def convert_activate(conv_op, ac_op, merged_net):
     bias_arg.s_i = 1
 
 
-def MergeBatchNorm(shadow_net, copy_params):
-    merged_net = Shadow()
-    for n, ori_net in enumerate(shadow_net.get_nets()):
+def merge_batchnorm(shadow_net, copy_params):
+    merged_net = Shadow(shadow_net.get_meta_net_name())
+    for n, ori_net in enumerate(shadow_net.get_meta_net_network()):
         merged_net.set_net(n)
         merged_net.set_net_name(ori_net.name)
-        merged_net.set_net_num_class(ori_net.num_class)
-        merged_net.set_net_out_blob(ori_net.out_blob)
         merged_net.copy_net_arg(ori_net.arg)
         op_size = len(ori_net.op)
         o = 0
@@ -120,13 +120,11 @@ def MergeBatchNorm(shadow_net, copy_params):
     return merged_net
 
 
-def MergeActivate(shadow_net):
-    merged_net = Shadow()
-    for n, ori_net in enumerate(shadow_net.get_nets()):
+def merge_activate(shadow_net):
+    merged_net = Shadow(shadow_net.get_meta_net_name())
+    for n, ori_net in enumerate(shadow_net.get_meta_net_network()):
         merged_net.set_net(n)
         merged_net.set_net_name(ori_net.name)
-        merged_net.set_net_num_class(ori_net.num_class)
-        merged_net.set_net_out_blob(ori_net.out_blob)
         merged_net.copy_net_arg(ori_net.arg)
         op_size = len(ori_net.op)
         o = 0
@@ -147,9 +145,7 @@ def MergeActivate(shadow_net):
     return merged_net
 
 
-def Merge(shadow_net, copy_params, merge_activate=True):
-    merged_bn_net = MergeBatchNorm(shadow_net, copy_params)
-    if merge_activate:
-        return MergeActivate(merged_bn_net)
-    else:
-        return merged_bn_net
+def merge(shadow_net, copy_params):
+    merged_bn_net = merge_batchnorm(shadow_net, copy_params)
+    merged_net = merge_activate(merged_bn_net)
+    return merged_net

@@ -1,8 +1,7 @@
 from __future__ import print_function
 
+from config import *
 from shadow.util import mkdir_p
-from config.config_customs import *
-from config.config_examples import *
 
 import argparse
 
@@ -37,24 +36,24 @@ if __name__ == '__main__':
         raise ValueError('Currently only support convert caffe or mxnet model!', model_type)
 
     if args.merge_op:
-        from shadow.merger import Merge
-        merged_net = Merge(shadow_net, args.copy_params)
+        from shadow.merger import merge
+        merged_net = merge(shadow_net, args.copy_params)
+
+    save_name = args.save_root + '/' + meta_net_info['save_name']
 
     if args.copy_params:
-        for n, model_name in enumerate(meta_net_info['model_name']):
-            save_path = args.save_root + '/' + model_name + '.shadowmodel'
-            shadow_net.write_proto_to_binary(save_path, n)
-            print('Convert successful, model has been written to ' + save_path)
-            if args.merge_op:
-                save_path = args.save_root + '/' + model_name + '_merged.shadowmodel'
-                merged_net.write_proto_to_binary(save_path, n)
-                print('Convert successful, merged model has been written to ' + save_path)
+        save_path = save_name + '.shadowmodel'
+        shadow_net.write_proto_to_binary(save_path)
+        print('Convert successful, model has been written to ' + save_path)
+        if args.merge_op:
+            save_path = save_name + '_merged.shadowmodel'
+            merged_net.write_proto_to_binary(save_path)
+            print('Merge successful, merged model has been written to ' + save_path)
     else:
-        for n, model_name in enumerate(meta_net_info['model_name']):
-            save_path = args.save_root + '/' + model_name + '.shadowtxt'
-            shadow_net.write_proto_to_txt(save_path, n)
-            print('Convert successful, model has been written to ' + save_path)
-            if args.merge_op:
-                save_path = args.save_root + '/' + model_name + '_merged.shadowtxt'
-                merged_net.write_proto_to_txt(save_path, n)
-                print('Merge successful, merged model has been written to ' + save_path)
+        save_path = save_name + '.shadowtxt'
+        shadow_net.write_proto_to_txt(save_path)
+        print('Convert successful, model has been written to ' + save_path)
+        if args.merge_op:
+            save_path = save_name + '_merged.shadowtxt'
+            merged_net.write_proto_to_txt(save_path)
+            print('Merge successful, merged model has been written to ' + save_path)

@@ -17,7 +17,7 @@ class DetectionMTCNN final : public Method {
   DetectionMTCNN() = default;
   ~DetectionMTCNN() override { Release(); }
 
-  void Setup(const VecString &model_files, const VecInt &in_shape) override;
+  void Setup(const std::string &model_file, const VecInt &in_shape) override;
 
   void Predict(const JImage &im_src, const VecRectF &rois,
                std::vector<VecBoxF> *Gboxes,

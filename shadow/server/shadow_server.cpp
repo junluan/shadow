@@ -5,35 +5,27 @@
 #include "server/server.grpc.pb.h"
 #include "util/jimage_proc.hpp"
 
+#include <memory>
+
 namespace Shadow {
 
 namespace Server {
 
 class ShadowServer final : public ::shadow::ShadowService::Service {
  public:
-  ShadowServer(const VecString &models, const std::string &method) {
+  ShadowServer(const std::string &model_file, const std::string &method) {
     if (method == "ssd" || method == "yolo") {
-      detection_ = new DemoDetection(method);
-      detection_->Setup(models, {1});
+      detection_ = std::make_shared<DemoDetection>(method);
+      detection_->Setup(model_file, {1});
       is_detection_ = true;
     } else if (method == "classification") {
-      classification_ = new DemoClassification(method);
-      classification_->Setup(models, {1});
+      classification_ = std::make_shared<DemoClassification>(method);
+      classification_->Setup(model_file, {1});
       is_detection_ = false;
     } else {
       LOG(FATAL) << "Unknown method " << method;
     }
     method_name_ = method;
-  }
-  ~ShadowServer() override {
-    if (detection_ != nullptr) {
-      delete detection_;
-      detection_ = nullptr;
-    }
-    if (classification_ != nullptr) {
-      delete classification_;
-      classification_ = nullptr;
-    }
   }
 
   grpc::Status Process(grpc::ServerContext *context,
@@ -96,8 +88,8 @@ class ShadowServer final : public ::shadow::ShadowService::Service {
   }
 
  private:
-  DemoDetection *detection_ = nullptr;
-  DemoClassification *classification_ = nullptr;
+  std::shared_ptr<DemoDetection> detection_ = nullptr;
+  std::shared_ptr<DemoClassification> classification_ = nullptr;
   std::string method_name_;
   bool is_detection_ = true;
   JImage im_ini_;
@@ -114,7 +106,7 @@ int main(int argc, char **argv) {
   std::string server_address("localhost:50051");
   std::string model("models/ssd/adas/adas_model_finetune_reduce_3.shadowmodel");
 
-  Shadow::Server::ShadowServer service({model}, "ssd");
+  Shadow::Server::ShadowServer service(model, "ssd");
 
   grpc::ServerBuilder builder;
   builder.AddListeningPort(server_address, grpc::InsecureServerCredentials());

@@ -58,11 +58,20 @@ inline void ApplyNMSFast(const VecBoxF &bboxes, const VecFloat &scores,
   }
 }
 
-void DetectionRefineDet::Setup(const VecString &model_files,
+void DetectionRefineDet::Setup(const std::string &model_file,
                                const VecInt &in_shape) {
   net_.Setup();
 
-  net_.LoadModel(model_files[0]);
+#if defined(USE_Protobuf)
+  shadow::MetaNetParam meta_net_param;
+  CHECK(IO::ReadProtoFromBinaryFile(model_file, &meta_net_param))
+      << "Error when loading proto binary file: " << model_file;
+
+  net_.LoadModel(meta_net_param.network(0));
+
+#else
+  LOG(FATAL) << "Unsupported load binary model, recompiled with USE_Protobuf";
+#endif
 
   const auto &in_blob = net_.in_blob();
   CHECK_EQ(in_blob.size(), 1);
@@ -95,7 +104,7 @@ void DetectionRefineDet::Setup(const VecString &model_files,
   in_data_.resize(batch_ * in_num_);
 
   threshold_ = 0.6;
-  num_classes_ = net_.num_class()[0];
+  num_classes_ = net_.get_single_argument<int>("num_classes", 21);
   num_priors_ = net_.GetBlobByName<float>(arm_priorbox_str_)->shape(2) / 4;
   num_loc_classes_ = 1;
   background_label_id_ = 0;

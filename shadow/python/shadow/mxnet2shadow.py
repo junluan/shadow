@@ -430,38 +430,30 @@ def convert_softmax(mxnet_nodes, index, param_dict, shadow_net):
 
 
 def mxnet2shadow(model_root, meta_net_info, copy_params=False):
-    mxnet_symbols, mxnet_arg_params, mxnet_aux_params = [], [], []
-    for index, model_name in enumerate(meta_net_info['model_name']):
-        model_epoch = meta_net_info['model_epoch'][index]
+    shadow_net = Shadow(meta_net_info['save_name'])
+
+    for n, model_name in enumerate(meta_net_info['model_name']):
+        model_epoch = meta_net_info['model_epoch'][n]
         sym, arg_params, aux_params = mx.model.load_checkpoint(model_root + '/' + model_name, model_epoch)
-        mxnet_symbols.append(json.loads(sym.tojson()))
-        mxnet_arg_params.append(arg_params)
-        mxnet_aux_params.append(aux_params)
-
-    shadow_net = Shadow()
-
-    for n in range(0, len(mxnet_symbols)):
-        mxnet_symbol = mxnet_symbols[n]
+        mxnet_symbol = json.loads(sym.tojson())
         mxnet_nodes = mxnet_symbol['nodes']
         mxnet_heads = mxnet_symbol['heads']
+
         net_info = meta_net_info['network'][n]
+        net_info['arg']['out_blob_v_s'] = find_nodes(mxnet_nodes, mxnet_heads)
 
         shadow_net.set_net(n)
         shadow_net.set_net_name(meta_net_info['model_name'][n])
-        shadow_net.set_net_num_class(net_info['num_class'])
         shadow_net.set_net_arg(net_info['arg'])
-        shadow_net.set_net_out_blob(find_nodes(mxnet_nodes, mxnet_heads))
 
         convert_input(net_info, shadow_net)
 
         param_dict = {}
         for index, json_node in enumerate(mxnet_nodes):
             json_op = json_node['op']
-
             if json_op == 'null':
                 continue
-
-            if json_op == 'Activation':
+            elif json_op == 'Activation':
                 convert_activate(mxnet_nodes, index, param_dict, shadow_net)
             elif json_op == 'BatchNorm':
                 convert_batch_norm(mxnet_nodes, index, param_dict, shadow_net)
@@ -495,6 +487,6 @@ def mxnet2shadow(model_root, meta_net_info, copy_params=False):
                 print('Skipping ' + json_op, ' please check!')
 
         if copy_params:
-            copy_weights(mxnet_arg_params[n], mxnet_aux_params[n], param_dict, shadow_net)
+            copy_weights(arg_params, aux_params, param_dict, shadow_net)
 
     return shadow_net

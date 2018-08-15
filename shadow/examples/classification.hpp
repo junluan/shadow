@@ -10,7 +10,7 @@ class Classification final : public Method {
   Classification() = default;
   ~Classification() override { Release(); }
 
-  void Setup(const VecString &model_files, const VecInt &in_shape) override;
+  void Setup(const std::string &model_file, const VecInt &in_shape) override;
 
   void Predict(const JImage &im_src, const VecRectF &rois,
                std::vector<std::map<std::string, VecFloat>> *scores) override;
@@ -27,10 +27,8 @@ class Classification final : public Method {
 
   Network net_;
   VecFloat in_data_;
-  VecInt task_dims_;
-  VecString task_names_;
   std::string in_str_, prob_str_;
-  int batch_, in_num_, in_c_, in_h_, in_w_;
+  int num_classes_, batch_, in_num_, in_c_, in_h_, in_w_;
 };
 
 }  // namespace Shadow

@@ -2,11 +2,20 @@
 
 namespace Shadow {
 
-void DetectionYOLO::Setup(const VecString &model_files,
+void DetectionYOLO::Setup(const std::string &model_file,
                           const VecInt &in_shape) {
   net_.Setup();
 
-  net_.LoadModel(model_files[0]);
+#if defined(USE_Protobuf)
+  shadow::MetaNetParam meta_net_param;
+  CHECK(IO::ReadProtoFromBinaryFile(model_file, &meta_net_param))
+      << "Error when loading proto binary file: " << model_file;
+
+  net_.LoadModel(meta_net_param.network(0));
+
+#else
+  LOG(FATAL) << "Unsupported load binary model, recompiled with USE_Protobuf";
+#endif
 
   const auto &in_blob = net_.in_blob();
   CHECK_EQ(in_blob.size(), 1);
@@ -40,7 +49,7 @@ void DetectionYOLO::Setup(const VecString &model_files,
   biases_ = VecFloat{1.08f,  1.19f, 3.42f, 4.41f,  6.63f,
                      11.38f, 9.42f, 5.11f, 16.62f, 10.52f};
   threshold_ = 0.6;
-  num_classes_ = net_.num_class()[0];
+  num_classes_ = net_.get_single_argument<int>("num_classes", 20);
   num_km_ = 5;
 }
 

@@ -21,7 +21,7 @@ def copy_weights(caffe_model, shadow_net):
 def convert_input(caffe_deploy, net_info, shadow_net):
     start_layer = 0
     shadow_inputs = []
-    shadow_shapes = [[]]
+    shadow_shapes = []
 
     if len(caffe_deploy.input) > 0:
         shadow_inputs.extend(caffe_deploy.input)
@@ -527,39 +527,27 @@ def convert_softmax(caffe_layer, shadow_net):
 
 
 def caffe2shadow(model_root, meta_net_info, copy_params=False):
-    caffe_deploys, caffe_models = [], []
-    for model_name in meta_net_info['model_name']:
+    shadow_net = Shadow(meta_net_info['save_name'])
+
+    for n, model_name in enumerate(meta_net_info['model_name']):
         deploy_file = model_root + '/' + model_name + '.prototxt'
         deploy_model = model_root + '/' + model_name + '.caffemodel'
 
         caffe_deploy = caffe_pb2.NetParameter()
         with open(deploy_file, 'r') as caffe_file:
             text_format.Merge(caffe_file.read(), caffe_deploy)
-            caffe_deploys.append(caffe_deploy)
-        if copy_params:
-            caffe_model = caffe_pb2.NetParameter()
-            with open(deploy_model, 'rb') as caffe_file:
-                caffe_model.ParseFromString(caffe_file.read())
-                caffe_models.append(caffe_model)
 
-    shadow_net = Shadow()
-
-    for n in range(0, len(caffe_deploys)):
-        caffe_deploy = caffe_deploys[n]
         net_info = meta_net_info['network'][n]
 
         shadow_net.set_net(n)
-        shadow_net.set_net_name(caffe_deploy.name)
-        shadow_net.set_net_num_class(net_info['num_class'])
+        shadow_net.set_net_name(meta_net_info['model_name'][n])
         shadow_net.set_net_arg(net_info['arg'])
-        shadow_net.set_net_out_blob(net_info['out_blob'])
 
         start_layer = convert_input(caffe_deploy, net_info, shadow_net)
 
-        for l in range(start_layer, len(caffe_deploy.layer)):
-            caffe_layer = caffe_deploy.layer[l]
+        for index in range(start_layer, len(caffe_deploy.layer)):
+            caffe_layer = caffe_deploy.layer[index]
             layer_type = caffe_layer.type
-
             if layer_type == 'PReLU' or layer_type == 'ReLU' or layer_type == 'Sigmoid':
                 convert_activate(caffe_layer, shadow_net)
             elif layer_type == 'Axpy':
@@ -606,6 +594,9 @@ def caffe2shadow(model_root, meta_net_info, copy_params=False):
                 print('Layer type: ' + layer_type + ' is not recognized!')
 
         if copy_params:
-            copy_weights(caffe_models[n], shadow_net)
+            caffe_model = caffe_pb2.NetParameter()
+            with open(deploy_model, 'rb') as caffe_file:
+                caffe_model.ParseFromString(caffe_file.read())
+            copy_weights(caffe_model, shadow_net)
 
     return shadow_net

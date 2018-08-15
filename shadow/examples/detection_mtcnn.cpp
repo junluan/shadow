@@ -42,13 +42,22 @@ inline VecBoxInfo NMS(const VecBoxInfo &boxes, float threshold,
   return out_boxes;
 }
 
-void DetectionMTCNN::Setup(const VecString &model_files,
+void DetectionMTCNN::Setup(const std::string &model_file,
                            const VecInt &in_shape) {
   net_p_.Setup();
 
-  net_p_.LoadModel(model_files[0]);
-  net_r_.LoadModel(model_files[1]);
-  net_o_.LoadModel(model_files[2]);
+#if defined(USE_Protobuf)
+  shadow::MetaNetParam meta_net_param;
+  CHECK(IO::ReadProtoFromBinaryFile(model_file, &meta_net_param))
+      << "Error when loading proto binary file: " << model_file;
+
+  net_p_.LoadModel(meta_net_param.network(0));
+  net_r_.LoadModel(meta_net_param.network(1));
+  net_o_.LoadModel(meta_net_param.network(2));
+
+#else
+  LOG(FATAL) << "Unsupported load binary model, recompiled with USE_Protobuf";
+#endif
 
   in_p_str_ = net_p_.in_blob()[0];
   in_r_str_ = net_r_.in_blob()[0];

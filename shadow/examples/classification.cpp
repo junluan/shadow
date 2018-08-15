@@ -2,11 +2,20 @@
 
 namespace Shadow {
 
-void Classification::Setup(const VecString &model_files,
+void Classification::Setup(const std::string &model_file,
                            const VecInt &in_shape) {
   net_.Setup();
 
-  net_.LoadModel(model_files[0]);
+#if defined(USE_Protobuf)
+  shadow::MetaNetParam meta_net_param;
+  CHECK(IO::ReadProtoFromBinaryFile(model_file, &meta_net_param))
+      << "Error when loading proto binary file: " << model_file;
+
+  net_.LoadModel(meta_net_param.network(0));
+
+#else
+  LOG(FATAL) << "Unsupported load binary model, recompiled with USE_Protobuf";
+#endif
 
   const auto &in_blob = net_.in_blob();
   CHECK_EQ(in_blob.size(), 1);
@@ -34,14 +43,7 @@ void Classification::Setup(const VecString &model_files,
 
   in_data_.resize(batch_ * in_num_);
 
-  task_names_ = VecString{"score"};
-  task_dims_ = net_.num_class();
-  CHECK_EQ(task_names_.size(), task_dims_.size());
-  int num_dim = 0;
-  for (const auto dim : task_dims_) {
-    num_dim += dim;
-  }
-  CHECK_EQ(num_dim, net_.GetBlobByName<float>(prob_str_)->num());
+  num_classes_ = net_.get_single_argument<int>("num_classes", 1000);
 }
 
 void Classification::Predict(
@@ -84,19 +86,13 @@ void Classification::Process(
 
   net_.Forward(data_map);
 
-  const auto *softmax_data = net_.GetBlobDataByName<float>(prob_str_);
+  const auto *prob_data = net_.GetBlobDataByName<float>(prob_str_);
 
   scores->clear();
-  int offset = 0;
   for (int b = 0; b < batch_; ++b) {
+    int offset = b * num_classes_;
     std::map<std::string, VecFloat> score_map;
-    for (int n = 0; n < task_dims_.size(); ++n) {
-      const auto &name = task_names_[n];
-      int dim = task_dims_[n];
-      VecFloat task_score(softmax_data + offset, softmax_data + offset + dim);
-      score_map[name] = task_score;
-      offset += dim;
-    }
+    score_map["score"] = VecFloat(prob_data + offset, prob_data + num_classes_);
     scores->push_back(score_map);
   }
 }

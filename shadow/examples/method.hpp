@@ -3,6 +3,7 @@
 
 #include "core/network.hpp"
 #include "util/boxes.hpp"
+#include "util/io.hpp"
 #include "util/jimage.hpp"
 #include "util/util.hpp"
 
@@ -13,7 +14,7 @@ class Method {
   Method() = default;
   virtual ~Method() = default;
 
-  virtual void Setup(const VecString &model_files, const VecInt &in_shape) {
+  virtual void Setup(const std::string &model_file, const VecInt &in_shape) {
     LOG(FATAL) << "Setup method!";
   }
 

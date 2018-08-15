@@ -45,26 +45,16 @@ class Network {
     return nullptr;
   }
 
-  const std::vector<int> num_class() {
-    VecInt num_classes;
-    for (const auto dim : net_param_.num_class()) {
-      num_classes.push_back(dim);
-    }
-    return num_classes;
-  }
-  const std::vector<std::string> out_blob() {
-    VecString out_blobs;
-    for (const auto &blob : net_param_.out_blob()) {
-      out_blobs.push_back(blob);
-    }
-    return out_blobs;
-  }
   const std::vector<std::string> in_blob() {
     VecString in_blobs;
     for (const auto &blob : net_param_.op(0).top()) {
       in_blobs.push_back(blob);
     }
     return in_blobs;
+  }
+  const std::vector<std::string> out_blob() {
+    CHECK(has_argument("out_blob")) << "Network must have out_blob argument";
+    return get_repeated_argument<std::string>("out_blob");
   }
 
   bool has_argument(const std::string &name) const {
