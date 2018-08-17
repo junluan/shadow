@@ -4,15 +4,25 @@
 
 namespace Shadow {
 
-void DeformableConvOp::Reshape() {
+void DeformableConvOp::Forward() {
   const auto *bottom = bottoms<float>(0);
+  const auto *offset_blob = bottoms<float>(1);
   auto *top = mutable_tops<float>(0);
 
   CHECK_NE(bottom, top);
+  if (bias_term_) {
+    CHECK_EQ(blobs_size(), 2);
+  } else {
+    CHECK_EQ(blobs_size(), 1);
+  }
 
-  int in_c = bottom->shape(1), in_h = bottom->shape(2), in_w = bottom->shape(3);
+  int batch = bottom->shape(0), in_c = bottom->shape(1),
+      in_h = bottom->shape(2), in_w = bottom->shape(3);
 
-  VecInt top_shape = bottom->shape();
+  CHECK_EQ(in_c % group_, 0);
+  CHECK_EQ(offset_blob->shape(1) % deformable_group_, 0);
+
+  auto top_shape = bottom->shape();
   top_shape[1] = num_output_;
   top_shape[2] =
       deformable_conv_out_size(in_h, kernel_size_, stride_, pad_, dilation_);
@@ -33,24 +43,9 @@ void DeformableConvOp::Reshape() {
     biases_multiplier_->reshape({out_spatial_dim_});
     Blas::Set(out_spatial_dim_, 1, biases_multiplier_->mutable_data(), 0);
   }
-  col_image_ = op_ws_->CreateBlob<float>(op_name_ + "_col_image");
-  col_image_->reshape({kernel_dim_ * group_, out_spatial_dim_});
-
-  DLOG(INFO) << op_name_ << "(" << op_type_ << "): " << bottom->name()
-             << Util::format_vector(bottom->shape(), ",", "(", ")") << " -> "
-             << num_output_ << "_" << kernel_size_ << "x" << kernel_size_
-             << "_s" << stride_ << "_p" << pad_ << " -> " << top->name()
-             << Util::format_vector(top->shape(), ",", "(", ")");
-}
-
-void DeformableConvOp::Forward() {
-  const auto *bottom = bottoms<float>(0);
-  const auto *offset_blob = bottoms<float>(1);
-  auto *top = mutable_tops<float>(0);
-
-  int batch = bottom->shape(0);
+  col_image_ = op_ws_->CreateTempBlob<float>(
+      {kernel_dim_ * group_, out_spatial_dim_}, op_name_ + "_col_image");
   int top_num = top->num(), bottom_num = bottom->num();
-
   for (int b = 0; b < batch; ++b) {
     Vision::DeformableIm2Col(
         bottom->data(), bottom->shape(), offset_blob->data(), b * bottom_num,
@@ -71,6 +66,8 @@ void DeformableConvOp::Forward() {
   if (activate_type_ == 1) {
     Vision::Activate(top->mutable_data(), top->count(), activate_type_);
   }
+
+  DLOG(INFO) << debug_log();
 }
 
 REGISTER_OPERATOR(DeformableConv, DeformableConvOp);

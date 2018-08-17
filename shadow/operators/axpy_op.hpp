@@ -17,12 +17,8 @@ namespace Shadow {
 class AxpyOp : public Operator {
  public:
   explicit AxpyOp(const shadow::OpParam &op_param, Workspace *ws)
-      : Operator(op_param, ws) {
-    CHECK_EQ(bottoms_size(), 3)
-        << "This op must have three bottoms: scale, x and y";
-  }
+      : Operator(op_param, ws) {}
 
-  void Reshape() override;
   void Forward() override;
 };
 

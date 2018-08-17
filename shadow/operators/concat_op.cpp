@@ -2,56 +2,46 @@
 
 namespace Shadow {
 
-void ConcatOp::Reshape() {
-  auto *top = mutable_tops<float>(0);
-
-  int num_axes = bottoms<float>(0)->num_axes();
-  auto top_shape = bottoms<float>(0)->shape();
-  for (int i = 1; i < bottoms_size(); ++i) {
-    CHECK_EQ(num_axes, bottoms<float>(i)->num_axes())
-        << "Bottoms must have the same axes!";
-    for (int j = 0; j < num_axes; ++j) {
-      if (j == concat_axis_) continue;
-      CHECK_EQ(top_shape[j], bottoms<float>(i)->shape(j))
-          << "Bottoms must have the same shape, except at concat_axis!";
-    }
-    top_shape[concat_axis_] += bottoms<float>(i)->shape(concat_axis_);
-  }
-  top->set_shape(top_shape);
-  if (bottoms_size() > 1) {
-    top->reshape(top_shape);
-  }
-
-  VecString str;
-  for (int i = 0; i < bottoms_size(); ++i) {
-    const auto *bottom = bottoms<float>(i);
-    str.push_back(
-        Util::format_vector(bottom->shape(), ",", bottom->name() + "(", ")"));
-  }
-  DLOG(INFO) << op_name_ << "(" << op_type_
-             << "): " << Util::format_vector(str, " + ") << " -> "
-             << top->name() << Util::format_vector(top->shape(), ",", "(", ")");
-}
-
 void ConcatOp::Forward() {
+  const auto *bottom_0 = bottoms<float>(0);
   auto *top = mutable_tops<float>(0);
 
-  if (bottoms_size() == 1) {
-    top->share_data(*bottoms<float>(0));
-    return;
+  auto top_shape = bottom_0->shape();
+  if (bottoms_size() > 1) {
+    int num_axes = bottom_0->num_axes();
+    CHECK_LT(concat_axis_, num_axes);
+    for (int n = 1; n < bottoms_size(); ++n) {
+      const auto *bottom = bottoms<float>(n);
+      CHECK_EQ(num_axes, bottom->num_axes())
+          << "Bottoms must have the same axes!";
+      for (int d = 0; d < num_axes; ++d) {
+        if (d == concat_axis_) continue;
+        CHECK_EQ(top_shape[d], bottom->shape(d))
+            << "Bottoms must have the same shape, except at concat_axis!";
+      }
+      top_shape[concat_axis_] += bottom->shape(concat_axis_);
+    }
+
+    top->reshape(top_shape);
+
+    int offset_concat_axis = 0;
+    int num_concats = bottom_0->count(0, concat_axis_);
+    int concat_size = bottom_0->count(concat_axis_ + 1);
+    int top_concat_axis = top->shape(concat_axis_);
+    for (int n = 0; n < bottoms_size(); ++n) {
+      const auto *bottom = bottoms<float>(n);
+      int bottom_concat_axis = bottom->shape(concat_axis_);
+      Vision::Concat(bottom->data(), bottom->count(), num_concats, concat_size,
+                     top_concat_axis, bottom_concat_axis, offset_concat_axis,
+                     top->mutable_data());
+      offset_concat_axis += bottom_concat_axis;
+    }
+  } else {
+    top->set_shape(top_shape);
+    top->share_data(*bottom_0);
   }
-  int offset_concat_axis = 0;
-  int top_concat_axis = top->shape(concat_axis_);
-  for (int i = 0; i < bottoms_size(); ++i) {
-    const auto *bottom = bottoms<float>(i);
-    int bottom_concat_axis = bottom->shape(concat_axis_);
-    int num_concats = bottom->count(0, concat_axis_);
-    int concat_input_size = bottom->count(concat_axis_ + 1);
-    Vision::Concat(bottom->data(), bottom->count(), num_concats,
-                   concat_input_size, top_concat_axis, bottom_concat_axis,
-                   offset_concat_axis, top->mutable_data());
-    offset_concat_axis += bottom_concat_axis;
-  }
+
+  DLOG(INFO) << debug_log();
 }
 
 REGISTER_OPERATOR(Concat, ConcatOp);

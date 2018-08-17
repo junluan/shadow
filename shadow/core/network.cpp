@@ -30,34 +30,23 @@ void Network::LoadModel(const std::string &proto_str,
   CopyWeights(weights_data);
 }
 
-void Network::Reshape(
+void Network::Forward(
+    const std::map<std::string, float *> &data_map,
     const std::map<std::string, std::vector<int>> &shape_map) {
   if (ops_.empty()) return;
-  for (const auto &in_map : shape_map) {
-    CHECK(!in_map.second.empty()) << in_map.first << " has empty shape";
-    auto *in_blob = GetBlobByName<float>(in_map.first);
-    if (in_blob != nullptr) {
-      in_blob->reshape(in_map.second);
-    } else {
-      LOG(FATAL) << "Can not find blob " << in_map.first;
-    }
-  }
-  for (auto &op : ops_) {
-    op->Reshape();
-  }
-
-  DLOG(INFO) << "Reshape Network!";
-}
-
-void Network::Forward(const std::map<std::string, float *> &data_map) {
-  if (ops_.empty()) return;
   for (const auto &in_map : data_map) {
-    CHECK_NOTNULL(in_map.second) << in_map.first << " has null data";
-    auto *in_blob = GetBlobByName<float>(in_map.first);
+    const auto &blob_name = in_map.first;
+    const auto *blob_data = in_map.second;
+    CHECK_NOTNULL(blob_data) << blob_name << " has null data";
+    auto *in_blob = GetBlobByName<float>(blob_name);
     if (in_blob != nullptr) {
-      in_blob->set_data(in_map.second, in_blob->count());
+      if (shape_map.count(blob_name)) {
+        const auto &blob_shape = shape_map.at(blob_name);
+        in_blob->reshape(blob_shape);
+      }
+      in_blob->set_data(blob_data, in_blob->count());
     } else {
-      LOG(FATAL) << "Can not find blob " << in_map.first;
+      LOG(FATAL) << "Can not find blob " << blob_name;
     }
   }
   for (auto &op : ops_) {
@@ -112,17 +101,10 @@ void Network::Initial() {
   const auto &input_op_param = net_param_.op(0);
   CHECK(input_op_param.type().find("Input") != std::string::npos)
       << "The first Op must be Input operator!";
-  ArgumentHelper arg_helper(input_op_param);
-  for (const auto &input_name : input_op_param.top()) {
-    const auto &input_shape =
-        arg_helper.GetRepeatedArgument<int>(input_name, VecInt{});
-    ws_.CreateBlob<float>(input_shape, input_name);
-  }
 
   ops_.clear();
   for (const auto &op_param : net_param_.op()) {
     auto *op = CreateOperator(op_param, &ws_);
-    op->Reshape();
     ops_.push_back(op);
   }
 

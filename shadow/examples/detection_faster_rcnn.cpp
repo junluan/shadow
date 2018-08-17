@@ -2,8 +2,7 @@
 
 namespace Shadow {
 
-void DetectionFasterRCNN::Setup(const std::string &model_file,
-                                const VecInt &in_shape) {
+void DetectionFasterRCNN::Setup(const std::string &model_file) {
   net_.Setup();
 
 #if defined(USE_Protobuf)
@@ -102,14 +101,13 @@ void DetectionFasterRCNN::Process(const VecFloat &in_data,
                                   const VecInt &in_shape,
                                   const VecFloat &im_info, float height,
                                   float width, VecBoxF *boxes) {
-  std::map<std::string, VecInt> shape_map;
   std::map<std::string, float *> data_map;
-  shape_map[in_str_] = in_shape;
+  std::map<std::string, VecInt> shape_map;
   data_map[in_str_] = const_cast<float *>(in_data.data());
   data_map[im_info_str_] = const_cast<float *>(im_info.data());
+  shape_map[in_str_] = in_shape;
 
-  net_.Reshape(shape_map);
-  net_.Forward(data_map);
+  net_.Forward(data_map, shape_map);
 
   const auto *roi_blob = net_.GetBlobByName<float>(rois_str_);
   const auto *roi_data = net_.GetBlobDataByName<float>(rois_str_);

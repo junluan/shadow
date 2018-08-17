@@ -2,29 +2,35 @@
 
 namespace Shadow {
 
-void FlattenOp::Reshape() {
+void FlattenOp::Forward() {
   const auto *bottom = bottoms<float>(0);
   auto *top = mutable_tops<float>(0);
 
   CHECK_NE(bottom, top);
 
+  int num_axes = bottom->num_axes();
+  if (end_axis_ == -1) {
+    end_axis_ = num_axes - 1;
+  }
+  CHECK_LT(end_axis_, num_axes);
+  CHECK_LE(axis_, end_axis_);
+
   VecInt top_shape;
-  for (int i = 0; i < axis_; ++i) {
-    top_shape.push_back(bottom->shape(i));
+  for (int d = 0; d < axis_; ++d) {
+    top_shape.push_back(bottom->shape(d));
   }
   top_shape.push_back(bottom->count(axis_, end_axis_ + 1));
-  for (int i = end_axis_ + 1; i < bottom->num_axes(); ++i) {
-    top_shape.push_back(bottom->shape(i));
+  for (int d = end_axis_ + 1; d < bottom->num_axes(); ++d) {
+    top_shape.push_back(bottom->shape(d));
   }
+
+  top->clear();
   top->set_shape(top_shape);
+  CHECK_EQ(top->count(), bottom->count());
 
-  DLOG(INFO) << op_name_ << "(" << op_type_ << "): " << bottom->name()
-             << Util::format_vector(bottom->shape(), ",", "(", ")") << " -> "
-             << top->name() << Util::format_vector(top->shape(), ",", "(", ")");
-}
+  top->share_data(*bottom);
 
-void FlattenOp::Forward() {
-  mutable_tops<float>(0)->share_data(*bottoms<float>(0));
+  DLOG(INFO) << debug_log();
 }
 
 REGISTER_OPERATOR(Flatten, FlattenOp);

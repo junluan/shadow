@@ -10,11 +10,8 @@ class ReorgOp : public Operator {
   explicit ReorgOp(const shadow::OpParam &op_param, Workspace *ws)
       : Operator(op_param, ws) {
     stride_ = get_single_argument<int>("stride", 2);
-    CHECK_EQ(bottoms<float>(0)->shape(2) % stride_, 0);
-    CHECK_EQ(bottoms<float>(0)->shape(3) % stride_, 0);
   }
 
-  void Reshape() override;
   void Forward() override;
 
  private:

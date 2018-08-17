@@ -2,8 +2,7 @@
 
 namespace Shadow {
 
-void Classification::Setup(const std::string &model_file,
-                           const VecInt &in_shape) {
+void Classification::Setup(const std::string &model_file) {
   net_.Setup();
 
 #if defined(USE_Protobuf)
@@ -27,13 +26,6 @@ void Classification::Setup(const std::string &model_file,
 
   auto data_shape = net_.GetBlobByName<float>(in_str_)->shape();
   CHECK_EQ(data_shape.size(), 4);
-  CHECK_EQ(in_shape.size(), 1);
-  if (data_shape[0] != in_shape[0]) {
-    data_shape[0] = in_shape[0];
-    std::map<std::string, VecInt> shape_map;
-    shape_map[in_str_] = data_shape;
-    net_.Reshape(shape_map);
-  }
 
   batch_ = data_shape[0];
   in_c_ = data_shape[1];

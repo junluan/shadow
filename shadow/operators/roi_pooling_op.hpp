@@ -14,10 +14,8 @@ class ROIPoolingOp : public Operator {
     CHECK_GT(pooled_h_, 0) << "pooled_h must be > 0";
     CHECK_GT(pooled_w_, 0) << "pooled_w must be > 0";
     spatial_scale_ = get_single_argument<float>("spatial_scale", 1.f / 16);
-    CHECK_EQ(bottoms_size(), 2);
   }
 
-  void Reshape() override;
   void Forward() override;
 
  private:

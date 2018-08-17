@@ -2,7 +2,7 @@
 
 namespace Shadow {
 
-void PoolingOp::Reshape() {
+void PoolingOp::Forward() {
   const auto *bottom = bottoms<float>(0);
   auto *top = mutable_tops<float>(0);
 
@@ -24,25 +24,18 @@ void PoolingOp::Reshape() {
   top_shape[3] = out_w;
   top->reshape(top_shape);
 
+  if (global_pooling_) {
+    kernel_size_ = in_h;
+    stride_ = 1;
+    pad_ = 0;
+  }
+
 #if defined(USE_CUDNN)
   cudnn::setPooling2dDesc<float>(&pooling_desc_, pool_type_, kernel_size_,
                                  kernel_size_, pad_, pad_, stride_, stride_);
   cudnn::setTensor4dDesc<float>(&bottom_desc_, batch, in_c, in_h, in_w);
   cudnn::setTensor4dDesc<float>(&top_desc_, batch, in_c, out_h, out_w);
-#endif
 
-  DLOG(INFO) << op_name_ << "(" << op_type_ << "): " << bottom->name()
-             << Util::format_vector(bottom->shape(), ",", "(", ")") << " -> "
-             << kernel_size_ << "x" << kernel_size_ << "_s" << stride_ << "_p"
-             << pad_ << "_t" << pool_type_ << " -> " << top->name()
-             << Util::format_vector(top->shape(), ",", "(", ")");
-}
-
-void PoolingOp::Forward() {
-  const auto *bottom = bottoms<float>(0);
-  auto *top = mutable_tops<float>(0);
-
-#if defined(USE_CUDNN)
   CUDNN_CHECK(cudnnPoolingForward(Kernel::cudnn_handle_, pooling_desc_,
                                   cudnn::dataType<float>::one, bottom_desc_,
                                   bottom->data(), cudnn::dataType<float>::zero,
@@ -52,6 +45,8 @@ void PoolingOp::Forward() {
   Vision::Pooling(bottom->data(), bottom->shape(), kernel_size_, stride_, pad_,
                   pool_type_, top->shape(), top->mutable_data());
 #endif
+
+  DLOG(INFO) << debug_log();
 }
 
 REGISTER_OPERATOR(Pooling, PoolingOp);

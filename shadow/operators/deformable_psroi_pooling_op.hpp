@@ -21,19 +21,11 @@ class DeformablePSROIPoolingOp : public Operator {
     spatial_scale_ = get_single_argument<float>("spatial_scale", 1.f / 16);
     trans_std_ = get_single_argument<float>("trans_std", 0);
     no_trans_ = get_single_argument<bool>("no_trans", false);
-
     if (part_size_ == 0) {
       part_size_ = pooled_size_;
     }
-
-    if (no_trans_) {
-      CHECK_EQ(bottoms_size(), 2);
-    } else {
-      CHECK_EQ(bottoms_size(), 3);
-    }
   }
 
-  void Reshape() override;
   void Forward() override;
 
  private:

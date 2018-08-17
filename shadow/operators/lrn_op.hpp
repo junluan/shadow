@@ -19,7 +19,6 @@ class LRNOp : public Operator {
     k_ = get_single_argument<float>("k", 1);
   }
 
-  void Reshape() override;
   void Forward() override;
 
  private:

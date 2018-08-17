@@ -10,7 +10,6 @@ class SoftmaxOp : public Operator {
   explicit SoftmaxOp(const shadow::OpParam &op_param, Workspace *ws)
       : Operator(op_param, ws) {
     axis_ = get_single_argument<int>("axis", 1);
-    axis_ = bottoms<float>(0)->canonical_index(axis_);
 
 #if defined(USE_CUDNN)
     cudnn::createTensorDesc<float>(&bottom_desc_);
@@ -30,7 +29,6 @@ class SoftmaxOp : public Operator {
 #endif
   }
 
-  void Reshape() override;
   void Forward() override;
 
  private:

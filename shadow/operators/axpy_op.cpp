@@ -2,7 +2,10 @@
 
 namespace Shadow {
 
-void AxpyOp::Reshape() {
+void AxpyOp::Forward() {
+  CHECK_EQ(bottoms_size(), 3)
+      << "This op must have three bottoms: scale, x and y";
+
   const auto *scale = bottoms<float>(0);
   const auto *x = bottoms<float>(1);
   const auto *y = bottoms<float>(2);
@@ -18,22 +21,10 @@ void AxpyOp::Reshape() {
 
   top->reshape(x->shape());
 
-  DLOG(INFO) << op_name_ << "(" << op_type_ << "): " << scale->name()
-             << Util::format_vector(scale->shape(), ",", "(", ")") << " + "
-             << x->name() << Util::format_vector(x->shape(), ",", "(", ")")
-             << " + " << y->name()
-             << Util::format_vector(y->shape(), ",", "(", ")") << " -> "
-             << top->name() << Util::format_vector(top->shape(), ",", "(", ")");
-}
-
-void AxpyOp::Forward() {
-  const auto *scale = bottoms<float>(0);
-  const auto *x = bottoms<float>(1);
-  const auto *y = bottoms<float>(2);
-  auto *top = mutable_tops<float>(0);
-
   Vision::Axpy(scale->data(), x->data(), y->data(), x->shape(),
                top->mutable_data());
+
+  DLOG(INFO) << debug_log();
 }
 
 REGISTER_OPERATOR(Axpy, AxpyOp);

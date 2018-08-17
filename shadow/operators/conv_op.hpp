@@ -16,18 +16,11 @@ class ConvOp : public Operator {
     pad_ = get_single_argument<int>("pad", 0);
     dilation_ = get_single_argument<int>("dilation", 1);
     group_ = get_single_argument<int>("group", 1);
-    CHECK_EQ(bottoms<float>(0)->shape(1) % group_, 0);
     CHECK_EQ(num_output_ % group_, 0);
     bias_term_ = get_single_argument<bool>("bias_term", true);
     activate_type_ = get_single_argument<int>("type", -1);
     CHECK((activate_type_ == -1 || activate_type_ == 1))
         << "Build in activate only support Relu";
-
-    if (bias_term_) {
-      CHECK_EQ(blobs_size(), 2);
-    } else {
-      CHECK_EQ(blobs_size(), 1);
-    }
 
 #if defined(USE_CUDNN)
 #if CUDNN_VERSION_MIN(7, 0, 1)
@@ -76,10 +69,9 @@ class ConvOp : public Operator {
 #endif
   }
 
-  void Reshape() override;
   void Forward() override;
 
- protected:
+ private:
   int num_output_, kernel_size_, stride_, pad_, dilation_, group_,
       activate_type_, out_spatial_dim_, kernel_dim_;
   int weight_offset_, col_offset_, output_offset_;

@@ -46,7 +46,6 @@ class ProposalOp : public Operator {
     anchors_->set_data(anchors.data(), anchors_->count());
   }
 
-  void Reshape() override;
   void Forward() override;
 
  private:

@@ -69,8 +69,7 @@ void *Workspace::GetTempPtr(int required) {
   if (sufficient_id == -1) {
     sufficient_id = static_cast<int>(blob_temp_.size());
     blob_temp_.push_back(new Blob<unsigned char>(VecInt{required}));
-    DLOG(WARNING) << "New temp buffer allocated: " << required / 1024 / 1024
-                  << " MB.";
+    DLOG(INFO) << "New temp buffer allocated: " << (required >> 20) << " MB.";
   }
   return blob_temp_[sufficient_id]->mutable_data();
 }

@@ -86,7 +86,6 @@ class Blob {
   }
 
   void reshape(const VecInt &shape, bool shared = false, int align = 1) {
-    if (shape.size() == 0) return;
     int cou = 1;
     for (const auto dim : shape) cou *= dim;
     CHECK_GT(cou, 0);

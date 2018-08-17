@@ -13,29 +13,13 @@ class ReshapeOp : public Operator {
     num_axes_ = get_single_argument<int>("num_axes", -1);
     CHECK_GE(num_axes_, -1);
     shape_ = get_repeated_argument<int>("shape");
-
-    inferred_axis_ = -1;
-    copy_axes_.clear();
-    constant_count_ = 1;
-    for (int i = 0; i < shape_.size(); ++i) {
-      int top_dim = shape_[i];
-      if (top_dim == 0) {
-        copy_axes_.push_back(i);
-      } else if (top_dim == -1) {
-        CHECK_EQ(inferred_axis_, -1);
-        inferred_axis_ = i;
-      } else {
-        constant_count_ *= top_dim;
-      }
-    }
   }
 
-  void Reshape() override;
   void Forward() override;
 
  private:
-  int axis_, num_axes_, inferred_axis_, constant_count_;
-  VecInt shape_, copy_axes_;
+  int axis_, num_axes_;
+  VecInt shape_;
 };
 
 }  // namespace Shadow

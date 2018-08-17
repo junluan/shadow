@@ -2,8 +2,7 @@
 
 namespace Shadow {
 
-void DetectionYOLO::Setup(const std::string &model_file,
-                          const VecInt &in_shape) {
+void DetectionYOLO::Setup(const std::string &model_file) {
   net_.Setup();
 
 #if defined(USE_Protobuf)
@@ -27,24 +26,14 @@ void DetectionYOLO::Setup(const std::string &model_file,
 
   auto data_shape = net_.GetBlobByName<float>(in_str_)->shape();
   CHECK_EQ(data_shape.size(), 4);
-  CHECK_EQ(in_shape.size(), 1);
-  if (data_shape[0] != in_shape[0]) {
-    data_shape[0] = in_shape[0];
-    std::map<std::string, VecInt> shape_map;
-    shape_map[in_str_] = data_shape;
-    net_.Reshape(shape_map);
-  }
 
   batch_ = data_shape[0];
   in_c_ = data_shape[1];
   in_h_ = data_shape[2];
   in_w_ = data_shape[3];
   in_num_ = in_c_ * in_h_ * in_w_;
-  out_num_ = net_.GetBlobByName<float>(out_str_)->num();
-  out_hw_ = net_.GetBlobByName<float>(out_str_)->shape(2);
 
   in_data_.resize(batch_ * in_num_);
-  out_data_.resize(batch_ * out_num_);
 
   biases_ = VecFloat{1.08f,  1.19f, 3.42f, 4.41f,  6.63f,
                      11.38f, 9.42f, 5.11f, 16.62f, 10.52f};
@@ -110,14 +99,17 @@ void DetectionYOLO::Process(const VecFloat &in_data,
 
   net_.Forward(data_map);
 
-  memcpy(out_data_.data(), net_.GetBlobDataByName<float>(out_str_),
-         out_data_.size() * sizeof(float));
+  auto *out_blob = net_.GetBlobByName<float>(out_str_);
+  auto *out_data = const_cast<float *>(out_blob->cpu_data());
+
+  out_num_ = out_blob->num();
+  out_hw_ = out_blob->shape(2);
 
   Gboxes->clear();
   for (int b = 0; b < batch_; ++b) {
     VecBoxF boxes;
-    ConvertDetections(out_data_.data() + b * out_num_, biases_.data(),
-                      num_classes_, num_km_, out_hw_, threshold_, &boxes);
+    ConvertDetections(out_data + b * out_num_, biases_.data(), num_classes_,
+                      num_km_, out_hw_, threshold_, &boxes);
     Gboxes->push_back(boxes);
   }
 }

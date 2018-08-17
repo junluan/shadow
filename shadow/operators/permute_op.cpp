@@ -2,25 +2,28 @@
 
 namespace Shadow {
 
-void PermuteOp::Reshape() {
+void PermuteOp::Forward() {
   const auto *bottom = bottoms<float>(0);
   auto *top = mutable_tops<float>(0);
 
   CHECK_NE(bottom, top);
 
-  VecInt top_shape, old_steps(num_axes_), new_steps(num_axes_);
+  int num_axes = static_cast<int>(permute_order_data_.size());
+  CHECK_EQ(num_axes, bottom->num_axes());
+
+  VecInt top_shape, old_steps(num_axes), new_steps(num_axes);
   for (const auto &order : permute_order_data_) {
     top_shape.push_back(bottom->shape(order));
   }
   top->reshape(top_shape);
 
-  for (int i = 0; i < num_axes_; ++i) {
-    if (i == num_axes_ - 1) {
-      old_steps[i] = 1;
-      new_steps[i] = 1;
+  for (int d = 0; d < num_axes; ++d) {
+    if (d == num_axes - 1) {
+      old_steps[d] = 1;
+      new_steps[d] = 1;
     } else {
-      old_steps[i] = bottom->count(i + 1);
-      new_steps[i] = top->count(i + 1);
+      old_steps[d] = bottom->count(d + 1);
+      new_steps[d] = top->count(d + 1);
     }
   }
 
@@ -28,28 +31,19 @@ void PermuteOp::Reshape() {
   old_steps_ = op_ws_->CreateBlob<int>(op_name_ + "_old_steps");
   new_steps_ = op_ws_->CreateBlob<int>(op_name_ + "_new_steps");
 
-  permute_order_->reshape({num_axes_});
-  old_steps_->reshape({num_axes_});
-  new_steps_->reshape({num_axes_});
+  permute_order_->reshape({num_axes});
+  old_steps_->reshape({num_axes});
+  new_steps_->reshape({num_axes});
 
-  permute_order_->set_data(permute_order_data_.data(), num_axes_);
-  old_steps_->set_data(old_steps.data(), num_axes_);
-  new_steps_->set_data(new_steps.data(), num_axes_);
-
-  DLOG(INFO) << op_name_ << "(" << op_type_ << "): " << bottom->name()
-             << Util::format_vector(bottom->shape(), ",", "(", ")") << " -> "
-             << Util::format_vector(permute_order_data_, ",", "(", ")")
-             << " -> " << top->name()
-             << Util::format_vector(top->shape(), ",", "(", ")");
-}
-
-void PermuteOp::Forward() {
-  const auto *bottom = bottoms<float>(0);
-  auto *top = mutable_tops<float>(0);
+  permute_order_->set_data(permute_order_data_.data(), num_axes);
+  old_steps_->set_data(old_steps.data(), num_axes);
+  new_steps_->set_data(new_steps.data(), num_axes);
 
   Vision::Permute(bottom->data(), bottom->count(), bottom->num_axes(),
                   permute_order_->data(), old_steps_->data(),
                   new_steps_->data(), top->mutable_data());
+
+  DLOG(INFO) << debug_log();
 }
 
 REGISTER_OPERATOR(Permute, PermuteOp);
@@ -94,6 +88,6 @@ template void Permute(const BufferF *in_data, int count, int num_axes,
                       const BufferI *permute_order, const BufferI *old_steps,
                       const BufferI *new_steps, BufferF *out_data);
 #endif
-}
+}  // namespace Vision
 
 }  // namespace Shadow

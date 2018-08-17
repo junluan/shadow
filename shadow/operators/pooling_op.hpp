@@ -16,10 +16,6 @@ class PoolingOp : public Operator {
       kernel_size_ = get_single_argument<int>("kernel_size", 2);
       stride_ = get_single_argument<int>("stride", 1);
       pad_ = get_single_argument<int>("pad", 0);
-    } else {
-      kernel_size_ = bottoms<float>(0)->shape(2);
-      stride_ = 1;
-      pad_ = 0;
     }
     full_pooling_ = get_single_argument<bool>("full_pooling", true);
 
@@ -46,7 +42,6 @@ class PoolingOp : public Operator {
 #endif
   }
 
-  void Reshape() override;
   void Forward() override;
 
  private:

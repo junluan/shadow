@@ -14,11 +14,9 @@ class PSROIPoolingOp : public Operator {
     CHECK_GT(output_dim_, 0) << "output_dim must be > 0";
     CHECK_GT(group_size_, 0) << "group_size must be > 0";
     spatial_scale_ = get_single_argument<float>("spatial_scale", 1.f / 16);
-    CHECK_EQ(bottoms_size(), 2);
     pooled_h_ = group_size_, pooled_w_ = group_size_;
   }
 
-  void Reshape() override;
   void Forward() override;
 
  private:

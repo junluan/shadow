@@ -58,8 +58,7 @@ inline void ApplyNMSFast(const VecBoxF &bboxes, const VecFloat &scores,
   }
 }
 
-void DetectionRefineDet::Setup(const std::string &model_file,
-                               const VecInt &in_shape) {
+void DetectionRefineDet::Setup(const std::string &model_file) {
   net_.Setup();
 
 #if defined(USE_Protobuf)
@@ -87,13 +86,6 @@ void DetectionRefineDet::Setup(const std::string &model_file,
 
   auto data_shape = net_.GetBlobByName<float>(in_str_)->shape();
   CHECK_EQ(data_shape.size(), 4);
-  CHECK_EQ(in_shape.size(), 1);
-  if (data_shape[0] != in_shape[0]) {
-    data_shape[0] = in_shape[0];
-    std::map<std::string, VecInt> shape_map;
-    shape_map[in_str_] = data_shape;
-    net_.Reshape(shape_map);
-  }
 
   batch_ = data_shape[0];
   in_c_ = data_shape[1];
@@ -105,7 +97,6 @@ void DetectionRefineDet::Setup(const std::string &model_file,
 
   threshold_ = 0.6;
   num_classes_ = net_.get_single_argument<int>("num_classes", 21);
-  num_priors_ = net_.GetBlobByName<float>(arm_priorbox_str_)->shape(2) / 4;
   num_loc_classes_ = 1;
   background_label_id_ = 0;
   top_k_ = 1000;
@@ -173,28 +164,32 @@ void DetectionRefineDet::Process(const VecFloat &in_data,
 
   net_.Forward(data_map);
 
+  auto *prior_blob = net_.GetBlobByName<float>(arm_priorbox_str_);
+
+  const auto *prior_data = prior_blob->cpu_data();
   const auto *loc_data = net_.GetBlobDataByName<float>(odm_loc_str_);
   const auto *conf_data = net_.GetBlobDataByName<float>(odm_conf_flatten_str_);
-  const auto *prior_data = net_.GetBlobDataByName<float>(arm_priorbox_str_);
   const auto *arm_conf_data =
       net_.GetBlobDataByName<float>(arm_conf_flatten_str_);
   const auto *arm_loc_data = net_.GetBlobDataByName<float>(arm_loc_str_);
 
+  int num_priors = prior_blob->shape(2) / 4;
+
   VecLabelBBox all_arm_loc_preds;
-  GetLocPredictions(arm_loc_data, batch_, num_priors_, num_loc_classes_,
+  GetLocPredictions(arm_loc_data, batch_, num_priors, num_loc_classes_,
                     share_location_, &all_arm_loc_preds);
 
   VecLabelBBox all_loc_preds;
-  GetLocPredictions(loc_data, batch_, num_priors_, num_loc_classes_,
+  GetLocPredictions(loc_data, batch_, num_priors, num_loc_classes_,
                     share_location_, &all_loc_preds);
 
   std::vector<std::map<int, VecFloat>> all_conf_scores;
-  OSGetConfidenceScores(conf_data, arm_conf_data, batch_, num_priors_,
+  OSGetConfidenceScores(conf_data, arm_conf_data, batch_, num_priors,
                         num_classes_, &all_conf_scores, objectness_score_);
 
   VecBoxF prior_bboxes;
   std::vector<VecFloat> prior_variances;
-  GetPriorBBoxes(prior_data, num_priors_, &prior_bboxes, &prior_variances);
+  GetPriorBBoxes(prior_data, num_priors, &prior_bboxes, &prior_variances);
 
   VecLabelBBox all_decode_bboxes;
   CasRegDecodeBBoxesAll(all_loc_preds, prior_bboxes, prior_variances, batch_,

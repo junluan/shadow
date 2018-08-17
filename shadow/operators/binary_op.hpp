@@ -15,16 +15,9 @@ class BinaryOp : public Operator {
     if (has_argument("scalar")) {
       scalar_data_ = get_single_argument<float>("scalar", 0);
       has_scalar_arg_ = true;
-    } else if (bottoms_size() > 1) {
-      scalar_ = const_cast<BlobF *>(bottoms<float>(1));
-    } else if (blobs_size() > 0) {
-      scalar_ = const_cast<BlobF *>(blobs<float>(0));
-    } else {
-      LOG(FATAL) << "Missing right blob for doing binary operation";
     }
   }
 
-  void Reshape() override;
   void Forward() override;
 
  private:

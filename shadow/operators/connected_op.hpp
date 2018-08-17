@@ -13,15 +13,8 @@ class ConnectedOp : public Operator {
     num_output_ = get_single_argument<int>("num_output", 0);
     bias_term_ = get_single_argument<bool>("bias_term", true);
     transpose_ = get_single_argument<bool>("transpose", false);
-
-    if (bias_term_) {
-      CHECK_EQ(blobs_size(), 2);
-    } else {
-      CHECK_EQ(blobs_size(), 1);
-    }
   }
 
-  void Reshape() override;
   void Forward() override;
 
  private:

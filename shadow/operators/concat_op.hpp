@@ -11,10 +11,8 @@ class ConcatOp : public Operator {
       : Operator(op_param, ws) {
     concat_axis_ = get_single_argument<int>("axis", 1);
     CHECK_GE(concat_axis_, 0);
-    CHECK_LT(concat_axis_, bottoms<float>(0)->num_axes());
   }
 
-  void Reshape() override;
   void Forward() override;
 
  private:

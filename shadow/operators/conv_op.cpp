@@ -4,20 +4,29 @@
 
 namespace Shadow {
 
-void ConvOp::Reshape() {
+void ConvOp::Forward() {
   const auto *bottom = bottoms<float>(0);
   auto *top = mutable_tops<float>(0);
 
   CHECK_NE(bottom, top);
+  if (bias_term_) {
+    CHECK_EQ(blobs_size(), 2);
+  } else {
+    CHECK_EQ(blobs_size(), 1);
+  }
 
   int batch = bottom->shape(0), in_c = bottom->shape(1),
       in_h = bottom->shape(2), in_w = bottom->shape(3);
 
-  VecInt top_shape = bottom->shape();
+  CHECK_EQ(in_c % group_, 0);
+
+  auto top_shape = bottom->shape();
   top_shape[1] = num_output_;
   top_shape[2] = conv_out_size(in_h, kernel_size_, stride_, pad_, dilation_);
   top_shape[3] = conv_out_size(in_w, kernel_size_, stride_, pad_, dilation_);
   top->reshape(top_shape);
+
+  DLOG(INFO) << debug_log();
 
   out_spatial_dim_ = top->count(2);
   kernel_dim_ = kernel_size_ * kernel_size_ * in_c / group_;
@@ -25,6 +34,32 @@ void ConvOp::Reshape() {
   weight_offset_ = num_output_ * kernel_dim_ / group_;
   col_offset_ = kernel_dim_ * out_spatial_dim_;
   output_offset_ = num_output_ * out_spatial_dim_ / group_;
+
+#if defined(USE_NNPACK)
+  use_nnpack_ = batch == 1 && group_ == 1 && dilation_ == 1 && bias_term_;
+  if (use_nnpack_) {
+    nnp_algorithm_ = nnp_convolution_algorithm_auto;
+    nnp_transform_ = nnp_convolution_transform_strategy_compute;
+    nnp_activation_ =
+        activate_type_ == 1 ? nnp_activation_relu : nnp_activation_identity;
+    nnp_input_size_.height = static_cast<size_t>(in_h);
+    nnp_input_size_.width = static_cast<size_t>(in_w);
+    nnp_pad_.top = nnp_pad_.bottom = nnp_pad_.left = nnp_pad_.right =
+        static_cast<size_t>(pad_);
+    nnp_kernel_size_.height = nnp_kernel_size_.width =
+        static_cast<size_t>(kernel_size_);
+    nnp_stride_.height = nnp_stride_.width = static_cast<size_t>(stride_);
+
+    int out_c = top->shape(1);
+    auto status = nnp_convolution_inference(
+        nnp_algorithm_, nnp_transform_, in_c, out_c, nnp_input_size_, nnp_pad_,
+        nnp_kernel_size_, nnp_stride_, bottom->data(), blobs<float>(0)->data(),
+        blobs<float>(1)->data(), top->mutable_data(), nullptr, nullptr,
+        nnp_activation_, nullptr, Kernel::nnp_pthreadpool_, nullptr);
+    CHECK_EQ(nnp_status_success, status);
+    return;
+  }
+#endif
 
 #if defined(USE_CUDNN)
   if (use_cudnn_) {
@@ -54,54 +89,7 @@ void ConvOp::Reshape() {
       workspace_ = op_ws_->CreateTempBlob<unsigned char>(
           {static_cast<int>(workspace_fwd_size_)}, op_name_ + "_workspace");
     }
-  }
-#endif
 
-#if defined(USE_NNPACK)
-  use_nnpack_ = batch == 1 && group_ == 1 && dilation_ == 1 && bias_term_;
-  if (use_nnpack_) {
-    nnp_algorithm_ = nnp_convolution_algorithm_auto;
-    nnp_transform_ = nnp_convolution_transform_strategy_compute;
-    nnp_activation_ =
-        activate_type_ == 1 ? nnp_activation_relu : nnp_activation_identity;
-    nnp_input_size_.height = static_cast<size_t>(in_h);
-    nnp_input_size_.width = static_cast<size_t>(in_w);
-    nnp_pad_.top = nnp_pad_.bottom = nnp_pad_.left = nnp_pad_.right =
-        static_cast<size_t>(pad_);
-    nnp_kernel_size_.height = nnp_kernel_size_.width =
-        static_cast<size_t>(kernel_size_);
-    nnp_stride_.height = nnp_stride_.width = static_cast<size_t>(stride_);
-  }
-#endif
-
-  use_depthwise_ = dilation_ == 1 && group_ == in_c && group_ == num_output_;
-  if (!use_cudnn_ && !use_nnpack_ && !use_depthwise_) {
-    if (bias_term_) {
-      biases_multiplier_ =
-          op_ws_->CreateBlob<float>(op_name_ + "_biases_multiplier");
-      biases_multiplier_->reshape({out_spatial_dim_});
-      Blas::Set(out_spatial_dim_, 1, biases_multiplier_->mutable_data(), 0);
-    }
-    col_image_ = op_ws_->CreateTempBlob<float>(
-        {kernel_dim_ * group_, out_spatial_dim_}, op_name_ + "_col_image");
-  }
-
-  DLOG(INFO) << op_name_ << "(" << op_type_ << "): " << bottom->name()
-             << Util::format_vector(bottom->shape(), ",", "(", ")") << " -> "
-             << num_output_ << "_" << kernel_size_ << "x" << kernel_size_
-             << "_s" << stride_ << "_p" << pad_ << " -> " << top->name()
-             << Util::format_vector(top->shape(), ",", "(", ")");
-}
-
-void ConvOp::Forward() {
-  const auto *bottom = bottoms<float>(0);
-  auto *top = mutable_tops<float>(0);
-
-  int batch = bottom->shape(0);
-  int top_num = top->num(), bottom_num = bottom->num();
-
-#if defined(USE_CUDNN)
-  if (use_cudnn_) {
     auto *workspace_ptr =
         workspace_fwd_size_ > 0 ? workspace_->mutable_data() : nullptr;
     CUDNN_CHECK(cudnnConvolutionForward(
@@ -122,19 +110,7 @@ void ConvOp::Forward() {
   }
 #endif
 
-#if defined(USE_NNPACK)
-  if (use_nnpack_) {
-    int in_c = bottom->shape(1), out_c = top->shape(1);
-    auto status = nnp_convolution_inference(
-        nnp_algorithm_, nnp_transform_, in_c, out_c, nnp_input_size_, nnp_pad_,
-        nnp_kernel_size_, nnp_stride_, bottom->data(), blobs<float>(0)->data(),
-        blobs<float>(1)->data(), top->mutable_data(), nullptr, nullptr,
-        nnp_activation_, nullptr, Kernel::nnp_pthreadpool_, nullptr);
-    CHECK_EQ(nnp_status_success, status);
-    return;
-  }
-#endif
-
+  use_depthwise_ = dilation_ == 1 && group_ == in_c && group_ == num_output_;
   if (use_depthwise_) {
     if (bias_term_) {
       Vision::Depthwise(bottom->data(), bottom->shape(),
@@ -148,6 +124,15 @@ void ConvOp::Forward() {
           stride_, pad_, bias_term_, top->shape(), top->mutable_data());
     }
   } else {
+    if (bias_term_) {
+      biases_multiplier_ =
+          op_ws_->CreateBlob<float>(op_name_ + "_biases_multiplier");
+      biases_multiplier_->reshape({out_spatial_dim_});
+      Blas::Set(out_spatial_dim_, 1, biases_multiplier_->mutable_data(), 0);
+    }
+    col_image_ = op_ws_->CreateTempBlob<float>(
+        {kernel_dim_ * group_, out_spatial_dim_}, op_name_ + "_col_image");
+    int top_num = top->num(), bottom_num = bottom->num();
     for (int b = 0; b < batch; ++b) {
       Vision::Im2Col(bottom->data(), bottom->shape(), b * bottom_num,
                      kernel_size_, stride_, pad_, dilation_, 0, top->shape(),

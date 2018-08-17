@@ -4,16 +4,23 @@
 
 namespace Shadow {
 
-void DeconvOp::Reshape() {
+void DeconvOp::Forward() {
   const auto *bottom = bottoms<float>(0);
   auto *top = mutable_tops<float>(0);
 
   CHECK_NE(bottom, top);
+  if (bias_term_) {
+    CHECK_EQ(blobs_size(), 2);
+  } else {
+    CHECK_EQ(blobs_size(), 1);
+  }
 
   int batch = bottom->shape(0), in_c = bottom->shape(1),
       in_h = bottom->shape(2), in_w = bottom->shape(3);
 
-  VecInt top_shape = bottom->shape();
+  CHECK_EQ(in_c % group_, 0);
+
+  auto top_shape = bottom->shape();
   top_shape[1] = num_output_;
   top_shape[2] = deconv_out_size(in_h, kernel_size_, stride_, pad_, dilation_);
   top_shape[3] = deconv_out_size(in_w, kernel_size_, stride_, pad_, dilation_);
@@ -29,32 +36,16 @@ void DeconvOp::Reshape() {
   col_offset_ = kernel_dim_ * conv_out_spatial_dim_;
   output_offset_ = conv_out_c * conv_out_spatial_dim_ / group_;
 
-  if (!use_cudnn_ && !use_nnpack_) {
-    if (bias_term_) {
-      biases_multiplier_ =
-          op_ws_->CreateBlob<float>(op_name_ + "_biases_multiplier");
-      biases_multiplier_->reshape({out_spatial_dim_});
-      Blas::Set(out_spatial_dim_, 1, biases_multiplier_->mutable_data(), 0);
-    }
-    col_image_ = op_ws_->CreateTempBlob<float>(
-        {kernel_dim_ * group_, conv_out_spatial_dim_}, op_name_ + "_col_image");
-  }
-
-  DLOG(INFO) << op_name_ << "(" << op_type_ << "): " << bottom->name()
-             << Util::format_vector(bottom->shape(), ",", "(", ")") << " -> "
-             << num_output_ << "_" << kernel_size_ << "x" << kernel_size_
-             << "_s" << stride_ << "_p" << pad_ << " -> " << top->name()
-             << Util::format_vector(top->shape(), ",", "(", ")");
-}
-
-void DeconvOp::Forward() {
-  const auto *bottom = bottoms<float>(0);
-  auto *top = mutable_tops<float>(0);
-
-  int batch = bottom->shape(0);
-  int top_num = top->num(), bottom_num = bottom->num();
-
   Blas::Set(top->count(), 0, top->mutable_data(), 0);
+  if (bias_term_) {
+    biases_multiplier_ =
+        op_ws_->CreateBlob<float>(op_name_ + "_biases_multiplier");
+    biases_multiplier_->reshape({out_spatial_dim_});
+    Blas::Set(out_spatial_dim_, 1, biases_multiplier_->mutable_data(), 0);
+  }
+  col_image_ = op_ws_->CreateTempBlob<float>(
+      {kernel_dim_ * group_, conv_out_spatial_dim_}, op_name_ + "_col_image");
+  int top_num = top->num(), bottom_num = bottom->num();
   for (int b = 0; b < batch; ++b) {
     for (int g = 0; g < group_; ++g) {
       Blas::BlasSgemm(1, 0, kernel_dim_, conv_out_spatial_dim_,
@@ -75,6 +66,8 @@ void DeconvOp::Forward() {
   if (activate_type_ == 1) {
     Vision::Activate(top->mutable_data(), top->count(), activate_type_);
   }
+
+  DLOG(INFO) << debug_log();
 }
 
 REGISTER_OPERATOR(Deconv, DeconvOp);

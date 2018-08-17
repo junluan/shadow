@@ -2,23 +2,23 @@
 
 namespace Shadow {
 
-void BinaryOp::Reshape() {
+void BinaryOp::Forward() {
   const auto *bottom = bottoms<float>(0);
   auto *top = mutable_tops<float>(0);
+
+  if (!has_scalar_arg_) {
+    if (bottoms_size() > 1) {
+      scalar_ = const_cast<BlobF *>(bottoms<float>(1));
+    } else if (blobs_size() > 0) {
+      scalar_ = const_cast<BlobF *>(blobs<float>(0));
+    } else {
+      LOG(FATAL) << "Missing right blob for doing binary operation";
+    }
+  }
 
   if (bottom != top && scalar_ != top) {
     top->reshape(bottom->shape());
   }
-
-  DLOG(INFO) << op_name_ << "(" << op_type_ << "): " << bottom->name()
-             << Util::format_vector(bottom->shape(), ",", "(", ")") << " -> "
-             << operation_ << " -> " << top->name()
-             << Util::format_vector(top->shape(), ",", "(", ")");
-}
-
-void BinaryOp::Forward() {
-  const auto *bottom = bottoms<float>(0);
-  auto *top = mutable_tops<float>(0);
 
   int count = top->count();
 
@@ -82,6 +82,8 @@ void BinaryOp::Forward() {
     default:
       LOG(FATAL) << "Unknown binary operation " << operation_;
   }
+
+  DLOG(INFO) << debug_log();
 }
 
 REGISTER_OPERATOR(Binary, BinaryOp);

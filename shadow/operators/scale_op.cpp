@@ -2,7 +2,7 @@
 
 namespace Shadow {
 
-void ScaleOp::Reshape() {
+void ScaleOp::Forward() {
   const auto *bottom = bottoms<float>(0);
   auto *top = mutable_tops<float>(0);
 
@@ -10,24 +10,56 @@ void ScaleOp::Reshape() {
     top->reshape(bottom->shape());
   }
 
+  if (scale_value_.empty() && bias_value_.empty()) {
+    CHECK_GE(blobs_size(), 1);
+    if (has_scale_ && has_bias_) {
+      CHECK_EQ(blobs_size(), 2);
+      scale_ = const_cast<BlobF *>(blobs<float>(0));
+      bias_ = const_cast<BlobF *>(blobs<float>(1));
+    } else if (has_scale_) {
+      scale_ = const_cast<BlobF *>(blobs<float>(0));
+      bias_ =
+          op_ws_->CreateBlob<float>(scale_->shape(), op_name_ + "_bias_value");
+      Blas::Set(bias_->count(), 0, bias_->mutable_data(), 0);
+    } else {
+      bias_ = const_cast<BlobF *>(blobs<float>(0));
+      scale_ =
+          op_ws_->CreateBlob<float>(bias_->shape(), op_name_ + "_scale_value");
+      Blas::Set(scale_->count(), 1, scale_->mutable_data(), 0);
+    }
+  } else {
+    int dim = bottom->shape(axis_);
+    if (scale_value_.size() > 1) {
+      CHECK_EQ(scale_value_.size(), dim);
+    } else if (scale_value_.size() == 1) {
+      scale_value_ = VecFloat(dim, scale_value_[0]);
+    } else {
+      scale_value_ = VecFloat(dim, 1);
+    }
+    if (bias_value_.size() > 1) {
+      CHECK_EQ(bias_value_.size(), dim);
+    } else if (bias_value_.size() == 1) {
+      bias_value_ = VecFloat(dim, bias_value_[0]);
+    } else {
+      bias_value_ = VecFloat(dim, 0);
+    }
+    scale_ = op_ws_->CreateBlob<float>({dim}, op_name_ + "_scale_value");
+    bias_ = op_ws_->CreateBlob<float>({dim}, op_name_ + "_bias_value");
+    scale_->set_data(scale_value_.data(), dim);
+    bias_->set_data(bias_value_.data(), dim);
+  }
+
   CHECK_GE(bottom->num_axes(), axis_ + scale_->num_axes());
-  for (int i = 0; i < scale_->num_axes(); ++i) {
-    CHECK_EQ(bottom->shape(axis_ + i), scale_->shape(i));
+  for (int d = 0; d < scale_->num_axes(); ++d) {
+    CHECK_EQ(bottom->shape(axis_ + d), scale_->shape(d));
   }
   scale_dim_ = scale_->count();
   inner_dim_ = bottom->count(axis_ + scale_->num_axes());
 
-  DLOG(INFO) << op_name_ << "(" << op_type_ << "): " << bottom->name()
-             << Util::format_vector(bottom->shape(), ",", "(", ")") << " -> "
-             << top->name() << Util::format_vector(top->shape(), ",", "(", ")");
-}
-
-void ScaleOp::Forward() {
-  const auto *bottom = bottoms<float>(0);
-  auto *top = mutable_tops<float>(0);
-
   Vision::Scale(bottom->data(), bottom->count(), scale_->data(), bias_->data(),
                 scale_dim_, inner_dim_, top->mutable_data());
+
+  DLOG(INFO) << debug_log();
 }
 
 REGISTER_OPERATOR(Scale, ScaleOp);

@@ -2,22 +2,13 @@
 
 namespace Shadow {
 
-void UnaryOp::Reshape() {
+void UnaryOp::Forward() {
   const auto *bottom = bottoms<float>(0);
   auto *top = mutable_tops<float>(0);
 
   if (bottom != top) {
     top->reshape(bottom->shape());
   }
-
-  DLOG(INFO) << op_name_ << "(" << op_type_ << "): " << bottom->name()
-             << Util::format_vector(bottom->shape(), ",", "(", ")") << " -> "
-             << top->name() << Util::format_vector(top->shape(), ",", "(", ")");
-}
-
-void UnaryOp::Forward() {
-  const auto *bottom = bottoms<float>(0);
-  auto *top = mutable_tops<float>(0);
 
   int count = bottom->count();
 
@@ -51,6 +42,8 @@ void UnaryOp::Forward() {
     default:
       LOG(FATAL) << "Unknown unary operation " << operation_;
   }
+
+  DLOG(INFO) << debug_log();
 }
 
 REGISTER_OPERATOR(Unary, UnaryOp);

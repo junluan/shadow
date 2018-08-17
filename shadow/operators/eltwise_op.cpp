@@ -2,58 +2,60 @@
 
 namespace Shadow {
 
-void EltwiseOp::Reshape() {
-  auto *top = mutable_tops<float>(0);
-
-  for (int i = 1; i < bottoms_size(); ++i) {
-    CHECK(bottoms<float>(i)->shape() == bottoms<float>(0)->shape());
-  }
-  top->reshape(bottoms<float>(0)->shape());
-
-  VecString str;
-  for (int i = 0; i < bottoms_size(); ++i) {
-    const auto *bottom = bottoms<float>(i);
-    str.push_back(
-        Util::format_vector(bottom->shape(), ",", bottom->name() + "(", ")"));
-  }
-  DLOG(INFO) << op_name_ << "(" << op_type_
-             << "): " << Util::format_vector(str, " + ") << " -> "
-             << top->name() << Util::format_vector(top->shape(), ",", "(", ")");
-}
-
 void EltwiseOp::Forward() {
+  const auto *bottom_0 = bottoms<float>(0);
   auto *top = mutable_tops<float>(0);
 
-  int count = bottoms<float>(0)->count();
+  CHECK_GE(bottoms_size(), 2);
+  for (int n = 1; n < bottoms_size(); ++n) {
+    CHECK(bottoms<float>(n)->shape() == bottom_0->shape());
+  }
+  top->reshape(bottom_0->shape());
+
+  int coeff_size = static_cast<int>(coeff_.size());
+
+  CHECK(coeff_size == 0 || coeff_size == bottoms_size())
+      << "Eltwise op takes one coefficient per bottom blob.";
+  CHECK(!(operation_ != 1 && coeff_size))
+      << "Eltwise op only takes coefficients for summation.";
+
+  VecFloat coeff(bottoms_size(), 1);
+  for (int n = 0; n < coeff_size; ++n) {
+    coeff[n] = coeff_[n];
+  }
+
+  int count = bottom_0->count();
 
   // Prod: 0, Sum: 1, Max: 2
   switch (operation_) {
     case kProd:
       Blas::Mul(count, bottoms<float>(0)->data(), 0, bottoms<float>(1)->data(),
                 0, top->mutable_data(), 0);
-      for (int i = 2; i < bottoms_size(); ++i) {
-        Blas::Mul(count, top->data(), 0, bottoms<float>(i)->data(), 0,
+      for (int n = 2; n < bottoms_size(); ++n) {
+        Blas::Mul(count, top->data(), 0, bottoms<float>(n)->data(), 0,
                   top->mutable_data(), 0);
       }
       break;
     case kSum:
       Blas::Set(count, 0, top->mutable_data(), 0);
-      for (int i = 0; i < bottoms_size(); ++i) {
-        Blas::BlasSaxpy(count, coeff_[i], bottoms<float>(i)->data(), 0,
+      for (int n = 0; n < bottoms_size(); ++n) {
+        Blas::BlasSaxpy(count, coeff[n], bottoms<float>(n)->data(), 0,
                         top->mutable_data(), 0);
       }
       break;
     case kMax:
       Blas::Max(count, bottoms<float>(0)->data(), 0, bottoms<float>(1)->data(),
                 0, top->mutable_data(), 0);
-      for (int i = 2; i < bottoms_size(); ++i) {
-        Blas::Max(count, top->data(), 0, bottoms<float>(i)->data(), 0,
+      for (int n = 2; n < bottoms_size(); ++n) {
+        Blas::Max(count, top->data(), 0, bottoms<float>(n)->data(), 0,
                   top->mutable_data(), 0);
       }
       break;
     default:
       LOG(FATAL) << "Unknown elementwise operation " << operation_;
   }
+
+  DLOG(INFO) << debug_log();
 }
 
 REGISTER_OPERATOR(Eltwise, EltwiseOp);

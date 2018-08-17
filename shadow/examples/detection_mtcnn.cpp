@@ -42,8 +42,7 @@ inline VecBoxInfo NMS(const VecBoxInfo &boxes, float threshold,
   return out_boxes;
 }
 
-void DetectionMTCNN::Setup(const std::string &model_file,
-                           const VecInt &in_shape) {
+void DetectionMTCNN::Setup(const std::string &model_file) {
   net_p_.Setup();
 
 #if defined(USE_Protobuf)
@@ -261,13 +260,12 @@ void DetectionMTCNN::Release() {
 void DetectionMTCNN::Process_net_p(const float *data, const VecInt &in_shape,
                                    float threshold, float scale,
                                    VecBoxInfo *boxes) {
-  std::map<std::string, VecInt> shape_map;
   std::map<std::string, float *> data_map;
-  shape_map[in_p_str_] = in_shape;
+  std::map<std::string, VecInt> shape_map;
   data_map[in_p_str_] = const_cast<float *>(data);
+  shape_map[in_p_str_] = in_shape;
 
-  net_p_.Reshape(shape_map);
-  net_p_.Forward(data_map);
+  net_p_.Forward(data_map, shape_map);
 
   const auto *loc_blob = net_p_.GetBlobByName<float>(net_p_conv4_2_);
   const auto *loc_data = const_cast<BlobF *>(loc_blob)->cpu_data();
@@ -303,13 +301,12 @@ void DetectionMTCNN::Process_net_r(const float *data, const VecInt &in_shape,
                                    float threshold,
                                    const VecBoxInfo &net_12_boxes,
                                    VecBoxInfo *boxes) {
-  std::map<std::string, VecInt> shape_map;
   std::map<std::string, float *> data_map;
-  shape_map[in_r_str_] = in_shape;
+  std::map<std::string, VecInt> shape_map;
   data_map[in_r_str_] = const_cast<float *>(data);
+  shape_map[in_r_str_] = in_shape;
 
-  net_r_.Reshape(shape_map);
-  net_r_.Forward(data_map);
+  net_r_.Forward(data_map, shape_map);
 
   const auto *loc_data = net_r_.GetBlobDataByName<float>(net_r_conv5_2_);
   const auto *conf_data = net_r_.GetBlobDataByName<float>(net_r_prob1_);
@@ -335,13 +332,12 @@ void DetectionMTCNN::Process_net_o(const float *data, const VecInt &in_shape,
                                    float threshold,
                                    const VecBoxInfo &net_24_boxes,
                                    VecBoxInfo *boxes) {
-  std::map<std::string, VecInt> shape_map;
   std::map<std::string, float *> data_map;
-  shape_map[in_o_str_] = in_shape;
+  std::map<std::string, VecInt> shape_map;
   data_map[in_o_str_] = const_cast<float *>(data);
+  shape_map[in_o_str_] = in_shape;
 
-  net_o_.Reshape(shape_map);
-  net_o_.Forward(data_map);
+  net_o_.Forward(data_map, shape_map);
 
   const auto *loc_data = net_o_.GetBlobDataByName<float>(net_o_conv6_2_);
   const auto *mark_data = net_o_.GetBlobDataByName<float>(net_o_conv6_3_);

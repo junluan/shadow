@@ -2,7 +2,7 @@
 
 namespace Shadow {
 
-void DeformablePSROIPoolingOp::Reshape() {
+void DeformablePSROIPoolingOp::Forward() {
   const auto *bottom_fea = bottoms<float>(0);
   const auto *bottom_roi = bottoms<float>(1);
   auto *top = mutable_tops<float>(0);
@@ -13,31 +13,15 @@ void DeformablePSROIPoolingOp::Reshape() {
 
   top->reshape({num_rois, output_dim_, pooled_size_, pooled_size_});
 
-  VecString str;
-  for (int i = 0; i < bottoms_size(); ++i) {
-    const auto *bottom = bottoms<float>(i);
-    str.push_back(
-        Util::format_vector(bottom->shape(), ",", bottom->name() + "(", ")"));
-  }
-  DLOG(INFO) << op_name_ << "(" << op_type_
-             << "): " << Util::format_vector(str, " + ") << " -> "
-             << top->name() << Util::format_vector(top->shape(), ",", "(", ")");
-}
-
-void DeformablePSROIPoolingOp::Forward() {
-  const auto *bottom_fea = bottoms<float>(0);
-  const auto *bottom_roi = bottoms<float>(1);
-  auto *top = mutable_tops<float>(0);
-
-  int num_rois = bottom_roi->shape(0);
-
   if (no_trans_) {
+    CHECK_EQ(bottoms_size(), 2);
     Vision::DeformablePSROIPooling(
         bottom_fea->data(), bottom_fea->shape(), bottom_roi->data(),
         static_cast<decltype(bottom_roi->data())>(nullptr), VecInt{}, num_rois,
         output_dim_, group_size_, pooled_size_, part_size_, sample_per_part_,
         spatial_scale_, trans_std_, no_trans_, top->mutable_data());
   } else {
+    CHECK_EQ(bottoms_size(), 3);
     const auto *bottom_trans = bottoms<float>(2);
     Vision::DeformablePSROIPooling(
         bottom_fea->data(), bottom_fea->shape(), bottom_roi->data(),

@@ -10,7 +10,7 @@ class DetectionRefineDet final : public Method {
   DetectionRefineDet() = default;
   ~DetectionRefineDet() override { Release(); }
 
-  void Setup(const std::string &model_file, const VecInt &in_shape) override;
+  void Setup(const std::string &model_file) override;
 
   void Predict(const JImage &im_src, const VecRectF &rois,
                std::vector<VecBoxF> *Gboxes,
@@ -58,8 +58,7 @@ class DetectionRefineDet final : public Method {
   std::string in_str_, odm_loc_str_, odm_conf_flatten_str_, arm_priorbox_str_,
       arm_conf_flatten_str_, arm_loc_str_;
   int batch_, in_num_, in_c_, in_h_, in_w_;
-  int num_classes_, num_priors_, num_loc_classes_, background_label_id_, top_k_,
-      keep_top_k_;
+  int num_classes_, num_loc_classes_, background_label_id_, top_k_, keep_top_k_;
   float threshold_, nms_threshold_, confidence_threshold_, objectness_score_;
   bool share_location_;
 };

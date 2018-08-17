@@ -2,7 +2,7 @@
 
 namespace Shadow {
 
-void PSROIPoolingOp::Reshape() {
+void PSROIPoolingOp::Forward() {
   const auto *bottom_fea = bottoms<float>(0);
   const auto *bottom_roi = bottoms<float>(1);
   auto *top = mutable_tops<float>(0);
@@ -13,28 +13,12 @@ void PSROIPoolingOp::Reshape() {
 
   top->reshape({num_rois, output_dim_, pooled_h_, pooled_w_});
 
-  VecString str;
-  for (int i = 0; i < bottoms_size(); ++i) {
-    const auto *bottom = bottoms<float>(i);
-    str.push_back(
-        Util::format_vector(bottom->shape(), ",", bottom->name() + "(", ")"));
-  }
-  DLOG(INFO) << op_name_ << "(" << op_type_
-             << "): " << Util::format_vector(str, " + ") << " -> "
-             << top->name() << Util::format_vector(top->shape(), ",", "(", ")");
-}
-
-void PSROIPoolingOp::Forward() {
-  const auto *bottom_fea = bottoms<float>(0);
-  const auto *bottom_roi = bottoms<float>(1);
-  auto *top = mutable_tops<float>(0);
-
-  int num_rois = bottom_roi->shape(0);
-
   Vision::PSROIPooling(bottom_fea->data(), bottom_fea->shape(),
                        bottom_roi->data(), num_rois, output_dim_, group_size_,
                        pooled_h_, pooled_w_, spatial_scale_,
                        top->mutable_data());
+
+  DLOG(INFO) << debug_log();
 }
 
 REGISTER_OPERATOR(PSROIPooling, PSROIPoolingOp);

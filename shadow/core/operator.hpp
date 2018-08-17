@@ -17,7 +17,6 @@ class Operator {
   explicit Operator(const shadow::OpParam &op_param, Workspace *ws);
   virtual ~Operator();
 
-  virtual void Reshape() { LOG(INFO) << "Reshape Operator!"; }
   virtual void Forward() { LOG(INFO) << "Forward Operator!"; }
 
   bool has_argument(const std::string &name) const {
@@ -44,14 +43,14 @@ class Operator {
   void set_type(const std::string &type) { op_type_ = type; }
 
   template <typename T>
-  const Blob<T> *bottoms(int i) const {
-    CHECK(check_index(i, bottoms_size()));
-    return op_ws_->GetBlob<T>(bottom_names_[i]);
+  const Blob<T> *bottoms(int n) const {
+    CHECK(check_index(n, bottoms_size()));
+    return op_ws_->GetBlob<T>(bottom_names_[n]);
   }
   template <typename T>
-  Blob<T> *mutable_bottoms(int i) {
+  Blob<T> *mutable_bottoms(int n) {
     return const_cast<Blob<T> *>(
-        static_cast<const Operator *>(this)->bottoms<T>(i));
+        static_cast<const Operator *>(this)->bottoms<T>(n));
   }
   template <typename T>
   void add_bottoms(const std::string &bottom_name) {
@@ -59,29 +58,29 @@ class Operator {
     bottom_names_.push_back(bottom_name);
   }
   template <typename T>
-  void set_bottoms(int i, int count, const T *data) {
-    CHECK(check_index(i, bottoms_size()));
-    mutable_bottoms<T>(i)->set_data(data, count);
+  void set_bottoms(int n, int count, const T *data) {
+    CHECK(check_index(n, bottoms_size()));
+    mutable_bottoms<T>(n)->set_data(data, count);
   }
-  const std::string &bottoms_name(int i) const {
-    CHECK(check_index(i, bottoms_size()));
-    return bottom_names_[i];
+  const std::string &bottoms_name(int n) const {
+    CHECK(check_index(n, bottoms_size()));
+    return bottom_names_[n];
   }
-  const std::string bottoms_type(int i) const {
-    CHECK(check_index(i, bottoms_size()));
-    return op_ws_->GetBlobType(bottom_names_[i]);
+  const std::string bottoms_type(int n) const {
+    CHECK(check_index(n, bottoms_size()));
+    return op_ws_->GetBlobType(bottom_names_[n]);
   }
   int bottoms_size() const { return static_cast<int>(bottom_names_.size()); }
 
   template <typename T>
-  const Blob<T> *tops(int i) const {
-    CHECK(check_index(i, tops_size()));
-    return op_ws_->GetBlob<T>(top_names_[i]);
+  const Blob<T> *tops(int n) const {
+    CHECK(check_index(n, tops_size()));
+    return op_ws_->GetBlob<T>(top_names_[n]);
   }
   template <typename T>
-  Blob<T> *mutable_tops(int i) {
+  Blob<T> *mutable_tops(int n) {
     return const_cast<Blob<T> *>(
-        static_cast<const Operator *>(this)->tops<T>(i));
+        static_cast<const Operator *>(this)->tops<T>(n));
   }
   template <typename T>
   void add_tops(const std::string &top_name) {
@@ -89,29 +88,29 @@ class Operator {
     top_names_.push_back(top_name);
   }
   template <typename T>
-  void set_tops(int i, int count, const T *data) {
-    CHECK(check_index(i, tops_size()));
-    mutable_tops<T>(i)->set_data(data, count);
+  void set_tops(int n, int count, const T *data) {
+    CHECK(check_index(n, tops_size()));
+    mutable_tops<T>(n)->set_data(data, count);
   }
-  const std::string tops_name(int i) const {
-    CHECK(check_index(i, tops_size()));
-    return top_names_[i];
+  const std::string tops_name(int n) const {
+    CHECK(check_index(n, tops_size()));
+    return top_names_[n];
   }
-  const std::string tops_type(int i) const {
-    CHECK(check_index(i, tops_size()));
-    return op_ws_->GetBlobType(top_names_[i]);
+  const std::string tops_type(int n) const {
+    CHECK(check_index(n, tops_size()));
+    return op_ws_->GetBlobType(top_names_[n]);
   }
   int tops_size() const { return static_cast<int>(top_names_.size()); }
 
   template <typename T>
-  const Blob<T> *blobs(int i) const {
-    CHECK(check_index(i, blobs_size()));
-    return op_ws_->GetBlob<T>(blob_names_[i]);
+  const Blob<T> *blobs(int n) const {
+    CHECK(check_index(n, blobs_size()));
+    return op_ws_->GetBlob<T>(blob_names_[n]);
   }
   template <typename T>
-  Blob<T> *mutable_blobs(int i) {
+  Blob<T> *mutable_blobs(int n) {
     return const_cast<Blob<T> *>(
-        static_cast<const Operator *>(this)->blobs<T>(i));
+        static_cast<const Operator *>(this)->blobs<T>(n));
   }
   template <typename T>
   void add_blobs(const std::string &blob_name) {
@@ -119,19 +118,40 @@ class Operator {
     blob_names_.push_back(blob_name);
   }
   template <typename T>
-  void set_blobs(int i, int count, const T *data) {
-    CHECK(check_index(i, blobs_size()));
-    mutable_blobs<T>(i)->set_data(data, count);
+  void set_blobs(int n, int count, const T *data) {
+    CHECK(check_index(n, blobs_size()));
+    mutable_blobs<T>(n)->set_data(data, count);
   }
-  const std::string blobs_name(int i) const {
-    CHECK(check_index(i, blobs_size()));
-    return blob_names_[i];
+  const std::string blobs_name(int n) const {
+    CHECK(check_index(n, blobs_size()));
+    return blob_names_[n];
   }
-  const std::string blobs_type(int i) const {
-    CHECK(check_index(i, blobs_size()));
-    return op_ws_->GetBlobType(blob_names_[i]);
+  const std::string blobs_type(int n) const {
+    CHECK(check_index(n, blobs_size()));
+    return op_ws_->GetBlobType(blob_names_[n]);
   }
   int blobs_size() const { return static_cast<int>(blob_names_.size()); }
+
+  const std::string debug_log() const {
+    VecString bottom_str, top_str;
+    for (int n = 0; n < bottoms_size(); ++n) {
+      const auto *bottom = bottoms<float>(n);
+      const auto &shape = bottom->shape();
+      const auto &name = bottom->name();
+      bottom_str.push_back(Util::format_vector(shape, ",", name + "(", ")"));
+    }
+    for (int n = 0; n < tops_size(); ++n) {
+      const auto *top = tops<float>(n);
+      const auto &shape = top->shape();
+      const auto &name = top->name();
+      top_str.push_back(Util::format_vector(shape, ",", name + "(", ")"));
+    }
+    std::stringstream ss;
+    ss << op_name_ << "(" << op_type_
+       << "): " << Util::format_vector(bottom_str, " + ") << " -> "
+       << Util::format_vector(top_str, " + ");
+    return ss.str();
+  }
 
  protected:
   std::string op_name_, op_type_;

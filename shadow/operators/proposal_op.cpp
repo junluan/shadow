@@ -47,7 +47,7 @@ inline VecInt nms_sorted(const std::vector<RectInfo> &rects,
   return picked;
 }
 
-void ProposalOp::Reshape() {
+void ProposalOp::Forward() {
   const auto *bottom_score = bottoms<float>(0);
   const auto *bottom_delta = bottoms<float>(1);
   const auto *bottom_info = bottoms<float>(2);
@@ -63,27 +63,8 @@ void ProposalOp::Reshape() {
   CHECK_EQ(num_regs, 4 * num_anchors_);
   CHECK_EQ(num_info, 3);
 
-  top->reshape({post_nms_top_n_, 5});
-
-  proposals_ = op_ws_->CreateBlob<float>(op_name_ + "_proposals");
-  proposals_->reshape({in_h * in_w * num_anchors_, 6});
-
-  VecString str;
-  for (int i = 0; i < bottoms_size(); ++i) {
-    const auto *bottom = bottoms<float>(i);
-    str.push_back(
-        Util::format_vector(bottom->shape(), ",", bottom->name() + "(", ")"));
-  }
-  DLOG(INFO) << op_name_ << "(" << op_type_
-             << "): " << Util::format_vector(str, " + ") << " -> "
-             << top->name() << Util::format_vector(top->shape(), ",", "(", ")");
-}
-
-void ProposalOp::Forward() {
-  const auto *bottom_score = bottoms<float>(0);
-  const auto *bottom_delta = bottoms<float>(1);
-  const auto *bottom_info = bottoms<float>(2);
-  auto *top = mutable_tops<float>(0);
+  proposals_ = op_ws_->CreateTempBlob<float>({in_h * in_w * num_anchors_, 6},
+                                             op_name_ + "_proposals");
 
   Vision::Proposal(anchors_->data(), bottom_score->data(), bottom_delta->data(),
                    bottom_info->data(), bottom_score->shape(), num_anchors_,
@@ -128,6 +109,8 @@ void ProposalOp::Forward() {
 
   top->reshape({picked_count, 5});
   top->set_data(selected_rois_.data(), selected_rois_.size());
+
+  DLOG(INFO) << debug_log();
 }
 
 REGISTER_OPERATOR(Proposal, ProposalOp);

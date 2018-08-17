@@ -59,13 +59,12 @@ class PriorBoxOp : public Operator {
     offset_ = get_single_argument<float>("offset", 0.5);
   }
 
-  void Reshape() override;
   void Forward() override;
 
  private:
   int num_priors_;
   float step_, offset_;
-  bool flip_, clip_, is_initial_;
+  bool flip_, clip_, is_initial_ = false;
   VecFloat min_sizes_, max_sizes_, aspect_ratios_, variance_, top_data_;
 };
 

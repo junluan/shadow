@@ -2,7 +2,7 @@
 
 namespace Shadow {
 
-void ROIPoolingOp::Reshape() {
+void ROIPoolingOp::Forward() {
   const auto *bottom_fea = bottoms<float>(0);
   const auto *bottom_roi = bottoms<float>(1);
   auto *top = mutable_tops<float>(0);
@@ -10,30 +10,13 @@ void ROIPoolingOp::Reshape() {
   CHECK_NE(bottom_fea, top);
 
   int in_c = bottom_fea->shape(1), num_rois = bottom_roi->shape(0);
-
   top->reshape({num_rois, in_c, pooled_h_, pooled_w_});
-
-  VecString str;
-  for (int i = 0; i < bottoms_size(); ++i) {
-    const auto *bottom = bottoms<float>(i);
-    str.push_back(
-        Util::format_vector(bottom->shape(), ",", bottom->name() + "(", ")"));
-  }
-  DLOG(INFO) << op_name_ << "(" << op_type_
-             << "): " << Util::format_vector(str, " + ") << " -> "
-             << top->name() << Util::format_vector(top->shape(), ",", "(", ")");
-}
-
-void ROIPoolingOp::Forward() {
-  const auto *bottom_fea = bottoms<float>(0);
-  const auto *bottom_roi = bottoms<float>(1);
-  auto *top = mutable_tops<float>(0);
-
-  int num_rois = bottom_roi->shape(0);
 
   Vision::ROIPooling(bottom_fea->data(), bottom_fea->shape(),
                      bottom_roi->data(), num_rois, pooled_h_, pooled_w_,
                      spatial_scale_, top->mutable_data());
+
+  DLOG(INFO) << debug_log();
 }
 
 REGISTER_OPERATOR(ROIPooling, ROIPoolingOp);
@@ -115,6 +98,6 @@ template void ROIPooling(const BufferF *in_data, const VecInt &in_shape,
                          const BufferF *roi_data, int num_rois, int pooled_h,
                          int pooled_w, float spatial_scale, BufferF *out_data);
 #endif
-}
+}  // namespace Vision
 
 }  // namespace Shadow

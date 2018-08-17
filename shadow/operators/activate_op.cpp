@@ -2,25 +2,12 @@
 
 namespace Shadow {
 
-void ActivateOp::Reshape() {
-  const auto *bottom = bottoms<float>(0);
-  auto *top = mutable_tops<float>(0);
-
-  if (bottom != top) {
-    top->reshape(bottom->shape());
-  }
-
-  DLOG(INFO) << op_name_ << "(" << op_type_ << "): " << bottom->name()
-             << Util::format_vector(bottom->shape(), ",", "(", ")") << " -> t"
-             << activate_type_ << " -> " << top->name()
-             << Util::format_vector(top->shape(), ",", "(", ")");
-}
-
 void ActivateOp::Forward() {
   const auto *bottom = bottoms<float>(0);
   auto *top = mutable_tops<float>(0);
 
   if (bottom != top) {
+    top->reshape(bottom->shape());
     Blas::BlasScopy(bottom->count(), bottom->data(), 0, top->mutable_data(), 0);
   }
 
@@ -30,9 +17,18 @@ void ActivateOp::Forward() {
       activate_type_ == kTanh) {
     Vision::Activate(top->mutable_data(), top->count(), activate_type_, slope_);
   } else if (activate_type_ == kPRelu) {
+    CHECK_EQ(blobs_size(), 1);
+    CHECK_GE(bottom->num_axes(), 2);
+    if (channel_shared_) {
+      CHECK_EQ(blobs<float>(0)->count(), 1);
+    } else {
+      CHECK_EQ(blobs<float>(0)->count(), bottom->shape(1));
+    }
     Vision::PRelu(top->mutable_data(), top->shape(), channel_shared_,
                   blobs<float>(0)->data());
   }
+
+  DLOG(INFO) << debug_log();
 }
 
 REGISTER_OPERATOR(Activate, ActivateOp);

@@ -14,7 +14,6 @@ class UnaryOp : public Operator {
     CHECK_LE(operation_, 12);
   }
 
-  void Reshape() override;
   void Forward() override;
 
  private:

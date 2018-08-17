@@ -16,11 +16,11 @@ class ShadowServer final : public ::shadow::ShadowService::Service {
   ShadowServer(const std::string &model_file, const std::string &method) {
     if (method == "ssd" || method == "yolo") {
       detection_ = std::make_shared<DemoDetection>(method);
-      detection_->Setup(model_file, {1});
+      detection_->Setup(model_file);
       is_detection_ = true;
     } else if (method == "classification") {
       classification_ = std::make_shared<DemoClassification>(method);
-      classification_->Setup(model_file, {1});
+      classification_->Setup(model_file);
       is_detection_ = false;
     } else {
       LOG(FATAL) << "Unknown method " << method;
