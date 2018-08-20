@@ -5,15 +5,17 @@
 namespace Shadow {
 
 void ConvOp::Forward() {
+  if (bias_term_) {
+    CHECK_EQ(bottoms_size(), 3);
+  } else {
+    CHECK_EQ(bottoms_size(), 2);
+  }
+
   const auto *bottom = bottoms<float>(0);
+  const auto *weight = bottoms<float>(1);
   auto *top = mutable_tops<float>(0);
 
   CHECK_NE(bottom, top);
-  if (bias_term_) {
-    CHECK_EQ(blobs_size(), 2);
-  } else {
-    CHECK_EQ(blobs_size(), 1);
-  }
 
   int batch = bottom->shape(0), in_c = bottom->shape(1),
       in_h = bottom->shape(2), in_w = bottom->shape(3);
@@ -53,8 +55,8 @@ void ConvOp::Forward() {
     int out_c = top->shape(1);
     auto status = nnp_convolution_inference(
         nnp_algorithm_, nnp_transform_, in_c, out_c, nnp_input_size_, nnp_pad_,
-        nnp_kernel_size_, nnp_stride_, bottom->data(), blobs<float>(0)->data(),
-        blobs<float>(1)->data(), top->mutable_data(), nullptr, nullptr,
+        nnp_kernel_size_, nnp_stride_, bottom->data(), weight->data(),
+        bottoms<float>(2)->data(), top->mutable_data(), nullptr, nullptr,
         nnp_activation_, nullptr, Kernel::nnp_pthreadpool_, nullptr);
     CHECK_EQ(nnp_status_success, status);
     return;
@@ -94,13 +96,13 @@ void ConvOp::Forward() {
         workspace_fwd_size_ > 0 ? workspace_->mutable_data() : nullptr;
     CUDNN_CHECK(cudnnConvolutionForward(
         Kernel::cudnn_handle_, cudnn::dataType<float>::one, bottom_desc_,
-        bottom->data(), filter_desc_, blobs<float>(0)->data(), conv_desc_,
-        fwd_algo_, workspace_ptr, workspace_fwd_size_,
-        cudnn::dataType<float>::zero, top_desc_, top->mutable_data()));
+        bottom->data(), filter_desc_, weight->data(), conv_desc_, fwd_algo_,
+        workspace_ptr, workspace_fwd_size_, cudnn::dataType<float>::zero,
+        top_desc_, top->mutable_data()));
     if (bias_term_) {
       CUDNN_CHECK(cudnnAddTensor(
           Kernel::cudnn_handle_, cudnn::dataType<float>::one, bias_desc_,
-          blobs<float>(1)->data(), cudnn::dataType<float>::one, top_desc_,
+          bottoms<float>(2)->data(), cudnn::dataType<float>::one, top_desc_,
           top->mutable_data()));
     }
     if (activate_type_ == 1) {
@@ -113,15 +115,14 @@ void ConvOp::Forward() {
   use_depthwise_ = dilation_ == 1 && group_ == in_c && group_ == num_output_;
   if (use_depthwise_) {
     if (bias_term_) {
-      Vision::Depthwise(bottom->data(), bottom->shape(),
-                        blobs<float>(0)->data(), blobs<float>(1)->data(),
+      Vision::Depthwise(bottom->data(), bottom->shape(), weight->data(),
+                        bottoms<float>(2)->data(), kernel_size_, stride_, pad_,
+                        bias_term_, top->shape(), top->mutable_data());
+    } else {
+      Vision::Depthwise(bottom->data(), bottom->shape(), weight->data(),
+                        static_cast<decltype(weight->data())>(nullptr),
                         kernel_size_, stride_, pad_, bias_term_, top->shape(),
                         top->mutable_data());
-    } else {
-      Vision::Depthwise(
-          bottom->data(), bottom->shape(), blobs<float>(0)->data(),
-          static_cast<decltype(blobs<float>(0)->data())>(nullptr), kernel_size_,
-          stride_, pad_, bias_term_, top->shape(), top->mutable_data());
     }
   } else {
     if (bias_term_) {
@@ -139,15 +140,15 @@ void ConvOp::Forward() {
                      col_image_->mutable_data());
       for (int g = 0; g < group_; ++g) {
         Blas::BlasSgemm(0, 0, num_output_ / group_, out_spatial_dim_,
-                        kernel_dim_, 1, blobs<float>(0)->data(),
-                        weight_offset_ * g, col_image_->data(), col_offset_ * g,
-                        0, top->mutable_data(),
-                        b * top_num + output_offset_ * g);
+                        kernel_dim_, 1, weight->data(), weight_offset_ * g,
+                        col_image_->data(), col_offset_ * g, 0,
+                        top->mutable_data(), b * top_num + output_offset_ * g);
       }
       if (bias_term_) {
         Blas::BlasSgemm(0, 0, num_output_, out_spatial_dim_, 1, 1,
-                        blobs<float>(1)->data(), 0, biases_multiplier_->data(),
-                        0, 1, top->mutable_data(), b * top_num);
+                        bottoms<float>(2)->data(), 0,
+                        biases_multiplier_->data(), 0, 1, top->mutable_data(),
+                        b * top_num);
       }
     }
   }

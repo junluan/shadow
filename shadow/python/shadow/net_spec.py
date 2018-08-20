@@ -52,19 +52,9 @@ class Shadow(object):
     def get_meta_net_arg(self):
         return self.meta_net_param.arg
 
-    def get_net(self, index):
-        assert index >= 0
-        assert len(self.meta_net_param.network) > index
-        return self.meta_net_param.network[index]
-
-    def get_net_name(self):
-        return self.get_net(self.net_index).name
-
-    def get_net_op(self):
-        return self.get_net(self.net_index).op
-
-    def get_net_arg(self):
-        return self.get_net(self.net_index).arg
+    def copy_meta_net_arg(self, arg):
+        for ar in arg:
+            self.meta_net_param.arg.add().CopyFrom(ar)
 
     def set_net(self, index):
         for i in range(len(self.meta_net_param.network), index + 1):
@@ -72,20 +62,44 @@ class Shadow(object):
         self.net_param = self.meta_net_param.network[index]
         self.net_index = index
 
+    def get_net(self, index):
+        assert index >= 0
+        assert len(self.meta_net_param.network) > index
+        return self.meta_net_param.network[index]
+
     def set_net_name(self, name):
         self.get_net(self.net_index).name = name
+
+    def get_net_name(self):
+        return self.get_net(self.net_index).name
+
+    def get_net_blob(self):
+        return self.get_net(self.net_index).blob
+
+    def get_net_op(self):
+        return self.get_net(self.net_index).op
 
     def set_net_arg(self, args):
         for arg_name in args:
             self.set_arg(self.get_net(self.net_index), arg_name[:-4], args[arg_name], arg_name[-3:])
 
-    def copy_meta_net_arg(self, arg):
-        for ar in arg:
-            self.meta_net_param.arg.add().CopyFrom(ar)
+    def get_net_arg(self):
+        return self.get_net(self.net_index).arg
+
+    def copy_net_blob(self, blob):
+        for b in blob:
+            self.get_net(self.net_index).blob.add().CopyFrom(b)
+
+    def copy_net_op(self, op):
+        for o in op:
+            self.get_net(self.net_index).op.add().CopyFrom(o)
 
     def copy_net_arg(self, arg):
         for ar in arg:
             self.get_net(self.net_index).arg.add().CopyFrom(ar)
+
+    def add_blob(self):
+        return self.get_net(self.net_index).blob.add()
 
     def add_op(self):
         return self.get_net(self.net_index).op.add()

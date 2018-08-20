@@ -10,6 +10,13 @@ void PoolingOp::Forward() {
 
   int batch = bottom->shape(0), in_c = bottom->shape(1);
   int in_h = bottom->shape(2), in_w = bottom->shape(3);
+
+  if (global_pooling_) {
+    kernel_size_ = in_h;
+    stride_ = 1;
+    pad_ = 0;
+  }
+
   int out_h =
       pooling_out_size(in_h, kernel_size_, stride_, pad_, full_pooling_);
   int out_w =
@@ -23,12 +30,6 @@ void PoolingOp::Forward() {
   top_shape[2] = out_h;
   top_shape[3] = out_w;
   top->reshape(top_shape);
-
-  if (global_pooling_) {
-    kernel_size_ = in_h;
-    stride_ = 1;
-    pad_ = 0;
-  }
 
 #if defined(USE_CUDNN)
   cudnn::setPooling2dDesc<float>(&pooling_desc_, pool_type_, kernel_size_,

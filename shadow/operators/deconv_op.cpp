@@ -5,15 +5,17 @@
 namespace Shadow {
 
 void DeconvOp::Forward() {
+  if (bias_term_) {
+    CHECK_EQ(bottoms_size(), 3);
+  } else {
+    CHECK_EQ(bottoms_size(), 2);
+  }
+
   const auto *bottom = bottoms<float>(0);
+  const auto *weight = bottoms<float>(1);
   auto *top = mutable_tops<float>(0);
 
   CHECK_NE(bottom, top);
-  if (bias_term_) {
-    CHECK_EQ(blobs_size(), 2);
-  } else {
-    CHECK_EQ(blobs_size(), 1);
-  }
 
   int batch = bottom->shape(0), in_c = bottom->shape(1),
       in_h = bottom->shape(2), in_w = bottom->shape(3);
@@ -49,7 +51,7 @@ void DeconvOp::Forward() {
   for (int b = 0; b < batch; ++b) {
     for (int g = 0; g < group_; ++g) {
       Blas::BlasSgemm(1, 0, kernel_dim_, conv_out_spatial_dim_,
-                      conv_out_c / group_, 1, blobs<float>(0)->data(),
+                      conv_out_c / group_, 1, weight->data(),
                       weight_offset_ * g, bottom->data(),
                       b * bottom_num + output_offset_ * g, 0,
                       col_image_->mutable_data(), col_offset_ * g);
@@ -59,8 +61,8 @@ void DeconvOp::Forward() {
                    top->mutable_data());
     if (bias_term_) {
       Blas::BlasSgemm(0, 0, num_output_, out_spatial_dim_, 1, 1,
-                      blobs<float>(1)->data(), 0, biases_multiplier_->data(), 0,
-                      1, top->mutable_data(), b * top_num);
+                      bottoms<float>(2)->data(), 0, biases_multiplier_->data(),
+                      0, 1, top->mutable_data(), b * top_num);
     }
   }
   if (activate_type_ == 1) {

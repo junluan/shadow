@@ -17,15 +17,16 @@ void ActivateOp::Forward() {
       activate_type_ == kTanh) {
     Vision::Activate(top->mutable_data(), top->count(), activate_type_, slope_);
   } else if (activate_type_ == kPRelu) {
-    CHECK_EQ(blobs_size(), 1);
+    CHECK_EQ(bottoms_size(), 2);
     CHECK_GE(bottom->num_axes(), 2);
+    const auto *slope = bottoms<float>(1);
     if (channel_shared_) {
-      CHECK_EQ(blobs<float>(0)->count(), 1);
+      CHECK_EQ(slope->count(), 1);
     } else {
-      CHECK_EQ(blobs<float>(0)->count(), bottom->shape(1));
+      CHECK_EQ(slope->count(), bottom->shape(1));
     }
     Vision::PRelu(top->mutable_data(), top->shape(), channel_shared_,
-                  blobs<float>(0)->data());
+                  slope->data());
   }
 
   DLOG(INFO) << debug_log();

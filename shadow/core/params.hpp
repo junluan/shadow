@@ -176,7 +176,6 @@ class OpParam {
     type_ = from.type_;
     bottom_ = from.bottom_;
     top_ = from.top_;
-    blobs_ = from.blobs_;
     arg_ = from.arg_;
     has_name_ = from.has_name_;
     has_type_ = from.has_type_;
@@ -187,7 +186,6 @@ class OpParam {
 
   REPEATED_FIELD_FUNC(bottom, std::string);
   REPEATED_FIELD_FUNC(top, std::string);
-  REPEATED_FIELD_FUNC(blobs, Blob);
   REPEATED_FIELD_FUNC(arg, Argument);
 
   void Clear() {
@@ -195,14 +193,12 @@ class OpParam {
     clear_type();
     clear_bottom();
     clear_top();
-    clear_blobs();
     clear_arg();
   }
 
  private:
   std::string name_{"None"}, type_{"None"};
   std::vector<std::string> bottom_, top_;
-  std::vector<Blob> blobs_;
   std::vector<Argument> arg_;
   bool has_name_{false}, has_type_{false};
 };
@@ -215,23 +211,27 @@ class NetParam {
     if (&from == this) return;
     Clear();
     name_ = from.name_;
+    blob_ = from.blob_;
     op_ = from.op_;
     arg_ = from.arg_;
     has_name_ = from.has_name_;
   }
 
   OPTIONAL_FIELD_DEFAULT_FUNC(name, std::string, "");
+  REPEATED_FIELD_FUNC(blob, Blob);
   REPEATED_FIELD_FUNC(op, OpParam);
   REPEATED_FIELD_FUNC(arg, Argument);
 
   void Clear() {
     clear_name();
+    clear_blob();
     clear_op();
     clear_arg();
   }
 
  private:
   std::string name_{"None"};
+  std::vector<Blob> blob_;
   std::vector<OpParam> op_;
   std::vector<Argument> arg_;
   bool has_name_{false};

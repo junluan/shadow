@@ -18,21 +18,6 @@ void ParseCommon(const JValue &root, shadow::OpParam *op) {
   for (const auto &top : Json::GetVecString(root, "top")) {
     op->add_top(top);
   }
-  if (root.HasMember("blobs")) {
-    const auto &blobs = root["blobs"];
-    CHECK(blobs.IsArray());
-    for (int i = 0; i < blobs.Size(); ++i) {
-      const auto &blob = blobs[i];
-      shadow::Blob shadow_blob;
-      if (blob.HasMember("shape")) {
-        const auto &shape = Json::GetVecInt(blob, "shape");
-        for (const auto &dim : shape) {
-          shadow_blob.add_shape(dim);
-        }
-      }
-      op->add_blobs(shadow_blob);
-    }
-  }
 }
 
 const shadow::OpParam ParseActivate(const JValue &root) {
@@ -520,7 +505,8 @@ const shadow::OpParam ParseScale(const JValue &root) {
 
   ParseCommon(root, &shadow_op);
 
-  int axis = 1, num_axes = 1, bias_term = false;
+  VecFloat scale_value, bias_value;
+  int axis = 1, has_scale = true, has_bias = true;
   if (root.HasMember("arg")) {
     const auto &args = root["arg"];
     for (int i = 0; i < args.Size(); ++i) {
@@ -529,17 +515,23 @@ const shadow::OpParam ParseScale(const JValue &root) {
       const auto &arg_name = Json::GetString(arg, "name", "");
       if (arg_name == "axis") {
         axis = Json::GetInt(arg, "s_i", 1);
-      } else if (arg_name == "num_axes") {
-        num_axes = Json::GetInt(arg, "s_i", 0);
-      } else if (arg_name == "bias_term") {
-        bias_term = Json::GetInt(arg, "s_i", 0);
+      } else if (arg_name == "has_scale") {
+        has_scale = Json::GetInt(arg, "s_i", 1);
+      } else if (arg_name == "has_bias") {
+        has_bias = Json::GetInt(arg, "s_i", 1);
+      } else if (arg_name == "scale_value") {
+        scale_value = Json::GetVecFloat(arg, "v_f");
+      } else if (arg_name == "bias_value") {
+        bias_value = Json::GetVecFloat(arg, "v_f");
       }
     }
   }
 
   set_s_i(&shadow_op, "axis", axis);
-  set_s_i(&shadow_op, "num_axes", num_axes);
-  set_s_i(&shadow_op, "bias_term", bias_term);
+  set_s_i(&shadow_op, "has_scale", has_scale);
+  set_s_i(&shadow_op, "has_bias", has_bias);
+  set_v_f(&shadow_op, "scale_value", scale_value);
+  set_v_f(&shadow_op, "bias_value", bias_value);
 
   return shadow_op;
 }
@@ -622,8 +614,60 @@ void ParseNet(const std::string &proto_text, shadow::NetParam *net) {
 
   net->set_name(net_name);
 
-  for (int i = 0; i < json_ops.Size(); ++i) {
-    const auto &json_op = json_ops[i];
+  if (document.HasMember("arg")) {
+    const auto &json_arg = document["arg"];
+    CHECK(json_arg.IsArray());
+    for (int n = 0; n < json_arg.Size(); ++n) {
+      const auto &arg = json_arg[n];
+      shadow::Argument shadow_arg;
+      CHECK(arg.HasMember("name"));
+      const auto &arg_name = Json::GetString(arg, "name", "");
+      shadow_arg.set_name(arg_name);
+      if (arg.HasMember("s_f")) {
+        shadow_arg.set_s_f(Json::GetFloat(arg, "s_f", 0));
+      } else if (arg.HasMember("s_i")) {
+        shadow_arg.set_s_i(Json::GetInt(arg, "s_i", 0));
+      } else if (arg.HasMember("s_s")) {
+        shadow_arg.set_s_s(Json::GetString(arg, "s_s", "None"));
+      } else if (arg.HasMember("v_f")) {
+        for (const auto &v : Json::GetVecFloat(arg, "v_f")) {
+          shadow_arg.add_v_f(v);
+        }
+      } else if (arg.HasMember("v_i")) {
+        for (const auto &v : Json::GetVecInt(arg, "v_i")) {
+          shadow_arg.add_v_i(v);
+        }
+      } else if (arg.HasMember("v_s")) {
+        for (const auto &v : Json::GetVecString(arg, "v_s")) {
+          shadow_arg.add_v_s(v);
+        }
+      } else {
+        LOG(FATAL) << "Unsupported argument: " << arg_name;
+      }
+      net->add_arg(shadow_arg);
+    }
+  }
+
+  if (document.HasMember("blob")) {
+    const auto &json_blobs = document["blob"];
+    CHECK(json_blobs.IsArray());
+    for (int n = 0; n < json_blobs.Size(); ++n) {
+      const auto &blob = json_blobs[n];
+      shadow::Blob shadow_blob;
+      shadow_blob.set_name(Json::GetString(blob, "name", "None"));
+      shadow_blob.set_type(Json::GetString(blob, "type", "float"));
+      if (blob.HasMember("shape")) {
+        const auto &shape = Json::GetVecInt(blob, "shape");
+        for (const auto &dim : shape) {
+          shadow_blob.add_shape(dim);
+        }
+      }
+      net->add_blob(shadow_blob);
+    }
+  }
+
+  for (int o = 0; o < json_ops.Size(); ++o) {
+    const auto &json_op = json_ops[o];
     const auto &op_name = Json::GetString(json_op, "name", "");
     const auto &op_type = Json::GetString(json_op, "type", "");
 
@@ -642,6 +686,7 @@ void ParseNet(const std::string &proto_text, shadow::NetParam *net) {
 
 #else
 struct Arg {
+  std::string type;
   float s_f;
   int s_i;
   std::string s_s;
@@ -650,70 +695,67 @@ struct Arg {
   std::vector<std::string> v_s;
 };
 
+const std::map<std::string, Arg> ParseArgument(
+    const std::string &argument_str) {
+  std::map<std::string, Arg> arg_map;
+  for (const auto &argument : Util::tokenize(argument_str, ";")) {
+    auto arg_trim = Util::trim(argument);
+    arg_trim = arg_trim.substr(1, arg_trim.size() - 2);
+    auto arg_part = Util::tokenize(arg_trim, ",");
+    CHECK_EQ(arg_part.size(), 3);
+    for (auto &part : arg_part) {
+      part = Util::trim(part);
+    }
+    const auto &arg_name = arg_part[0];
+    const auto &arg_type = arg_part[1];
+    const auto &arg_value = arg_part[2].substr(1, arg_part[2].size() - 2);
+    Arg arg{};
+    arg.type = arg_type;
+    if (arg_type == "s_f") {
+      arg.s_f = Util::stof(arg_value);
+    } else if (arg_type == "s_i") {
+      arg.s_i = Util::stoi(arg_value);
+    } else if (arg_type == "s_s") {
+      arg.s_s = arg_value;
+    } else if (arg_type == "v_f") {
+      for (const auto &v : Util::tokenize(arg_value, "#")) {
+        arg.v_f.push_back(Util::stof(Util::trim(v)));
+      }
+    } else if (arg_type == "v_i") {
+      for (const auto &v : Util::tokenize(arg_value, "#")) {
+        arg.v_i.push_back(Util::stoi(Util::trim(v)));
+      }
+    } else if (arg_type == "v_s") {
+      for (const auto &v : Util::tokenize(arg_value, "#")) {
+        arg.v_s.push_back(Util::trim(v));
+      }
+    } else {
+      LOG(FATAL) << "Unsupported argument type " << arg_type;
+    }
+    arg_map[arg_name] = arg;
+  }
+  return arg_map;
+}
+
 const std::map<std::string, Arg> ParseCommon(
     const std::vector<std::string> &params, shadow::OpParam *op) {
   op->set_type(params[0]);
   op->set_name(params[1]);
   const auto &counts = Util::tokenize(params[2], " ");
-  CHECK_EQ(counts.size(), 4);
+  CHECK_EQ(counts.size(), 3);
   if (Util::stoi(counts[0]) > 0) {
-    for (const auto &bottom : Util::tokenize(params[3], ",")) {
+    for (const auto &bottom : Util::tokenize(params[3], ";")) {
       op->add_bottom(Util::trim(bottom));
     }
   }
   if (Util::stoi(counts[1]) > 0) {
-    for (const auto &top : Util::tokenize(params[4], ",")) {
+    for (const auto &top : Util::tokenize(params[4], ";")) {
       op->add_top(Util::trim(top));
     }
   }
-  if (Util::stoi(counts[2]) > 0) {
-    for (const auto &blob : Util::tokenize(params[5], ",")) {
-      auto blob_trim = Util::trim(blob);
-      blob_trim = blob_trim.substr(1, blob_trim.size() - 2);
-      shadow::Blob shadow_blob;
-      for (const auto &dim : Util::tokenize(blob_trim, " ")) {
-        shadow_blob.add_shape(Util::stoi(dim));
-      }
-      op->add_blobs(shadow_blob);
-    }
-  }
   std::map<std::string, Arg> arg_map;
-  if (Util::stoi(counts[3]) > 0) {
-    for (const auto &argument : Util::tokenize(params[6], ",")) {
-      auto arg_trim = Util::trim(argument);
-      arg_trim = arg_trim.substr(1, arg_trim.size() - 2);
-      auto arg_part = Util::tokenize(arg_trim, ":");
-      CHECK_EQ(arg_part.size(), 3);
-      for (auto &part : arg_part) {
-        part = Util::trim(part);
-      }
-      const auto &arg_name = arg_part[0];
-      const auto &arg_type = arg_part[1];
-      const auto &arg_value = arg_part[2].substr(1, arg_part[2].size() - 2);
-      Arg arg{};
-      if (arg_type == "s_f") {
-        arg.s_f = Util::stof(arg_value);
-      } else if (arg_type == "s_i") {
-        arg.s_i = Util::stoi(arg_value);
-      } else if (arg_type == "s_s") {
-        arg.s_s = arg_value;
-      } else if (arg_type == "v_f") {
-        for (const auto &v : Util::tokenize(arg_value, " ")) {
-          arg.v_f.push_back(Util::stof(v));
-        }
-      } else if (arg_type == "v_i") {
-        for (const auto &v : Util::tokenize(arg_value, " ")) {
-          arg.v_i.push_back(Util::stoi(v));
-        }
-      } else if (arg_type == "v_s") {
-        for (const auto &v : Util::tokenize(arg_value, " ")) {
-          arg.v_s.push_back(v);
-        }
-      } else {
-        LOG(FATAL) << "Unsupported argument type " << arg_type;
-      }
-      arg_map[arg_name] = arg;
-    }
+  if (Util::stoi(counts[2]) > 0) {
+    arg_map = ParseArgument(params[5]);
   }
   return arg_map;
 }
@@ -1108,20 +1150,29 @@ const shadow::OpParam ParseScale(const std::vector<std::string> &params) {
 
   const auto &argument = ParseCommon(params, &shadow_op);
 
-  int axis = 1, num_axes = 1, bias_term = false;
+  VecFloat scale_value, bias_value;
+  int axis = 1, has_scale = true, has_bias = true;
   if (argument.count("axis")) {
     axis = argument.at("axis").s_i;
   }
-  if (argument.count("num_axes")) {
-    num_axes = argument.at("num_axes").s_i;
+  if (argument.count("has_scale")) {
+    has_scale = argument.at("has_scale").s_i;
   }
-  if (argument.count("bias_term")) {
-    bias_term = argument.at("bias_term").s_i;
+  if (argument.count("has_bias")) {
+    has_bias = argument.at("has_bias").s_i;
+  }
+  if (argument.count("scale_value")) {
+    scale_value = argument.at("scale_value").v_f;
+  }
+  if (argument.count("bias_value")) {
+    bias_value = argument.at("bias_value").v_f;
   }
 
   set_s_i(&shadow_op, "axis", axis);
-  set_s_i(&shadow_op, "num_axes", num_axes);
-  set_s_i(&shadow_op, "bias_term", bias_term);
+  set_s_i(&shadow_op, "has_scale", has_scale);
+  set_s_i(&shadow_op, "has_bias", has_bias);
+  set_v_f(&shadow_op, "scale_value", scale_value);
+  set_v_f(&shadow_op, "bias_value", bias_value);
 
   return shadow_op;
 }
@@ -1182,15 +1233,59 @@ static const std::map<std::string, ParseFunc> parse_func_map{
     {"Unary", ParseUnary}};
 
 void ParseNet(const std::string &proto_text, shadow::NetParam *net) {
-  const auto &ops = Util::tokenize(proto_text, "\n");
-  CHECK_GT(ops.size(), 0);
+  const auto &marks = Util::tokenize(proto_text, "\n");
+  CHECK_GT(marks.size(), 0);
 
-  const auto &net_name = ops[0];
-  net->set_name(net_name.substr(1, net_name.size() - 2));
+  net->set_name(marks[0].substr(1, marks[0].size() - 2));
 
-  for (int i = 3; i < ops.size(); ++i) {
-    auto params = Util::tokenize(ops[i], "|");
-    CHECK_EQ(params.size(), 7);
+  const auto &argument = marks[1].substr(1, marks[1].size() - 2);
+  for (const auto &arg : ParseArgument(argument)) {
+    shadow::Argument shadow_arg;
+    shadow_arg.set_name(arg.first);
+    if (arg.second.type == "s_f") {
+      shadow_arg.set_s_f(arg.second.s_f);
+    } else if (arg.second.type == "s_i") {
+      shadow_arg.set_s_i(arg.second.s_i);
+    } else if (arg.second.type == "s_s") {
+      shadow_arg.set_s_s(arg.second.s_s);
+    } else if (arg.second.type == "v_f") {
+      for (const auto &v : arg.second.v_f) {
+        shadow_arg.add_v_f(v);
+      }
+    } else if (arg.second.type == "v_i") {
+      for (const auto &v : arg.second.v_i) {
+        shadow_arg.add_v_i(v);
+      }
+    } else if (arg.second.type == "v_s") {
+      for (const auto &v : arg.second.v_s) {
+        shadow_arg.add_v_s(v);
+      }
+    }
+    net->add_arg(shadow_arg);
+  }
+
+  const auto &blobs = marks[2].substr(1, marks[2].size() - 2);
+  for (const auto &blob : Util::tokenize(blobs, ";")) {
+    auto blob_trim = Util::trim(blob);
+    blob_trim = blob_trim.substr(1, blob_trim.size() - 2);
+    auto blob_part = Util::tokenize(blob_trim, ",");
+    CHECK_EQ(blob_part.size(), 3);
+    for (auto &part : blob_part) {
+      part = Util::trim(part);
+    }
+    shadow::Blob shadow_blob;
+    shadow_blob.set_name(blob_part[0]);
+    shadow_blob.set_type(blob_part[1]);
+    const auto &blob_shape = blob_part[2].substr(1, blob_part[2].size() - 2);
+    for (const auto &dim : Util::tokenize(blob_shape, "#")) {
+      shadow_blob.add_shape(Util::stoi(Util::trim(dim)));
+    }
+    net->add_blob(shadow_blob);
+  }
+
+  for (int i = 3; i < marks.size(); ++i) {
+    auto params = Util::tokenize(marks[i], "|");
+    CHECK_EQ(params.size(), 6);
     for (auto &param : params) {
       param = Util::trim(param);
       param = param.substr(1, param.size() - 2);

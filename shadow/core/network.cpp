@@ -96,11 +96,56 @@ void Network::LoadProtoStrOrText(const std::string &proto_str_or_text,
 }
 
 void Network::Initial() {
+  for (const auto &blob : net_param_.blob()) {
+    VecInt shape;
+    int cc = 1;
+    for (auto dim : blob.shape()) {
+      cc *= dim;
+      shape.push_back(dim);
+    }
+    const auto &blob_name = blob.name();
+    const auto blob_type = blob.has_type() ? blob.type() : "float";
+    if (blob_type == "float") {
+      auto *blob_ptr = ws_.CreateBlob<float>(shape, blob_name, true);
+      CHECK_NOTNULL(blob_ptr) << "Failed to create float blob " << blob_name;
+      int data_f_size = blob.data_f_size();
+      if (data_f_size > 0) {
+        CHECK_EQ(data_f_size, cc)
+            << "Blob float data size and blob shape are mismatch";
+        blob_ptr->set_data(blob.data_f().data(), data_f_size);
+      }
+    } else if (blob_type == "int") {
+      auto *blob_ptr = ws_.CreateBlob<int>(shape, blob_name, true);
+      CHECK_NOTNULL(blob_ptr) << "Failed to create int blob " << blob_name;
+      int data_i_size = blob.data_i_size();
+      if (data_i_size > 0) {
+        CHECK_EQ(data_i_size, cc)
+            << "Blob int data size and blob shape are mismatch";
+        blob_ptr->set_data(blob.data_i().data(), data_i_size);
+      }
+    } else if (blob_type == "unsigned char") {
+      auto *blob_ptr = ws_.CreateBlob<unsigned char>(shape, blob_name, true);
+      CHECK_NOTNULL(blob_ptr)
+          << "Failed to create unsigned char blob " << blob_name;
+      int data_b_size = 0;
+      if (blob.data_b_size() > 0) {
+        CHECK_EQ(blob.data_b_size(), 1);
+        data_b_size = static_cast<int>(blob.data_b(0).size());
+      }
+      if (data_b_size > 0) {
+        CHECK_EQ(data_b_size, cc)
+            << "Blob unsigned char data size and blob shape are mismatch";
+        auto uc_data_ptr = static_cast<unsigned char *>(
+            static_cast<void *>(const_cast<char *>(blob.data_b(0).data())));
+        blob_ptr->set_data(uc_data_ptr, data_b_size);
+      }
+    } else {
+      LOG(FATAL) << "Failed to create blob " << blob_name << ", asked for type "
+                 << blob_type;
+    }
+  }
+
   arg_helper_ = ArgumentHelper(net_param_);
-  CHECK_GT(net_param_.op_size(), 0);
-  const auto &input_op_param = net_param_.op(0);
-  CHECK(input_op_param.type().find("Input") != std::string::npos)
-      << "The first Op must be Input operator!";
 
   ops_.clear();
   for (const auto &op_param : net_param_.op()) {
@@ -113,35 +158,35 @@ void Network::Initial() {
 
 void Network::CopyWeights(const std::vector<const void *> &weights) {
   int weights_count = 0;
-  for (auto &op : ops_) {
-    for (int n = 0; n < op->blobs_size(); ++n) {
-      CHECK_LT(weights_count, weights.size());
-      const auto &blob_type = op->blobs_type(n);
-      const auto *weight = weights[weights_count++];
-      if (blob_type == int_id) {
-        const auto *weight_data = static_cast<const int *>(weight);
-        op->set_blobs<int>(n, op->blobs<int>(n)->count(), weight_data);
-      } else if (blob_type == float_id) {
-        const auto *weight_data = static_cast<const float *>(weight);
-        op->set_blobs<float>(n, op->blobs<float>(n)->count(), weight_data);
-      } else if (blob_type == uchar_id) {
-        const auto *weight_data = static_cast<const unsigned char *>(weight);
-        op->set_blobs<unsigned char>(n, op->blobs<unsigned char>(n)->count(),
-                                     weight_data);
-      } else {
-        LOG(FATAL) << "Unknown blob type " << blob_type;
-      }
+  for (const auto &blob : net_param_.blob()) {
+    CHECK_LT(weights_count, weights.size());
+    const auto *weight = weights[weights_count++];
+    const auto &blob_name = blob.name();
+    const auto &blob_type = ws_.GetBlobType(blob_name);
+    if (blob_type == int_id) {
+      const auto *weight_data = static_cast<const int *>(weight);
+      auto *weight_blob = ws_.GetBlob<int>(blob_name);
+      weight_blob->set_data(weight_data, weight_blob->count());
+    } else if (blob_type == float_id) {
+      const auto *weight_data = static_cast<const float *>(weight);
+      auto *weight_blob = ws_.GetBlob<float>(blob_name);
+      weight_blob->set_data(weight_data, weight_blob->count());
+    } else if (blob_type == uchar_id) {
+      const auto *weight_data = static_cast<const unsigned char *>(weight);
+      auto *weight_blob = ws_.GetBlob<unsigned char>(blob_name);
+      weight_blob->set_data(weight_data, weight_blob->count());
+    } else {
+      LOG(FATAL) << "Unknown blob type " << blob_type;
     }
   }
 }
 
 void Network::CopyWeights(const float *weights_data) {
-  for (auto &op : ops_) {
-    for (int n = 0; n < op->blobs_size(); ++n) {
-      int blob_count = op->blobs<float>(n)->count();
-      op->set_blobs<float>(n, blob_count, weights_data);
-      weights_data += blob_count;
-    }
+  for (const auto &blob : net_param_.blob()) {
+    auto *weight_blob = ws_.GetBlob<float>(blob.name());
+    int blob_count = weight_blob->count();
+    weight_blob->set_data(weights_data, blob_count);
+    weights_data += blob_count;
   }
 }
 

@@ -7,13 +7,8 @@ void BinaryOp::Forward() {
   auto *top = mutable_tops<float>(0);
 
   if (!has_scalar_arg_) {
-    if (bottoms_size() > 1) {
-      scalar_ = const_cast<BlobF *>(bottoms<float>(1));
-    } else if (blobs_size() > 0) {
-      scalar_ = const_cast<BlobF *>(blobs<float>(0));
-    } else {
-      LOG(FATAL) << "Missing right blob for doing binary operation";
-    }
+    CHECK_EQ(bottoms_size(), 2);
+    scalar_ = const_cast<BlobF *>(bottoms<float>(1));
   }
 
   if (bottom != top && scalar_ != top) {

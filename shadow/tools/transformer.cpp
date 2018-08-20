@@ -2,79 +2,98 @@
 
 namespace Shadow {
 
-const std::string ConvertCustom(const shadow::NetParam& shadow_net) {
+const std::vector<shadow::Blob> get_blobs(const shadow::NetParam& shadow_net,
+                                          const shadow::OpParam& op_param) {
+  std::vector<shadow::Blob> weight_blobs;
+  for (const auto& blob_name : op_param.bottom()) {
+    for (const auto& blob : shadow_net.blob()) {
+      if (blob_name == blob.name()) {
+        weight_blobs.push_back(blob);
+      }
+    }
+  }
+  return weight_blobs;
+}
+
+const std::string convert_arg(const shadow::Argument& arg) {
+  std::stringstream arg_ss;
+  arg_ss << "{" << arg.name() << ", ";
+  if (arg.has_s_i()) {
+    arg_ss << "s_i, [" << arg.s_i() << "]";
+  } else if (arg.has_s_f()) {
+    arg_ss << "s_f, [" << arg.s_f() << "]";
+  } else if (arg.has_s_s()) {
+    arg_ss << "s_s, [" << arg.s_s() << "]";
+  } else if (arg.v_i_size() > 0) {
+    std::vector<int> arg_i_vec;
+    for (const auto a : arg.v_i()) {
+      arg_i_vec.push_back(a);
+    }
+    arg_ss << "v_i, " << Util::format_vector(arg_i_vec, " # ", "[", "]");
+  } else if (arg.v_f_size() > 0) {
+    std::vector<float> arg_f_vec;
+    for (const auto a : arg.v_f()) {
+      arg_f_vec.push_back(a);
+    }
+    arg_ss << "v_f, " << Util::format_vector(arg_f_vec, " # ", "[", "]");
+  } else if (arg.v_s_size() > 0) {
+    std::vector<std::string> arg_s_vec;
+    for (const auto& a : arg.v_s()) {
+      arg_s_vec.push_back(a);
+    }
+    arg_ss << "v_s, " << Util::format_vector(arg_s_vec, " # ", "[", "]");
+  }
+  arg_ss << "}";
+  return arg_ss.str();
+}
+
+const std::string convert_custom(const shadow::NetParam& shadow_net) {
   std::stringstream ss;
-  std::vector<int> num_class_vec;
-  std::vector<std::string> out_blob_vec;
-  for (const auto dim : shadow_net.num_class()) {
-    num_class_vec.push_back(dim);
-  }
-  for (const auto& blob : shadow_net.out_blob()) {
-    out_blob_vec.push_back(blob);
-  }
   ss << "[" << shadow_net.name() << "]" << std::endl;
-  ss << Util::format_vector(num_class_vec, " ", "[", "]") << std::endl;
-  ss << Util::format_vector(out_blob_vec, ", ", "[", "]") << std::endl;
+
+  std::vector<std::string> net_arg_vec;
+  for (const auto& arg : shadow_net.arg()) {
+    net_arg_vec.push_back(convert_arg(arg));
+  }
+  ss << Util::format_vector(net_arg_vec, "; ", "[", "]") << std::endl;
+
+  std::vector<std::string> blob_vec;
+  for (const auto& blob : shadow_net.blob()) {
+    std::stringstream blob_ss;
+    const auto blob_type = blob.has_type() ? blob.type() : "float";
+    blob_ss << "{" << blob.name() << ", " << blob_type << ", ";
+    std::vector<int> shape;
+    for (const auto dim : blob.shape()) {
+      shape.push_back(dim);
+    }
+    blob_ss << Util::format_vector(shape, " # ", "[", "]") << "}";
+    blob_vec.push_back(blob_ss.str());
+  }
+  ss << Util::format_vector(blob_vec, "; ", "[", "]") << std::endl;
+
   for (const auto& op_param : shadow_net.op()) {
     const auto& op_type = op_param.type();
     int bottom_size = op_param.bottom_size();
     int top_size = op_param.top_size();
-    int blob_size = op_param.blobs_size();
     int arg_size = op_param.arg_size();
-    std::vector<std::string> bottom_vec, top_vec, blob_vec, arg_vec;
+    std::vector<std::string> bottom_vec, top_vec, arg_vec;
     for (const auto& bottom : op_param.bottom()) {
       bottom_vec.push_back(bottom);
     }
     for (const auto& top : op_param.top()) {
       top_vec.push_back(top);
     }
-    for (const auto& blob : op_param.blobs()) {
-      std::vector<int> shape;
-      for (const auto dim : blob.shape()) {
-        shape.push_back(dim);
-      }
-      blob_vec.push_back(Util::format_vector(shape, " ", "[", "]"));
-    }
     for (const auto& arg : op_param.arg()) {
-      std::stringstream arg_ss;
-      arg_ss << "{" << arg.name() << " : ";
-      if (arg.has_s_i()) {
-        arg_ss << "s_i : [" << arg.s_i() << "]";
-      } else if (arg.has_s_f()) {
-        arg_ss << "s_f : [" << arg.s_f() << "]";
-      } else if (arg.has_s_s()) {
-        arg_ss << "s_s : [" << arg.s_s() << "]";
-      } else if (arg.v_i_size() > 0) {
-        std::vector<int> arg_i_vec;
-        for (const auto a : arg.v_i()) {
-          arg_i_vec.push_back(a);
-        }
-        arg_ss << "v_i : " << Util::format_vector(arg_i_vec, " ", "[", "]");
-      } else if (arg.v_f_size() > 0) {
-        std::vector<float> arg_f_vec;
-        for (const auto a : arg.v_f()) {
-          arg_f_vec.push_back(a);
-        }
-        arg_ss << "v_f : " << Util::format_vector(arg_f_vec, " ", "[", "]");
-      } else if (arg.v_s_size() > 0) {
-        std::vector<std::string> arg_s_vec;
-        for (const auto& a : arg.v_s()) {
-          arg_s_vec.push_back(a);
-        }
-        arg_ss << "v_s : " << Util::format_vector(arg_s_vec, " ", "[", "]");
-      }
-      arg_ss << "}";
-      arg_vec.push_back(arg_ss.str());
+      arg_vec.push_back(convert_arg(arg));
     }
 
     ss << "[" << op_type << "] | [" << op_param.name() << "] | ";
-    ss << "[" << bottom_size << " " << top_size << " " << blob_size << " "
-       << arg_size << "] | ";
-    ss << Util::format_vector(bottom_vec, ", ", "[", "]") << " | ";
-    ss << Util::format_vector(top_vec, ", ", "[", "]") << " | ";
-    ss << Util::format_vector(blob_vec, ", ", "[", "]") << " | ";
-    ss << Util::format_vector(arg_vec, ", ", "[", "]") << std::endl;
+    ss << "[" << bottom_size << " " << top_size << " " << arg_size << "] | ";
+    ss << Util::format_vector(bottom_vec, "; ", "[", "]") << " | ";
+    ss << Util::format_vector(top_vec, "; ", "[", "]") << " | ";
+    ss << Util::format_vector(arg_vec, "; ", "[", "]") << std::endl;
   }
+
   return ss.str();
 }
 
@@ -91,41 +110,32 @@ void WriteDefines(const shadow::NetParam& shadow_net, const std::string& root,
   const auto& model_name_weights_hpp = model_name + "_weights.hpp";
 
   std::vector<int> blob_counts;
-  std::vector<std::string> blob_names, blob_types;
+  std::vector<std::string> blob_names, blob_types, illegal_chars{"/", "-", ":"};
   shadow::NetParam net(shadow_net);
-  for (int o = 0; o < net.op_size(); ++o) {
-    auto op_param = net.mutable_op(o);
-    if (op_param->blobs_size() == 0) continue;
-    const std::vector<std::string>& illegal_chars{"/", "-"};
-    const auto& op_name =
-        Util::find_replace(op_param->name(), illegal_chars, "_");
-    int blob_count = 0;
-    for (const auto& blob : op_param->blobs()) {
-      const auto blob_type = blob.has_type() ? blob.type() : "float";
-      if (blob_type == "float") {
-        blob_counts.push_back(blob.data_f_size());
-      } else if (blob_type == "int") {
-        blob_counts.push_back(blob.data_i_size());
-      } else if (blob_type == "unsigned char") {
-        CHECK_EQ(blob.data_b_size(), 1);
-        blob_counts.push_back(static_cast<int>(blob.data_b(0).size()));
-      } else {
-        LOG(FATAL) << "Unknown blob type " << blob_type;
-      }
-      std::stringstream ss;
-      ss << weight_prefix << "_" << op_name << "_weight_" << blob_count++
-         << "_";
-      blob_names.push_back(ss.str());
-      blob_types.push_back(blob_type);
+  for (int n = 0; n < net.blob_size(); ++n) {
+    auto* blob = net.mutable_blob(n);
+    const auto blob_type = blob->has_type() ? blob->type() : "float";
+    if (blob_type == "float") {
+      blob_counts.push_back(blob->data_f_size());
+    } else if (blob_type == "int") {
+      blob_counts.push_back(blob->data_i_size());
+    } else if (blob_type == "unsigned char") {
+      CHECK_EQ(blob->data_b_size(), 1);
+      blob_counts.push_back(static_cast<int>(blob->data_b(0).size()));
+    } else {
+      LOG(FATAL) << "Unknown blob type " << blob_type;
     }
-    for (int n = 0; n < op_param->blobs_size(); ++n) {
-      op_param->mutable_blobs(n)->clear_data_f();
-      op_param->mutable_blobs(n)->clear_data_i();
-      op_param->mutable_blobs(n)->clear_data_b();
-    }
+    std::stringstream ss;
+    ss << weight_prefix << "_"
+       << Util::find_replace(blob->name(), illegal_chars, "_") << "_";
+    blob_names.push_back(ss.str());
+    blob_types.push_back(blob_type);
+    blob->clear_data_f();
+    blob->clear_data_i();
+    blob->clear_data_b();
   }
 
-  std::string proto_str, json_str, custom_str = ConvertCustom(shadow_net);
+  std::string proto_str, json_str, custom_str = convert_custom(shadow_net);
   IO::WriteProtoToText(net, &proto_str);
 #if defined(SUPPORT_JSON)
   IO::WriteProtoToJsonText(net, &json_str, true);
@@ -298,19 +308,21 @@ void WriteWeights(const shadow::NetParam& shadow_net, const std::string& root,
                  ::tolower);
   const auto& model_name_weights_hpp = model_name + "_weights.hpp";
 
+  const std::vector<std::string>& illegal_chars{"/", "-", ":"};
   for (const auto& op_param : shadow_net.op()) {
-    if (op_param.blobs_size() == 0) continue;
-    const std::vector<std::string>& illegal_chars{"/", "-"};
+    const auto& weight_blobs = get_blobs(shadow_net, op_param);
+    if (weight_blobs.empty()) continue;
     const auto& op_name =
         Util::find_replace(op_param.name(), illegal_chars, "_");
     std::ofstream file(root + "/" + model_name + "_" + op_name + ".cpp");
-
     file << "#include \"" << model_name_weights_hpp << "\"\n\n";
     int blob_count = 0;
-    for (const auto& blob : op_param.blobs()) {
+    for (const auto& blob : weight_blobs) {
+      const auto& blob_name =
+          Util::find_replace(blob.name(), illegal_chars, "_");
       const auto blob_type = blob.has_type() ? blob.type() : "float";
-      file << "const " << blob_type << " " << weight_prefix << "_" << op_name
-           << "_weight_" << blob_count++ << "_[] = {\n";
+      file << "const " << blob_type << " " << weight_prefix << "_" << blob_name
+           << "_[] = {\n";
       int data_size = 0;
       int count = 0, num_of_line = 10;
       if (blob_type == "float") {

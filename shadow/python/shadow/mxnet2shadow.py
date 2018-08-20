@@ -22,8 +22,7 @@ def copy_weights(arg_params, aux_params, param_dict, shadow_net):
         op_name = shadow_op.name
         if op_name not in param_dict:
             continue
-        param_names = param_dict[op_name]
-        for param_name in param_names:
+        for n, param_name in enumerate(param_dict[op_name]):
             if param_name in arg_params:
                 param_data = arg_params[param_name].asnumpy().flatten()
             elif param_name in aux_params:
@@ -32,9 +31,11 @@ def copy_weights(arg_params, aux_params, param_dict, shadow_net):
                 param_data = [1]
             else:
                 raise ValueError(param_name + ' not found in arg_params or aux_params')
-            shadow_blob = shadow_op.blobs.add()
+            shadow_blob = net_param.blob.add()
+            shadow_blob.name = op_name + '_weights:{}'.format(n)
             shadow_blob.shape.extend([len(param_data)])
             shadow_blob.data_f.extend(param_data)
+            shadow_op.bottom.append(shadow_blob.name)
 
 
 def parse_param(params, name, type, default_value):

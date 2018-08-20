@@ -3,10 +3,10 @@
 namespace Shadow {
 
 void NormalizeOp::Forward() {
+  CHECK_EQ(bottoms_size(), 2);
+
   const auto *bottom = bottoms<float>(0);
   auto *top = mutable_tops<float>(0);
-
-  CHECK_EQ(blobs_size(), 1);
 
   int batch = bottom->shape(0), in_c = bottom->shape(1),
       in_h = bottom->shape(2), in_w = bottom->shape(3);
@@ -57,14 +57,14 @@ void NormalizeOp::Forward() {
                 top->mutable_data(), data_offset);
     }
     if (channel_shared_) {
-      CHECK_EQ(blobs<float>(0)->count(), 1);
+      CHECK_EQ(bottoms<float>(1)->count(), 1);
       float scale = 0;
-      blobs<float>(0)->read_data(&scale, 1);
+      bottoms<float>(1)->read_data(&scale, 1);
       Blas::BlasSscal(num, scale, top->mutable_data(), data_offset);
     } else {
-      CHECK_EQ(blobs<float>(0)->count(), in_c);
-      Blas::BlasSgemm(0, 0, in_c, spatial_dim, 1, 1, blobs<float>(0)->data(), 0,
-                      sum_spatial_multiplier_->data(), 0, 0,
+      CHECK_EQ(bottoms<float>(1)->count(), in_c);
+      Blas::BlasSgemm(0, 0, in_c, spatial_dim, 1, 1, bottoms<float>(1)->data(),
+                      0, sum_spatial_multiplier_->data(), 0, 0,
                       buffer_->mutable_data(), 0);
       Blas::Mul(num, top->data(), data_offset, buffer_->data(), 0,
                 top->mutable_data(), data_offset);

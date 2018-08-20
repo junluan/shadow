@@ -102,36 +102,6 @@ class Operator {
   }
   int tops_size() const { return static_cast<int>(top_names_.size()); }
 
-  template <typename T>
-  const Blob<T> *blobs(int n) const {
-    CHECK(check_index(n, blobs_size()));
-    return op_ws_->GetBlob<T>(blob_names_[n]);
-  }
-  template <typename T>
-  Blob<T> *mutable_blobs(int n) {
-    return const_cast<Blob<T> *>(
-        static_cast<const Operator *>(this)->blobs<T>(n));
-  }
-  template <typename T>
-  void add_blobs(const std::string &blob_name) {
-    op_ws_->CreateBlob<T>(blob_name);
-    blob_names_.push_back(blob_name);
-  }
-  template <typename T>
-  void set_blobs(int n, int count, const T *data) {
-    CHECK(check_index(n, blobs_size()));
-    mutable_blobs<T>(n)->set_data(data, count);
-  }
-  const std::string blobs_name(int n) const {
-    CHECK(check_index(n, blobs_size()));
-    return blob_names_[n];
-  }
-  const std::string blobs_type(int n) const {
-    CHECK(check_index(n, blobs_size()));
-    return op_ws_->GetBlobType(blob_names_[n]);
-  }
-  int blobs_size() const { return static_cast<int>(blob_names_.size()); }
-
   const std::string debug_log() const {
     VecString bottom_str, top_str;
     for (int n = 0; n < bottoms_size(); ++n) {
@@ -163,7 +133,7 @@ class Operator {
   shadow::OpParam op_param_;
   ArgumentHelper arg_helper_;
 
-  VecString bottom_names_, top_names_, blob_names_;
+  VecString bottom_names_, top_names_;
 
   DISABLE_COPY_AND_ASSIGN(Operator);
 };

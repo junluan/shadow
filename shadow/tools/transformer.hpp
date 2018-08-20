@@ -9,8 +9,6 @@
 
 namespace Shadow {
 
-const std::string ConvertCustom(const shadow::NetParam& shadow_net);
-
 void WriteDefines(const shadow::NetParam& shadow_net, const std::string& root,
                   const std::string& model_name);
 

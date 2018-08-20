@@ -11,10 +11,12 @@ def copy_weights(caffe_model, shadow_net):
         op_name = shadow_op.name
         for caffe_layer in caffe_model.layer:
             if caffe_layer.name == op_name:
-                for caffe_blob in caffe_layer.blobs:
-                    shadow_blob = shadow_op.blobs.add()
+                for n, caffe_blob in enumerate(caffe_layer.blobs):
+                    shadow_blob = net_param.blob.add()
+                    shadow_blob.name = op_name + '_weights:{}'.format(n)
                     shadow_blob.shape.extend([len(caffe_blob.data)])
                     shadow_blob.data_f.extend(caffe_blob.data)
+                    shadow_op.bottom.append(shadow_blob.name)
                 break
 
 

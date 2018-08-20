@@ -3,6 +3,8 @@
 namespace Shadow {
 
 void PSROIPoolingOp::Forward() {
+  CHECK_EQ(bottoms_size(), 2);
+
   const auto *bottom_fea = bottoms<float>(0);
   const auto *bottom_roi = bottoms<float>(1);
   auto *top = mutable_tops<float>(0);

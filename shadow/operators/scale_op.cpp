@@ -11,18 +11,18 @@ void ScaleOp::Forward() {
   }
 
   if (scale_value_.empty() && bias_value_.empty()) {
-    CHECK_GE(blobs_size(), 1);
+    CHECK_GE(bottoms_size(), 2);
     if (has_scale_ && has_bias_) {
-      CHECK_EQ(blobs_size(), 2);
-      scale_ = const_cast<BlobF *>(blobs<float>(0));
-      bias_ = const_cast<BlobF *>(blobs<float>(1));
+      CHECK_EQ(bottoms_size(), 3);
+      scale_ = const_cast<BlobF *>(bottoms<float>(1));
+      bias_ = const_cast<BlobF *>(bottoms<float>(2));
     } else if (has_scale_) {
-      scale_ = const_cast<BlobF *>(blobs<float>(0));
+      scale_ = const_cast<BlobF *>(bottoms<float>(1));
       bias_ =
           op_ws_->CreateBlob<float>(scale_->shape(), op_name_ + "_bias_value");
       Blas::Set(bias_->count(), 0, bias_->mutable_data(), 0);
     } else {
-      bias_ = const_cast<BlobF *>(blobs<float>(0));
+      bias_ = const_cast<BlobF *>(bottoms<float>(1));
       scale_ =
           op_ws_->CreateBlob<float>(bias_->shape(), op_name_ + "_scale_value");
       Blas::Set(scale_->count(), 1, scale_->mutable_data(), 0);
