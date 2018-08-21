@@ -30,8 +30,10 @@ __kernel void Im2Col(__global float *in_data, int offset, int count, int in_c,
 }
 
 __kernel void Pooling(__global float *in_data, int count, int in_c, int in_h,
-                      int in_w, int kernel_size, int stride, int pad, int mode,
-                      int out_h, int out_w, __global float *out_data) {
+                      int in_w, int kernel_size_h, int kernel_size_w,
+                      int stride_h, int stride_w, int pad_h, int pad_w,
+                      int mode, int out_h, int out_w,
+                      __global float *out_data) {
   CL_KERNEL_LOOP(globalid, count)
 
   int temp = globalid / out_w;
@@ -41,9 +43,9 @@ __kernel void Pooling(__global float *in_data, int count, int in_c, int in_h,
   int c_out = temp % in_c;
   int b_out = temp / in_c;
 
-  int kistart = i_out * stride - pad, kjstart = j_out * stride - pad;
-  int kiend = min(kistart + kernel_size, in_h + pad);
-  int kjend = min(kjstart + kernel_size, in_w + pad);
+  int kistart = i_out * stride_h - pad_h, kjstart = j_out * stride_w - pad_w;
+  int kiend = min(kistart + kernel_size_h, in_h + pad_h);
+  int kjend = min(kjstart + kernel_size_w, in_w + pad_w);
   int pool_size = (kiend - kistart) * (kjend - kjstart);
   kistart = max(kistart, 0), kjstart = max(kjstart, 0);
   kiend = min(kiend, in_h), kjend = min(kjend, in_w);

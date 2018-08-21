@@ -77,18 +77,21 @@ def convert_batch_norm(o, ori_net, merged_net, copy_params):
     eps = get_arg(bn_op, 'eps', 's_f', 1e-5)
     bn_mean_blob = get_blob(ori_net, bn_op.bottom[1])
     bn_var_blob = get_blob(ori_net, bn_op.bottom[2])
-    bn_scale_blob = get_blob(ori_net, bn_op.bottom[3])
-    assert bn_mean_blob is not None
-    assert bn_var_blob is not None
-    assert bn_scale_blob is not None
+    assert bn_mean_blob is not None and bn_var_blob is not None
     bn_mean = copy.deepcopy(bn_mean_blob.data_f)
     bn_var = copy.deepcopy(bn_var_blob.data_f)
-    bn_scale = bn_scale_blob.data_f[0]
+
+    bn_scale = 1
+    if len(bn_op.bottom) == 4:
+        bn_scale_blob = get_blob(ori_net, bn_op.bottom[3])
+        assert bn_scale_blob is not None
+        bn_scale = bn_scale_blob.data_f[0]
+
     if bn_scale != 0:
-        bn_scale = 1 / bn_scale
+        bn_scale = 1. / bn_scale
     for i in range(0, len(bn_mean)):
         bn_mean[i] *= bn_scale
-        bn_var[i] = 1 / math.sqrt(abs(bn_var[i]) * bn_scale + eps)
+        bn_var[i] = 1. / math.sqrt(abs(bn_var[i]) * bn_scale + eps)
 
     scale_scale_blob = get_blob(ori_net, scale_op.bottom[1])
     scale_bias_blob = get_blob(ori_net, scale_op.bottom[2])

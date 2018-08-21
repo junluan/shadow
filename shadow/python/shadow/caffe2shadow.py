@@ -12,9 +12,12 @@ def copy_weights(caffe_model, shadow_net):
         for caffe_layer in caffe_model.layer:
             if caffe_layer.name == op_name:
                 for n, caffe_blob in enumerate(caffe_layer.blobs):
+                    blob_shape = caffe_blob.shape.dim
+                    if len(blob_shape) == 0:
+                        blob_shape = [len(caffe_blob.data)]
                     shadow_blob = net_param.blob.add()
                     shadow_blob.name = op_name + '_weights:{}'.format(n)
-                    shadow_blob.shape.extend([len(caffe_blob.data)])
+                    shadow_blob.shape.extend(blob_shape)
                     shadow_blob.data_f.extend(caffe_blob.data)
                     shadow_op.bottom.append(shadow_blob.name)
                 break
@@ -73,7 +76,7 @@ def convert_input(caffe_deploy, net_info, shadow_net):
             mean_value[i] *= -scale_value[i]
         for input_name in shadow_inputs:
             if 'data' in input_name:
-                shadow_net.add_scale(input_name, [input_name], [input_name], 1, 1, False, False, scale_value, mean_value)
+                shadow_net.add_scale(input_name, [input_name], [input_name], 1, False, False, scale_value, mean_value)
 
     return start_layer
 
@@ -136,7 +139,7 @@ def convert_bias(caffe_layer, shadow_net):
         if caffe_param.HasField('num_axes'):
             num_axes = caffe_param.num_axes
 
-    shadow_net.add_scale(layer_name, bottom_names, top_names, axis, num_axes, False, True)
+    shadow_net.add_scale(layer_name, bottom_names, top_names, axis, False, True)
 
 
 def convert_concat(caffe_layer, shadow_net):
@@ -347,9 +350,9 @@ def convert_pooling(caffe_layer, shadow_net):
     top_names = caffe_layer.top
 
     pool = 'Max'
-    kernel_size = 0
-    stride = 1
-    pad = 0
+    kernel_size = [3, 3]
+    stride = [1, 1]
+    pad = [0, 0]
     global_pooling = False
     if caffe_layer.HasField('pooling_param'):
         caffe_param = caffe_layer.pooling_param
@@ -361,14 +364,14 @@ def convert_pooling(caffe_layer, shadow_net):
             elif caffe_param.pool == 1:
                 pool = 'Ave'
         if caffe_param.HasField('kernel_size'):
-            kernel_size = caffe_param.kernel_size
+            kernel_size = [caffe_param.kernel_size] * 2
         else:
             if not global_pooling:
                 raise ValueError('kernel_size must be supplied')
         if caffe_param.HasField('stride'):
-            stride = caffe_param.stride
+            stride = [caffe_param.stride] * 2
         if caffe_param.HasField('pad'):
-            pad = caffe_param.pad
+            pad = [caffe_param.pad] * 2
 
     shadow_net.add_pooling(layer_name, bottom_names, top_names, pool, kernel_size, stride, pad, global_pooling)
 
@@ -511,7 +514,7 @@ def convert_scale(caffe_layer, shadow_net):
         if caffe_param.HasField('bias_term'):
             bias_term = caffe_param.bias_term
 
-    shadow_net.add_scale(layer_name, bottom_names, top_names, axis, num_axes, True, bias_term)
+    shadow_net.add_scale(layer_name, bottom_names, top_names, axis, True, bias_term)
 
 
 def convert_softmax(caffe_layer, shadow_net):

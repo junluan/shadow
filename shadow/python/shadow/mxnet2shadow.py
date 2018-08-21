@@ -24,17 +24,15 @@ def copy_weights(arg_params, aux_params, param_dict, shadow_net):
             continue
         for n, param_name in enumerate(param_dict[op_name]):
             if param_name in arg_params:
-                param_data = arg_params[param_name].asnumpy().flatten()
+                param_data = arg_params[param_name].asnumpy()
             elif param_name in aux_params:
-                param_data = aux_params[param_name].asnumpy().flatten()
-            elif '_bn_scale' in param_name:
-                param_data = [1]
+                param_data = aux_params[param_name].asnumpy()
             else:
                 raise ValueError(param_name + ' not found in arg_params or aux_params')
             shadow_blob = net_param.blob.add()
             shadow_blob.name = op_name + '_weights:{}'.format(n)
-            shadow_blob.shape.extend([len(param_data)])
-            shadow_blob.data_f.extend(param_data)
+            shadow_blob.shape.extend(param_data.shape)
+            shadow_blob.data_f.extend(param_data.flatten())
             shadow_op.bottom.append(shadow_blob.name)
 
 
@@ -108,7 +106,7 @@ def convert_input(net_info, shadow_net):
             mean_value[i] *= -scale_value[i]
         for input_name in shadow_inputs:
             if 'data' in input_name:
-                shadow_net.add_scale(input_name, [input_name], [input_name], 1, 1, False, False, scale_value, mean_value)
+                shadow_net.add_scale(input_name, [input_name], [input_name], 1, False, False, scale_value, mean_value)
 
 
 def convert_activate(mxnet_nodes, index, param_dict, shadow_net):
@@ -148,19 +146,17 @@ def convert_batch_norm(mxnet_nodes, index, param_dict, shadow_net):
     if len(param_names) > 0:
         mean_name = json_name + '_moving_mean'
         var_name = json_name + '_moving_var'
-        scale_name = json_name + '_bn_scale'
         gamma_name = json_name + '_gamma'
         beta_name = json_name + '_beta'
-        param_dict[json_name] = [mean_name, var_name, scale_name]
+        param_dict[json_name] = [mean_name, var_name]
         param_dict[json_name + '_scale'] = [gamma_name, beta_name]
 
     use_global_stats = parse_param(json_attr, 'use_global_stats', 's_s', 'True') == 'True'
     use_global_stats = True
-    scale_bias_term = True
     eps = parse_param(json_attr, 'eps', 's_f', 1e-5)
 
     shadow_net.add_batch_norm(json_name, bottom_names, [json_name], use_global_stats, eps)
-    shadow_net.add_scale(json_name + '_scale', [json_name], [json_name], 1, 1, True, scale_bias_term)
+    shadow_net.add_scale(json_name + '_scale', [json_name], [json_name], 1)
 
 
 def convert_binary(mxnet_nodes, index, param_dict, shadow_net):
@@ -362,7 +358,7 @@ def convert_pooling(mxnet_nodes, index, param_dict, shadow_net):
     global_pooling = parse_param(json_attr, 'global_pool', 's_s', 'False') == 'True'
     full_pooling = parse_param(json_attr, 'pooling_convention', 's_s', 'valid') == 'full'
 
-    shadow_net.add_pooling(json_name, bottom_names, [json_name], pool, kernel_size[0], stride[0], pad[0], global_pooling, full_pooling)
+    shadow_net.add_pooling(json_name, bottom_names, [json_name], pool, kernel_size, stride, pad, global_pooling, full_pooling)
 
 
 def convert_proposal(mxnet_nodes, index, param_dict, shadow_net):

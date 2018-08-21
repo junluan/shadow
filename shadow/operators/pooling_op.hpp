@@ -12,10 +12,27 @@ class PoolingOp : public Operator {
     pool_type_ = get_single_argument<int>("pool", 0);
     global_pooling_ = get_single_argument<bool>("global_pooling", false);
     if (!global_pooling_) {
-      CHECK(has_argument("kernel_size"));
-      kernel_size_ = get_single_argument<int>("kernel_size", 2);
-      stride_ = get_single_argument<int>("stride", 1);
-      pad_ = get_single_argument<int>("pad", 0);
+      const auto &kernel_size = get_repeated_argument<int>("kernel_size");
+      CHECK(kernel_size.size() == 1 || kernel_size.size() == 2);
+      if (kernel_size.size() == 1) {
+        kernel_size_h_ = kernel_size_w_ = kernel_size[0];
+      } else {
+        kernel_size_h_ = kernel_size[0], kernel_size_w_ = kernel_size[1];
+      }
+      const auto &stride = get_repeated_argument<int>("stride");
+      CHECK(stride.size() == 1 || stride.size() == 2);
+      if (stride.size() == 1) {
+        stride_h_ = stride_w_ = stride[0];
+      } else {
+        stride_h_ = stride[0], stride_w_ = stride[1];
+      }
+      const auto &pad = get_repeated_argument<int>("pad");
+      CHECK(pad.size() == 1 || pad.size() == 2);
+      if (pad.size() == 1) {
+        pad_h_ = pad_w_ = pad[0];
+      } else {
+        pad_h_ = pad[0], pad_w_ = pad[1];
+      }
     }
     full_pooling_ = get_single_argument<bool>("full_pooling", true);
 
@@ -45,7 +62,8 @@ class PoolingOp : public Operator {
   void Forward() override;
 
  private:
-  int pool_type_, kernel_size_, stride_, pad_;
+  int pool_type_, kernel_size_h_, kernel_size_w_, stride_h_, stride_w_, pad_h_,
+      pad_w_;
   bool global_pooling_, full_pooling_;
 
 #if defined(USE_CUDNN)
@@ -68,9 +86,9 @@ static inline int pooling_out_size(int dim, int kernel_size, int stride,
 namespace Vision {
 
 template <typename T>
-void Pooling(const T *in_data, const VecInt &in_shape, int kernel_size,
-             int stride, int pad, int mode, const VecInt &out_shape,
-             T *out_data);
+void Pooling(const T *in_data, const VecInt &in_shape, int kernel_size_h,
+             int kernel_size_w, int stride_h, int stride_w, int pad_h,
+             int pad_w, int mode, const VecInt &out_shape, T *out_data);
 
 }  // namespace Vision
 

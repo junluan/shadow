@@ -123,8 +123,7 @@ class Shadow(object):
 
         if activate_type == 'PRelu':
             self.set_arg(op_param, 'type', 0, 's_i')
-            if channel_shared:
-                self.set_arg(op_param, 'channel_shared', channel_shared, 's_i')
+            self.set_arg(op_param, 'channel_shared', channel_shared, 's_i')
         elif activate_type == 'Relu':
             self.set_arg(op_param, 'type', 1, 's_i')
         elif activate_type == 'Leaky':
@@ -147,8 +146,7 @@ class Shadow(object):
         op_param = self.net_param.op.add()
         self.add_common(op_param, name, 'BatchNorm', bottoms, tops)
 
-        if not use_global_stats:
-            self.set_arg(op_param, 'use_global_stats', use_global_stats, 's_i')
+        self.set_arg(op_param, 'use_global_stats', use_global_stats, 's_i')
         self.set_arg(op_param, 'eps', eps, 's_f')
 
     def add_binary(self, name, bottoms, tops, operation, scalar=None):
@@ -178,18 +176,15 @@ class Shadow(object):
         op_param = self.net_param.op.add()
         self.add_common(op_param, name, 'Concat', bottoms, tops)
 
-        if axis != 1:
-            self.set_arg(op_param, 'axis', axis, 's_i')
+        self.set_arg(op_param, 'axis', axis, 's_i')
 
     def add_connected(self, name, bottoms, tops, num_output, bias_term=True, transpose=False):
         op_param = self.net_param.op.add()
         self.add_common(op_param, name, 'Connected', bottoms, tops)
 
         self.set_arg(op_param, 'num_output', num_output, 's_i')
-        if not bias_term:
-            self.set_arg(op_param, 'bias_term', bias_term, 's_i')
-        if transpose:
-            self.set_arg(op_param, 'transpose', transpose, 's_i')
+        self.set_arg(op_param, 'bias_term', bias_term, 's_i')
+        self.set_arg(op_param, 'transpose', transpose, 's_i')
 
     def add_conv(self, name, bottoms, tops, num_output, kernel_size, stride=1, pad=0, dilation=1, bias_term=True, group=1):
         op_param = self.net_param.op.add()
@@ -199,12 +194,9 @@ class Shadow(object):
         self.set_arg(op_param, 'kernel_size', kernel_size, 's_i')
         self.set_arg(op_param, 'stride', stride, 's_i')
         self.set_arg(op_param, 'pad', pad, 's_i')
-        if dilation != 1:
-            self.set_arg(op_param, 'dilation', dilation, 's_i')
-        if not bias_term:
-            self.set_arg(op_param, 'bias_term', bias_term, 's_i')
-        if group != 1:
-            self.set_arg(op_param, 'group', group, 's_i')
+        self.set_arg(op_param, 'dilation', dilation, 's_i')
+        self.set_arg(op_param, 'bias_term', bias_term, 's_i')
+        self.set_arg(op_param, 'group', group, 's_i')
 
     def add_deconv(self, name, bottoms, tops, num_output, kernel_size, stride=1, pad=0, dilation=1, bias_term=True, group=1):
         op_param = self.net_param.op.add()
@@ -214,12 +206,9 @@ class Shadow(object):
         self.set_arg(op_param, 'kernel_size', kernel_size, 's_i')
         self.set_arg(op_param, 'stride', stride, 's_i')
         self.set_arg(op_param, 'pad', pad, 's_i')
-        if dilation != 1:
-            self.set_arg(op_param, 'dilation', dilation, 's_i')
-        if not bias_term:
-            self.set_arg(op_param, 'bias_term', bias_term, 's_i')
-        if group != 1:
-            self.set_arg(op_param, 'group', group, 's_i')
+        self.set_arg(op_param, 'dilation', dilation, 's_i')
+        self.set_arg(op_param, 'bias_term', bias_term, 's_i')
+        self.set_arg(op_param, 'group', group, 's_i')
 
     def add_deformable_conv(self, name, bottoms, tops, num_output, kernel_size, stride=1, pad=0, dilation=1, bias_term=True, group=1, deformable_group=1):
         op_param = self.net_param.op.add()
@@ -229,14 +218,10 @@ class Shadow(object):
         self.set_arg(op_param, 'kernel_size', kernel_size, 's_i')
         self.set_arg(op_param, 'stride', stride, 's_i')
         self.set_arg(op_param, 'pad', pad, 's_i')
-        if dilation != 1:
-            self.set_arg(op_param, 'dilation', dilation, 's_i')
-        if not bias_term:
-            self.set_arg(op_param, 'bias_term', bias_term, 's_i')
-        if group != 1:
-            self.set_arg(op_param, 'group', group, 's_i')
-        if deformable_group != 1:
-            self.set_arg(op_param, 'deformable_group', deformable_group, 's_i')
+        self.set_arg(op_param, 'dilation', dilation, 's_i')
+        self.set_arg(op_param, 'bias_term', bias_term, 's_i')
+        self.set_arg(op_param, 'group', group, 's_i')
+        self.set_arg(op_param, 'deformable_group', deformable_group, 's_i')
 
     def add_deformable_psroi_pooling(self, name, bottoms, tops, output_dim, group_size, pooled_size, part_size, sample_per_part, spatial_scale, trans_std, no_trans=False):
         op_param = self.net_param.op.add()
@@ -270,36 +255,28 @@ class Shadow(object):
         op_param = self.net_param.op.add()
         self.add_common(op_param, name, 'Flatten', bottoms, tops)
 
-        if axis != 1:
-            self.set_arg(op_param, 'axis', axis, 's_i')
-        if end_axis != -1:
-            self.set_arg(op_param, 'end_axis', end_axis, 's_i')
+        self.set_arg(op_param, 'axis', axis, 's_i')
+        self.set_arg(op_param, 'end_axis', end_axis, 's_i')
 
     def add_lrn(self, name, bottoms, tops, local_size=5, alpha=1, beta=0.75, norm_region='AcrossChannels', k=1):
         op_param = self.net_param.op.add()
         self.add_common(op_param, name, 'LRN', bottoms, tops)
 
-        if local_size != 5:
-            self.set_arg(op_param, 'local_size', local_size, 's_i')
-        if alpha != 1:
-            self.set_arg(op_param, 'alpha', alpha, 's_f')
-        if beta != 0.75:
-            self.set_arg(op_param, 'beta', beta, 's_f')
+        self.set_arg(op_param, 'local_size', local_size, 's_i')
+        self.set_arg(op_param, 'alpha', alpha, 's_f')
+        self.set_arg(op_param, 'beta', beta, 's_f')
         if norm_region == 'AcrossChannels':
             self.set_arg(op_param, 'norm_region', 0, 's_i')
         else:
             raise ValueError('Unsupported norm region type', norm_region)
-        if k != 1:
-            self.set_arg(op_param, 'k', k, 's_f')
+        self.set_arg(op_param, 'k', k, 's_f')
 
     def add_normalize(self, name, bottoms, tops, across_spatial=True, channel_shared=True):
         op_param = self.net_param.op.add()
         self.add_common(op_param, name, 'Normalize', bottoms, tops)
 
-        if not across_spatial:
-            self.set_arg(op_param, 'across_spatial', across_spatial, 's_i')
-        if not channel_shared:
-            self.set_arg(op_param, 'channel_shared', channel_shared, 's_i')
+        self.set_arg(op_param, 'across_spatial', across_spatial, 's_i')
+        self.set_arg(op_param, 'channel_shared', channel_shared, 's_i')
 
     def add_permute(self, name, bottoms, tops, order=None):
         op_param = self.net_param.op.add()
@@ -308,7 +285,7 @@ class Shadow(object):
         if order is not None:
             self.set_arg(op_param, 'order', order, 'v_i')
 
-    def add_pooling(self, name, bottoms, tops, pool, kernel_size, stride=1, pad=0, global_pooling=False, full_pooling=True):
+    def add_pooling(self, name, bottoms, tops, pool, kernel_size, stride, pad, global_pooling=False, full_pooling=True):
         op_param = self.net_param.op.add()
         self.add_common(op_param, name, 'Pooling', bottoms, tops)
 
@@ -316,13 +293,11 @@ class Shadow(object):
             self.set_arg(op_param, 'pool', 0, 's_i')
         else:
             self.set_arg(op_param, 'pool', 1, 's_i')
-        self.set_arg(op_param, 'kernel_size', kernel_size, 's_i')
-        self.set_arg(op_param, 'stride', stride, 's_i')
-        self.set_arg(op_param, 'pad', pad, 's_i')
-        if global_pooling:
-            self.set_arg(op_param, 'global_pooling', global_pooling, 's_i')
-        if not full_pooling:
-            self.set_arg(op_param, 'full_pooling', full_pooling, 's_i')
+        self.set_arg(op_param, 'kernel_size', kernel_size, 'v_i')
+        self.set_arg(op_param, 'stride', stride, 'v_i')
+        self.set_arg(op_param, 'pad', pad, 'v_i')
+        self.set_arg(op_param, 'global_pooling', global_pooling, 's_i')
+        self.set_arg(op_param, 'full_pooling', full_pooling, 's_i')
 
     def add_prior_box(self, name, bottoms, tops, min_size=None, max_size=None, aspect_ratio=None, flip=True, clip=True, variance=None, step=0, offset=0.5):
         op_param = self.net_param.op.add()
@@ -334,16 +309,12 @@ class Shadow(object):
             self.set_arg(op_param, 'max_size', max_size, 'v_f')
         if aspect_ratio is not None:
             self.set_arg(op_param, 'aspect_ratio', aspect_ratio, 'v_f')
-        if not flip:
-            self.set_arg(op_param, 'flip', flip, 's_i')
-        if not clip:
-            self.set_arg(op_param, 'clip', clip, 's_i')
+        self.set_arg(op_param, 'flip', flip, 's_i')
+        self.set_arg(op_param, 'clip', clip, 's_i')
         if variance is not None:
             self.set_arg(op_param, 'variance', variance, 'v_f')
-        if step != 0:
-            self.set_arg(op_param, 'step', step, 's_f')
-        if offset != 0.5:
-            self.set_arg(op_param, 'offset', offset, 's_f')
+        self.set_arg(op_param, 'step', step, 's_f')
+        self.set_arg(op_param, 'offset', offset, 's_f')
 
     def add_proposal(self, name, bottoms, tops, feat_stride=16, pre_nms_top_n=6000, post_nms_top_n=300, min_size=16, nms_thresh=0.7, ratios=[0.5, 1, 2], scales=[8, 16, 32]):
         op_param = self.net_param.op.add()
@@ -377,10 +348,8 @@ class Shadow(object):
 
         if shape is not None:
             self.set_arg(op_param, 'shape', shape, 'v_i')
-        if axis != 0:
-            self.set_arg(op_param, 'axis', axis, 's_i')
-        if num_axes != -1:
-            self.set_arg(op_param, 'num_axes', num_axes, 's_i')
+        self.set_arg(op_param, 'axis', axis, 's_i')
+        self.set_arg(op_param, 'num_axes', num_axes, 's_i')
 
     def add_roi_pooling(self, name, bottoms, tops, pooled_h, pooled_w, spatial_scale):
         op_param = self.net_param.op.add()
@@ -390,16 +359,13 @@ class Shadow(object):
         self.set_arg(op_param, 'pooled_w', pooled_w, 's_i')
         self.set_arg(op_param, 'spatial_scale', spatial_scale, 's_f')
 
-    def add_scale(self, name, bottoms, tops, axis=1, num_axes=1, has_scale=True, has_bias=True, scale_value=None, bias_value=None):
+    def add_scale(self, name, bottoms, tops, axis=1, has_scale=True, has_bias=True, scale_value=None, bias_value=None):
         op_param = self.net_param.op.add()
         self.add_common(op_param, name, 'Scale', bottoms, tops)
 
-        if axis != 1:
-            self.set_arg(op_param, 'axis', axis, 's_i')
-        if not has_scale:
-            self.set_arg(op_param, 'has_scale', has_scale, 's_i')
-        if not has_bias:
-            self.set_arg(op_param, 'has_bias', has_bias, 's_i')
+        self.set_arg(op_param, 'axis', axis, 's_i')
+        self.set_arg(op_param, 'has_scale', has_scale, 's_i')
+        self.set_arg(op_param, 'has_bias', has_bias, 's_i')
         if scale_value is not None:
             self.set_arg(op_param, 'scale_value', scale_value, 'v_f')
         if bias_value is not None:
@@ -413,8 +379,7 @@ class Shadow(object):
         op_param = self.net_param.op.add()
         self.add_common(op_param, name, 'Softmax', bottoms, tops)
 
-        if axis != 1:
-            self.set_arg(op_param, 'axis', axis, 's_i')
+        self.set_arg(op_param, 'axis', axis, 's_i')
 
     def add_unary(self, name, bottoms, tops, operation):
         op_param = self.net_param.op.add()

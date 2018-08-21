@@ -12,28 +12,31 @@ void PoolingOp::Forward() {
   int in_h = bottom->shape(2), in_w = bottom->shape(3);
 
   if (global_pooling_) {
-    kernel_size_ = in_h;
-    stride_ = 1;
-    pad_ = 0;
+    kernel_size_h_ = in_h, kernel_size_w_ = in_w;
+    stride_h_ = stride_w_ = 1;
+    pad_h_ = pad_w_ = 0;
   }
 
   int out_h =
-      pooling_out_size(in_h, kernel_size_, stride_, pad_, full_pooling_);
+      pooling_out_size(in_h, kernel_size_h_, stride_h_, pad_h_, full_pooling_);
   int out_w =
-      pooling_out_size(in_w, kernel_size_, stride_, pad_, full_pooling_);
-  if (pad_) {
-    if ((out_h - 1) * stride_ >= in_h + pad_) out_h--;
-    if ((out_w - 1) * stride_ >= in_w + pad_) out_w--;
+      pooling_out_size(in_w, kernel_size_w_, stride_w_, pad_w_, full_pooling_);
+  if (pad_h_) {
+    if ((out_h - 1) * stride_h_ >= in_h + pad_h_) out_h--;
+  }
+  if (pad_w_) {
+    if ((out_w - 1) * stride_w_ >= in_w + pad_w_) out_w--;
   }
 
-  VecInt top_shape = bottom->shape();
+  auto top_shape = bottom->shape();
   top_shape[2] = out_h;
   top_shape[3] = out_w;
   top->reshape(top_shape);
 
 #if defined(USE_CUDNN)
-  cudnn::setPooling2dDesc<float>(&pooling_desc_, pool_type_, kernel_size_,
-                                 kernel_size_, pad_, pad_, stride_, stride_);
+  cudnn::setPooling2dDesc<float>(&pooling_desc_, pool_type_, kernel_size_h_,
+                                 kernel_size_w_, pad_h_, pad_w_, stride_h_,
+                                 stride_w_);
   cudnn::setTensor4dDesc<float>(&bottom_desc_, batch, in_c, in_h, in_w);
   cudnn::setTensor4dDesc<float>(&top_desc_, batch, in_c, out_h, out_w);
 
@@ -43,7 +46,8 @@ void PoolingOp::Forward() {
                                   top_desc_, top->mutable_data()));
 
 #else
-  Vision::Pooling(bottom->data(), bottom->shape(), kernel_size_, stride_, pad_,
+  Vision::Pooling(bottom->data(), bottom->shape(), kernel_size_h_,
+                  kernel_size_w_, stride_h_, stride_w_, pad_h_, pad_w_,
                   pool_type_, top->shape(), top->mutable_data());
 #endif
 
@@ -56,9 +60,9 @@ namespace Vision {
 
 #if !defined(USE_CUDA) & !defined(USE_CL)
 template <typename T>
-void Pooling(const T *in_data, const VecInt &in_shape, int kernel_size,
-             int stride, int pad, int mode, const VecInt &out_shape,
-             T *out_data) {
+void Pooling(const T *in_data, const VecInt &in_shape, int kernel_size_h,
+             int kernel_size_w, int stride_h, int stride_w, int pad_h,
+             int pad_w, int mode, const VecInt &out_shape, T *out_data) {
   int batch = in_shape[0];
   int in_c = in_shape[1], in_h = in_shape[2], in_w = in_shape[3];
   int out_h = out_shape[2], out_w = out_shape[3];
@@ -66,9 +70,9 @@ void Pooling(const T *in_data, const VecInt &in_shape, int kernel_size,
     for (int c = 0; c < in_c; ++c) {
       for (int h = 0; h < out_h; ++h) {
         for (int w = 0; w < out_w; ++w) {
-          int kistart = h * stride - pad, kjstart = w * stride - pad;
-          int kiend = std::min(kistart + kernel_size, in_h + pad);
-          int kjend = std::min(kjstart + kernel_size, in_w + pad);
+          int kistart = h * stride_h - pad_h, kjstart = w * stride_w - pad_w;
+          int kiend = std::min(kistart + kernel_size_h, in_h + pad_h);
+          int kjend = std::min(kjstart + kernel_size_w, in_w + pad_w);
           int pool_size = (kiend - kistart) * (kjend - kjstart);
           kistart = std::max(kistart, 0), kjstart = std::max(kjstart, 0);
           kiend = std::min(kiend, in_h), kjend = std::min(kjend, in_w);
@@ -91,14 +95,15 @@ void Pooling(const T *in_data, const VecInt &in_shape, int kernel_size,
 }
 
 template void Pooling(const float *in_data, const VecInt &in_shape,
-                      int kernel_size, int stride, int pad, int mode,
+                      int kernel_size_h, int kernel_size_w, int stride_h,
+                      int stride_w, int pad_h, int pad_w, int mode,
                       const VecInt &out_shape, float *out_data);
 
 #elif defined(USE_CL)
 template <typename T>
-void Pooling(const T *in_data, const VecInt &in_shape, int kernel_size,
-             int stride, int pad, int mode, const VecInt &out_shape,
-             T *out_data) {
+void Pooling(const T *in_data, const VecInt &in_shape, int kernel_size_h,
+             int kernel_size_w, int stride_h, int stride_w, int pad_h,
+             int pad_w, int mode, const VecInt &out_shape, T *out_data) {
   int batch = in_shape[0];
   int in_c = in_shape[1], in_h = in_shape[2], in_w = in_shape[3];
   int out_h = out_shape[2], out_w = out_shape[3];
@@ -106,8 +111,9 @@ void Pooling(const T *in_data, const VecInt &in_shape, int kernel_size,
 
   size_t global = count;
   auto *kernel = Kernel::cl_kernels_["Pooling"];
-  kernel->SetArguments(*in_data, count, in_c, in_h, in_w, kernel_size, stride,
-                       pad, mode, out_h, out_w, *out_data);
+  kernel->SetArguments(*in_data, count, in_c, in_h, in_w, kernel_size_h,
+                       kernel_size_w, stride_h, stride_w, pad_h, pad_w, mode,
+                       out_h, out_w, *out_data);
   kernel->Launch(*Kernel::queue_, {global}, Kernel::event_);
   Kernel::queue_->Finish();
 }

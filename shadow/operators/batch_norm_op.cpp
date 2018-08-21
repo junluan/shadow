@@ -4,7 +4,7 @@ namespace Shadow {
 
 void BatchNormOp::Forward() {
   if (use_global_stats_) {
-    CHECK_EQ(bottoms_size(), 4);
+    CHECK_GE(bottoms_size(), 3);
   } else {
     CHECK_EQ(bottoms_size(), 1);
   }
@@ -46,9 +46,11 @@ void BatchNormOp::Forward() {
   Blas::Set(spatial_dim, 1, sum_spatial_multiplier_->mutable_data(), 0);
 
   if (use_global_stats_) {
-    CHECK_EQ(bottoms<float>(3)->count(), 1);
     float scale = 1;
-    bottoms<float>(3)->read_data(&scale, 1);
+    if (bottoms_size() == 4) {
+      CHECK_EQ(bottoms<float>(3)->count(), 1);
+      bottoms<float>(3)->read_data(&scale, 1);
+    }
     float scale_factor = scale == 0 ? 0 : 1 / scale;
     Blas::Mul(mean_->count(), bottoms<float>(1)->data(), 0, scale_factor,
               mean_->mutable_data(), 0);
