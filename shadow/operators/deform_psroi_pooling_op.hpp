@@ -1,14 +1,13 @@
-#ifndef SHADOW_OPERATORS_DEFORMABLE_PSROI_POOLING_OP_HPP
-#define SHADOW_OPERATORS_DEFORMABLE_PSROI_POOLING_OP_HPP
+#ifndef SHADOW_OPERATORS_DEFORM_PSROI_POOLING_OP_HPP
+#define SHADOW_OPERATORS_DEFORM_PSROI_POOLING_OP_HPP
 
 #include "core/operator.hpp"
 
 namespace Shadow {
 
-class DeformablePSROIPoolingOp : public Operator {
+class DeformPSROIPoolingOp : public Operator {
  public:
-  explicit DeformablePSROIPoolingOp(const shadow::OpParam &op_param,
-                                    Workspace *ws)
+  explicit DeformPSROIPoolingOp(const shadow::OpParam &op_param, Workspace *ws)
       : Operator(op_param, ws) {
     output_dim_ = get_single_argument<int>("output_dim", 0);
     group_size_ = get_single_argument<int>("group_size", 0);
@@ -37,16 +36,15 @@ class DeformablePSROIPoolingOp : public Operator {
 namespace Vision {
 
 template <typename T>
-void DeformablePSROIPooling(const T *in_data, const VecInt &in_shape,
-                            const T *roi_data, const T *trans_data,
-                            const VecInt &trans_shape, int num_rois,
-                            int output_dim, int group_size, int pooled_size,
-                            int part_size, int sample_per_part,
-                            float spatial_scale, float trans_std, bool no_trans,
-                            T *out_data);
+void DeformPSROIPooling(const T *in_data, const VecInt &in_shape,
+                        const T *roi_data, const T *trans_data,
+                        const VecInt &trans_shape, int num_rois, int output_dim,
+                        int group_size, int pooled_size, int part_size,
+                        int sample_per_part, float spatial_scale,
+                        float trans_std, bool no_trans, T *out_data);
 
 }  // namespace Vision
 
 }  // namespace Shadow
 
-#endif  // SHADOW_OPERATORS_DEFORMABLE_PSROI_POOLING_OP_HPP
+#endif  // SHADOW_OPERATORS_DEFORM_PSROI_POOLING_OP_HPP

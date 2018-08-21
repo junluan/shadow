@@ -1,8 +1,8 @@
-#include "deformable_psroi_pooling_op.hpp"
+#include "deform_psroi_pooling_op.hpp"
 
 namespace Shadow {
 
-void DeformablePSROIPoolingOp::Forward() {
+void DeformPSROIPoolingOp::Forward() {
   CHECK_EQ(bottoms_size(), 2);
 
   const auto *bottom_fea = bottoms<float>(0);
@@ -17,7 +17,7 @@ void DeformablePSROIPoolingOp::Forward() {
 
   if (no_trans_) {
     CHECK_EQ(bottoms_size(), 2);
-    Vision::DeformablePSROIPooling(
+    Vision::DeformPSROIPooling(
         bottom_fea->data(), bottom_fea->shape(), bottom_roi->data(),
         static_cast<decltype(bottom_roi->data())>(nullptr), VecInt{}, num_rois,
         output_dim_, group_size_, pooled_size_, part_size_, sample_per_part_,
@@ -25,7 +25,7 @@ void DeformablePSROIPoolingOp::Forward() {
   } else {
     CHECK_EQ(bottoms_size(), 3);
     const auto *bottom_trans = bottoms<float>(2);
-    Vision::DeformablePSROIPooling(
+    Vision::DeformPSROIPooling(
         bottom_fea->data(), bottom_fea->shape(), bottom_roi->data(),
         bottom_trans->data(), bottom_trans->shape(), num_rois, output_dim_,
         group_size_, pooled_size_, part_size_, sample_per_part_, spatial_scale_,
@@ -33,7 +33,7 @@ void DeformablePSROIPoolingOp::Forward() {
   }
 }
 
-REGISTER_OPERATOR(DeformablePSROIPooling, DeformablePSROIPoolingOp);
+REGISTER_OPERATOR(DeformPSROIPooling, DeformPSROIPoolingOp);
 
 namespace Vision {
 
@@ -57,13 +57,12 @@ inline float bilinear_interp(const float *data, float x, float y, int width,
 }
 
 template <typename T>
-void DeformablePSROIPooling(const T *in_data, const VecInt &in_shape,
-                            const T *roi_data, const T *trans_data,
-                            const VecInt &trans_shape, int num_rois,
-                            int output_dim, int group_size, int pooled_size,
-                            int part_size, int sample_per_part,
-                            float spatial_scale, float trans_std, bool no_trans,
-                            T *out_data) {
+void DeformPSROIPooling(const T *in_data, const VecInt &in_shape,
+                        const T *roi_data, const T *trans_data,
+                        const VecInt &trans_shape, int num_rois, int output_dim,
+                        int group_size, int pooled_size, int part_size,
+                        int sample_per_part, float spatial_scale,
+                        float trans_std, bool no_trans, T *out_data) {
   int batch = in_shape[0];
   int in_c = in_shape[1], in_h = in_shape[2], in_w = in_shape[3];
   int in_num = in_c * in_h * in_w,
@@ -147,12 +146,14 @@ void DeformablePSROIPooling(const T *in_data, const VecInt &in_shape,
   }
 }
 
-template void DeformablePSROIPooling(
-    const float *in_data, const VecInt &in_shape, const float *roi_data,
-    const float *trans_data, const VecInt &trans_shape, int num_rois,
-    int output_dim, int group_size, int pooled_size, int part_size,
-    int sample_per_part, float spatial_scale, float trans_std, bool no_trans,
-    float *out_data);
+template void DeformPSROIPooling(const float *in_data, const VecInt &in_shape,
+                                 const float *roi_data, const float *trans_data,
+                                 const VecInt &trans_shape, int num_rois,
+                                 int output_dim, int group_size,
+                                 int pooled_size, int part_size,
+                                 int sample_per_part, float spatial_scale,
+                                 float trans_std, bool no_trans,
+                                 float *out_data);
 
 #elif defined(USE_CL)
 #endif

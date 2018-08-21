@@ -243,7 +243,7 @@ def convert_conv(mxnet_nodes, index, param_dict, shadow_net):
     shadow_net.add_conv(json_name, bottom_names, [json_name], num_output, kernel_size[0], stride[0], pad[0], dilate[0], bias_term, group)
 
 
-def convert_deformable_conv(mxnet_nodes, index, param_dict, shadow_net):
+def convert_deform_conv(mxnet_nodes, index, param_dict, shadow_net):
     json_node = mxnet_nodes[index]
     json_name = json_node['name']
     json_inputs = json_node['inputs']
@@ -262,12 +262,12 @@ def convert_deformable_conv(mxnet_nodes, index, param_dict, shadow_net):
     dilate = parse_param(json_attr, 'dilate', 'v_i', [1, 1])
     bias_term = parse_param(json_attr, 'no_bias', 's_s', 'False') != 'True'
     group = parse_param(json_attr, 'num_group', 's_i', 1)
-    deformable_group = parse_param(json_attr, 'num_deformable_group', 's_i', 1)
+    deform_group = parse_param(json_attr, 'num_deformable_group', 's_i', 1)
 
-    shadow_net.add_deformable_conv(json_name, bottom_names, [json_name], num_output, kernel_size[0], stride[0], pad[0], dilate[0], bias_term, group, deformable_group)
+    shadow_net.add_deform_conv(json_name, bottom_names, [json_name], num_output, kernel_size[0], stride[0], pad[0], dilate[0], bias_term, group, deform_group)
 
 
-def convert_deformable_psroi_pooling(mxnet_nodes, index, param_dict, shadow_net):
+def convert_deform_psroi_pooling(mxnet_nodes, index, param_dict, shadow_net):
     json_node = mxnet_nodes[index]
     json_name = json_node['name']
     json_inputs = json_node['inputs']
@@ -286,7 +286,7 @@ def convert_deformable_psroi_pooling(mxnet_nodes, index, param_dict, shadow_net)
     trans_std = parse_param(json_attr, 'trans_std', 's_f', 0.1)
     no_trans = parse_param(json_attr, 'no_trans', 's_s', 'False') == 'True'
 
-    shadow_net.add_deformable_psroi_pooling(json_name, bottom_names, [json_name], output_dim, group_size, pooled_size, part_size, sample_per_part, spatial_scale, trans_std, no_trans)
+    shadow_net.add_deform_psroi_pooling(json_name, bottom_names, [json_name], output_dim, group_size, pooled_size, part_size, sample_per_part, spatial_scale, trans_std, no_trans)
 
 
 def convert_eltwise(mxnet_nodes, index, param_dict, shadow_net, operation):
@@ -463,9 +463,9 @@ def mxnet2shadow(model_root, meta_net_info, copy_params=False):
             elif json_op == 'Convolution':
                 convert_conv(mxnet_nodes, index, param_dict, shadow_net)
             elif json_op == '_contrib_DeformableConvolution':
-                convert_deformable_conv(mxnet_nodes, index, param_dict, shadow_net)
+                convert_deform_conv(mxnet_nodes, index, param_dict, shadow_net)
             elif json_op == '_contrib_DeformablePSROIPooling':
-                convert_deformable_psroi_pooling(mxnet_nodes, index, param_dict, shadow_net)
+                convert_deform_psroi_pooling(mxnet_nodes, index, param_dict, shadow_net)
             elif json_op == 'elemwise_add' or json_op == 'broadcast_add':
                 convert_eltwise(mxnet_nodes, index, param_dict, shadow_net, 'Sum')
             elif json_op == 'LeakyReLU':

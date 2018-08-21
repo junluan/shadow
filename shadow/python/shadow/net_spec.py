@@ -210,9 +210,9 @@ class Shadow(object):
         self.set_arg(op_param, 'bias_term', bias_term, 's_i')
         self.set_arg(op_param, 'group', group, 's_i')
 
-    def add_deformable_conv(self, name, bottoms, tops, num_output, kernel_size, stride=1, pad=0, dilation=1, bias_term=True, group=1, deformable_group=1):
+    def add_deform_conv(self, name, bottoms, tops, num_output, kernel_size, stride=1, pad=0, dilation=1, bias_term=True, group=1, deform_group=1):
         op_param = self.net_param.op.add()
-        self.add_common(op_param, name, 'DeformableConv', bottoms, tops)
+        self.add_common(op_param, name, 'DeformConv', bottoms, tops)
 
         self.set_arg(op_param, 'num_output', num_output, 's_i')
         self.set_arg(op_param, 'kernel_size', kernel_size, 's_i')
@@ -221,11 +221,11 @@ class Shadow(object):
         self.set_arg(op_param, 'dilation', dilation, 's_i')
         self.set_arg(op_param, 'bias_term', bias_term, 's_i')
         self.set_arg(op_param, 'group', group, 's_i')
-        self.set_arg(op_param, 'deformable_group', deformable_group, 's_i')
+        self.set_arg(op_param, 'deform_group', deform_group, 's_i')
 
-    def add_deformable_psroi_pooling(self, name, bottoms, tops, output_dim, group_size, pooled_size, part_size, sample_per_part, spatial_scale, trans_std, no_trans=False):
+    def add_deform_psroi_pooling(self, name, bottoms, tops, output_dim, group_size, pooled_size, part_size, sample_per_part, spatial_scale, trans_std, no_trans=False):
         op_param = self.net_param.op.add()
-        self.add_common(op_param, name, 'DeformablePSROIPooling', bottoms, tops)
+        self.add_common(op_param, name, 'DeformPSROIPooling', bottoms, tops)
 
         self.set_arg(op_param, 'output_dim', output_dim, 's_i')
         self.set_arg(op_param, 'group_size', group_size, 's_i')

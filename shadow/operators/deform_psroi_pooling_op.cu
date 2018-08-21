@@ -1,4 +1,4 @@
-#include "deformable_psroi_pooling_op.hpp"
+#include "deform_psroi_pooling_op.hpp"
 
 namespace Shadow {
 
@@ -24,7 +24,7 @@ __device__ T bilinear_interp(const T *data, T x, T y, int width, int height) {
 }
 
 template <typename T>
-__global__ void DeformablePSROIPoolForwardKernel(
+__global__ void DeformPSROIPoolForwardKernel(
     int count, const T *bottom_data, T spatial_scale, int channels, int height,
     int width, int pooled_height, int pooled_width, const T *bottom_rois,
     const T *bottom_trans, bool no_trans, T trans_std, int sample_per_part,
@@ -110,30 +110,31 @@ __global__ void DeformablePSROIPoolForwardKernel(
 }
 
 template <typename T>
-void DeformablePSROIPooling(const T *in_data, const VecInt &in_shape,
-                            const T *roi_data, const T *trans_data,
-                            const VecInt &trans_shape, int num_rois,
-                            int output_dim, int group_size, int pooled_size,
-                            int part_size, int sample_per_part,
-                            float spatial_scale, float trans_std, bool no_trans,
-                            T *out_data) {
+void DeformPSROIPooling(const T *in_data, const VecInt &in_shape,
+                        const T *roi_data, const T *trans_data,
+                        const VecInt &trans_shape, int num_rois, int output_dim,
+                        int group_size, int pooled_size, int part_size,
+                        int sample_per_part, float spatial_scale,
+                        float trans_std, bool no_trans, T *out_data) {
   int in_c = in_shape[1], in_h = in_shape[2], in_w = in_shape[3];
   int num_classes = no_trans ? 1 : trans_shape[1] / 2;
   int channels_each_class = no_trans ? output_dim : output_dim / num_classes;
   int count = num_rois * output_dim * pooled_size * pooled_size;
-  DeformablePSROIPoolForwardKernel<T><<<GetBlocks(count), NumThreads>>>(
+  DeformPSROIPoolForwardKernel<T><<<GetBlocks(count), NumThreads>>>(
       count, in_data, spatial_scale, in_c, in_h, in_w, pooled_size, pooled_size,
       roi_data, trans_data, no_trans, trans_std, sample_per_part, output_dim,
       group_size, part_size, num_classes, channels_each_class, out_data);
   CUDA_CHECK(cudaPeekAtLastError());
 }
 
-template void DeformablePSROIPooling(
-    const float *in_data, const VecInt &in_shape, const float *roi_data,
-    const float *trans_data, const VecInt &trans_shape, int num_rois,
-    int output_dim, int group_size, int pooled_size, int part_size,
-    int sample_per_part, float spatial_scale, float trans_std, bool no_trans,
-    float *out_data);
+template void DeformPSROIPooling(const float *in_data, const VecInt &in_shape,
+                                 const float *roi_data, const float *trans_data,
+                                 const VecInt &trans_shape, int num_rois,
+                                 int output_dim, int group_size,
+                                 int pooled_size, int part_size,
+                                 int sample_per_part, float spatial_scale,
+                                 float trans_std, bool no_trans,
+                                 float *out_data);
 #endif
 
 }  // namespace Vision

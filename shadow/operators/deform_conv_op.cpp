@@ -1,10 +1,10 @@
-#include "deformable_conv_op.hpp"
+#include "deform_conv_op.hpp"
 
 #include "activate_op.hpp"
 
 namespace Shadow {
 
-void DeformableConvOp::Forward() {
+void DeformConvOp::Forward() {
   if (bias_term_) {
     CHECK_EQ(bottoms_size(), 4);
   } else {
@@ -22,14 +22,14 @@ void DeformableConvOp::Forward() {
       in_h = bottom->shape(2), in_w = bottom->shape(3);
 
   CHECK_EQ(in_c % group_, 0);
-  CHECK_EQ(offset_blob->shape(1) % deformable_group_, 0);
+  CHECK_EQ(offset_blob->shape(1) % deform_group_, 0);
 
   auto top_shape = bottom->shape();
   top_shape[1] = num_output_;
   top_shape[2] =
-      deformable_conv_out_size(in_h, kernel_size_, stride_, pad_, dilation_);
+      deform_conv_out_size(in_h, kernel_size_, stride_, pad_, dilation_);
   top_shape[3] =
-      deformable_conv_out_size(in_w, kernel_size_, stride_, pad_, dilation_);
+      deform_conv_out_size(in_w, kernel_size_, stride_, pad_, dilation_);
   top->reshape(top_shape);
 
   out_spatial_dim_ = top->count(2);
@@ -49,10 +49,10 @@ void DeformableConvOp::Forward() {
       {kernel_dim_ * group_, out_spatial_dim_}, op_name_ + "_col_image");
   int top_num = top->num(), bottom_num = bottom->num();
   for (int b = 0; b < batch; ++b) {
-    Vision::DeformableIm2Col(
-        bottom->data(), bottom->shape(), offset_blob->data(), b * bottom_num,
-        deformable_group_, kernel_size_, stride_, pad_, dilation_, 0,
-        top->shape(), col_image_->mutable_data());
+    Vision::DeformIm2Col(bottom->data(), bottom->shape(), offset_blob->data(),
+                         b * bottom_num, deform_group_, kernel_size_, stride_,
+                         pad_, dilation_, 0, top->shape(),
+                         col_image_->mutable_data());
     for (int g = 0; g < group_; ++g) {
       Blas::BlasSgemm(0, 0, num_output_ / group_, out_spatial_dim_, kernel_dim_,
                       1, weight->data(), weight_offset_ * g, col_image_->data(),
@@ -72,14 +72,13 @@ void DeformableConvOp::Forward() {
   DLOG(INFO) << debug_log();
 }
 
-REGISTER_OPERATOR(DeformableConv, DeformableConvOp);
+REGISTER_OPERATOR(DeformConv, DeformConvOp);
 
 namespace Vision {
 
 #if !defined(USE_CUDA) & !defined(USE_CL)
-inline float deformable_im2col_bilinear(const float *bottom_data,
-                                        int data_width, int height, int width,
-                                        float h, float w) {
+inline float deform_im2col_bilinear(const float *bottom_data, int data_width,
+                                    int height, int width, float h, float w) {
   auto h_low = static_cast<int>(std::floor(h));
   auto w_low = static_cast<int>(std::floor(w));
   int h_high;
@@ -109,24 +108,24 @@ inline float deformable_im2col_bilinear(const float *bottom_data,
 }
 
 template <typename T>
-void DeformableIm2Col(const T *in_data, const VecInt &in_shape,
-                      const T *offset_data, int offset, int deformable_group,
-                      int kernel_size, int stride, int pad, int dilation,
-                      int zero_point, const VecInt &out_shape, T *out_data) {
+void DeformIm2Col(const T *in_data, const VecInt &in_shape,
+                  const T *offset_data, int offset, int deform_group,
+                  int kernel_size, int stride, int pad, int dilation,
+                  int zero_point, const VecInt &out_shape, T *out_data) {
   int in_c = in_shape[1], in_h = in_shape[2], in_w = in_shape[3];
   int out_h = out_shape[2], out_w = out_shape[3];
-  int channel_per_deformable_group = in_c / deformable_group;
+  int channel_per_deform_group = in_c / deform_group;
   for (int c_im = 0; c_im < in_c; ++c_im) {
     for (int h_col = 0; h_col < out_h; ++h_col) {
       for (int w_col = 0; w_col < out_w; ++w_col) {
         int c_col = c_im * kernel_size * kernel_size;
-        int deformable_group_index = c_im / channel_per_deformable_group;
+        int deform_group_index = c_im / channel_per_deform_group;
         int h_in = h_col * stride - pad;
         int w_in = w_col * stride - pad;
         T *data_col_ptr = out_data + (c_col * out_h + h_col) * out_w + w_col;
         const T *data_im_ptr =
             in_data + offset + (c_im * in_h + h_in) * in_w + w_in;
-        const T *data_offset_ptr = offset_data + deformable_group_index * 2 *
+        const T *data_offset_ptr = offset_data + deform_group_index * 2 *
                                                      kernel_size * kernel_size *
                                                      out_h * out_w;
         for (int i = 0; i < kernel_size; ++i) {
@@ -146,8 +145,8 @@ void DeformableIm2Col(const T *in_data, const VecInt &in_shape,
               T map_w = j * dilation + offset_w;
               int cur_height = in_h - h_in;
               int cur_width = in_w - w_in;
-              val = deformable_im2col_bilinear(data_im_ptr, in_w, cur_height,
-                                               cur_width, map_h, map_w);
+              val = deform_im2col_bilinear(data_im_ptr, in_w, cur_height,
+                                           cur_width, map_h, map_w);
             }
             *data_col_ptr = val;
             data_col_ptr += out_h * out_w;
@@ -158,12 +157,11 @@ void DeformableIm2Col(const T *in_data, const VecInt &in_shape,
   }
 }
 
-template void DeformableIm2Col(const float *in_data, const VecInt &in_shape,
-                               const float *offset_data, int offset,
-                               int deformable_group, int kernel_size,
-                               int stride, int pad, int dilation,
-                               int zero_point, const VecInt &out_shape,
-                               float *out_data);
+template void DeformIm2Col(const float *in_data, const VecInt &in_shape,
+                           const float *offset_data, int offset,
+                           int deform_group, int kernel_size, int stride,
+                           int pad, int dilation, int zero_point,
+                           const VecInt &out_shape, float *out_data);
 
 #elif defined(USE_CL)
 #endif
