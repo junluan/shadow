@@ -72,7 +72,7 @@ class Blob {
 
   void share_data(const BACKEND *data, const VecInt &shape) {
     CHECK_NOTNULL(data);
-    int cou = 1;
+    size_t cou = 1;
     for (const auto dim : shape) cou *= dim;
     CHECK_EQ(cou, count());
     if (data_ != data) {
@@ -86,7 +86,7 @@ class Blob {
   }
 
   void reshape(const VecInt &shape, bool shared = false, int align = 1) {
-    int cou = 1;
+    size_t cou = 1;
     for (const auto dim : shape) cou *= dim;
     CHECK_GT(cou, 0);
     if (data_ == nullptr || cou > capacity_) {
@@ -97,9 +97,9 @@ class Blob {
   }
   void reshape(int batch, int channel, int height, int width,
                bool shared = false, int align = MALLOC_ALIGN) {
-    int cstep =
+    auto cstep =
         align_size(height * width * sizeof(Dtype), align) / sizeof(Dtype);
-    int cou = batch * channel * cstep;
+    auto cou = batch * channel * cstep;
     CHECK_GT(cou, 0);
     if (data_ == nullptr || cou > capacity_) {
       clear();
@@ -111,14 +111,14 @@ class Blob {
 
   const std::string &name() const { return name_; }
   Device device() const { return device_; }
-  int cstep() const { return cstep_; }
-  int capacity() const { return capacity_; }
+  size_t cstep() const { return cstep_; }
+  size_t capacity() const { return capacity_; }
   bool shared() const { return shared_; }
 
   void set_name(const std::string &name) { name_ = name; }
   void set_device(Device device) { device_ = device; }
-  void set_cstep(int cstep) { cstep_ = cstep; }
-  void set_capacity(int capacity) { capacity_ = capacity; }
+  void set_cstep(size_t cstep) { cstep_ = cstep; }
+  void set_capacity(size_t capacity) { capacity_ = capacity; }
   void set_shared(bool shared) { shared_ = shared; }
 
   const VecInt &shape() const { return shape_; }
@@ -144,7 +144,7 @@ class Blob {
     return cou;
   }
 
-  int mem_count() const { return capacity_ * sizeof(Dtype); }
+  size_t mem_count() const { return capacity_ * sizeof(Dtype); }
 
   int canonical_index(int index) const {
     CHECK_GE(index, -num_axes());
@@ -173,7 +173,7 @@ class Blob {
   }
 
  private:
-  void allocate_data(int count, bool shared, int align) {
+  void allocate_data(size_t count, bool shared, int align) {
     capacity_ = count;
 #if !defined(USE_CUDA) & !defined(USE_CL)
     if (!shared) {
@@ -201,7 +201,7 @@ class Blob {
   std::string name_;
   VecInt shape_{};
   Device device_ = kCPU;
-  int cstep_ = 0, capacity_ = 0;
+  size_t cstep_ = 0, capacity_ = 0;
   bool shared_ = false;
 
   DISABLE_COPY_AND_ASSIGN(Blob<Dtype>);

@@ -58,17 +58,18 @@ void Workspace::ClearBlob(const std::string &blob_type, void *blob) {
   }
 }
 
-void *Workspace::GetTempPtr(int required) {
+void *Workspace::GetTempPtr(int count, int size) {
+  auto required = static_cast<size_t>(count) * size;
   int sufficient_id = -1;
   for (int n = 0; n < blob_temp_.size(); ++n) {
-    if (required <= blob_temp_[n]->capacity()) {
+    if (required <= blob_temp_[n]->mem_count()) {
       sufficient_id = n;
       break;
     }
   }
   if (sufficient_id == -1) {
     sufficient_id = static_cast<int>(blob_temp_.size());
-    blob_temp_.push_back(new Blob<unsigned char>(VecInt{required}));
+    blob_temp_.push_back(new Blob<unsigned char>(VecInt{count, size}));
     DLOG(INFO) << "New temp buffer allocated: " << (required >> 20) << " MB.";
   }
   return blob_temp_[sufficient_id]->mutable_data();

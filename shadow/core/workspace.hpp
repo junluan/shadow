@@ -69,8 +69,8 @@ class Workspace {
                       bool shared = false) {
     if (HasBlob(name)) {
       if (!shape.empty()) {
-        CHECK(shape == GetBlob<T>(name)->shape()) << "Blob " << name
-                                                  << " shape mismatch";
+        CHECK(shape == GetBlob<T>(name)->shape())
+            << "Blob " << name << " shape mismatch";
       }
     } else {
       blob_map_[name].first = typeid(T).name();
@@ -96,8 +96,9 @@ class Workspace {
     blob->set_shape(shape);
     int cou = 1;
     for (const auto dim : shape) cou *= dim;
-    int required = cou * sizeof(Dtype) / sizeof(unsigned char);
-    blob->share_data(reinterpret_cast<BACKEND *>(GetTempPtr(required)), shape);
+    CHECK_GT(cou, 0);
+    int size = sizeof(Dtype) / sizeof(unsigned char);
+    blob->share_data(reinterpret_cast<BACKEND *>(GetTempPtr(cou, size)), shape);
     return blob;
   }
 
@@ -109,7 +110,7 @@ class Workspace {
  private:
   void ClearBlob(const std::string &blob_type, void *blob);
 
-  void *GetTempPtr(int required);
+  void *GetTempPtr(int count, int size);
 
   std::map<std::string, std::pair<std::string, void *>> blob_map_;
   std::vector<BlobUC *> blob_temp_;

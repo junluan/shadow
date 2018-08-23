@@ -23,14 +23,14 @@ namespace Shadow {
 
 #define MALLOC_ALIGN 16
 
-static inline int align_size(int sz, int n) { return (sz + n - 1) & -n; }
+static inline size_t align_size(int sz, int n) { return (sz + n - 1) & -n; }
 
 template <typename T>
 static inline T* align_ptr(T* ptr, int n = sizeof(T)) {
   return (T*)(((size_t)ptr + n - 1) & -n);
 }
 
-static inline void* fast_malloc(int size, int align) {
+static inline void* fast_malloc(size_t size, int align) {
   auto* u_data = new unsigned char[size + sizeof(void*) + align]();
   unsigned char** a_data = align_ptr((unsigned char**)u_data + 1, align);
   a_data[-1] = u_data;

@@ -45,7 +45,7 @@ void Release() {
 void Synchronize() { CUDA_CHECK(cudaDeviceSynchronize()); }
 
 template <typename T, typename Dtype>
-T *MakeBuffer(int size, Dtype *host_ptr) {
+T *MakeBuffer(size_t size, Dtype *host_ptr) {
   T *buffer;
   CUDA_CHECK(cudaMalloc(&buffer, size * sizeof(Dtype)));
   if (host_ptr != nullptr) {
@@ -55,19 +55,19 @@ T *MakeBuffer(int size, Dtype *host_ptr) {
 }
 
 template <typename T, typename Dtype>
-void ReadBuffer(int size, const T *src, Dtype *des) {
+void ReadBuffer(size_t size, const T *src, Dtype *des) {
   CUDA_CHECK(
       cudaMemcpy(des, src, size * sizeof(Dtype), cudaMemcpyDeviceToHost));
 }
 
 template <typename T, typename Dtype>
-void WriteBuffer(int size, const Dtype *src, T *des) {
+void WriteBuffer(size_t size, const Dtype *src, T *des) {
   CUDA_CHECK(
       cudaMemcpy(des, src, size * sizeof(Dtype), cudaMemcpyHostToDevice));
 }
 
 template <typename T, typename Dtype>
-void CopyBuffer(int size, const T *src, T *des) {
+void CopyBuffer(size_t size, const T *src, T *des) {
   CUDA_CHECK(
       cudaMemcpy(des, src, size * sizeof(Dtype), cudaMemcpyDeviceToDevice));
 }
@@ -78,25 +78,28 @@ void ReleaseBuffer(T *buffer) {
 }
 
 // Explicit instantiation
-template int *MakeBuffer<int, int>(int size, int *host_ptr);
-template float *MakeBuffer<float, float>(int size, float *host_ptr);
+template int *MakeBuffer<int, int>(size_t size, int *host_ptr);
+template float *MakeBuffer<float, float>(size_t size, float *host_ptr);
 template unsigned char *MakeBuffer<unsigned char, unsigned char>(
-    int size, unsigned char *host_ptr);
+    size_t size, unsigned char *host_ptr);
 
-template void ReadBuffer<int, int>(int size, const int *src, int *des);
-template void ReadBuffer<float, float>(int size, const float *src, float *des);
-template void ReadBuffer<unsigned char, unsigned char>(int size,
+template void ReadBuffer<int, int>(size_t size, const int *src, int *des);
+template void ReadBuffer<float, float>(size_t size, const float *src,
+                                       float *des);
+template void ReadBuffer<unsigned char, unsigned char>(size_t size,
                                                        const unsigned char *src,
                                                        unsigned char *des);
 
-template void WriteBuffer<int, int>(int size, const int *src, int *des);
-template void WriteBuffer<float, float>(int size, const float *src, float *des);
+template void WriteBuffer<int, int>(size_t size, const int *src, int *des);
+template void WriteBuffer<float, float>(size_t size, const float *src,
+                                        float *des);
 template void WriteBuffer<unsigned char, unsigned char>(
-    int size, const unsigned char *src, unsigned char *des);
+    size_t size, const unsigned char *src, unsigned char *des);
 
-template void CopyBuffer<int, int>(int size, const int *src, int *des);
-template void CopyBuffer<float, float>(int size, const float *src, float *des);
-template void CopyBuffer<unsigned char, unsigned char>(int size,
+template void CopyBuffer<int, int>(size_t size, const int *src, int *des);
+template void CopyBuffer<float, float>(size_t size, const float *src,
+                                       float *des);
+template void CopyBuffer<unsigned char, unsigned char>(size_t size,
                                                        const unsigned char *src,
                                                        unsigned char *des);
 

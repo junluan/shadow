@@ -97,22 +97,22 @@ void Release() {
 void Synchronize() {}
 
 template <typename T, typename Dtype>
-T *MakeBuffer(int size, Dtype *host_ptr) {
+T *MakeBuffer(size_t size, Dtype *host_ptr) {
   return new EasyCL::Buffer<Dtype>(*Kernel::context_, size);
 }
 
 template <typename T, typename Dtype>
-void ReadBuffer(int size, const T *src, Dtype *des) {
+void ReadBuffer(size_t size, const T *src, Dtype *des) {
   src->Read(*Kernel::queue_, size, des);
 }
 
 template <typename T, typename Dtype>
-void WriteBuffer(int size, const Dtype *src, T *des) {
+void WriteBuffer(size_t size, const Dtype *src, T *des) {
   des->Write(*Kernel::queue_, size, src);
 }
 
 template <typename T, typename Dtype>
-void CopyBuffer(int size, const T *src, T *des) {
+void CopyBuffer(size_t size, const T *src, T *des) {
   src->CopyTo(*Kernel::queue_, size, *des);
 }
 
@@ -122,21 +122,21 @@ void ReleaseBuffer(T *buffer) {
 }
 
 // Explicit instantiation
-template BufferI *MakeBuffer(int size, int *host_ptr);
-template BufferF *MakeBuffer(int size, float *host_ptr);
-template BufferUC *MakeBuffer(int size, unsigned char *host_ptr);
+template BufferI *MakeBuffer(size_t size, int *host_ptr);
+template BufferF *MakeBuffer(size_t size, float *host_ptr);
+template BufferUC *MakeBuffer(size_t size, unsigned char *host_ptr);
 
-template void ReadBuffer(int size, const BufferI *src, int *des);
-template void ReadBuffer(int size, const BufferF *src, float *des);
-template void ReadBuffer(int size, const BufferUC *src, unsigned char *des);
+template void ReadBuffer(size_t size, const BufferI *src, int *des);
+template void ReadBuffer(size_t size, const BufferF *src, float *des);
+template void ReadBuffer(size_t size, const BufferUC *src, unsigned char *des);
 
-template void WriteBuffer(int size, const int *src, BufferI *des);
-template void WriteBuffer(int size, const float *src, BufferF *des);
-template void WriteBuffer(int size, const unsigned char *src, BufferUC *des);
+template void WriteBuffer(size_t size, const int *src, BufferI *des);
+template void WriteBuffer(size_t size, const float *src, BufferF *des);
+template void WriteBuffer(size_t size, const unsigned char *src, BufferUC *des);
 
-template void CopyBuffer(int size, const BufferI *src, BufferI *des);
-template void CopyBuffer(int size, const BufferF *src, BufferF *des);
-template void CopyBuffer(int size, const BufferUC *src, BufferUC *des);
+template void CopyBuffer(size_t size, const BufferI *src, BufferI *des);
+template void CopyBuffer(size_t size, const BufferF *src, BufferF *des);
+template void CopyBuffer(size_t size, const BufferUC *src, BufferUC *des);
 
 template void ReleaseBuffer(BufferI *buffer);
 template void ReleaseBuffer(BufferF *buffer);

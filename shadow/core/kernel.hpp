@@ -52,16 +52,16 @@ void Release();
 void Synchronize();
 
 template <typename T, typename Dtype>
-T *MakeBuffer(int size, Dtype *host_ptr);
+T *MakeBuffer(size_t size, Dtype *host_ptr);
 
 template <typename T, typename Dtype>
-void ReadBuffer(int size, const T *src, Dtype *des);
+void ReadBuffer(size_t size, const T *src, Dtype *des);
 
 template <typename T, typename Dtype>
-void WriteBuffer(int size, const Dtype *src, T *des);
+void WriteBuffer(size_t size, const Dtype *src, T *des);
 
 template <typename T, typename Dtype = float>
-void CopyBuffer(int size, const T *src, T *des);
+void CopyBuffer(size_t size, const T *src, T *des);
 
 template <typename T>
 void ReleaseBuffer(T *buffer);
