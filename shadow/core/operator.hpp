@@ -138,8 +138,6 @@ class Operator {
   DISABLE_COPY_AND_ASSIGN(Operator);
 };
 
-using VecOp = std::vector<Operator *>;
-
 Operator *CreateOperator(const shadow::OpParam &op_param, Workspace *ws);
 
 SHADOW_DECLARE_REGISTRY(OperatorRegistry, Operator, const shadow::OpParam &,

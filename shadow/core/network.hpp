@@ -20,12 +20,6 @@ class Network {
                const std::map<std::string, std::vector<int>> &shape_map = {});
   void Release();
 
-  const Operator *GetOpByName(const std::string &op_name) {
-    for (const auto &op : ops_) {
-      if (op_name == op->name()) return op;
-    }
-    return nullptr;
-  }
   template <typename T>
   const Blob<T> *GetBlobByName(const std::string &blob_name) const {
     return ws_.GetBlob<T>(blob_name);
@@ -87,7 +81,7 @@ class Network {
   shadow::NetParam net_param_;
   ArgumentHelper arg_helper_;
 
-  VecOp ops_;
+  std::vector<Operator *> ops_;
   Workspace ws_;
 };
 
