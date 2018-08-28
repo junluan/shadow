@@ -17,6 +17,8 @@
 #include "util/easycl.hpp"
 #endif
 
+#include <cstdlib>
+
 namespace Shadow {
 
 #if defined(USE_CUDA)

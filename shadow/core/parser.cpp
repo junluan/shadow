@@ -1,12 +1,14 @@
 #include "parser.hpp"
+#include "json.hpp"
 
 #include "util/log.hpp"
 #include "util/util.hpp"
 
 namespace Shadow {
 
-#if !defined(USE_Protobuf)
 namespace Parser {
+
+#if !defined(USE_Protobuf)
 
 #if defined(USE_JSON)
 void ParseCommon(const JValue &root, shadow::OpParam *op) {
@@ -206,7 +208,7 @@ const shadow::OpParam ParseEltwise(const JValue &root) {
   ParseCommon(root, &shadow_op);
 
   int operation = 1;
-  VecFloat coeffs;
+  std::vector<float> coeffs;
   if (root.HasMember("arg")) {
     const auto &args = root["arg"];
     for (int i = 0; i < args.Size(); ++i) {
@@ -314,7 +316,7 @@ const shadow::OpParam ParseNormalize(const JValue &root) {
   ParseCommon(root, &shadow_op);
 
   int across_spatial = true, channel_shared = true;
-  VecFloat scale;
+  std::vector<float> scale;
   if (root.HasMember("arg")) {
     const auto &args = root["arg"];
     for (int i = 0; i < args.Size(); ++i) {
@@ -343,7 +345,7 @@ const shadow::OpParam ParsePermute(const JValue &root) {
 
   ParseCommon(root, &shadow_op);
 
-  VecInt order;
+  std::vector<int> order;
   if (root.HasMember("arg")) {
     const auto &args = root["arg"];
     for (int i = 0; i < args.Size(); ++i) {
@@ -404,7 +406,7 @@ const shadow::OpParam ParsePriorBox(const JValue &root) {
 
   ParseCommon(root, &shadow_op);
 
-  VecFloat min_size, max_size, aspect_ratio, variance;
+  std::vector<float> min_size, max_size, aspect_ratio, variance;
   int flip = true, clip = false;
   float step = -1, offset = 0.5;
   if (root.HasMember("arg")) {
@@ -475,7 +477,7 @@ const shadow::OpParam ParseReshape(const JValue &root) {
 
   ParseCommon(root, &shadow_op);
 
-  VecInt shape;
+  std::vector<int> shape;
   int axis = 0, num_axes = -1;
   if (root.HasMember("arg")) {
     const auto &args = root["arg"];
@@ -505,7 +507,7 @@ const shadow::OpParam ParseScale(const JValue &root) {
 
   ParseCommon(root, &shadow_op);
 
-  VecFloat scale_value, bias_value;
+  std::vector<float> scale_value, bias_value;
   int axis = 1, has_scale = true, has_bias = true;
   if (root.HasMember("arg")) {
     const auto &args = root["arg"];
@@ -909,7 +911,7 @@ const shadow::OpParam ParseEltwise(const std::vector<std::string> &params) {
   const auto &argument = ParseCommon(params, &shadow_op);
 
   int operation = 1;
-  VecFloat coeffs;
+  std::vector<float> coeffs;
   if (argument.count("operation")) {
     operation = argument.at("operation").s_i;
   }
@@ -992,7 +994,7 @@ const shadow::OpParam ParseNormalize(const std::vector<std::string> &params) {
   const auto &argument = ParseCommon(params, &shadow_op);
 
   int across_spatial = true, channel_shared = true;
-  VecFloat scale;
+  std::vector<float> scale;
   if (argument.count("across_spatial")) {
     across_spatial = argument.at("across_spatial").s_i;
   }
@@ -1015,7 +1017,7 @@ const shadow::OpParam ParsePermute(const std::vector<std::string> &params) {
 
   const auto &argument = ParseCommon(params, &shadow_op);
 
-  VecInt order;
+  std::vector<int> order;
   if (argument.count("order")) {
     order = argument.at("order").v_i;
   }
@@ -1064,7 +1066,7 @@ const shadow::OpParam ParsePriorBox(const std::vector<std::string> &params) {
 
   const auto &argument = ParseCommon(params, &shadow_op);
 
-  VecFloat min_size, max_size, aspect_ratio, variance;
+  std::vector<float> min_size, max_size, aspect_ratio, variance;
   int flip = true, clip = false;
   float step = -1, offset = 0.5;
   if (argument.count("min_size")) {
@@ -1126,7 +1128,7 @@ const shadow::OpParam ParseReshape(const std::vector<std::string> &params) {
 
   const auto &argument = ParseCommon(params, &shadow_op);
 
-  VecInt shape;
+  std::vector<int> shape;
   int axis = 0, num_axes = -1;
   if (argument.count("shape")) {
     shape = argument.at("shape").v_i;
@@ -1150,7 +1152,7 @@ const shadow::OpParam ParseScale(const std::vector<std::string> &params) {
 
   const auto &argument = ParseCommon(params, &shadow_op);
 
-  VecFloat scale_value, bias_value;
+  std::vector<float> scale_value, bias_value;
   int axis = 1, has_scale = true, has_bias = true;
   if (argument.count("axis")) {
     axis = argument.at("axis").s_i;
@@ -1308,7 +1310,8 @@ void ParseNet(const std::string &proto_text, shadow::NetParam *net) {
 }
 #endif
 
-}  // namespace Parser
 #endif
+
+}  // namespace Parser
 
 }  // namespace Shadow

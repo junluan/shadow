@@ -1,19 +1,20 @@
 #ifndef SHADOW_CORE_JSON_HPP
 #define SHADOW_CORE_JSON_HPP
 
-#include "util/type.hpp"
-
 #if defined(USE_JSON)
 #include "document.h"
+using JValue = rapidjson::Value;
+using JDocument = rapidjson::Document;
 #endif
+
+#include <string>
+#include <vector>
 
 namespace Shadow {
 
-#if defined(USE_JSON)
-using JValue = rapidjson::Value;
-using JDocument = rapidjson::Document;
-
 namespace Json {
+
+#if defined(USE_JSON)
 
 const JDocument GetDocument(const std::string &json_text);
 
@@ -30,20 +31,23 @@ const float GetFloat(const JValue &root, const std::string &name,
 const std::string GetString(const JValue &root, const std::string &name,
                             const std::string &def);
 
-const VecBool GetVecBool(const JValue &root, const std::string &name,
-                         const VecBool &def = {});
+const std::vector<bool> GetVecBool(const JValue &root, const std::string &name,
+                                   const std::vector<bool> &def = {});
 
-const VecInt GetVecInt(const JValue &root, const std::string &name,
-                       const VecInt &def = {});
+const std::vector<int> GetVecInt(const JValue &root, const std::string &name,
+                                 const std::vector<int> &def = {});
 
-const VecFloat GetVecFloat(const JValue &root, const std::string &name,
-                           const VecFloat &def = {});
+const std::vector<float> GetVecFloat(const JValue &root,
+                                     const std::string &name,
+                                     const std::vector<float> &def = {});
 
-const VecString GetVecString(const JValue &root, const std::string &name,
-                             const VecString &def = {});
+const std::vector<std::string> GetVecString(
+    const JValue &root, const std::string &name,
+    const std::vector<std::string> &def = {});
+
+#endif
 
 }  // namespace Json
-#endif
 
 }  // namespace Shadow
 
