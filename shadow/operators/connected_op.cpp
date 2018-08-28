@@ -26,7 +26,7 @@ void ConnectedOp::Forward() {
                       top->mutable_data(), 0);
     }
   } else {
-    Blas::BlasSgemm(0, !transpose_, batch, num_output_, bottom_num, 1,
+    Blas::BlasSgemm(0, transpose_, batch, num_output_, bottom_num, 1,
                     bottom->data(), 0, weight->data(), 0, 0,
                     top->mutable_data(), 0);
     if (bias_term_) {

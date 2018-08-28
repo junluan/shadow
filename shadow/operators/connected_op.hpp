@@ -12,7 +12,7 @@ class ConnectedOp : public Operator {
     CHECK(has_argument("num_output"));
     num_output_ = get_single_argument<int>("num_output", 0);
     bias_term_ = get_single_argument<bool>("bias_term", true);
-    transpose_ = get_single_argument<bool>("transpose", false);
+    transpose_ = get_single_argument<bool>("transpose", true);
   }
 
   void Forward() override;

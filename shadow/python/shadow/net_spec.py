@@ -178,7 +178,7 @@ class Shadow(object):
 
         self.set_arg(op_param, 'axis', axis, 's_i')
 
-    def add_connected(self, name, bottoms, tops, num_output, bias_term=True, transpose=False):
+    def add_connected(self, name, bottoms, tops, num_output, bias_term=True, transpose=True):
         op_param = self.net_param.op.add()
         self.add_common(op_param, name, 'Connected', bottoms, tops)
 

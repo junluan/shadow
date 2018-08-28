@@ -130,7 +130,7 @@ const shadow::OpParam ParseConnected(const JValue &root) {
 
   ParseCommon(root, &shadow_op);
 
-  int num_output = -1, bias_term = true, transpose = false;
+  int num_output = -1, bias_term = true, transpose = true;
   if (root.HasMember("arg")) {
     const auto &args = root["arg"];
     for (int i = 0; i < args.Size(); ++i) {
@@ -142,7 +142,7 @@ const shadow::OpParam ParseConnected(const JValue &root) {
       } else if (arg_name == "bias_term") {
         bias_term = Json::GetInt(arg, "s_i", 1);
       } else if (arg_name == "transpose") {
-        transpose = Json::GetInt(arg, "s_i", 0);
+        transpose = Json::GetInt(arg, "s_i", 1);
       }
     }
   }
@@ -840,7 +840,7 @@ const shadow::OpParam ParseConnected(const std::vector<std::string> &params) {
 
   const auto &argument = ParseCommon(params, &shadow_op);
 
-  int num_output = -1, bias_term = true, transpose = false;
+  int num_output = -1, bias_term = true, transpose = true;
   if (argument.count("num_output")) {
     num_output = argument.at("num_output").s_i;
   }

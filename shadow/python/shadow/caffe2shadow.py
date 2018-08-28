@@ -162,7 +162,7 @@ def convert_connected(caffe_layer, shadow_net):
     top_names = caffe_layer.top
 
     bias_term = True
-    transpose = False
+    transpose = True
     if caffe_layer.HasField('inner_product_param'):
         caffe_param = caffe_layer.inner_product_param
         if caffe_param.HasField('num_output'):
@@ -172,7 +172,7 @@ def convert_connected(caffe_layer, shadow_net):
         if caffe_param.HasField('bias_term'):
             bias_term = caffe_param.bias_term
         if caffe_param.HasField('transpose'):
-            transpose = caffe_param.transpose
+            transpose = not caffe_param.transpose
 
     shadow_net.add_connected(layer_name, bottom_names, top_names, num_output, bias_term, transpose)
 
