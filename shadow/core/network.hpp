@@ -16,7 +16,7 @@ class Network {
                  const std::vector<const void *> &weights);
   void LoadModel(const std::string &proto_str, const float *weights_data);
 
-  void Forward(const std::map<std::string, float *> &data_map = {},
+  void Forward(const std::map<std::string, float *> &data_map,
                const std::map<std::string, std::vector<int>> &shape_map = {});
   void Release();
 
