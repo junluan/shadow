@@ -1,193 +1,86 @@
 #include "network.hpp"
-
-#include "util/io.hpp"
+#include "network_impl.hpp"
 
 namespace Shadow {
 
-void Network::Setup(int device_id) { Kernel::Setup(device_id); }
+Network::Network() {
+  if (engine_ == nullptr) {
+    engine_ = std::make_shared<NetworkImpl>();
+  }
+}
+
+void Network::Setup(int device_id) { engine_->Setup(device_id); }
 
 void Network::LoadModel(const std::string &proto_bin) {
-  LoadProtoBin(proto_bin, &net_param_);
-  Initial();
+  engine_->LoadModel(proto_bin);
 }
 
 void Network::LoadModel(const shadow::NetParam &net_param) {
-  net_param_ = net_param;
-  Initial();
+  engine_->LoadModel(net_param);
 }
 
 void Network::LoadModel(const std::string &proto_str,
                         const std::vector<const void *> &weights) {
-  LoadProtoStrOrText(proto_str, &net_param_);
-  Initial();
-  CopyWeights(weights);
+  engine_->LoadModel(proto_str, weights);
 }
 
 void Network::LoadModel(const std::string &proto_str,
                         const float *weights_data) {
-  LoadProtoStrOrText(proto_str, &net_param_);
-  Initial();
-  CopyWeights(weights_data);
+  engine_->LoadModel(proto_str, weights_data);
 }
 
 void Network::Forward(
     const std::map<std::string, float *> &data_map,
     const std::map<std::string, std::vector<int>> &shape_map) {
-  if (ops_.empty()) return;
-  for (const auto &in_map : data_map) {
-    const auto &blob_name = in_map.first;
-    const auto *blob_data = in_map.second;
-    CHECK_NOTNULL(blob_data) << blob_name << " has null data";
-    auto *in_blob = GetBlobByName<float>(blob_name);
-    if (in_blob != nullptr) {
-      if (shape_map.count(blob_name)) {
-        const auto &blob_shape = shape_map.at(blob_name);
-        in_blob->reshape(blob_shape);
-      }
-      in_blob->set_data(blob_data, in_blob->count());
-    } else {
-      LOG(FATAL) << "Can not find blob " << blob_name;
-    }
-  }
-  for (auto &op : ops_) {
-    op->Forward();
-  }
-  Kernel::Synchronize();
-
-  DLOG(INFO) << "Forward Network!";
+  engine_->Forward(data_map, shape_map);
 }
 
-void Network::Release() {
-  net_param_.Clear();
-
-  for (auto &op : ops_) {
-    delete op;
-    op = nullptr;
-  }
-  ops_.clear();
-
-  Kernel::Release();
-
-  DLOG(INFO) << "Release Network!";
-}
-
-void Network::LoadProtoBin(const std::string &proto_bin,
-                           shadow::NetParam *net_param) {
-#if defined(USE_Protobuf)
-  CHECK(IO::ReadProtoFromBinaryFile(proto_bin, net_param))
-      << "Error when loading proto binary file: " << proto_bin;
-
-#else
-  LOG(FATAL) << "Unsupported load binary model, recompiled with USE_Protobuf";
-#endif
-}
-
-void Network::LoadProtoStrOrText(const std::string &proto_str_or_text,
-                                 shadow::NetParam *net_param) {
-  bool success;
-  Path path(proto_str_or_text);
-  if (path.is_file()) {
-    success = IO::ReadProtoFromTextFile(proto_str_or_text, net_param);
-  } else {
-    success = IO::ReadProtoFromText(proto_str_or_text, net_param);
-  }
-  CHECK(!proto_str_or_text.empty() && success)
-      << "Error when loading proto: " << proto_str_or_text;
-}
-
-void Network::Initial() {
-  for (const auto &blob : net_param_.blob()) {
-    VecInt shape;
-    int cc = 1;
-    for (auto dim : blob.shape()) {
-      cc *= dim;
-      shape.push_back(dim);
-    }
-    const auto &blob_name = blob.name();
-    const auto blob_type = blob.has_type() ? blob.type() : "float";
-    if (blob_type == "float") {
-      auto *blob_ptr = ws_.CreateBlob<float>(shape, blob_name, true);
-      CHECK_NOTNULL(blob_ptr) << "Failed to create float blob " << blob_name;
-      int data_f_size = blob.data_f_size();
-      if (data_f_size > 0) {
-        CHECK_EQ(data_f_size, cc)
-            << "Blob float data size and blob shape are mismatch";
-        blob_ptr->set_data(blob.data_f().data(), data_f_size);
-      }
-    } else if (blob_type == "int") {
-      auto *blob_ptr = ws_.CreateBlob<int>(shape, blob_name, true);
-      CHECK_NOTNULL(blob_ptr) << "Failed to create int blob " << blob_name;
-      int data_i_size = blob.data_i_size();
-      if (data_i_size > 0) {
-        CHECK_EQ(data_i_size, cc)
-            << "Blob int data size and blob shape are mismatch";
-        blob_ptr->set_data(blob.data_i().data(), data_i_size);
-      }
-    } else if (blob_type == "unsigned char") {
-      auto *blob_ptr = ws_.CreateBlob<unsigned char>(shape, blob_name, true);
-      CHECK_NOTNULL(blob_ptr)
-          << "Failed to create unsigned char blob " << blob_name;
-      int data_b_size = 0;
-      if (blob.data_b_size() > 0) {
-        CHECK_EQ(blob.data_b_size(), 1);
-        data_b_size = static_cast<int>(blob.data_b(0).size());
-      }
-      if (data_b_size > 0) {
-        CHECK_EQ(data_b_size, cc)
-            << "Blob unsigned char data size and blob shape are mismatch";
-        auto uc_data_ptr = static_cast<unsigned char *>(
-            static_cast<void *>(const_cast<char *>(blob.data_b(0).data())));
-        blob_ptr->set_data(uc_data_ptr, data_b_size);
-      }
-    } else {
-      LOG(FATAL) << "Failed to create blob " << blob_name << ", asked for type "
-                 << blob_type;
-    }
+#define INSTANTIATE_GET_BLOB(T)                                          \
+  template <>                                                            \
+  const T *Network::GetBlobDataByName<T>(const std::string &blob_name) { \
+    return engine_->GetBlobDataByName<T>(blob_name);                     \
+  }                                                                      \
+  template <>                                                            \
+  const std::vector<int> Network::GetBlobShapeByName<T>(                 \
+      const std::string &blob_name) {                                    \
+    return engine_->GetBlobShapeByName<T>(blob_name);                    \
   }
 
-  arg_helper_ = ArgumentHelper(net_param_);
+INSTANTIATE_GET_BLOB(float);
+INSTANTIATE_GET_BLOB(int);
+#undef INSTANTIATE_GET_BLOB
 
-  ops_.clear();
-  for (const auto &op_param : net_param_.op()) {
-    auto *op = CreateOperator(op_param, &ws_);
-    ops_.push_back(op);
-  }
+const std::vector<std::string> Network::in_blob() { return engine_->in_blob(); }
 
-  DLOG(INFO) << "Initial Network!";
+const std::vector<std::string> Network::out_blob() {
+  return engine_->out_blob();
 }
 
-void Network::CopyWeights(const std::vector<const void *> &weights) {
-  int weights_count = 0;
-  for (const auto &blob : net_param_.blob()) {
-    CHECK_LT(weights_count, weights.size());
-    const auto *weight = weights[weights_count++];
-    const auto &blob_name = blob.name();
-    const auto &blob_type = ws_.GetBlobType(blob_name);
-    if (blob_type == int_id) {
-      const auto *weight_data = static_cast<const int *>(weight);
-      auto *weight_blob = ws_.GetBlob<int>(blob_name);
-      weight_blob->set_data(weight_data, weight_blob->count());
-    } else if (blob_type == float_id) {
-      const auto *weight_data = static_cast<const float *>(weight);
-      auto *weight_blob = ws_.GetBlob<float>(blob_name);
-      weight_blob->set_data(weight_data, weight_blob->count());
-    } else if (blob_type == uchar_id) {
-      const auto *weight_data = static_cast<const unsigned char *>(weight);
-      auto *weight_blob = ws_.GetBlob<unsigned char>(blob_name);
-      weight_blob->set_data(weight_data, weight_blob->count());
-    } else {
-      LOG(FATAL) << "Unknown blob type " << blob_type;
-    }
-  }
+bool Network::has_argument(const std::string &name) const {
+  return engine_->has_argument(name);
 }
 
-void Network::CopyWeights(const float *weights_data) {
-  for (const auto &blob : net_param_.blob()) {
-    auto *weight_blob = ws_.GetBlob<float>(blob.name());
-    int blob_count = weight_blob->count();
-    weight_blob->set_data(weights_data, blob_count);
-    weights_data += blob_count;
+#define INSTANTIATE_ARGUMENT(T)                                             \
+  template <>                                                               \
+  T Network::get_single_argument<T>(const std::string &name,                \
+                                    const T &default_value) const {         \
+    return engine_->get_single_argument<T>(name, default_value);            \
+  }                                                                         \
+  template <>                                                               \
+  bool Network::has_single_argument_of_type<T>(const std::string &name)     \
+      const {                                                               \
+    return engine_->has_single_argument_of_type<T>(name);                   \
+  }                                                                         \
+  template <>                                                               \
+  const std::vector<T> Network::get_repeated_argument<T>(                   \
+      const std::string &name, const std::vector<T> &default_value) const { \
+    return engine_->get_repeated_argument<T>(name, default_value);          \
   }
-}
+
+INSTANTIATE_ARGUMENT(float);
+INSTANTIATE_ARGUMENT(int);
+INSTANTIATE_ARGUMENT(bool);
+INSTANTIATE_ARGUMENT(std::string);
+#undef INSTANTIATE_ARGUMENT
 
 }  // namespace Shadow

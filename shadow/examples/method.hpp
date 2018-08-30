@@ -39,8 +39,6 @@ class Method {
     LOG(FATAL) << "Predict for Mat!";
   }
 #endif
-
-  virtual void Release() { LOG(FATAL) << "Release method!"; }
 };
 
 static inline void ConvertData(const JImage &im_src, float *data,

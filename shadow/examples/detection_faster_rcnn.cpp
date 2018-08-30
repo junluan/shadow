@@ -27,7 +27,7 @@ void DetectionFasterRCNN::Setup(const std::string &model_file) {
   cls_prob_str_ = out_blob[1];
   bbox_pred_str_ = out_blob[2];
 
-  in_shape_ = net_.GetBlobByName<float>(in_str_)->shape();
+  in_shape_ = net_.GetBlobShapeByName<float>(in_str_);
   CHECK_EQ(in_shape_[0], 1);
 
   im_info_.resize(3, 0);
@@ -95,8 +95,6 @@ void DetectionFasterRCNN::Predict(
 }
 #endif
 
-void DetectionFasterRCNN::Release() { net_.Release(); }
-
 void DetectionFasterRCNN::Process(const VecFloat &in_data,
                                   const VecInt &in_shape,
                                   const VecFloat &im_info, float height,
@@ -109,13 +107,14 @@ void DetectionFasterRCNN::Process(const VecFloat &in_data,
 
   net_.Forward(data_map, shape_map);
 
-  const auto *roi_blob = net_.GetBlobByName<float>(rois_str_);
+  const auto &roi_shape = net_.GetBlobShapeByName<float>(rois_str_);
+
   const auto *roi_data = net_.GetBlobDataByName<float>(rois_str_);
   const auto *score_data = net_.GetBlobDataByName<float>(cls_prob_str_);
   const auto *delta_data = net_.GetBlobDataByName<float>(bbox_pred_str_);
 
   boxes->clear();
-  int num_rois = roi_blob->shape(0);
+  int num_rois = roi_shape[0];
   for (int n = 0; n < num_rois; ++n) {
     int label = 0, score_offset = n * num_classes_;
     float max_score = 0.f;

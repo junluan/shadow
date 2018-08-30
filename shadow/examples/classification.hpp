@@ -8,7 +8,6 @@ namespace Shadow {
 class Classification final : public Method {
  public:
   Classification() = default;
-  ~Classification() override { Release(); }
 
   void Setup(const std::string &model_file) override;
 
@@ -18,8 +17,6 @@ class Classification final : public Method {
   void Predict(const cv::Mat &im_mat, const VecRectF &rois,
                std::vector<std::map<std::string, VecFloat>> *scores) override;
 #endif
-
-  void Release() override;
 
  private:
   void Process(const VecFloat &in_data,

@@ -15,7 +15,6 @@ using VecBoxInfo = std::vector<BoxInfo>;
 class DetectionMTCNN final : public Method {
  public:
   DetectionMTCNN() = default;
-  ~DetectionMTCNN() override { Release(); }
 
   void Setup(const std::string &model_file) override;
 
@@ -27,8 +26,6 @@ class DetectionMTCNN final : public Method {
                std::vector<VecBoxF> *Gboxes,
                std::vector<std::vector<VecPointF>> *Gpoints) override;
 #endif
-
-  void Release() override;
 
  private:
   void Process_net_p(const float *data, const VecInt &in_shape, float threshold,

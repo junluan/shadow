@@ -24,7 +24,7 @@ void Classification::Setup(const std::string &model_file) {
   CHECK_EQ(out_blob.size(), 1);
   prob_str_ = out_blob[0];
 
-  auto data_shape = net_.GetBlobByName<float>(in_str_)->shape();
+  const auto &data_shape = net_.GetBlobShapeByName<float>(in_str_);
   CHECK_EQ(data_shape.size(), 4);
 
   batch_ = data_shape[0];
@@ -67,8 +67,6 @@ void Classification::Predict(
   CHECK_EQ(scores->size(), rois.size());
 }
 #endif
-
-void Classification::Release() { net_.Release(); }
 
 void Classification::Process(
     const VecFloat &in_data,

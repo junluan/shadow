@@ -84,7 +84,7 @@ void DetectionRefineDet::Setup(const std::string &model_file) {
   arm_conf_flatten_str_ = out_blob[3];
   arm_loc_str_ = out_blob[4];
 
-  auto data_shape = net_.GetBlobByName<float>(in_str_)->shape();
+  const auto &data_shape = net_.GetBlobShapeByName<float>(in_str_);
   CHECK_EQ(data_shape.size(), 4);
 
   batch_ = data_shape[0];
@@ -155,8 +155,6 @@ void DetectionRefineDet::Predict(const cv::Mat &im_mat, const VecRectF &rois,
 }
 #endif
 
-void DetectionRefineDet::Release() { net_.Release(); }
-
 void DetectionRefineDet::Process(const VecFloat &in_data,
                                  std::vector<VecBoxF> *Gboxes) {
   std::map<std::string, float *> data_map;
@@ -164,16 +162,16 @@ void DetectionRefineDet::Process(const VecFloat &in_data,
 
   net_.Forward(data_map);
 
-  auto *prior_blob = net_.GetBlobByName<float>(arm_priorbox_str_);
+  const auto &prior_shape = net_.GetBlobShapeByName<float>(arm_priorbox_str_);
 
-  const auto *prior_data = prior_blob->cpu_data();
+  const auto *prior_data = net_.GetBlobDataByName<float>(arm_priorbox_str_);
   const auto *loc_data = net_.GetBlobDataByName<float>(odm_loc_str_);
   const auto *conf_data = net_.GetBlobDataByName<float>(odm_conf_flatten_str_);
   const auto *arm_conf_data =
       net_.GetBlobDataByName<float>(arm_conf_flatten_str_);
   const auto *arm_loc_data = net_.GetBlobDataByName<float>(arm_loc_str_);
 
-  int num_priors = prior_blob->shape(2) / 4;
+  int num_priors = prior_shape[2] / 4;
 
   VecLabelBBox all_arm_loc_preds;
   GetLocPredictions(arm_loc_data, batch_, num_priors, num_loc_classes_,

@@ -70,16 +70,16 @@ void DetectionMTCNN::Setup(const std::string &model_file) {
   net_o_conv6_3_ = net_o_.out_blob()[1];
   net_o_prob1_ = net_o_.out_blob()[2];
 
-  net_p_in_shape_ = net_p_.GetBlobByName<float>(in_p_str_)->shape();
+  net_p_in_shape_ = net_p_.GetBlobShapeByName<float>(in_p_str_);
   net_p_stride_ = 2, net_p_cell_size_ = 12;
 
-  net_r_in_shape_ = net_r_.GetBlobByName<float>(in_r_str_)->shape();
+  net_r_in_shape_ = net_r_.GetBlobShapeByName<float>(in_r_str_);
   net_r_in_c_ = net_r_in_shape_[1];
   net_r_in_h_ = net_r_in_shape_[2];
   net_r_in_w_ = net_r_in_shape_[3];
   net_r_in_num_ = net_r_in_c_ * net_r_in_h_ * net_r_in_w_;
 
-  net_o_in_shape_ = net_o_.GetBlobByName<float>(in_o_str_)->shape();
+  net_o_in_shape_ = net_o_.GetBlobShapeByName<float>(in_o_str_);
   net_o_in_c_ = net_o_in_shape_[1];
   net_o_in_h_ = net_o_in_shape_[2];
   net_o_in_w_ = net_o_in_shape_[3];
@@ -251,12 +251,6 @@ void DetectionMTCNN::Predict(const cv::Mat &im_mat, const VecRectF &rois,
 }
 #endif
 
-void DetectionMTCNN::Release() {
-  net_p_.Release();
-  net_r_.Release();
-  net_o_.Release();
-}
-
 void DetectionMTCNN::Process_net_p(const float *data, const VecInt &in_shape,
                                    float threshold, float scale,
                                    VecBoxInfo *boxes) {
@@ -267,11 +261,11 @@ void DetectionMTCNN::Process_net_p(const float *data, const VecInt &in_shape,
 
   net_p_.Forward(data_map, shape_map);
 
-  const auto *loc_blob = net_p_.GetBlobByName<float>(net_p_conv4_2_);
-  const auto *loc_data = const_cast<BlobF *>(loc_blob)->cpu_data();
+  const auto &loc_shape = net_p_.GetBlobShapeByName<float>(net_p_conv4_2_);
+  const auto *loc_data = net_p_.GetBlobDataByName<float>(net_p_conv4_2_);
   const auto *conf_data = net_p_.GetBlobDataByName<float>(net_p_prob1_);
 
-  int out_h = loc_blob->shape(2), out_w = loc_blob->shape(3);
+  int out_h = loc_shape[2], out_w = loc_shape[3];
   int out_spatial_dim = out_h * out_w;
 
   boxes->clear();

@@ -8,7 +8,6 @@ namespace Shadow {
 class DetectionFasterRCNN final : public Method {
  public:
   DetectionFasterRCNN() = default;
-  ~DetectionFasterRCNN() override { Release(); }
 
   void Setup(const std::string &model_file) override;
 
@@ -20,8 +19,6 @@ class DetectionFasterRCNN final : public Method {
                std::vector<VecBoxF> *Gboxes,
                std::vector<std::vector<VecPointF>> *Gpoints) override;
 #endif
-
-  void Release() override;
 
  private:
   void Process(const VecFloat &in_data, const VecInt &in_shape,

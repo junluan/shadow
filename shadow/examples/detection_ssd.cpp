@@ -82,7 +82,7 @@ void DetectionSSD::Setup(const std::string &model_file) {
   mbox_conf_flatten_str_ = out_blob[1];
   mbox_priorbox_str_ = out_blob[2];
 
-  auto data_shape = net_.GetBlobByName<float>(in_str_)->shape();
+  const auto &data_shape = net_.GetBlobShapeByName<float>(in_str_);
   CHECK_EQ(data_shape.size(), 4);
 
   batch_ = data_shape[0];
@@ -152,8 +152,6 @@ void DetectionSSD::Predict(const cv::Mat &im_mat, const VecRectF &rois,
 }
 #endif
 
-void DetectionSSD::Release() { net_.Release(); }
-
 void DetectionSSD::Process(const VecFloat &in_data,
                            std::vector<VecBoxF> *Gboxes) {
   std::map<std::string, float *> data_map;
@@ -161,13 +159,13 @@ void DetectionSSD::Process(const VecFloat &in_data,
 
   net_.Forward(data_map);
 
-  auto *prior_blob = net_.GetBlobByName<float>(mbox_priorbox_str_);
+  const auto &prior_shape = net_.GetBlobShapeByName<float>(mbox_priorbox_str_);
 
-  const auto *prior_data = prior_blob->cpu_data();
+  const auto *prior_data = net_.GetBlobDataByName<float>(mbox_priorbox_str_);
   const auto *loc_data = net_.GetBlobDataByName<float>(mbox_loc_str_);
   const auto *conf_data = net_.GetBlobDataByName<float>(mbox_conf_flatten_str_);
 
-  int num_priors = prior_blob->shape(2) / 4;
+  int num_priors = prior_shape[2] / 4;
 
   VecLabelBBox all_loc_preds;
   GetLocPredictions(loc_data, batch_, num_priors, num_loc_classes_,

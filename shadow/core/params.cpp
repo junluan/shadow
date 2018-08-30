@@ -71,4 +71,41 @@ INSTANTIATE_GET_REPEATED_ARGUMENT(bool, v_i);
 INSTANTIATE_GET_REPEATED_ARGUMENT(std::string, v_s);
 #undef INSTANTIATE_GET_REPEATED_ARGUMENT
 
+#define INSTANTIATE_SET_SINGLE_ARGUMENT(fieldname, P, T)                    \
+  void set_##fieldname(P* param, const std::string& name, const T& value) { \
+    auto* arg = param->add_arg();                                           \
+    arg->set_name(name);                                                    \
+    arg->set_##fieldname(value);                                            \
+  }
+
+INSTANTIATE_SET_SINGLE_ARGUMENT(s_f, shadow::NetParam, float);
+INSTANTIATE_SET_SINGLE_ARGUMENT(s_i, shadow::NetParam, int);
+INSTANTIATE_SET_SINGLE_ARGUMENT(s_i, shadow::NetParam, bool);
+INSTANTIATE_SET_SINGLE_ARGUMENT(s_s, shadow::NetParam, std::string);
+INSTANTIATE_SET_SINGLE_ARGUMENT(s_f, shadow::OpParam, float);
+INSTANTIATE_SET_SINGLE_ARGUMENT(s_i, shadow::OpParam, int);
+INSTANTIATE_SET_SINGLE_ARGUMENT(s_i, shadow::OpParam, bool);
+INSTANTIATE_SET_SINGLE_ARGUMENT(s_s, shadow::OpParam, std::string);
+#undef INSTANTIATE_SET_SINGLE_ARGUMENT
+
+#define INSTANTIATE_SET_REPEATED_ARGUMENT(fieldname, P, T) \
+  void set_##fieldname(P* param, const std::string& name,  \
+                       const std::vector<T>& value) {      \
+    auto* arg = param->add_arg();                          \
+    arg->set_name(name);                                   \
+    for (const auto v : value) {                           \
+      arg->add_##fieldname(v);                             \
+    }                                                      \
+  }
+
+INSTANTIATE_SET_REPEATED_ARGUMENT(v_f, shadow::NetParam, float);
+INSTANTIATE_SET_REPEATED_ARGUMENT(v_i, shadow::NetParam, int);
+INSTANTIATE_SET_REPEATED_ARGUMENT(v_i, shadow::NetParam, bool);
+INSTANTIATE_SET_REPEATED_ARGUMENT(v_s, shadow::NetParam, std::string);
+INSTANTIATE_SET_REPEATED_ARGUMENT(v_f, shadow::OpParam, float);
+INSTANTIATE_SET_REPEATED_ARGUMENT(v_i, shadow::OpParam, int);
+INSTANTIATE_SET_REPEATED_ARGUMENT(v_i, shadow::OpParam, bool);
+INSTANTIATE_SET_REPEATED_ARGUMENT(v_s, shadow::OpParam, std::string);
+#undef INSTANTIATE_SET_REPEATED_ARGUMENT
+
 }  // namespace Shadow

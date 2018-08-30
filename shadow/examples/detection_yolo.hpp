@@ -8,7 +8,6 @@ namespace Shadow {
 class DetectionYOLO final : public Method {
  public:
   DetectionYOLO() = default;
-  ~DetectionYOLO() override { Release(); }
 
   void Setup(const std::string &model_file) override;
 
@@ -21,8 +20,6 @@ class DetectionYOLO final : public Method {
                std::vector<std::vector<VecPointF>> *Gpoints) override;
 #endif
 
-  void Release() override;
-
  private:
   void Process(const VecFloat &in_data, std::vector<VecBoxF> *Gboxes);
 
@@ -30,7 +27,7 @@ class DetectionYOLO final : public Method {
                          int side, float threshold, VecBoxF *boxes);
 
   Network net_;
-  VecFloat in_data_, out_data_, biases_;
+  VecFloat in_data_, biases_;
   std::string in_str_, out_str_;
   int batch_, in_num_, in_c_, in_h_, in_w_, out_num_, out_hw_;
   int num_classes_, num_km_;

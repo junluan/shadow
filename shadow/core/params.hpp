@@ -262,36 +262,32 @@ class ArgumentHelper {
   std::map<std::string, shadow::Argument> arg_map_;
 };
 
-#define INSTANTIATE_SET_SINGLE_ARGUMENT(T, fieldname)                    \
-  static void set_##fieldname(shadow::OpParam *op_param,                 \
-                              const std::string &name, const T &value) { \
-    auto shadow_arg = op_param->add_arg();                               \
-    shadow_arg->set_name(name);                                          \
-    shadow_arg->set_##fieldname(value);                                  \
-  }
+#define DECLARE_SET_SINGLE_ARGUMENT(fieldname, P, T) \
+  void set_##fieldname(P *param, const std::string &name, const T &value);
 
-INSTANTIATE_SET_SINGLE_ARGUMENT(float, s_f);
-INSTANTIATE_SET_SINGLE_ARGUMENT(int, s_i);
-INSTANTIATE_SET_SINGLE_ARGUMENT(bool, s_i);
-INSTANTIATE_SET_SINGLE_ARGUMENT(std::string, s_s);
-#undef INSTANTIATE_SET_SINGLE_ARGUMENT
+DECLARE_SET_SINGLE_ARGUMENT(s_f, shadow::NetParam, float);
+DECLARE_SET_SINGLE_ARGUMENT(s_i, shadow::NetParam, int);
+DECLARE_SET_SINGLE_ARGUMENT(s_i, shadow::NetParam, bool);
+DECLARE_SET_SINGLE_ARGUMENT(s_s, shadow::NetParam, std::string);
+DECLARE_SET_SINGLE_ARGUMENT(s_f, shadow::OpParam, float);
+DECLARE_SET_SINGLE_ARGUMENT(s_i, shadow::OpParam, int);
+DECLARE_SET_SINGLE_ARGUMENT(s_i, shadow::OpParam, bool);
+DECLARE_SET_SINGLE_ARGUMENT(s_s, shadow::OpParam, std::string);
+#undef DECLARE_SET_SINGLE_ARGUMENT
 
-#define INSTANTIATE_SET_REPEATED_ARGUMENT(T, fieldname)      \
-  static void set_##fieldname(shadow::OpParam *op_param,     \
-                              const std::string &name,       \
-                              const std::vector<T> &value) { \
-    auto shadow_arg = op_param->add_arg();                   \
-    shadow_arg->set_name(name);                              \
-    for (const auto v : value) {                             \
-      shadow_arg->add_##fieldname(v);                        \
-    }                                                        \
-  }
+#define DECLARE_SET_REPEATED_ARGUMENT(fieldname, P, T)    \
+  void set_##fieldname(P *param, const std::string &name, \
+                       const std::vector<T> &value);
 
-INSTANTIATE_SET_REPEATED_ARGUMENT(float, v_f);
-INSTANTIATE_SET_REPEATED_ARGUMENT(int, v_i);
-INSTANTIATE_SET_REPEATED_ARGUMENT(bool, v_i);
-INSTANTIATE_SET_REPEATED_ARGUMENT(std::string, v_s);
-#undef INSTANTIATE_SET_REPEATED_ARGUMENT
+DECLARE_SET_REPEATED_ARGUMENT(v_f, shadow::NetParam, float);
+DECLARE_SET_REPEATED_ARGUMENT(v_i, shadow::NetParam, int);
+DECLARE_SET_REPEATED_ARGUMENT(v_i, shadow::NetParam, bool);
+DECLARE_SET_REPEATED_ARGUMENT(v_s, shadow::NetParam, std::string);
+DECLARE_SET_REPEATED_ARGUMENT(v_f, shadow::OpParam, float);
+DECLARE_SET_REPEATED_ARGUMENT(v_i, shadow::OpParam, int);
+DECLARE_SET_REPEATED_ARGUMENT(v_i, shadow::OpParam, bool);
+DECLARE_SET_REPEATED_ARGUMENT(v_s, shadow::OpParam, std::string);
+#undef DECLARE_SET_REPEATED_ARGUMENT
 
 }  // namespace Shadow
 

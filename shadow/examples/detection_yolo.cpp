@@ -24,7 +24,7 @@ void DetectionYOLO::Setup(const std::string &model_file) {
   CHECK_EQ(out_blob.size(), 1);
   out_str_ = out_blob[0];
 
-  auto data_shape = net_.GetBlobByName<float>(in_str_)->shape();
+  const auto &data_shape = net_.GetBlobShapeByName<float>(in_str_);
   CHECK_EQ(data_shape.size(), 4);
 
   batch_ = data_shape[0];
@@ -90,8 +90,6 @@ void DetectionYOLO::Predict(const cv::Mat &im_mat, const VecRectF &rois,
 }
 #endif
 
-void DetectionYOLO::Release() { net_.Release(); }
-
 void DetectionYOLO::Process(const VecFloat &in_data,
                             std::vector<VecBoxF> *Gboxes) {
   std::map<std::string, float *> data_map;
@@ -99,17 +97,21 @@ void DetectionYOLO::Process(const VecFloat &in_data,
 
   net_.Forward(data_map);
 
-  auto *out_blob = net_.GetBlobByName<float>(out_str_);
-  auto *out_data = const_cast<float *>(out_blob->cpu_data());
+  const auto &out_shape = net_.GetBlobShapeByName<float>(out_str_);
+  const auto *out_data = net_.GetBlobDataByName<float>(out_str_);
 
-  out_num_ = out_blob->num();
-  out_hw_ = out_blob->shape(2);
+  out_num_ = 1;
+  for (int d = 1; d < out_shape.size(); ++d) {
+    out_num_ *= out_shape[d];
+  }
+  out_hw_ = out_shape[2];
 
   Gboxes->clear();
   for (int b = 0; b < batch_; ++b) {
     VecBoxF boxes;
-    ConvertDetections(out_data + b * out_num_, biases_.data(), num_classes_,
-                      num_km_, out_hw_, threshold_, &boxes);
+    ConvertDetections(const_cast<float *>(out_data) + b * out_num_,
+                      biases_.data(), num_classes_, num_km_, out_hw_,
+                      threshold_, &boxes);
     Gboxes->push_back(boxes);
   }
 }
