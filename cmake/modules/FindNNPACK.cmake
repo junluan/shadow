@@ -42,32 +42,13 @@ find_library(CLOG_LIBRARY
 set(__looked_for NNPACK_INCLUDE_DIRS NNPACK_LIBRARY PTHREADPOOL_LIBRARY CPUINFO_LIBRARY CLOG_LIBRARY)
 set(NNPACK_LIBRARIES ${NNPACK_LIBRARY} ${PTHREADPOOL_LIBRARY} ${CPUINFO_LIBRARY} ${CLOG_LIBRARY})
 
-if (ANDROID)
-  set(__nnpack_libs nnpack_ukernels)
-  if (${ANDROID_ABI} STREQUAL "armeabi-v7a")
-    list(APPEND __nnpack_libs cpufeatures)
-  endif ()
-  foreach (__nnpack_lib ${__nnpack_libs})
-    string(TOUPPER ${__nnpack_lib} __nnpack_lib_upper)
-    find_library(${__nnpack_lib_upper}_LIBRARY
-                 NAMES ${__nnpack_lib}
-                 PATHS ${NNPACK_DIR}
-                 PATH_SUFFIXES lib lib64 lib/x86_64 lib/x64 lib/x86
-                 DOC "The path to nnpack ${__nnpack_lib} library"
-                 NO_DEFAULT_PATH)
-    mark_as_advanced(${__nnpack_lib_upper}_LIBRARY)
-    list(APPEND __looked_for ${__nnpack_lib_upper}_LIBRARY)
-    list(APPEND NNPACK_LIBRARIES ${${__nnpack_lib_upper}_LIBRARY})
-  endforeach ()
-endif ()
-
 find_package_handle_standard_args(NNPACK DEFAULT_MSG ${__looked_for})
 
 if (NNPACK_FOUND)
   if (NOT NNPACK_FIND_QUIETLY)
     message(STATUS "Found NNPACK: ${NNPACK_INCLUDE_DIRS}, ${NNPACK_LIBRARIES}")
   endif ()
-  mark_as_advanced(NNPACK_ROOT_DIR NNPACK_INCLUDE_DIRS NNPACK_LIBRARY PTHREADPOOL_LIBRARY)
+  mark_as_advanced(NNPACK_ROOT_DIR NNPACK_INCLUDE_DIRS NNPACK_LIBRARY PTHREADPOOL_LIBRARY CPUINFO_LIBRARY CLOG_LIBRARY)
 else ()
   if (NNPACK_FIND_REQUIRED)
     message(FATAL_ERROR "Could not find NNPACK")
