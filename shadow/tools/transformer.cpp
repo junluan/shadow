@@ -181,6 +181,8 @@ void WriteDefines(const shadow::NetParam& shadow_net, const std::string& root,
   cpp_file << "#include \"" << model_name_hpp << "\"\n"
            << "#include \"" << model_name_weights_hpp << "\"\n\n";
 
+  cpp_file << "namespace Shadow {\n\n";
+
   size_t offset = 0;
   for (int n = 0; n < proto_split_num; ++n) {
     cpp_file << "const std::string " << proto_split_names[n] << " = \nR\"(";
@@ -225,7 +227,9 @@ void WriteDefines(const shadow::NetParam& shadow_net, const std::string& root,
 
   cpp_file << "const std::vector<std::string> " << class_name << "::types_{\n"
            << Util::format_vector(blob_types, "\",\n    \"", "    \"", "\"")
-           << "\n};\n";
+           << "\n};\n\n";
+
+  cpp_file << "}  // namespace Shadow\n";
 
   cpp_file.close();
 
@@ -238,6 +242,8 @@ void WriteDefines(const shadow::NetParam& shadow_net, const std::string& root,
   hpp_file << "#include <cstring>\n"
            << "#include <string>\n"
            << "#include <vector>\n\n";
+
+  hpp_file << "namespace Shadow {\n\n";
 
   hpp_file << "class " << class_name << " {\n"
            << " public:\n";
@@ -280,6 +286,8 @@ void WriteDefines(const shadow::NetParam& shadow_net, const std::string& root,
   hpp_file << "  static const std::vector<int> counts_;\n";
   hpp_file << "};\n\n";
 
+  hpp_file << "}  // namespace Shadow\n\n";
+
   hpp_file << "#endif  // SHADOW_" << class_name << "_HPP\n";
 
   hpp_file.close();
@@ -290,11 +298,14 @@ void WriteDefines(const shadow::NetParam& shadow_net, const std::string& root,
   weight_file << "#ifndef SHADOW_" << class_name << "_WEIGHTS_HPP\n"
               << "#define SHADOW_" << class_name << "_WEIGHTS_HPP\n\n";
 
+  weight_file << "namespace Shadow {\n\n";
+
   for (int n = 0; n < blob_names.size(); ++n) {
     const auto &blob_name = blob_names[n], blob_type = blob_types[n];
     weight_file << "extern const " << blob_type << " " << blob_name << "[];\n";
   }
-  weight_file << "\n";
+
+  weight_file << "\n}  // namespace Shadow\n\n";
 
   weight_file << "#endif  // SHADOW_" << class_name << "_WEIGHTS_HPP\n";
 
@@ -316,6 +327,9 @@ void WriteWeights(const shadow::NetParam& shadow_net, const std::string& root,
         Util::find_replace(op_param.name(), illegal_chars, "_");
     std::ofstream file(root + "/" + model_name + "_" + op_name + ".cpp");
     file << "#include \"" << model_name_weights_hpp << "\"\n\n";
+
+    file << "namespace Shadow {\n\n";
+
     int blob_count = 0;
     for (const auto& blob : weight_blobs) {
       const auto& blob_name =
@@ -356,6 +370,9 @@ void WriteWeights(const shadow::NetParam& shadow_net, const std::string& root,
       }
       file << "};\n\n";
     }
+
+    file << "}  // namespace Shadow\n";
+
     file.close();
   }
 }
