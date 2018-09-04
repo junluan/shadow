@@ -368,7 +368,8 @@ const shadow::OpParam ParsePooling(const JValue &root) {
 
   ParseCommon(root, &shadow_op);
 
-  int pool = 0, kernel_size = -1, stride = 1, pad = 0, global_pooling = false;
+  int pool = 0, global_pooling = false;
+  std::vector<int> kernel_size, stride, pad;
   if (root.HasMember("arg")) {
     const auto &args = root["arg"];
     for (int i = 0; i < args.Size(); ++i) {
@@ -378,24 +379,21 @@ const shadow::OpParam ParsePooling(const JValue &root) {
       if (arg_name == "pool") {
         pool = Json::GetInt(arg, "s_i", 0);
       } else if (arg_name == "kernel_size") {
-        kernel_size = Json::GetInt(arg, "s_i", -1);
+        kernel_size = Json::GetVecInt(arg, "v_i");
       } else if (arg_name == "stride") {
-        stride = Json::GetInt(arg, "s_i", 1);
+        stride = Json::GetVecInt(arg, "v_i");
       } else if (arg_name == "pad") {
-        pad = Json::GetInt(arg, "s_i", 0);
+        pad = Json::GetVecInt(arg, "v_i");
       } else if (arg_name == "global_pooling") {
         global_pooling = Json::GetInt(arg, "s_i", 0);
       }
     }
   }
 
-  if (!global_pooling) {
-    CHECK_GT(kernel_size, 0);
-  }
   set_s_i(&shadow_op, "pool", pool);
-  set_s_i(&shadow_op, "kernel_size", kernel_size);
-  set_s_i(&shadow_op, "stride", stride);
-  set_s_i(&shadow_op, "pad", pad);
+  set_v_i(&shadow_op, "kernel_size", kernel_size);
+  set_v_i(&shadow_op, "stride", stride);
+  set_v_i(&shadow_op, "pad", pad);
   set_s_i(&shadow_op, "global_pooling", global_pooling);
 
   return shadow_op;
@@ -1032,30 +1030,28 @@ const shadow::OpParam ParsePooling(const std::vector<std::string> &params) {
 
   const auto &argument = ParseCommon(params, &shadow_op);
 
-  int pool = 0, kernel_size = -1, stride = 1, pad = 0, global_pooling = false;
+  int pool = 0, global_pooling = false;
+  std::vector<int> kernel_size, stride, pad;
   if (argument.count("pool")) {
     pool = argument.at("pool").s_i;
   }
   if (argument.count("kernel_size")) {
-    kernel_size = argument.at("kernel_size").s_i;
+    kernel_size = argument.at("kernel_size").v_i;
   }
   if (argument.count("stride")) {
-    stride = argument.at("stride").s_i;
+    stride = argument.at("stride").v_i;
   }
   if (argument.count("pad")) {
-    pad = argument.at("pad").s_i;
+    pad = argument.at("pad").v_i;
   }
   if (argument.count("global_pooling")) {
     global_pooling = argument.at("global_pooling").s_i;
   }
 
-  if (!global_pooling) {
-    CHECK_GT(kernel_size, 0);
-  }
   set_s_i(&shadow_op, "pool", pool);
-  set_s_i(&shadow_op, "kernel_size", kernel_size);
-  set_s_i(&shadow_op, "stride", stride);
-  set_s_i(&shadow_op, "pad", pad);
+  set_v_i(&shadow_op, "kernel_size", kernel_size);
+  set_v_i(&shadow_op, "stride", stride);
+  set_v_i(&shadow_op, "pad", pad);
   set_s_i(&shadow_op, "global_pooling", global_pooling);
 
   return shadow_op;
