@@ -18,13 +18,15 @@ void ScaleOp::Forward() {
       bias_ = const_cast<BlobF *>(bottoms<float>(2));
     } else if (has_scale_) {
       scale_ = const_cast<BlobF *>(bottoms<float>(1));
-      bias_ =
-          op_ws_->CreateBlob<float>(scale_->shape(), op_name_ + "_bias_value");
+      op_ws_->GrowTempBuffer(scale_->count() * sizeof(float));
+      bias_ = op_ws_->CreateTempBlob<float>(scale_->shape(),
+                                            op_name_ + "_bias_value");
       Blas::Set(bias_->count(), 0, bias_->mutable_data(), 0);
     } else {
       bias_ = const_cast<BlobF *>(bottoms<float>(1));
-      scale_ =
-          op_ws_->CreateBlob<float>(bias_->shape(), op_name_ + "_scale_value");
+      op_ws_->GrowTempBuffer(bias_->count() * sizeof(float));
+      scale_ = op_ws_->CreateTempBlob<float>(bias_->shape(),
+                                             op_name_ + "_scale_value");
       Blas::Set(scale_->count(), 1, scale_->mutable_data(), 0);
     }
   } else {
@@ -43,8 +45,9 @@ void ScaleOp::Forward() {
     } else {
       bias_value_ = VecFloat(dim, 0);
     }
-    scale_ = op_ws_->CreateBlob<float>({dim}, op_name_ + "_scale_value");
-    bias_ = op_ws_->CreateBlob<float>({dim}, op_name_ + "_bias_value");
+    op_ws_->GrowTempBuffer(2 * dim * sizeof(float));
+    scale_ = op_ws_->CreateTempBlob<float>({dim}, op_name_ + "_scale_value");
+    bias_ = op_ws_->CreateTempBlob<float>({dim}, op_name_ + "_bias_value");
     scale_->set_data(scale_value_.data(), dim);
     bias_->set_data(bias_value_.data(), dim);
   }

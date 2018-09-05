@@ -39,14 +39,19 @@ void DeconvOp::Forward() {
   output_offset_ = conv_out_c * conv_out_spatial_dim_ / group_;
 
   Blas::Set(top->count(), 0, top->mutable_data(), 0);
+
+  int temp_count = kernel_dim_ * group_ * conv_out_spatial_dim_;
   if (bias_term_) {
-    biases_multiplier_ =
-        op_ws_->CreateBlob<float>(op_name_ + "_biases_multiplier");
-    biases_multiplier_->reshape({out_spatial_dim_});
-    Blas::Set(out_spatial_dim_, 1, biases_multiplier_->mutable_data(), 0);
+    temp_count += out_spatial_dim_;
   }
+  op_ws_->GrowTempBuffer(temp_count * sizeof(float));
   col_image_ = op_ws_->CreateTempBlob<float>(
       {kernel_dim_ * group_, conv_out_spatial_dim_}, op_name_ + "_col_image");
+  if (bias_term_) {
+    biases_multiplier_ = op_ws_->CreateTempBlob<float>(
+        {out_spatial_dim_}, op_name_ + "_biases_multiplier");
+    Blas::Set(out_spatial_dim_, 1, biases_multiplier_->mutable_data(), 0);
+  }
   int top_num = top->num(), bottom_num = bottom->num();
   for (int b = 0; b < batch; ++b) {
     for (int g = 0; g < group_; ++g) {

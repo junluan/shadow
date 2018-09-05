@@ -4,6 +4,7 @@
 #include "blob.hpp"
 
 #include <map>
+#include <memory>
 #include <string>
 #include <typeinfo>
 
@@ -23,24 +24,11 @@ class Workspace {
       ClearBlob(blob_type, blob);
     }
     blob_map_.clear();
-    for (auto blob_it : blob_temp_) {
-      delete blob_it;
-      blob_it = nullptr;
-    }
-    blob_temp_.clear();
   }
 
-  bool HasBlob(const std::string &name) const {
-    return static_cast<bool>(blob_map_.count(name));
-  }
+  bool HasBlob(const std::string &name) const;
 
-  const std::string GetBlobType(const std::string &name) const {
-    if (blob_map_.count(name)) {
-      return blob_map_.at(name).first;
-    }
-    DLOG(WARNING) << "Blob " << name << " not in the workspace.";
-    return std::string();
-  }
+  const std::string GetBlobType(const std::string &name) const;
 
   template <typename T>
   const Blob<T> *GetBlob(const std::string &name) const {
@@ -102,10 +90,10 @@ class Workspace {
     return blob;
   }
 
-  bool RemoveBlob(const std::string &name);
+  void GrowTempBuffer(int size);
 
-  int GetWorkspaceSize() const;
-  int GetWorkspaceTempSize() const;
+  size_t GetWorkspaceSize() const;
+  size_t GetWorkspaceTempSize() const;
 
  private:
   void ClearBlob(const std::string &blob_type, void *blob);
@@ -113,7 +101,8 @@ class Workspace {
   void *GetTempPtr(int count, int size);
 
   std::map<std::string, std::pair<std::string, void *>> blob_map_;
-  std::vector<BlobUC *> blob_temp_;
+  std::shared_ptr<BlobUC> blob_temp_ = nullptr;
+  size_t temp_offset_ = 0;
 
   DISABLE_COPY_AND_ASSIGN(Workspace);
 };

@@ -39,11 +39,8 @@ class ProposalOp : public Operator {
     nms_thresh_ = get_single_argument<float>("nms_thresh", 0.7f);
     ratios_ = get_repeated_argument<float>("ratios", {0.5f, 1.f, 2.f});
     scales_ = get_repeated_argument<float>("scales", {8.f, 16.f, 32.f});
-    const auto &anchors = generate_anchors(16, ratios_, scales_);
+    anchors_ = generate_anchors(16, ratios_, scales_);
     num_anchors_ = static_cast<int>(ratios_.size() * scales_.size());
-    anchors_ =
-        op_ws_->CreateBlob<float>({num_anchors_, 4}, op_name_ + "_anchors");
-    anchors_->set_data(anchors.data(), anchors_->count());
   }
 
   void Forward() override;
@@ -51,9 +48,7 @@ class ProposalOp : public Operator {
  private:
   int feat_stride_, pre_nms_top_n_, post_nms_top_n_, min_size_, num_anchors_;
   float nms_thresh_;
-  VecFloat ratios_, scales_, selected_rois_;
-
-  BlobF *anchors_ = nullptr, *proposals_ = nullptr;
+  VecFloat ratios_, scales_, anchors_, selected_rois_;
 };
 
 namespace Vision {

@@ -63,17 +63,24 @@ void ProposalOp::Forward() {
   CHECK_EQ(num_regs, 4 * num_anchors_);
   CHECK_EQ(num_info, 3);
 
-  proposals_ = op_ws_->CreateTempBlob<float>({in_h * in_w * num_anchors_, 6},
-                                             op_name_ + "_proposals");
+  int temp_count = num_anchors_ * 4 + in_h * in_w * num_anchors_ * 6;
+  op_ws_->GrowTempBuffer(temp_count * sizeof(float));
 
-  Vision::Proposal(anchors_->data(), bottom_score->data(), bottom_delta->data(),
+  auto *anchors =
+      op_ws_->CreateTempBlob<float>({num_anchors_, 4}, op_name_ + "_anchors");
+  anchors->set_data(anchors_.data(), anchors->count());
+
+  auto *proposals = op_ws_->CreateTempBlob<float>(
+      {in_h * in_w * num_anchors_, 6}, op_name_ + "_proposals");
+
+  Vision::Proposal(anchors->data(), bottom_score->data(), bottom_delta->data(),
                    bottom_info->data(), bottom_score->shape(), num_anchors_,
-                   feat_stride_, min_size_, proposals_->mutable_data());
+                   feat_stride_, min_size_, proposals->mutable_data());
 
-  const auto *proposal_data = proposals_->cpu_data();
+  const auto *proposal_data = proposals->cpu_data();
 
   std::vector<RectInfo> rectangles;
-  for (int n = 0; n < proposals_->shape(0); ++n) {
+  for (int n = 0; n < proposals->shape(0); ++n) {
     const auto *proposal_ptr = proposal_data + n * 6;
     if (proposal_ptr[5] > 0) {
       RectInfo rect = {};

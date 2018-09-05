@@ -31,6 +31,11 @@ void SoftmaxOp::Forward() {
 #else
   auto scale_shape = bottom->shape();
   scale_shape[axis_] = 1;
+
+  int temp_count = 1;
+  for (auto dim : scale_shape) temp_count *= dim;
+  op_ws_->GrowTempBuffer(temp_count * sizeof(float));
+
   scale_ = op_ws_->CreateTempBlob<float>(scale_shape, op_name_ + "_scale");
 
   int count = bottom->count(), channels = bottom->shape(axis_);

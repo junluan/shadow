@@ -30,9 +30,9 @@ void ConnectedOp::Forward() {
                     bottom->data(), 0, weight->data(), 0, 0,
                     top->mutable_data(), 0);
     if (bias_term_) {
-      biases_multiplier_ =
-          op_ws_->CreateBlob<float>(op_name_ + "_biases_multiplier");
-      biases_multiplier_->reshape({batch});
+      op_ws_->GrowTempBuffer(batch * sizeof(float));
+      biases_multiplier_ = op_ws_->CreateTempBlob<float>(
+          {batch}, op_name_ + "_biases_multiplier");
       Blas::Set(batch, 1, biases_multiplier_->mutable_data(), 0);
       Blas::BlasSgemm(0, 0, batch, num_output_, 1, 1,
                       biases_multiplier_->data(), 0, bottoms<float>(2)->data(),

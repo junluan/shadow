@@ -2,21 +2,31 @@
 
 namespace Shadow {
 
-bool Workspace::RemoveBlob(const std::string &name) {
-  auto blob_it = blob_map_.find(name);
-  if (blob_it != blob_map_.end()) {
-    const auto &blob_type = blob_map_.at(name).first;
-    auto *blob = blob_map_.at(name).second;
-    ClearBlob(blob_type, blob);
-    blob_map_.erase(blob_it);
-    return true;
-  }
-  DLOG(WARNING) << "Blob " << name << " not exists. Skipping.";
-  return false;
+bool Workspace::HasBlob(const std::string &name) const {
+  return static_cast<bool>(blob_map_.count(name));
 }
 
-int Workspace::GetWorkspaceSize() const {
-  int count = 0;
+const std::string Workspace::GetBlobType(const std::string &name) const {
+  if (blob_map_.count(name)) {
+    return blob_map_.at(name).first;
+  }
+  DLOG(WARNING) << "Blob " << name << " not in the workspace.";
+  return std::string();
+}
+
+void Workspace::GrowTempBuffer(int size) {
+  if (blob_temp_ == nullptr) {
+    blob_temp_ = std::make_shared<Blob<unsigned char>>(VecInt{size});
+  } else {
+    if (size > blob_temp_->mem_count()) {
+      blob_temp_->reshape({size});
+    }
+  }
+  temp_offset_ = 0;
+}
+
+size_t Workspace::GetWorkspaceSize() const {
+  size_t count = 0;
   for (const auto &blob_it : blob_map_) {
     const auto &blob_type = blob_it.second.first;
     auto *blob = blob_it.second.second;
@@ -35,12 +45,8 @@ int Workspace::GetWorkspaceSize() const {
   return count;
 }
 
-int Workspace::GetWorkspaceTempSize() const {
-  int count = 0;
-  for (const auto &blob_it : blob_temp_) {
-    count += blob_it->mem_count();
-  }
-  return count;
+size_t Workspace::GetWorkspaceTempSize() const {
+  return blob_temp_->mem_count();
 }
 
 void Workspace::ClearBlob(const std::string &blob_type, void *blob) {
@@ -60,19 +66,10 @@ void Workspace::ClearBlob(const std::string &blob_type, void *blob) {
 
 void *Workspace::GetTempPtr(int count, int size) {
   auto required = static_cast<size_t>(count) * size;
-  int sufficient_id = -1;
-  for (int n = 0; n < blob_temp_.size(); ++n) {
-    if (required <= blob_temp_[n]->mem_count()) {
-      sufficient_id = n;
-      break;
-    }
-  }
-  if (sufficient_id == -1) {
-    sufficient_id = static_cast<int>(blob_temp_.size());
-    blob_temp_.push_back(new Blob<unsigned char>(VecInt{count, size}));
-    DLOG(INFO) << "New temp buffer allocated: " << (required >> 20) << " MB.";
-  }
-  return blob_temp_[sufficient_id]->mutable_data();
+  CHECK_LE(temp_offset_ + required, blob_temp_->mem_count());
+  auto *ptr = blob_temp_->mutable_data() + temp_offset_;
+  temp_offset_ += required;
+  return ptr;
 }
 
 }  // namespace Shadow
