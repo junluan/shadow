@@ -134,7 +134,7 @@ def convert_activate(mxnet_nodes, index, param_dict, shadow_net):
     shadow_net.add_activate(json_name, bottom_names, bottom_names, act_type)
 
 
-def convert_batch_norm(mxnet_nodes, index, param_dict, shadow_net):
+def convert_batch_norm(mxnet_nodes, index, param_dict, arg_params, shadow_net):
     json_node = mxnet_nodes[index]
     json_name = json_node['name']
     json_inputs = json_node['inputs']
@@ -151,9 +151,13 @@ def convert_batch_norm(mxnet_nodes, index, param_dict, shadow_net):
         param_dict[json_name] = [mean_name, var_name]
         param_dict[json_name + '_scale'] = [gamma_name, beta_name]
 
+    eps = parse_param(json_attr, 'eps', 's_f', 1e-5)
     use_global_stats = parse_param(json_attr, 'use_global_stats', 's_s', 'True') == 'True'
     use_global_stats = True
-    eps = parse_param(json_attr, 'eps', 's_f', 1e-5)
+    fix_gamma = parse_param(json_attr, 'fix_gamma', 's_s', 'False') == 'True'
+    if fix_gamma:
+        gamma = arg_params[json_name + '_gamma'].asnumpy()
+        arg_params[json_name + '_gamma'] = mx.nd.ones(len(gamma))
 
     shadow_net.add_batch_norm(json_name, bottom_names, [json_name], use_global_stats, eps)
     shadow_net.add_scale(json_name + '_scale', [json_name], [json_name], 1)
@@ -453,7 +457,7 @@ def mxnet2shadow(model_root, meta_net_info, copy_params=False):
             elif json_op == 'Activation':
                 convert_activate(mxnet_nodes, index, param_dict, shadow_net)
             elif json_op == 'BatchNorm':
-                convert_batch_norm(mxnet_nodes, index, param_dict, shadow_net)
+                convert_batch_norm(mxnet_nodes, index, param_dict, arg_params, shadow_net)
             elif json_op == '_plus_scalar' or json_op == '_minus_scalar' or json_op == '_mul_scalar' or json_op == '_div_scalar':
                 convert_binary(mxnet_nodes, index, param_dict, shadow_net)
             elif json_op == 'Concat':
