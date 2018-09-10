@@ -14,9 +14,7 @@ class Method {
   Method() = default;
   virtual ~Method() = default;
 
-  virtual void Setup(const std::string &model_file) {
-    LOG(FATAL) << "Setup method!";
-  }
+  virtual void Setup(const std::string &model_file) = 0;
 
   virtual void Predict(const JImage &im_src, const VecRectF &rois,
                        std::vector<VecBoxF> *Gboxes,
@@ -41,10 +39,9 @@ class Method {
 #endif
 };
 
-static inline void ConvertData(const JImage &im_src, float *data,
-                               const RectF &roi, int channel, int height,
-                               int width, int flag = 1,
-                               bool transpose = false) {
+static void ConvertData(const JImage &im_src, float *data, const RectF &roi,
+                        int channel, int height, int width, int flag = 1,
+                        bool transpose = false) {
   CHECK_NOTNULL(im_src.data());
   CHECK_NOTNULL(data);
 
@@ -136,10 +133,9 @@ static inline void ConvertData(const JImage &im_src, float *data,
 }
 
 #if defined(USE_OpenCV)
-static inline void ConvertData(const cv::Mat &im_mat, float *data,
-                               const RectF &roi, int channel, int height,
-                               int width, int flag = 1,
-                               bool transpose = false) {
+static void ConvertData(const cv::Mat &im_mat, float *data, const RectF &roi,
+                        int channel, int height, int width, int flag = 1,
+                        bool transpose = false) {
   CHECK(!im_mat.empty());
   CHECK_NOTNULL(data);
 
