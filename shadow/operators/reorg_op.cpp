@@ -20,8 +20,6 @@ void ReorgOp::Forward() {
   top->reshape(top_shape);
 
   Vision::Reorg(bottom->data(), bottom->shape(), stride_, top->mutable_data());
-
-  DLOG(INFO) << debug_log();
 }
 
 REGISTER_OPERATOR(Reorg, ReorgOp);

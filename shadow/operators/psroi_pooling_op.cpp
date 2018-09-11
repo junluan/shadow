@@ -19,8 +19,6 @@ void PSROIPoolingOp::Forward() {
                        bottom_roi->data(), num_rois, output_dim_, group_size_,
                        pooled_h_, pooled_w_, spatial_scale_,
                        top->mutable_data());
-
-  DLOG(INFO) << debug_log();
 }
 
 REGISTER_OPERATOR(PSROIPooling, PSROIPoolingOp);

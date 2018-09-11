@@ -65,8 +65,6 @@ void ReshapeOp::Forward() {
   CHECK_EQ(top->count(), bottom->count());
 
   top->share_data(*bottom);
-
-  DLOG(INFO) << debug_log();
 }
 
 REGISTER_OPERATOR(Reshape, ReshapeOp);

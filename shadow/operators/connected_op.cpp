@@ -39,8 +39,6 @@ void ConnectedOp::Forward() {
                       0, 1, top->mutable_data(), 0);
     }
   }
-
-  DLOG(INFO) << debug_log();
 }
 
 REGISTER_OPERATOR(Connected, ConnectedOp);

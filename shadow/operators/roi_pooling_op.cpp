@@ -17,8 +17,6 @@ void ROIPoolingOp::Forward() {
   Vision::ROIPooling(bottom_fea->data(), bottom_fea->shape(),
                      bottom_roi->data(), num_rois, pooled_h_, pooled_w_,
                      spatial_scale_, top->mutable_data());
-
-  DLOG(INFO) << debug_log();
 }
 
 REGISTER_OPERATOR(ROIPooling, ROIPoolingOp);

@@ -54,8 +54,6 @@ void EltwiseOp::Forward() {
     default:
       LOG(FATAL) << "Unknown elementwise operation " << operation_;
   }
-
-  DLOG(INFO) << debug_log();
 }
 
 REGISTER_OPERATOR(Eltwise, EltwiseOp);

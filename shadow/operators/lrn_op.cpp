@@ -15,8 +15,6 @@ void LRNOp::Forward() {
 
   Vision::LRN(bottom->data(), bottom->shape(), size_, alpha_, beta_, k_,
               scale_->mutable_data(), top->mutable_data());
-
-  DLOG(INFO) << debug_log();
 }
 
 REGISTER_OPERATOR(LRN, LRNOp);

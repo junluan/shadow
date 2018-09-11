@@ -28,8 +28,6 @@ void ActivateOp::Forward() {
     Vision::PRelu(top->mutable_data(), top->shape(), channel_shared_,
                   slope->data());
   }
-
-  DLOG(INFO) << debug_log();
 }
 
 REGISTER_OPERATOR(Activate, ActivateOp);

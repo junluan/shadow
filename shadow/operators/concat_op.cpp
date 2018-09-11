@@ -40,8 +40,6 @@ void ConcatOp::Forward() {
     top->set_shape(top_shape);
     top->share_data(*bottom_0);
   }
-
-  DLOG(INFO) << debug_log();
 }
 
 REGISTER_OPERATOR(Concat, ConcatOp);

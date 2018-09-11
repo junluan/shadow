@@ -116,8 +116,6 @@ void ProposalOp::Forward() {
 
   top->reshape({picked_count, 5});
   top->set_data(selected_rois_.data(), selected_rois_.size());
-
-  DLOG(INFO) << debug_log();
 }
 
 REGISTER_OPERATOR(Proposal, ProposalOp);

@@ -93,7 +93,6 @@ void PriorBoxOp::Forward() {
   }
   top->set_data(top_data_.data(), top_data_.size());
   is_initial_ = true;
-  DLOG(INFO) << debug_log();
 }
 
 REGISTER_OPERATOR(PriorBox, PriorBoxOp);

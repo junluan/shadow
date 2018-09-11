@@ -41,8 +41,6 @@ void PermuteOp::Forward() {
   Vision::Permute(bottom->data(), bottom->count(), bottom->num_axes(),
                   permute_order_->data(), old_steps_->data(),
                   new_steps_->data(), top->mutable_data());
-
-  DLOG(INFO) << debug_log();
 }
 
 REGISTER_OPERATOR(Permute, PermuteOp);

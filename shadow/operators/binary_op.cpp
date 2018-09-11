@@ -77,8 +77,6 @@ void BinaryOp::Forward() {
     default:
       LOG(FATAL) << "Unknown binary operation " << operation_;
   }
-
-  DLOG(INFO) << debug_log();
 }
 
 REGISTER_OPERATOR(Binary, BinaryOp);

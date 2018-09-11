@@ -61,8 +61,6 @@ void ScaleOp::Forward() {
 
   Vision::Scale(bottom->data(), bottom->count(), scale_->data(), bias_->data(),
                 scale_dim_, inner_dim_, top->mutable_data());
-
-  DLOG(INFO) << debug_log();
 }
 
 REGISTER_OPERATOR(Scale, ScaleOp);

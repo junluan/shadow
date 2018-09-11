@@ -76,8 +76,6 @@ void NormalizeOp::Forward() {
                 top->mutable_data(), data_offset);
     }
   }
-
-  DLOG(INFO) << debug_log();
 }
 
 REGISTER_OPERATOR(Normalize, NormalizeOp);

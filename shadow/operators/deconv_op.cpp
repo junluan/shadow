@@ -73,8 +73,6 @@ void DeconvOp::Forward() {
   if (activate_type_ == 1) {
     Vision::Activate(top->mutable_data(), top->count(), activate_type_);
   }
-
-  DLOG(INFO) << debug_log();
 }
 
 REGISTER_OPERATOR(Deconv, DeconvOp);

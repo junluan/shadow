@@ -42,8 +42,6 @@ void UnaryOp::Forward() {
     default:
       LOG(FATAL) << "Unknown unary operation " << operation_;
   }
-
-  DLOG(INFO) << debug_log();
 }
 
 REGISTER_OPERATOR(Unary, UnaryOp);

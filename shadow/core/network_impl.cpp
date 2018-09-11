@@ -51,6 +51,7 @@ void Network::NetworkImpl::Forward(
   }
   for (auto &op : ops_) {
     op->Forward();
+    DLOG(INFO) << op->debug_log();
   }
   Kernel::Synchronize();
 

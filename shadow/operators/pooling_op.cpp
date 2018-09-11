@@ -50,8 +50,6 @@ void PoolingOp::Forward() {
                   kernel_size_w_, stride_h_, stride_w_, pad_h_, pad_w_,
                   pool_type_, top->shape(), top->mutable_data());
 #endif
-
-  DLOG(INFO) << debug_log();
 }
 
 REGISTER_OPERATOR(Pooling, PoolingOp);

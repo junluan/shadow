@@ -50,8 +50,6 @@ void SoftmaxOp::Forward() {
   Blas::ChannelDiv(count, outer_num_, channels, inner_num_, scale_->data(),
                    top->mutable_data());
 #endif
-
-  DLOG(INFO) << debug_log();
 }
 
 REGISTER_OPERATOR(Softmax, SoftmaxOp);

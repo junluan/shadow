@@ -3,6 +3,7 @@
 
 #include "blas.hpp"
 #include "blob.hpp"
+#include "json_helper.hpp"
 #include "params.hpp"
 #include "registry.hpp"
 #include "workspace.hpp"
@@ -37,10 +38,7 @@ class Operator {
   }
 
   const std::string &name() const { return op_name_; }
-  void set_name(const std::string &name) { op_name_ = name; }
-
   const std::string &type() const { return op_type_; }
-  void set_type(const std::string &type) { op_type_ = type; }
 
   template <typename T>
   const Blob<T> *bottoms(int n) const {
@@ -102,26 +100,7 @@ class Operator {
   }
   int tops_size() const { return static_cast<int>(top_names_.size()); }
 
-  const std::string debug_log() const {
-    VecString bottom_str, top_str;
-    for (int n = 0; n < bottoms_size(); ++n) {
-      const auto *bottom = bottoms<float>(n);
-      const auto &shape = bottom->shape();
-      const auto &name = bottom->name();
-      bottom_str.push_back(Util::format_vector(shape, ",", name + "(", ")"));
-    }
-    for (int n = 0; n < tops_size(); ++n) {
-      const auto *top = tops<float>(n);
-      const auto &shape = top->shape();
-      const auto &name = top->name();
-      top_str.push_back(Util::format_vector(shape, ",", name + "(", ")"));
-    }
-    std::stringstream ss;
-    ss << op_name_ << "(" << op_type_
-       << "): " << Util::format_vector(bottom_str, " + ") << " -> "
-       << Util::format_vector(top_str, " + ");
-    return ss.str();
-  }
+  const std::string debug_log() const;
 
  protected:
   std::string op_name_, op_type_;
@@ -129,6 +108,8 @@ class Operator {
 
  private:
   bool check_index(int i, int size) const { return i >= 0 && i < size; }
+
+  DEFINE_JSON_SERIALIZATION(op_param_);
 
   shadow::OpParam op_param_;
   ArgumentHelper arg_helper_;

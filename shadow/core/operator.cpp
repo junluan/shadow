@@ -34,6 +34,29 @@ Operator::Operator(const shadow::OpParam &op_param, Workspace *ws)
 
 Operator::~Operator() { op_param_.Clear(); }
 
+const std::string Operator::debug_log() const {
+  VecString bottom_str, top_str;
+  for (int n = 0; n < bottoms_size(); ++n) {
+    const auto *bottom = bottoms<float>(n);
+    const auto &shape = bottom->shape();
+    const auto &name = bottom->name();
+    bottom_str.push_back(Util::format_vector(shape, ",", name + "(", ")"));
+  }
+  for (int n = 0; n < tops_size(); ++n) {
+    const auto *top = tops<float>(n);
+    const auto &shape = top->shape();
+    const auto &name = top->name();
+    top_str.push_back(Util::format_vector(shape, ",", name + "(", ")"));
+  }
+  std::stringstream ss;
+  ss << op_name_ << "(" << op_type_
+     << "): " << Util::format_vector(bottom_str, " + ") << " -> "
+     << Util::format_vector(top_str, " + ");
+  ss << " <- ";
+  json_state(ss);
+  return ss.str();
+}
+
 Operator *CreateOperator(const shadow::OpParam &op_param, Workspace *ws) {
   static StaticLinkingProtector g_protector;
   auto *registry = OperatorRegistry();

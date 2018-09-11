@@ -2,7 +2,7 @@
 
 namespace Shadow {
 
-void InputOp::Forward() { DLOG(INFO) << debug_log(); }
+void InputOp::Forward() {}
 
 REGISTER_OPERATOR(Input, InputOp);
 

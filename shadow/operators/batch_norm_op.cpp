@@ -93,8 +93,6 @@ void BatchNormOp::Forward() {
                   0, 0, temp_->mutable_data(), 0);
   Blas::Div(top->count(), top->data(), 0, temp_->data(), 0, top->mutable_data(),
             0);
-
-  DLOG(INFO) << debug_log();
 }
 
 REGISTER_OPERATOR(BatchNorm, BatchNormOp);

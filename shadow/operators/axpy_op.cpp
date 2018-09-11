@@ -23,8 +23,6 @@ void AxpyOp::Forward() {
 
   Vision::Axpy(scale->data(), x->data(), y->data(), x->shape(),
                top->mutable_data());
-
-  DLOG(INFO) << debug_log();
 }
 
 REGISTER_OPERATOR(Axpy, AxpyOp);

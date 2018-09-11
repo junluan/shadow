@@ -28,8 +28,6 @@ void ConvOp::Forward() {
   top_shape[3] = conv_out_size(in_w, kernel_size_, stride_, pad_, dilation_);
   top->reshape(top_shape);
 
-  DLOG(INFO) << debug_log();
-
   out_spatial_dim_ = top->count(2);
   kernel_dim_ = kernel_size_ * kernel_size_ * in_c / group_;
 
