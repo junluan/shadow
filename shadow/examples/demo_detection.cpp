@@ -5,13 +5,11 @@ namespace Shadow {
 
 void DemoDetection::Test(const std::string &image_file) {
   im_ini_.Read(image_file);
-  VecRectF rois{RectF(0, 0, im_ini_.w_, im_ini_.h_)};
   timer_.start();
-  Predict(im_ini_, rois, &Gboxes_, &Gpoints_);
-  Boxes::Amend(&Gboxes_, rois);
-  const auto &boxes = Boxes::NMS(Gboxes_, 0.5);
+  Predict(im_ini_, RectF(0, 0, im_ini_.w_, im_ini_.h_), &boxes_, &Gpoints_);
+  boxes_ = Boxes::NMS(boxes_, 0.5);
   LOG(INFO) << "Predicted in " << timer_.get_millisecond() << " ms";
-  for (const auto &boxF : boxes) {
+  for (const auto &boxF : boxes_) {
     const BoxI box(boxF);
     int color_r = (box.label * 100) % 255;
     int color_g = (color_r + 100) % 255;
@@ -35,15 +33,13 @@ void DemoDetection::BatchTest(const std::string &list_file, bool image_write) {
   CHECK(file.is_open()) << "Can't open file " << result_file;
   for (const auto &im_path : image_list) {
     im_ini_.Read(im_path);
-    VecRectF rois{RectF(0, 0, im_ini_.w_, im_ini_.h_)};
     timer_.start();
-    Predict(im_ini_, rois, &Gboxes_, &Gpoints_);
-    Boxes::Amend(&Gboxes_, rois);
-    const auto &boxes = Boxes::NMS(Gboxes_, 0.5);
+    Predict(im_ini_, RectF(0, 0, im_ini_.w_, im_ini_.h_), &boxes_, &Gpoints_);
+    boxes_ = Boxes::NMS(boxes_, 0.5);
     time_cost += timer_.get_millisecond();
     if (image_write) {
       const auto &out_file = Util::find_replace_last(im_path, ".", "-result.");
-      for (const auto &boxF : boxes) {
+      for (const auto &boxF : boxes_) {
         const BoxI box(boxF);
         int color_r = (box.label * 100) % 255;
         int color_g = (color_r + 100) % 255;
@@ -53,7 +49,7 @@ void DemoDetection::BatchTest(const std::string &list_file, bool image_write) {
       }
       im_ini_.Write(out_file);
     }
-    PrintDetections(im_path, boxes, &file);
+    PrintDetections(im_path, boxes_, &file);
     process.update(count++, &std::cout);
   }
   file.close();
@@ -65,8 +61,8 @@ void DemoDetection::BatchTest(const std::string &list_file, bool image_write) {
 void DemoDetection::VideoTest(const std::string &video_file, bool video_show,
                               bool video_write) {
   cv::VideoCapture capture;
-  CHECK(capture.open(video_file)) << "Error when opening video file "
-                                  << video_file;
+  CHECK(capture.open(video_file))
+      << "Error when opening video file " << video_file;
   auto rate = static_cast<float>(capture.get(CV_CAP_PROP_FPS));
   auto width = static_cast<int>(capture.get(CV_CAP_PROP_FRAME_WIDTH));
   auto height = static_cast<int>(capture.get(CV_CAP_PROP_FRAME_HEIGHT));
@@ -101,27 +97,23 @@ void DemoDetection::CameraTest(int camera, bool video_write) {
 void DemoDetection::CaptureTest(cv::VideoCapture *capture,
                                 const std::string &window_name, bool video_show,
                                 cv::VideoWriter *writer) {
-  auto rate = static_cast<float>(capture->get(CV_CAP_PROP_FPS));
   if (video_show) {
     cv::namedWindow(window_name, cv::WINDOW_NORMAL);
   }
   cv::Mat im_mat;
-  VecBoxF boxes, old_boxes;
   double time_sum = 0, time_cost;
   int count = 0;
   std::stringstream ss;
   ss.precision(5);
   while (capture->read(im_mat) && !im_mat.empty()) {
     im_ini_.FromMat(im_mat);
-    VecRectF rois{RectF(0, 0, im_ini_.w_, im_ini_.h_)};
     timer_.start();
-    Predict(im_ini_, rois, &Gboxes_, &Gpoints_);
-    Boxes::Amend(&Gboxes_, rois);
-    boxes = Boxes::NMS(Gboxes_, 0.5);
-    Boxes::Smooth(old_boxes, &boxes, 0.3);
+    Predict(im_ini_, RectF(0, 0, im_ini_.w_, im_ini_.h_), &boxes_, &Gpoints_);
+    boxes_ = Boxes::NMS(boxes_, 0.5);
     time_cost = timer_.get_millisecond();
-    old_boxes = boxes;
-    DrawDetections(boxes, &im_mat, true);
+    Boxes::Smooth(old_boxes_, &boxes_, 0.3);
+    old_boxes_ = boxes_;
+    DrawDetections(boxes_, &im_mat, true);
     if (writer->isOpened()) {
       writer->write(im_mat);
     }
@@ -135,9 +127,7 @@ void DemoDetection::CaptureTest(cv::VideoCapture *capture,
       cv::putText(im_mat, ss.str(), cv::Point(10, 30), cv::FONT_ITALIC, 0.7,
                   cv::Scalar(225, 105, 65), 2);
       cv::imshow(window_name, im_mat);
-      int wait_time = static_cast<int>(1000 / rate - time_cost) - 1;
-      wait_time = wait_time > 1 ? wait_time : 1;
-      if (cv::waitKey(wait_time) % 256 == 32) {
+      if (cv::waitKey(1) % 256 == 32) {
         if ((cv::waitKey(0) % 256) == 27) break;
       }
     }

@@ -29,9 +29,7 @@ class DemoDetection {
     }
   }
 
-  void Setup(const std::string &model_file) {
-    method_->Setup(model_file);
-  }
+  void Setup(const std::string &model_file) { method_->Setup(model_file); }
 
   void Test(const std::string &image_file);
   void BatchTest(const std::string &list_file, bool image_write = false);
@@ -41,16 +39,14 @@ class DemoDetection {
   void CameraTest(int camera, bool video_write = false);
 #endif
 
-  void Predict(const JImage &im_src, const VecRectF &rois,
-               std::vector<VecBoxF> *Gboxes,
-               std::vector<std::vector<VecPointF>> *Gpoints) {
-    method_->Predict(im_src, rois, Gboxes, Gpoints);
+  void Predict(const JImage &im_src, const RectF &roi, VecBoxF *boxes,
+               std::vector<VecPointF> *Gpoints) {
+    method_->Predict(im_src, roi, boxes, Gpoints);
   }
 #if defined(USE_OpenCV)
-  void Predict(const cv::Mat &im_mat, const VecRectF &rois,
-               std::vector<VecBoxF> *Gboxes,
-               std::vector<std::vector<VecPointF>> *Gpoints) {
-    method_->Predict(im_mat, rois, Gboxes, Gpoints);
+  void Predict(const cv::Mat &im_mat, const RectF &roi, VecBoxF *boxes,
+               std::vector<VecPointF> *Gpoints) {
+    method_->Predict(im_mat, roi, boxes, Gpoints);
   }
 #endif
 
@@ -67,8 +63,8 @@ class DemoDetection {
 
   std::shared_ptr<Method> method_ = nullptr;
   JImage im_ini_;
-  std::vector<VecBoxF> Gboxes_;
-  std::vector<std::vector<VecPointF>> Gpoints_;
+  VecBoxF boxes_, old_boxes_;
+  std::vector<VecPointF> Gpoints_;
   Timer timer_;
 };
 

@@ -38,39 +38,24 @@ void Classification::Setup(const std::string &model_file) {
   num_classes_ = net_.get_single_argument<int>("num_classes", 1000);
 }
 
-void Classification::Predict(
-    const JImage &im_src, const VecRectF &rois,
-    std::vector<std::map<std::string, VecFloat>> *scores) {
-  CHECK_LE(rois.size(), batch_);
-  for (int b = 0; b < rois.size(); ++b) {
-    ConvertData(im_src, in_data_.data() + b * in_num_, rois[b], in_c_, in_h_,
-                in_w_);
-  }
+void Classification::Predict(const JImage &im_src, const RectF &roi,
+                             std::map<std::string, VecFloat> *scores) {
+  ConvertData(im_src, in_data_.data(), roi, in_c_, in_h_, in_w_);
 
   Process(in_data_, scores);
-
-  CHECK_EQ(scores->size(), rois.size());
 }
 
 #if defined(USE_OpenCV)
-void Classification::Predict(
-    const cv::Mat &im_mat, const VecRectF &rois,
-    std::vector<std::map<std::string, VecFloat>> *scores) {
-  CHECK_LE(rois.size(), batch_);
-  for (int b = 0; b < rois.size(); ++b) {
-    ConvertData(im_mat, in_data_.data() + b * in_num_, rois[b], in_c_, in_h_,
-                in_w_);
-  }
+void Classification::Predict(const cv::Mat &im_mat, const RectF &roi,
+                             std::map<std::string, VecFloat> *scores) {
+  ConvertData(im_mat, in_data_.data(), roi, in_c_, in_h_, in_w_);
 
   Process(in_data_, scores);
-
-  CHECK_EQ(scores->size(), rois.size());
 }
 #endif
 
-void Classification::Process(
-    const VecFloat &in_data,
-    std::vector<std::map<std::string, VecFloat>> *scores) {
+void Classification::Process(const VecFloat &in_data,
+                             std::map<std::string, VecFloat> *scores) {
   std::map<std::string, float *> data_map;
   data_map[in_str_] = const_cast<float *>(in_data.data());
 
@@ -81,9 +66,7 @@ void Classification::Process(
   scores->clear();
   for (int b = 0; b < batch_; ++b) {
     int offset = b * num_classes_;
-    std::map<std::string, VecFloat> score_map;
-    score_map["score"] = VecFloat(prob_data + offset, prob_data + num_classes_);
-    scores->push_back(score_map);
+    (*scores)["score"] = VecFloat(prob_data + offset, prob_data + num_classes_);
   }
 }
 

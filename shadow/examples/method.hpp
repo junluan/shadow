@@ -16,24 +16,22 @@ class Method {
 
   virtual void Setup(const std::string &model_file) = 0;
 
-  virtual void Predict(const JImage &im_src, const VecRectF &rois,
-                       std::vector<VecBoxF> *Gboxes,
-                       std::vector<std::vector<VecPointF>> *Gpoints) {
+  virtual void Predict(const JImage &im_src, const RectF &roi, VecBoxF *boxes,
+                       std::vector<VecPointF> *Gpoints) {
     LOG(FATAL) << "Predict for JImage!";
   }
-  virtual void Predict(const JImage &im_src, const VecRectF &rois,
-                       std::vector<std::map<std::string, VecFloat>> *scores) {
+  virtual void Predict(const JImage &im_src, const RectF &roi,
+                       std::map<std::string, VecFloat> *scores) {
     LOG(FATAL) << "Predict for JImage!";
   }
 
 #if defined(USE_OpenCV)
-  virtual void Predict(const cv::Mat &im_mat, const VecRectF &rois,
-                       std::vector<VecBoxF> *Gboxes,
-                       std::vector<std::vector<VecPointF>> *Gpoints) {
+  virtual void Predict(const cv::Mat &im_mat, const RectF &roi, VecBoxF *boxes,
+                       std::vector<VecPointF> *Gpoints) {
     LOG(FATAL) << "Predict for Mat!";
   }
-  virtual void Predict(const cv::Mat &im_mat, const VecRectF &rois,
-                       std::vector<std::map<std::string, VecFloat>> *scores) {
+  virtual void Predict(const cv::Mat &im_mat, const RectF &roi,
+                       std::map<std::string, VecFloat> *scores) {
     LOG(FATAL) << "Predict for Mat!";
   }
 #endif

@@ -42,51 +42,41 @@ void DetectionYOLO::Setup(const std::string &model_file) {
   num_km_ = 5;
 }
 
-void DetectionYOLO::Predict(const JImage &im_src, const VecRectF &rois,
-                            std::vector<VecBoxF> *Gboxes,
-                            std::vector<std::vector<VecPointF>> *Gpoints) {
-  CHECK_LE(rois.size(), batch_);
-  for (int b = 0; b < rois.size(); ++b) {
-    ConvertData(im_src, in_data_.data() + b * in_num_, rois[b], in_c_, in_h_,
-                in_w_, 0);
+void DetectionYOLO::Predict(const JImage &im_src, const RectF &roi,
+                            VecBoxF *boxes, std::vector<VecPointF> *Gpoints) {
+  ConvertData(im_src, in_data_.data(), roi, in_c_, in_h_, in_w_, 0);
+
+  std::vector<VecBoxF> Gboxes;
+  Process(in_data_, &Gboxes);
+
+  float height = roi.h, width = roi.w;
+  for (auto &box : Gboxes[0]) {
+    box.xmin *= width;
+    box.xmax *= width;
+    box.ymin *= height;
+    box.ymax *= height;
   }
 
-  Process(in_data_, Gboxes);
-
-  CHECK_EQ(Gboxes->size(), rois.size());
-  for (int b = 0; b < Gboxes->size(); ++b) {
-    float height = rois[b].h, width = rois[b].w;
-    for (auto &box : Gboxes->at(b)) {
-      box.xmin *= width;
-      box.xmax *= width;
-      box.ymin *= height;
-      box.ymax *= height;
-    }
-  }
+  *boxes = Gboxes[0];
 }
 
 #if defined(USE_OpenCV)
-void DetectionYOLO::Predict(const cv::Mat &im_mat, const VecRectF &rois,
-                            std::vector<VecBoxF> *Gboxes,
-                            std::vector<std::vector<VecPointF>> *Gpoints) {
-  CHECK_LE(rois.size(), batch_);
-  for (int b = 0; b < rois.size(); ++b) {
-    ConvertData(im_mat, in_data_.data() + b * in_num_, rois[b], in_c_, in_h_,
-                in_w_, 0);
+void DetectionYOLO::Predict(const cv::Mat &im_mat, const RectF &roi,
+                            VecBoxF *boxes, std::vector<VecPointF> *Gpoints) {
+  ConvertData(im_mat, in_data_.data(), roi, in_c_, in_h_, in_w_, 0);
+
+  std::vector<VecBoxF> Gboxes;
+  Process(in_data_, &Gboxes);
+
+  float height = roi.h, width = roi.w;
+  for (auto &box : Gboxes[0]) {
+    box.xmin *= width;
+    box.xmax *= width;
+    box.ymin *= height;
+    box.ymax *= height;
   }
 
-  Process(in_data_, Gboxes);
-
-  CHECK_EQ(Gboxes->size(), rois.size());
-  for (int b = 0; b < Gboxes->size(); ++b) {
-    float height = rois[b].h, width = rois[b].w;
-    for (auto &box : Gboxes->at(b)) {
-      box.xmin *= width;
-      box.xmax *= width;
-      box.ymin *= height;
-      box.ymax *= height;
-    }
-  }
+  *boxes = Gboxes[0];
 }
 #endif
 
