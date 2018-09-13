@@ -517,6 +517,23 @@ def convert_scale(caffe_layer, shadow_net):
     shadow_net.add_scale(layer_name, bottom_names, top_names, axis, True, bias_term)
 
 
+def convert_slice(caffe_layer, shadow_net):
+    layer_name = caffe_layer.name
+    bottom_names = caffe_layer.bottom
+    top_names = caffe_layer.top
+
+    axis = 1
+    slice_point = None
+    if caffe_layer.HasField('slice_param'):
+        caffe_param = caffe_layer.slice_param
+        if caffe_param.HasField('axis'):
+            axis = caffe_param.axis
+        if len(caffe_param.slice_point) > 0:
+            slice_point = caffe_param.slice_point
+
+    shadow_net.add_slice(layer_name, bottom_names, top_names, axis, slice_point)
+
+
 def convert_softmax(caffe_layer, shadow_net):
     layer_name = caffe_layer.name
     bottom_names = caffe_layer.bottom
@@ -593,6 +610,8 @@ def caffe2shadow(model_root, meta_net_info, copy_params=False):
                 convert_roi_pooling(caffe_layer, shadow_net)
             elif layer_type == 'Scale':
                 convert_scale(caffe_layer, shadow_net)
+            elif layer_type == 'Slice':
+                convert_slice(caffe_layer, shadow_net)
             elif layer_type == 'Softmax':
                 convert_softmax(caffe_layer, shadow_net)
             else:

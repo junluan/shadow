@@ -375,9 +375,23 @@ class Shadow(object):
         has_scalar = scale_value is not None or bias_value is not None
         assert has_blob != has_scalar
 
+    def add_slice(self, name, bottoms, tops, axis=1, slice_point=None):
+        op_param = self.net_param.op.add()
+        self.add_common(op_param, name, 'Slice', bottoms, tops)
+
+        self.set_arg(op_param, 'axis', axis, 's_i')
+        if slice_point is not None:
+            self.set_arg(op_param, 'slice_point', slice_point, 'v_f')
+
     def add_softmax(self, name, bottoms, tops, axis=1):
         op_param = self.net_param.op.add()
         self.add_common(op_param, name, 'Softmax', bottoms, tops)
+
+        self.set_arg(op_param, 'axis', axis, 's_i')
+
+    def add_stack(self, name, bottoms, tops, axis=0):
+        op_param = self.net_param.op.add()
+        self.add_common(op_param, name, 'Stack', bottoms, tops)
 
         self.set_arg(op_param, 'axis', axis, 's_i')
 

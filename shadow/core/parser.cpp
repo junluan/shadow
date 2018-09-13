@@ -536,6 +536,33 @@ const shadow::OpParam ParseScale(const JValue &root) {
   return shadow_op;
 }
 
+const shadow::OpParam ParseSlice(const JValue &root) {
+  shadow::OpParam shadow_op;
+
+  ParseCommon(root, &shadow_op);
+
+  int axis = 1;
+  std::vector<int> slice_point;
+  if (root.HasMember("arg")) {
+    const auto &args = root["arg"];
+    for (int i = 0; i < args.Size(); ++i) {
+      const auto &arg = args[i];
+      CHECK(arg.HasMember("name"));
+      const auto &arg_name = Json::GetString(arg, "name", "");
+      if (arg_name == "axis") {
+        axis = Json::GetInt(arg, "s_i", 1);
+      } else if (arg_name == "slice_point") {
+        slice_point = Json::GetVecInt(arg, "v_i");
+      }
+    }
+  }
+
+  set_s_i(&shadow_op, "axis", axis);
+  set_v_i(&shadow_op, "slice_point", slice_point);
+
+  return shadow_op;
+}
+
 const shadow::OpParam ParseSoftmax(const JValue &root) {
   shadow::OpParam shadow_op;
 
@@ -550,6 +577,29 @@ const shadow::OpParam ParseSoftmax(const JValue &root) {
       const auto &arg_name = Json::GetString(arg, "name", "");
       if (arg_name == "axis") {
         axis = Json::GetInt(arg, "s_i", 1);
+      }
+    }
+  }
+
+  set_s_i(&shadow_op, "axis", axis);
+
+  return shadow_op;
+}
+
+const shadow::OpParam ParseStack(const JValue &root) {
+  shadow::OpParam shadow_op;
+
+  ParseCommon(root, &shadow_op);
+
+  int axis = 0;
+  if (root.HasMember("arg")) {
+    const auto &args = root["arg"];
+    for (int i = 0; i < args.Size(); ++i) {
+      const auto &arg = args[i];
+      CHECK(arg.HasMember("name"));
+      const auto &arg_name = Json::GetString(arg, "name", "");
+      if (arg_name == "axis") {
+        axis = Json::GetInt(arg, "s_i", 0);
       }
     }
   }
@@ -603,7 +653,9 @@ static const std::map<std::string, ParseFunc> parse_func_map{
     {"Reorg", ParseReorg},
     {"Reshape", ParseReshape},
     {"Scale", ParseScale},
+    {"Slice", ParseSlice},
     {"Softmax", ParseSoftmax},
+    {"Stack", ParseStack},
     {"Unary", ParseUnary}};
 
 void ParseNet(const std::string &proto_text, shadow::NetParam *net) {
@@ -1175,12 +1227,47 @@ const shadow::OpParam ParseScale(const std::vector<std::string> &params) {
   return shadow_op;
 }
 
+const shadow::OpParam ParseSlice(const std::vector<std::string> &params) {
+  shadow::OpParam shadow_op;
+
+  const auto &argument = ParseCommon(params, &shadow_op);
+
+  int axis = 1;
+  std::vector<int> slice_point;
+  if (argument.count("axis")) {
+    axis = argument.at("axis").s_i;
+  }
+  if (argument.count("slice_point")) {
+    slice_point = argument.at("slice_point").v_i;
+  }
+
+  set_s_i(&shadow_op, "axis", axis);
+  set_v_i(&shadow_op, "slice_point", slice_point);
+
+  return shadow_op;
+}
+
 const shadow::OpParam ParseSoftmax(const std::vector<std::string> &params) {
   shadow::OpParam shadow_op;
 
   const auto &argument = ParseCommon(params, &shadow_op);
 
   int axis = 1;
+  if (argument.count("axis")) {
+    axis = argument.at("axis").s_i;
+  }
+
+  set_s_i(&shadow_op, "axis", axis);
+
+  return shadow_op;
+}
+
+const shadow::OpParam ParseStack(const std::vector<std::string> &params) {
+  shadow::OpParam shadow_op;
+
+  const auto &argument = ParseCommon(params, &shadow_op);
+
+  int axis = 0;
   if (argument.count("axis")) {
     axis = argument.at("axis").s_i;
   }
@@ -1227,7 +1314,9 @@ static const std::map<std::string, ParseFunc> parse_func_map{
     {"Reorg", ParseReorg},
     {"Reshape", ParseReshape},
     {"Scale", ParseScale},
+    {"Slice", ParseSlice},
     {"Softmax", ParseSoftmax},
+    {"Stack", ParseStack},
     {"Unary", ParseUnary}};
 
 void ParseNet(const std::string &proto_text, shadow::NetParam *net) {
