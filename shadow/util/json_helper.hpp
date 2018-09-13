@@ -10,7 +10,7 @@
 #include <unordered_map>
 #include <vector>
 
-#include "params.hpp"
+#include "core/params.hpp"
 
 namespace Shadow {
 
