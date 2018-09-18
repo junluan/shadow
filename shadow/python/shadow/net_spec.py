@@ -381,7 +381,7 @@ class Shadow(object):
 
         self.set_arg(op_param, 'axis', axis, 's_i')
         if slice_point is not None:
-            self.set_arg(op_param, 'slice_point', slice_point, 'v_f')
+            self.set_arg(op_param, 'slice_point', slice_point, 'v_i')
 
     def add_softmax(self, name, bottoms, tops, axis=1):
         op_param = self.net_param.op.add()
