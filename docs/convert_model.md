@@ -59,5 +59,3 @@ python convert_to_shadow.py --model_root model_mxnet --config_name custom --save
 ```
 
 Python is snail! If you copy params, go and take a tea break.
-
-

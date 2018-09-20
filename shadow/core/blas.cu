@@ -100,23 +100,23 @@ void Set(int n, float val, T *y, int offy) {
   CUDA_CHECK(cudaPeekAtLastError());
 }
 
-#define BLAS_BINARY_FUNC(name, operation)                                 \
-  template <typename T>                                                   \
-  __global__ void Kernel##name(int n, const T *a, int offa, const T *b,   \
-                               int offb, T *y, int offy) {                \
-    CUDA_KERNEL_LOOP(i, n) {                                              \
-      a += offa, b += offb, y += offy;                                    \
-      operation;                                                          \
-    }                                                                     \
-  }                                                                       \
-  template <typename T>                                                   \
-  void name(int n, const T *a, int offa, const T *b, int offb, T *y,      \
-            int offy) {                                                   \
-    Kernel##name<T><<<GetBlocks(n), NumThreads>>>(n, a, offa, b, offb, y, \
-                                                  offy);                  \
-    CUDA_CHECK(cudaPeekAtLastError());                                    \
-  }                                                                       \
-  template void name(int n, const float *a, int offa, const float *b,     \
+#define BLAS_BINARY_FUNC(name, operation)                               \
+  template <typename T>                                                 \
+  __global__ void Kernel##name(int n, const T *a, int offa, const T *b, \
+                               int offb, T *y, int offy) {              \
+    CUDA_KERNEL_LOOP(i, n) {                                            \
+      a += offa, b += offb, y += offy;                                  \
+      operation;                                                        \
+    }                                                                   \
+  }                                                                     \
+  template <typename T>                                                 \
+  void name(int n, const T *a, int offa, const T *b, int offb, T *y,    \
+            int offy) {                                                 \
+    Kernel##name<T>                                                     \
+        <<<GetBlocks(n), NumThreads>>>(n, a, offa, b, offb, y, offy);   \
+    CUDA_CHECK(cudaPeekAtLastError());                                  \
+  }                                                                     \
+  template void name(int n, const float *a, int offa, const float *b,   \
                      int offb, float *y, int offy);
 
 #define BLAS_BINARY_SCALAR_FUNC(name, operation)                               \
