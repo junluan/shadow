@@ -27,7 +27,7 @@ void PermuteOp::Forward() {
     }
   }
 
-  op_ws_->GrowTempBuffer(3 * num_axes * sizeof(int));
+  op_ws_->GrowTempBuffer(3 * num_axes, sizeof(int));
 
   permute_order_ =
       op_ws_->CreateTempBlob<int>({num_axes}, op_name_ + "_permute_order");

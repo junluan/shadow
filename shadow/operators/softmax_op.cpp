@@ -34,7 +34,7 @@ void SoftmaxOp::Forward() {
 
   int temp_count = 1;
   for (auto dim : scale_shape) temp_count *= dim;
-  op_ws_->GrowTempBuffer(temp_count * sizeof(float));
+  op_ws_->GrowTempBuffer(temp_count, sizeof(float));
 
   scale_ = op_ws_->CreateTempBlob<float>(scale_shape, op_name_ + "_scale");
 

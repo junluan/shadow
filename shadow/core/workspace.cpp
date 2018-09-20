@@ -14,12 +14,14 @@ const std::string Workspace::GetBlobType(const std::string &name) const {
   return std::string();
 }
 
-void Workspace::GrowTempBuffer(int size) {
+void Workspace::GrowTempBuffer(int count, int elem_size) {
   if (blob_temp_ == nullptr) {
-    blob_temp_ = std::make_shared<Blob<unsigned char>>(VecInt{size});
+    blob_temp_ =
+        std::make_shared<Blob<unsigned char>>(VecInt{count, elem_size});
   } else {
-    if (size > blob_temp_->mem_count()) {
-      blob_temp_->reshape({size});
+    auto required = static_cast<size_t>(count) * elem_size;
+    if (required > blob_temp_->mem_count()) {
+      blob_temp_->reshape({count, elem_size});
     }
   }
   temp_offset_ = 0;
@@ -64,8 +66,8 @@ void Workspace::ClearBlob(const std::string &blob_type, void *blob) {
   }
 }
 
-void *Workspace::GetTempPtr(int count, int size) {
-  auto required = static_cast<size_t>(count) * size;
+void *Workspace::GetTempPtr(size_t count, int elem_size) {
+  auto required = count * elem_size;
   CHECK_LE(temp_offset_ + required, blob_temp_->mem_count());
   auto *ptr = blob_temp_->mutable_data() + temp_offset_;
   temp_offset_ += required;

@@ -30,7 +30,7 @@ void ConnectedOp::Forward() {
                     bottom->data(), 0, weight->data(), 0, 0,
                     top->mutable_data(), 0);
     if (bias_term_) {
-      op_ws_->GrowTempBuffer(batch * sizeof(float));
+      op_ws_->GrowTempBuffer(batch, sizeof(float));
       biases_multiplier_ = op_ws_->CreateTempBlob<float>(
           {batch}, op_name_ + "_biases_multiplier");
       Blas::Set(batch, 1, biases_multiplier_->mutable_data(), 0);

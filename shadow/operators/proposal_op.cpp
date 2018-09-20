@@ -64,7 +64,7 @@ void ProposalOp::Forward() {
   CHECK_EQ(num_info, 3);
 
   int temp_count = num_anchors_ * 4 + in_h * in_w * num_anchors_ * 6;
-  op_ws_->GrowTempBuffer(temp_count * sizeof(float));
+  op_ws_->GrowTempBuffer(temp_count, sizeof(float));
 
   auto *anchors =
       op_ws_->CreateTempBlob<float>({num_anchors_, 4}, op_name_ + "_anchors");

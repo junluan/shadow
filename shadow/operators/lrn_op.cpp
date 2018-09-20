@@ -10,7 +10,7 @@ void LRNOp::Forward() {
     top->reshape(bottom->shape());
   }
 
-  op_ws_->GrowTempBuffer(bottom->count() * sizeof(float));
+  op_ws_->GrowTempBuffer(bottom->count(), sizeof(float));
   scale_ = op_ws_->CreateTempBlob<float>(bottom->shape(), op_name_ + "_scale");
 
   Vision::LRN(bottom->data(), bottom->shape(), size_, alpha_, beta_, k_,

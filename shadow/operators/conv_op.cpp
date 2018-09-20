@@ -86,7 +86,7 @@ void ConvOp::Forward() {
         top_desc_, fwd_algo_, &workspace_fwd_size_));
 
     if (workspace_fwd_size_ > 0) {
-      op_ws_->GrowTempBuffer(static_cast<int>(workspace_fwd_size_) *
+      op_ws_->GrowTempBuffer(static_cast<int>(workspace_fwd_size_),
                              sizeof(unsigned char));
       workspace_ = op_ws_->CreateTempBlob<unsigned char>(
           {static_cast<int>(workspace_fwd_size_)}, op_name_ + "_workspace");
@@ -129,7 +129,7 @@ void ConvOp::Forward() {
     if (bias_term_) {
       temp_count += out_spatial_dim_;
     }
-    op_ws_->GrowTempBuffer(temp_count * sizeof(float));
+    op_ws_->GrowTempBuffer(temp_count, sizeof(float));
     col_image_ = op_ws_->CreateTempBlob<float>(
         {kernel_dim_ * group_, out_spatial_dim_}, op_name_ + "_col_image");
     if (bias_term_) {

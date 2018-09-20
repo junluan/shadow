@@ -22,7 +22,7 @@ void NormalizeOp::Forward() {
   if (!channel_shared_) {
     temp_count += spatial_dim;
   }
-  op_ws_->GrowTempBuffer(temp_count * sizeof(float));
+  op_ws_->GrowTempBuffer(temp_count, sizeof(float));
 
   if (!across_spatial_) {
     norm_ =

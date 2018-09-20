@@ -27,7 +27,7 @@ void BatchNormOp::Forward() {
 
   int temp_count =
       2 * channels + bottom->count() + batch * channels + batch + spatial_dim;
-  op_ws_->GrowTempBuffer(temp_count * sizeof(float));
+  op_ws_->GrowTempBuffer(temp_count, sizeof(float));
 
   mean_ = op_ws_->CreateTempBlob<float>({1, channels}, op_name_ + "_mean");
   variance_ =

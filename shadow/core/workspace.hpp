@@ -82,7 +82,7 @@ class Workspace {
     CHECK_NOTNULL(blob);
     blob->clear();
     blob->set_shape(shape);
-    int cou = 1;
+    size_t cou = 1;
     for (const auto dim : shape) cou *= dim;
     CHECK_GT(cou, 0);
     int size = sizeof(Dtype) / sizeof(unsigned char);
@@ -90,7 +90,7 @@ class Workspace {
     return blob;
   }
 
-  void GrowTempBuffer(int size);
+  void GrowTempBuffer(int count, int elem_size);
 
   size_t GetWorkspaceSize() const;
   size_t GetWorkspaceTempSize() const;
@@ -98,7 +98,7 @@ class Workspace {
  private:
   void ClearBlob(const std::string &blob_type, void *blob);
 
-  void *GetTempPtr(int count, int size);
+  void *GetTempPtr(size_t count, int elem_size);
 
   std::map<std::string, std::pair<std::string, void *>> blob_map_;
   std::shared_ptr<BlobUC> blob_temp_ = nullptr;
