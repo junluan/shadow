@@ -47,7 +47,7 @@ REGISTER_OPERATOR(Permute, PermuteOp);
 
 namespace Vision {
 
-#if !defined(USE_CUDA) & !defined(USE_CL)
+#if !defined(USE_CUDA)
 template <typename T, typename Dtype>
 void Permute(const T *in_data, int count, int num_axes,
              const Dtype *permute_order, const Dtype *old_steps,
@@ -67,23 +67,6 @@ void Permute(const T *in_data, int count, int num_axes,
 template void Permute(const float *in_data, int count, int num_axes,
                       const int *permute_order, const int *old_steps,
                       const int *new_steps, float *out_data);
-
-#elif defined(USE_CL)
-template <typename T, typename Dtype>
-void Permute(const T *in_data, int count, int num_axes,
-             const Dtype *permute_order, const Dtype *old_steps,
-             const Dtype *new_steps, T *out_data) {
-  size_t global = count;
-  auto *kernel = Kernel::cl_kernels_["Permute"];
-  kernel->SetArguments(*in_data, count, num_axes, *permute_order, *old_steps,
-                       *new_steps, *out_data);
-  kernel->Launch(*Kernel::queue_, {global}, Kernel::event_);
-  Kernel::queue_->Finish();
-}
-
-template void Permute(const BufferF *in_data, int count, int num_axes,
-                      const BufferI *permute_order, const BufferI *old_steps,
-                      const BufferI *new_steps, BufferF *out_data);
 #endif
 }  // namespace Vision
 

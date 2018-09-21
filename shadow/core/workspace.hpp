@@ -2,6 +2,7 @@
 #define SHADOW_CORE_WORKSPACE_HPP
 
 #include "blob.hpp"
+#include "context.hpp"
 
 #include <map>
 #include <memory>
@@ -86,7 +87,7 @@ class Workspace {
     for (const auto dim : shape) cou *= dim;
     CHECK_GT(cou, 0);
     int size = sizeof(Dtype) / sizeof(unsigned char);
-    blob->share_data(reinterpret_cast<BACKEND *>(GetTempPtr(cou, size)), shape);
+    blob->share_data(reinterpret_cast<Dtype *>(GetTempPtr(cou, size)), shape);
     return blob;
   }
 
@@ -94,6 +95,11 @@ class Workspace {
 
   size_t GetWorkspaceSize() const;
   size_t GetWorkspaceTempSize() const;
+
+  void CreateContext(int device_id);
+  void *BlasHandle() const;
+  void *CudnnHandle() const;
+  void *NNPACKHandle() const;
 
  private:
   void ClearBlob(const std::string &blob_type, void *blob);
@@ -103,6 +109,8 @@ class Workspace {
   std::map<std::string, std::pair<std::string, void *>> blob_map_;
   std::shared_ptr<BlobUC> blob_temp_ = nullptr;
   size_t temp_offset_ = 0;
+
+  std::shared_ptr<Context> context_ = nullptr;
 
   DISABLE_COPY_AND_ASSIGN(Workspace);
 };

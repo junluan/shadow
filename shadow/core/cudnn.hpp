@@ -14,11 +14,10 @@ namespace Shadow {
 #define CUDNN_VERSION_MIN(major, minor, patch) \
   (CUDNN_VERSION >= (major * 1000 + minor * 100 + patch))
 
-#define CUDNN_CHECK(condition)                 \
-  do {                                         \
-    cudnnStatus_t status = condition;          \
-    CHECK_EQ(status, CUDNN_STATUS_SUCCESS)     \
-        << " " << cudnnGetErrorString(status); \
+#define CUDNN_CHECK(condition)                                             \
+  do {                                                                     \
+    cudnnStatus_t status = condition;                                      \
+    CHECK_EQ(status, CUDNN_STATUS_SUCCESS) << cudnnGetErrorString(status); \
   } while (0)
 
 namespace cudnn {
@@ -142,12 +141,6 @@ inline void setPooling2dDesc(cudnnPoolingDescriptor_t* pool_desc, int pool_type,
 }
 
 }  // namespace cudnn
-
-namespace Kernel {
-
-extern cudnnHandle_t cudnn_handle_;
-
-}  // namespace Kernel
 
 #endif
 

@@ -1,20 +1,16 @@
 #ifndef SHADOW_CORE_KERNEL_HPP
 #define SHADOW_CORE_KERNEL_HPP
 
-#if !defined(USE_CUDA) & !defined(USE_CL)
-#if defined(USE_NNPACK)
-#include "nnpack.h"
-#endif
-
-#elif defined(USE_CUDA)
+#if defined(USE_CUDA)
 #include "cublas_v2.h"
 #include "cuda_runtime.h"
 #include "device_launch_parameters.h"
 
 #include "cudnn.hpp"
+#endif
 
-#elif defined(USE_CL)
-#include "util/easycl.hpp"
+#if defined(USE_NNPACK)
+#include "nnpack.h"
 #endif
 
 #include <cstdlib>
@@ -33,23 +29,20 @@ inline int GetBlocks(const int N) { return (N + NumThreads - 1) / NumThreads; }
   for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < (n); \
        i += blockDim.x * gridDim.x)
 
-#define CUDA_CHECK(condition)                                         \
-  do {                                                                \
-    cudaError_t error = condition;                                    \
-    CHECK_EQ(error, cudaSuccess) << " " << cudaGetErrorString(error); \
+#define CUDA_CHECK(condition)                                  \
+  do {                                                         \
+    cudaError_t error = condition;                             \
+    CHECK_EQ(error, cudaSuccess) << cudaGetErrorString(error); \
+  } while (0)
+
+#define CUBLAS_CHECK(condition)              \
+  do {                                       \
+    cublasStatus_t status = condition;       \
+    CHECK_EQ(status, CUBLAS_STATUS_SUCCESS); \
   } while (0)
 #endif
 
-#if defined(USE_CL)
-using BufferI = EasyCL::Buffer<int>;
-using BufferF = EasyCL::Buffer<float>;
-using BufferUC = EasyCL::Buffer<unsigned char>;
-#endif
-
 namespace Kernel {
-
-void Setup(int device_id = 0);
-void Release();
 
 void Synchronize();
 
@@ -67,25 +60,6 @@ void CopyBuffer(size_t size, const T *src, T *des);
 
 template <typename T>
 void ReleaseBuffer(T *buffer);
-
-#if !defined(USE_CUDA) & !defined(USE_CL)
-#if defined(USE_NNPACK)
-const int NumThreads = 0;
-
-extern pthreadpool_t nnp_pthreadpool_;
-#endif
-
-#elif defined(USE_CUDA)
-extern cublasHandle_t cublas_handle_;
-
-#elif defined(USE_CL)
-extern EasyCL::Device *device_;
-extern EasyCL::Context *context_;
-extern EasyCL::Queue *queue_;
-extern EasyCL::Event *event_;
-
-extern EasyCL::KernelSet cl_kernels_;
-#endif
 
 }  // namespace Kernel
 

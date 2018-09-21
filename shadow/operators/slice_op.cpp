@@ -55,7 +55,7 @@ REGISTER_OPERATOR(Slice, SliceOp);
 
 namespace Vision {
 
-#if !defined(USE_CUDA) & !defined(USE_CL)
+#if !defined(USE_CUDA)
 template <typename T>
 void Slice(const T *in_data, int count, int num_slices, int slice_size,
            int bottom_slice_axis, int top_slice_axis, int offset_slice_axis,
@@ -70,8 +70,6 @@ void Slice(const T *in_data, int count, int num_slices, int slice_size,
 template void Slice(const float *in_data, int count, int num_slices,
                     int slice_size, int bottom_slice_axis, int top_slice_axis,
                     int offset_slice_axis, float *out_data);
-
-#elif defined(USE_CL)
 #endif
 
 }  // namespace Vision

@@ -21,7 +21,7 @@ REGISTER_OPERATOR(LRN, LRNOp);
 
 namespace Vision {
 
-#if !defined(USE_CUDA) & !defined(USE_CL)
+#if !defined(USE_CUDA)
 template <typename T>
 void LRN(const T *in_data, const VecInt &in_shape, int size, float alpha,
          float beta, float k, T *scale_data, T *out_data) {
@@ -71,34 +71,6 @@ void LRN(const T *in_data, const VecInt &in_shape, int size, float alpha,
 template void LRN(const float *in_data, const VecInt &in_shape, int size,
                   float alpha, float beta, float k, float *scale_data,
                   float *out_data);
-
-#elif defined(USE_CL)
-template <typename T>
-void LRN(const T *in_data, const VecInt &in_shape, int size, float alpha,
-         float beta, float k, T *scale_data, T *out_data) {
-  int batch = in_shape[0], in_c = in_shape[1];
-  int in_h = in_shape[2], in_w = in_shape[3];
-  float alpha_over_size = alpha / size, negative_beta = -beta;
-  int count = batch * in_h * in_w;
-
-  size_t global = count;
-  auto *kernel = Kernel::cl_kernels_["LRNFillScale"];
-  kernel->SetArguments(*in_data, count, in_c, in_h, in_w, size, alpha_over_size,
-                       k, *scale_data);
-  kernel->Launch(*Kernel::queue_, {global}, Kernel::event_);
-  Kernel::queue_->Finish();
-
-  count *= in_c;
-  global = count;
-  kernel = Kernel::cl_kernels_["LRN"];
-  kernel->SetArguments(*in_data, count, *scale_data, negative_beta, *out_data);
-  kernel->Launch(*Kernel::queue_, {global}, Kernel::event_);
-  Kernel::queue_->Finish();
-}
-
-template void LRN(const BufferF *in_data, const VecInt &in_shape, int size,
-                  float alpha, float beta, float k, BufferF *scale_data,
-                  BufferF *out_data);
 #endif
 
 }  // namespace Vision

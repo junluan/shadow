@@ -31,7 +31,7 @@ REGISTER_OPERATOR(Stack, StackOp);
 
 namespace Vision {
 
-#if !defined(USE_CUDA) & !defined(USE_CL)
+#if !defined(USE_CUDA)
 template <typename T>
 void Stack(const T *in_data, int count, int num_stacks, int stack_size,
            int top_stack_axis, int offset_stack_axis, T *out_data) {
@@ -44,8 +44,6 @@ void Stack(const T *in_data, int count, int num_stacks, int stack_size,
 template void Stack(const float *in_data, int count, int num_stacks,
                     int stack_size, int top_stack_axis, int offset_concat_axis,
                     float *out_data);
-
-#elif defined(USE_CL)
 #endif
 
 }  // namespace Vision

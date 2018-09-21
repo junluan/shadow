@@ -2,8 +2,6 @@ cmake_minimum_required(VERSION 3.2)
 project(shadow)
 
 option(USE_CUDA "Use CUDA" ON)
-option(USE_CL "Use OpenCL" OFF)
-
 option(USE_CUDNN "Use CUDNN for acceleration" ON)
 
 option(USE_Eigen "Use Eigen in CPU mode" ON)

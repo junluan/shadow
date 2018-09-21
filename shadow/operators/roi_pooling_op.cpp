@@ -23,7 +23,7 @@ REGISTER_OPERATOR(ROIPooling, ROIPoolingOp);
 
 namespace Vision {
 
-#if !defined(USE_CUDA) & !defined(USE_CL)
+#if !defined(USE_CUDA)
 template <typename T>
 void ROIPooling(const T *in_data, const VecInt &in_shape, const T *roi_data,
                 int num_rois, int pooled_h, int pooled_w, float spatial_scale,
@@ -78,25 +78,6 @@ void ROIPooling(const T *in_data, const VecInt &in_shape, const T *roi_data,
 template void ROIPooling(const float *in_data, const VecInt &in_shape,
                          const float *roi_data, int num_rois, int pooled_h,
                          int pooled_w, float spatial_scale, float *out_data);
-#elif defined(USE_CL)
-template <typename T>
-void ROIPooling(const T *in_data, const VecInt &in_shape, const T *roi_data,
-                int num_rois, int pooled_h, int pooled_w, float spatial_scale,
-                T *out_data) {
-  int in_c = in_shape[1], in_h = in_shape[2], in_w = in_shape[3];
-  int count = num_rois * in_c * pooled_h * pooled_w;
-
-  size_t global = count;
-  auto *kernel = Kernel::cl_kernels_["ROIPooling"];
-  kernel->SetArguments(*in_data, count, *roi_data, in_c, in_h, in_w, pooled_h,
-                       pooled_w, spatial_scale, *out_data);
-  kernel->Launch(*Kernel::queue_, {global}, Kernel::event_);
-  Kernel::queue_->Finish();
-}
-
-template void ROIPooling(const BufferF *in_data, const VecInt &in_shape,
-                         const BufferF *roi_data, int num_rois, int pooled_h,
-                         int pooled_w, float spatial_scale, BufferF *out_data);
 #endif
 }  // namespace Vision
 

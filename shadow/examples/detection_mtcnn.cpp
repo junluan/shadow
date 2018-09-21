@@ -44,6 +44,8 @@ inline VecBoxInfo NMS(const VecBoxInfo &boxes, float threshold,
 
 void DetectionMTCNN::Setup(const std::string &model_file) {
   net_p_.Setup();
+  net_r_.Setup();
+  net_o_.Setup();
 
 #if defined(USE_Protobuf)
   shadow::MetaNetParam meta_net_param;

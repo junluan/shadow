@@ -46,7 +46,7 @@ void NormalizeOp::Forward() {
     Blas::Square(num, bottom->data(), data_offset, buffer_->mutable_data(), 0);
     if (across_spatial_) {
       float sum = 0;
-      Blas::BlasSasum(num, buffer_->data(), 0, &sum);
+      Blas::BlasSasum(num, buffer_->data(), 0, &sum, op_ws_->BlasHandle());
       float norm = std::sqrt(sum + EPS);
       Blas::Mul(num, bottom->data(), data_offset, 1.f / norm,
                 top->mutable_data(), data_offset);
@@ -54,11 +54,11 @@ void NormalizeOp::Forward() {
       Blas::Set(norm_->count(), EPS, norm_->mutable_data(), 0);
       Blas::BlasSgemv(1, in_c, spatial_dim, 1, buffer_->data(), 0,
                       sum_channel_multiplier_->data(), 0, 1,
-                      norm_->mutable_data(), 0);
+                      norm_->mutable_data(), 0, op_ws_->BlasHandle());
       Blas::Pow(spatial_dim, norm_->data(), 0, 0.5f, norm_->mutable_data(), 0);
       Blas::BlasSgemm(0, 0, in_c, spatial_dim, 1, 1,
                       sum_channel_multiplier_->data(), 0, norm_->data(), 0, 0,
-                      buffer_->mutable_data(), 0);
+                      buffer_->mutable_data(), 0, op_ws_->BlasHandle());
       Blas::Div(num, bottom->data(), data_offset, buffer_->data(), 0,
                 top->mutable_data(), data_offset);
     }
@@ -66,12 +66,13 @@ void NormalizeOp::Forward() {
       CHECK_EQ(bottoms<float>(1)->count(), 1);
       float scale = 0;
       bottoms<float>(1)->read_data(&scale, 1);
-      Blas::BlasSscal(num, scale, top->mutable_data(), data_offset);
+      Blas::BlasSscal(num, scale, top->mutable_data(), data_offset,
+                      op_ws_->BlasHandle());
     } else {
       CHECK_EQ(bottoms<float>(1)->count(), in_c);
       Blas::BlasSgemm(0, 0, in_c, spatial_dim, 1, 1, bottoms<float>(1)->data(),
                       0, sum_spatial_multiplier_->data(), 0, 0,
-                      buffer_->mutable_data(), 0);
+                      buffer_->mutable_data(), 0, op_ws_->BlasHandle());
       Blas::Mul(num, top->data(), data_offset, buffer_->data(), 0,
                 top->mutable_data(), data_offset);
     }

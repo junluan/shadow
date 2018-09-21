@@ -40,10 +40,10 @@ void PoolingOp::Forward() {
   cudnn::setTensor4dDesc<float>(&bottom_desc_, batch, in_c, in_h, in_w);
   cudnn::setTensor4dDesc<float>(&top_desc_, batch, in_c, out_h, out_w);
 
-  CUDNN_CHECK(cudnnPoolingForward(Kernel::cudnn_handle_, pooling_desc_,
-                                  cudnn::dataType<float>::one, bottom_desc_,
-                                  bottom->data(), cudnn::dataType<float>::zero,
-                                  top_desc_, top->mutable_data()));
+  CUDNN_CHECK(cudnnPoolingForward(
+      cudnnHandle_t(op_ws_->CudnnHandle()), pooling_desc_,
+      cudnn::dataType<float>::one, bottom_desc_, bottom->data(),
+      cudnn::dataType<float>::zero, top_desc_, top->mutable_data()));
 
 #else
   Vision::Pooling(bottom->data(), bottom->shape(), kernel_size_h_,
@@ -56,7 +56,7 @@ REGISTER_OPERATOR(Pooling, PoolingOp);
 
 namespace Vision {
 
-#if !defined(USE_CUDA) & !defined(USE_CL)
+#if !defined(USE_CUDA)
 template <typename T>
 void Pooling(const T *in_data, const VecInt &in_shape, int kernel_size_h,
              int kernel_size_w, int stride_h, int stride_w, int pad_h,
@@ -96,29 +96,6 @@ template void Pooling(const float *in_data, const VecInt &in_shape,
                       int kernel_size_h, int kernel_size_w, int stride_h,
                       int stride_w, int pad_h, int pad_w, int mode,
                       const VecInt &out_shape, float *out_data);
-
-#elif defined(USE_CL)
-template <typename T>
-void Pooling(const T *in_data, const VecInt &in_shape, int kernel_size_h,
-             int kernel_size_w, int stride_h, int stride_w, int pad_h,
-             int pad_w, int mode, const VecInt &out_shape, T *out_data) {
-  int batch = in_shape[0];
-  int in_c = in_shape[1], in_h = in_shape[2], in_w = in_shape[3];
-  int out_h = out_shape[2], out_w = out_shape[3];
-  int count = batch * in_c * out_h * out_w;
-
-  size_t global = count;
-  auto *kernel = Kernel::cl_kernels_["Pooling"];
-  kernel->SetArguments(*in_data, count, in_c, in_h, in_w, kernel_size_h,
-                       kernel_size_w, stride_h, stride_w, pad_h, pad_w, mode,
-                       out_h, out_w, *out_data);
-  kernel->Launch(*Kernel::queue_, {global}, Kernel::event_);
-  Kernel::queue_->Finish();
-}
-
-template void Pooling(const BufferF *in_data, const VecInt &in_shape,
-                      int kernel_size, int stride, int pad, int mode,
-                      const VecInt &out_shape, BufferF *out_data);
 #endif
 
 }  // namespace Vision

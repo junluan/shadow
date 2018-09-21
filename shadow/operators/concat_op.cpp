@@ -46,7 +46,7 @@ REGISTER_OPERATOR(Concat, ConcatOp);
 
 namespace Vision {
 
-#if !defined(USE_CUDA) & !defined(USE_CL)
+#if !defined(USE_CUDA)
 template <typename T>
 void Concat(const T *in_data, int count, int num_concats, int concat_size,
             int top_concat_axis, int bottom_concat_axis, int offset_concat_axis,
@@ -62,25 +62,6 @@ template void Concat(const float *in_data, int count, int num_concats,
                      int concat_size, int top_concat_axis,
                      int bottom_concat_axis, int offset_concat_axis,
                      float *out_data);
-
-#elif defined(USE_CL)
-template <typename T>
-void Concat(const T *in_data, int count, int num_concats, int concat_size,
-            int top_concat_axis, int bottom_concat_axis, int offset_concat_axis,
-            T *out_data) {
-  size_t global = count;
-  auto *kernel = Kernel::cl_kernels_["Concat"];
-  kernel->SetArguments(*in_data, count, num_concats, concat_size,
-                       top_concat_axis, bottom_concat_axis, offset_concat_axis,
-                       *out_data);
-  kernel->Launch(*Kernel::queue_, {global}, Kernel::event_);
-  Kernel::queue_->Finish();
-}
-
-template void Concat(const BufferF *in_data, int count, int num_concats,
-                     int concat_size, int top_concat_axis,
-                     int bottom_concat_axis, int offset_concat_axis,
-                     BufferF *out_data);
 #endif
 
 }  // namespace Vision

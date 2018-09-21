@@ -29,7 +29,7 @@ REGISTER_OPERATOR(Axpy, AxpyOp);
 
 namespace Vision {
 
-#if !defined(USE_CUDA) & !defined(USE_CL)
+#if !defined(USE_CUDA)
 template <typename T>
 void Axpy(const T *scale_data, const T *x_data, const T *y_data,
           const VecInt &in_shape, T *out_data) {
@@ -37,13 +37,13 @@ void Axpy(const T *scale_data, const T *x_data, const T *y_data,
   int in_c = in_shape[1], in_h = in_shape[2], in_w = in_shape[3];
   int count = batch * in_c * in_h * in_w;
   int spatial_dim = in_h * in_w;
-  Blas::BlasScopy(count, y_data, 0, out_data, 0);
+  Blas::BlasScopy(count, y_data, 0, out_data, 0, nullptr);
   for (int b = 0; b < batch; ++b) {
     for (int c = 0; c < in_c; ++c) {
       int scale_offset = b * in_c + c;
       int data_offset = scale_offset * spatial_dim;
       Blas::BlasSaxpy(spatial_dim, scale_data[scale_offset], x_data,
-                      data_offset, out_data, data_offset);
+                      data_offset, out_data, data_offset, nullptr);
     }
   }
 }
@@ -51,8 +51,6 @@ void Axpy(const T *scale_data, const T *x_data, const T *y_data,
 template void Axpy(const float *scale_data, const float *x_data,
                    const float *y_data, const VecInt &in_shape,
                    float *out_data);
-
-#elif defined(USE_CL)
 #endif
 
 }  // namespace Vision

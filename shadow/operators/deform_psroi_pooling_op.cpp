@@ -37,7 +37,7 @@ REGISTER_OPERATOR(DeformPSROIPooling, DeformPSROIPoolingOp);
 
 namespace Vision {
 
-#if !defined(USE_CUDA) & !defined(USE_CL)
+#if !defined(USE_CUDA)
 inline float bilinear_interp(const float *data, float x, float y, int width,
                              int height) {
   auto x1 = static_cast<int>(std::floor(x));
@@ -154,8 +154,6 @@ template void DeformPSROIPooling(const float *in_data, const VecInt &in_shape,
                                  int sample_per_part, float spatial_scale,
                                  float trans_std, bool no_trans,
                                  float *out_data);
-
-#elif defined(USE_CL)
 #endif
 
 }  // namespace Vision

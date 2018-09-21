@@ -183,43 +183,46 @@ BLAS_UNARY_FUNC(Ceil, y[i] = ceilf(a[i]));
 
 // Level 1
 template <typename T>
-void BlasSscal(int n, float alpha, T *x, int offx) {
-  cublasSscal(Kernel::cublas_handle_, n, &alpha, x + offx, 1);
+void BlasSscal(int n, float alpha, T *x, int offx, void *ctx) {
+  CUBLAS_CHECK(cublasSscal(cublasHandle_t(ctx), n, &alpha, x + offx, 1));
 }
 
 template <typename T>
-void BlasScopy(int n, const T *x, int offx, T *y, int offy) {
-  cublasScopy(Kernel::cublas_handle_, n, x + offx, 1, y + offy, 1);
+void BlasScopy(int n, const T *x, int offx, T *y, int offy, void *ctx) {
+  CUBLAS_CHECK(cublasScopy(cublasHandle_t(ctx), n, x + offx, 1, y + offy, 1));
 }
 
 template <typename T>
-void BlasSaxpy(int n, float alpha, const T *x, int offx, T *y, int offy) {
-  cublasSaxpy(Kernel::cublas_handle_, n, &alpha, x + offx, 1, y + offy, 1);
+void BlasSaxpy(int n, float alpha, const T *x, int offx, T *y, int offy,
+               void *ctx) {
+  CUBLAS_CHECK(
+      cublasSaxpy(cublasHandle_t(ctx), n, &alpha, x + offx, 1, y + offy, 1));
 }
 
 template <typename T>
-void BlasSasum(int n, const T *x, int offx, float *y) {
-  cublasSasum(Kernel::cublas_handle_, n, x + offx, 1, y);
+void BlasSasum(int n, const T *x, int offx, float *y, void *ctx) {
+  CUBLAS_CHECK(cublasSasum(cublasHandle_t(ctx), n, x + offx, 1, y));
 }
 
 // Level 2
 template <typename T>
 void BlasSgemv(int TA, int M, int N, float alpha, const T *A, int offA,
-               const T *x, int offx, float beta, T *y, int offy) {
+               const T *x, int offx, float beta, T *y, int offy, void *ctx) {
   auto transA = TA ? CUBLAS_OP_N : CUBLAS_OP_T;
-  cublasSgemv(Kernel::cublas_handle_, transA, N, M, &alpha, A + offA, N,
-              x + offx, 1, &beta, y + offy, 1);
+  CUBLAS_CHECK(cublasSgemv(cublasHandle_t(ctx), transA, N, M, &alpha, A + offA,
+                           N, x + offx, 1, &beta, y + offy, 1));
 }
 
 // Level 3
 template <typename T>
 void BlasSgemm(int TA, int TB, int M, int N, int K, float alpha, const T *A,
-               int offA, const T *B, int offB, float beta, T *C, int offC) {
+               int offA, const T *B, int offB, float beta, T *C, int offC,
+               void *ctx) {
   int lda = TA ? M : K, ldb = TB ? K : N;
   auto transA = TA ? CUBLAS_OP_T : CUBLAS_OP_N;
   auto transB = TB ? CUBLAS_OP_T : CUBLAS_OP_N;
-  cublasSgemm(Kernel::cublas_handle_, transB, transA, N, M, K, &alpha, B + offB,
-              ldb, A + offA, lda, &beta, C + offC, N);
+  CUBLAS_CHECK(cublasSgemm(cublasHandle_t(ctx), transB, transA, N, M, K, &alpha,
+                           B + offB, ldb, A + offA, lda, &beta, C + offC, N));
 }
 
 // Explicit instantiation
@@ -235,21 +238,22 @@ template void ChannelDiv(int count, int num, int channels, int spatial_dim,
 template void Set(int n, float val, float *y, int offy);
 
 // Level 1
-template void BlasSscal(int n, float alpha, float *x, int offx);
-template void BlasScopy(int n, const float *x, int offx, float *y, int offy);
+template void BlasSscal(int n, float alpha, float *x, int offx, void *ctx);
+template void BlasScopy(int n, const float *x, int offx, float *y, int offy,
+                        void *ctx);
 template void BlasSaxpy(int n, float alpha, const float *x, int offx, float *y,
-                        int offy);
-template void BlasSasum(int n, const float *x, int offx, float *y);
+                        int offy, void *ctx);
+template void BlasSasum(int n, const float *x, int offx, float *y, void *ctx);
 
 // Level 2
 template void BlasSgemv(int TA, int M, int N, float alpha, const float *A,
                         int offA, const float *x, int offx, float beta,
-                        float *y, int offy);
+                        float *y, int offy, void *ctx);
 
 // Level 3
 template void BlasSgemm(int TA, int TB, int M, int N, int K, float alpha,
                         const float *A, int offA, const float *B, int offB,
-                        float beta, float *C, int offC);
+                        float beta, float *C, int offC, void *ctx);
 #endif
 
 }  // namespace Blas

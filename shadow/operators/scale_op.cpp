@@ -77,7 +77,7 @@ REGISTER_OPERATOR(Scale, ScaleOp);
 
 namespace Vision {
 
-#if !defined(USE_CUDA) & !defined(USE_CL)
+#if !defined(USE_CUDA)
 template <typename T>
 void Scale(const T *in_data, int count, const T *scale_data, const T *bias_data,
            int scale_dim, int inner_dim, T *out_data) {
@@ -90,22 +90,6 @@ void Scale(const T *in_data, int count, const T *scale_data, const T *bias_data,
 template void Scale(const float *in_data, int count, const float *scale_data,
                     const float *bias_data, int scale_dim, int inner_dim,
                     float *out_data);
-
-#elif defined(USE_CL)
-template <typename T>
-void Scale(const T *in_data, int count, const T *scale_data, const T *bias_data,
-           int scale_dim, int inner_dim, T *out_data) {
-  size_t global = count;
-  auto *kernel = Kernel::cl_kernels_["Scale"];
-  kernel->SetArguments(*in_data, count, *scale_data, *bias_data, scale_dim,
-                       inner_dim, *out_data);
-  kernel->Launch(*Kernel::queue_, {global}, Kernel::event_);
-  Kernel::queue_->Finish();
-}
-
-template void Scale(const BufferF *in_data, int count,
-                    const BufferF *scale_data, const BufferF *bias_data,
-                    int scale_dim, int inner_dim, BufferF *out_data);
 #endif
 
 }  // namespace Vision

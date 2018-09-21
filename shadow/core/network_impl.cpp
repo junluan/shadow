@@ -4,7 +4,9 @@
 
 namespace Shadow {
 
-void Network::NetworkImpl::Setup(int device_id) { Kernel::Setup(device_id); }
+void Network::NetworkImpl::Setup(int device_id) {
+  ws_.CreateContext(device_id);
+}
 
 void Network::NetworkImpl::LoadModel(const std::string &proto_bin) {
   LoadProtoBin(proto_bin, &net_param_);
@@ -34,6 +36,7 @@ void Network::NetworkImpl::Forward(
     const std::map<std::string, float *> &data_map,
     const std::map<std::string, std::vector<int>> &shape_map) {
   if (ops_.empty()) return;
+
   for (const auto &in_map : data_map) {
     const auto &blob_name = in_map.first;
     const auto *blob_data = in_map.second;
@@ -49,11 +52,15 @@ void Network::NetworkImpl::Forward(
       LOG(FATAL) << "Can not find blob " << blob_name;
     }
   }
+
   for (auto &op : ops_) {
     op->Forward();
     DLOG(INFO) << op->debug_log();
   }
+
+#if defined(USE_CUDA)
   Kernel::Synchronize();
+#endif
 
   DLOG(INFO) << "Forward Network!";
 }
@@ -66,8 +73,6 @@ void Network::NetworkImpl::Release() {
     op = nullptr;
   }
   ops_.clear();
-
-  Kernel::Release();
 
   DLOG(INFO) << "Release Network!";
 }

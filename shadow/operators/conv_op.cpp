@@ -55,7 +55,8 @@ void ConvOp::Forward() {
         nnp_algorithm_, nnp_transform_, in_c, out_c, nnp_input_size_, nnp_pad_,
         nnp_kernel_size_, nnp_stride_, bottom->data(), weight->data(),
         bottoms<float>(2)->data(), top->mutable_data(), nullptr, nullptr,
-        nnp_activation_, nullptr, Kernel::nnp_pthreadpool_, nullptr);
+        nnp_activation_, nullptr, pthreadpool_t(op_ws_->NNPACKHandle()),
+        nullptr);
     CHECK_EQ(nnp_status_success, status);
     return;
   }
@@ -77,13 +78,13 @@ void ConvOp::Forward() {
     size_t workspace_limit_bytes = group_ == 1 ? 64 * 1024 * 1024 : 0;
 
     CUDNN_CHECK(cudnnGetConvolutionForwardAlgorithm(
-        Kernel::cudnn_handle_, bottom_desc_, filter_desc_, conv_desc_,
-        top_desc_, CUDNN_CONVOLUTION_FWD_SPECIFY_WORKSPACE_LIMIT,
+        cudnnHandle_t(op_ws_->CudnnHandle()), bottom_desc_, filter_desc_,
+        conv_desc_, top_desc_, CUDNN_CONVOLUTION_FWD_SPECIFY_WORKSPACE_LIMIT,
         workspace_limit_bytes, &fwd_algo_));
 
     CUDNN_CHECK(cudnnGetConvolutionForwardWorkspaceSize(
-        Kernel::cudnn_handle_, bottom_desc_, filter_desc_, conv_desc_,
-        top_desc_, fwd_algo_, &workspace_fwd_size_));
+        cudnnHandle_t(op_ws_->CudnnHandle()), bottom_desc_, filter_desc_,
+        conv_desc_, top_desc_, fwd_algo_, &workspace_fwd_size_));
 
     if (workspace_fwd_size_ > 0) {
       op_ws_->GrowTempBuffer(static_cast<int>(workspace_fwd_size_),
@@ -95,15 +96,15 @@ void ConvOp::Forward() {
     auto *workspace_ptr =
         workspace_fwd_size_ > 0 ? workspace_->mutable_data() : nullptr;
     CUDNN_CHECK(cudnnConvolutionForward(
-        Kernel::cudnn_handle_, cudnn::dataType<float>::one, bottom_desc_,
-        bottom->data(), filter_desc_, weight->data(), conv_desc_, fwd_algo_,
-        workspace_ptr, workspace_fwd_size_, cudnn::dataType<float>::zero,
-        top_desc_, top->mutable_data()));
+        cudnnHandle_t(op_ws_->CudnnHandle()), cudnn::dataType<float>::one,
+        bottom_desc_, bottom->data(), filter_desc_, weight->data(), conv_desc_,
+        fwd_algo_, workspace_ptr, workspace_fwd_size_,
+        cudnn::dataType<float>::zero, top_desc_, top->mutable_data()));
     if (bias_term_) {
       CUDNN_CHECK(cudnnAddTensor(
-          Kernel::cudnn_handle_, cudnn::dataType<float>::one, bias_desc_,
-          bottoms<float>(2)->data(), cudnn::dataType<float>::one, top_desc_,
-          top->mutable_data()));
+          cudnnHandle_t(op_ws_->CudnnHandle()), cudnn::dataType<float>::one,
+          bias_desc_, bottoms<float>(2)->data(), cudnn::dataType<float>::one,
+          top_desc_, top->mutable_data()));
     }
     if (activate_type_ == 1) {
       Vision::Activate(top->mutable_data(), top->count(), activate_type_);
@@ -146,13 +147,14 @@ void ConvOp::Forward() {
         Blas::BlasSgemm(0, 0, num_output_ / group_, out_spatial_dim_,
                         kernel_dim_, 1, weight->data(), weight_offset_ * g,
                         col_image_->data(), col_offset_ * g, 0,
-                        top->mutable_data(), b * top_num + output_offset_ * g);
+                        top->mutable_data(), b * top_num + output_offset_ * g,
+                        op_ws_->BlasHandle());
       }
       if (bias_term_) {
         Blas::BlasSgemm(0, 0, num_output_, out_spatial_dim_, 1, 1,
                         bottoms<float>(2)->data(), 0,
                         biases_multiplier_->data(), 0, 1, top->mutable_data(),
-                        b * top_num);
+                        b * top_num, op_ws_->BlasHandle());
       }
     }
   }
@@ -165,7 +167,7 @@ REGISTER_OPERATOR(Conv, ConvOp);
 
 namespace Vision {
 
-#if !defined(USE_CUDA) & !defined(USE_CL)
+#if !defined(USE_CUDA)
 // check for 0 <= a < b
 inline bool check_border(int a, int b) {
   return static_cast<unsigned>(a) < static_cast<unsigned>(b);
@@ -256,29 +258,6 @@ template void Depthwise(const float *in_data, const VecInt &in_shape,
                         const float *weight_data, const float *bias_data,
                         int kernel_size, int stride, int pad, int bias_term,
                         const VecInt &out_shape, float *out_data);
-
-#elif defined(USE_CL)
-template <typename T>
-void Im2Col(const T *in_data, const VecInt &in_shape, int offset,
-            int kernel_size, int stride, int pad, int dilation, int zero_point,
-            const VecInt &out_shape, T *col_data) {
-  int in_c = in_shape[1], in_h = in_shape[2], in_w = in_shape[3];
-  int out_h = out_shape[2], out_w = out_shape[3];
-  int count = in_c * out_h * out_w;
-
-  size_t global = count;
-  auto *kernel = Kernel::cl_kernels_["Im2Col"];
-  kernel->SetArguments(*in_data, offset, count, in_c, in_h, in_w, kernel_size,
-                       stride, pad, dilation, zero_point, out_h, out_w,
-                       *col_data);
-  kernel->Launch(*Kernel::queue_, {global}, Kernel::event_);
-  Kernel::queue_->Finish();
-}
-
-template void Im2Col(const BufferF *in_data, const VecInt &in_shape, int offset,
-                     int kernel_size, int stride, int pad, int dilation,
-                     int zero_point, const VecInt &out_shape,
-                     BufferF *col_data);
 #endif
 
 }  // namespace Vision

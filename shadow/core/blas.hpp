@@ -80,26 +80,28 @@ void Ceil(int n, const T *a, int offa, T *y, int offy);
 
 // Level 1
 template <typename T>
-void BlasSscal(int n, float alpha, T *x, int offx);
+void BlasSscal(int n, float alpha, T *x, int offx, void *ctx);
 
 template <typename T>
-void BlasScopy(int n, const T *x, int offx, T *y, int offy);
+void BlasScopy(int n, const T *x, int offx, T *y, int offy, void *ctx);
 
 template <typename T>
-void BlasSaxpy(int n, float alpha, const T *x, int offx, T *y, int offy);
+void BlasSaxpy(int n, float alpha, const T *x, int offx, T *y, int offy,
+               void *ctx);
 
 template <typename T>
-void BlasSasum(int n, const T *x, int offx, float *y);
+void BlasSasum(int n, const T *x, int offx, float *y, void *ctx);
 
 // Level 2
 template <typename T>
 void BlasSgemv(int TA, int M, int N, float alpha, const T *A, int offA,
-               const T *x, int offx, float beta, T *y, int offy);
+               const T *x, int offx, float beta, T *y, int offy, void *ctx);
 
 // Level 3
 template <typename T>
 void BlasSgemm(int TA, int TB, int M, int N, int K, float alpha, const T *A,
-               int offA, const T *B, int offB, float beta, T *C, int offC);
+               int offA, const T *B, int offB, float beta, T *C, int offC,
+               void *ctx);
 
 }  // namespace Blas
 

@@ -55,11 +55,11 @@ void DeconvOp::Forward() {
   int top_num = top->num(), bottom_num = bottom->num();
   for (int b = 0; b < batch; ++b) {
     for (int g = 0; g < group_; ++g) {
-      Blas::BlasSgemm(1, 0, kernel_dim_, conv_out_spatial_dim_,
-                      conv_out_c / group_, 1, weight->data(),
-                      weight_offset_ * g, bottom->data(),
-                      b * bottom_num + output_offset_ * g, 0,
-                      col_image_->mutable_data(), col_offset_ * g);
+      Blas::BlasSgemm(
+          1, 0, kernel_dim_, conv_out_spatial_dim_, conv_out_c / group_, 1,
+          weight->data(), weight_offset_ * g, bottom->data(),
+          b * bottom_num + output_offset_ * g, 0, col_image_->mutable_data(),
+          col_offset_ * g, op_ws_->BlasHandle());
     }
     Vision::Col2Im(col_image_->data(), top->shape(), b * top_num, kernel_size_,
                    stride_, pad_, dilation_, bottom->shape(),
@@ -67,7 +67,8 @@ void DeconvOp::Forward() {
     if (bias_term_) {
       Blas::BlasSgemm(0, 0, num_output_, out_spatial_dim_, 1, 1,
                       bottoms<float>(2)->data(), 0, biases_multiplier_->data(),
-                      0, 1, top->mutable_data(), b * top_num);
+                      0, 1, top->mutable_data(), b * top_num,
+                      op_ws_->BlasHandle());
     }
   }
   if (activate_type_ == 1) {
@@ -79,7 +80,7 @@ REGISTER_OPERATOR(Deconv, DeconvOp);
 
 namespace Vision {
 
-#if !defined(USE_CUDA) & !defined(USE_CL)
+#if !defined(USE_CUDA)
 // check for 0 <= a < b
 inline bool check_border(int a, int b) {
   return static_cast<unsigned>(a) < static_cast<unsigned>(b);
@@ -117,8 +118,6 @@ void Col2Im(const T *col_data, const VecInt &in_shape, int offset,
 template void Col2Im(const float *col_data, const VecInt &in_shape, int offset,
                      int kernel_size, int stride, int pad, int dilation,
                      const VecInt &out_shape, float *in_data);
-
-#elif defined(USE_CL)
 #endif
 
 }  // namespace Vision

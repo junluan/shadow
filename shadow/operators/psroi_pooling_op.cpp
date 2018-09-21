@@ -25,7 +25,7 @@ REGISTER_OPERATOR(PSROIPooling, PSROIPoolingOp);
 
 namespace Vision {
 
-#if !defined(USE_CUDA) & !defined(USE_CL)
+#if !defined(USE_CUDA)
 template <typename T>
 void PSROIPooling(const T *in_data, const VecInt &in_shape, const T *roi_data,
                   int num_rois, int output_dim, int group_size, int pooled_h,
@@ -90,8 +90,6 @@ template void PSROIPooling(const float *in_data, const VecInt &in_shape,
                            const float *roi_data, int num_rois, int output_dim,
                            int group_size, int pooled_h, int pooled_w,
                            float spatial_scale, float *out_data);
-
-#elif defined(USE_CL)
 #endif
 
 }  // namespace Vision

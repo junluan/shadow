@@ -9,12 +9,6 @@
 
 namespace Shadow {
 
-#if defined(USE_CL)
-#define BACKEND EasyCL::Buffer<Dtype>
-#else
-#define BACKEND Dtype
-#endif
-
 enum Device { kCPU, kGPU };
 
 template <typename Dtype>
@@ -29,48 +23,48 @@ class Blob {
   }
   ~Blob() { clear(); }
 
-  const BACKEND *data() const { return data_; }
-  BACKEND *mutable_data() { return data_; }
+  const Dtype *data() const { return data_; }
+  Dtype *mutable_data() { return data_; }
 
   const Dtype *cpu_data() {
-#if !defined(USE_CUDA) & !defined(USE_CL)
-    return data_;
-
-#else
-    int cou = count();
-    cpu_data_.resize(cou);
+#if defined(USE_CUDA)
+    auto cou = count();
+    cpu_data_.resize(cou, 0);
     read_data(cpu_data_.data(), cou);
     return cpu_data_.data();
+
+#else
+    return data_;
 #endif
   }
 
   void set_data(const Dtype *data, int set_count) {
     CHECK_NOTNULL(data);
     CHECK_EQ(set_count, count());
-#if !defined(USE_CUDA) & !defined(USE_CL)
+#if defined(USE_CUDA)
+    Kernel::WriteBuffer(count(), data, data_);
+
+#else
     if (!shared_) {
       memcpy(data_, data, count() * sizeof(Dtype));
     } else {
       data_ = const_cast<Dtype *>(data);
     }
-
-#else
-    Kernel::WriteBuffer(count(), data, data_);
 #endif
   }
 
   void read_data(Dtype *data, int read_count) const {
     CHECK_NOTNULL(data);
     CHECK_EQ(read_count, count());
-#if !defined(USE_CUDA) & !defined(USE_CL)
-    memcpy(data, data_, count() * sizeof(Dtype));
+#if defined(USE_CUDA)
+    Kernel::ReadBuffer(count(), data_, data);
 
 #else
-    Kernel::ReadBuffer(count(), data_, data);
+    memcpy(data, data_, count() * sizeof(Dtype));
 #endif
   }
 
-  void share_data(const BACKEND *data, const VecInt &shape) {
+  void share_data(const Dtype *data, const VecInt &shape) {
     CHECK_NOTNULL(data);
     size_t cou = 1;
     for (const auto dim : shape) cou *= dim;
@@ -78,7 +72,7 @@ class Blob {
     if (data_ != data) {
       CHECK(data_ == nullptr);
     }
-    data_ = const_cast<BACKEND *>(data);
+    data_ = const_cast<Dtype *>(data);
     shared_ = true;
   }
   void share_data(const Blob<Dtype> &from) {
@@ -157,11 +151,11 @@ class Blob {
 
   void clear() {
     if (data_ != nullptr && !shared_) {
-#if !defined(USE_CUDA) & !defined(USE_CL)
-      fast_free(data_);
+#if defined(USE_CUDA)
+      Kernel::ReleaseBuffer(data_);
 
 #else
-      Kernel::ReleaseBuffer(data_);
+      fast_free(data_);
 #endif
     }
     data_ = nullptr;
@@ -175,27 +169,27 @@ class Blob {
  private:
   void allocate_data(size_t count, bool shared, int align) {
     capacity_ = count;
-#if !defined(USE_CUDA) & !defined(USE_CL)
+#if defined(USE_CUDA)
+    data_ = Kernel::MakeBuffer<Dtype>(count, static_cast<Dtype *>(nullptr));
+
+#else
     if (!shared) {
       data_ = static_cast<Dtype *>(fast_malloc(count * sizeof(Dtype), align));
     }
     shared_ = shared;
-
-#else
-    data_ = Kernel::MakeBuffer<BACKEND>(count, static_cast<Dtype *>(nullptr));
 #endif
   }
 
   void set_device() {
-#if !defined(USE_CUDA) & !defined(USE_CL)
-    device_ = kCPU;
+#if defined(USE_CUDA)
+    device_ = kGPU;
 
 #else
-    device_ = kGPU;
+    device_ = kCPU;
 #endif
   }
 
-  BACKEND *data_ = nullptr;
+  Dtype *data_ = nullptr;
   std::vector<Dtype> cpu_data_{};
 
   std::string name_;

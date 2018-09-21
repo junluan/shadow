@@ -2,10 +2,6 @@
 #include "common.hpp"
 #include "kernel.hpp"
 
-#if defined(USE_CL)
-#include "clBLAS.h"
-#endif
-
 #if defined(USE_OpenBLAS)
 #include "cblas.h"
 #elif defined(USE_MKL)
@@ -20,7 +16,7 @@ namespace Shadow {
 
 namespace Blas {
 
-#if !defined(USE_CUDA) & !defined(USE_CL)
+#if !defined(USE_CUDA)
 template <typename T>
 void ChannelMax(int num, int channels, int spatial_dim, const T *data,
                 T *val_max) {
@@ -211,7 +207,7 @@ BLAS_UNARY_FUNC(Ceil, y[i] = std::ceil(a[i]));
 
 // Level 1
 template <typename T>
-void BlasSscal(int n, float alpha, T *x, int offx) {
+void BlasSscal(int n, float alpha, T *x, int offx, void *ctx) {
 #if defined(USE_OpenBLAS) | defined(USE_MKL)
   cblas_sscal(n, alpha, x + offx, 1);
 #elif defined(USE_Eigen)
@@ -225,7 +221,7 @@ void BlasSscal(int n, float alpha, T *x, int offx) {
 }
 
 template <typename T>
-void BlasScopy(int n, const T *x, int offx, T *y, int offy) {
+void BlasScopy(int n, const T *x, int offx, T *y, int offy, void *ctx) {
 #if defined(USE_OpenBLAS) | defined(USE_MKL)
   cblas_scopy(n, x + offx, 1, y + offy, 1);
 #elif defined(USE_Eigen)
@@ -240,7 +236,8 @@ void BlasScopy(int n, const T *x, int offx, T *y, int offy) {
 }
 
 template <typename T>
-void BlasSaxpy(int n, float alpha, const T *x, int offx, T *y, int offy) {
+void BlasSaxpy(int n, float alpha, const T *x, int offx, T *y, int offy,
+               void *ctx) {
 #if defined(USE_OpenBLAS) | defined(USE_MKL)
   cblas_saxpy(n, alpha, x + offx, 1, y + offy, 1);
 #elif defined(USE_Eigen)
@@ -255,7 +252,7 @@ void BlasSaxpy(int n, float alpha, const T *x, int offx, T *y, int offy) {
 }
 
 template <typename T>
-void BlasSasum(int n, const T *x, int offx, float *y) {
+void BlasSasum(int n, const T *x, int offx, float *y, void *ctx) {
 #if defined(USE_OpenBLAS) | defined(USE_MKL)
   *y = cblas_sasum(n, x + offx, 1);
 #elif defined(USE_Eigen)
@@ -295,7 +292,7 @@ inline void SgemvT(int M, int N, float alpha, const float *A, const float *x,
 
 template <typename T>
 void BlasSgemv(int TA, int M, int N, float alpha, const T *A, int offA,
-               const T *x, int offx, float beta, T *y, int offy) {
+               const T *x, int offx, float beta, T *y, int offy, void *ctx) {
 #if defined(USE_OpenBLAS) | defined(USE_MKL)
   auto transA = TA ? CblasTrans : CblasNoTrans;
   cblas_sgemv(CblasRowMajor, transA, M, N, alpha, A + offA, N, x + offx, 1,
@@ -376,7 +373,8 @@ inline void SgemmTT(int M, int N, int K, float alpha, const float *A,
 
 template <typename T>
 void BlasSgemm(int TA, int TB, int M, int N, int K, float alpha, const T *A,
-               int offA, const T *B, int offB, float beta, T *C, int offC) {
+               int offA, const T *B, int offB, float beta, T *C, int offC,
+               void *ctx) {
 #if defined(USE_OpenBLAS) | defined(USE_MKL)
   int lda = TA ? M : K, ldb = TB ? K : N;
   auto transA = TA ? CblasTrans : CblasNoTrans;
@@ -434,219 +432,22 @@ template void ChannelDiv(int count, int num, int channels, int spatial_dim,
 template void Set(int n, float val, float *y, int offy);
 
 // Level 1
-template void BlasSscal(int n, float alpha, float *x, int offx);
-template void BlasScopy(int n, const float *x, int offx, float *y, int offy);
+template void BlasSscal(int n, float alpha, float *x, int offx, void *ctx);
+template void BlasScopy(int n, const float *x, int offx, float *y, int offy,
+                        void *ctx);
 template void BlasSaxpy(int n, float alpha, const float *x, int offx, float *y,
-                        int offy);
-template void BlasSasum(int n, const float *x, int offx, float *y);
+                        int offy, void *ctx);
+template void BlasSasum(int n, const float *x, int offx, float *y, void *ctx);
 
 // Level 2
 template void BlasSgemv(int TA, int M, int N, float alpha, const float *A,
                         int offA, const float *x, int offx, float beta,
-                        float *y, int offy);
+                        float *y, int offy, void *ctx);
 
 // Level 3
 template void BlasSgemm(int TA, int TB, int M, int N, int K, float alpha,
                         const float *A, int offA, const float *B, int offB,
-                        float beta, float *C, int offC);
-
-#elif defined(USE_CL)
-template <typename T>
-void ChannelMax(int num, int channels, int spatial_dim, const T *data,
-                T *val_max) {
-  size_t global = num * spatial_dim;
-  auto *kernel = Kernel::cl_kernels_["ChannelMax"];
-  kernel->SetArguments(num, channels, spatial_dim, *data, *val_max);
-  kernel->Launch(*Kernel::queue_, {global}, Kernel::event_);
-  Kernel::queue_->Finish();
-}
-template <typename T>
-void ChannelSub(int count, int num, int channels, int spatial_dim,
-                const T *val_sub, T *data) {
-  size_t global = count;
-  auto *kernel = Kernel::cl_kernels_["ChannelSub"];
-  kernel->SetArguments(count, num, channels, spatial_dim, *val_sub, *data);
-  kernel->Launch(*Kernel::queue_, {global}, Kernel::event_);
-  Kernel::queue_->Finish();
-}
-template <typename T>
-void ChannelSum(int num, int channels, int spatial_dim, const T *data,
-                T *val_sum) {
-  size_t global = num * spatial_dim;
-  auto *kernel = Kernel::cl_kernels_["ChannelSum"];
-  kernel->SetArguments(num, channels, spatial_dim, *data, *val_sum);
-  kernel->Launch(*Kernel::queue_, {global}, Kernel::event_);
-  Kernel::queue_->Finish();
-}
-template <typename T>
-void ChannelDiv(int count, int num, int channels, int spatial_dim,
-                const T *val_div, T *data) {
-  size_t global = count;
-  auto *kernel = Kernel::cl_kernels_["ChannelDiv"];
-  kernel->SetArguments(count, num, channels, spatial_dim, *val_div, *data);
-  kernel->Launch(*Kernel::queue_, {global}, Kernel::event_);
-  Kernel::queue_->Finish();
-}
-
-template <typename T>
-void Set(int n, float val, T *y, int offy) {
-  size_t global = n;
-  auto *kernel = Kernel::cl_kernels_["Set"];
-  kernel->SetArguments(n, val, *y, offy);
-  kernel->Launch(*Kernel::queue_, {global}, Kernel::event_);
-  Kernel::queue_->Finish();
-}
-
-#define BLAS_BINARY_FUNC(name, kname)                                       \
-  template <typename T>                                                     \
-  inline void name(int n, const T *a, int offa, const T *b, int offb, T *y, \
-                   int offy) {                                              \
-    size_t global = n;                                                      \
-    auto *kernel = Kernel::cl_kernels_[kname];                              \
-    kernel->SetArguments(n, *a, offa, *b, offb, *y, offy);                  \
-    kernel->Launch(*Kernel::queue_, {global}, Kernel::event_);              \
-    Kernel::queue_->Finish();                                               \
-  }                                                                         \
-  template void name(int n, const BufferF *a, int offa, const BufferF *b,   \
-                     int offb, BufferF *y, int offy);
-
-#define BLAS_BINARY_SCALAR_FUNC(name, kname)                                   \
-  template <typename T>                                                        \
-  inline void name(int n, const T *a, int offa, float alpha, T *y, int offy) { \
-    size_t global = n;                                                         \
-    auto *kernel = Kernel::cl_kernels_[kname];                                 \
-    kernel->SetArguments(n, *a, offa, alpha, *y, offy);                        \
-    kernel->Launch(*Kernel::queue_, {global}, Kernel::event_);                 \
-    Kernel::queue_->Finish();                                                  \
-  }                                                                            \
-  template void name(int n, const BufferF *a, int offa, float alpha,           \
-                     BufferF *y, int offy);
-
-#define BLAS_UNARY_FUNC(name, kname)                              \
-  template <typename T>                                           \
-  inline void name(int n, const T *a, int offa, T *y, int offy) { \
-    size_t global = n;                                            \
-    auto *kernel = Kernel::cl_kernels_[kname];                    \
-    kernel->SetArguments(n, *a, offa, *y, offy);                  \
-    kernel->Launch(*Kernel::queue_, {global}, Kernel::event_);    \
-    Kernel::queue_->Finish();                                     \
-  }                                                               \
-  template void name(int n, const BufferF *a, int offa, BufferF *y, int offy);
-
-BLAS_BINARY_FUNC(Add, "Add");
-BLAS_BINARY_FUNC(Sub, "Sub");
-BLAS_BINARY_FUNC(Mul, "Mul");
-BLAS_BINARY_FUNC(Div, "Div");
-BLAS_BINARY_FUNC(Pow, "Pow");
-BLAS_BINARY_FUNC(Max, "Max");
-BLAS_BINARY_FUNC(Min, "Min");
-
-BLAS_BINARY_SCALAR_FUNC(Add, "AddScalar");
-BLAS_BINARY_SCALAR_FUNC(Sub, "SubScalar");
-BLAS_BINARY_SCALAR_FUNC(Mul, "MulScalar");
-BLAS_BINARY_SCALAR_FUNC(Div, "DivScalar");
-BLAS_BINARY_SCALAR_FUNC(Pow, "PowScalar");
-BLAS_BINARY_SCALAR_FUNC(Max, "MaxScalar");
-BLAS_BINARY_SCALAR_FUNC(Min, "MinScalar");
-
-BLAS_UNARY_FUNC(Abs, "Abs");
-BLAS_UNARY_FUNC(Square, "Square");
-BLAS_UNARY_FUNC(Sqrt, "Sqrt");
-BLAS_UNARY_FUNC(Log, "Log");
-BLAS_UNARY_FUNC(Exp, "Exp");
-BLAS_UNARY_FUNC(Sin, "Sin");
-BLAS_UNARY_FUNC(Cos, "Cos");
-BLAS_UNARY_FUNC(Tan, "Tan");
-BLAS_UNARY_FUNC(Asin, "Asin");
-BLAS_UNARY_FUNC(Acos, "Acos");
-BLAS_UNARY_FUNC(Atan, "Atan");
-BLAS_UNARY_FUNC(Floor, "Floor");
-BLAS_UNARY_FUNC(Ceil, "Ceil");
-
-// Level 1
-template <typename T>
-void BlasSscal(int n, float alpha, T *x, int offx) {
-  clblasSscal(n, alpha, (*x)(), offx, 1, 1, Kernel::queue_->pointer(), 0,
-              nullptr, nullptr);
-  Kernel::queue_->Finish();
-}
-
-template <typename T>
-void BlasScopy(int n, const T *x, int offx, T *y, int offy) {
-  clblasScopy(n, (*x)(), offx, 1, (*y)(), offy, 1, 1, Kernel::queue_->pointer(),
-              0, nullptr, nullptr);
-  Kernel::queue_->Finish();
-}
-
-template <typename T>
-void BlasSaxpy(int n, float alpha, const T *x, int offx, T *y, int offy) {
-  clblasSaxpy(n, alpha, (*x)(), offx, 1, (*y)(), offy, 1, 1,
-              Kernel::queue_->pointer(), 0, nullptr, nullptr);
-  Kernel::queue_->Finish();
-}
-
-template <typename T>
-void BlasSasum(int n, const T *x, int offx, float *y) {
-  BufferF y_(*Kernel::context_, 1), temp_(*Kernel::context_, n);
-  clblasSasum(n, y_(), 0, (*x)(), offx, 1, temp_(), 1,
-              Kernel::queue_->pointer(), 0, nullptr, nullptr);
-  Kernel::queue_->Finish();
-  y_.Read(*Kernel::queue_, 1, y);
-}
-
-// Level 2
-template <typename T>
-void BlasSgemv(int TA, int M, int N, float alpha, const T *A, int offA,
-               const T *x, int offx, float beta, T *y, int offy) {
-  auto transA = TA ? clblasTrans : clblasNoTrans;
-  clblasSgemv(clblasRowMajor, transA, M, N, alpha, (*A)(), offA, N, (*x)(),
-              offx, 1, beta, (*y)(), offy, 1, 1, Kernel::queue_->pointer(), 0,
-              nullptr, nullptr);
-  Kernel::queue_->Finish();
-}
-
-// Level 3
-template <typename T>
-void BlasSgemm(int TA, int TB, int M, int N, int K, float alpha, const T *A,
-               int offA, const T *B, int offB, float beta, T *C, int offC) {
-  int lda = TA ? M : K, ldb = TB ? K : N;
-  auto transA = TA ? clblasTrans : clblasNoTrans;
-  auto transB = TB ? clblasTrans : clblasNoTrans;
-  clblasSgemm(clblasRowMajor, transA, transB, M, N, K, alpha, (*A)(), offA, lda,
-              (*B)(), offB, ldb, beta, (*C)(), offC, N, 1,
-              Kernel::queue_->pointer(), 0, nullptr, nullptr);
-  Kernel::queue_->Finish();
-}
-
-// Explicit instantiation
-template void ChannelMax(int num, int channels, int spatial_dim,
-                         const BufferF *data, BufferF *val_max);
-template void ChannelSub(int count, int num, int channels, int spatial_dim,
-                         const BufferF *val_sub, BufferF *data);
-template void ChannelSum(int num, int channels, int spatial_dim,
-                         const BufferF *data, BufferF *val_sum);
-template void ChannelDiv(int count, int num, int channels, int spatial_dim,
-                         const BufferF *val_div, BufferF *data);
-
-template void Set(int n, float val, BufferF *y, int offy);
-
-// Level 1
-template void BlasSscal(int n, float alpha, BufferF *x, int offx);
-template void BlasScopy(int n, const BufferF *x, int offx, BufferF *y,
-                        int offy);
-template void BlasSaxpy(int n, float alpha, const BufferF *x, int offx,
-                        BufferF *y, int offy);
-template void BlasSasum(int n, const BufferF *x, int offx, float *y);
-
-// Level 2
-template void BlasSgemv(int TA, int M, int N, float alpha, const BufferF *A,
-                        int offA, const BufferF *x, int offx, float beta,
-                        BufferF *y, int offy);
-
-// Level 3
-template void BlasSgemm(int TA, int TB, int M, int N, int K, float alpha,
-                        const BufferF *A, int offA, const BufferF *B, int offB,
-                        float beta, BufferF *C, int offC);
+                        float beta, float *C, int offC, void *ctx);
 #endif
 
 }  // namespace Blas

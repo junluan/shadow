@@ -122,7 +122,7 @@ REGISTER_OPERATOR(Proposal, ProposalOp);
 
 namespace Vision {
 
-#if !defined(USE_CUDA) & !defined(USE_CL)
+#if !defined(USE_CUDA)
 template <typename T>
 void Proposal(const T *anchor_data, const T *score_data, const T *delta_data,
               const T *info_data, const VecInt &in_shape, int num_anchors,
@@ -174,28 +174,6 @@ template void Proposal(const float *anchor_data, const float *score_data,
                        const float *delta_data, const float *info_data,
                        const VecInt &in_shape, int num_anchors, int feat_stride,
                        int min_size, float *proposal_data);
-
-#elif defined(USE_CL)
-template <typename T>
-void Proposal(const T *anchor_data, const T *score_data, const T *delta_data,
-              const T *info_data, const VecInt &in_shape, int num_anchors,
-              int feat_stride, int min_size, T *proposal_data) {
-  int in_h = in_shape[2], in_w = in_shape[3];
-  int count = in_h * in_w * num_anchors;
-
-  size_t global = count;
-  auto *kernel = Kernel::cl_kernels_["Proposal"];
-  kernel->SetArguments(count, *anchor_data, *score_data, *delta_data,
-                       *info_data, in_h, in_w, num_anchors, feat_stride,
-                       min_size, *proposal_data);
-  kernel->Launch(*Kernel::queue_, {global}, Kernel::event_);
-  Kernel::queue_->Finish();
-}
-
-template void Proposal(const BufferF *anchor_data, const BufferF *score_data,
-                       const BufferF *delta_data, const BufferF *info_data,
-                       const VecInt &in_shape, int num_anchors, int feat_stride,
-                       int min_size, BufferF *proposal_data);
 #endif
 
 }  // namespace Vision

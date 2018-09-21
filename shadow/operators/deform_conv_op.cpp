@@ -61,12 +61,13 @@ void DeformConvOp::Forward() {
       Blas::BlasSgemm(0, 0, num_output_ / group_, out_spatial_dim_, kernel_dim_,
                       1, weight->data(), weight_offset_ * g, col_image_->data(),
                       col_offset_ * g, 0, top->mutable_data(),
-                      b * top_num + output_offset_ * g);
+                      b * top_num + output_offset_ * g, op_ws_->BlasHandle());
     }
     if (bias_term_) {
       Blas::BlasSgemm(0, 0, num_output_, out_spatial_dim_, 1, 1,
                       bottoms<float>(3)->data(), 0, biases_multiplier_->data(),
-                      0, 1, top->mutable_data(), b * top_num);
+                      0, 1, top->mutable_data(), b * top_num,
+                      op_ws_->BlasHandle());
     }
   }
   if (activate_type_ == 1) {
@@ -78,7 +79,7 @@ REGISTER_OPERATOR(DeformConv, DeformConvOp);
 
 namespace Vision {
 
-#if !defined(USE_CUDA) & !defined(USE_CL)
+#if !defined(USE_CUDA)
 inline float deform_im2col_bilinear(const float *bottom_data, int data_width,
                                     int height, int width, float h, float w) {
   auto h_low = static_cast<int>(std::floor(h));
@@ -164,8 +165,6 @@ template void DeformIm2Col(const float *in_data, const VecInt &in_shape,
                            int deform_group, int kernel_size, int stride,
                            int pad, int dilation, int zero_point,
                            const VecInt &out_shape, float *out_data);
-
-#elif defined(USE_CL)
 #endif
 
 }  // namespace Vision

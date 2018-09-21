@@ -8,40 +8,6 @@ namespace Shadow {
 namespace Kernel {
 
 #if defined(USE_CUDA)
-cublasHandle_t cublas_handle_ = nullptr;
-#if defined(USE_CUDNN)
-cudnnHandle_t cudnn_handle_ = nullptr;
-#endif
-
-void Setup(int device_id) {
-  if (cublas_handle_ == nullptr) {
-    CUDA_CHECK(cudaSetDevice(device_id));
-    cublasCreate(&cublas_handle_);
-    CHECK_NOTNULL(cublas_handle_);
-  }
-
-#if defined(USE_CUDNN)
-  if (cudnn_handle_ == nullptr) {
-    CUDNN_CHECK(cudnnCreate(&cudnn_handle_));
-    CHECK_NOTNULL(cudnn_handle_);
-  }
-#endif
-}
-
-void Release() {
-  if (cublas_handle_ != nullptr) {
-    cublasDestroy(cublas_handle_);
-    cublas_handle_ = nullptr;
-  }
-
-#if defined(USE_CUDNN)
-  if (cudnn_handle_ != nullptr) {
-    CUDNN_CHECK(cudnnDestroy(cudnn_handle_));
-    cudnn_handle_ = nullptr;
-  }
-#endif
-}
-
 void Synchronize() { CUDA_CHECK(cudaDeviceSynchronize()); }
 
 template <typename T, typename Dtype>
