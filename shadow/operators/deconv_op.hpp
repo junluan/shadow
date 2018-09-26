@@ -21,6 +21,47 @@ class DeconvOp : public Operator {
     activate_type_ = get_single_argument<int>("type", -1);
     CHECK((activate_type_ == -1 || activate_type_ == 1))
         << "Build in activate only support Relu";
+
+#if defined(USE_CUDNN)
+#if CUDNN_VERSION_MIN(7, 0, 1)
+    use_cudnn_ = true;
+#else
+    use_cudnn_ = group_ == 1;
+#endif
+    if (use_cudnn_) {
+      cudnn::createConvolutionDesc<float>(&conv_desc_);
+      cudnn::createTensorDesc<float>(&bottom_desc_);
+      cudnn::createTensorDesc<float>(&top_desc_);
+      cudnn::createFilterDesc<float>(&filter_desc_);
+      if (bias_term_) {
+        cudnn::createTensorDesc<float>(&bias_desc_);
+      }
+    }
+#endif
+  }
+  ~DeconvOp() override {
+#if defined(USE_CUDNN)
+    if (conv_desc_ != nullptr) {
+      cudnnDestroyConvolutionDescriptor(conv_desc_);
+      conv_desc_ = nullptr;
+    }
+    if (bottom_desc_ != nullptr) {
+      cudnnDestroyTensorDescriptor(bottom_desc_);
+      bottom_desc_ = nullptr;
+    }
+    if (top_desc_ != nullptr) {
+      cudnnDestroyTensorDescriptor(top_desc_);
+      top_desc_ = nullptr;
+    }
+    if (filter_desc_ != nullptr) {
+      cudnnDestroyFilterDescriptor(filter_desc_);
+      filter_desc_ = nullptr;
+    }
+    if (bias_desc_ != nullptr) {
+      cudnnDestroyTensorDescriptor(bias_desc_);
+      bias_desc_ = nullptr;
+    }
+#endif
   }
 
   void Forward() override;
@@ -32,6 +73,19 @@ class DeconvOp : public Operator {
   bool bias_term_, use_cudnn_ = false, use_nnpack_ = false;
 
   BlobF *biases_multiplier_ = nullptr, *col_image_ = nullptr;
+
+#if defined(USE_CUDNN)
+  cudnnConvolutionBwdDataAlgo_t bwd_data_algo_ =
+      CUDNN_CONVOLUTION_BWD_DATA_ALGO_0;
+
+  cudnnConvolutionDescriptor_t conv_desc_ = nullptr;
+  cudnnTensorDescriptor_t bottom_desc_ = nullptr, top_desc_ = nullptr;
+  cudnnFilterDescriptor_t filter_desc_ = nullptr;
+  cudnnTensorDescriptor_t bias_desc_ = nullptr;
+
+  size_t workspace_bwd_size_ = 0;
+  BlobUC *workspace_ = nullptr;
+#endif
 };
 
 static inline int deconv_out_size(int dim, int kernel_size, int stride, int pad,

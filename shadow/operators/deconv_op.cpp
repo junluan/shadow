@@ -40,6 +40,58 @@ void DeconvOp::Forward() {
 
   Blas::Set(top->count(), 0, top->mutable_data(), 0);
 
+#if defined(USE_CUDNN)
+  if (use_cudnn_) {
+    cudnn::setConvolution2dDesc<float>(&conv_desc_, pad_, pad_, stride_,
+                                       stride_, dilation_, dilation_, group_);
+    cudnn::setTensor4dDesc<float>(&bottom_desc_, batch, in_c, in_h, in_w);
+    cudnn::setTensor4dDesc<float>(&top_desc_, batch, num_output_, top_shape[2],
+                                  top_shape[3]);
+    cudnn::setFilter4dDesc<float>(&filter_desc_, conv_out_c, conv_in_c / group_,
+                                  kernel_size_, kernel_size_);
+    if (bias_term_) {
+      cudnn::setTensor4dDesc<float>(&bias_desc_, 1, num_output_, 1, 1);
+    }
+
+    size_t workspace_limit_bytes = group_ == 1 ? 64 * 1024 * 1024 : 0;
+
+    CUDNN_CHECK(cudnnGetConvolutionBackwardDataAlgorithm(
+        cudnnHandle_t(op_ws_->CudnnHandle()), filter_desc_, bottom_desc_,
+        conv_desc_, top_desc_,
+        CUDNN_CONVOLUTION_BWD_DATA_SPECIFY_WORKSPACE_LIMIT,
+        workspace_limit_bytes, &bwd_data_algo_));
+
+    CUDNN_CHECK(cudnnGetConvolutionBackwardDataWorkspaceSize(
+        cudnnHandle_t(op_ws_->CudnnHandle()), filter_desc_, bottom_desc_,
+        conv_desc_, top_desc_, bwd_data_algo_, &workspace_bwd_size_));
+
+    if (workspace_bwd_size_ > 0) {
+      op_ws_->GrowTempBuffer(static_cast<int>(workspace_bwd_size_),
+                             sizeof(unsigned char));
+      workspace_ = op_ws_->CreateTempBlob<unsigned char>(
+          {static_cast<int>(workspace_bwd_size_)}, op_name_ + "_workspace");
+    }
+
+    auto *workspace_ptr =
+        workspace_bwd_size_ > 0 ? workspace_->mutable_data() : nullptr;
+    CUDNN_CHECK(cudnnConvolutionBackwardData(
+        cudnnHandle_t(op_ws_->CudnnHandle()), cudnn::dataType<float>::one,
+        filter_desc_, weight->data(), bottom_desc_, bottom->data(), conv_desc_,
+        bwd_data_algo_, workspace_ptr, workspace_bwd_size_,
+        cudnn::dataType<float>::zero, top_desc_, top->mutable_data()));
+    if (bias_term_) {
+      CUDNN_CHECK(cudnnAddTensor(
+          cudnnHandle_t(op_ws_->CudnnHandle()), cudnn::dataType<float>::one,
+          bias_desc_, bottoms<float>(2)->data(), cudnn::dataType<float>::one,
+          top_desc_, top->mutable_data()));
+    }
+    if (activate_type_ == 1) {
+      Vision::Activate(top->mutable_data(), top->count(), activate_type_);
+    }
+    return;
+  }
+#endif
+
   int temp_count = kernel_dim_ * group_ * conv_out_spatial_dim_;
   if (bias_term_) {
     temp_count += out_spatial_dim_;
