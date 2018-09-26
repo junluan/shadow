@@ -61,11 +61,6 @@ class ConvOp : public Operator {
       cudnnDestroyTensorDescriptor(bias_desc_);
       bias_desc_ = nullptr;
     }
-
-    if (workspace_ != nullptr) {
-      cudaFree(workspace_);
-      workspace_ = nullptr;
-    }
 #endif
   }
 
