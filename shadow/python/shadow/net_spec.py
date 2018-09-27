@@ -246,6 +246,8 @@ class Shadow(object):
             self.set_arg(op_param, 'operation', 1, 's_i')
         elif operation == 'Max':
             self.set_arg(op_param, 'operation', 2, 's_i')
+        elif operation == 'Min':
+            self.set_arg(op_param, 'operation', 3, 's_i')
         else:
             raise ValueError('Unsupported operation type', operation)
         if coeff is not None:

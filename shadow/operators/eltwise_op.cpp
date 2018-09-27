@@ -26,7 +26,7 @@ void EltwiseOp::Forward() {
 
   int count = bottom_0->count();
 
-  // Prod: 0, Sum: 1, Max: 2
+  // Prod: 0, Sum: 1, Max: 2, Min: 3
   switch (operation_) {
     case kProd:
       Blas::Mul(count, bottoms<float>(0)->data(), 0, bottoms<float>(1)->data(),
@@ -48,6 +48,14 @@ void EltwiseOp::Forward() {
                 0, top->mutable_data(), 0);
       for (int n = 2; n < bottoms_size(); ++n) {
         Blas::Max(count, top->data(), 0, bottoms<float>(n)->data(), 0,
+                  top->mutable_data(), 0);
+      }
+      break;
+    case kMin:
+      Blas::Min(count, bottoms<float>(0)->data(), 0, bottoms<float>(1)->data(),
+                0, top->mutable_data(), 0);
+      for (int n = 2; n < bottoms_size(); ++n) {
+        Blas::Min(count, top->data(), 0, bottoms<float>(n)->data(), 0,
                   top->mutable_data(), 0);
       }
       break;
