@@ -13,9 +13,9 @@ if [ "$TRAVIS_OS_NAME" = 'linux' ]; then
         libprotobuf-dev \
         protobuf-compiler
 
-    CUDA_REPO_PKG='cuda-repo-ubuntu1404_8.0.61-1_amd64.deb'
-    CUDA_PKG_VERSION='8-0'
-    CUDA_VERSION='8.0'
+    CUDA_REPO_PKG='cuda-repo-ubuntu1404_10.0.130-1_amd64.deb'
+    CUDA_PKG_VERSION='10-0'
+    CUDA_VERSION='10.0'
     wget "https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1404/x86_64/${CUDA_REPO_PKG}"
     sudo dpkg -i "$CUDA_REPO_PKG"
     rm -f "$CUDA_REPO_PKG"
@@ -30,7 +30,7 @@ if [ "$TRAVIS_OS_NAME" = 'linux' ]; then
     sudo ln -sf /usr/local/cuda-$CUDA_VERSION /usr/local/cuda
 
     CUDNN_REPO_PKG='nvidia-machine-learning-repo-ubuntu1404_4.0-2_amd64.deb'
-    CUDNN_PKG_VERSION='7.2.1.38-1+cuda8.0'
+    CUDNN_PKG_VERSION='7.3.0.29-1+cuda10.0'
     wget "https://developer.download.nvidia.com/compute/machine-learning/repos/ubuntu1404/x86_64/${CUDNN_REPO_PKG}"
     sudo dpkg -i "$CUDNN_REPO_PKG"
     rm -f "$CUDNN_REPO_PKG"
