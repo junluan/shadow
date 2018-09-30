@@ -9,7 +9,7 @@ void ActivateOp::Forward() {
   if (bottom != top) {
     top->reshape(bottom->shape());
     Blas::BlasScopy(bottom->count(), bottom->data(), 0, top->mutable_data(), 0,
-                    op_ws_->BlasHandle());
+                    op_ws_->Ctx()->blas_handle());
   }
 
   // PRelu: 0, Relu: 1, Leaky: 2, Sigmoid: 3, SoftPlus: 4, Tanh: 5

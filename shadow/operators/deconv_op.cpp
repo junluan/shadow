@@ -56,14 +56,15 @@ void DeconvOp::Forward() {
     size_t workspace_limit_bytes = group_ == 1 ? 64 * 1024 * 1024 : 0;
 
     CUDNN_CHECK(cudnnGetConvolutionBackwardDataAlgorithm(
-        cudnnHandle_t(op_ws_->CudnnHandle()), filter_desc_, bottom_desc_,
-        conv_desc_, top_desc_,
+        cudnnHandle_t(op_ws_->Ctx()->cudnn_handle()), filter_desc_,
+        bottom_desc_, conv_desc_, top_desc_,
         CUDNN_CONVOLUTION_BWD_DATA_SPECIFY_WORKSPACE_LIMIT,
         workspace_limit_bytes, &bwd_data_algo_));
 
     CUDNN_CHECK(cudnnGetConvolutionBackwardDataWorkspaceSize(
-        cudnnHandle_t(op_ws_->CudnnHandle()), filter_desc_, bottom_desc_,
-        conv_desc_, top_desc_, bwd_data_algo_, &workspace_bwd_size_));
+        cudnnHandle_t(op_ws_->Ctx()->cudnn_handle()), filter_desc_,
+        bottom_desc_, conv_desc_, top_desc_, bwd_data_algo_,
+        &workspace_bwd_size_));
 
     if (workspace_bwd_size_ > 0) {
       op_ws_->GrowTempBuffer(static_cast<int>(workspace_bwd_size_),
@@ -75,15 +76,16 @@ void DeconvOp::Forward() {
     auto *workspace_ptr =
         workspace_bwd_size_ > 0 ? workspace_->mutable_data() : nullptr;
     CUDNN_CHECK(cudnnConvolutionBackwardData(
-        cudnnHandle_t(op_ws_->CudnnHandle()), cudnn::dataType<float>::one,
-        filter_desc_, weight->data(), bottom_desc_, bottom->data(), conv_desc_,
-        bwd_data_algo_, workspace_ptr, workspace_bwd_size_,
-        cudnn::dataType<float>::zero, top_desc_, top->mutable_data()));
+        cudnnHandle_t(op_ws_->Ctx()->cudnn_handle()),
+        cudnn::dataType<float>::one, filter_desc_, weight->data(), bottom_desc_,
+        bottom->data(), conv_desc_, bwd_data_algo_, workspace_ptr,
+        workspace_bwd_size_, cudnn::dataType<float>::zero, top_desc_,
+        top->mutable_data()));
     if (bias_term_) {
       CUDNN_CHECK(cudnnAddTensor(
-          cudnnHandle_t(op_ws_->CudnnHandle()), cudnn::dataType<float>::one,
-          bias_desc_, bottoms<float>(2)->data(), cudnn::dataType<float>::one,
-          top_desc_, top->mutable_data()));
+          cudnnHandle_t(op_ws_->Ctx()->cudnn_handle()),
+          cudnn::dataType<float>::one, bias_desc_, bottoms<float>(2)->data(),
+          cudnn::dataType<float>::one, top_desc_, top->mutable_data()));
     }
     if (activate_type_ == 1) {
       Vision::Activate(top->mutable_data(), top->count(), activate_type_);
@@ -111,7 +113,7 @@ void DeconvOp::Forward() {
           1, 0, kernel_dim_, conv_out_spatial_dim_, conv_out_c / group_, 1,
           weight->data(), weight_offset_ * g, bottom->data(),
           b * bottom_num + output_offset_ * g, 0, col_image_->mutable_data(),
-          col_offset_ * g, op_ws_->BlasHandle());
+          col_offset_ * g, op_ws_->Ctx()->blas_handle());
     }
     Vision::Col2Im(col_image_->data(), top->shape(), b * top_num, kernel_size_,
                    stride_, pad_, dilation_, bottom->shape(),
@@ -120,7 +122,7 @@ void DeconvOp::Forward() {
       Blas::BlasSgemm(0, 0, num_output_, out_spatial_dim_, 1, 1,
                       bottoms<float>(2)->data(), 0, biases_multiplier_->data(),
                       0, 1, top->mutable_data(), b * top_num,
-                      op_ws_->BlasHandle());
+                      op_ws_->Ctx()->blas_handle());
     }
   }
   if (activate_type_ == 1) {

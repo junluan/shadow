@@ -55,7 +55,7 @@ void ConvOp::Forward() {
         nnp_algorithm_, nnp_transform_, in_c, out_c, nnp_input_size_, nnp_pad_,
         nnp_kernel_size_, nnp_stride_, bottom->data(), weight->data(),
         bottoms<float>(2)->data(), top->mutable_data(), nullptr, nullptr,
-        nnp_activation_, nullptr, pthreadpool_t(op_ws_->NNPACKHandle()),
+        nnp_activation_, nullptr, pthreadpool_t(op_ws_->Ctx()->nnpack_handle()),
         nullptr);
     CHECK_EQ(nnp_status_success, status);
     return;
@@ -78,13 +78,14 @@ void ConvOp::Forward() {
     size_t workspace_limit_bytes = group_ == 1 ? 64 * 1024 * 1024 : 0;
 
     CUDNN_CHECK(cudnnGetConvolutionForwardAlgorithm(
-        cudnnHandle_t(op_ws_->CudnnHandle()), bottom_desc_, filter_desc_,
-        conv_desc_, top_desc_, CUDNN_CONVOLUTION_FWD_SPECIFY_WORKSPACE_LIMIT,
-        workspace_limit_bytes, &fwd_algo_));
+        cudnnHandle_t(op_ws_->Ctx()->cudnn_handle()), bottom_desc_,
+        filter_desc_, conv_desc_, top_desc_,
+        CUDNN_CONVOLUTION_FWD_SPECIFY_WORKSPACE_LIMIT, workspace_limit_bytes,
+        &fwd_algo_));
 
     CUDNN_CHECK(cudnnGetConvolutionForwardWorkspaceSize(
-        cudnnHandle_t(op_ws_->CudnnHandle()), bottom_desc_, filter_desc_,
-        conv_desc_, top_desc_, fwd_algo_, &workspace_fwd_size_));
+        cudnnHandle_t(op_ws_->Ctx()->cudnn_handle()), bottom_desc_,
+        filter_desc_, conv_desc_, top_desc_, fwd_algo_, &workspace_fwd_size_));
 
     if (workspace_fwd_size_ > 0) {
       op_ws_->GrowTempBuffer(static_cast<int>(workspace_fwd_size_),
@@ -96,15 +97,16 @@ void ConvOp::Forward() {
     auto *workspace_ptr =
         workspace_fwd_size_ > 0 ? workspace_->mutable_data() : nullptr;
     CUDNN_CHECK(cudnnConvolutionForward(
-        cudnnHandle_t(op_ws_->CudnnHandle()), cudnn::dataType<float>::one,
-        bottom_desc_, bottom->data(), filter_desc_, weight->data(), conv_desc_,
-        fwd_algo_, workspace_ptr, workspace_fwd_size_,
-        cudnn::dataType<float>::zero, top_desc_, top->mutable_data()));
+        cudnnHandle_t(op_ws_->Ctx()->cudnn_handle()),
+        cudnn::dataType<float>::one, bottom_desc_, bottom->data(), filter_desc_,
+        weight->data(), conv_desc_, fwd_algo_, workspace_ptr,
+        workspace_fwd_size_, cudnn::dataType<float>::zero, top_desc_,
+        top->mutable_data()));
     if (bias_term_) {
       CUDNN_CHECK(cudnnAddTensor(
-          cudnnHandle_t(op_ws_->CudnnHandle()), cudnn::dataType<float>::one,
-          bias_desc_, bottoms<float>(2)->data(), cudnn::dataType<float>::one,
-          top_desc_, top->mutable_data()));
+          cudnnHandle_t(op_ws_->Ctx()->cudnn_handle()),
+          cudnn::dataType<float>::one, bias_desc_, bottoms<float>(2)->data(),
+          cudnn::dataType<float>::one, top_desc_, top->mutable_data()));
     }
     if (activate_type_ == 1) {
       Vision::Activate(top->mutable_data(), top->count(), activate_type_);
@@ -148,13 +150,13 @@ void ConvOp::Forward() {
                         kernel_dim_, 1, weight->data(), weight_offset_ * g,
                         col_image_->data(), col_offset_ * g, 0,
                         top->mutable_data(), b * top_num + output_offset_ * g,
-                        op_ws_->BlasHandle());
+                        op_ws_->Ctx()->blas_handle());
       }
       if (bias_term_) {
         Blas::BlasSgemm(0, 0, num_output_, out_spatial_dim_, 1, 1,
                         bottoms<float>(2)->data(), 0,
                         biases_multiplier_->data(), 0, 1, top->mutable_data(),
-                        b * top_num, op_ws_->BlasHandle());
+                        b * top_num, op_ws_->Ctx()->blas_handle());
       }
     }
   }

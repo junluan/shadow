@@ -4,9 +4,7 @@
 
 namespace Shadow {
 
-void Network::NetworkImpl::Setup(int device_id) {
-  ws_.CreateContext(device_id);
-}
+void Network::NetworkImpl::Setup(int device_id) { ws_.CreateCtx(device_id); }
 
 void Network::NetworkImpl::LoadModel(const std::string &proto_bin) {
   LoadProtoBin(proto_bin, &net_param_);
@@ -35,6 +33,8 @@ void Network::NetworkImpl::LoadModel(const std::string &proto_str,
 void Network::NetworkImpl::Forward(
     const std::map<std::string, float *> &data_map,
     const std::map<std::string, std::vector<int>> &shape_map) {
+  ws_.Ctx()->SwitchDevice();
+
   if (ops_.empty()) return;
 
   for (const auto &in_map : data_map) {

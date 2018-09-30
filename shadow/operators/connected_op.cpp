@@ -21,15 +21,15 @@ void ConnectedOp::Forward() {
   if (batch == 1) {
     Blas::BlasSgemv(0, num_output_, bottom_num, 1, weight->data(), 0,
                     bottom->data(), 0, 0, top->mutable_data(), 0,
-                    op_ws_->BlasHandle());
+                    op_ws_->Ctx()->blas_handle());
     if (bias_term_) {
       Blas::BlasSaxpy(num_output_, 1, bottoms<float>(2)->data(), 0,
-                      top->mutable_data(), 0, op_ws_->BlasHandle());
+                      top->mutable_data(), 0, op_ws_->Ctx()->blas_handle());
     }
   } else {
     Blas::BlasSgemm(0, transpose_, batch, num_output_, bottom_num, 1,
                     bottom->data(), 0, weight->data(), 0, 0,
-                    top->mutable_data(), 0, op_ws_->BlasHandle());
+                    top->mutable_data(), 0, op_ws_->Ctx()->blas_handle());
     if (bias_term_) {
       op_ws_->GrowTempBuffer(batch, sizeof(float));
       biases_multiplier_ = op_ws_->CreateTempBlob<float>(
@@ -37,7 +37,8 @@ void ConnectedOp::Forward() {
       Blas::Set(batch, 1, biases_multiplier_->mutable_data(), 0);
       Blas::BlasSgemm(0, 0, batch, num_output_, 1, 1,
                       biases_multiplier_->data(), 0, bottoms<float>(2)->data(),
-                      0, 1, top->mutable_data(), 0, op_ws_->BlasHandle());
+                      0, 1, top->mutable_data(), 0,
+                      op_ws_->Ctx()->blas_handle());
     }
   }
 }

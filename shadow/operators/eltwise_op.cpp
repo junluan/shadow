@@ -40,7 +40,7 @@ void EltwiseOp::Forward() {
       Blas::Set(count, 0, top->mutable_data(), 0);
       for (int n = 0; n < bottoms_size(); ++n) {
         Blas::BlasSaxpy(count, coeff[n], bottoms<float>(n)->data(), 0,
-                        top->mutable_data(), 0, op_ws_->BlasHandle());
+                        top->mutable_data(), 0, op_ws_->Ctx()->blas_handle());
       }
       break;
     case kMax:

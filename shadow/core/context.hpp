@@ -10,12 +10,14 @@ class Context {
   ~Context();
 
   void Reset(int device_id);
+  void SwitchDevice();
 
   void* blas_handle();
   void* cudnn_handle();
   void* nnpack_handle();
 
  private:
+  int device_id_ = 0;
   void *cublas_handle_ = nullptr, *cudnn_handle_ = nullptr;
   void *nnpack_handle_ = nullptr;
 

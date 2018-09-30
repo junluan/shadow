@@ -51,23 +51,17 @@ size_t Workspace::GetWorkspaceTempSize() const {
   return blob_temp_->mem_count();
 }
 
-void Workspace::CreateContext(int device_id) {
-  context_.reset(new Context(device_id));
+void Workspace::CreateCtx(int device_id) {
+  if (context_ == nullptr) {
+    context_ = std::make_shared<Context>(device_id);
+  } else {
+    context_->Reset(device_id);
+  }
 }
 
-void *Workspace::BlasHandle() const {
+Context *Workspace::Ctx() {
   CHECK_NOTNULL(context_);
-  return context_->blas_handle();
-}
-
-void *Workspace::CudnnHandle() const {
-  CHECK_NOTNULL(context_);
-  return context_->cudnn_handle();
-}
-
-void *Workspace::NNPACKHandle() const {
-  CHECK_NOTNULL(context_);
-  return context_->nnpack_handle();
+  return context_.get();
 }
 
 void Workspace::ClearBlob(const std::string &blob_type, void *blob) {

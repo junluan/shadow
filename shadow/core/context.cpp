@@ -14,6 +14,12 @@ void Context::Reset(int device_id) {
   Init(device_id);
 }
 
+void Context::SwitchDevice() {
+#if defined(USE_CUDA)
+  CUDA_CHECK(cudaSetDevice(device_id_));
+#endif
+}
+
 void* Context::blas_handle() {
 #if defined(USE_CUDA)
   CHECK_NOTNULL(cublas_handle_);
@@ -42,8 +48,11 @@ void* Context::nnpack_handle() {
 }
 
 void Context::Init(int device_id) {
+  device_id_ = device_id;
+
+  SwitchDevice();
+
 #if defined(USE_CUDA)
-  CUDA_CHECK(cudaSetDevice(device_id));
   if (cublas_handle_ == nullptr) {
     CUBLAS_CHECK(cublasCreate((cublasHandle_t*)&cublas_handle_));
     CHECK_NOTNULL(cublas_handle_);

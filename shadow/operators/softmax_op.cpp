@@ -10,7 +10,7 @@ void SoftmaxOp::Forward() {
   if (bottom != top) {
     top->reshape(bottom->shape());
     Blas::BlasScopy(bottom->count(), bottom->data(), 0, top->mutable_data(), 0,
-                    op_ws_->BlasHandle());
+                    op_ws_->Ctx()->blas_handle());
   }
 
   axis_ = bottom->canonical_index(axis_);
@@ -25,7 +25,7 @@ void SoftmaxOp::Forward() {
                                 inner_num_, 1);
 
   CUDNN_CHECK(cudnnSoftmaxForward(
-      cudnnHandle_t(op_ws_->CudnnHandle()), CUDNN_SOFTMAX_ACCURATE,
+      cudnnHandle_t(op_ws_->Ctx()->cudnn_handle()), CUDNN_SOFTMAX_ACCURATE,
       CUDNN_SOFTMAX_MODE_CHANNEL, cudnn::dataType<float>::one, bottom_desc_,
       bottom->data(), cudnn::dataType<float>::zero, top_desc_,
       top->mutable_data()));

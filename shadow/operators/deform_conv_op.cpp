@@ -61,13 +61,14 @@ void DeformConvOp::Forward() {
       Blas::BlasSgemm(0, 0, num_output_ / group_, out_spatial_dim_, kernel_dim_,
                       1, weight->data(), weight_offset_ * g, col_image_->data(),
                       col_offset_ * g, 0, top->mutable_data(),
-                      b * top_num + output_offset_ * g, op_ws_->BlasHandle());
+                      b * top_num + output_offset_ * g,
+                      op_ws_->Ctx()->blas_handle());
     }
     if (bias_term_) {
       Blas::BlasSgemm(0, 0, num_output_, out_spatial_dim_, 1, 1,
                       bottoms<float>(3)->data(), 0, biases_multiplier_->data(),
                       0, 1, top->mutable_data(), b * top_num,
-                      op_ws_->BlasHandle());
+                      op_ws_->Ctx()->blas_handle());
     }
   }
   if (activate_type_ == 1) {

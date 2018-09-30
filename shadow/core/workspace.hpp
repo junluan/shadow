@@ -96,10 +96,8 @@ class Workspace {
   size_t GetWorkspaceSize() const;
   size_t GetWorkspaceTempSize() const;
 
-  void CreateContext(int device_id);
-  void *BlasHandle() const;
-  void *CudnnHandle() const;
-  void *NNPACKHandle() const;
+  void CreateCtx(int device_id);
+  Context *Ctx();
 
  private:
   void ClearBlob(const std::string &blob_type, void *blob);

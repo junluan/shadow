@@ -41,7 +41,7 @@ void PoolingOp::Forward() {
   cudnn::setTensor4dDesc<float>(&top_desc_, batch, in_c, out_h, out_w);
 
   CUDNN_CHECK(cudnnPoolingForward(
-      cudnnHandle_t(op_ws_->CudnnHandle()), pooling_desc_,
+      cudnnHandle_t(op_ws_->Ctx()->cudnn_handle()), pooling_desc_,
       cudnn::dataType<float>::one, bottom_desc_, bottom->data(),
       cudnn::dataType<float>::zero, top_desc_, top->mutable_data()));
 
