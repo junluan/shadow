@@ -26,7 +26,7 @@ namespace shadow {
   void add_##NAME(const TYPE &value) { NAME##_.push_back(value); }          \
   const TYPE &NAME(int index) const { return NAME##_[index]; }              \
   TYPE *mutable_##NAME(int index) { return &NAME##_[index]; }               \
-  int NAME##_size() const { return NAME##_.size(); }                        \
+  int NAME##_size() const { return static_cast<int>(NAME##_.size()); }      \
   bool has_##NAME() const { return !NAME##_.empty(); }                      \
   void clear_##NAME() { NAME##_.clear(); }
 

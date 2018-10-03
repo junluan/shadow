@@ -24,6 +24,7 @@
 #include <chrono>
 #include <climits>
 #elif defined(_WIN32)
+#pragma warning(disable : 4018 4244 4267 4305 4996)
 #define NOMINMAX
 #include <windows.h>
 #endif

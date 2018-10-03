@@ -168,7 +168,7 @@ inline void json_encode(std::stringstream& out, const shadow::OpParam& t) {
 }
 
 template <typename T>
-struct json_forwarder {
+class json_forwarder {
  public:
   static void encode(std::stringstream& out, const T& t) {
     encode_inner(out, t, has_json_state{}, p_has_json_state{});

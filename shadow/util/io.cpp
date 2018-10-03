@@ -5,6 +5,7 @@
 #if defined(__linux__) || defined(__APPLE__)
 #include <unistd.h>
 #elif defined(_WIN32)
+#pragma warning(disable : 4996)
 #include <io.h>
 #endif
 #include <fcntl.h>

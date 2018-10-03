@@ -2,6 +2,10 @@
 
 #include "log.hpp"
 
+#if defined(_WIN32)
+#pragma warning(disable : 4018)
+#endif
+
 namespace Shadow {
 
 namespace Json {

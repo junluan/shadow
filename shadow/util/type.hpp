@@ -2,6 +2,7 @@
 #define SHADOW_UTIL_TYPE_HPP
 
 #if defined(_WIN32)
+#pragma warning(disable : 4244)
 #define _USE_MATH_DEFINES
 #endif
 
