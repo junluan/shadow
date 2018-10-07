@@ -1,6 +1,6 @@
 include(FindPackageHandleStandardArgs)
 
-set(gRPC_USE_STATIC_LIBS ON)
+set(gRPC_USE_STATIC_LIBS OFF)
 
 set(gRPC_ROOT_DIR ${PROJECT_SOURCE_DIR}/third_party/grpc CACHE PATH "Folder contains gRPC")
 

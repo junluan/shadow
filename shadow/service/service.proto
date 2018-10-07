@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+package shadow;
+
+message Object {
+  float xmin = 1;
+  float ymin = 2;
+  float xmax = 3;
+  float ymax = 4;
+  int32 label = 5;
+  float score = 6;
+}
+
+message Task {
+  string name = 1;
+  repeated float values = 2;
+}
+
+message SetupParam {
+  string method_name = 1;
+  string model_file = 6;
+  string model_param = 7;
+}
+
+message RequestParam {
+  string method_name = 1;
+  string file_path = 6;
+}
+
+message Response {
+  repeated Object objects = 1;
+  repeated Task tasks = 2;
+}
+
+service Inference {
+  rpc Setup(SetupParam) returns (Response) {}
+  rpc Predict(RequestParam) returns (Response) {}
+}
