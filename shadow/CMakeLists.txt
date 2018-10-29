@@ -71,3 +71,16 @@ if (${BUILD_TEST})
   target_link_libraries(test_shadow ${Shadow_LIB} ${GoogleTest_LIBRARIES})
   install(TARGETS test_shadow DESTINATION ${Shadow_INSTALL_BIN_PREFIX})
 endif ()
+
+if (${BUILD_LINT})
+  find_program(ClangFormat "clang-format")
+  if (ClangFormat)
+    set(shadow_src ${shadow_cpu_src} ${shadow_gpu_src}
+                   ${shadow_examples_src}
+                   ${shadow_server_src} ${shadow_client_src}
+                   ${shadow_test_src} ${shadow_tools_src})
+    add_custom_target(shadow_lint ${ClangFormat} -style="Google" -i ${shadow_src})
+  else ()
+    message(WARNING "Could not find clang-format executable")
+  endif ()
+endif ()
