@@ -17,9 +17,8 @@ class Blob {
   explicit Blob(const std::string &name = "") : name_(name) { set_device(); }
   explicit Blob(const VecInt &shape, const std::string &name = "",
                 bool shared = false)
-      : name_(name) {
+      : Blob(name) {
     reshape(shape, shared);
-    set_device();
   }
   ~Blob() { clear(); }
 

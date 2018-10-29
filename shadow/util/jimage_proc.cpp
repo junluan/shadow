@@ -749,9 +749,9 @@ void Canny(const JImage &im_src, JImage *im_canny, float thresh_low,
     if (thresh_high > 0) thresh_high *= thresh_high;
   }
 
-//   0 - the pixel might belong to an edge
-//   1 - the pixel can not belong to an edge
-//   2 - the pixel does belong to an edge
+  // 0 - the pixel might belong to an edge
+  // 1 - the pixel can not belong to an edge
+  // 2 - the pixel does belong to an edge
 
 #define CANNY_SHIFT 15
   const auto TG22 = static_cast<int>(

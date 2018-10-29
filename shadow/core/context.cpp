@@ -22,8 +22,8 @@ void Context::SwitchDevice() {
 
 void* Context::blas_handle() {
 #if defined(USE_CUDA)
-  CHECK_NOTNULL(cublas_handle_);
-  return cublas_handle_;
+  CHECK_NOTNULL(blas_handle_);
+  return blas_handle_;
 #else
   return nullptr;
 #endif
@@ -53,9 +53,9 @@ void Context::Init(int device_id) {
   SwitchDevice();
 
 #if defined(USE_CUDA)
-  if (cublas_handle_ == nullptr) {
-    CUBLAS_CHECK(cublasCreate((cublasHandle_t*)&cublas_handle_));
-    CHECK_NOTNULL(cublas_handle_);
+  if (blas_handle_ == nullptr) {
+    CUBLAS_CHECK(cublasCreate((cublasHandle_t*)&blas_handle_));
+    CHECK_NOTNULL(blas_handle_);
   }
 #endif
 
@@ -77,9 +77,9 @@ void Context::Init(int device_id) {
 
 void Context::Clear() {
 #if defined(USE_CUDA)
-  if (cublas_handle_ != nullptr) {
-    CUBLAS_CHECK(cublasDestroy(cublasHandle_t(cublas_handle_)));
-    cublas_handle_ = nullptr;
+  if (blas_handle_ != nullptr) {
+    CUBLAS_CHECK(cublasDestroy(cublasHandle_t(blas_handle_)));
+    blas_handle_ = nullptr;
   }
 #endif
 

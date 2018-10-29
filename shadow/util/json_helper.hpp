@@ -14,10 +14,9 @@
 
 namespace Shadow {
 
-#define JSON_DICT_ENTRY(out, prefix, T)                               \
-  out << "\"" #T "\":";                                               \
-  json_forwarder<std::decay<decltype((prefix).T)>::type>::encode(out, \
-                                                                 (prefix).T)
+#define JSON_DICT_ENTRY(out, prefix, T) \
+  out << "\"" #T "\":";                 \
+  JsonForwarder<std::decay<decltype((prefix).T)>::type>::encode(out, (prefix).T)
 #define JSON_DICT_ENTRIES2(out, prefix, T1, T2) \
   JSON_DICT_ENTRY(out, prefix, T1);             \
   out << ",";                                   \
@@ -72,7 +71,7 @@ namespace Shadow {
   }
 
 template <typename>
-class json_forwarder;
+class JsonForwarder;
 
 template <typename T>
 inline void json_encode(std::stringstream& out, const T& t) {
@@ -91,7 +90,7 @@ template <typename T>
 inline void json_encode_iterable(std::stringstream& out, const T& t) {
   out << "[";
   for (auto it = t.begin(); it != t.end(); ++it) {
-    json_forwarder<typename std::decay<decltype(*it)>::type>::encode(out, *it);
+    JsonForwarder<typename std::decay<decltype(*it)>::type>::encode(out, *it);
     if (std::next(it) != t.end()) {
       out << ",";
     }
@@ -103,10 +102,10 @@ template <typename T>
 inline void json_encode_map(std::stringstream& out, const T& t) {
   out << "{";
   for (auto it = t.begin(); it != t.end(); ++it) {
-    json_forwarder<typename std::decay<decltype(it->first)>::type>::encode(
+    JsonForwarder<typename std::decay<decltype(it->first)>::type>::encode(
         out, it->first);
     out << ":";
-    json_forwarder<typename std::decay<decltype(it->second)>::type>::encode(
+    JsonForwarder<typename std::decay<decltype(it->second)>::type>::encode(
         out, it->second);
     if (std::next(it) != t.end()) {
       out << ",";
@@ -168,7 +167,7 @@ inline void json_encode(std::stringstream& out, const shadow::OpParam& t) {
 }
 
 template <typename T>
-class json_forwarder {
+class JsonForwarder {
  public:
   static void encode(std::stringstream& out, const T& t) {
     encode_inner(out, t, has_json_state{}, p_has_json_state{});

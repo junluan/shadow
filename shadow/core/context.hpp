@@ -18,8 +18,9 @@ class Context {
 
  private:
   int device_id_ = 0;
-  void *cublas_handle_ = nullptr, *cudnn_handle_ = nullptr;
-  void *nnpack_handle_ = nullptr;
+  void* blas_handle_ = nullptr;
+  void* cudnn_handle_ = nullptr;
+  void* nnpack_handle_ = nullptr;
 
   void Init(int device_id);
   void Clear();

@@ -1,5 +1,5 @@
-#ifndef SHADOW_CORE_FACTORY_HPP
-#define SHADOW_CORE_FACTORY_HPP
+#ifndef SHADOW_CORE_REGISTRY_HPP
+#define SHADOW_CORE_REGISTRY_HPP
 
 #include "common.hpp"
 
@@ -10,7 +10,7 @@
 
 namespace Shadow {
 
-template <class SrcType, class ObjectType, class... Args>
+template <typename SrcType, typename ObjectType, typename... Args>
 class Registry {
  public:
   using Creator = std::function<ObjectType*(Args...)>;
@@ -68,7 +68,7 @@ class Registry {
   DISABLE_COPY_AND_ASSIGN(Registry);
 };
 
-template <class SrcType, class ObjectType, class... Args>
+template <typename SrcType, typename ObjectType, typename... Args>
 class Register {
  public:
   Register(const SrcType& key, Registry<SrcType, ObjectType, Args...>* registry,
@@ -77,7 +77,7 @@ class Register {
     registry->Register(key, creator, help_msg);
   }
 
-  template <class DerivedType>
+  template <typename DerivedType>
   static ObjectType* DefaultCreator(Args... args) {
     return static_cast<ObjectType*>(new DerivedType(args...));
   }
@@ -131,4 +131,4 @@ class Register {
 
 }  // namespace Shadow
 
-#endif  // SHADOW_CORE_FACTORY_HPP
+#endif  // SHADOW_CORE_REGISTRY_HPP
