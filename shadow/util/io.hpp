@@ -25,12 +25,16 @@ bool ReadProtoFromTextFile(const std::string& proto_file, Message* proto);
 
 bool ReadProtoFromBinaryFile(const std::string& proto_file, Message* proto);
 
+bool ReadProtoFromArray(const void* proto_data, int proto_size, Message* proto);
+
 void WriteProtoToText(const Message& proto, std::string* proto_text);
 
 void WriteProtoToTextFile(const Message& proto, const std::string& proto_file);
 
 void WriteProtoToBinaryFile(const Message& proto,
                             const std::string& proto_file);
+
+void WriteProtoToArray(const Message& proto, void* proto_data);
 
 #if defined(SUPPORT_JSON)
 void WriteProtoToJsonText(const Message& proto, std::string* json_text,

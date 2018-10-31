@@ -29,6 +29,7 @@ namespace IO {
 
 #if defined(USE_Protobuf)
 using google::protobuf::TextFormat;
+using google::protobuf::io::ArrayInputStream;
 using google::protobuf::io::CodedInputStream;
 using google::protobuf::io::CodedOutputStream;
 using google::protobuf::io::FileInputStream;
@@ -57,13 +58,26 @@ bool ReadProtoFromBinaryFile(const std::string& proto_file, Message* proto) {
   int fd = open(proto_file.c_str(), O_RDONLY);
 #endif
   CHECK_NE(fd, -1) << "File not found: " << proto_file;
-  auto* raw_input = new FileInputStream(fd);
-  auto* coded_input = new CodedInputStream(raw_input);
+  auto* file_input = new FileInputStream(fd);
+  auto* coded_input = new CodedInputStream(file_input);
   coded_input->SetTotalBytesLimit(INT_MAX, 1073741824);
-  bool success = proto->ParseFromCodedStream(coded_input);
+  bool success = proto->ParseFromCodedStream(coded_input) &&
+                 coded_input->ConsumedEntireMessage();
   delete coded_input;
-  delete raw_input;
+  delete file_input;
   close(fd);
+  return success;
+}
+
+bool ReadProtoFromArray(const void* proto_data, int proto_size,
+                        Message* proto) {
+  auto* array_input = new ArrayInputStream(proto_data, proto_size);
+  auto* coded_input = new CodedInputStream(array_input);
+  coded_input->SetTotalBytesLimit(INT_MAX, 1073741824);
+  bool success = proto->ParseFromCodedStream(coded_input) &&
+                 coded_input->ConsumedEntireMessage();
+  delete coded_input;
+  delete array_input;
   return success;
 }
 
@@ -74,9 +88,10 @@ void WriteProtoToText(const Message& proto, std::string* proto_text) {
 
 void WriteProtoToTextFile(const Message& proto, const std::string& proto_file) {
   int fd = open(proto_file.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
-  auto* output = new FileOutputStream(fd);
-  CHECK(TextFormat::Print(proto, output)) << "Write proto to text file error!";
-  delete output;
+  auto* file_output = new FileOutputStream(fd);
+  CHECK(TextFormat::Print(proto, file_output))
+      << "Write proto to text file error!";
+  delete file_output;
   close(fd);
 }
 
@@ -85,6 +100,12 @@ void WriteProtoToBinaryFile(const Message& proto,
   std::ofstream file(proto_file,
                      std::ios::out | std::ios::trunc | std::ios::binary);
   CHECK(proto.SerializeToOstream(&file)) << "Write proto to binary file error!";
+}
+
+void WriteProtoToArray(const Message& proto, void* proto_data) {
+  int proto_size = proto.ByteSize();
+  CHECK(proto.SerializeToArray(proto_data, proto_size))
+      << "Write proto to array error!";
 }
 
 #if defined(SUPPORT_JSON)
