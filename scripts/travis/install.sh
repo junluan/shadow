@@ -30,7 +30,7 @@ if [ "$TRAVIS_OS_NAME" = 'linux' ]; then
     sudo ln -sf /usr/local/cuda-$CUDA_VERSION /usr/local/cuda
 
     CUDNN_REPO_PKG='nvidia-machine-learning-repo-ubuntu1404_4.0-2_amd64.deb'
-    CUDNN_PKG_VERSION='7.3.0.29-1+cuda10.0'
+    CUDNN_PKG_VERSION='7.3.1.20-1+cuda10.0'
     wget "https://developer.download.nvidia.com/compute/machine-learning/repos/ubuntu1404/x86_64/${CUDNN_REPO_PKG}"
     sudo dpkg -i "$CUDNN_REPO_PKG"
     rm -f "$CUDNN_REPO_PKG"
@@ -41,7 +41,7 @@ if [ "$TRAVIS_OS_NAME" = 'linux' ]; then
 elif [ "$TRAVIS_OS_NAME" = 'osx' ]; then
     brew update
     pip uninstall -y numpy  # use brew version (opencv dependency)
-    brew install opencv protobuf
+    brew install --force --ignore-dependencies opencv protobuf
 else
     echo "OS \"$TRAVIS_OS_NAME\" is unknown"
     exit 1
