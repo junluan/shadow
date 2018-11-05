@@ -10,45 +10,23 @@ echo "============================================================"
 echo "Building Shadow ... "
 echo "Building directory $SHADOW_BUILD_ROOT"
 echo "============================================================"
-if ! [ -d $SHADOW_BUILD_ROOT ]; then
-  mkdir $SHADOW_BUILD_ROOT
-fi
-cd $SHADOW_BUILD_ROOT
-SHADOW_CMAKE_ARGS=('-DCMAKE_INSTALL_PREFIX=.')
-SHADOW_CMAKE_ARGS+=('-DCMAKE_BUILD_TYPE=Release')
-if [ "$USE_CUDA" = 'true' ]; then
-    SHADOW_CMAKE_ARGS+=('-DUSE_CUDA=ON')
-else
-    SHADOW_CMAKE_ARGS+=('-DUSE_CUDA=OFF')
-fi
-if [ "$USE_CUDNN" = 'true' ]; then
-    SHADOW_CMAKE_ARGS+=('-DUSE_CUDNN=ON')
-else
-    SHADOW_CMAKE_ARGS+=('-DUSE_CUDNN=OFF')
-fi
-if [ "$USE_Eigen" = 'true' ]; then
-    SHADOW_CMAKE_ARGS+=('-DUSE_Eigen=ON')
-else
-    SHADOW_CMAKE_ARGS+=('-DUSE_Eigen=OFF')
-fi
-if [ "$USE_BLAS" = 'true' ]; then
-    SHADOW_CMAKE_ARGS+=('-DUSE_BLAS=ON')
-else
-    SHADOW_CMAKE_ARGS+=('-DUSE_BLAS=OFF')
-fi
-if [ "$USE_NNPACK" = 'true' ]; then
-    SHADOW_CMAKE_ARGS+=('-DUSE_NNPACK=ON')
-else
-    SHADOW_CMAKE_ARGS+=('-DUSE_NNPACK=OFF')
-fi
-if [ "$BUILD_SHARED_LIBS" = 'true' ]; then
-    SHADOW_CMAKE_ARGS+=('-DBUILD_SHARED_LIBS=ON')
-else
-    SHADOW_CMAKE_ARGS+=('-DBUILD_SHARED_LIBS=OFF')
-fi
-cmake .. ${SHADOW_CMAKE_ARGS[*]}
-if [ "$TRAVIS_OS_NAME" = 'linux' ]; then
-    make "-j$(nproc)" install
-elif [ "$TRAVIS_OS_NAME" = 'osx' ]; then
-    make "-j$(sysctl -n hw.ncpu)" install
+
+mkdir -p $SHADOW_BUILD_ROOT && cd $SHADOW_BUILD_ROOT
+
+CMAKE_ARGS=()
+CMAKE_ARGS+=("-DCMAKE_INSTALL_PREFIX=$SHADOW_BUILD_ROOT")
+CMAKE_ARGS+=("-DCMAKE_BUILD_TYPE=Release")
+CMAKE_ARGS+=("-DUSE_CUDA=$USE_CUDA")
+CMAKE_ARGS+=("-DUSE_CUDNN=$USE_CUDNN")
+CMAKE_ARGS+=("-DUSE_Eigen=$USE_Eigen")
+CMAKE_ARGS+=("-DUSE_BLAS=$USE_BLAS")
+CMAKE_ARGS+=("-DUSE_NNPACK=$USE_NNPACK")
+CMAKE_ARGS+=("-DBUILD_SHARED_LIBS=$BUILD_SHARED_LIBS")
+
+cmake .. ${CMAKE_ARGS[*]}
+
+if [ "$TRAVIS_OS_NAME" = "linux" ]; then
+    cmake --build . --target install -- "-j$(nproc)"
+elif [ "$TRAVIS_OS_NAME" = "osx" ]; then
+    cmake --build . --target install -- "-j$(sysctl -n hw.ncpu)"
 fi
