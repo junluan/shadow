@@ -1,26 +1,28 @@
 set(main_arch 30)
-set(known_archs 20 21 30 35 50 52 60 61)
-set(known_archs7 20 21 30 35 50 52)
+set(known_archs 20 21 30 35 37 50 52 60 61 70 75)
+set(known_archs8 20 21 30 35 37 50 52 60 61)
+set(known_archs9 30 35 37 50 52 60 61 70)
+set(known_archs10 30 35 37 50 52 60 61 70 75)
 
 function (detect_cuda_archs cuda_archs)
   if (NOT CUDA_gpu_detect_output)
     set(__cufile ${PROJECT_BINARY_DIR}/detect_cuda_archs.cu)
 
     file(WRITE ${__cufile} ""
-         "#include <cstdio>\n"
-         "int main()\n"
-         "{\n"
-         "  int count = 0;\n"
-         "  if (cudaSuccess != cudaGetDeviceCount(&count)) return -1;\n"
-         "  if (count == 0) return -1;\n"
-         "  for (int device = 0; device < count; ++device)\n"
-         "  {\n"
-         "    cudaDeviceProp prop;\n"
-         "    if (cudaSuccess == cudaGetDeviceProperties(&prop, device))\n"
-         "      std::printf(\"%d.%d \", prop.major, prop.minor);\n"
-         "  }\n"
-         "  return 0;\n"
-         "}\n")
+      "#include <cuda_runtime.h>\n"
+      "#include <cstdio>\n"
+      "int main() {\n"
+      "  int count = 0;\n"
+      "  if (cudaSuccess != cudaGetDeviceCount(&count)) return -1;\n"
+      "  if (count == 0) return -1;\n"
+      "  for (int device = 0; device < count; ++device) {\n"
+      "    cudaDeviceProp prop;\n"
+      "    if (cudaSuccess == cudaGetDeviceProperties(&prop, device)) {\n"
+      "      std::printf(\"%d.%d \", prop.major, prop.minor);\n"
+      "    }\n"
+      "  }\n"
+      "  return 0;\n"
+      "}\n")
 
     execute_process(COMMAND "${CUDA_NVCC_EXECUTABLE}" "-ccbin=${CUDA_HOST_COMPILER}" ${CUDA_NVCC_FLAGS} "--run" "${__cufile}"
                     WORKING_DIRECTORY "${PROJECT_BINARY_DIR}/CMakeFiles/"
@@ -42,8 +44,12 @@ function (detect_cuda_archs cuda_archs)
 endfunction ()
 
 function (select_nvcc_arch_flags out_variable)
-  if (${CUDA_VERSION} LESS 8.0)
-    set(known_archs ${known_archs7})
+  if (${CUDA_VERSION} GREATER_EQUAL 10.0)
+    set(known_archs ${known_archs10})
+  elseif (${CUDA_VERSION} GREATER_EQUAL 9.0)
+    set(known_archs ${known_archs9})
+  elseif (${CUDA_VERSION} GREATER_EQUAL 8.0)
+    set(known_archs ${known_archs8})
   endif ()
 
   detect_cuda_archs(__cuda_arch)
