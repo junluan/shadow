@@ -26,23 +26,15 @@ bool ArgumentHelper::HasArgument(const std::string& name) const {
   return static_cast<bool>(arg_map_.count(name));
 }
 
-#define INSTANTIATE_GET_SINGLE_ARGUMENT(T, fieldname)                      \
-  template <>                                                              \
-  T ArgumentHelper::GetSingleArgument<T>(const std::string& name,          \
-                                         const T& default_value) const {   \
-    if (arg_map_.count(name) == 0) {                                       \
-      return default_value;                                                \
-    }                                                                      \
-    CHECK(arg_map_.at(name).has_##fieldname());                            \
-    return arg_map_.at(name).fieldname();                                  \
-  }                                                                        \
-  template <>                                                              \
-  bool ArgumentHelper::HasSingleArgumentOfType<T>(const std::string& name) \
-      const {                                                              \
-    if (arg_map_.count(name) == 0) {                                       \
-      return false;                                                        \
-    }                                                                      \
-    return arg_map_.at(name).has_##fieldname();                            \
+#define INSTANTIATE_GET_SINGLE_ARGUMENT(T, fieldname)                    \
+  template <>                                                            \
+  T ArgumentHelper::GetSingleArgument<T>(const std::string& name,        \
+                                         const T& default_value) const { \
+    if (arg_map_.count(name) == 0) {                                     \
+      return default_value;                                              \
+    }                                                                    \
+    CHECK(arg_map_.at(name).has_##fieldname());                          \
+    return arg_map_.at(name).fieldname();                                \
   }
 
 INSTANTIATE_GET_SINGLE_ARGUMENT(float, s_f);

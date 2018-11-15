@@ -11,12 +11,16 @@ Network::Network() {
 
 void Network::Setup(int device_id) { engine_->Setup(device_id); }
 
-void Network::LoadModel(const std::string &proto_bin) {
-  engine_->LoadModel(proto_bin);
-}
-
 void Network::LoadModel(const shadow::NetParam &net_param) {
   engine_->LoadModel(net_param);
+}
+
+void Network::LoadModel(const void *proto_data, int proto_size) {
+  engine_->LoadModel(proto_data, proto_size);
+}
+
+void Network::LoadModel(const std::string &proto_bin) {
+  engine_->LoadModel(proto_bin);
 }
 
 void Network::LoadModel(const std::string &proto_str,
@@ -25,7 +29,7 @@ void Network::LoadModel(const std::string &proto_str,
 }
 
 void Network::LoadModel(const std::string &proto_str,
-                        const float *weights_data) {
+                        const void *weights_data) {
   engine_->LoadModel(proto_str, weights_data);
 }
 
@@ -65,11 +69,6 @@ bool Network::has_argument(const std::string &name) const {
   T Network::get_single_argument<T>(const std::string &name,                \
                                     const T &default_value) const {         \
     return engine_->get_single_argument<T>(name, default_value);            \
-  }                                                                         \
-  template <>                                                               \
-  bool Network::has_single_argument_of_type<T>(const std::string &name)     \
-      const {                                                               \
-    return engine_->has_single_argument_of_type<T>(name);                   \
   }                                                                         \
   template <>                                                               \
   const std::vector<T> Network::get_repeated_argument<T>(                   \

@@ -6,13 +6,18 @@ namespace Shadow {
 
 void Network::NetworkImpl::Setup(int device_id) { ws_.CreateCtx(device_id); }
 
-void Network::NetworkImpl::LoadModel(const std::string &proto_bin) {
-  LoadProtoBin(proto_bin, &net_param_);
+void Network::NetworkImpl::LoadModel(const shadow::NetParam &net_param) {
+  net_param_ = net_param;
   Initial();
 }
 
-void Network::NetworkImpl::LoadModel(const shadow::NetParam &net_param) {
-  net_param_ = net_param;
+void Network::NetworkImpl::LoadModel(const void *proto_data, int proto_size) {
+  LoadProtoData(proto_data, proto_size, &net_param_);
+  Initial();
+}
+
+void Network::NetworkImpl::LoadModel(const std::string &proto_bin) {
+  LoadProtoBin(proto_bin, &net_param_);
   Initial();
 }
 
@@ -24,7 +29,7 @@ void Network::NetworkImpl::LoadModel(const std::string &proto_str,
 }
 
 void Network::NetworkImpl::LoadModel(const std::string &proto_str,
-                                     const float *weights_data) {
+                                     const void *weights_data) {
   LoadProtoStrOrText(proto_str, &net_param_);
   Initial();
   CopyWeights(weights_data);
@@ -77,6 +82,18 @@ void Network::NetworkImpl::Release() {
   DLOG(INFO) << "Release Network!";
 }
 
+void Network::NetworkImpl::LoadProtoData(const void *proto_data, int proto_size,
+                                         shadow::NetParam *net_param) {
+#if defined(USE_Protobuf)
+  CHECK(IO::ReadProtoFromArray(proto_data, proto_size, net_param))
+      << "Error when loading proto array data";
+
+#else
+  LOG(FATAL)
+      << "Unsupported load proto array model, recompiled with USE_Protobuf";
+#endif
+}
+
 void Network::NetworkImpl::LoadProtoBin(const std::string &proto_bin,
                                         shadow::NetParam *net_param) {
 #if defined(USE_Protobuf)
@@ -84,7 +101,8 @@ void Network::NetworkImpl::LoadProtoBin(const std::string &proto_bin,
       << "Error when loading proto binary file: " << proto_bin;
 
 #else
-  LOG(FATAL) << "Unsupported load binary model, recompiled with USE_Protobuf";
+  LOG(FATAL)
+      << "Unsupported load proto binary model, recompiled with USE_Protobuf";
 #endif
 }
 
@@ -196,12 +214,32 @@ void Network::NetworkImpl::CopyWeights(
   }
 }
 
-void Network::NetworkImpl::CopyWeights(const float *weights_data) {
+void Network::NetworkImpl::CopyWeights(const void *weights_data) {
   for (const auto &blob : net_param_.blob()) {
-    auto *weight_blob = ws_.GetBlob<float>(blob.name());
-    int blob_count = weight_blob->count();
-    weight_blob->set_data(weights_data, blob_count);
-    weights_data += blob_count;
+    const auto &blob_name = blob.name();
+    const auto &blob_type = ws_.GetBlobType(blob_name);
+    if (blob_type == int_id) {
+      auto *weight_blob = ws_.GetBlob<int>(blob_name);
+      const auto *blob_data_ptr = static_cast<const int *>(weights_data);
+      int blob_count = weight_blob->count();
+      weight_blob->set_data(blob_data_ptr, blob_count);
+      weights_data = blob_data_ptr + blob_count;
+    } else if (blob_type == float_id) {
+      auto *weight_blob = ws_.GetBlob<float>(blob_name);
+      const auto *blob_data_ptr = static_cast<const float *>(weights_data);
+      int blob_count = weight_blob->count();
+      weight_blob->set_data(blob_data_ptr, blob_count);
+      weights_data = blob_data_ptr + blob_count;
+    } else if (blob_type == uchar_id) {
+      auto *weight_blob = ws_.GetBlob<unsigned char>(blob_name);
+      const auto *blob_data_ptr =
+          static_cast<const unsigned char *>(weights_data);
+      int blob_count = weight_blob->count();
+      weight_blob->set_data(blob_data_ptr, blob_count);
+      weights_data = blob_data_ptr + blob_count;
+    } else {
+      LOG(FATAL) << "Unknown blob type " << blob_type;
+    }
   }
 }
 

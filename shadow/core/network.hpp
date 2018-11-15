@@ -16,11 +16,12 @@ class Network {
 
   void Setup(int device_id = 0);
 
-  void LoadModel(const std::string &proto_bin);
   void LoadModel(const shadow::NetParam &net_param);
+  void LoadModel(const void *proto_data, int proto_size);
+  void LoadModel(const std::string &proto_bin);
   void LoadModel(const std::string &proto_str,
                  const std::vector<const void *> &weights);
-  void LoadModel(const std::string &proto_str, const float *weights_data);
+  void LoadModel(const std::string &proto_str, const void *weights_data);
 
   void Forward(const std::map<std::string, float *> &data_map,
                const std::map<std::string, std::vector<int>> &shape_map = {});
@@ -36,8 +37,6 @@ class Network {
   bool has_argument(const std::string &name) const;
   template <typename T>
   T get_single_argument(const std::string &name, const T &default_value) const;
-  template <typename T>
-  bool has_single_argument_of_type(const std::string &name) const;
   template <typename T>
   const std::vector<T> get_repeated_argument(
       const std::string &name, const std::vector<T> &default_value = {}) const;
