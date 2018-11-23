@@ -3,7 +3,7 @@
 namespace Shadow {
 
 void DeformPSROIPoolingOp::Forward() {
-  CHECK_EQ(bottoms_size(), 2);
+  CHECK_GE(bottoms_size(), 2);
 
   const auto *bottom_fea = bottoms<float>(0);
   const auto *bottom_roi = bottoms<float>(1);
