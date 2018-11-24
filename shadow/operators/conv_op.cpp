@@ -109,7 +109,8 @@ void ConvOp::Forward() {
           cudnn::dataType<float>::one, top_desc_, top->mutable_data()));
     }
     if (activate_type_ == 1) {
-      Vision::Activate(top->mutable_data(), top->count(), activate_type_);
+      Vision::Activate(top->data(), top->mutable_data(), top->count(),
+                       activate_type_);
     }
     return;
   }
@@ -161,7 +162,8 @@ void ConvOp::Forward() {
     }
   }
   if (activate_type_ == 1) {
-    Vision::Activate(top->mutable_data(), top->count(), activate_type_);
+    Vision::Activate(top->data(), top->mutable_data(), top->count(),
+                     activate_type_);
   }
 }
 

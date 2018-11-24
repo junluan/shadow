@@ -27,42 +27,47 @@ __device__ float ActivateValue(T x, int type, float slope) {
 }
 
 template <typename T>
-__global__ void KernelActivate(T *data, int count, int type, float slope) {
+__global__ void KernelActivate(const T *in_data, T *out_data, int count,
+                               int type, float slope) {
   CUDA_KERNEL_LOOP(globalid, count) {
-    data[globalid] = ActivateValue(data[globalid], type, slope);
+    out_data[globalid] = ActivateValue(in_data[globalid], type, slope);
   }
 }
 
 template <typename T>
-void Activate(T *data, int count, int type, float slope) {
-  KernelActivate<T><<<GetBlocks(count), NumThreads>>>(data, count, type, slope);
+void Activate(const T *in_data, T *out_data, int count, int type, float slope) {
+  KernelActivate<T>
+      <<<GetBlocks(count), NumThreads>>>(in_data, out_data, count, type, slope);
   CUDA_CHECK(cudaPeekAtLastError());
 }
 
 template <typename T>
-__global__ void KernelPRelu(T *data, int count, int channels, int dim,
-                            int div_factor, const T *slope_data) {
+__global__ void KernelPRelu(const T *in_data, T *out_data, int count,
+                            int channels, int dim, int div_factor,
+                            const T *slope_data) {
   CUDA_KERNEL_LOOP(globalid, count) {
     int c = (globalid / dim) % channels / div_factor;
-    T value = data[globalid];
-    data[globalid] = value > 0 ? value : value * slope_data[c];
+    T value = in_data[globalid];
+    out_data[globalid] = value > 0 ? value : value * slope_data[c];
   }
 }
 
 template <typename T>
-void PRelu(T *data, const VecInt &in_shape, bool channel_shared,
-           const T *slope_data) {
+void PRelu(const T *in_data, T *out_data, const VecInt &in_shape,
+           bool channel_shared, const T *slope_data) {
   int channels = in_shape[1], dim = 1;
   for (int i = 2; i < in_shape.size(); ++i) dim *= in_shape[i];
   int count = in_shape[0] * channels * dim;
   int div_factor = channel_shared ? channels : 1;
-  KernelPRelu<T><<<GetBlocks(count), NumThreads>>>(data, count, channels, dim,
-                                                   div_factor, slope_data);
+  KernelPRelu<T><<<GetBlocks(count), NumThreads>>>(
+      in_data, out_data, count, channels, dim, div_factor, slope_data);
   CUDA_CHECK(cudaPeekAtLastError());
 }
 
-template void Activate(float *data, int count, int type, float slope);
-template void PRelu(float *data, const VecInt &in_shape, bool channel_shared,
+template void Activate(const float *in_data, float *out_data, int count,
+                       int type, float slope);
+template void PRelu(const float *in_data, float *out_data,
+                    const VecInt &in_shape, bool channel_shared,
                     const float *slope_data);
 #endif
 
