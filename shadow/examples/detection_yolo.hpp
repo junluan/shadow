@@ -21,15 +21,17 @@ class DetectionYOLO final : public Method {
  private:
   void Process(const VecFloat &in_data, std::vector<VecBoxF> *Gboxes);
 
-  void ConvertDetections(float *data, float *biases, int classes, int num_km,
-                         int side, float threshold, VecBoxF *boxes);
+  void ConvertDetections(float *data, const float *biases, int out_h, int out_w,
+                         VecBoxF *boxes);
 
   Network net_;
-  VecFloat in_data_, biases_;
-  std::string in_str_, out_str_;
-  int batch_, in_num_, in_c_, in_h_, in_w_, out_num_, out_hw_;
-  int num_classes_, num_km_;
-  float threshold_;
+  VecFloat in_data_;
+  std::vector<VecFloat> biases_;
+  std::string in_str_;
+  VecString out_str_;
+  int batch_, in_num_, in_c_, in_h_, in_w_;
+  int num_classes_, num_km_, version_ = 2;
+  float threshold_, nms_threshold_;
 };
 
 }  // namespace Shadow
