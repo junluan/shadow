@@ -340,6 +340,33 @@ const shadow::OpParam ParseNormalize(const JValue &root) {
   return shadow_op;
 }
 
+const shadow::OpParam ParsePad(const JValue &root) {
+  shadow::OpParam shadow_op;
+
+  ParseCommon(root, &shadow_op);
+
+  std::vector<int> paddings;
+  float value = 0;
+  if (root.HasMember("arg")) {
+    const auto &args = root["arg"];
+    for (int i = 0; i < args.Size(); ++i) {
+      const auto &arg = args[i];
+      CHECK(arg.HasMember("name"));
+      const auto &arg_name = Json::GetString(arg, "name", "");
+      if (arg_name == "paddings") {
+        paddings = Json::GetVecInt(arg, "v_i");
+      } else if (arg_name == "value") {
+        value = Json::GetFloat(arg, "s_f", 0);
+      }
+    }
+  }
+
+  set_v_i(&shadow_op, "paddings", paddings);
+  set_s_f(&shadow_op, "value", value);
+
+  return shadow_op;
+}
+
 const shadow::OpParam ParsePermute(const JValue &root) {
   shadow::OpParam shadow_op;
 
@@ -500,6 +527,35 @@ const shadow::OpParam ParseReshape(const JValue &root) {
   return shadow_op;
 }
 
+const shadow::OpParam ParseResize(const JValue &root) {
+  shadow::OpParam shadow_op;
+
+  ParseCommon(root, &shadow_op);
+
+  int out_h = 0, out_w = 0, type = 1;
+  if (root.HasMember("arg")) {
+    const auto &args = root["arg"];
+    for (int i = 0; i < args.Size(); ++i) {
+      const auto &arg = args[i];
+      CHECK(arg.HasMember("name"));
+      const auto &arg_name = Json::GetString(arg, "name", "");
+      if (arg_name == "out_h") {
+        out_h = Json::GetInt(arg, "s_i", 0);
+      } else if (arg_name == "out_w") {
+        out_w = Json::GetInt(arg, "s_i", 0);
+      } else if (arg_name == "type") {
+        type = Json::GetInt(arg, "s_i", 1);
+      }
+    }
+  }
+
+  set_v_i(&shadow_op, "shape", shape);
+  set_s_i(&shadow_op, "axis", axis);
+  set_s_i(&shadow_op, "num_axes", num_axes);
+
+  return shadow_op;
+}
+
 const shadow::OpParam ParseScale(const JValue &root) {
   shadow::OpParam shadow_op;
 
@@ -647,11 +703,13 @@ static const std::map<std::string, ParseFunc> parse_func_map{
     {"Input", ParseInput},
     {"LRN", ParseLRN},
     {"Normalize", ParseNormalize},
+    {"Pad", ParsePad},
     {"Permute", ParsePermute},
     {"Pooling", ParsePooling},
     {"PriorBox", ParsePriorBox},
     {"Reorg", ParseReorg},
     {"Reshape", ParseReshape},
+    {"Resize", ParseResize},
     {"Scale", ParseScale},
     {"Slice", ParseSlice},
     {"Softmax", ParseSoftmax},
@@ -1062,6 +1120,26 @@ const shadow::OpParam ParseNormalize(const std::vector<std::string> &params) {
   return shadow_op;
 }
 
+const shadow::OpParam ParsePad(const std::vector<std::string> &params) {
+  shadow::OpParam shadow_op;
+
+  const auto &argument = ParseCommon(params, &shadow_op);
+
+  std::vector<int> paddings;
+  float value = 0;
+  if (argument.count("paddings")) {
+    paddings = argument.at("paddings").v_i;
+  }
+  if (argument.count("value")) {
+    value = argument.at("value").s_f;
+  }
+
+  set_v_i(&shadow_op, "paddings", paddings);
+  set_s_f(&shadow_op, "value", value);
+
+  return shadow_op;
+}
+
 const shadow::OpParam ParsePermute(const std::vector<std::string> &params) {
   shadow::OpParam shadow_op;
 
@@ -1195,6 +1273,29 @@ const shadow::OpParam ParseReshape(const std::vector<std::string> &params) {
   return shadow_op;
 }
 
+const shadow::OpParam ParseResize(const std::vector<std::string> &params) {
+  shadow::OpParam shadow_op;
+
+  const auto &argument = ParseCommon(params, &shadow_op);
+
+  int out_h = 0, out_w = 0, type = 1;
+  if (argument.count("out_h")) {
+    out_h = argument.at("out_h").s_i;
+  }
+  if (argument.count("out_w")) {
+    out_w = argument.at("out_w").s_i;
+  }
+  if (argument.count("type")) {
+    type = argument.at("type").s_i;
+  }
+
+  set_s_i(&shadow_op, "out_h", out_h);
+  set_s_i(&shadow_op, "out_w", out_w);
+  set_s_i(&shadow_op, "type", type);
+
+  return shadow_op;
+}
+
 const shadow::OpParam ParseScale(const std::vector<std::string> &params) {
   shadow::OpParam shadow_op;
 
@@ -1308,11 +1409,13 @@ static const std::map<std::string, ParseFunc> parse_func_map{
     {"Input", ParseInput},
     {"LRN", ParseLRN},
     {"Normalize", ParseNormalize},
+    {"Pad", ParsePad},
     {"Permute", ParsePermute},
     {"Pooling", ParsePooling},
     {"PriorBox", ParsePriorBox},
     {"Reorg", ParseReorg},
     {"Reshape", ParseReshape},
+    {"Resize", ParseResize},
     {"Scale", ParseScale},
     {"Slice", ParseSlice},
     {"Softmax", ParseSoftmax},

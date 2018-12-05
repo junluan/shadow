@@ -280,6 +280,13 @@ class Shadow(object):
         self.set_arg(op_param, 'across_spatial', across_spatial, 's_i')
         self.set_arg(op_param, 'channel_shared', channel_shared, 's_i')
 
+    def add_pad(self, name, bottoms, tops, paddings, value=0):
+        op_param = self.net_param.op.add()
+        self.add_common(op_param, name, 'Pad', bottoms, tops)
+
+        self.set_arg(op_param, 'paddings', paddings, 'v_i')
+        self.set_arg(op_param, 'value', value, 's_f')
+
     def add_permute(self, name, bottoms, tops, order=None):
         op_param = self.net_param.op.add()
         self.add_common(op_param, name, 'Permute', bottoms, tops)
@@ -352,6 +359,14 @@ class Shadow(object):
             self.set_arg(op_param, 'shape', shape, 'v_i')
         self.set_arg(op_param, 'axis', axis, 's_i')
         self.set_arg(op_param, 'num_axes', num_axes, 's_i')
+
+    def add_resize(self, name, bottoms, tops, out_h, out_w, type=1):
+        op_param = self.net_param.op.add()
+        self.add_common(op_param, name, 'Resize', bottoms, tops)
+
+        self.set_arg(op_param, 'out_h', out_h, 's_i')
+        self.set_arg(op_param, 'out_w', out_w, 's_i')
+        self.set_arg(op_param, 'type', type, 's_i')
 
     def add_roi_pooling(self, name, bottoms, tops, pooled_h, pooled_w, spatial_scale):
         op_param = self.net_param.op.add()
