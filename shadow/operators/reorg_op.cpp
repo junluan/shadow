@@ -31,19 +31,19 @@ template <typename T>
 void Reorg(const T *in_data, const VecInt &in_shape, int stride, T *out_data) {
   int batch = in_shape[0], in_c = in_shape[1];
   int in_h = in_shape[2], in_w = in_shape[3];
-  int out_c = in_c * stride * stride;
-  int out_h = in_h / stride, out_w = in_w / stride;
+  int out_c = in_c / (stride * stride);
   for (int b = 0; b < batch; ++b) {
-    for (int c = 0; c < out_c; ++c) {
-      for (int h = 0; h < out_h; ++h) {
-        for (int w = 0; w < out_w; ++w) {
-          int c_in = c % in_c;
-          int area = c / in_c;
-          int h_in = h * stride + area / stride;
-          int w_in = w * stride + area % stride;
-          int in_index = ((b * in_c + c_in) * in_h + h_in) * in_w + w_in;
-          int out_index = ((b * out_c + c) * out_h + h) * out_w + w;
-          out_data[out_index] = in_data[in_index];
+    for (int c = 0; c < in_c; ++c) {
+      for (int h = 0; h < in_h; ++h) {
+        for (int w = 0; w < in_w; ++w) {
+          int c2 = c % out_c;
+          int offset = c / out_c;
+          int h2 = h * stride + offset / stride;
+          int w2 = w * stride + offset % stride;
+          int in_index = ((b * in_c + c) * in_h + h) * in_w + w;
+          int out_index =
+              ((b * out_c + c2) * in_h * stride + h2) * in_w * stride + w2;
+          out_data[in_index] = in_data[out_index];
         }
       }
     }
