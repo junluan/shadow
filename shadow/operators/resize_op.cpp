@@ -11,12 +11,26 @@ void ResizeOp::Forward() {
   int in_h = bottom->shape(2), in_w = bottom->shape(3);
 
   if (bottoms_size() > 1) {
-    const auto* size = bottoms<int>(1);
-    CHECK_EQ(size->count(), 2);
-    VecInt size_data(2, 0);
-    size->read_data(size_data.data(), 2);
-    out_h_ = size_data[0], out_w_ = size_data[1];
+    const auto& size_type = bottoms_type(1);
+    if (size_type == int_id) {
+      const auto* size = bottoms<int>(1);
+      CHECK_EQ(size->num_axes(), 1);
+      CHECK_EQ(size->count(), 2);
+      VecInt size_data(2, 0);
+      size->read_data(size_data.data(), 2);
+      out_h_ = size_data[0], out_w_ = size_data[1];
+    } else if (size_type == float_id) {
+      const auto* size = bottoms<float>(1);
+      CHECK_EQ(size->num_axes(), 4);
+      out_h_ = size->shape(2), out_w_ = size->shape(3);
+    }
   }
+
+  if (out_h_ == 0 || out_w_ == 0) {
+    out_h_ = static_cast<int>(in_h * scale_);
+    out_w_ = static_cast<int>(in_w * scale_);
+  }
+
   CHECK_GT(out_h_, 0);
   CHECK_GT(out_w_, 0);
 

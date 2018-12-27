@@ -360,12 +360,13 @@ class Shadow(object):
         self.set_arg(op_param, 'axis', axis, 's_i')
         self.set_arg(op_param, 'num_axes', num_axes, 's_i')
 
-    def add_resize(self, name, bottoms, tops, out_h, out_w, type=1):
+    def add_resize(self, name, bottoms, tops, out_h=0, out_w=0, scale=1, type=1):
         op_param = self.net_param.op.add()
         self.add_common(op_param, name, 'Resize', bottoms, tops)
 
         self.set_arg(op_param, 'out_h', out_h, 's_i')
         self.set_arg(op_param, 'out_w', out_w, 's_i')
+        self.set_arg(op_param, 'scale', scale, 's_f')
         self.set_arg(op_param, 'type', type, 's_i')
 
     def add_roi_pooling(self, name, bottoms, tops, pooled_h, pooled_w, spatial_scale):
