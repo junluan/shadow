@@ -6,7 +6,6 @@ void NormalizeOp::Forward() {
   CHECK_EQ(bottoms_size(), 2);
 
   const auto *bottom = bottoms<float>(0);
-  const auto *scale = bottoms<float>(1);
   auto *top = mutable_tops<float>(0);
 
   int batch = bottom->shape(0), in_c = bottom->shape(1),
@@ -20,7 +19,7 @@ void NormalizeOp::Forward() {
     temp_count += spatial_dim;
     temp_count += in_c;
   }
-  if (!channel_shared_) {
+  if (!channel_shared_ && bottoms_size() > 1) {
     temp_count += spatial_dim;
   }
   op_ws_->GrowTempBuffer(temp_count, sizeof(float));
@@ -33,7 +32,7 @@ void NormalizeOp::Forward() {
     Blas::Set(in_c, 1, sum_channel_multiplier_->mutable_data(), 0);
   }
 
-  if (!channel_shared_) {
+  if (!channel_shared_ && bottoms_size() > 1) {
     sum_spatial_multiplier_ = op_ws_->CreateTempBlob<float>(
         {1, 1, in_h, in_w}, op_name_ + "_sum_spatial_multiplier");
     Blas::Set(spatial_dim, 1, sum_spatial_multiplier_->mutable_data(), 0);
@@ -64,19 +63,24 @@ void NormalizeOp::Forward() {
       Blas::Div(num, bottom->data(), data_offset, buffer_->data(), 0,
                 top->mutable_data(), data_offset);
     }
-    if (channel_shared_) {
-      CHECK_EQ(scale->count(), 1);
-      float scale_data = 1;
-      scale->read_data(&scale_data, 1);
-      Blas::BlasSscal(num, scale_data, top->mutable_data(), data_offset,
-                      op_ws_->Ctx()->blas_handle());
-    } else {
-      CHECK_EQ(scale->count(), in_c);
-      Blas::BlasSgemm(0, 0, in_c, spatial_dim, 1, 1, scale->data(), 0,
-                      sum_spatial_multiplier_->data(), 0, 0,
-                      buffer_->mutable_data(), 0, op_ws_->Ctx()->blas_handle());
-      Blas::Mul(num, top->data(), data_offset, buffer_->data(), 0,
-                top->mutable_data(), data_offset);
+    if (bottoms_size() > 1) {
+      CHECK_EQ(bottoms_size(), 2);
+      const auto *scale = bottoms<float>(1);
+      if (channel_shared_) {
+        CHECK_EQ(scale->count(), 1);
+        float scale_data = 1;
+        scale->read_data(&scale_data, 1);
+        Blas::BlasSscal(num, scale_data, top->mutable_data(), data_offset,
+                        op_ws_->Ctx()->blas_handle());
+      } else {
+        CHECK_EQ(scale->count(), in_c);
+        Blas::BlasSgemm(0, 0, in_c, spatial_dim, 1, 1, scale->data(), 0,
+                        sum_spatial_multiplier_->data(), 0, 0,
+                        buffer_->mutable_data(), 0,
+                        op_ws_->Ctx()->blas_handle());
+        Blas::Mul(num, top->data(), data_offset, buffer_->data(), 0,
+                  top->mutable_data(), data_offset);
+      }
     }
   }
 }
