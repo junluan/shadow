@@ -26,20 +26,20 @@ void NormalizeOp::Forward() {
 
   if (!across_spatial_) {
     norm_ =
-        op_ws_->CreateTempBlob<float>({1, 1, in_h, in_w}, op_name_ + "_norm");
+        op_ws_->CreateTempBlob<float>({1, 1, in_h, in_w}, op_name_ + "/norm");
     sum_channel_multiplier_ = op_ws_->CreateTempBlob<float>(
-        {1, in_c, 1, 1}, op_name_ + "_sum_channel_multiplier");
+        {1, in_c, 1, 1}, op_name_ + "/sum_channel_multiplier");
     Blas::Set(in_c, 1, sum_channel_multiplier_->mutable_data(), 0);
   }
 
   if (!channel_shared_ && bottoms_size() > 1) {
     sum_spatial_multiplier_ = op_ws_->CreateTempBlob<float>(
-        {1, 1, in_h, in_w}, op_name_ + "_sum_spatial_multiplier");
+        {1, 1, in_h, in_w}, op_name_ + "/sum_spatial_multiplier");
     Blas::Set(spatial_dim, 1, sum_spatial_multiplier_->mutable_data(), 0);
   }
 
   buffer_ = op_ws_->CreateTempBlob<float>({1, in_c, in_h, in_w},
-                                          op_name_ + "_buffer");
+                                          op_name_ + "/buffer");
 
   for (int b = 0; b < batch; ++b) {
     int data_offset = b * num;

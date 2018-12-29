@@ -30,16 +30,16 @@ void BatchNormOp::Forward() {
       2 * channels + bottom->count() + batch * channels + batch + spatial_dim;
   op_ws_->GrowTempBuffer(temp_count, sizeof(float));
 
-  mean_ = op_ws_->CreateTempBlob<float>({1, channels}, op_name_ + "_mean");
+  mean_ = op_ws_->CreateTempBlob<float>({1, channels}, op_name_ + "/mean");
   variance_ =
-      op_ws_->CreateTempBlob<float>({1, channels}, op_name_ + "_variance");
-  temp_ = op_ws_->CreateTempBlob<float>(bottom->shape(), op_name_ + "_temp");
+      op_ws_->CreateTempBlob<float>({1, channels}, op_name_ + "/variance");
+  temp_ = op_ws_->CreateTempBlob<float>(bottom->shape(), op_name_ + "/temp");
   batch_by_channel_ = op_ws_->CreateTempBlob<float>(
-      {batch, channels}, op_name_ + "_batch_by_channel");
+      {batch, channels}, op_name_ + "/batch_by_channel");
   sum_batch_multiplier_ = op_ws_->CreateTempBlob<float>(
-      {batch}, op_name_ + "_sum_batch_multiplier");
+      {batch}, op_name_ + "/sum_batch_multiplier");
   sum_spatial_multiplier_ = op_ws_->CreateTempBlob<float>(
-      {1, 1, spatial_dim}, op_name_ + "_sum_spatial_multiplier");
+      {1, 1, spatial_dim}, op_name_ + "/sum_spatial_multiplier");
 
   Blas::Set(batch, 1, sum_batch_multiplier_->mutable_data(), 0);
   Blas::Set(spatial_dim, 1, sum_spatial_multiplier_->mutable_data(), 0);

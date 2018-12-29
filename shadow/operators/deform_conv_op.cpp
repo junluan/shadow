@@ -45,10 +45,10 @@ void DeformConvOp::Forward() {
   }
   op_ws_->GrowTempBuffer(temp_count, sizeof(float));
   col_image_ = op_ws_->CreateTempBlob<float>(
-      {kernel_dim_ * group_, out_spatial_dim_}, op_name_ + "_col_image");
+      {kernel_dim_ * group_, out_spatial_dim_}, op_name_ + "/col_image");
   if (bias_term_) {
     biases_multiplier_ = op_ws_->CreateTempBlob<float>(
-        {out_spatial_dim_}, op_name_ + "_biases_multiplier");
+        {out_spatial_dim_}, op_name_ + "/biases_multiplier");
     Blas::Set(out_spatial_dim_, 1, biases_multiplier_->mutable_data(), 0);
   }
   int top_num = top->num(), bottom_num = bottom->num();

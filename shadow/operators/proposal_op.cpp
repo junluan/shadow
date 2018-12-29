@@ -67,11 +67,11 @@ void ProposalOp::Forward() {
   op_ws_->GrowTempBuffer(temp_count, sizeof(float));
 
   auto *anchors =
-      op_ws_->CreateTempBlob<float>({num_anchors_, 4}, op_name_ + "_anchors");
+      op_ws_->CreateTempBlob<float>({num_anchors_, 4}, op_name_ + "/anchors");
   anchors->set_data(anchors_.data(), anchors->count());
 
   auto *proposals = op_ws_->CreateTempBlob<float>(
-      {in_h * in_w * num_anchors_, 6}, op_name_ + "_proposals");
+      {in_h * in_w * num_anchors_, 6}, op_name_ + "/proposals");
 
   Vision::Proposal(anchors->data(), bottom_score->data(), bottom_delta->data(),
                    bottom_info->data(), bottom_score->shape(), num_anchors_,

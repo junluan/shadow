@@ -30,9 +30,9 @@ void PermuteOp::Forward() {
   op_ws_->GrowTempBuffer(3 * num_axes, sizeof(int));
 
   permute_order_ =
-      op_ws_->CreateTempBlob<int>({num_axes}, op_name_ + "_permute_order");
-  old_steps_ = op_ws_->CreateTempBlob<int>({num_axes}, op_name_ + "_old_steps");
-  new_steps_ = op_ws_->CreateTempBlob<int>({num_axes}, op_name_ + "_new_steps");
+      op_ws_->CreateTempBlob<int>({num_axes}, op_name_ + "/permute_order");
+  old_steps_ = op_ws_->CreateTempBlob<int>({num_axes}, op_name_ + "/old_steps");
+  new_steps_ = op_ws_->CreateTempBlob<int>({num_axes}, op_name_ + "/new_steps");
 
   permute_order_->set_data(permute_order_data_.data(), num_axes);
   old_steps_->set_data(old_steps.data(), num_axes);
