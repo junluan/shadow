@@ -9,14 +9,12 @@ set(INTEL_ROOT_DIR /opt/intel CACHE PATH "Folder contains intel libs")
 find_path(MKL_ROOT_DIR
           NAMES include/mkl.h
           PATHS ${INTEL_ROOT_DIR}/mkl
-          DOC "Folder contains MKL"
           NO_DEFAULT_PATH)
 
 find_path(MKL_INCLUDE_DIRS
           NAMES mkl.h
           PATHS ${MKL_ROOT_DIR}
           PATH_SUFFIXES include include/x86_64 include/x64
-          DOC "MKL include header cblas.h"
           NO_DEFAULT_PATH)
 
 set(__looked_for MKL_ROOT_DIR MKL_INCLUDE_DIRS)

@@ -8,7 +8,6 @@ find_path(RapidJSON_INCLUDE_DIRS
           NAMES document.h
           PATHS ${RapidJSON_DIR}
           PATH_SUFFIXES include include/x86_64 include/x64 include/rapidjson
-          DOC "RapidJSON include header"
           NO_DEFAULT_PATH)
 
 find_package_handle_standard_args(RapidJSON DEFAULT_MSG RapidJSON_INCLUDE_DIRS)

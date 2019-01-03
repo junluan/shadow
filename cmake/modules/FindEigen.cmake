@@ -8,7 +8,6 @@ find_path(Eigen_INCLUDE_DIRS
           NAMES Eigen/Eigen
           PATHS ${Eigen_DIR}
           PATH_SUFFIXES include include/x86_64 include/x64 include/eigen3
-          DOC "Eigen include header"
           NO_DEFAULT_PATH)
 
 find_package_handle_standard_args(Eigen DEFAULT_MSG Eigen_INCLUDE_DIRS)

@@ -8,21 +8,18 @@ find_program(Protoc_EXECUTABLE
              NAMES protoc
              PATHS ${Protobuf_DIR}
              PATH_SUFFIXES bin
-             DOC "Protobuf protoc"
              NO_DEFAULT_PATH)
 
 find_path(Protobuf_INCLUDE_DIRS
           NAMES google/protobuf/message.h
           PATHS ${Protobuf_DIR}
           PATH_SUFFIXES include include/x86_64 include/x64
-          DOC "Protobuf include"
           NO_DEFAULT_PATH)
 
 find_library(Protobuf_LIBRARIES
              NAMES protobuf libprotobuf
              PATHS ${Protobuf_DIR}
              PATH_SUFFIXES lib lib64 lib/x86_64 lib/x86_64-linux-gnu lib/x64 lib/x86
-             DOC "Protobuf library"
              NO_DEFAULT_PATH)
 
 find_package_handle_standard_args(Protobuf DEFAULT_MSG Protobuf_INCLUDE_DIRS Protobuf_LIBRARIES Protoc_EXECUTABLE)

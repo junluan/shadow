@@ -8,13 +8,13 @@ find_path(CUDNN_INCLUDE_DIRS
           NAMES cudnn.h
           PATHS ${CUDNN_DIR}
           PATH_SUFFIXES include include/x86_64 include/x64
-          DOC "CUDNN include header cudnn.h")
+          NO_DEFAULT_PATH)
 
 find_library(CUDNN_LIBRARIES
              NAMES cudnn
              PATHS ${CUDNN_DIR}
              PATH_SUFFIXES lib lib64 lib/x86_64 lib/x64 lib/x86
-             DOC "CUDNN library")
+             NO_DEFAULT_PATH)
 
 find_package_handle_standard_args(CUDNN DEFAULT_MSG CUDNN_INCLUDE_DIRS CUDNN_LIBRARIES)
 

@@ -10,14 +10,12 @@ find_program(gRPC_CPP_PLUGIN
              NAMES grpc_cpp_plugin
              PATHS ${gRPC_DIR}
              PATH_SUFFIXES bin
-             DOC "gRPC cpp plugin"
              NO_DEFAULT_PATH)
 
 find_path(gRPC_INCLUDE_DIRS
           NAMES grpc++/grpc++.h
           PATHS ${gRPC_DIR}
           PATH_SUFFIXES include include/x86_64 include/x64
-          DOC "gRPC include header grpc++.h"
           NO_DEFAULT_PATH)
 
 set(__looked_for gRPC_CPP_PLUGIN gRPC_INCLUDE_DIRS)

@@ -8,14 +8,12 @@ find_path(GoogleTest_INCLUDE_DIRS
           NAMES gtest/gtest.h
           PATHS ${GoogleTest_DIR}
           PATH_SUFFIXES include include/x86_64 include/x64
-          DOC "googletest include header gtest.h"
           NO_DEFAULT_PATH)
 
 find_library(GoogleTest_LIBRARIES
              NAMES gtest
              PATHS ${GoogleTest_DIR}
              PATH_SUFFIXES lib lib64 lib/x86_64 lib/x64 lib/x86
-             DOC "googletest library"
              NO_DEFAULT_PATH)
 
 find_package_handle_standard_args(GoogleTest DEFAULT_MSG GoogleTest_INCLUDE_DIRS GoogleTest_LIBRARIES)
