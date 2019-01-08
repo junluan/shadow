@@ -81,31 +81,29 @@ bool ReadProtoFromArray(const void* proto_data, int proto_size,
   return success;
 }
 
-void WriteProtoToText(const Message& proto, std::string* proto_text) {
-  CHECK(TextFormat::PrintToString(proto, proto_text))
-      << "Write proto to text error!";
+bool WriteProtoToText(const Message& proto, std::string* proto_text) {
+  return TextFormat::PrintToString(proto, proto_text);
 }
 
-void WriteProtoToTextFile(const Message& proto, const std::string& proto_file) {
+bool WriteProtoToTextFile(const Message& proto, const std::string& proto_file) {
   int fd = open(proto_file.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
-  auto* file_output = new FileOutputStream(fd);
-  CHECK(TextFormat::Print(proto, file_output))
-      << "Write proto to text file error!";
-  delete file_output;
+  CHECK_NE(fd, -1) << "File not found: " << proto_file;
+  auto* output = new FileOutputStream(fd);
+  bool success = TextFormat::Print(proto, output);
+  delete output;
   close(fd);
+  return success;
 }
 
-void WriteProtoToBinaryFile(const Message& proto,
+bool WriteProtoToBinaryFile(const Message& proto,
                             const std::string& proto_file) {
   std::ofstream file(proto_file,
                      std::ios::out | std::ios::trunc | std::ios::binary);
-  CHECK(proto.SerializeToOstream(&file)) << "Write proto to binary file error!";
+  return proto.SerializeToOstream(&file);
 }
 
-void WriteProtoToArray(const Message& proto, void* proto_data) {
-  int proto_size = proto.ByteSize();
-  CHECK(proto.SerializeToArray(proto_data, proto_size))
-      << "Write proto to array error!";
+bool WriteProtoToArray(const Message& proto, void* proto_data) {
+  return proto.SerializeToArray(proto_data, proto.ByteSize());
 }
 
 #if defined(SUPPORT_JSON)
@@ -113,13 +111,12 @@ using google::protobuf::util::JsonPrintOptions;
 using google::protobuf::util::MessageToJsonString;
 using google::protobuf::util::Status;
 
-void WriteProtoToJsonText(const Message& proto, std::string* json_text,
+bool WriteProtoToJsonText(const Message& proto, std::string* json_text,
                           bool compact) {
   JsonPrintOptions options;
   options.add_whitespace = !compact;
   options.preserve_proto_field_names = true;
-  CHECK(MessageToJsonString(proto, json_text, options).ok())
-      << "Write proto to json text error!";
+  return MessageToJsonString(proto, json_text, options).ok();
 }
 #endif
 
