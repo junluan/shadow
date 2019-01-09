@@ -135,7 +135,7 @@ cv::Mat JImage::ToMat() const {
     return cv::Mat(h_, w_, CV_8UC1, data_);
   } else if (order_ == kRGB) {
     cv::Mat im_rgb(h_, w_, CV_8UC3, data_), im_bgr;
-    cv::cvtColor(im_rgb, im_bgr, CV_RGB2BGR);
+    cv::cvtColor(im_rgb, im_bgr, cv::COLOR_RGB2BGR);
     return im_bgr;
   } else if (order_ == kBGR) {
     return cv::Mat(h_, w_, CV_8UC3, data_);
