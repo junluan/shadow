@@ -58,6 +58,13 @@ void DemoDetection::BatchTest(const std::string &list_file, bool image_write) {
 }
 
 #if defined(USE_OpenCV)
+#if CV_MAJOR_VERSION >= 4
+#define CV_FOURCC cv::VideoWriter::fourcc
+#define CV_CAP_PROP_FPS cv::CAP_PROP_FPS
+#define CV_CAP_PROP_FRAME_WIDTH cv::CAP_PROP_FRAME_WIDTH
+#define CV_CAP_PROP_FRAME_HEIGHT cv::CAP_PROP_FRAME_HEIGHT
+#endif
+
 void DemoDetection::VideoTest(const std::string &video_file, bool video_show,
                               bool video_write) {
   cv::VideoCapture capture;
@@ -68,7 +75,7 @@ void DemoDetection::VideoTest(const std::string &video_file, bool video_show,
   auto height = static_cast<int>(capture.get(CV_CAP_PROP_FRAME_HEIGHT));
   cv::VideoWriter writer;
   if (video_write) {
-    const auto &out_file = Util::change_extension(video_file, "-result.avi");
+    const auto &out_file = Util::change_extension(video_file, "-result.mp4");
     int format = CV_FOURCC('H', '2', '6', '4');
     writer.open(out_file, format, rate, cv::Size(width, height));
   }
@@ -85,7 +92,7 @@ void DemoDetection::CameraTest(int camera, bool video_write) {
   auto height = static_cast<int>(capture.get(CV_CAP_PROP_FRAME_HEIGHT));
   cv::VideoWriter writer;
   if (video_write) {
-    const auto &out_file = "data/demo-result.avi";
+    const auto &out_file = "data/demo-result.mp4";
     int format = CV_FOURCC('H', '2', '6', '4');
     writer.open(out_file, format, rate, cv::Size(width, height));
   }
