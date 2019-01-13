@@ -1,9 +1,32 @@
-#include "demo_detection.hpp"
+#include "demo_detect.hpp"
+
+#include "detect_faster_rcnn.hpp"
+#include "detect_mtcnn.hpp"
+#include "detect_refinedet.hpp"
+#include "detect_ssd.hpp"
+#include "detect_yolo.hpp"
+
 #include "util/jimage_proc.hpp"
 
 namespace Shadow {
 
-void DemoDetection::Test(const std::string &image_file) {
+DemoDetect::DemoDetect(const std::string &method_name) {
+  if (method_name == "faster") {
+    method_ = std::make_shared<DetectFasterRCNN>();
+  } else if (method_name == "mtcnn") {
+    method_ = std::make_shared<DetectMTCNN>();
+  } else if (method_name == "ssd") {
+    method_ = std::make_shared<DetectSSD>();
+  } else if (method_name == "refinedet") {
+    method_ = std::make_shared<DetectRefineDet>();
+  } else if (method_name == "yolo") {
+    method_ = std::make_shared<DetectYOLO>();
+  } else {
+    LOG(FATAL) << "Unknown method " << method_name;
+  }
+}
+
+void DemoDetect::Test(const std::string &image_file) {
   im_ini_.Read(image_file);
   timer_.start();
   method_->Predict(im_ini_, RectF(0, 0, im_ini_.w_, im_ini_.h_), &boxes_,
@@ -15,7 +38,7 @@ void DemoDetection::Test(const std::string &image_file) {
   im_ini_.Show("result");
 }
 
-void DemoDetection::BatchTest(const std::string &list_file, bool image_write) {
+void DemoDetect::BatchTest(const std::string &list_file, bool image_write) {
   const auto &image_list = Util::load_list(list_file);
   int num_im = static_cast<int>(image_list.size()), count = 0;
   double time_cost = 0;
@@ -51,8 +74,8 @@ void DemoDetection::BatchTest(const std::string &list_file, bool image_write) {
 #define CV_CAP_PROP_FRAME_HEIGHT cv::CAP_PROP_FRAME_HEIGHT
 #endif
 
-void DemoDetection::VideoTest(const std::string &video_file, bool video_show,
-                              bool video_write) {
+void DemoDetect::VideoTest(const std::string &video_file, bool video_show,
+                           bool video_write) {
   cv::VideoCapture capture;
   CHECK(capture.open(video_file))
       << "Error when opening video file " << video_file;
@@ -70,7 +93,7 @@ void DemoDetection::VideoTest(const std::string &video_file, bool video_show,
   writer.release();
 }
 
-void DemoDetection::CameraTest(int camera, bool video_write) {
+void DemoDetect::CameraTest(int camera, bool video_write) {
   cv::VideoCapture capture;
   CHECK(capture.open(camera)) << "Error when opening camera!";
   auto rate = static_cast<float>(capture.get(CV_CAP_PROP_FPS));
@@ -87,9 +110,9 @@ void DemoDetection::CameraTest(int camera, bool video_write) {
   writer.release();
 }
 
-void DemoDetection::CaptureTest(cv::VideoCapture *capture,
-                                const std::string &window_name, bool video_show,
-                                cv::VideoWriter *writer) {
+void DemoDetect::CaptureTest(cv::VideoCapture *capture,
+                             const std::string &window_name, bool video_show,
+                             cv::VideoWriter *writer) {
   if (video_show) {
     cv::namedWindow(window_name, cv::WINDOW_NORMAL);
   }
@@ -128,7 +151,7 @@ void DemoDetection::CaptureTest(cv::VideoCapture *capture,
   }
 }
 
-void DemoDetection::DrawDetections(const VecBoxF &boxes, cv::Mat *im_mat) {
+void DemoDetect::DrawDetections(const VecBoxF &boxes, cv::Mat *im_mat) {
   for (const auto &boxF : boxes) {
     const BoxI box(boxF);
     int color_r = (box.label * 100) % 255;
@@ -141,8 +164,8 @@ void DemoDetection::DrawDetections(const VecBoxF &boxes, cv::Mat *im_mat) {
 }
 #endif
 
-void DemoDetection::DrawDetections(const Shadow::VecBoxF &boxes,
-                                   Shadow::JImage *im_src) {
+void DemoDetect::DrawDetections(const Shadow::VecBoxF &boxes,
+                                Shadow::JImage *im_src) {
   for (const auto &box : boxes_) {
     int color_r = (box.label * 100) % 255;
     int color_g = (color_r + 100) % 255;
@@ -152,7 +175,7 @@ void DemoDetection::DrawDetections(const Shadow::VecBoxF &boxes,
   }
 }
 
-void DemoDetection::PrintConsole(const Shadow::VecBoxF &boxes, bool split) {
+void DemoDetect::PrintConsole(const Shadow::VecBoxF &boxes, bool split) {
   for (const auto &boxF : boxes) {
     const BoxI box(boxF);
     LOG(INFO) << "xmin = " << box.xmin << ", ymin = " << box.ymin
@@ -164,8 +187,8 @@ void DemoDetection::PrintConsole(const Shadow::VecBoxF &boxes, bool split) {
   }
 }
 
-void DemoDetection::PrintStream(const std::string &im_name,
-                                const VecBoxF &boxes, std::ostream *os) {
+void DemoDetect::PrintStream(const std::string &im_name, const VecBoxF &boxes,
+                             std::ostream *os) {
   *os << im_name << ":" << std::endl;
   *os << "objects:" << std::endl;
   for (const auto &boxF : boxes) {

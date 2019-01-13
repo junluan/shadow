@@ -1,13 +1,13 @@
-#ifndef SHADOW_EXAMPLES_DETECTION_YOLO_HPP
-#define SHADOW_EXAMPLES_DETECTION_YOLO_HPP
+#ifndef SHADOW_EXAMPLES_DETECT_YOLO_HPP
+#define SHADOW_EXAMPLES_DETECT_YOLO_HPP
 
 #include "method.hpp"
 
 namespace Shadow {
 
-class DetectionYOLO final : public Method {
+class DetectYOLO final : public Method {
  public:
-  DetectionYOLO() = default;
+  DetectYOLO() = default;
 
   void Setup(const std::string &model_file) override;
 
@@ -36,4 +36,4 @@ class DetectionYOLO final : public Method {
 
 }  // namespace Shadow
 
-#endif  // SHADOW_EXAMPLES_DETECTION_YOLO_HPP
+#endif  // SHADOW_EXAMPLES_DETECT_YOLO_HPP

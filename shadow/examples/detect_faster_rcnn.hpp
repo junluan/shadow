@@ -1,13 +1,13 @@
-#ifndef SHADOW_EXAMPLES_DETECTION_FASTER_RCNN_HPP
-#define SHADOW_EXAMPLES_DETECTION_FASTER_RCNN_HPP
+#ifndef SHADOW_EXAMPLES_DETECT_FASTER_RCNN_HPP
+#define SHADOW_EXAMPLES_DETECT_FASTER_RCNN_HPP
 
 #include "method.hpp"
 
 namespace Shadow {
 
-class DetectionFasterRCNN final : public Method {
+class DetectFasterRCNN final : public Method {
  public:
-  DetectionFasterRCNN() = default;
+  DetectFasterRCNN() = default;
 
   void Setup(const std::string &model_file) override;
 
@@ -37,4 +37,4 @@ class DetectionFasterRCNN final : public Method {
 
 }  // namespace Shadow
 
-#endif  // SHADOW_EXAMPLES_DETECTION_FASTER_RCNN_HPP
+#endif  // SHADOW_EXAMPLES_DETECT_FASTER_RCNN_HPP

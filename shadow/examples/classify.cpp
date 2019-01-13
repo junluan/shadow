@@ -1,8 +1,8 @@
-#include "classification.hpp"
+#include "classify.hpp"
 
 namespace Shadow {
 
-void Classification::Setup(const std::string &model_file) {
+void Classify::Setup(const std::string &model_file) {
   net_.Setup();
 
 #if defined(USE_Protobuf)
@@ -38,24 +38,24 @@ void Classification::Setup(const std::string &model_file) {
   num_classes_ = net_.get_single_argument<int>("num_classes", 1000);
 }
 
-void Classification::Predict(const JImage &im_src, const RectF &roi,
-                             std::map<std::string, VecFloat> *scores) {
+void Classify::Predict(const JImage &im_src, const RectF &roi,
+                       std::map<std::string, VecFloat> *scores) {
   ConvertData(im_src, in_data_.data(), roi, in_c_, in_h_, in_w_);
 
   Process(in_data_, scores);
 }
 
 #if defined(USE_OpenCV)
-void Classification::Predict(const cv::Mat &im_mat, const RectF &roi,
-                             std::map<std::string, VecFloat> *scores) {
+void Classify::Predict(const cv::Mat &im_mat, const RectF &roi,
+                       std::map<std::string, VecFloat> *scores) {
   ConvertData(im_mat, in_data_.data(), roi, in_c_, in_h_, in_w_);
 
   Process(in_data_, scores);
 }
 #endif
 
-void Classification::Process(const VecFloat &in_data,
-                             std::map<std::string, VecFloat> *scores) {
+void Classify::Process(const VecFloat &in_data,
+                       std::map<std::string, VecFloat> *scores) {
   std::map<std::string, float *> data_map;
   data_map[in_str_] = const_cast<float *>(in_data.data());
 

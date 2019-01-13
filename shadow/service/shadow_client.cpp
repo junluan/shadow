@@ -19,7 +19,7 @@ class Client {
     if (method_name_ == "mtcnn" || method_name_ == "ssd" ||
         method_name_ == "refinedet") {
       is_detection_ = true;
-    } else if (method_name_ == "classification") {
+    } else if (method_name_ == "classify") {
       is_detection_ = false;
     } else {
       LOG(FATAL) << "Unknown method " << method_name_;
@@ -95,7 +95,7 @@ int main(int argc, char** argv) {
 
   Shadow::Client client(channel);
 
-  client.Setup("classification", model);
+  client.Setup("classify", model);
   client.Predict(test_image);
 
   return 0;

@@ -1,4 +1,4 @@
-#include "detection_ssd.hpp"
+#include "detect_ssd.hpp"
 
 namespace Shadow {
 
@@ -58,7 +58,7 @@ inline void ApplyNMSFast(const VecBoxF &bboxes, const VecFloat &scores,
   }
 }
 
-void DetectionSSD::Setup(const std::string &model_file) {
+void DetectSSD::Setup(const std::string &model_file) {
   net_.Setup();
 
 #if defined(USE_Protobuf)
@@ -104,8 +104,8 @@ void DetectionSSD::Setup(const std::string &model_file) {
   share_location_ = true;
 }
 
-void DetectionSSD::Predict(const JImage &im_src, const RectF &roi,
-                           VecBoxF *boxes, std::vector<VecPointF> *Gpoints) {
+void DetectSSD::Predict(const JImage &im_src, const RectF &roi, VecBoxF *boxes,
+                        std::vector<VecPointF> *Gpoints) {
   ConvertData(im_src, in_data_.data(), roi, in_c_, in_h_, in_w_);
 
   std::vector<VecBoxF> Gboxes;
@@ -123,8 +123,8 @@ void DetectionSSD::Predict(const JImage &im_src, const RectF &roi,
 }
 
 #if defined(USE_OpenCV)
-void DetectionSSD::Predict(const cv::Mat &im_mat, const RectF &roi,
-                           VecBoxF *boxes, std::vector<VecPointF> *Gpoints) {
+void DetectSSD::Predict(const cv::Mat &im_mat, const RectF &roi, VecBoxF *boxes,
+                        std::vector<VecPointF> *Gpoints) {
   ConvertData(im_mat, in_data_.data(), roi, in_c_, in_h_, in_w_);
 
   std::vector<VecBoxF> Gboxes;
@@ -142,8 +142,7 @@ void DetectionSSD::Predict(const cv::Mat &im_mat, const RectF &roi,
 }
 #endif
 
-void DetectionSSD::Process(const VecFloat &in_data,
-                           std::vector<VecBoxF> *Gboxes) {
+void DetectSSD::Process(const VecFloat &in_data, std::vector<VecBoxF> *Gboxes) {
   std::map<std::string, float *> data_map;
   data_map[in_str_] = const_cast<float *>(in_data.data());
 
@@ -263,10 +262,10 @@ void DetectionSSD::Process(const VecFloat &in_data,
   }
 }
 
-void DetectionSSD::GetLocPredictions(const float *loc_data, int num,
-                                     int num_preds_per_class,
-                                     int num_loc_classes, bool share_location,
-                                     VecLabelBBox *loc_preds) {
+void DetectSSD::GetLocPredictions(const float *loc_data, int num,
+                                  int num_preds_per_class, int num_loc_classes,
+                                  bool share_location,
+                                  VecLabelBBox *loc_preds) {
   loc_preds->resize(num);
   for (auto &label_bbox : *loc_preds) {
     for (int p = 0; p < num_preds_per_class; ++p) {
@@ -286,7 +285,7 @@ void DetectionSSD::GetLocPredictions(const float *loc_data, int num,
   }
 }
 
-void DetectionSSD::GetConfidenceScores(
+void DetectSSD::GetConfidenceScores(
     const float *conf_data, int num, int num_preds_per_class, int num_classes,
     std::vector<std::map<int, VecFloat>> *conf_preds) {
   conf_preds->clear();
@@ -302,9 +301,9 @@ void DetectionSSD::GetConfidenceScores(
   }
 }
 
-void DetectionSSD::GetPriorBBoxes(const float *prior_data, int num_priors,
-                                  VecBoxF *prior_bboxes,
-                                  std::vector<VecFloat> *prior_variances) {
+void DetectSSD::GetPriorBBoxes(const float *prior_data, int num_priors,
+                               VecBoxF *prior_bboxes,
+                               std::vector<VecFloat> *prior_variances) {
   prior_bboxes->clear();
   prior_variances->clear();
   for (int i = 0; i < num_priors; ++i) {
@@ -327,12 +326,12 @@ void DetectionSSD::GetPriorBBoxes(const float *prior_data, int num_priors,
   }
 }
 
-void DetectionSSD::DecodeBBoxesAll(const VecLabelBBox &all_loc_preds,
-                                   const VecBoxF &prior_bboxes,
-                                   const std::vector<VecFloat> &prior_variances,
-                                   int num, bool share_location,
-                                   int num_loc_classes, int background_label_id,
-                                   VecLabelBBox *all_decode_bboxes) {
+void DetectSSD::DecodeBBoxesAll(const VecLabelBBox &all_loc_preds,
+                                const VecBoxF &prior_bboxes,
+                                const std::vector<VecFloat> &prior_variances,
+                                int num, bool share_location,
+                                int num_loc_classes, int background_label_id,
+                                VecLabelBBox *all_decode_bboxes) {
   CHECK_EQ(all_loc_preds.size(), num);
   all_decode_bboxes->clear();
   all_decode_bboxes->resize(num);
@@ -353,9 +352,9 @@ void DetectionSSD::DecodeBBoxesAll(const VecLabelBBox &all_loc_preds,
   }
 }
 
-void DetectionSSD::DecodeBBoxes(const VecBoxF &prior_bboxes,
-                                const std::vector<VecFloat> &prior_variances,
-                                const VecBoxF &bboxes, VecBoxF *decode_bboxes) {
+void DetectSSD::DecodeBBoxes(const VecBoxF &prior_bboxes,
+                             const std::vector<VecFloat> &prior_variances,
+                             const VecBoxF &bboxes, VecBoxF *decode_bboxes) {
   CHECK_EQ(prior_bboxes.size(), prior_variances.size());
   CHECK_EQ(prior_bboxes.size(), bboxes.size());
   size_t num_bboxes = prior_bboxes.size();
@@ -370,9 +369,9 @@ void DetectionSSD::DecodeBBoxes(const VecBoxF &prior_bboxes,
   }
 }
 
-void DetectionSSD::DecodeBBox(const BoxF &prior_bbox,
-                              const VecFloat &prior_variance, const BoxF &bbox,
-                              BoxF *decode_bbox) {
+void DetectSSD::DecodeBBox(const BoxF &prior_bbox,
+                           const VecFloat &prior_variance, const BoxF &bbox,
+                           BoxF *decode_bbox) {
   float prior_width = prior_bbox.xmax - prior_bbox.xmin;
   CHECK_GT(prior_width, 0);
   float prior_height = prior_bbox.ymax - prior_bbox.ymin;

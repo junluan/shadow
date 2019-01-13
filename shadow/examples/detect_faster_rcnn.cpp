@@ -1,8 +1,8 @@
-#include "detection_faster_rcnn.hpp"
+#include "detect_faster_rcnn.hpp"
 
 namespace Shadow {
 
-void DetectionFasterRCNN::Setup(const std::string &model_file) {
+void DetectFasterRCNN::Setup(const std::string &model_file) {
   net_.Setup();
 
 #if defined(USE_Protobuf)
@@ -39,9 +39,9 @@ void DetectionFasterRCNN::Setup(const std::string &model_file) {
   class_agnostic_ = net_.get_single_argument<bool>("class_agnostic", false);
 }
 
-void DetectionFasterRCNN::Predict(const JImage &im_src, const RectF &roi,
-                                  VecBoxF *boxes,
-                                  std::vector<VecPointF> *Gpoints) {
+void DetectFasterRCNN::Predict(const JImage &im_src, const RectF &roi,
+                               VecBoxF *boxes,
+                               std::vector<VecPointF> *Gpoints) {
   float crop_h = roi.h <= 1 ? roi.h * im_src.h_ : roi.h;
   float crop_w = roi.w <= 1 ? roi.w * im_src.w_ : roi.w;
   CalculateScales(crop_h, crop_w, max_side_, min_side_, &scales_);
@@ -61,9 +61,9 @@ void DetectionFasterRCNN::Predict(const JImage &im_src, const RectF &roi,
 }
 
 #if defined(USE_OpenCV)
-void DetectionFasterRCNN::Predict(const cv::Mat &im_mat, const RectF &roi,
-                                  VecBoxF *boxes,
-                                  std::vector<VecPointF> *Gpoints) {
+void DetectFasterRCNN::Predict(const cv::Mat &im_mat, const RectF &roi,
+                               VecBoxF *boxes,
+                               std::vector<VecPointF> *Gpoints) {
   float crop_h = roi.h <= 1 ? roi.h * im_mat.rows : roi.h;
   float crop_w = roi.w <= 1 ? roi.w * im_mat.cols : roi.w;
   CalculateScales(crop_h, crop_w, max_side_, min_side_, &scales_);
@@ -83,10 +83,9 @@ void DetectionFasterRCNN::Predict(const cv::Mat &im_mat, const RectF &roi,
 }
 #endif
 
-void DetectionFasterRCNN::Process(const VecFloat &in_data,
-                                  const VecInt &in_shape,
-                                  const VecFloat &im_info, float height,
-                                  float width, VecBoxF *boxes) {
+void DetectFasterRCNN::Process(const VecFloat &in_data, const VecInt &in_shape,
+                               const VecFloat &im_info, float height,
+                               float width, VecBoxF *boxes) {
   std::map<std::string, float *> data_map;
   std::map<std::string, VecInt> shape_map;
   data_map[in_str_] = const_cast<float *>(in_data.data());
@@ -160,10 +159,9 @@ void DetectionFasterRCNN::Process(const VecFloat &in_data,
   *boxes = Boxes::NMS(*boxes, nms_threshold_);
 }
 
-void DetectionFasterRCNN::CalculateScales(float height, float width,
-                                          float max_side,
-                                          const VecFloat &min_side,
-                                          VecFloat *scales) {
+void DetectFasterRCNN::CalculateScales(float height, float width,
+                                       float max_side, const VecFloat &min_side,
+                                       VecFloat *scales) {
   scales->clear();
   float pr_min = std::min(height, width), pr_max = std::max(height, width);
   for (const auto side : min_side) {

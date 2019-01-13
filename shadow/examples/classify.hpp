@@ -1,13 +1,13 @@
-#ifndef SHADOW_EXAMPLES_CLASSIFICATION_HPP
-#define SHADOW_EXAMPLES_CLASSIFICATION_HPP
+#ifndef SHADOW_EXAMPLES_CLASSIFY_HPP
+#define SHADOW_EXAMPLES_CLASSIFY_HPP
 
 #include "method.hpp"
 
 namespace Shadow {
 
-class Classification final : public Method {
+class Classify final : public Method {
  public:
-  Classification() = default;
+  Classify() = default;
 
   void Setup(const std::string &model_file) override;
 
@@ -30,4 +30,4 @@ class Classification final : public Method {
 
 }  // namespace Shadow
 
-#endif  // SHADOW_EXAMPLES_CLASSIFICATION_HPP
+#endif  // SHADOW_EXAMPLES_CLASSIFY_HPP

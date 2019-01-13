@@ -1,8 +1,8 @@
-#include "detection_yolo.hpp"
+#include "detect_yolo.hpp"
 
 namespace Shadow {
 
-void DetectionYOLO::Setup(const std::string &model_file) {
+void DetectYOLO::Setup(const std::string &model_file) {
   net_.Setup();
 
 #if defined(USE_Protobuf)
@@ -51,8 +51,8 @@ void DetectionYOLO::Setup(const std::string &model_file) {
   CHECK_EQ(out_str_.size(), biases_.size());
 }
 
-void DetectionYOLO::Predict(const JImage &im_src, const RectF &roi,
-                            VecBoxF *boxes, std::vector<VecPointF> *Gpoints) {
+void DetectYOLO::Predict(const JImage &im_src, const RectF &roi, VecBoxF *boxes,
+                         std::vector<VecPointF> *Gpoints) {
   ConvertData(im_src, in_data_.data(), roi, in_c_, in_h_, in_w_, 0);
 
   std::vector<VecBoxF> Gboxes;
@@ -70,8 +70,8 @@ void DetectionYOLO::Predict(const JImage &im_src, const RectF &roi,
 }
 
 #if defined(USE_OpenCV)
-void DetectionYOLO::Predict(const cv::Mat &im_mat, const RectF &roi,
-                            VecBoxF *boxes, std::vector<VecPointF> *Gpoints) {
+void DetectYOLO::Predict(const cv::Mat &im_mat, const RectF &roi,
+                         VecBoxF *boxes, std::vector<VecPointF> *Gpoints) {
   ConvertData(im_mat, in_data_.data(), roi, in_c_, in_h_, in_w_, 0);
 
   std::vector<VecBoxF> Gboxes;
@@ -89,8 +89,8 @@ void DetectionYOLO::Predict(const cv::Mat &im_mat, const RectF &roi,
 }
 #endif
 
-void DetectionYOLO::Process(const VecFloat &in_data,
-                            std::vector<VecBoxF> *Gboxes) {
+void DetectYOLO::Process(const VecFloat &in_data,
+                         std::vector<VecBoxF> *Gboxes) {
   std::map<std::string, float *> data_map;
   data_map[in_str_] = const_cast<float *>(in_data.data());
 
@@ -196,8 +196,8 @@ inline void ConvertBoxes(int version, const float *data, const float *biases,
   }
 }
 
-void DetectionYOLO::ConvertDetections(float *data, const float *biases,
-                                      int out_h, int out_w, VecBoxF *boxes) {
+void DetectYOLO::ConvertDetections(float *data, const float *biases, int out_h,
+                                   int out_w, VecBoxF *boxes) {
   ActivateSoftmax(version_, data, num_classes_, num_km_, out_h, out_w);
   ConvertBoxes(version_, data, biases, num_classes_, num_km_, in_h_, in_w_,
                out_h, out_w, threshold_, boxes);

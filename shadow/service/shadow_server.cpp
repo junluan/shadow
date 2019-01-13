@@ -2,12 +2,12 @@
 
 #include "service.grpc.pb.h"
 
-#include "examples/classification.hpp"
-#include "examples/detection_faster_rcnn.hpp"
-#include "examples/detection_mtcnn.hpp"
-#include "examples/detection_refinedet.hpp"
-#include "examples/detection_ssd.hpp"
-#include "examples/detection_yolo.hpp"
+#include "examples/classify.hpp"
+#include "examples/detect_faster_rcnn.hpp"
+#include "examples/detect_mtcnn.hpp"
+#include "examples/detect_refinedet.hpp"
+#include "examples/detect_ssd.hpp"
+#include "examples/detect_yolo.hpp"
 
 #include <memory>
 
@@ -20,19 +20,19 @@ class Server final : public shadow::Inference::Service {
                      shadow::Response *response) override {
     is_detection_ = true;
     method_name_ = setup_param->method_name();
-    if (method_name_ == "classification") {
-      method_ = std::make_shared<Classification>();
+    if (method_name_ == "classify") {
+      method_ = std::make_shared<Classify>();
       is_detection_ = false;
     } else if (method_name_ == "faster") {
-      method_ = std::make_shared<DetectionFasterRCNN>();
+      method_ = std::make_shared<DetectFasterRCNN>();
     } else if (method_name_ == "mtcnn") {
-      method_ = std::make_shared<DetectionMTCNN>();
+      method_ = std::make_shared<DetectMTCNN>();
     } else if (method_name_ == "ssd") {
-      method_ = std::make_shared<DetectionSSD>();
+      method_ = std::make_shared<DetectSSD>();
     } else if (method_name_ == "refinedet") {
-      method_ = std::make_shared<DetectionRefineDet>();
+      method_ = std::make_shared<DetectRefineDet>();
     } else if (method_name_ == "yolo") {
-      method_ = std::make_shared<DetectionYOLO>();
+      method_ = std::make_shared<DetectYOLO>();
     } else {
       LOG(FATAL) << "Unknown method " << method_name_;
     }

@@ -1,5 +1,5 @@
-#ifndef SHADOW_EXAMPLES_DETECTION_MTCNN_HPP
-#define SHADOW_EXAMPLES_DETECTION_MTCNN_HPP
+#ifndef SHADOW_EXAMPLES_DETECT_MTCNN_HPP
+#define SHADOW_EXAMPLES_DETECT_MTCNN_HPP
 
 #include "method.hpp"
 
@@ -12,9 +12,9 @@ struct BoxInfo {
 
 using VecBoxInfo = std::vector<BoxInfo>;
 
-class DetectionMTCNN final : public Method {
+class DetectMTCNN final : public Method {
  public:
-  DetectionMTCNN() = default;
+  DetectMTCNN() = default;
 
   void Setup(const std::string &model_file) override;
 
@@ -56,4 +56,4 @@ class DetectionMTCNN final : public Method {
 
 }  // namespace Shadow
 
-#endif  // SHADOW_EXAMPLES_DETECTION_MTCNN_HPP
+#endif  // SHADOW_EXAMPLES_DETECT_MTCNN_HPP

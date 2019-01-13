@@ -1,4 +1,4 @@
-#include "detection_refinedet.hpp"
+#include "detect_refinedet.hpp"
 
 namespace Shadow {
 
@@ -58,7 +58,7 @@ inline void ApplyNMSFast(const VecBoxF &bboxes, const VecFloat &scores,
   }
 }
 
-void DetectionRefineDet::Setup(const std::string &model_file) {
+void DetectRefineDet::Setup(const std::string &model_file) {
   net_.Setup();
 
 #if defined(USE_Protobuf)
@@ -107,9 +107,8 @@ void DetectionRefineDet::Setup(const std::string &model_file) {
   share_location_ = true;
 }
 
-void DetectionRefineDet::Predict(const JImage &im_src, const RectF &roi,
-                                 VecBoxF *boxes,
-                                 std::vector<VecPointF> *Gpoints) {
+void DetectRefineDet::Predict(const JImage &im_src, const RectF &roi,
+                              VecBoxF *boxes, std::vector<VecPointF> *Gpoints) {
   ConvertData(im_src, in_data_.data(), roi, in_c_, in_h_, in_w_);
 
   std::vector<VecBoxF> Gboxes;
@@ -127,9 +126,8 @@ void DetectionRefineDet::Predict(const JImage &im_src, const RectF &roi,
 }
 
 #if defined(USE_OpenCV)
-void DetectionRefineDet::Predict(const cv::Mat &im_mat, const RectF &roi,
-                                 VecBoxF *boxes,
-                                 std::vector<VecPointF> *Gpoints) {
+void DetectRefineDet::Predict(const cv::Mat &im_mat, const RectF &roi,
+                              VecBoxF *boxes, std::vector<VecPointF> *Gpoints) {
   ConvertData(im_mat, in_data_.data(), roi, in_c_, in_h_, in_w_);
 
   std::vector<VecBoxF> Gboxes;
@@ -147,8 +145,8 @@ void DetectionRefineDet::Predict(const cv::Mat &im_mat, const RectF &roi,
 }
 #endif
 
-void DetectionRefineDet::Process(const VecFloat &in_data,
-                                 std::vector<VecBoxF> *Gboxes) {
+void DetectRefineDet::Process(const VecFloat &in_data,
+                              std::vector<VecBoxF> *Gboxes) {
   std::map<std::string, float *> data_map;
   data_map[in_str_] = const_cast<float *>(in_data.data());
 
@@ -275,11 +273,11 @@ void DetectionRefineDet::Process(const VecFloat &in_data,
   }
 }
 
-void DetectionRefineDet::GetLocPredictions(const float *loc_data, int num,
-                                           int num_preds_per_class,
-                                           int num_loc_classes,
-                                           bool share_location,
-                                           VecLabelBBox *loc_preds) {
+void DetectRefineDet::GetLocPredictions(const float *loc_data, int num,
+                                        int num_preds_per_class,
+                                        int num_loc_classes,
+                                        bool share_location,
+                                        VecLabelBBox *loc_preds) {
   loc_preds->resize(num);
   for (auto &label_bbox : *loc_preds) {
     for (int p = 0; p < num_preds_per_class; ++p) {
@@ -299,7 +297,7 @@ void DetectionRefineDet::GetLocPredictions(const float *loc_data, int num,
   }
 }
 
-void DetectionRefineDet::OSGetConfidenceScores(
+void DetectRefineDet::OSGetConfidenceScores(
     const float *conf_data, const float *arm_conf_data, int num,
     int num_preds_per_class, int num_classes,
     std::vector<std::map<int, VecFloat>> *conf_preds, float objectness_score) {
@@ -327,9 +325,9 @@ void DetectionRefineDet::OSGetConfidenceScores(
   }
 }
 
-void DetectionRefineDet::GetPriorBBoxes(
-    const float *prior_data, int num_priors, VecBoxF *prior_bboxes,
-    std::vector<VecFloat> *prior_variances) {
+void DetectRefineDet::GetPriorBBoxes(const float *prior_data, int num_priors,
+                                     VecBoxF *prior_bboxes,
+                                     std::vector<VecFloat> *prior_variances) {
   prior_bboxes->clear();
   prior_variances->clear();
   for (int i = 0; i < num_priors; ++i) {
@@ -352,7 +350,7 @@ void DetectionRefineDet::GetPriorBBoxes(
   }
 }
 
-void DetectionRefineDet::CasRegDecodeBBoxesAll(
+void DetectRefineDet::CasRegDecodeBBoxesAll(
     const VecLabelBBox &all_loc_preds, const VecBoxF &prior_bboxes,
     const std::vector<VecFloat> &prior_variances, int num, bool share_location,
     int num_loc_classes, int background_label_id,
@@ -382,9 +380,10 @@ void DetectionRefineDet::CasRegDecodeBBoxesAll(
   }
 }
 
-void DetectionRefineDet::DecodeBBoxes(
-    const VecBoxF &prior_bboxes, const std::vector<VecFloat> &prior_variances,
-    const VecBoxF &bboxes, VecBoxF *decode_bboxes) {
+void DetectRefineDet::DecodeBBoxes(const VecBoxF &prior_bboxes,
+                                   const std::vector<VecFloat> &prior_variances,
+                                   const VecBoxF &bboxes,
+                                   VecBoxF *decode_bboxes) {
   CHECK_EQ(prior_bboxes.size(), prior_variances.size());
   CHECK_EQ(prior_bboxes.size(), bboxes.size());
   size_t num_bboxes = prior_bboxes.size();
@@ -399,9 +398,9 @@ void DetectionRefineDet::DecodeBBoxes(
   }
 }
 
-void DetectionRefineDet::DecodeBBox(const BoxF &prior_bbox,
-                                    const VecFloat &prior_variance,
-                                    const BoxF &bbox, BoxF *decode_bbox) {
+void DetectRefineDet::DecodeBBox(const BoxF &prior_bbox,
+                                 const VecFloat &prior_variance,
+                                 const BoxF &bbox, BoxF *decode_bbox) {
   float prior_width = prior_bbox.xmax - prior_bbox.xmin;
   CHECK_GT(prior_width, 0);
   float prior_height = prior_bbox.ymax - prior_bbox.ymin;

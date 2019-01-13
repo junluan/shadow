@@ -1,22 +1,13 @@
-#ifndef SHADOW_EXAMPLES_DEMO_CLASSIFICATION_HPP
-#define SHADOW_EXAMPLES_DEMO_CLASSIFICATION_HPP
+#ifndef SHADOW_EXAMPLES_DEMO_CLASSIFY_HPP
+#define SHADOW_EXAMPLES_DEMO_CLASSIFY_HPP
 
-#include "classification.hpp"
-
-#include <memory>
+#include "method.hpp"
 
 namespace Shadow {
 
-class DemoClassification {
+class DemoClassify {
  public:
-  explicit DemoClassification(
-      const std::string &method_name = "classification") {
-    if (method_name == "classification") {
-      method_ = std::make_shared<Classification>();
-    } else {
-      LOG(FATAL) << "Unknown method " << method_name;
-    }
-  }
+  explicit DemoClassify(const std::string &method_name);
 
   void Setup(const std::string &model_file) { method_->Setup(model_file); }
 
@@ -39,4 +30,4 @@ class DemoClassification {
 
 }  // namespace Shadow
 
-#endif  // SHADOW_EXAMPLES_DEMO_CLASSIFICATION_HPP
+#endif  // SHADOW_EXAMPLES_DEMO_CLASSIFY_HPP

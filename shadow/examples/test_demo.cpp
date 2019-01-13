@@ -1,5 +1,5 @@
-#include "demo_classification.hpp"
-#include "demo_detection.hpp"
+#include "demo_classify.hpp"
+#include "demo_detect.hpp"
 
 int main(int argc, char const *argv[]) {
   std::string model("models/mtcnn/mtcnn_merged.shadowmodel");
@@ -7,7 +7,7 @@ int main(int argc, char const *argv[]) {
   std::string test_list("data/static/demo_list.txt");
   std::string test_video("data/video/demo_tracking.mp4");
 
-  Shadow::DemoDetection demo("mtcnn");
+  Shadow::DemoDetect demo("mtcnn");
   demo.Setup(model);
   demo.Test(test_image);
   //demo.BatchTest(test_list, false);
