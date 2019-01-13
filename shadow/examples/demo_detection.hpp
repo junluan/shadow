@@ -13,7 +13,7 @@ namespace Shadow {
 
 class DemoDetection {
  public:
-  explicit DemoDetection(const std::string &method_name = "ssd") {
+  explicit DemoDetection(const std::string &method_name = "mtcnn") {
     if (method_name == "faster") {
       method_ = std::make_shared<DetectionFasterRCNN>();
     } else if (method_name == "mtcnn") {
@@ -39,31 +39,23 @@ class DemoDetection {
   void CameraTest(int camera, bool video_write = false);
 #endif
 
-  void Predict(const JImage &im_src, const RectF &roi, VecBoxF *boxes,
-               std::vector<VecPointF> *Gpoints) {
-    method_->Predict(im_src, roi, boxes, Gpoints);
-  }
-#if defined(USE_OpenCV)
-  void Predict(const cv::Mat &im_mat, const RectF &roi, VecBoxF *boxes,
-               std::vector<VecPointF> *Gpoints) {
-    method_->Predict(im_mat, roi, boxes, Gpoints);
-  }
-#endif
-
  private:
 #if defined(USE_OpenCV)
   void CaptureTest(cv::VideoCapture *capture, const std::string &window_name,
                    bool video_show, cv::VideoWriter *writer);
-  void DrawDetections(const VecBoxF &boxes, cv::Mat *im_mat,
-                      bool console_show = true);
+  void DrawDetections(const VecBoxF &boxes, cv::Mat *im_mat);
 #endif
 
-  void PrintDetections(const std::string &im_name, const VecBoxF &boxes,
-                       std::ostream *os);
+  void DrawDetections(const VecBoxF &boxes, JImage *im_src);
+
+  void PrintConsole(const VecBoxF &boxes, bool split = false);
+
+  void PrintStream(const std::string &im_name, const VecBoxF &boxes,
+                   std::ostream *os);
 
   std::shared_ptr<Method> method_ = nullptr;
   JImage im_ini_;
-  VecBoxF boxes_, old_boxes_;
+  VecBoxF boxes_;
   std::vector<VecPointF> Gpoints_;
   Timer timer_;
 };

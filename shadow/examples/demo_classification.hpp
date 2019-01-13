@@ -23,21 +23,13 @@ class DemoClassification {
   void Test(const std::string &image_file);
   void BatchTest(const std::string &list_file);
 
-  void Predict(const JImage &im_src, const RectF &roi,
-               std::map<std::string, VecFloat> *scores) {
-    method_->Predict(im_src, roi, scores);
-  }
-#if defined(USE_OpenCV)
-  void Predict(const cv::Mat &im_mat, const RectF &roi,
-               std::map<std::string, VecFloat> *scores) {
-    method_->Predict(im_mat, roi, scores);
-  }
-#endif
-
  private:
-  void PrintDetections(const std::string &im_name,
-                       const std::map<std::string, VecFloat> &scores,
-                       std::ostream *os);
+  void PrintConsole(const std::map<std::string, VecFloat> &scores, int top_k,
+                    bool split = false);
+
+  void PrintStream(const std::string &im_name,
+                   const std::map<std::string, VecFloat> &scores, int top_k,
+                   std::ostream *os);
 
   std::shared_ptr<Method> method_ = nullptr;
   JImage im_ini_;

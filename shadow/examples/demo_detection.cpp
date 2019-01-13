@@ -6,20 +6,12 @@ namespace Shadow {
 void DemoDetection::Test(const std::string &image_file) {
   im_ini_.Read(image_file);
   timer_.start();
-  Predict(im_ini_, RectF(0, 0, im_ini_.w_, im_ini_.h_), &boxes_, &Gpoints_);
+  method_->Predict(im_ini_, RectF(0, 0, im_ini_.w_, im_ini_.h_), &boxes_,
+                   &Gpoints_);
   boxes_ = Boxes::NMS(boxes_, 0.5);
   LOG(INFO) << "Predicted in " << timer_.get_millisecond() << " ms";
-  for (const auto &boxF : boxes_) {
-    const BoxI box(boxF);
-    int color_r = (box.label * 100) % 255;
-    int color_g = (color_r + 100) % 255;
-    int color_b = (color_g + 100) % 255;
-    Scalar scalar(color_r, color_g, color_b);
-    JImageProc::Rectangle(&im_ini_, box.RectInt(), scalar);
-    LOG(INFO) << "xmin = " << box.xmin << ", ymin = " << box.ymin
-              << ", xmax = " << box.xmax << ", ymax = " << box.ymax
-              << ", label = " << box.label << ", score = " << box.score;
-  }
+  PrintConsole(boxes_);
+  DrawDetections(boxes_, &im_ini_);
   im_ini_.Show("result");
 }
 
@@ -34,22 +26,16 @@ void DemoDetection::BatchTest(const std::string &list_file, bool image_write) {
   for (const auto &im_path : image_list) {
     im_ini_.Read(im_path);
     timer_.start();
-    Predict(im_ini_, RectF(0, 0, im_ini_.w_, im_ini_.h_), &boxes_, &Gpoints_);
+    method_->Predict(im_ini_, RectF(0, 0, im_ini_.w_, im_ini_.h_), &boxes_,
+                     &Gpoints_);
     boxes_ = Boxes::NMS(boxes_, 0.5);
     time_cost += timer_.get_millisecond();
+    PrintStream(im_path, boxes_, &file);
     if (image_write) {
       const auto &out_file = Util::find_replace_last(im_path, ".", "-result.");
-      for (const auto &boxF : boxes_) {
-        const BoxI box(boxF);
-        int color_r = (box.label * 100) % 255;
-        int color_g = (color_r + 100) % 255;
-        int color_b = (color_g + 100) % 255;
-        Scalar scalar(color_r, color_g, color_b);
-        JImageProc::Rectangle(&im_ini_, box.RectInt(), scalar);
-      }
+      DrawDetections(boxes_, &im_ini_);
       im_ini_.Write(out_file);
     }
-    PrintDetections(im_path, boxes_, &file);
     process.update(count++, &std::cout);
   }
   file.close();
@@ -113,14 +99,15 @@ void DemoDetection::CaptureTest(cv::VideoCapture *capture,
   std::stringstream ss;
   ss.precision(5);
   while (capture->read(im_mat) && !im_mat.empty()) {
-    im_ini_.FromMat(im_mat);
     timer_.start();
-    Predict(im_ini_, RectF(0, 0, im_ini_.w_, im_ini_.h_), &boxes_, &Gpoints_);
+    method_->Predict(im_mat, RectF(0, 0, im_mat.cols, im_mat.rows), &boxes_,
+                     &Gpoints_);
     boxes_ = Boxes::NMS(boxes_, 0.5);
     time_cost = timer_.get_millisecond();
-    Boxes::Smooth(old_boxes_, &boxes_, 0.3);
-    old_boxes_ = boxes_;
-    DrawDetections(boxes_, &im_mat, true);
+    PrintConsole(boxes_, true);
+    if (writer->isOpened() || video_show) {
+      DrawDetections(boxes_, &im_mat);
+    }
     if (writer->isOpened()) {
       writer->write(im_mat);
     }
@@ -141,8 +128,7 @@ void DemoDetection::CaptureTest(cv::VideoCapture *capture,
   }
 }
 
-void DemoDetection::DrawDetections(const VecBoxF &boxes, cv::Mat *im_mat,
-                                   bool console_show) {
+void DemoDetection::DrawDetections(const VecBoxF &boxes, cv::Mat *im_mat) {
   for (const auto &boxF : boxes) {
     const BoxI box(boxF);
     int color_r = (box.label * 100) % 255;
@@ -151,17 +137,35 @@ void DemoDetection::DrawDetections(const VecBoxF &boxes, cv::Mat *im_mat,
     cv::Scalar scalar(color_b, color_g, color_r);
     cv::rectangle(*im_mat, cv::Point(box.xmin, box.ymin),
                   cv::Point(box.xmax, box.ymax), scalar, 2);
-    if (console_show) {
-      LOG(INFO) << "xmin = " << box.xmin << ", ymin = " << box.ymin
-                << ", xmax = " << box.xmax << ", ymax = " << box.ymax
-                << ", label = " << box.label << ", score = " << box.score;
-    }
   }
 }
 #endif
 
-void DemoDetection::PrintDetections(const std::string &im_name,
-                                    const VecBoxF &boxes, std::ostream *os) {
+void DemoDetection::DrawDetections(const Shadow::VecBoxF &boxes,
+                                   Shadow::JImage *im_src) {
+  for (const auto &box : boxes_) {
+    int color_r = (box.label * 100) % 255;
+    int color_g = (color_r + 100) % 255;
+    int color_b = (color_g + 100) % 255;
+    Scalar scalar(color_r, color_g, color_b);
+    JImageProc::Rectangle(im_src, box.RectInt(), scalar);
+  }
+}
+
+void DemoDetection::PrintConsole(const Shadow::VecBoxF &boxes, bool split) {
+  for (const auto &boxF : boxes) {
+    const BoxI box(boxF);
+    LOG(INFO) << "xmin = " << box.xmin << ", ymin = " << box.ymin
+              << ", xmax = " << box.xmax << ", ymax = " << box.ymax
+              << ", label = " << box.label << ", score = " << box.score;
+  }
+  if (split) {
+    LOG(INFO) << "------------------------------";
+  }
+}
+
+void DemoDetection::PrintStream(const std::string &im_name,
+                                const VecBoxF &boxes, std::ostream *os) {
   *os << im_name << ":" << std::endl;
   *os << "objects:" << std::endl;
   for (const auto &boxF : boxes) {
@@ -169,7 +173,7 @@ void DemoDetection::PrintDetections(const std::string &im_name,
     *os << "   " << box.xmin << " " << box.ymin << " " << box.xmax << " "
         << box.ymax << " " << box.label << " " << box.score << std::endl;
   }
-  *os << "-------------------------" << std::endl;
+  *os << "------------------------------" << std::endl;
 }
 
 }  // namespace Shadow
