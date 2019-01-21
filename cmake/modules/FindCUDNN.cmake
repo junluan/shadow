@@ -2,7 +2,7 @@ include(FindPackageHandleStandardArgs)
 
 set(CUDNN_ROOT_DIR "" CACHE PATH "Folder contains NVIDIA cuDNN")
 
-set(CUDNN_DIR ${CUDNN_ROOT_DIR} ${CUDA_TOOLKIT_ROOT_DIR})
+set(CUDNN_DIR ${CUDNN_ROOT_DIR} ${CUDA_TOOLKIT_ROOT_DIR} /usr /usr/local)
 
 find_path(CUDNN_INCLUDE_DIRS
           NAMES cudnn.h
@@ -13,7 +13,7 @@ find_path(CUDNN_INCLUDE_DIRS
 find_library(CUDNN_LIBRARIES
              NAMES cudnn
              PATHS ${CUDNN_DIR}
-             PATH_SUFFIXES lib lib64 lib/x86_64 lib/x64 lib/x86
+             PATH_SUFFIXES lib lib64 lib/x86_64 lib/x86_64-linux-gnu lib/x64 lib/x86
              NO_DEFAULT_PATH)
 
 find_package_handle_standard_args(CUDNN DEFAULT_MSG CUDNN_INCLUDE_DIRS CUDNN_LIBRARIES)
