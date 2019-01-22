@@ -21,6 +21,53 @@ void BatchNormOp::Forward() {
   int batch = bottom->shape(0), channel = bottom->shape(1),
       spatial_dim = bottom->count(2);
 
+#if defined(USE_CUDNN)
+  if (use_cudnn_) {
+    cudnn::setTensor4dDesc<float>(&bottom_top_desc_, batch, channel,
+                                  bottom->shape(2), bottom->shape(3));
+    cudnn::setTensor4dDesc<float>(&param_desc_, 1, channel, 1, 1);
+
+    op_ws_->GrowTempBuffer(4 * channel, sizeof(float));
+
+    auto *scale_cudnn =
+        op_ws_->CreateTempBlob<float>({1, channel}, op_name_ + "/scale_cudnn");
+    auto *bias_cudnn =
+        op_ws_->CreateTempBlob<float>({1, channel}, op_name_ + "/bias_cudnn");
+    auto *mean_cudnn =
+        op_ws_->CreateTempBlob<float>({1, channel}, op_name_ + "/mean_cudnn");
+    auto *variance_cudnn = op_ws_->CreateTempBlob<float>(
+        {1, channel}, op_name_ + "/variance_cudnn");
+
+    Blas::Set(channel, 1, scale_cudnn->mutable_data(), 0);
+    Blas::Set(channel, 0, bias_cudnn->mutable_data(), 0);
+
+    const auto *mean_cudnn_ptr = bottoms<float>(1)->data(),
+               *variance_cudnn_ptr = bottoms<float>(2)->data();
+    if (bottoms_size() == 4) {
+      float scale = 1;
+      CHECK_EQ(bottoms<float>(3)->count(), 1);
+      bottoms<float>(3)->read_data(&scale, 1);
+      float scale_factor = scale == 0 ? 0 : 1 / scale;
+      Blas::Mul(mean_cudnn->count(), bottoms<float>(1)->data(), 0, scale_factor,
+                mean_cudnn->mutable_data(), 0);
+      Blas::Mul(variance_cudnn->count(), bottoms<float>(2)->data(), 0,
+                scale_factor, variance_cudnn->mutable_data(), 0);
+      mean_cudnn_ptr = mean_cudnn->data();
+      variance_cudnn_ptr = variance_cudnn->data();
+    }
+
+    double eps = eps_ > CUDNN_BN_MIN_EPSILON ? eps_ : CUDNN_BN_MIN_EPSILON;
+    CUDNN_CHECK(cudnnBatchNormalizationForwardInference(
+        cudnnHandle_t(op_ws_->Ctx()->cudnn_handle()), CUDNN_BATCHNORM_SPATIAL,
+        cudnn::dataType<float>::one, cudnn::dataType<float>::zero,
+        bottom_top_desc_, bottom->data(), bottom_top_desc_, top->mutable_data(),
+        param_desc_, scale_cudnn->data(), bias_cudnn->data(), mean_cudnn_ptr,
+        variance_cudnn_ptr, eps));
+
+    return;
+  }
+#endif
+
   int temp_count =
       2 * channel + bottom->count() + batch * channel + batch + spatial_dim;
   op_ws_->GrowTempBuffer(temp_count, sizeof(float));
