@@ -24,8 +24,6 @@ class LRNOp : public Operator {
  private:
   int size_, norm_region_;
   float alpha_, beta_, k_;
-
-  BlobF *scale_ = nullptr;
 };
 
 namespace Vision {

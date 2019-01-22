@@ -9,15 +9,13 @@ class PermuteOp : public Operator {
  public:
   explicit PermuteOp(const shadow::OpParam &op_param, Workspace *ws)
       : Operator(op_param, ws) {
-    permute_order_data_ = get_repeated_argument<int>("order");
+    permute_order_value_ = get_repeated_argument<int>("order");
   }
 
   void Forward() override;
 
  private:
-  VecInt permute_order_data_;
-
-  BlobI *permute_order_ = nullptr, *old_steps_ = nullptr, *new_steps_ = nullptr;
+  VecInt permute_order_value_;
 };
 
 namespace Vision {

@@ -22,8 +22,6 @@ class ScaleOp : public Operator {
   int axis_, scale_dim_, inner_dim_;
   bool has_scale_, has_bias_;
   VecFloat scale_value_, bias_value_;
-
-  BlobF *scale_ = nullptr, *bias_ = nullptr;
 };
 
 namespace Vision {

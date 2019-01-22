@@ -1,5 +1,4 @@
 #include "softmax_op.hpp"
-#include "core/blas.hpp"
 
 namespace Shadow {
 
@@ -15,19 +14,16 @@ void SoftmaxOp::Forward() {
 
   axis_ = bottom->canonical_index(axis_);
 
-  outer_num_ = bottom->count(0, axis_);
-  inner_num_ = bottom->count(axis_ + 1);
+  int outer_num = bottom->count(0, axis_), inner_num = bottom->count(axis_ + 1);
 
 #if defined(USE_CUDNN)
-  cudnn::setTensor4dDesc<float>(&bottom_desc_, outer_num_, bottom->shape(axis_),
-                                inner_num_, 1);
-  cudnn::setTensor4dDesc<float>(&top_desc_, outer_num_, bottom->shape(axis_),
-                                inner_num_, 1);
+  cudnn::setTensor4dDesc<float>(&bottom_top_desc_, outer_num,
+                                bottom->shape(axis_), inner_num, 1);
 
   CUDNN_CHECK(cudnnSoftmaxForward(
       cudnnHandle_t(op_ws_->Ctx()->cudnn_handle()), CUDNN_SOFTMAX_ACCURATE,
-      CUDNN_SOFTMAX_MODE_CHANNEL, cudnn::dataType<float>::one, bottom_desc_,
-      bottom->data(), cudnn::dataType<float>::zero, top_desc_,
+      CUDNN_SOFTMAX_MODE_CHANNEL, cudnn::dataType<float>::one, bottom_top_desc_,
+      bottom->data(), cudnn::dataType<float>::zero, bottom_top_desc_,
       top->mutable_data()));
 
 #else
@@ -38,18 +34,18 @@ void SoftmaxOp::Forward() {
   for (auto dim : scale_shape) temp_count *= dim;
   op_ws_->GrowTempBuffer(temp_count, sizeof(float));
 
-  scale_ = op_ws_->CreateTempBlob<float>(scale_shape, op_name_ + "/scale");
+  auto *scale = op_ws_->CreateTempBlob<float>(scale_shape, op_name_ + "/scale");
 
   int count = bottom->count(), channels = bottom->shape(axis_);
 
-  Blas::ChannelMax(outer_num_, channels, inner_num_, top->data(),
-                   scale_->mutable_data());
-  Blas::ChannelSub(count, outer_num_, channels, inner_num_, scale_->data(),
+  Blas::ChannelMax(outer_num, channels, inner_num, top->data(),
+                   scale->mutable_data());
+  Blas::ChannelSub(count, outer_num, channels, inner_num, scale->data(),
                    top->mutable_data());
   Blas::Exp(count, top->data(), 0, top->mutable_data(), 0);
-  Blas::ChannelSum(outer_num_, channels, inner_num_, top->data(),
-                   scale_->mutable_data());
-  Blas::ChannelDiv(count, outer_num_, channels, inner_num_, scale_->data(),
+  Blas::ChannelSum(outer_num, channels, inner_num, top->data(),
+                   scale->mutable_data());
+  Blas::ChannelDiv(count, outer_num, channels, inner_num, scale->data(),
                    top->mutable_data());
 #endif
 }

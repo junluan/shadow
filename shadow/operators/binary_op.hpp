@@ -26,8 +26,6 @@ class BinaryOp : public Operator {
   int operation_;
   float scalar_data_;
   bool has_scalar_arg_ = false;
-
-  BlobF *scalar_ = nullptr;
 };
 
 }  // namespace Shadow

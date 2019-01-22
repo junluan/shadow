@@ -3,8 +3,6 @@
 namespace Shadow {
 
 void NormalizeOp::Forward() {
-  CHECK_EQ(bottoms_size(), 2);
-
   const auto *bottom = bottoms<float>(0);
   auto *top = mutable_tops<float>(0);
 
@@ -24,43 +22,45 @@ void NormalizeOp::Forward() {
   }
   op_ws_->GrowTempBuffer(temp_count, sizeof(float));
 
+  BlobF *norm = nullptr, *sum_channel_multiplier = nullptr,
+        *sum_spatial_multiplier = nullptr;
   if (!across_spatial_) {
-    norm_ =
+    norm =
         op_ws_->CreateTempBlob<float>({1, 1, in_h, in_w}, op_name_ + "/norm");
-    sum_channel_multiplier_ = op_ws_->CreateTempBlob<float>(
+    sum_channel_multiplier = op_ws_->CreateTempBlob<float>(
         {1, in_c, 1, 1}, op_name_ + "/sum_channel_multiplier");
-    Blas::Set(in_c, 1, sum_channel_multiplier_->mutable_data(), 0);
+    Blas::Set(in_c, 1, sum_channel_multiplier->mutable_data(), 0);
   }
 
   if (!channel_shared_ && bottoms_size() > 1) {
-    sum_spatial_multiplier_ = op_ws_->CreateTempBlob<float>(
+    sum_spatial_multiplier = op_ws_->CreateTempBlob<float>(
         {1, 1, in_h, in_w}, op_name_ + "/sum_spatial_multiplier");
-    Blas::Set(spatial_dim, 1, sum_spatial_multiplier_->mutable_data(), 0);
+    Blas::Set(spatial_dim, 1, sum_spatial_multiplier->mutable_data(), 0);
   }
 
-  buffer_ = op_ws_->CreateTempBlob<float>({1, in_c, in_h, in_w},
-                                          op_name_ + "/buffer");
+  auto *buffer = op_ws_->CreateTempBlob<float>({1, in_c, in_h, in_w},
+                                               op_name_ + "/buffer");
 
   for (int b = 0; b < batch; ++b) {
     int data_offset = b * num;
-    Blas::Square(num, bottom->data(), data_offset, buffer_->mutable_data(), 0);
+    Blas::Square(num, bottom->data(), data_offset, buffer->mutable_data(), 0);
     if (across_spatial_) {
       float sum = 0;
-      Blas::BlasSasum(num, buffer_->data(), 0, &sum,
+      Blas::BlasSasum(num, buffer->data(), 0, &sum,
                       op_ws_->Ctx()->blas_handle());
-      float norm = std::sqrt(sum + EPS);
-      Blas::Mul(num, bottom->data(), data_offset, 1.f / norm,
+      float norm_value = std::sqrt(sum + EPS);
+      Blas::Mul(num, bottom->data(), data_offset, 1.f / norm_value,
                 top->mutable_data(), data_offset);
     } else {
-      Blas::Set(norm_->count(), EPS, norm_->mutable_data(), 0);
-      Blas::BlasSgemv(1, in_c, spatial_dim, 1, buffer_->data(), 0,
-                      sum_channel_multiplier_->data(), 0, 1,
-                      norm_->mutable_data(), 0, op_ws_->Ctx()->blas_handle());
-      Blas::Pow(spatial_dim, norm_->data(), 0, 0.5f, norm_->mutable_data(), 0);
+      Blas::Set(norm->count(), EPS, norm->mutable_data(), 0);
+      Blas::BlasSgemv(1, in_c, spatial_dim, 1, buffer->data(), 0,
+                      sum_channel_multiplier->data(), 0, 1,
+                      norm->mutable_data(), 0, op_ws_->Ctx()->blas_handle());
+      Blas::Pow(spatial_dim, norm->data(), 0, 0.5f, norm->mutable_data(), 0);
       Blas::BlasSgemm(0, 0, in_c, spatial_dim, 1, 1,
-                      sum_channel_multiplier_->data(), 0, norm_->data(), 0, 0,
-                      buffer_->mutable_data(), 0, op_ws_->Ctx()->blas_handle());
-      Blas::Div(num, bottom->data(), data_offset, buffer_->data(), 0,
+                      sum_channel_multiplier->data(), 0, norm->data(), 0, 0,
+                      buffer->mutable_data(), 0, op_ws_->Ctx()->blas_handle());
+      Blas::Div(num, bottom->data(), data_offset, buffer->data(), 0,
                 top->mutable_data(), data_offset);
     }
     if (bottoms_size() > 1) {
@@ -75,10 +75,10 @@ void NormalizeOp::Forward() {
       } else {
         CHECK_EQ(scale->count(), in_c);
         Blas::BlasSgemm(0, 0, in_c, spatial_dim, 1, 1, scale->data(), 0,
-                        sum_spatial_multiplier_->data(), 0, 0,
-                        buffer_->mutable_data(), 0,
+                        sum_spatial_multiplier->data(), 0, 0,
+                        buffer->mutable_data(), 0,
                         op_ws_->Ctx()->blas_handle());
-        Blas::Mul(num, top->data(), data_offset, buffer_->data(), 0,
+        Blas::Mul(num, top->data(), data_offset, buffer->data(), 0,
                   top->mutable_data(), data_offset);
       }
     }

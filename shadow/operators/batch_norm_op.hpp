@@ -18,10 +18,6 @@ class BatchNormOp : public Operator {
  private:
   bool use_global_stats_;
   float eps_;
-
-  BlobF *mean_ = nullptr, *variance_ = nullptr, *temp_ = nullptr;
-  BlobF *batch_by_channel_ = nullptr, *sum_batch_multiplier_ = nullptr,
-        *sum_spatial_multiplier_ = nullptr;
 };
 
 }  // namespace Shadow

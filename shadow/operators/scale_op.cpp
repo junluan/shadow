@@ -10,24 +10,25 @@ void ScaleOp::Forward() {
     top->reshape(bottom->shape());
   }
 
+  BlobF *scale = nullptr, *bias = nullptr;
   if (scale_value_.empty() && bias_value_.empty()) {
     CHECK_GE(bottoms_size(), 2);
     if (has_scale_ && has_bias_) {
       CHECK_EQ(bottoms_size(), 3);
-      scale_ = const_cast<BlobF *>(bottoms<float>(1));
-      bias_ = const_cast<BlobF *>(bottoms<float>(2));
+      scale = const_cast<BlobF *>(bottoms<float>(1));
+      bias = const_cast<BlobF *>(bottoms<float>(2));
     } else if (has_scale_) {
-      scale_ = const_cast<BlobF *>(bottoms<float>(1));
-      op_ws_->GrowTempBuffer(scale_->count(), sizeof(float));
-      bias_ = op_ws_->CreateTempBlob<float>(scale_->shape(),
-                                            op_name_ + "/bias_value");
-      Blas::Set(bias_->count(), 0, bias_->mutable_data(), 0);
+      scale = const_cast<BlobF *>(bottoms<float>(1));
+      op_ws_->GrowTempBuffer(scale->count(), sizeof(float));
+      bias = op_ws_->CreateTempBlob<float>(scale->shape(),
+                                           op_name_ + "/bias_value");
+      Blas::Set(bias->count(), 0, bias->mutable_data(), 0);
     } else {
-      bias_ = const_cast<BlobF *>(bottoms<float>(1));
-      op_ws_->GrowTempBuffer(bias_->count(), sizeof(float));
-      scale_ = op_ws_->CreateTempBlob<float>(bias_->shape(),
-                                             op_name_ + "/scale_value");
-      Blas::Set(scale_->count(), 1, scale_->mutable_data(), 0);
+      bias = const_cast<BlobF *>(bottoms<float>(1));
+      op_ws_->GrowTempBuffer(bias->count(), sizeof(float));
+      scale = op_ws_->CreateTempBlob<float>(bias->shape(),
+                                            op_name_ + "/scale_value");
+      Blas::Set(scale->count(), 1, scale->mutable_data(), 0);
     }
   } else {
     int dim = bottom->shape(axis_);
@@ -46,30 +47,30 @@ void ScaleOp::Forward() {
       bias_value_ = VecFloat(dim, 0);
     }
     op_ws_->GrowTempBuffer(2 * dim, sizeof(float));
-    scale_ = op_ws_->CreateTempBlob<float>({dim}, op_name_ + "/scale_value");
-    bias_ = op_ws_->CreateTempBlob<float>({dim}, op_name_ + "/bias_value");
-    scale_->set_data(scale_value_.data(), dim);
-    bias_->set_data(bias_value_.data(), dim);
+    scale = op_ws_->CreateTempBlob<float>({dim}, op_name_ + "/scale_value");
+    bias = op_ws_->CreateTempBlob<float>({dim}, op_name_ + "/bias_value");
+    scale->set_data(scale_value_.data(), dim);
+    bias->set_data(bias_value_.data(), dim);
   }
 
   VecInt shape;
-  for (int d = scale_->num_axes() - 1; d >= 0; --d) {
-    int dim = scale_->shape(d);
+  for (int d = scale->num_axes() - 1; d >= 0; --d) {
+    int dim = scale->shape(d);
     if (dim != 1 || !shape.empty() || d == 0) {
       shape.insert(shape.begin(), dim);
     }
   }
-  scale_->set_shape(shape);
-  bias_->set_shape(shape);
+  scale->set_shape(shape);
+  bias->set_shape(shape);
 
-  CHECK_GE(bottom->num_axes(), axis_ + scale_->num_axes());
-  for (int d = 0; d < scale_->num_axes(); ++d) {
-    CHECK_EQ(bottom->shape(axis_ + d), scale_->shape(d));
+  CHECK_GE(bottom->num_axes(), axis_ + scale->num_axes());
+  for (int d = 0; d < scale->num_axes(); ++d) {
+    CHECK_EQ(bottom->shape(axis_ + d), scale->shape(d));
   }
-  scale_dim_ = scale_->count();
-  inner_dim_ = bottom->count(axis_ + scale_->num_axes());
+  scale_dim_ = scale->count();
+  inner_dim_ = bottom->count(axis_ + scale->num_axes());
 
-  Vision::Scale(bottom->data(), bottom->count(), scale_->data(), bias_->data(),
+  Vision::Scale(bottom->data(), bottom->count(), scale->data(), bias->data(),
                 scale_dim_, inner_dim_, top->mutable_data());
 }
 

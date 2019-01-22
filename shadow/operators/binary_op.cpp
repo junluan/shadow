@@ -6,12 +6,13 @@ void BinaryOp::Forward() {
   const auto *bottom = bottoms<float>(0);
   auto *top = mutable_tops<float>(0);
 
+  BlobF *scalar = nullptr;
   if (!has_scalar_arg_) {
     CHECK_EQ(bottoms_size(), 2);
-    scalar_ = const_cast<BlobF *>(bottoms<float>(1));
+    scalar = const_cast<BlobF *>(bottoms<float>(1));
   }
 
-  if (bottom != top && scalar_ != top) {
+  if (bottom != top && scalar != top) {
     top->reshape(bottom->shape());
   }
 
@@ -23,7 +24,7 @@ void BinaryOp::Forward() {
         return Blas::Add(count, bottom->data(), 0, scalar_data_,
                          top->mutable_data(), 0);
       } else {
-        return Blas::Add(count, bottom->data(), 0, scalar_->data(), 0,
+        return Blas::Add(count, bottom->data(), 0, scalar->data(), 0,
                          top->mutable_data(), 0);
       }
     case kSub:
@@ -31,7 +32,7 @@ void BinaryOp::Forward() {
         return Blas::Sub(count, bottom->data(), 0, scalar_data_,
                          top->mutable_data(), 0);
       } else {
-        return Blas::Sub(count, bottom->data(), 0, scalar_->data(), 0,
+        return Blas::Sub(count, bottom->data(), 0, scalar->data(), 0,
                          top->mutable_data(), 0);
       }
     case kMul:
@@ -39,7 +40,7 @@ void BinaryOp::Forward() {
         return Blas::Mul(count, bottom->data(), 0, scalar_data_,
                          top->mutable_data(), 0);
       } else {
-        return Blas::Mul(count, bottom->data(), 0, scalar_->data(), 0,
+        return Blas::Mul(count, bottom->data(), 0, scalar->data(), 0,
                          top->mutable_data(), 0);
       }
     case kDiv:
@@ -47,7 +48,7 @@ void BinaryOp::Forward() {
         return Blas::Div(count, bottom->data(), 0, scalar_data_,
                          top->mutable_data(), 0);
       } else {
-        return Blas::Div(count, bottom->data(), 0, scalar_->data(), 0,
+        return Blas::Div(count, bottom->data(), 0, scalar->data(), 0,
                          top->mutable_data(), 0);
       }
     case kPow:
@@ -55,7 +56,7 @@ void BinaryOp::Forward() {
         return Blas::Pow(count, bottom->data(), 0, scalar_data_,
                          top->mutable_data(), 0);
       } else {
-        return Blas::Pow(count, bottom->data(), 0, scalar_->data(), 0,
+        return Blas::Pow(count, bottom->data(), 0, scalar->data(), 0,
                          top->mutable_data(), 0);
       }
     case kMax:
@@ -63,7 +64,7 @@ void BinaryOp::Forward() {
         return Blas::Max(count, bottom->data(), 0, scalar_data_,
                          top->mutable_data(), 0);
       } else {
-        return Blas::Max(count, bottom->data(), 0, scalar_->data(), 0,
+        return Blas::Max(count, bottom->data(), 0, scalar->data(), 0,
                          top->mutable_data(), 0);
       }
     case kMin:
@@ -71,7 +72,7 @@ void BinaryOp::Forward() {
         return Blas::Min(count, bottom->data(), 0, scalar_data_,
                          top->mutable_data(), 0);
       } else {
-        return Blas::Min(count, bottom->data(), 0, scalar_->data(), 0,
+        return Blas::Min(count, bottom->data(), 0, scalar->data(), 0,
                          top->mutable_data(), 0);
       }
     default:

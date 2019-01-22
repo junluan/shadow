@@ -44,29 +44,30 @@ void DeformConvOp::Forward() {
     temp_count += out_spatial_dim_;
   }
   op_ws_->GrowTempBuffer(temp_count, sizeof(float));
-  col_image_ = op_ws_->CreateTempBlob<float>(
+  auto *col_image = op_ws_->CreateTempBlob<float>(
       {kernel_dim_ * group_, out_spatial_dim_}, op_name_ + "/col_image");
+  BlobF *biases_multiplier = nullptr;
   if (bias_term_) {
-    biases_multiplier_ = op_ws_->CreateTempBlob<float>(
+    biases_multiplier = op_ws_->CreateTempBlob<float>(
         {out_spatial_dim_}, op_name_ + "/biases_multiplier");
-    Blas::Set(out_spatial_dim_, 1, biases_multiplier_->mutable_data(), 0);
+    Blas::Set(out_spatial_dim_, 1, biases_multiplier->mutable_data(), 0);
   }
   int top_num = top->num(), bottom_num = bottom->num();
   for (int b = 0; b < batch; ++b) {
     Vision::DeformIm2Col(bottom->data(), bottom->shape(), offset_blob->data(),
                          b * bottom_num, deform_group_, kernel_size_, stride_,
                          pad_, dilation_, 0, top->shape(),
-                         col_image_->mutable_data());
+                         col_image->mutable_data());
     for (int g = 0; g < group_; ++g) {
       Blas::BlasSgemm(0, 0, num_output_ / group_, out_spatial_dim_, kernel_dim_,
-                      1, weight->data(), weight_offset_ * g, col_image_->data(),
+                      1, weight->data(), weight_offset_ * g, col_image->data(),
                       col_offset_ * g, 0, top->mutable_data(),
                       b * top_num + output_offset_ * g,
                       op_ws_->Ctx()->blas_handle());
     }
     if (bias_term_) {
       Blas::BlasSgemm(0, 0, num_output_, out_spatial_dim_, 1, 1,
-                      bottoms<float>(3)->data(), 0, biases_multiplier_->data(),
+                      bottoms<float>(3)->data(), 0, biases_multiplier->data(),
                       0, 1, top->mutable_data(), b * top_num,
                       op_ws_->Ctx()->blas_handle());
     }

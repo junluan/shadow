@@ -8,39 +8,41 @@ void PermuteOp::Forward() {
 
   CHECK_NE(bottom, top);
 
-  int num_axes = static_cast<int>(permute_order_data_.size());
+  int num_axes = static_cast<int>(permute_order_value_.size());
   CHECK_EQ(num_axes, bottom->num_axes());
 
-  VecInt top_shape, old_steps(num_axes), new_steps(num_axes);
-  for (const auto &order : permute_order_data_) {
+  VecInt top_shape, old_steps_value(num_axes), new_steps_value(num_axes);
+  for (const auto &order : permute_order_value_) {
     top_shape.push_back(bottom->shape(order));
   }
   top->reshape(top_shape);
 
   for (int d = 0; d < num_axes; ++d) {
     if (d == num_axes - 1) {
-      old_steps[d] = 1;
-      new_steps[d] = 1;
+      old_steps_value[d] = 1;
+      new_steps_value[d] = 1;
     } else {
-      old_steps[d] = bottom->count(d + 1);
-      new_steps[d] = top->count(d + 1);
+      old_steps_value[d] = bottom->count(d + 1);
+      new_steps_value[d] = top->count(d + 1);
     }
   }
 
   op_ws_->GrowTempBuffer(3 * num_axes, sizeof(int));
 
-  permute_order_ =
+  auto *permute_order =
       op_ws_->CreateTempBlob<int>({num_axes}, op_name_ + "/permute_order");
-  old_steps_ = op_ws_->CreateTempBlob<int>({num_axes}, op_name_ + "/old_steps");
-  new_steps_ = op_ws_->CreateTempBlob<int>({num_axes}, op_name_ + "/new_steps");
+  auto *old_steps =
+      op_ws_->CreateTempBlob<int>({num_axes}, op_name_ + "/old_steps");
+  auto *new_steps =
+      op_ws_->CreateTempBlob<int>({num_axes}, op_name_ + "/new_steps");
 
-  permute_order_->set_data(permute_order_data_.data(), num_axes);
-  old_steps_->set_data(old_steps.data(), num_axes);
-  new_steps_->set_data(new_steps.data(), num_axes);
+  permute_order->set_data(permute_order_value_.data(), num_axes);
+  old_steps->set_data(old_steps_value.data(), num_axes);
+  new_steps->set_data(new_steps_value.data(), num_axes);
 
   Vision::Permute(bottom->data(), bottom->count(), bottom->num_axes(),
-                  permute_order_->data(), old_steps_->data(),
-                  new_steps_->data(), top->mutable_data());
+                  permute_order->data(), old_steps->data(), new_steps->data(),
+                  top->mutable_data());
 }
 
 REGISTER_OPERATOR(Permute, PermuteOp);

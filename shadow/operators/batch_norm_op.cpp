@@ -12,37 +12,33 @@ void BatchNormOp::Forward() {
   const auto *bottom = bottoms<float>(0);
   auto *top = mutable_tops<float>(0);
 
-  int batch = bottom->shape(0), channels, spatial_dim = bottom->count(2);
-
-  if (bottom->num_axes() == 1) {
-    channels = 1;
-  } else {
-    channels = bottom->shape(1);
-  }
-
   if (bottom != top) {
     top->reshape(bottom->shape());
     Blas::BlasScopy(bottom->count(), bottom->data(), 0, top->mutable_data(), 0,
                     op_ws_->Ctx()->blas_handle());
   }
 
+  int batch = bottom->shape(0), channel = bottom->shape(1),
+      spatial_dim = bottom->count(2);
+
   int temp_count =
-      2 * channels + bottom->count() + batch * channels + batch + spatial_dim;
+      2 * channel + bottom->count() + batch * channel + batch + spatial_dim;
   op_ws_->GrowTempBuffer(temp_count, sizeof(float));
 
-  mean_ = op_ws_->CreateTempBlob<float>({1, channels}, op_name_ + "/mean");
-  variance_ =
-      op_ws_->CreateTempBlob<float>({1, channels}, op_name_ + "/variance");
-  temp_ = op_ws_->CreateTempBlob<float>(bottom->shape(), op_name_ + "/temp");
-  batch_by_channel_ = op_ws_->CreateTempBlob<float>(
-      {batch, channels}, op_name_ + "/batch_by_channel");
-  sum_batch_multiplier_ = op_ws_->CreateTempBlob<float>(
+  auto *mean = op_ws_->CreateTempBlob<float>({1, channel}, op_name_ + "/mean");
+  auto *variance =
+      op_ws_->CreateTempBlob<float>({1, channel}, op_name_ + "/variance");
+  auto *temp =
+      op_ws_->CreateTempBlob<float>(bottom->shape(), op_name_ + "/temp");
+  auto *batch_by_channel = op_ws_->CreateTempBlob<float>(
+      {batch, channel}, op_name_ + "/batch_by_channel");
+  auto *sum_batch_multiplier = op_ws_->CreateTempBlob<float>(
       {batch}, op_name_ + "/sum_batch_multiplier");
-  sum_spatial_multiplier_ = op_ws_->CreateTempBlob<float>(
+  auto *sum_spatial_multiplier = op_ws_->CreateTempBlob<float>(
       {1, 1, spatial_dim}, op_name_ + "/sum_spatial_multiplier");
 
-  Blas::Set(batch, 1, sum_batch_multiplier_->mutable_data(), 0);
-  Blas::Set(spatial_dim, 1, sum_spatial_multiplier_->mutable_data(), 0);
+  Blas::Set(batch, 1, sum_batch_multiplier->mutable_data(), 0);
+  Blas::Set(spatial_dim, 1, sum_spatial_multiplier->mutable_data(), 0);
 
   if (use_global_stats_) {
     float scale = 1;
@@ -51,49 +47,49 @@ void BatchNormOp::Forward() {
       bottoms<float>(3)->read_data(&scale, 1);
     }
     float scale_factor = scale == 0 ? 0 : 1 / scale;
-    Blas::Mul(mean_->count(), bottoms<float>(1)->data(), 0, scale_factor,
-              mean_->mutable_data(), 0);
-    Blas::Mul(variance_->count(), bottoms<float>(2)->data(), 0, scale_factor,
-              variance_->mutable_data(), 0);
+    Blas::Mul(mean->count(), bottoms<float>(1)->data(), 0, scale_factor,
+              mean->mutable_data(), 0);
+    Blas::Mul(variance->count(), bottoms<float>(2)->data(), 0, scale_factor,
+              variance->mutable_data(), 0);
   }
 
   if (!use_global_stats_) {
     Blas::BlasSgemv(
-        0, batch * channels, spatial_dim, 1.f / (batch * spatial_dim),
-        bottom->data(), 0, sum_spatial_multiplier_->data(), 0, 0,
-        batch_by_channel_->mutable_data(), 0, op_ws_->Ctx()->blas_handle());
-    Blas::BlasSgemv(1, batch, channels, 1, batch_by_channel_->data(), 0,
-                    sum_batch_multiplier_->data(), 0, 0, mean_->mutable_data(),
-                    0, op_ws_->Ctx()->blas_handle());
+        0, batch * channel, spatial_dim, 1.f / (batch * spatial_dim),
+        bottom->data(), 0, sum_spatial_multiplier->data(), 0, 0,
+        batch_by_channel->mutable_data(), 0, op_ws_->Ctx()->blas_handle());
+    Blas::BlasSgemv(1, batch, channel, 1, batch_by_channel->data(), 0,
+                    sum_batch_multiplier->data(), 0, 0, mean->mutable_data(), 0,
+                    op_ws_->Ctx()->blas_handle());
   }
-  Blas::BlasSgemm(0, 0, batch, channels, 1, 1, sum_batch_multiplier_->data(), 0,
-                  mean_->data(), 0, 0, batch_by_channel_->mutable_data(), 0,
+  Blas::BlasSgemm(0, 0, batch, channel, 1, 1, sum_batch_multiplier->data(), 0,
+                  mean->data(), 0, 0, batch_by_channel->mutable_data(), 0,
                   op_ws_->Ctx()->blas_handle());
-  Blas::BlasSgemm(0, 0, batch * channels, spatial_dim, 1, -1,
-                  batch_by_channel_->data(), 0, sum_spatial_multiplier_->data(),
+  Blas::BlasSgemm(0, 0, batch * channel, spatial_dim, 1, -1,
+                  batch_by_channel->data(), 0, sum_spatial_multiplier->data(),
                   0, 1, top->mutable_data(), 0, op_ws_->Ctx()->blas_handle());
 
   if (!use_global_stats_) {
-    Blas::Pow(top->count(), top->data(), 0, 2, temp_->mutable_data(), 0);
+    Blas::Pow(top->count(), top->data(), 0, 2, temp->mutable_data(), 0);
     Blas::BlasSgemv(
-        0, batch * channels, spatial_dim, 1.f / (batch * spatial_dim),
-        temp_->data(), 0, sum_spatial_multiplier_->data(), 0, 0,
-        batch_by_channel_->mutable_data(), 0, op_ws_->Ctx()->blas_handle());
-    Blas::BlasSgemv(1, batch, channels, 1, batch_by_channel_->data(), 0,
-                    sum_batch_multiplier_->data(), 0, 0,
-                    variance_->mutable_data(), 0, op_ws_->Ctx()->blas_handle());
+        0, batch * channel, spatial_dim, 1.f / (batch * spatial_dim),
+        temp->data(), 0, sum_spatial_multiplier->data(), 0, 0,
+        batch_by_channel->mutable_data(), 0, op_ws_->Ctx()->blas_handle());
+    Blas::BlasSgemv(1, batch, channel, 1, batch_by_channel->data(), 0,
+                    sum_batch_multiplier->data(), 0, 0,
+                    variance->mutable_data(), 0, op_ws_->Ctx()->blas_handle());
   }
-  Blas::Add(variance_->count(), variance_->data(), 0, eps_,
-            variance_->mutable_data(), 0);
-  Blas::Pow(variance_->count(), variance_->data(), 0, 0.5,
-            variance_->mutable_data(), 0);
-  Blas::BlasSgemm(0, 0, batch, channels, 1, 1, sum_batch_multiplier_->data(), 0,
-                  variance_->data(), 0, 0, batch_by_channel_->mutable_data(), 0,
+  Blas::Add(variance->count(), variance->data(), 0, eps_,
+            variance->mutable_data(), 0);
+  Blas::Pow(variance->count(), variance->data(), 0, 0.5,
+            variance->mutable_data(), 0);
+  Blas::BlasSgemm(0, 0, batch, channel, 1, 1, sum_batch_multiplier->data(), 0,
+                  variance->data(), 0, 0, batch_by_channel->mutable_data(), 0,
                   op_ws_->Ctx()->blas_handle());
-  Blas::BlasSgemm(0, 0, batch * channels, spatial_dim, 1, 1,
-                  batch_by_channel_->data(), 0, sum_spatial_multiplier_->data(),
-                  0, 0, temp_->mutable_data(), 0, op_ws_->Ctx()->blas_handle());
-  Blas::Div(top->count(), top->data(), 0, temp_->data(), 0, top->mutable_data(),
+  Blas::BlasSgemm(0, 0, batch * channel, spatial_dim, 1, 1,
+                  batch_by_channel->data(), 0, sum_spatial_multiplier->data(),
+                  0, 0, temp->mutable_data(), 0, op_ws_->Ctx()->blas_handle());
+  Blas::Div(top->count(), top->data(), 0, temp->data(), 0, top->mutable_data(),
             0);
 }
 

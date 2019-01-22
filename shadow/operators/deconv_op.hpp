@@ -70,9 +70,7 @@ class DeconvOp : public Operator {
   int num_output_, kernel_size_, stride_, pad_, dilation_, group_,
       activate_type_, conv_out_spatial_dim_, out_spatial_dim_, kernel_dim_;
   int conv_in_c, conv_out_c, weight_offset_, col_offset_, output_offset_;
-  bool bias_term_, use_cudnn_ = false, use_nnpack_ = false;
-
-  BlobF *biases_multiplier_ = nullptr, *col_image_ = nullptr;
+  bool bias_term_, use_cudnn_ = false;
 
 #if defined(USE_CUDNN)
   cudnnConvolutionBwdDataAlgo_t bwd_data_algo_ =
@@ -84,7 +82,6 @@ class DeconvOp : public Operator {
   cudnnTensorDescriptor_t bias_desc_ = nullptr;
 
   size_t workspace_bwd_size_ = 0;
-  BlobUC *workspace_ = nullptr;
 #endif
 };
 

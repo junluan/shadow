@@ -73,8 +73,6 @@ class ConvOp : public Operator {
   bool bias_term_, use_cudnn_ = false, use_nnpack_ = false,
                    use_depthwise_ = false;
 
-  BlobF *biases_multiplier_ = nullptr, *col_image_ = nullptr;
-
 #if defined(USE_CUDNN)
   cudnnConvolutionFwdAlgo_t fwd_algo_ =
       CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_GEMM;
@@ -85,7 +83,6 @@ class ConvOp : public Operator {
   cudnnTensorDescriptor_t bias_desc_ = nullptr;
 
   size_t workspace_fwd_size_ = 0;
-  BlobUC *workspace_ = nullptr;
 #endif
 
 #if defined(USE_NNPACK)

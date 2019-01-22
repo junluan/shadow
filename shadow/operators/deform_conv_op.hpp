@@ -32,8 +32,6 @@ class DeformConvOp : public Operator {
       deform_group_, activate_type_, out_spatial_dim_, kernel_dim_;
   int weight_offset_, col_offset_, output_offset_;
   bool bias_term_;
-
-  BlobF *biases_multiplier_ = nullptr, *col_image_ = nullptr;
 };
 
 static inline int deform_conv_out_size(int dim, int kernel_size, int stride,

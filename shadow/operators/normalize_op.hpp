@@ -17,9 +17,6 @@ class NormalizeOp : public Operator {
 
  private:
   bool across_spatial_, channel_shared_;
-
-  BlobF *norm_ = nullptr, *buffer_ = nullptr;
-  BlobF *sum_channel_multiplier_ = nullptr, *sum_spatial_multiplier_ = nullptr;
 };
 
 }  // namespace Shadow

@@ -32,13 +32,12 @@ void ConnectedOp::Forward() {
                     top->mutable_data(), 0, op_ws_->Ctx()->blas_handle());
     if (bias_term_) {
       op_ws_->GrowTempBuffer(batch, sizeof(float));
-      biases_multiplier_ = op_ws_->CreateTempBlob<float>(
+      auto *biases_multiplier = op_ws_->CreateTempBlob<float>(
           {batch}, op_name_ + "/biases_multiplier");
-      Blas::Set(batch, 1, biases_multiplier_->mutable_data(), 0);
-      Blas::BlasSgemm(0, 0, batch, num_output_, 1, 1,
-                      biases_multiplier_->data(), 0, bottoms<float>(2)->data(),
-                      0, 1, top->mutable_data(), 0,
-                      op_ws_->Ctx()->blas_handle());
+      Blas::Set(batch, 1, biases_multiplier->mutable_data(), 0);
+      Blas::BlasSgemm(0, 0, batch, num_output_, 1, 1, biases_multiplier->data(),
+                      0, bottoms<float>(2)->data(), 0, 1, top->mutable_data(),
+                      0, op_ws_->Ctx()->blas_handle());
     }
   }
 }
