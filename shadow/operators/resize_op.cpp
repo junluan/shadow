@@ -9,6 +9,7 @@ void ResizeOp::Forward() {
   CHECK_NE(bottom, top);
 
   int in_h = bottom->shape(2), in_w = bottom->shape(3);
+  int out_h = out_h_, out_w = out_w_;
 
   if (bottoms_size() > 1) {
     const auto& size_type = bottoms_type(1);
@@ -18,28 +19,28 @@ void ResizeOp::Forward() {
       CHECK_EQ(size->count(), 2);
       VecInt size_data(2, 0);
       size->read_data(size_data.data(), 2);
-      out_h_ = size_data[0], out_w_ = size_data[1];
+      out_h = size_data[0], out_w = size_data[1];
     } else if (size_type == float_id) {
       const auto* size = bottoms<float>(1);
       CHECK_EQ(size->num_axes(), 4);
-      out_h_ = size->shape(2), out_w_ = size->shape(3);
+      out_h = size->shape(2), out_w = size->shape(3);
     }
   }
 
-  if (out_h_ == 0 || out_w_ == 0) {
-    out_h_ = static_cast<int>(in_h * scale_);
-    out_w_ = static_cast<int>(in_w * scale_);
+  if (out_h == 0 || out_w == 0) {
+    out_h = static_cast<int>(in_h * scale_h_);
+    out_w = static_cast<int>(in_w * scale_w_);
   }
 
-  CHECK_GT(out_h_, 0);
-  CHECK_GT(out_w_, 0);
+  CHECK_GT(out_h, 0);
+  CHECK_GT(out_w, 0);
 
   auto top_shape = bottom->shape();
-  top_shape[2] = out_h_;
-  top_shape[3] = out_w_;
+  top_shape[2] = out_h;
+  top_shape[3] = out_w;
   top->reshape(top_shape);
 
-  if (out_h_ == in_h && out_w_ == in_w) {
+  if (out_h == in_h && out_w == in_w) {
     Blas::BlasScopy(bottom->count(), bottom->data(), 0, top->mutable_data(), 0,
                     op_ws_->Ctx()->blas_handle());
   } else {

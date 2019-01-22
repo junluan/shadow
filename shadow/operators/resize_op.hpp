@@ -11,7 +11,7 @@ class ResizeOp : public Operator {
       : Operator(op_param, ws) {
     out_h_ = get_single_argument<int>("out_h", 0);
     out_w_ = get_single_argument<int>("out_w", 0);
-    scale_ = get_single_argument<float>("scale", 1);
+    scale_h_ = scale_w_ = get_single_argument<float>("scale", 1);
     type_ = get_single_argument<int>("type", 1);
   }
 
@@ -19,7 +19,7 @@ class ResizeOp : public Operator {
 
  private:
   int out_h_, out_w_, type_;
-  float scale_;
+  float scale_h_, scale_w_;
 };
 
 namespace Vision {
