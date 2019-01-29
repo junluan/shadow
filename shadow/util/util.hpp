@@ -653,12 +653,12 @@ class Profiler {
  private:
   bool enable_ = true;
   std::map<std::string, Timer> timers_;
-  std::map<std::string, std::pair<int, double>> stats_;
+  std::map<std::string, std::pair<unsigned int, double>> stats_;
 };
 
-class Process {
+class ProcessBar {
  public:
-  Process(int slice, int total, const std::string &prefix = "") {
+  ProcessBar(int slice, int total, const std::string &prefix = "") {
     slice_ = slice;
     total_ = total;
     prefix_ = prefix;

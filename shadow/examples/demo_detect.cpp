@@ -42,7 +42,7 @@ void DemoDetect::BatchTest(const std::string &list_file, bool image_write) {
   const auto &image_list = Util::load_list(list_file);
   int num_im = static_cast<int>(image_list.size()), count = 0;
   double time_cost = 0;
-  Process process(20, num_im, "Processing: ");
+  ProcessBar process_bar(20, num_im, "Processing: ");
   const auto &result_file = Util::find_replace_last(list_file, ".", "-result.");
   std::ofstream file(result_file);
   CHECK(file.is_open()) << "Can't open file " << result_file;
@@ -59,7 +59,7 @@ void DemoDetect::BatchTest(const std::string &list_file, bool image_write) {
       DrawDetections(boxes_, &im_ini_);
       im_ini_.Write(out_file);
     }
-    process.update(count++, &std::cout);
+    process_bar.update(count++, &std::cout);
   }
   file.close();
   LOG(INFO) << "Processed in: " << time_cost
