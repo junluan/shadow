@@ -37,29 +37,30 @@ class Blob {
 #endif
   }
 
-  void set_data(const Dtype *data, int set_count) {
+  void set_data(const Dtype *data, int set_count, int offset = 0) {
     CHECK_NOTNULL(data);
-    CHECK_EQ(set_count, count());
+    CHECK_LE(set_count + offset, count());
 #if defined(USE_CUDA)
-    Kernel::WriteBuffer(count(), data, data_);
+    Kernel::WriteBuffer(set_count, data, data_ + offset);
 
 #else
     if (!shared_) {
-      memcpy(data_, data, count() * sizeof(Dtype));
+      memcpy(data_ + offset, data, set_count * sizeof(Dtype));
     } else {
+      CHECK_EQ(offset, 0);
       data_ = const_cast<Dtype *>(data);
     }
 #endif
   }
 
-  void read_data(Dtype *data, int read_count) const {
+  void read_data(Dtype *data, int read_count, int offset = 0) const {
     CHECK_NOTNULL(data);
-    CHECK_EQ(read_count, count());
+    CHECK_LE(read_count + offset, count());
 #if defined(USE_CUDA)
-    Kernel::ReadBuffer(count(), data_, data);
+    Kernel::ReadBuffer(read_count, data_ + offset, data);
 
 #else
-    memcpy(data, data_, count() * sizeof(Dtype));
+    memcpy(data, data_ + offset, read_count * sizeof(Dtype));
 #endif
   }
 
