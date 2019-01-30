@@ -33,20 +33,20 @@ void DetectYOLO::Setup(const std::string &model_file) {
 
   in_data_.resize(batch_ * in_num_);
 
-  threshold_ = 0.6;
-  nms_threshold_ = 0.3;
+  threshold_ = net_.get_single_argument<float>("threshold", 0.6);
+  nms_threshold_ = net_.get_single_argument<float>("nms_threshold", 0.3);
   num_classes_ = net_.get_single_argument<int>("num_classes", 80);
 
   // For yolo v2
-  biases_ = {{0.57273f, 0.677385f, 1.87446f, 2.06253f, 3.33843f, 5.47434f,
-              7.88282f, 3.52778f, 9.77052f, 9.16828f}};
-  num_km_ = 5;
-  version_ = 2;
+  // biases_ = {{0.57273f, 0.677385f, 1.87446f, 2.06253f, 3.33843f, 5.47434f,
+  //            7.88282f, 3.52778f, 9.77052f, 9.16828f}};
+  // num_km_ = 5;
+  // version_ = 2;
 
   // For yolo v3
-  // biases_ = {{81, 82, 135, 169, 344, 319}, {10, 14, 23, 27, 37, 58}};
-  // num_km_ = 3;
-  // version_ = 3;
+  biases_ = {{81, 82, 135, 169, 344, 319}, {10, 14, 23, 27, 37, 58}};
+  num_km_ = 3;
+  version_ = 3;
 
   CHECK_EQ(out_str_.size(), biases_.size());
 }

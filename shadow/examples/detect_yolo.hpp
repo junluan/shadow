@@ -30,7 +30,7 @@ class DetectYOLO final : public Method {
   std::string in_str_;
   VecString out_str_;
   int batch_, in_num_, in_c_, in_h_, in_w_;
-  int num_classes_, num_km_, version_ = 2;
+  int num_classes_, num_km_, version_;
   float threshold_, nms_threshold_;
 };
 

@@ -33,8 +33,8 @@ void DetectFasterRCNN::Setup(const std::string &model_file) {
   im_info_.resize(3, 0);
   num_classes_ = net_.get_single_argument<int>("num_classes", 21);
   max_side_ = 1000, min_side_ = {600};
-  threshold_ = 0.6;
-  nms_threshold_ = 0.3;
+  threshold_ = net_.get_single_argument<float>("threshold", 0.6);
+  nms_threshold_ = net_.get_single_argument<float>("nms_threshold", 0.3);
   is_bgr_ = net_.get_single_argument<bool>("is_bgr", true);
   class_agnostic_ = net_.get_single_argument<bool>("class_agnostic", false);
 }

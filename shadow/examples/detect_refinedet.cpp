@@ -95,15 +95,16 @@ void DetectRefineDet::Setup(const std::string &model_file) {
 
   in_data_.resize(batch_ * in_num_);
 
-  threshold_ = 0.6;
+  threshold_ = net_.get_single_argument<float>("threshold", 0.6);
   num_classes_ = net_.get_single_argument<int>("num_classes", 21);
   num_loc_classes_ = 1;
   background_label_id_ = 0;
-  top_k_ = 1000;
-  keep_top_k_ = 1000;
-  nms_threshold_ = 0.3;
-  confidence_threshold_ = 0.01;
-  objectness_score_ = 0.01;
+  top_k_ = net_.get_single_argument<int>("top_k", 1000);
+  keep_top_k_ = net_.get_single_argument<int>("keep_top_k", 300);
+  nms_threshold_ = net_.get_single_argument<float>("nms_threshold", 0.3);
+  confidence_threshold_ =
+      net_.get_single_argument<float>("confidence_threshold", 0.01);
+  objectness_score_ = net_.get_single_argument<float>("objectness_score", 0.01);
   share_location_ = true;
 }
 
