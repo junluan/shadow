@@ -533,6 +533,7 @@ const shadow::OpParam ParseResize(const JValue &root) {
   ParseCommon(root, &shadow_op);
 
   int out_h = 0, out_w = 0, type = 1;
+  float scale = 1;
   if (root.HasMember("arg")) {
     const auto &args = root["arg"];
     for (int i = 0; i < args.Size(); ++i) {
@@ -543,15 +544,18 @@ const shadow::OpParam ParseResize(const JValue &root) {
         out_h = Json::GetInt(arg, "s_i", 0);
       } else if (arg_name == "out_w") {
         out_w = Json::GetInt(arg, "s_i", 0);
+      } else if (arg_name == "scale") {
+        scale = Json::GetFloat(arg, "s_f", 1);
       } else if (arg_name == "type") {
         type = Json::GetInt(arg, "s_i", 1);
       }
     }
   }
 
-  set_v_i(&shadow_op, "shape", shape);
-  set_s_i(&shadow_op, "axis", axis);
-  set_s_i(&shadow_op, "num_axes", num_axes);
+  set_s_i(&shadow_op, "out_h", out_h);
+  set_s_i(&shadow_op, "out_w", out_w);
+  set_s_f(&shadow_op, "scale", scale);
+  set_s_i(&shadow_op, "type", type);
 
   return shadow_op;
 }
@@ -1279,11 +1283,15 @@ const shadow::OpParam ParseResize(const std::vector<std::string> &params) {
   const auto &argument = ParseCommon(params, &shadow_op);
 
   int out_h = 0, out_w = 0, type = 1;
+  float scale = 1;
   if (argument.count("out_h")) {
     out_h = argument.at("out_h").s_i;
   }
   if (argument.count("out_w")) {
     out_w = argument.at("out_w").s_i;
+  }
+  if (argument.count("scale")) {
+    scale = argument.at("scale").s_f;
   }
   if (argument.count("type")) {
     type = argument.at("type").s_i;
@@ -1291,6 +1299,7 @@ const shadow::OpParam ParseResize(const std::vector<std::string> &params) {
 
   set_s_i(&shadow_op, "out_h", out_h);
   set_s_i(&shadow_op, "out_w", out_w);
+  set_s_f(&shadow_op, "scale", scale);
   set_s_i(&shadow_op, "type", type);
 
   return shadow_op;
