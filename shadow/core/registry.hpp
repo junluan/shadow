@@ -83,14 +83,6 @@ class Register {
   }
 };
 
-#define SHADOW_CONCATENATE_IMPL(s1, s2) s1##s2
-#define SHADOW_CONCATENATE(s1, s2) SHADOW_CONCATENATE_IMPL(s1, s2)
-#ifdef __COUNTER__
-#define SHADOW_ANONYMOUS_VARIABLE(str) SHADOW_CONCATENATE(str, __COUNTER__)
-#else
-#define SHADOW_ANONYMOUS_VARIABLE(str) SHADOW_CONCATENATE(str, __LINE__)
-#endif
-
 #define SHADOW_DECLARE_TYPED_REGISTRY(RegistryName, SrcType, ObjectType, ...) \
   Registry<SrcType, ObjectType, ##__VA_ARGS__>* RegistryName();               \
   using Register##RegistryName = Register<SrcType, ObjectType, ##__VA_ARGS__>;
