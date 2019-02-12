@@ -1,6 +1,6 @@
 #include <grpc++/grpc++.h>
 
-#include "service.grpc.pb.h"
+#include "proto/service.grpc.pb.h"
 
 #include "util/log.hpp"
 #include "util/util.hpp"

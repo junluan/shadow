@@ -1,6 +1,6 @@
 #include <grpc++/grpc++.h>
 
-#include "service.grpc.pb.h"
+#include "proto/service.grpc.pb.h"
 
 #include "examples/classify.hpp"
 #include "examples/detect_faster_rcnn.hpp"
