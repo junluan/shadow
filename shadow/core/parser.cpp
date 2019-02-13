@@ -28,6 +28,7 @@ const shadow::OpParam ParseActivate(const JValue &root) {
   ParseCommon(root, &shadow_op);
 
   int type = 1, channel_shared = false;
+  float slope = 0.1;
   if (root.HasMember("arg")) {
     const auto &args = root["arg"];
     for (int i = 0; i < args.Size(); ++i) {
@@ -36,6 +37,8 @@ const shadow::OpParam ParseActivate(const JValue &root) {
       const auto &arg_name = Json::GetString(arg, "name", "");
       if (arg_name == "type") {
         type = Json::GetInt(arg, "s_i", 1);
+      } else if (arg_name == "slope") {
+        slope = Json::GetFloat(arg, "s_f", 0.1);
       } else if (arg_name == "channel_shared") {
         channel_shared = Json::GetInt(arg, "s_i", 0);
       }
@@ -43,6 +46,7 @@ const shadow::OpParam ParseActivate(const JValue &root) {
   }
 
   set_s_i(&shadow_op, "type", type);
+  set_s_f(&shadow_op, "slope", slope);
   set_s_i(&shadow_op, "channel_shared", channel_shared);
 
   return shadow_op;
@@ -54,6 +58,7 @@ const shadow::OpParam ParseBatchNorm(const JValue &root) {
   ParseCommon(root, &shadow_op);
 
   int use_global_stats = true;
+  float eps = 1e-5;
   if (root.HasMember("arg")) {
     const auto &args = root["arg"];
     for (int i = 0; i < args.Size(); ++i) {
@@ -62,11 +67,14 @@ const shadow::OpParam ParseBatchNorm(const JValue &root) {
       const auto &arg_name = Json::GetString(arg, "name", "");
       if (arg_name == "use_global_stats") {
         use_global_stats = Json::GetInt(arg, "s_i", 1);
+      } else if (arg_name == "eps") {
+        eps = Json::GetFloat(arg, "s_f", 1e-5);
       }
     }
   }
 
   set_s_i(&shadow_op, "use_global_stats", use_global_stats);
+  set_s_f(&shadow_op, "eps", eps);
 
   return shadow_op;
 }
@@ -316,7 +324,6 @@ const shadow::OpParam ParseNormalize(const JValue &root) {
   ParseCommon(root, &shadow_op);
 
   int across_spatial = true, channel_shared = true;
-  std::vector<float> scale;
   if (root.HasMember("arg")) {
     const auto &args = root["arg"];
     for (int i = 0; i < args.Size(); ++i) {
@@ -327,15 +334,12 @@ const shadow::OpParam ParseNormalize(const JValue &root) {
         across_spatial = Json::GetInt(arg, "s_i", 1);
       } else if (arg_name == "channel_shared") {
         channel_shared = Json::GetInt(arg, "s_i", 1);
-      } else if (arg_name == "scale") {
-        scale = Json::GetVecFloat(arg, "v_f");
       }
     }
   }
 
   set_s_i(&shadow_op, "across_spatial", across_spatial);
   set_s_i(&shadow_op, "channel_shared", channel_shared);
-  set_v_f(&shadow_op, "scale", scale);
 
   return shadow_op;
 }
@@ -395,7 +399,7 @@ const shadow::OpParam ParsePooling(const JValue &root) {
 
   ParseCommon(root, &shadow_op);
 
-  int pool = 0, global_pooling = false;
+  int pool = 0, global_pooling = false, full_pooling = true;
   std::vector<int> kernel_size, stride, pad;
   if (root.HasMember("arg")) {
     const auto &args = root["arg"];
@@ -413,6 +417,8 @@ const shadow::OpParam ParsePooling(const JValue &root) {
         pad = Json::GetVecInt(arg, "v_i");
       } else if (arg_name == "global_pooling") {
         global_pooling = Json::GetInt(arg, "s_i", 0);
+      } else if (arg_name == "full_pooling") {
+        full_pooling = Json::GetInt(arg, "s_i", 1);
       }
     }
   }
@@ -422,6 +428,7 @@ const shadow::OpParam ParsePooling(const JValue &root) {
   set_v_i(&shadow_op, "stride", stride);
   set_v_i(&shadow_op, "pad", pad);
   set_s_i(&shadow_op, "global_pooling", global_pooling);
+  set_s_i(&shadow_op, "full_pooling", full_pooling);
 
   return shadow_op;
 }
@@ -880,14 +887,19 @@ const shadow::OpParam ParseActivate(const std::vector<std::string> &params) {
   const auto &argument = ParseCommon(params, &shadow_op);
 
   int type = 1, channel_shared = false;
+  float slope = 0.1;
   if (argument.count("type")) {
     type = argument.at("type").s_i;
+  }
+  if (argument.count("slope")) {
+    slope = argument.at("slope").s_f;
   }
   if (argument.count("channel_shared")) {
     channel_shared = argument.at("channel_shared").s_i;
   }
 
   set_s_i(&shadow_op, "type", type);
+  set_s_f(&shadow_op, "slope", slope);
   set_s_i(&shadow_op, "channel_shared", channel_shared);
 
   return shadow_op;
@@ -899,11 +911,16 @@ const shadow::OpParam ParseBatchNorm(const std::vector<std::string> &params) {
   const auto &argument = ParseCommon(params, &shadow_op);
 
   int use_global_stats = true;
+  float eps = 1e-5;
   if (argument.count("use_global_stats")) {
     use_global_stats = argument.at("use_global_stats").s_i;
   }
+  if (argument.count("eps")) {
+    eps = argument.at("eps").s_f;
+  }
 
   set_s_i(&shadow_op, "use_global_stats", use_global_stats);
+  set_s_f(&shadow_op, "eps", eps);
 
   return shadow_op;
 }
@@ -1106,20 +1123,15 @@ const shadow::OpParam ParseNormalize(const std::vector<std::string> &params) {
   const auto &argument = ParseCommon(params, &shadow_op);
 
   int across_spatial = true, channel_shared = true;
-  std::vector<float> scale;
   if (argument.count("across_spatial")) {
     across_spatial = argument.at("across_spatial").s_i;
   }
   if (argument.count("channel_shared")) {
     channel_shared = argument.at("channel_shared").s_i;
   }
-  if (argument.count("scale")) {
-    scale = argument.at("scale").v_f;
-  }
 
   set_s_i(&shadow_op, "across_spatial", across_spatial);
   set_s_i(&shadow_op, "channel_shared", channel_shared);
-  set_v_f(&shadow_op, "scale", scale);
 
   return shadow_op;
 }
@@ -1164,7 +1176,7 @@ const shadow::OpParam ParsePooling(const std::vector<std::string> &params) {
 
   const auto &argument = ParseCommon(params, &shadow_op);
 
-  int pool = 0, global_pooling = false;
+  int pool = 0, global_pooling = false, full_pooling = true;
   std::vector<int> kernel_size, stride, pad;
   if (argument.count("pool")) {
     pool = argument.at("pool").s_i;
@@ -1181,12 +1193,16 @@ const shadow::OpParam ParsePooling(const std::vector<std::string> &params) {
   if (argument.count("global_pooling")) {
     global_pooling = argument.at("global_pooling").s_i;
   }
+  if (argument.count("full_pooling")) {
+    full_pooling = argument.at("full_pooling").s_i;
+  }
 
   set_s_i(&shadow_op, "pool", pool);
   set_v_i(&shadow_op, "kernel_size", kernel_size);
   set_v_i(&shadow_op, "stride", stride);
   set_v_i(&shadow_op, "pad", pad);
   set_s_i(&shadow_op, "global_pooling", global_pooling);
+  set_s_i(&shadow_op, "full_pooling", full_pooling);
 
   return shadow_op;
 }
