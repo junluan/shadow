@@ -282,6 +282,29 @@ const shadow::OpParam ParseInput(const JValue &root) {
   return shadow_op;
 }
 
+const shadow::OpParam ParseInstanceNorm(const JValue &root) {
+  shadow::OpParam shadow_op;
+
+  ParseCommon(root, &shadow_op);
+
+  float eps = 1e-5;
+  if (root.HasMember("arg")) {
+    const auto &args = root["arg"];
+    for (int i = 0; i < args.Size(); ++i) {
+      const auto &arg = args[i];
+      CHECK(arg.HasMember("name"));
+      const auto &arg_name = Json::GetString(arg, "name", "");
+      if (arg_name == "eps") {
+        eps = Json::GetFloat(arg, "s_f", 1e-5);
+      }
+    }
+  }
+
+  set_s_f(&shadow_op, "eps", eps);
+
+  return shadow_op;
+}
+
 const shadow::OpParam ParseLRN(const JValue &root) {
   shadow::OpParam shadow_op;
 
@@ -603,6 +626,29 @@ const shadow::OpParam ParseScale(const JValue &root) {
   return shadow_op;
 }
 
+const shadow::OpParam ParseShuffleChannel(const JValue &root) {
+  shadow::OpParam shadow_op;
+
+  ParseCommon(root, &shadow_op);
+
+  int group = 0;
+  if (root.HasMember("arg")) {
+    const auto &args = root["arg"];
+    for (int i = 0; i < args.Size(); ++i) {
+      const auto &arg = args[i];
+      CHECK(arg.HasMember("name"));
+      const auto &arg_name = Json::GetString(arg, "name", "");
+      if (arg_name == "group") {
+        group = Json::GetInt(arg, "s_i", 0);
+      }
+    }
+  }
+
+  set_s_i(&shadow_op, "group", group);
+
+  return shadow_op;
+}
+
 const shadow::OpParam ParseSlice(const JValue &root) {
   shadow::OpParam shadow_op;
 
@@ -712,6 +758,7 @@ static const std::map<std::string, ParseFunc> parse_func_map{
     {"Eltwise", ParseEltwise},
     {"Flatten", ParseFlatten},
     {"Input", ParseInput},
+    {"InstanceNorm", ParseInstanceNorm},
     {"LRN", ParseLRN},
     {"Normalize", ParseNormalize},
     {"Pad", ParsePad},
@@ -722,6 +769,7 @@ static const std::map<std::string, ParseFunc> parse_func_map{
     {"Reshape", ParseReshape},
     {"Resize", ParseResize},
     {"Scale", ParseScale},
+    {"ShuffleChannel", ParseShuffleChannel},
     {"Slice", ParseSlice},
     {"Softmax", ParseSoftmax},
     {"Stack", ParseStack},
@@ -1085,6 +1133,22 @@ const shadow::OpParam ParseInput(const std::vector<std::string> &params) {
   return shadow_op;
 }
 
+const shadow::OpParam ParseInstanceNorm(
+    const std::vector<std::string> &params) {
+  shadow::OpParam shadow_op;
+
+  const auto &argument = ParseCommon(params, &shadow_op);
+
+  float eps = 1e-5;
+  if (argument.count("eps")) {
+    eps = argument.at("eps").s_f;
+  }
+
+  set_s_f(&shadow_op, "eps", eps);
+
+  return shadow_op;
+}
+
 const shadow::OpParam ParseLRN(const std::vector<std::string> &params) {
   shadow::OpParam shadow_op;
 
@@ -1353,6 +1417,22 @@ const shadow::OpParam ParseScale(const std::vector<std::string> &params) {
   return shadow_op;
 }
 
+const shadow::OpParam ParseShuffleChannel(
+    const std::vector<std::string> &params) {
+  shadow::OpParam shadow_op;
+
+  const auto &argument = ParseCommon(params, &shadow_op);
+
+  int group = 0;
+  if (argument.count("group")) {
+    group = argument.at("group").s_i;
+  }
+
+  set_s_i(&shadow_op, "group", group);
+
+  return shadow_op;
+}
+
 const shadow::OpParam ParseSlice(const std::vector<std::string> &params) {
   shadow::OpParam shadow_op;
 
@@ -1432,6 +1512,7 @@ static const std::map<std::string, ParseFunc> parse_func_map{
     {"Eltwise", ParseEltwise},
     {"Flatten", ParseFlatten},
     {"Input", ParseInput},
+    {"InstanceNorm", ParseInstanceNorm},
     {"LRN", ParseLRN},
     {"Normalize", ParseNormalize},
     {"Pad", ParsePad},
@@ -1442,6 +1523,7 @@ static const std::map<std::string, ParseFunc> parse_func_map{
     {"Reshape", ParseReshape},
     {"Resize", ParseResize},
     {"Scale", ParseScale},
+    {"ShuffleChannel", ParseShuffleChannel},
     {"Slice", ParseSlice},
     {"Softmax", ParseSoftmax},
     {"Stack", ParseStack},

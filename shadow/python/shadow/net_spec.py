@@ -260,6 +260,12 @@ class Shadow(object):
         self.set_arg(op_param, 'axis', axis, 's_i')
         self.set_arg(op_param, 'end_axis', end_axis, 's_i')
 
+    def add_instance_norm(self, name, bottoms, tops, eps=1e-5):
+        op_param = self.net_param.op.add()
+        self.add_common(op_param, name, 'InstanceNorm', bottoms, tops)
+
+        self.set_arg(op_param, 'eps', eps, 's_f')
+
     def add_lrn(self, name, bottoms, tops, local_size=5, alpha=1, beta=0.75, norm_region='AcrossChannels', k=1):
         op_param = self.net_param.op.add()
         self.add_common(op_param, name, 'LRN', bottoms, tops)
@@ -392,6 +398,12 @@ class Shadow(object):
         has_blob = has_scale or has_bias
         has_scalar = scale_value is not None or bias_value is not None
         assert has_blob != has_scalar
+
+    def add_shuffle_channel(self, name, bottoms, tops, group):
+        op_param = self.net_param.op.add()
+        self.add_common(op_param, name, 'ShuffleChannel', bottoms, tops)
+
+        self.set_arg(op_param, 'group', group, 's_i')
 
     def add_slice(self, name, bottoms, tops, axis=1, slice_point=None):
         op_param = self.net_param.op.add()
