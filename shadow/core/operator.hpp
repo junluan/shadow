@@ -125,13 +125,12 @@ SHADOW_DECLARE_REGISTRY(OperatorRegistry, Operator, const shadow::OpParam &,
 class StaticLinkingProtector {
  public:
   StaticLinkingProtector() {
-    const auto registered_ops = OperatorRegistry()->Keys().size();
-    if (registered_ops == 0) {
-      LOG(FATAL) << "You might have made a build error: the Shadow library "
-                    "does not seem to be linked with whole-static library "
-                    "option. To do so, use -Wl,-force_load (clang) or "
-                    "-Wl,--whole-archive (gcc) to link the Shadow library.";
-    }
+    const auto &registered_ops = OperatorRegistry()->Keys();
+    LOG_IF(FATAL, registered_ops.empty())
+        << "You might have made a build error: the Shadow library does not "
+           "seem to be linked with whole-static library option. To do so, use "
+           "-Wl,-force_load (clang) or -Wl,--whole-archive (gcc) to link the "
+           "Shadow library.";
   }
 };
 

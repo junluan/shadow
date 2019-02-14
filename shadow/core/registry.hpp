@@ -17,31 +17,23 @@ class Registry {
 
   Registry() = default;
 
-  void Register(const SrcType& key, Creator creator) {
-    if (registry_.count(key) != 0) {
-      std::cerr << "Key " << key << " already registered." << std::endl;
+  void Register(const SrcType& key, Creator creator,
+                const std::string& help_msg = "") {
+    if (Has(key)) {
+      std::cerr << "Key: " << key << " is already registered" << std::endl;
       std::exit(1);
     }
     registry_[key] = creator;
-  }
-
-  void Register(const SrcType& key, Creator creator,
-                const std::string& help_msg) {
-    Register(key, creator);
     help_message_[key] = help_msg;
   }
 
-  inline bool Has(const SrcType& key) { return (registry_.count(key) != 0); }
-
   ObjectType* Create(const SrcType& key, Args... args) {
-    if (registry_.count(key) == 0) {
-      std::cerr << "Unknown Key " << key << std::endl;
-      std::exit(1);
-    }
-    return registry_[key](args...);
+    return Has(key) ? registry_[key](args...) : nullptr;
   }
 
-  std::vector<SrcType> Keys() {
+  bool Has(const SrcType& key) const { return registry_.count(key) > 0; }
+
+  const std::vector<SrcType> Keys() const {
     std::vector<SrcType> keys;
     for (const auto& it : registry_) {
       keys.push_back(it.first);
@@ -49,16 +41,12 @@ class Registry {
     return keys;
   }
 
-  const std::map<SrcType, std::string>& HelpMessage() const {
-    return help_message_;
-  }
-
   const std::string HelpMessage(const SrcType& key) const {
-    auto it = help_message_.find(key);
-    if (it == help_message_.end()) {
+    if (help_message_.count(key)) {
+      return help_message_[key];
+    } else {
       return std::string();
     }
-    return it->second;
   }
 
  private:
@@ -79,7 +67,7 @@ class Register {
 
   template <typename DerivedType>
   static ObjectType* DefaultCreator(Args... args) {
-    return static_cast<ObjectType*>(new DerivedType(args...));
+    return reinterpret_cast<ObjectType*>(new DerivedType(args...));
   }
 };
 

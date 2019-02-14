@@ -59,8 +59,10 @@ const std::string Operator::debug_log() const {
 
 Operator *CreateOperator(const shadow::OpParam &op_param, Workspace *ws) {
   static StaticLinkingProtector g_protector;
-  auto *registry = OperatorRegistry();
-  return registry->Create(op_param.type(), op_param, ws);
+  auto *op = OperatorRegistry()->Create(op_param.type(), op_param, ws);
+  LOG_IF(FATAL, op == nullptr)
+      << "Op type: " << op_param.type() << " is not registered";
+  return op;
 }
 
 SHADOW_DEFINE_REGISTRY(OperatorRegistry, Operator, const shadow::OpParam &,
