@@ -2,11 +2,11 @@ from __future__ import print_function
 from __future__ import division
 
 import numpy as np
-from shadow.net_spec import Shadow
+from .network import Network
 
 
-def get_arg(shadow_op, arg_name, arg_type, default_value):
-    for arg in shadow_op.arg:
+def get_arg(op, arg_name, arg_type, default_value):
+    for arg in op.arg:
         if arg.name == arg_name:
             if arg_type == 's_i':
                 return arg.s_i
@@ -35,7 +35,7 @@ def convert_batch_norm(o, ori_net, merged_net, copy_params):
     bn_op = ori_net.op[o + 1]
     scale_op = ori_net.op[o + 2]
 
-    merged_op = merged_net.add_op()
+    merged_op = merged_net.add_net_op()
     merged_op.name = conv_op.name
     merged_op.type = conv_op.type
     merged_op.bottom.append(conv_op.bottom[0])
@@ -48,8 +48,8 @@ def convert_batch_norm(o, ori_net, merged_net, copy_params):
     if not copy_params:
         return
 
-    merge_weight_blob = merged_net.add_blob()
-    merge_bias_blob = merged_net.add_blob()
+    merge_weight_blob = merged_net.add_net_blob()
+    merge_bias_blob = merged_net.add_net_blob()
 
     merge_weight_blob.name = merged_op.name + '_merged_weights:0'
     merge_bias_blob.name = merged_op.name + '_merged_weights:1'
@@ -116,7 +116,7 @@ def convert_batch_norm(o, ori_net, merged_net, copy_params):
 
 
 def convert_activate(conv_op, ac_op, merged_net):
-    merged_op = merged_net.add_op()
+    merged_op = merged_net.add_net_op()
     merged_op.name = conv_op.name
     merged_op.type = conv_op.type
     merged_op.top.extend(ac_op.top)
@@ -130,12 +130,13 @@ def convert_activate(conv_op, ac_op, merged_net):
     bias_arg.s_i = 1
 
 
-def merge_batchnorm(shadow_net, copy_params):
-    merged_net = Shadow(shadow_net.get_meta_net_name())
-    for n, ori_net in enumerate(shadow_net.get_meta_net_network()):
+def merge_batchnorm(network, copy_params):
+    merged_net = Network(network.get_meta_net_name())
+    merged_net.set_meta_net_arg(network.get_meta_net_arg())
+    for n, ori_net in enumerate(network.get_meta_net_network()):
         merged_net.set_net(n)
         merged_net.set_net_name(ori_net.name)
-        merged_net.copy_net_arg(ori_net.arg)
+        merged_net.set_net_arg(ori_net.arg)
         op_size = len(ori_net.op)
         o = 0
         while o < op_size:
@@ -151,22 +152,23 @@ def merge_batchnorm(shadow_net, copy_params):
                     convert_batch_norm(o, ori_net, merged_net, copy_params)
                     o += 3
                     continue
-            merged_net.add_op().CopyFrom(op)
+            merged_net.add_net_op().CopyFrom(op)
             o += 1
             for bottom_name in op.bottom:
                 blob = get_blob(ori_net, bottom_name)
                 if blob is not None:
-                    merged_net.add_blob().CopyFrom(blob)
+                    merged_net.add_net_blob().CopyFrom(blob)
     return merged_net
 
 
-def merge_activate(shadow_net):
-    merged_net = Shadow(shadow_net.get_meta_net_name())
-    for n, ori_net in enumerate(shadow_net.get_meta_net_network()):
+def merge_activate(network):
+    merged_net = Network(network.get_meta_net_name())
+    merged_net.set_meta_net_arg(network.get_meta_net_arg())
+    for n, ori_net in enumerate(network.get_meta_net_network()):
         merged_net.set_net(n)
         merged_net.set_net_name(ori_net.name)
-        merged_net.copy_net_blob(ori_net.blob)
-        merged_net.copy_net_arg(ori_net.arg)
+        merged_net.set_net_blob(ori_net.blob)
+        merged_net.set_net_arg(ori_net.arg)
         op_size = len(ori_net.op)
         o = 0
         while o < op_size:
@@ -181,12 +183,12 @@ def merge_activate(shadow_net):
                     convert_activate(op, ori_net.op[ac_index], merged_net)
                     o += 2
                     continue
-            merged_net.add_op().CopyFrom(op)
+            merged_net.add_net_op().CopyFrom(op)
             o += 1
     return merged_net
 
 
-def merge(shadow_net, copy_params):
-    merged_bn_net = merge_batchnorm(shadow_net, copy_params)
+def merge(network, copy_params):
+    merged_bn_net = merge_batchnorm(network, copy_params)
     merged_net = merge_activate(merged_bn_net)
     return merged_net

@@ -17,7 +17,7 @@ def get_config_squeezenet():
     }
 
     meta_net_info = {
-        'model_type': 'mxnet',
+        'model_type': ['mxnet'],
         'model_name': ['squeezenet_v1.1'],
         'model_epoch': [0],
         'save_name': 'squeezenet_v1.1',
@@ -66,7 +66,7 @@ def get_config_mtcnn():
     }
 
     meta_net_info = {
-        'model_type': 'caffe',
+        'model_type': ['caffe', 'caffe', 'caffe'],
         'model_name': ['det1', 'det2', 'det3'],
         'model_epoch': [],
         'save_name': 'mtcnn',
@@ -92,7 +92,7 @@ def get_config_ssd():
     }
 
     meta_net_info = {
-        'model_type': 'caffe',
+        'model_type': ['caffe'],
         'model_name': ['adas_model_finetune_reduce_3'],
         'model_epoch': [],
         'save_name': 'adas_model_finetune_reduce_3',
@@ -120,7 +120,7 @@ def get_config_faster():
     }
 
     meta_net_info = {
-        'model_type': 'caffe',
+        'model_type': ['caffe'],
         'model_name': ['VGG16_faster_rcnn_final'],
         'model_epoch': [],
         'save_name': 'VGG16_faster_rcnn_final',

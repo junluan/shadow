@@ -40,11 +40,14 @@ def get_config_custom():
     }
 
     meta_net_info = {
-        'model_type': 'mxnet',  # model type: caffe or mxnet
+        'model_type': ['mxnet'],  # model type: caffe or mxnet
         'model_name': ['squeezenet_v1.1'],  # model file name on disk
         'model_epoch': [0],  # only for mxnet model
         'save_name': 'squeezenet_v1.1',  # shadow model saved name
-        'network': [net_info]  # networks
+        'network': [net_info],  # networks
+        'arg': {  # meta net arguments, must end with one of 's_i, s_f, s_s, v_i, v_f, v_s'
+            'version_s_s': '0.0.1',  # some useful arguments
+        }
     }
 
     return meta_net_info
@@ -57,5 +60,3 @@ Now you can convert a custom model after you finish the config function. The ```
 ```
 python convert_to_shadow.py --model_root model_mxnet --config_name custom --save_root model_shadow
 ```
-
-Python is snail! If you copy params, go and take a tea break.

@@ -2,60 +2,58 @@ from __future__ import print_function
 
 from google.protobuf import text_format
 from proto import caffe_pb2
-from shadow.net_spec import Shadow
 
 
-def copy_weights(caffe_model, shadow_net):
-    net_param = shadow_net.net_param
-    for shadow_op in net_param.op:
-        op_name = shadow_op.name
+def copy_weights(caffe_model, network):
+    net_param = network.net_param
+    for op in net_param.op:
+        op_name = op.name
         for caffe_layer in caffe_model.layer:
             if caffe_layer.name == op_name:
                 for n, caffe_blob in enumerate(caffe_layer.blobs):
                     blob_shape = caffe_blob.shape.dim
                     if len(blob_shape) == 0:
                         blob_shape = [len(caffe_blob.data)]
-                    shadow_blob = net_param.blob.add()
-                    shadow_blob.name = op_name + '_weights:{}'.format(n)
-                    shadow_blob.shape.extend(blob_shape)
-                    shadow_blob.data_f.extend(caffe_blob.data)
-                    shadow_op.bottom.append(shadow_blob.name)
+                    blob = net_param.blob.add()
+                    blob.name = op_name + '_weights:{}'.format(n)
+                    blob.shape.extend(blob_shape)
+                    blob.data_f.extend(caffe_blob.data)
+                    op.bottom.append(blob.name)
                 break
 
 
-def convert_input(caffe_deploy, net_info, shadow_net):
+def convert_input(caffe_deploy, net_info, network):
     start_layer = 0
-    shadow_inputs = []
-    shadow_shapes = []
+    inputs, shapes = [], []
 
     if len(caffe_deploy.input) > 0:
-        shadow_inputs.extend(caffe_deploy.input)
+        inputs.extend(caffe_deploy.input)
         if len(net_info['input_shape']) == 0:
             if len(caffe_deploy.input_shape) > 0:
                 for caffe_shape in caffe_deploy.input_shape:
-                    shadow_shapes.append(caffe_shape.dim)
+                    shapes.append(caffe_shape.dim)
             elif len(caffe_deploy.input_dim) > 0:
                 num_dim = len(caffe_deploy.input_dim)
                 num_shape = int(num_dim / 4)
                 for i in range(0, num_shape):
-                    shadow_shapes.append(caffe_deploy.input_dim[4*i : 4*(i+1)])
+                    shapes.append(caffe_deploy.input_dim[4*i : 4*(i+1)])
         else:
-            shadow_shapes = net_info['input_shape']
+            shapes = net_info['input_shape']
         start_layer = 0
     elif caffe_deploy.layer[0].type == 'Input':
         caffe_input_layer = caffe_deploy.layer[0]
-        shadow_inputs.extend(caffe_input_layer.top)
+        inputs.extend(caffe_input_layer.top)
         if len(net_info['input_shape']) == 0:
             if caffe_input_layer.HasField('input_param'):
                 caffe_param = caffe_input_layer.input_param
                 for caffe_shape in caffe_param.shape:
-                    shadow_shapes.append(caffe_shape.dim)
+                    shapes.append(caffe_shape.dim)
         else:
-            shadow_shapes = net_info['input_shape']
+            shapes = net_info['input_shape']
         start_layer = 1
 
-    assert len(shadow_inputs) == len(shadow_shapes)
-    shadow_net.add_input('input', [], shadow_inputs, shadow_shapes)
+    assert len(inputs) == len(shapes)
+    network.add_input('input', [], inputs, shapes)
 
     num_mean = len(net_info['mean_value'])
     num_scale = len(net_info['scale_value'])
@@ -74,14 +72,14 @@ def convert_input(caffe_deploy, net_info, shadow_net):
         assert len(mean_value) == len(scale_value)
         for i in range(0, len(mean_value)):
             mean_value[i] *= -scale_value[i]
-        for input_name in shadow_inputs:
+        for input_name in inputs:
             if 'data' in input_name:
-                shadow_net.add_scale(input_name, [input_name], [input_name], 1, False, False, scale_value, mean_value)
+                network.add_scale(input_name, [input_name], [input_name], 1, False, False, scale_value, mean_value)
 
     return start_layer
 
 
-def convert_activate(caffe_layer, shadow_net):
+def convert_activate(caffe_layer, network):
     layer_name = caffe_layer.name
     layer_type = caffe_layer.type
     bottom_names = caffe_layer.bottom
@@ -96,19 +94,19 @@ def convert_activate(caffe_layer, shadow_net):
     else:
         raise ValueError('Unsupported activate type', layer_type)
 
-    shadow_net.add_activate(layer_name, bottom_names, top_names, act_type)
+    network.add_activate(layer_name, bottom_names, top_names, act_type)
 
 
-def convert_axpy(caffe_layer, shadow_net):
+def convert_axpy(caffe_layer, network):
     layer_name = caffe_layer.name
     layer_type = caffe_layer.type
     bottom_names = caffe_layer.bottom
     top_names = caffe_layer.top
 
-    shadow_net.add_axpy(layer_name, bottom_names, top_names)
+    network.add_axpy(layer_name, bottom_names, top_names)
 
 
-def convert_batch_norm(caffe_layer, shadow_net):
+def convert_batch_norm(caffe_layer, network):
     layer_name = caffe_layer.name
     bottom_names = caffe_layer.bottom
     top_names = caffe_layer.top
@@ -122,10 +120,10 @@ def convert_batch_norm(caffe_layer, shadow_net):
         if caffe_param.HasField('eps'):
             eps = caffe_param.eps
 
-    shadow_net.add_batch_norm(layer_name, bottom_names, top_names, use_global_stats, eps)
+    network.add_batch_norm(layer_name, bottom_names, top_names, use_global_stats, eps)
 
 
-def convert_bias(caffe_layer, shadow_net):
+def convert_bias(caffe_layer, network):
     layer_name = caffe_layer.name
     bottom_names = caffe_layer.bottom
     top_names = caffe_layer.top
@@ -139,10 +137,10 @@ def convert_bias(caffe_layer, shadow_net):
         if caffe_param.HasField('num_axes'):
             num_axes = caffe_param.num_axes
 
-    shadow_net.add_scale(layer_name, bottom_names, top_names, axis, False, True)
+    network.add_scale(layer_name, bottom_names, top_names, axis, False, True)
 
 
-def convert_concat(caffe_layer, shadow_net):
+def convert_concat(caffe_layer, network):
     layer_name = caffe_layer.name
     bottom_names = caffe_layer.bottom
     top_names = caffe_layer.top
@@ -153,10 +151,10 @@ def convert_concat(caffe_layer, shadow_net):
         if caffe_param.HasField('axis'):
             axis = caffe_param.axis
 
-    shadow_net.add_concat(layer_name, bottom_names, top_names, axis)
+    network.add_concat(layer_name, bottom_names, top_names, axis)
 
 
-def convert_connected(caffe_layer, shadow_net):
+def convert_connected(caffe_layer, network):
     layer_name = caffe_layer.name
     bottom_names = caffe_layer.bottom
     top_names = caffe_layer.top
@@ -174,10 +172,10 @@ def convert_connected(caffe_layer, shadow_net):
         if caffe_param.HasField('transpose'):
             transpose = not caffe_param.transpose
 
-    shadow_net.add_connected(layer_name, bottom_names, top_names, num_output, bias_term, transpose)
+    network.add_connected(layer_name, bottom_names, top_names, num_output, bias_term, transpose)
 
 
-def convert_conv(caffe_layer, shadow_net):
+def convert_conv(caffe_layer, network):
     layer_name = caffe_layer.name
     bottom_names = caffe_layer.bottom
     top_names = caffe_layer.top
@@ -208,10 +206,10 @@ def convert_conv(caffe_layer, shadow_net):
         if caffe_param.HasField('group'):
             group = caffe_param.group
 
-    shadow_net.add_conv(layer_name, bottom_names, top_names, num_output, kernel_size, stride, pad, dilation, bias_term, group)
+    network.add_conv(layer_name, bottom_names, top_names, num_output, kernel_size, stride, pad, dilation, bias_term, group)
 
 
-def convert_deconv(caffe_layer, shadow_net):
+def convert_deconv(caffe_layer, network):
     layer_name = caffe_layer.name
     bottom_names = caffe_layer.bottom
     top_names = caffe_layer.top
@@ -242,10 +240,10 @@ def convert_deconv(caffe_layer, shadow_net):
         if caffe_param.HasField('group'):
             group = caffe_param.group
 
-    shadow_net.add_deconv(layer_name, bottom_names, top_names, num_output, kernel_size, stride, pad, dilation, bias_term, group)
+    network.add_deconv(layer_name, bottom_names, top_names, num_output, kernel_size, stride, pad, dilation, bias_term, group)
 
 
-def convert_eltwise(caffe_layer, shadow_net):
+def convert_eltwise(caffe_layer, network):
     layer_name = caffe_layer.name
     bottom_names = caffe_layer.bottom
     top_names = caffe_layer.top
@@ -264,10 +262,10 @@ def convert_eltwise(caffe_layer, shadow_net):
         if len(caffe_param.coeff) > 0:
             coeff = caffe_param.coeff
 
-    shadow_net.add_eltwise(layer_name, bottom_names, top_names, eltwise_op, coeff)
+    network.add_eltwise(layer_name, bottom_names, top_names, eltwise_op, coeff)
 
 
-def convert_flatten(caffe_layer, shadow_net):
+def convert_flatten(caffe_layer, network):
     layer_name = caffe_layer.name
     bottom_names = caffe_layer.bottom
     top_names = caffe_layer.top
@@ -281,10 +279,10 @@ def convert_flatten(caffe_layer, shadow_net):
         if caffe_param.HasField('end_axis'):
             end_axis = caffe_param.end_axis
 
-    shadow_net.add_flatten(layer_name, bottom_names, top_names, axis, end_axis)
+    network.add_flatten(layer_name, bottom_names, top_names, axis, end_axis)
 
 
-def convert_lrn(caffe_layer, shadow_net):
+def convert_lrn(caffe_layer, network):
     layer_name = caffe_layer.name
     bottom_names = caffe_layer.bottom
     top_names = caffe_layer.top
@@ -310,10 +308,10 @@ def convert_lrn(caffe_layer, shadow_net):
         if caffe_param.HasField('k'):
             k = caffe_param.k
 
-    shadow_net.add_lrn(layer_name, bottom_names, top_names, local_size, alpha, beta, norm_region, k)
+    network.add_lrn(layer_name, bottom_names, top_names, local_size, alpha, beta, norm_region, k)
 
 
-def convert_normalize(caffe_layer, shadow_net):
+def convert_normalize(caffe_layer, network):
     layer_name = caffe_layer.name
     bottom_names = caffe_layer.bottom
     top_names = caffe_layer.top
@@ -327,10 +325,10 @@ def convert_normalize(caffe_layer, shadow_net):
         if caffe_param.HasField('channel_shared'):
             channel_shared = caffe_param.channel_shared
 
-    shadow_net.add_normalize(layer_name, bottom_names, top_names, across_spatial, channel_shared)
+    network.add_normalize(layer_name, bottom_names, top_names, across_spatial, channel_shared)
 
 
-def convert_permute(caffe_layer, shadow_net):
+def convert_permute(caffe_layer, network):
     layer_name = caffe_layer.name
     bottom_names = caffe_layer.bottom
     top_names = caffe_layer.top
@@ -341,10 +339,10 @@ def convert_permute(caffe_layer, shadow_net):
         if len(caffe_param.order) > 0:
             order = caffe_param.order
 
-    shadow_net.add_permute(layer_name, bottom_names, top_names, order)
+    network.add_permute(layer_name, bottom_names, top_names, order)
 
 
-def convert_pooling(caffe_layer, shadow_net):
+def convert_pooling(caffe_layer, network):
     layer_name = caffe_layer.name
     bottom_names = caffe_layer.bottom
     top_names = caffe_layer.top
@@ -373,10 +371,10 @@ def convert_pooling(caffe_layer, shadow_net):
         if caffe_param.HasField('pad'):
             pad = [caffe_param.pad] * 2
 
-    shadow_net.add_pooling(layer_name, bottom_names, top_names, pool, kernel_size, stride, pad, global_pooling)
+    network.add_pooling(layer_name, bottom_names, top_names, pool, kernel_size, stride, pad, global_pooling)
 
 
-def convert_prior_box(caffe_layer, shadow_net):
+def convert_prior_box(caffe_layer, network):
     layer_name = caffe_layer.name
     bottom_names = caffe_layer.bottom
     top_names = caffe_layer.top
@@ -408,10 +406,10 @@ def convert_prior_box(caffe_layer, shadow_net):
         if caffe_param.HasField('offset'):
             offset = caffe_param.offset
 
-    shadow_net.add_prior_box(layer_name, bottom_names, top_names, min_size, max_size, aspect_ratio, flip, clip, variance, step, offset)
+    network.add_prior_box(layer_name, bottom_names, top_names, min_size, max_size, aspect_ratio, flip, clip, variance, step, offset)
 
 
-def convert_python(caffe_layer, shadow_net):
+def convert_python(caffe_layer, network):
     layer_name = caffe_layer.name
     bottom_names = caffe_layer.bottom
     top_names = caffe_layer.top
@@ -422,7 +420,7 @@ def convert_python(caffe_layer, shadow_net):
             if caffe_param.layer == 'ProposalLayer':
                 if caffe_param.HasField('param_str'):
                     print('Can not parse python param, please check ' + caffe_param.param_str)
-                shadow_net.add_proposal(layer_name, bottom_names, top_names)
+                network.add_proposal(layer_name, bottom_names, top_names)
             else:
                 raise ValueError('Layer not support ' + caffe_param.layer)
         else:
@@ -431,7 +429,7 @@ def convert_python(caffe_layer, shadow_net):
         raise ValueError('Must have python param')
 
 
-def convert_psroi_pooling(caffe_layer, shadow_net):
+def convert_psroi_pooling(caffe_layer, network):
     layer_name = caffe_layer.name
     bottom_names = caffe_layer.bottom
     top_names = caffe_layer.top
@@ -451,10 +449,10 @@ def convert_psroi_pooling(caffe_layer, shadow_net):
         else:
             raise ValueError('spatial_scale must be supplied')
 
-    shadow_net.add_psroi_pooling(layer_name, bottom_names, top_names, output_dim, group_size, spatial_scale)
+    network.add_psroi_pooling(layer_name, bottom_names, top_names, output_dim, group_size, spatial_scale)
 
 
-def convert_reshape(caffe_layer, shadow_net):
+def convert_reshape(caffe_layer, network):
     layer_name = caffe_layer.name
     bottom_names = caffe_layer.bottom
     top_names = caffe_layer.top
@@ -471,10 +469,10 @@ def convert_reshape(caffe_layer, shadow_net):
         if caffe_param.HasField('num_axes'):
             num_axes = caffe_param.num_axes
 
-    shadow_net.add_reshape(layer_name, bottom_names, top_names, shape, axis, num_axes)
+    network.add_reshape(layer_name, bottom_names, top_names, shape, axis, num_axes)
 
 
-def convert_roi_pooling(caffe_layer, shadow_net):
+def convert_roi_pooling(caffe_layer, network):
     layer_name = caffe_layer.name
     bottom_names = caffe_layer.bottom
     top_names = caffe_layer.top
@@ -494,10 +492,10 @@ def convert_roi_pooling(caffe_layer, shadow_net):
         else:
             raise ValueError('spatial_scale must be supplied')
 
-    shadow_net.add_roi_pooling(layer_name, bottom_names, top_names, pooled_h, pooled_w, spatial_scale)
+    network.add_roi_pooling(layer_name, bottom_names, top_names, pooled_h, pooled_w, spatial_scale)
 
 
-def convert_scale(caffe_layer, shadow_net):
+def convert_scale(caffe_layer, network):
     layer_name = caffe_layer.name
     bottom_names = caffe_layer.bottom
     top_names = caffe_layer.top
@@ -514,10 +512,10 @@ def convert_scale(caffe_layer, shadow_net):
         if caffe_param.HasField('bias_term'):
             bias_term = caffe_param.bias_term
 
-    shadow_net.add_scale(layer_name, bottom_names, top_names, axis, True, bias_term)
+    network.add_scale(layer_name, bottom_names, top_names, axis, True, bias_term)
 
 
-def convert_slice(caffe_layer, shadow_net):
+def convert_slice(caffe_layer, network):
     layer_name = caffe_layer.name
     bottom_names = caffe_layer.bottom
     top_names = caffe_layer.top
@@ -531,10 +529,10 @@ def convert_slice(caffe_layer, shadow_net):
         if len(caffe_param.slice_point) > 0:
             slice_point = caffe_param.slice_point
 
-    shadow_net.add_slice(layer_name, bottom_names, top_names, axis, slice_point)
+    network.add_slice(layer_name, bottom_names, top_names, axis, slice_point)
 
 
-def convert_softmax(caffe_layer, shadow_net):
+def convert_softmax(caffe_layer, network):
     layer_name = caffe_layer.name
     bottom_names = caffe_layer.bottom
     top_names = caffe_layer.top
@@ -545,82 +543,74 @@ def convert_softmax(caffe_layer, shadow_net):
         if caffe_param.HasField('axis'):
             axis = caffe_param.axis
 
-    shadow_net.add_softmax(layer_name, bottom_names, top_names, axis)
+    network.add_softmax(layer_name, bottom_names, top_names, axis)
 
 
-def caffe2shadow(model_root, meta_net_info, copy_params=False):
-    shadow_net = Shadow(meta_net_info['save_name'])
+def convert_caffe(network, net_info, model_root, model_name, copy_params):
+    deploy_file = model_root + '/' + model_name + '.prototxt'
+    deploy_model = model_root + '/' + model_name + '.caffemodel'
 
-    for n, model_name in enumerate(meta_net_info['model_name']):
-        deploy_file = model_root + '/' + model_name + '.prototxt'
-        deploy_model = model_root + '/' + model_name + '.caffemodel'
+    caffe_deploy = caffe_pb2.NetParameter()
+    with open(deploy_file, 'r') as caffe_file:
+        text_format.Merge(caffe_file.read(), caffe_deploy)
 
-        caffe_deploy = caffe_pb2.NetParameter()
-        with open(deploy_file, 'r') as caffe_file:
-            text_format.Merge(caffe_file.read(), caffe_deploy)
+    network.set_net_name(model_name)
+    network.set_net_arg_dict(net_info['arg'])
 
-        net_info = meta_net_info['network'][n]
+    start_layer = convert_input(caffe_deploy, net_info, network)
 
-        shadow_net.set_net(n)
-        shadow_net.set_net_name(meta_net_info['model_name'][n])
-        shadow_net.set_net_arg(net_info['arg'])
+    for index in range(start_layer, len(caffe_deploy.layer)):
+        caffe_layer = caffe_deploy.layer[index]
+        layer_type = caffe_layer.type
+        if layer_type == 'PReLU' or layer_type == 'ReLU' or layer_type == 'Sigmoid':
+            convert_activate(caffe_layer, network)
+        elif layer_type == 'Axpy':
+            convert_axpy(caffe_layer, network)
+        elif layer_type == 'BatchNorm':
+            convert_batch_norm(caffe_layer, network)
+        elif layer_type == 'Bias':
+            convert_bias(caffe_layer, network)
+        elif layer_type == 'Concat':
+            convert_concat(caffe_layer, network)
+        elif layer_type == 'InnerProduct':
+            convert_connected(caffe_layer, network)
+        elif layer_type == 'Convolution' or layer_type == 'DepthwiseConvolution':
+            convert_conv(caffe_layer, network)
+        elif layer_type == 'Deconvolution':
+            convert_deconv(caffe_layer, network)
+        elif layer_type == 'Eltwise':
+            convert_eltwise(caffe_layer, network)
+        elif layer_type == 'Flatten':
+            convert_flatten(caffe_layer, network)
+        elif layer_type == 'LRN':
+            convert_lrn(caffe_layer, network)
+        elif layer_type == 'Normalize':
+            convert_normalize(caffe_layer, network)
+        elif layer_type == 'Permute':
+            convert_permute(caffe_layer, network)
+        elif layer_type == 'Pooling':
+            convert_pooling(caffe_layer, network)
+        elif layer_type == 'PriorBox':
+            convert_prior_box(caffe_layer, network)
+        elif layer_type == 'PSROIPooling':
+            convert_psroi_pooling(caffe_layer, network)
+        elif layer_type == 'Python':
+            convert_python(caffe_layer, network)
+        elif layer_type == 'Reshape':
+            convert_reshape(caffe_layer, network)
+        elif layer_type == 'ROIPooling':
+            convert_roi_pooling(caffe_layer, network)
+        elif layer_type == 'Scale':
+            convert_scale(caffe_layer, network)
+        elif layer_type == 'Slice':
+            convert_slice(caffe_layer, network)
+        elif layer_type == 'Softmax':
+            convert_softmax(caffe_layer, network)
+        else:
+            print('Layer type: ' + layer_type + ' is not recognized!')
 
-        start_layer = convert_input(caffe_deploy, net_info, shadow_net)
-
-        for index in range(start_layer, len(caffe_deploy.layer)):
-            caffe_layer = caffe_deploy.layer[index]
-            layer_type = caffe_layer.type
-            if layer_type == 'PReLU' or layer_type == 'ReLU' or layer_type == 'Sigmoid':
-                convert_activate(caffe_layer, shadow_net)
-            elif layer_type == 'Axpy':
-                convert_axpy(caffe_layer, shadow_net)
-            elif layer_type == 'BatchNorm':
-                convert_batch_norm(caffe_layer, shadow_net)
-            elif layer_type == 'Bias':
-                convert_bias(caffe_layer, shadow_net)
-            elif layer_type == 'Concat':
-                convert_concat(caffe_layer, shadow_net)
-            elif layer_type == 'InnerProduct':
-                convert_connected(caffe_layer, shadow_net)
-            elif layer_type == 'Convolution' or layer_type == 'DepthwiseConvolution':
-                convert_conv(caffe_layer, shadow_net)
-            elif layer_type == 'Deconvolution':
-                convert_deconv(caffe_layer, shadow_net)
-            elif layer_type == 'Eltwise':
-                convert_eltwise(caffe_layer, shadow_net)
-            elif layer_type == 'Flatten':
-                convert_flatten(caffe_layer, shadow_net)
-            elif layer_type == 'LRN':
-                convert_lrn(caffe_layer, shadow_net)
-            elif layer_type == 'Normalize':
-                convert_normalize(caffe_layer, shadow_net)
-            elif layer_type == 'Permute':
-                convert_permute(caffe_layer, shadow_net)
-            elif layer_type == 'Pooling':
-                convert_pooling(caffe_layer, shadow_net)
-            elif layer_type == 'PriorBox':
-                convert_prior_box(caffe_layer, shadow_net)
-            elif layer_type == 'PSROIPooling':
-                convert_psroi_pooling(caffe_layer, shadow_net)
-            elif layer_type == 'Python':
-                convert_python(caffe_layer, shadow_net)
-            elif layer_type == 'Reshape':
-                convert_reshape(caffe_layer, shadow_net)
-            elif layer_type == 'ROIPooling':
-                convert_roi_pooling(caffe_layer, shadow_net)
-            elif layer_type == 'Scale':
-                convert_scale(caffe_layer, shadow_net)
-            elif layer_type == 'Slice':
-                convert_slice(caffe_layer, shadow_net)
-            elif layer_type == 'Softmax':
-                convert_softmax(caffe_layer, shadow_net)
-            else:
-                print('Layer type: ' + layer_type + ' is not recognized!')
-
-        if copy_params:
-            caffe_model = caffe_pb2.NetParameter()
-            with open(deploy_model, 'rb') as caffe_file:
-                caffe_model.ParseFromString(caffe_file.read())
-            copy_weights(caffe_model, shadow_net)
-
-    return shadow_net
+    if copy_params:
+        caffe_model = caffe_pb2.NetParameter()
+        with open(deploy_model, 'rb') as caffe_file:
+            caffe_model.ParseFromString(caffe_file.read())
+        copy_weights(caffe_model, network)
