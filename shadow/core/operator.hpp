@@ -3,6 +3,7 @@
 
 #include "blas.hpp"
 #include "blob.hpp"
+#include "helper.hpp"
 #include "params.hpp"
 #include "registry.hpp"
 #include "workspace.hpp"

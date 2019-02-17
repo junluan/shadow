@@ -6,13 +6,11 @@
 #endif
 
 #include <limits>
-#include <map>
 #include <string>
 #include <vector>
 
-namespace Shadow {
-
 #if !defined(USE_Protobuf)
+
 namespace shadow {
 
 #define REPEATED_FIELD_FUNC(NAME, TYPE)                                     \
@@ -30,49 +28,26 @@ namespace shadow {
   bool has_##NAME() const { return !NAME##_.empty(); }                      \
   void clear_##NAME() { NAME##_.clear(); }
 
-#define OPTIONAL_FIELD_DEFAULT_FUNC(NAME, TYPE, DEFAULT) \
-  const TYPE &NAME() const { return NAME##_; }           \
-  void set_##NAME(const TYPE &value) {                   \
-    NAME##_ = value;                                     \
-    has_##NAME##_ = true;                                \
-  }                                                      \
-  bool has_##NAME() const { return has_##NAME##_; }      \
-  void clear_##NAME() {                                  \
-    NAME##_ = DEFAULT;                                   \
-    has_##NAME##_ = false;                               \
-  }
-
-#define OPTIONAL_NESTED_MESSAGE_FUNC(NAME, TYPE)              \
-  const TYPE &NAME() const {                                  \
-    return NAME##_ != nullptr ? *NAME##_ : default_##NAME##_; \
-  }                                                           \
-  TYPE *mutable_##NAME() {                                    \
-    if (NAME##_ == nullptr) {                                 \
-      NAME##_ = new TYPE;                                     \
-    }                                                         \
-    return NAME##_;                                           \
-  }                                                           \
-  void clear_##NAME() {                                       \
-    if (NAME##_ != nullptr) {                                 \
-      delete NAME##_;                                         \
-      NAME##_ = nullptr;                                      \
-    }                                                         \
-  }
-
-#define DEFAULT_CONSTRUCTOR_FUNC(NAME)     \
-  NAME() = default;                        \
-  NAME(const NAME &from) { *this = from; } \
-  ~NAME() { Clear(); }
-
-#define EQUAL_OPERATOR_FUNC(NAME)     \
-  NAME &operator=(const NAME &from) { \
-    CopyFrom(from);                   \
-    return *this;                     \
+#define OPTIONAL_FIELD_FUNC(NAME, TYPE, DEFAULT)    \
+  const TYPE &NAME() const { return NAME##_; }      \
+  void set_##NAME(const TYPE &value) {              \
+    NAME##_ = value;                                \
+    has_##NAME##_ = true;                           \
+  }                                                 \
+  bool has_##NAME() const { return has_##NAME##_; } \
+  void clear_##NAME() {                             \
+    NAME##_ = DEFAULT;                              \
+    has_##NAME##_ = false;                          \
   }
 
 #define DEFAULT_CONSTRUCTOR_WITH_EQUAL_OPERATOR_FUNC(NAME) \
-  DEFAULT_CONSTRUCTOR_FUNC(NAME)                           \
-  EQUAL_OPERATOR_FUNC(NAME)
+  NAME() = default;                                        \
+  NAME(const NAME &from) { *this = from; }                 \
+  ~NAME() { Clear(); }                                     \
+  NAME &operator=(const NAME &from) {                      \
+    CopyFrom(from);                                        \
+    return *this;                                          \
+  }
 
 class Blob {
  public:
@@ -91,8 +66,8 @@ class Blob {
     has_type_ = from.has_type_;
   }
 
-  OPTIONAL_FIELD_DEFAULT_FUNC(name, std::string, "");
-  OPTIONAL_FIELD_DEFAULT_FUNC(type, std::string, "");
+  OPTIONAL_FIELD_FUNC(name, std::string, "");
+  OPTIONAL_FIELD_FUNC(type, std::string, "");
   REPEATED_FIELD_FUNC(shape, int);
   REPEATED_FIELD_FUNC(data_f, float);
   REPEATED_FIELD_FUNC(data_i, int);
@@ -136,10 +111,10 @@ class Argument {
     has_s_s_ = from.has_s_s_;
   }
 
-  OPTIONAL_FIELD_DEFAULT_FUNC(name, std::string, "");
-  OPTIONAL_FIELD_DEFAULT_FUNC(s_f, float, std::numeric_limits<float>::max());
-  OPTIONAL_FIELD_DEFAULT_FUNC(s_i, int, std::numeric_limits<int>::max());
-  OPTIONAL_FIELD_DEFAULT_FUNC(s_s, std::string, "");
+  OPTIONAL_FIELD_FUNC(name, std::string, "");
+  OPTIONAL_FIELD_FUNC(s_f, float, std::numeric_limits<float>::max());
+  OPTIONAL_FIELD_FUNC(s_i, int, std::numeric_limits<int>::max());
+  OPTIONAL_FIELD_FUNC(s_s, std::string, "");
   REPEATED_FIELD_FUNC(v_f, float);
   REPEATED_FIELD_FUNC(v_i, int);
   REPEATED_FIELD_FUNC(v_s, std::string);
@@ -181,8 +156,8 @@ class OpParam {
     has_type_ = from.has_type_;
   }
 
-  OPTIONAL_FIELD_DEFAULT_FUNC(name, std::string, "");
-  OPTIONAL_FIELD_DEFAULT_FUNC(type, std::string, "");
+  OPTIONAL_FIELD_FUNC(name, std::string, "");
+  OPTIONAL_FIELD_FUNC(type, std::string, "");
 
   REPEATED_FIELD_FUNC(bottom, std::string);
   REPEATED_FIELD_FUNC(top, std::string);
@@ -217,7 +192,7 @@ class NetParam {
     has_name_ = from.has_name_;
   }
 
-  OPTIONAL_FIELD_DEFAULT_FUNC(name, std::string, "");
+  OPTIONAL_FIELD_FUNC(name, std::string, "");
   REPEATED_FIELD_FUNC(blob, Blob);
   REPEATED_FIELD_FUNC(op, OpParam);
   REPEATED_FIELD_FUNC(arg, Argument);
@@ -237,55 +212,38 @@ class NetParam {
   bool has_name_{false};
 };
 
-}  // namespace shadow
-#endif
-
-class ArgumentHelper {
+class MetaNetParam {
  public:
-  ArgumentHelper() = default;
-  explicit ArgumentHelper(const shadow::NetParam &def);
-  explicit ArgumentHelper(const shadow::OpParam &def);
+  DEFAULT_CONSTRUCTOR_WITH_EQUAL_OPERATOR_FUNC(MetaNetParam);
 
-  bool HasArgument(const std::string &name) const;
+  void CopyFrom(const MetaNetParam &from) {
+    if (&from == this) return;
+    Clear();
+    name_ = from.name_;
+    network_ = from.network_;
+    arg_ = from.arg_;
+    has_name_ = from.has_name_;
+  }
 
-  template <typename T>
-  T GetSingleArgument(const std::string &name, const T &default_value) const;
-  template <typename T>
-  std::vector<T> GetRepeatedArgument(
-      const std::string &name,
-      const std::vector<T> &default_value = std::vector<T>()) const;
+  OPTIONAL_FIELD_FUNC(name, std::string, "");
+  REPEATED_FIELD_FUNC(network, NetParam);
+  REPEATED_FIELD_FUNC(arg, Argument);
+
+  void Clear() {
+    clear_name();
+    clear_network();
+    clear_arg();
+  }
 
  private:
-  std::map<std::string, shadow::Argument> arg_map_;
+  std::string name_{"None"};
+  std::vector<NetParam> network_;
+  std::vector<Argument> arg_;
+  bool has_name_{false};
 };
 
-#define DECLARE_SET_SINGLE_ARGUMENT(fieldname, P, T) \
-  void set_##fieldname(P *param, const std::string &name, const T &value);
+}  // namespace shadow
 
-DECLARE_SET_SINGLE_ARGUMENT(s_f, shadow::NetParam, float);
-DECLARE_SET_SINGLE_ARGUMENT(s_i, shadow::NetParam, int);
-DECLARE_SET_SINGLE_ARGUMENT(s_i, shadow::NetParam, bool);
-DECLARE_SET_SINGLE_ARGUMENT(s_s, shadow::NetParam, std::string);
-DECLARE_SET_SINGLE_ARGUMENT(s_f, shadow::OpParam, float);
-DECLARE_SET_SINGLE_ARGUMENT(s_i, shadow::OpParam, int);
-DECLARE_SET_SINGLE_ARGUMENT(s_i, shadow::OpParam, bool);
-DECLARE_SET_SINGLE_ARGUMENT(s_s, shadow::OpParam, std::string);
-#undef DECLARE_SET_SINGLE_ARGUMENT
-
-#define DECLARE_SET_REPEATED_ARGUMENT(fieldname, P, T)    \
-  void set_##fieldname(P *param, const std::string &name, \
-                       const std::vector<T> &value);
-
-DECLARE_SET_REPEATED_ARGUMENT(v_f, shadow::NetParam, float);
-DECLARE_SET_REPEATED_ARGUMENT(v_i, shadow::NetParam, int);
-DECLARE_SET_REPEATED_ARGUMENT(v_i, shadow::NetParam, bool);
-DECLARE_SET_REPEATED_ARGUMENT(v_s, shadow::NetParam, std::string);
-DECLARE_SET_REPEATED_ARGUMENT(v_f, shadow::OpParam, float);
-DECLARE_SET_REPEATED_ARGUMENT(v_i, shadow::OpParam, int);
-DECLARE_SET_REPEATED_ARGUMENT(v_i, shadow::OpParam, bool);
-DECLARE_SET_REPEATED_ARGUMENT(v_s, shadow::OpParam, std::string);
-#undef DECLARE_SET_REPEATED_ARGUMENT
-
-}  // namespace Shadow
+#endif
 
 #endif  // SHADOW_CORE_PARAMS_HPP

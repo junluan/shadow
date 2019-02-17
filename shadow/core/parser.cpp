@@ -1,5 +1,7 @@
 #include "parser.hpp"
 
+#include "helper.hpp"
+
 #include "util/json.hpp"
 #include "util/log.hpp"
 #include "util/util.hpp"
@@ -45,9 +47,9 @@ const shadow::OpParam ParseActivate(const JValue &root) {
     }
   }
 
-  set_s_i(&shadow_op, "type", type);
-  set_s_f(&shadow_op, "slope", slope);
-  set_s_i(&shadow_op, "channel_shared", channel_shared);
+  add_s_i(&shadow_op, "type", type);
+  add_s_f(&shadow_op, "slope", slope);
+  add_s_i(&shadow_op, "channel_shared", channel_shared);
 
   return shadow_op;
 }
@@ -73,8 +75,8 @@ const shadow::OpParam ParseBatchNorm(const JValue &root) {
     }
   }
 
-  set_s_i(&shadow_op, "use_global_stats", use_global_stats);
-  set_s_f(&shadow_op, "eps", eps);
+  add_s_i(&shadow_op, "use_global_stats", use_global_stats);
+  add_s_f(&shadow_op, "eps", eps);
 
   return shadow_op;
 }
@@ -102,9 +104,9 @@ const shadow::OpParam ParseBinary(const JValue &root) {
     }
   }
 
-  set_s_i(&shadow_op, "operation", operation);
+  add_s_i(&shadow_op, "operation", operation);
   if (has_scalar) {
-    set_s_f(&shadow_op, "scalar", scalar);
+    add_s_f(&shadow_op, "scalar", scalar);
   }
 
   return shadow_op;
@@ -128,7 +130,7 @@ const shadow::OpParam ParseConcat(const JValue &root) {
     }
   }
 
-  set_s_i(&shadow_op, "axis", axis);
+  add_s_i(&shadow_op, "axis", axis);
 
   return shadow_op;
 }
@@ -156,9 +158,9 @@ const shadow::OpParam ParseConnected(const JValue &root) {
   }
 
   CHECK_GT(num_output, 0);
-  set_s_i(&shadow_op, "num_output", num_output);
-  set_s_i(&shadow_op, "bias_term", bias_term);
-  set_s_i(&shadow_op, "transpose", transpose);
+  add_s_i(&shadow_op, "num_output", num_output);
+  add_s_i(&shadow_op, "bias_term", bias_term);
+  add_s_i(&shadow_op, "transpose", transpose);
 
   return shadow_op;
 }
@@ -198,14 +200,14 @@ const shadow::OpParam ParseConv(const JValue &root) {
 
   CHECK_GT(num_output, 0);
   CHECK_GT(kernel_size, 0);
-  set_s_i(&shadow_op, "num_output", num_output);
-  set_s_i(&shadow_op, "kernel_size", kernel_size);
-  set_s_i(&shadow_op, "stride", stride);
-  set_s_i(&shadow_op, "pad", pad);
-  set_s_i(&shadow_op, "dilation", dilation);
-  set_s_i(&shadow_op, "group", group);
-  set_s_i(&shadow_op, "bias_term", bias_term);
-  set_s_i(&shadow_op, "type", type);
+  add_s_i(&shadow_op, "num_output", num_output);
+  add_s_i(&shadow_op, "kernel_size", kernel_size);
+  add_s_i(&shadow_op, "stride", stride);
+  add_s_i(&shadow_op, "pad", pad);
+  add_s_i(&shadow_op, "dilation", dilation);
+  add_s_i(&shadow_op, "group", group);
+  add_s_i(&shadow_op, "bias_term", bias_term);
+  add_s_i(&shadow_op, "type", type);
 
   return shadow_op;
 }
@@ -231,8 +233,8 @@ const shadow::OpParam ParseEltwise(const JValue &root) {
     }
   }
 
-  set_s_i(&shadow_op, "operation", operation);
-  set_v_f(&shadow_op, "coeff", coeffs);
+  add_s_i(&shadow_op, "operation", operation);
+  add_v_f(&shadow_op, "coeff", coeffs);
 
   return shadow_op;
 }
@@ -257,8 +259,8 @@ const shadow::OpParam ParseFlatten(const JValue &root) {
     }
   }
 
-  set_s_i(&shadow_op, "axis", axis);
-  set_s_i(&shadow_op, "end_axis", end_axis);
+  add_s_i(&shadow_op, "axis", axis);
+  add_s_i(&shadow_op, "end_axis", end_axis);
 
   return shadow_op;
 }
@@ -275,7 +277,7 @@ const shadow::OpParam ParseInput(const JValue &root) {
       CHECK(arg.HasMember("name"));
       const auto &arg_name = Json::GetString(arg, "name", "");
       const auto &shape = Json::GetVecInt(arg, "v_i");
-      set_v_i(&shadow_op, arg_name, shape);
+      add_v_i(&shadow_op, arg_name, shape);
     }
   }
 
@@ -300,7 +302,7 @@ const shadow::OpParam ParseInstanceNorm(const JValue &root) {
     }
   }
 
-  set_s_f(&shadow_op, "eps", eps);
+  add_s_f(&shadow_op, "eps", eps);
 
   return shadow_op;
 }
@@ -332,11 +334,11 @@ const shadow::OpParam ParseLRN(const JValue &root) {
     }
   }
 
-  set_s_i(&shadow_op, "local_size", local_size);
-  set_s_f(&shadow_op, "alpha", alpha);
-  set_s_f(&shadow_op, "beta", beta);
-  set_s_f(&shadow_op, "k", k);
-  set_s_i(&shadow_op, "norm_region", norm_region);
+  add_s_i(&shadow_op, "local_size", local_size);
+  add_s_f(&shadow_op, "alpha", alpha);
+  add_s_f(&shadow_op, "beta", beta);
+  add_s_f(&shadow_op, "k", k);
+  add_s_i(&shadow_op, "norm_region", norm_region);
 
   return shadow_op;
 }
@@ -361,8 +363,8 @@ const shadow::OpParam ParseNormalize(const JValue &root) {
     }
   }
 
-  set_s_i(&shadow_op, "across_spatial", across_spatial);
-  set_s_i(&shadow_op, "channel_shared", channel_shared);
+  add_s_i(&shadow_op, "across_spatial", across_spatial);
+  add_s_i(&shadow_op, "channel_shared", channel_shared);
 
   return shadow_op;
 }
@@ -388,8 +390,8 @@ const shadow::OpParam ParsePad(const JValue &root) {
     }
   }
 
-  set_v_i(&shadow_op, "paddings", paddings);
-  set_s_f(&shadow_op, "value", value);
+  add_v_i(&shadow_op, "paddings", paddings);
+  add_s_f(&shadow_op, "value", value);
 
   return shadow_op;
 }
@@ -412,7 +414,7 @@ const shadow::OpParam ParsePermute(const JValue &root) {
     }
   }
 
-  set_v_i(&shadow_op, "order", order);
+  add_v_i(&shadow_op, "order", order);
 
   return shadow_op;
 }
@@ -446,12 +448,12 @@ const shadow::OpParam ParsePooling(const JValue &root) {
     }
   }
 
-  set_s_i(&shadow_op, "pool", pool);
-  set_v_i(&shadow_op, "kernel_size", kernel_size);
-  set_v_i(&shadow_op, "stride", stride);
-  set_v_i(&shadow_op, "pad", pad);
-  set_s_i(&shadow_op, "global_pooling", global_pooling);
-  set_s_i(&shadow_op, "full_pooling", full_pooling);
+  add_s_i(&shadow_op, "pool", pool);
+  add_v_i(&shadow_op, "kernel_size", kernel_size);
+  add_v_i(&shadow_op, "stride", stride);
+  add_v_i(&shadow_op, "pad", pad);
+  add_s_i(&shadow_op, "global_pooling", global_pooling);
+  add_s_i(&shadow_op, "full_pooling", full_pooling);
 
   return shadow_op;
 }
@@ -490,16 +492,16 @@ const shadow::OpParam ParsePriorBox(const JValue &root) {
     }
   }
 
-  set_v_f(&shadow_op, "min_size", min_size);
-  set_v_f(&shadow_op, "max_size", max_size);
-  set_v_f(&shadow_op, "aspect_ratio", aspect_ratio);
-  set_s_i(&shadow_op, "flip", flip);
-  set_s_i(&shadow_op, "clip", clip);
-  set_v_f(&shadow_op, "variance", variance);
+  add_v_f(&shadow_op, "min_size", min_size);
+  add_v_f(&shadow_op, "max_size", max_size);
+  add_v_f(&shadow_op, "aspect_ratio", aspect_ratio);
+  add_s_i(&shadow_op, "flip", flip);
+  add_s_i(&shadow_op, "clip", clip);
+  add_v_f(&shadow_op, "variance", variance);
   if (step > 0) {
-    set_s_f(&shadow_op, "step", step);
+    add_s_f(&shadow_op, "step", step);
   }
-  set_s_f(&shadow_op, "offset", offset);
+  add_s_f(&shadow_op, "offset", offset);
 
   return shadow_op;
 }
@@ -522,7 +524,7 @@ const shadow::OpParam ParseReorg(const JValue &root) {
     }
   }
 
-  set_s_i(&shadow_op, "stride", stride);
+  add_s_i(&shadow_op, "stride", stride);
 
   return shadow_op;
 }
@@ -550,9 +552,9 @@ const shadow::OpParam ParseReshape(const JValue &root) {
     }
   }
 
-  set_v_i(&shadow_op, "shape", shape);
-  set_s_i(&shadow_op, "axis", axis);
-  set_s_i(&shadow_op, "num_axes", num_axes);
+  add_v_i(&shadow_op, "shape", shape);
+  add_s_i(&shadow_op, "axis", axis);
+  add_s_i(&shadow_op, "num_axes", num_axes);
 
   return shadow_op;
 }
@@ -582,10 +584,10 @@ const shadow::OpParam ParseResize(const JValue &root) {
     }
   }
 
-  set_s_i(&shadow_op, "out_h", out_h);
-  set_s_i(&shadow_op, "out_w", out_w);
-  set_s_f(&shadow_op, "scale", scale);
-  set_s_i(&shadow_op, "type", type);
+  add_s_i(&shadow_op, "out_h", out_h);
+  add_s_i(&shadow_op, "out_w", out_w);
+  add_s_f(&shadow_op, "scale", scale);
+  add_s_i(&shadow_op, "type", type);
 
   return shadow_op;
 }
@@ -617,11 +619,11 @@ const shadow::OpParam ParseScale(const JValue &root) {
     }
   }
 
-  set_s_i(&shadow_op, "axis", axis);
-  set_s_i(&shadow_op, "has_scale", has_scale);
-  set_s_i(&shadow_op, "has_bias", has_bias);
-  set_v_f(&shadow_op, "scale_value", scale_value);
-  set_v_f(&shadow_op, "bias_value", bias_value);
+  add_s_i(&shadow_op, "axis", axis);
+  add_s_i(&shadow_op, "has_scale", has_scale);
+  add_s_i(&shadow_op, "has_bias", has_bias);
+  add_v_f(&shadow_op, "scale_value", scale_value);
+  add_v_f(&shadow_op, "bias_value", bias_value);
 
   return shadow_op;
 }
@@ -644,7 +646,7 @@ const shadow::OpParam ParseShuffleChannel(const JValue &root) {
     }
   }
 
-  set_s_i(&shadow_op, "group", group);
+  add_s_i(&shadow_op, "group", group);
 
   return shadow_op;
 }
@@ -670,8 +672,8 @@ const shadow::OpParam ParseSlice(const JValue &root) {
     }
   }
 
-  set_s_i(&shadow_op, "axis", axis);
-  set_v_i(&shadow_op, "slice_point", slice_point);
+  add_s_i(&shadow_op, "axis", axis);
+  add_v_i(&shadow_op, "slice_point", slice_point);
 
   return shadow_op;
 }
@@ -694,7 +696,7 @@ const shadow::OpParam ParseSoftmax(const JValue &root) {
     }
   }
 
-  set_s_i(&shadow_op, "axis", axis);
+  add_s_i(&shadow_op, "axis", axis);
 
   return shadow_op;
 }
@@ -717,7 +719,7 @@ const shadow::OpParam ParseStack(const JValue &root) {
     }
   }
 
-  set_s_i(&shadow_op, "axis", axis);
+  add_s_i(&shadow_op, "axis", axis);
 
   return shadow_op;
 }
@@ -740,7 +742,7 @@ const shadow::OpParam ParseUnary(const JValue &root) {
     }
   }
 
-  set_s_i(&shadow_op, "operation", operation);
+  add_s_i(&shadow_op, "operation", operation);
 
   return shadow_op;
 }
@@ -946,9 +948,9 @@ const shadow::OpParam ParseActivate(const std::vector<std::string> &params) {
     channel_shared = argument.at("channel_shared").s_i;
   }
 
-  set_s_i(&shadow_op, "type", type);
-  set_s_f(&shadow_op, "slope", slope);
-  set_s_i(&shadow_op, "channel_shared", channel_shared);
+  add_s_i(&shadow_op, "type", type);
+  add_s_f(&shadow_op, "slope", slope);
+  add_s_i(&shadow_op, "channel_shared", channel_shared);
 
   return shadow_op;
 }
@@ -967,8 +969,8 @@ const shadow::OpParam ParseBatchNorm(const std::vector<std::string> &params) {
     eps = argument.at("eps").s_f;
   }
 
-  set_s_i(&shadow_op, "use_global_stats", use_global_stats);
-  set_s_f(&shadow_op, "eps", eps);
+  add_s_i(&shadow_op, "use_global_stats", use_global_stats);
+  add_s_f(&shadow_op, "eps", eps);
 
   return shadow_op;
 }
@@ -989,9 +991,9 @@ const shadow::OpParam ParseBinary(const std::vector<std::string> &params) {
     has_scalar = true;
   }
 
-  set_s_i(&shadow_op, "operation", operation);
+  add_s_i(&shadow_op, "operation", operation);
   if (has_scalar) {
-    set_s_f(&shadow_op, "scalar", scalar);
+    add_s_f(&shadow_op, "scalar", scalar);
   }
 
   return shadow_op;
@@ -1007,7 +1009,7 @@ const shadow::OpParam ParseConcat(const std::vector<std::string> &params) {
     axis = argument.at("axis").s_i;
   }
 
-  set_s_i(&shadow_op, "axis", axis);
+  add_s_i(&shadow_op, "axis", axis);
 
   return shadow_op;
 }
@@ -1029,9 +1031,9 @@ const shadow::OpParam ParseConnected(const std::vector<std::string> &params) {
   }
 
   CHECK_GT(num_output, 0);
-  set_s_i(&shadow_op, "num_output", num_output);
-  set_s_i(&shadow_op, "bias_term", bias_term);
-  set_s_i(&shadow_op, "transpose", transpose);
+  add_s_i(&shadow_op, "num_output", num_output);
+  add_s_i(&shadow_op, "bias_term", bias_term);
+  add_s_i(&shadow_op, "transpose", transpose);
 
   return shadow_op;
 }
@@ -1070,14 +1072,14 @@ const shadow::OpParam ParseConv(const std::vector<std::string> &params) {
 
   CHECK_GT(num_output, 0);
   CHECK_GT(kernel_size, 0);
-  set_s_i(&shadow_op, "num_output", num_output);
-  set_s_i(&shadow_op, "kernel_size", kernel_size);
-  set_s_i(&shadow_op, "stride", stride);
-  set_s_i(&shadow_op, "pad", pad);
-  set_s_i(&shadow_op, "dilation", dilation);
-  set_s_i(&shadow_op, "group", group);
-  set_s_i(&shadow_op, "bias_term", bias_term);
-  set_s_i(&shadow_op, "type", type);
+  add_s_i(&shadow_op, "num_output", num_output);
+  add_s_i(&shadow_op, "kernel_size", kernel_size);
+  add_s_i(&shadow_op, "stride", stride);
+  add_s_i(&shadow_op, "pad", pad);
+  add_s_i(&shadow_op, "dilation", dilation);
+  add_s_i(&shadow_op, "group", group);
+  add_s_i(&shadow_op, "bias_term", bias_term);
+  add_s_i(&shadow_op, "type", type);
 
   return shadow_op;
 }
@@ -1096,8 +1098,8 @@ const shadow::OpParam ParseEltwise(const std::vector<std::string> &params) {
     coeffs = argument.at("coeff").v_f;
   }
 
-  set_s_i(&shadow_op, "operation", operation);
-  set_v_f(&shadow_op, "coeff", coeffs);
+  add_s_i(&shadow_op, "operation", operation);
+  add_v_f(&shadow_op, "coeff", coeffs);
 
   return shadow_op;
 }
@@ -1115,8 +1117,8 @@ const shadow::OpParam ParseFlatten(const std::vector<std::string> &params) {
     end_axis = argument.at("end_axis").s_i;
   }
 
-  set_s_i(&shadow_op, "axis", axis);
-  set_s_i(&shadow_op, "end_axis", end_axis);
+  add_s_i(&shadow_op, "axis", axis);
+  add_s_i(&shadow_op, "end_axis", end_axis);
 
   return shadow_op;
 }
@@ -1127,7 +1129,7 @@ const shadow::OpParam ParseInput(const std::vector<std::string> &params) {
   const auto &argument = ParseCommon(params, &shadow_op);
 
   for (const auto &arg : argument) {
-    set_v_i(&shadow_op, arg.first, arg.second.v_i);
+    add_v_i(&shadow_op, arg.first, arg.second.v_i);
   }
 
   return shadow_op;
@@ -1144,7 +1146,7 @@ const shadow::OpParam ParseInstanceNorm(
     eps = argument.at("eps").s_f;
   }
 
-  set_s_f(&shadow_op, "eps", eps);
+  add_s_f(&shadow_op, "eps", eps);
 
   return shadow_op;
 }
@@ -1172,11 +1174,11 @@ const shadow::OpParam ParseLRN(const std::vector<std::string> &params) {
     norm_region = argument.at("norm_region").s_i;
   }
 
-  set_s_i(&shadow_op, "local_size", local_size);
-  set_s_f(&shadow_op, "alpha", alpha);
-  set_s_f(&shadow_op, "beta", beta);
-  set_s_f(&shadow_op, "k", k);
-  set_s_i(&shadow_op, "norm_region", norm_region);
+  add_s_i(&shadow_op, "local_size", local_size);
+  add_s_f(&shadow_op, "alpha", alpha);
+  add_s_f(&shadow_op, "beta", beta);
+  add_s_f(&shadow_op, "k", k);
+  add_s_i(&shadow_op, "norm_region", norm_region);
 
   return shadow_op;
 }
@@ -1194,8 +1196,8 @@ const shadow::OpParam ParseNormalize(const std::vector<std::string> &params) {
     channel_shared = argument.at("channel_shared").s_i;
   }
 
-  set_s_i(&shadow_op, "across_spatial", across_spatial);
-  set_s_i(&shadow_op, "channel_shared", channel_shared);
+  add_s_i(&shadow_op, "across_spatial", across_spatial);
+  add_s_i(&shadow_op, "channel_shared", channel_shared);
 
   return shadow_op;
 }
@@ -1214,8 +1216,8 @@ const shadow::OpParam ParsePad(const std::vector<std::string> &params) {
     value = argument.at("value").s_f;
   }
 
-  set_v_i(&shadow_op, "paddings", paddings);
-  set_s_f(&shadow_op, "value", value);
+  add_v_i(&shadow_op, "paddings", paddings);
+  add_s_f(&shadow_op, "value", value);
 
   return shadow_op;
 }
@@ -1230,7 +1232,7 @@ const shadow::OpParam ParsePermute(const std::vector<std::string> &params) {
     order = argument.at("order").v_i;
   }
 
-  set_v_i(&shadow_op, "order", order);
+  add_v_i(&shadow_op, "order", order);
 
   return shadow_op;
 }
@@ -1261,12 +1263,12 @@ const shadow::OpParam ParsePooling(const std::vector<std::string> &params) {
     full_pooling = argument.at("full_pooling").s_i;
   }
 
-  set_s_i(&shadow_op, "pool", pool);
-  set_v_i(&shadow_op, "kernel_size", kernel_size);
-  set_v_i(&shadow_op, "stride", stride);
-  set_v_i(&shadow_op, "pad", pad);
-  set_s_i(&shadow_op, "global_pooling", global_pooling);
-  set_s_i(&shadow_op, "full_pooling", full_pooling);
+  add_s_i(&shadow_op, "pool", pool);
+  add_v_i(&shadow_op, "kernel_size", kernel_size);
+  add_v_i(&shadow_op, "stride", stride);
+  add_v_i(&shadow_op, "pad", pad);
+  add_s_i(&shadow_op, "global_pooling", global_pooling);
+  add_s_i(&shadow_op, "full_pooling", full_pooling);
 
   return shadow_op;
 }
@@ -1304,16 +1306,16 @@ const shadow::OpParam ParsePriorBox(const std::vector<std::string> &params) {
     offset = argument.at("offset").s_f;
   }
 
-  set_v_f(&shadow_op, "min_size", min_size);
-  set_v_f(&shadow_op, "max_size", max_size);
-  set_v_f(&shadow_op, "aspect_ratio", aspect_ratio);
-  set_s_i(&shadow_op, "flip", flip);
-  set_s_i(&shadow_op, "clip", clip);
-  set_v_f(&shadow_op, "variance", variance);
+  add_v_f(&shadow_op, "min_size", min_size);
+  add_v_f(&shadow_op, "max_size", max_size);
+  add_v_f(&shadow_op, "aspect_ratio", aspect_ratio);
+  add_s_i(&shadow_op, "flip", flip);
+  add_s_i(&shadow_op, "clip", clip);
+  add_v_f(&shadow_op, "variance", variance);
   if (step > 0) {
-    set_s_f(&shadow_op, "step", step);
+    add_s_f(&shadow_op, "step", step);
   }
-  set_s_f(&shadow_op, "offset", offset);
+  add_s_f(&shadow_op, "offset", offset);
 
   return shadow_op;
 }
@@ -1328,7 +1330,7 @@ const shadow::OpParam ParseReorg(const std::vector<std::string> &params) {
     stride = argument.at("stride").s_i;
   }
 
-  set_s_i(&shadow_op, "stride", stride);
+  add_s_i(&shadow_op, "stride", stride);
 
   return shadow_op;
 }
@@ -1350,9 +1352,9 @@ const shadow::OpParam ParseReshape(const std::vector<std::string> &params) {
     num_axes = argument.at("num_axes").s_i;
   }
 
-  set_v_i(&shadow_op, "shape", shape);
-  set_s_i(&shadow_op, "axis", axis);
-  set_s_i(&shadow_op, "num_axes", num_axes);
+  add_v_i(&shadow_op, "shape", shape);
+  add_s_i(&shadow_op, "axis", axis);
+  add_s_i(&shadow_op, "num_axes", num_axes);
 
   return shadow_op;
 }
@@ -1377,10 +1379,10 @@ const shadow::OpParam ParseResize(const std::vector<std::string> &params) {
     type = argument.at("type").s_i;
   }
 
-  set_s_i(&shadow_op, "out_h", out_h);
-  set_s_i(&shadow_op, "out_w", out_w);
-  set_s_f(&shadow_op, "scale", scale);
-  set_s_i(&shadow_op, "type", type);
+  add_s_i(&shadow_op, "out_h", out_h);
+  add_s_i(&shadow_op, "out_w", out_w);
+  add_s_f(&shadow_op, "scale", scale);
+  add_s_i(&shadow_op, "type", type);
 
   return shadow_op;
 }
@@ -1408,11 +1410,11 @@ const shadow::OpParam ParseScale(const std::vector<std::string> &params) {
     bias_value = argument.at("bias_value").v_f;
   }
 
-  set_s_i(&shadow_op, "axis", axis);
-  set_s_i(&shadow_op, "has_scale", has_scale);
-  set_s_i(&shadow_op, "has_bias", has_bias);
-  set_v_f(&shadow_op, "scale_value", scale_value);
-  set_v_f(&shadow_op, "bias_value", bias_value);
+  add_s_i(&shadow_op, "axis", axis);
+  add_s_i(&shadow_op, "has_scale", has_scale);
+  add_s_i(&shadow_op, "has_bias", has_bias);
+  add_v_f(&shadow_op, "scale_value", scale_value);
+  add_v_f(&shadow_op, "bias_value", bias_value);
 
   return shadow_op;
 }
@@ -1428,7 +1430,7 @@ const shadow::OpParam ParseShuffleChannel(
     group = argument.at("group").s_i;
   }
 
-  set_s_i(&shadow_op, "group", group);
+  add_s_i(&shadow_op, "group", group);
 
   return shadow_op;
 }
@@ -1447,8 +1449,8 @@ const shadow::OpParam ParseSlice(const std::vector<std::string> &params) {
     slice_point = argument.at("slice_point").v_i;
   }
 
-  set_s_i(&shadow_op, "axis", axis);
-  set_v_i(&shadow_op, "slice_point", slice_point);
+  add_s_i(&shadow_op, "axis", axis);
+  add_v_i(&shadow_op, "slice_point", slice_point);
 
   return shadow_op;
 }
@@ -1463,7 +1465,7 @@ const shadow::OpParam ParseSoftmax(const std::vector<std::string> &params) {
     axis = argument.at("axis").s_i;
   }
 
-  set_s_i(&shadow_op, "axis", axis);
+  add_s_i(&shadow_op, "axis", axis);
 
   return shadow_op;
 }
@@ -1478,7 +1480,7 @@ const shadow::OpParam ParseStack(const std::vector<std::string> &params) {
     axis = argument.at("axis").s_i;
   }
 
-  set_s_i(&shadow_op, "axis", axis);
+  add_s_i(&shadow_op, "axis", axis);
 
   return shadow_op;
 }
@@ -1493,7 +1495,7 @@ const shadow::OpParam ParseUnary(const std::vector<std::string> &params) {
     operation = argument.at("operation").s_i;
   }
 
-  set_s_i(&shadow_op, "operation", operation);
+  add_s_i(&shadow_op, "operation", operation);
 
   return shadow_op;
 }
