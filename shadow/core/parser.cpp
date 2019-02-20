@@ -701,6 +701,29 @@ const shadow::OpParam ParseSoftmax(const JValue &root) {
   return shadow_op;
 }
 
+const shadow::OpParam ParseSqueeze(const JValue &root) {
+  shadow::OpParam shadow_op;
+
+  ParseCommon(root, &shadow_op);
+
+  std::vector<int> axes;
+  if (root.HasMember("arg")) {
+    const auto &args = root["arg"];
+    for (int i = 0; i < args.Size(); ++i) {
+      const auto &arg = args[i];
+      CHECK(arg.HasMember("name"));
+      const auto &arg_name = Json::GetString(arg, "name", "");
+      if (arg_name == "axes") {
+        axes = Json::GetVecInt(arg, "v_i");
+      }
+    }
+  }
+
+  add_v_i(&shadow_op, "axes", axes);
+
+  return shadow_op;
+}
+
 const shadow::OpParam ParseStack(const JValue &root) {
   shadow::OpParam shadow_op;
 
@@ -774,6 +797,7 @@ static const std::map<std::string, ParseFunc> parse_func_map{
     {"ShuffleChannel", ParseShuffleChannel},
     {"Slice", ParseSlice},
     {"Softmax", ParseSoftmax},
+    {"Squeeze", ParseSqueeze},
     {"Stack", ParseStack},
     {"Unary", ParseUnary}};
 
@@ -1470,6 +1494,21 @@ const shadow::OpParam ParseSoftmax(const std::vector<std::string> &params) {
   return shadow_op;
 }
 
+const shadow::OpParam ParseSqueeze(const std::vector<std::string> &params) {
+  shadow::OpParam shadow_op;
+
+  const auto &argument = ParseCommon(params, &shadow_op);
+
+  std::vector<int> axes;
+  if (argument.count("axes")) {
+    axes = argument.at("axes").v_i;
+  }
+
+  add_v_i(&shadow_op, "axes", axes);
+
+  return shadow_op;
+}
+
 const shadow::OpParam ParseStack(const std::vector<std::string> &params) {
   shadow::OpParam shadow_op;
 
@@ -1528,6 +1567,7 @@ static const std::map<std::string, ParseFunc> parse_func_map{
     {"ShuffleChannel", ParseShuffleChannel},
     {"Slice", ParseSlice},
     {"Softmax", ParseSoftmax},
+    {"Squeeze", ParseSqueeze},
     {"Stack", ParseStack},
     {"Unary", ParseUnary}};
 

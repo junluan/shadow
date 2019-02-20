@@ -437,6 +437,13 @@ class Network(object):
 
         self.add_arg(op_param, 'axis', axis, 's_i')
 
+    def add_squeeze(self, name, bottoms, tops, axes=None):
+        op_param = self.add_net_op()
+        self.add_common(op_param, name, 'Squeeze', bottoms, tops)
+
+        if axes is not None:
+            self.add_arg(op_param, 'axes', axes, 'v_i')
+
     def add_stack(self, name, bottoms, tops, axis=0):
         op_param = self.add_net_op()
         self.add_common(op_param, name, 'Stack', bottoms, tops)
