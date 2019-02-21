@@ -3,6 +3,7 @@ from __future__ import print_function
 from .network import Network
 from .convert_caffe import convert_caffe
 from .convert_mxnet import convert_mxnet
+from .convert_onnx import convert_onnx
 
 
 def convert(model_root, meta_net_info, copy_params=False):
@@ -25,7 +26,9 @@ def convert(model_root, meta_net_info, copy_params=False):
         elif type == 'mxnet':
             assert n < len(model_epoch)
             convert_mxnet(network, net_info[n], model_root, model_name[n], model_epoch[n], copy_params)
+        elif type == 'onnx':
+            convert_onnx(network, net_info[n], model_root, model_name[n], copy_params)
         else:
-            raise ValueError('Currently only support convert caffe or mxnet model!', type)
+            raise ValueError('Currently only support convert caffe, mxnet or onnx model!', type)
 
     return network
