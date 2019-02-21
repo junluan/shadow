@@ -29,7 +29,7 @@ def copy_weights(arg_params, aux_params, param_dict, network):
             else:
                 raise ValueError(param_name + ' not found in arg_params or aux_params')
             blob = net_param.blob.add()
-            blob.name = op_name + '_weights:{}'.format(n)
+            blob.name = op_name + '/weights:{}'.format(n)
             blob.shape.extend(param_data.shape)
             blob.data_f.extend(param_data.flatten())
             op.bottom.append(blob.name)
@@ -108,14 +108,11 @@ def convert_input(net_info, network):
                 network.add_scale(input_name, [input_name], [input_name], 1, False, False, scale_value, mean_value)
 
 
-def convert_activate(mxnet_nodes, index, param_dict, network):
+def convert_activate(mxnet_nodes, index, network):
     json_node = mxnet_nodes[index]
     json_name = json_node['name']
     json_inputs = json_node['inputs']
-    if params_str in json_node:
-        json_attr = json_node[params_str]
-    else:
-        json_attr = {}
+    json_attr = json_node[params_str] if params_str in json_node else {}
     bottom_names, param_names = find_inputs(mxnet_nodes, json_name, json_inputs)
 
     act_type = parse_param(json_attr, 'act_type', 's_s', 'relu')
@@ -133,14 +130,11 @@ def convert_activate(mxnet_nodes, index, param_dict, network):
     network.add_activate(json_name, bottom_names, bottom_names, act_type)
 
 
-def convert_batch_norm(mxnet_nodes, index, param_dict, arg_params, network):
+def convert_batch_norm(mxnet_nodes, index, arg_params, param_dict, network):
     json_node = mxnet_nodes[index]
     json_name = json_node['name']
     json_inputs = json_node['inputs']
-    if params_str in json_node:
-        json_attr = json_node[params_str]
-    else:
-        json_attr = {}
+    json_attr = json_node[params_str] if params_str in json_node else {}
     bottom_names, param_names = find_inputs(mxnet_nodes, json_name, json_inputs)
     if len(param_names) > 0:
         mean_name = json_name + '_moving_mean'
@@ -162,14 +156,11 @@ def convert_batch_norm(mxnet_nodes, index, param_dict, arg_params, network):
     network.add_scale(json_name + '_scale', [json_name], [json_name], 1)
 
 
-def convert_binary(mxnet_nodes, index, param_dict, network):
+def convert_binary(mxnet_nodes, index, network):
     json_node = mxnet_nodes[index]
     json_name = json_node['name']
     json_inputs = json_node['inputs']
-    if params_str in json_node:
-        json_attr = json_node[params_str]
-    else:
-        json_attr = {}
+    json_attr = json_node[params_str] if params_str in json_node else {}
     bottom_names, param_names = find_inputs(mxnet_nodes, json_name, json_inputs)
 
     json_op = json_node['op']
@@ -189,14 +180,11 @@ def convert_binary(mxnet_nodes, index, param_dict, network):
     network.add_binary(json_name, bottom_names, [json_name], operation_type, scalar)
 
 
-def convert_concat(mxnet_nodes, index, param_dict, network):
+def convert_concat(mxnet_nodes, index, network):
     json_node = mxnet_nodes[index]
     json_name = json_node['name']
     json_inputs = json_node['inputs']
-    if params_str in json_node:
-        json_attr = json_node[params_str]
-    else:
-        json_attr = {}
+    json_attr = json_node[params_str] if params_str in json_node else {}
     bottom_names, param_names = find_inputs(mxnet_nodes, json_name, json_inputs)
 
     dim = parse_param(json_attr, 'dim', 's_i', 1)
@@ -209,10 +197,7 @@ def convert_connected(mxnet_nodes, index, param_dict, network):
     json_node = mxnet_nodes[index]
     json_name = json_node['name']
     json_inputs = json_node['inputs']
-    if params_str in json_node:
-        json_attr = json_node[params_str]
-    else:
-        json_attr = {}
+    json_attr = json_node[params_str] if params_str in json_node else {}
     bottom_names, param_names = find_inputs(mxnet_nodes, json_name, json_inputs)
     if len(param_names) > 0:
         param_dict[json_name] = param_names
@@ -227,10 +212,7 @@ def convert_conv(mxnet_nodes, index, param_dict, network):
     json_node = mxnet_nodes[index]
     json_name = json_node['name']
     json_inputs = json_node['inputs']
-    if params_str in json_node:
-        json_attr = json_node[params_str]
-    else:
-        json_attr = {}
+    json_attr = json_node[params_str] if params_str in json_node else {}
     bottom_names, param_names = find_inputs(mxnet_nodes, json_name, json_inputs)
     if len(param_names) > 0:
         param_dict[json_name] = param_names
@@ -250,10 +232,7 @@ def convert_deform_conv(mxnet_nodes, index, param_dict, network):
     json_node = mxnet_nodes[index]
     json_name = json_node['name']
     json_inputs = json_node['inputs']
-    if params_str in json_node:
-        json_attr = json_node[params_str]
-    else:
-        json_attr = {}
+    json_attr = json_node[params_str] if params_str in json_node else {}
     bottom_names, param_names = find_inputs(mxnet_nodes, json_name, json_inputs)
     if len(param_names) > 0:
         param_dict[json_name] = param_names
@@ -270,14 +249,11 @@ def convert_deform_conv(mxnet_nodes, index, param_dict, network):
     network.add_deform_conv(json_name, bottom_names, [json_name], num_output, kernel_size[0], stride[0], pad[0], dilate[0], bias_term, group, deform_group)
 
 
-def convert_deform_psroi_pooling(mxnet_nodes, index, param_dict, network):
+def convert_deform_psroi_pooling(mxnet_nodes, index, network):
     json_node = mxnet_nodes[index]
     json_name = json_node['name']
     json_inputs = json_node['inputs']
-    if params_str in json_node:
-        json_attr = json_node[params_str]
-    else:
-        json_attr = {}
+    json_attr = json_node[params_str] if params_str in json_node else {}
     bottom_names, param_names = find_inputs(mxnet_nodes, json_name, json_inputs)
 
     output_dim = parse_param(json_attr, 'output_dim', 's_i', 0)
@@ -292,14 +268,11 @@ def convert_deform_psroi_pooling(mxnet_nodes, index, param_dict, network):
     network.add_deform_psroi_pooling(json_name, bottom_names, [json_name], output_dim, group_size, pooled_size, part_size, sample_per_part, spatial_scale, trans_std, no_trans)
 
 
-def convert_eltwise(mxnet_nodes, index, param_dict, network, operation):
+def convert_eltwise(mxnet_nodes, index, operation, network):
     json_node = mxnet_nodes[index]
     json_name = json_node['name']
     json_inputs = json_node['inputs']
-    if params_str in json_node:
-        json_attr = json_node[params_str]
-    else:
-        json_attr = {}
+    json_attr = json_node[params_str] if params_str in json_node else {}
     bottom_names, param_names = find_inputs(mxnet_nodes, json_name, json_inputs)
 
     network.add_eltwise(json_name, bottom_names, [json_name], operation)
@@ -309,10 +282,7 @@ def convert_leakyrelu(mxnet_nodes, index, param_dict, network):
     json_node = mxnet_nodes[index]
     json_name = json_node['name']
     json_inputs = json_node['inputs']
-    if params_str in json_node:
-        json_attr = json_node[params_str]
-    else:
-        json_attr = {}
+    json_attr = json_node[params_str] if params_str in json_node else {}
     bottom_names, param_names = find_inputs(mxnet_nodes, json_name, json_inputs)
     if len(param_names) > 0:
         param_dict[json_name] = param_names
@@ -336,14 +306,11 @@ def convert_leakyrelu(mxnet_nodes, index, param_dict, network):
     network.add_activate(json_name, bottom_names, [json_name], act_type, slope=slope)
 
 
-def convert_pooling(mxnet_nodes, index, param_dict, network):
+def convert_pooling(mxnet_nodes, index, network):
     json_node = mxnet_nodes[index]
     json_name = json_node['name']
     json_inputs = json_node['inputs']
-    if params_str in json_node:
-        json_attr = json_node[params_str]
-    else:
-        json_attr = {}
+    json_attr = json_node[params_str] if params_str in json_node else {}
     bottom_names, param_names = find_inputs(mxnet_nodes, json_name, json_inputs)
 
     pool = parse_param(json_attr, 'pool_type', 's_s', 'max')
@@ -364,14 +331,11 @@ def convert_pooling(mxnet_nodes, index, param_dict, network):
     network.add_pooling(json_name, bottom_names, [json_name], pool, kernel_size, stride, pad, global_pooling, full_pooling)
 
 
-def convert_proposal(mxnet_nodes, index, param_dict, network):
+def convert_proposal(mxnet_nodes, index, network):
     json_node = mxnet_nodes[index]
     json_name = json_node['name']
     json_inputs = json_node['inputs']
-    if params_str in json_node:
-        json_attr = json_node[params_str]
-    else:
-        json_attr = {}
+    json_attr = json_node[params_str] if params_str in json_node else {}
     bottom_names, param_names = find_inputs(mxnet_nodes, json_name, json_inputs)
 
     feat_stride = parse_param(json_attr, 'feature_stride', 's_i', 16)
@@ -385,14 +349,11 @@ def convert_proposal(mxnet_nodes, index, param_dict, network):
     network.add_proposal(json_name, bottom_names, [json_name], feat_stride, pre_nms_top_n, post_nms_top_n, min_size, nms_thresh, ratios, scales)
 
 
-def convert_reshape(mxnet_nodes, index, param_dict, network):
+def convert_reshape(mxnet_nodes, index, network):
     json_node = mxnet_nodes[index]
     json_name = json_node['name']
     json_inputs = json_node['inputs']
-    if params_str in json_node:
-        json_attr = json_node[params_str]
-    else:
-        json_attr = {}
+    json_attr = json_node[params_str] if params_str in json_node else {}
     bottom_names, param_names = find_inputs(mxnet_nodes, json_name, json_inputs)
 
     shape = parse_param(json_attr, 'shape', 'v_f', None)
@@ -400,14 +361,11 @@ def convert_reshape(mxnet_nodes, index, param_dict, network):
     network.add_reshape(json_name, bottom_names, [json_name], shape)
 
 
-def convert_roi_pooling(mxnet_nodes, index, param_dict, network):
+def convert_roi_pooling(mxnet_nodes, index, network):
     json_node = mxnet_nodes[index]
     json_name = json_node['name']
     json_inputs = json_node['inputs']
-    if params_str in json_node:
-        json_attr = json_node[params_str]
-    else:
-        json_attr = {}
+    json_attr = json_node[params_str] if params_str in json_node else {}
     bottom_names, param_names = find_inputs(mxnet_nodes, json_name, json_inputs)
 
     pooled_size = parse_param(json_attr, 'pooled_size', 'v_i', [14, 14])
@@ -416,14 +374,11 @@ def convert_roi_pooling(mxnet_nodes, index, param_dict, network):
     network.add_roi_pooling(json_name, bottom_names, [json_name], pooled_size[0], pooled_size[1], spatial_scale)
 
 
-def convert_softmax(mxnet_nodes, index, param_dict, network):
+def convert_softmax(mxnet_nodes, index, network):
     json_node = mxnet_nodes[index]
     json_name = json_node['name']
     json_inputs = json_node['inputs']
-    if params_str in json_node:
-        json_attr = json_node[params_str]
-    else:
-        json_attr = {}
+    json_attr = json_node[params_str] if params_str in json_node else {}
     bottom_names, param_names = find_inputs(mxnet_nodes, json_name, json_inputs)
 
     network.add_softmax(json_name, bottom_names, [json_name])
@@ -448,13 +403,13 @@ def convert_mxnet(network, net_info, model_root, model_name, model_epoch, copy_p
         if json_op == 'null':
             continue
         elif json_op == 'Activation':
-            convert_activate(mxnet_nodes, index, param_dict, network)
+            convert_activate(mxnet_nodes, index, network)
         elif json_op == 'BatchNorm':
-            convert_batch_norm(mxnet_nodes, index, param_dict, arg_params, network)
+            convert_batch_norm(mxnet_nodes, index, arg_params, param_dict, network)
         elif json_op == '_plus_scalar' or json_op == '_minus_scalar' or json_op == '_mul_scalar' or json_op == '_div_scalar':
-            convert_binary(mxnet_nodes, index, param_dict, network)
+            convert_binary(mxnet_nodes, index, network)
         elif json_op == 'Concat':
-            convert_concat(mxnet_nodes, index, param_dict, network)
+            convert_concat(mxnet_nodes, index, network)
         elif json_op == 'FullyConnected':
             convert_connected(mxnet_nodes, index, param_dict, network)
         elif json_op == 'Convolution':
@@ -462,21 +417,21 @@ def convert_mxnet(network, net_info, model_root, model_name, model_epoch, copy_p
         elif json_op == '_contrib_DeformableConvolution':
             convert_deform_conv(mxnet_nodes, index, param_dict, network)
         elif json_op == '_contrib_DeformablePSROIPooling':
-            convert_deform_psroi_pooling(mxnet_nodes, index, param_dict, network)
+            convert_deform_psroi_pooling(mxnet_nodes, index, network)
         elif json_op == 'elemwise_add' or json_op == 'broadcast_add':
-            convert_eltwise(mxnet_nodes, index, param_dict, network, 'Sum')
+            convert_eltwise(mxnet_nodes, index, 'Sum', network)
         elif json_op == 'LeakyReLU':
             convert_leakyrelu(mxnet_nodes, index, param_dict, network)
         elif json_op == 'Pooling':
-            convert_pooling(mxnet_nodes, index, param_dict, network)
+            convert_pooling(mxnet_nodes, index, network)
         elif json_op == '_contrib_Proposal':
-            convert_proposal(mxnet_nodes, index, param_dict, network)
+            convert_proposal(mxnet_nodes, index, network)
         elif json_op == 'Reshape':
-            convert_reshape(mxnet_nodes, index, param_dict, network)
+            convert_reshape(mxnet_nodes, index, network)
         elif json_op == 'ROIPooling':
-            convert_roi_pooling(mxnet_nodes, index, param_dict, network)
+            convert_roi_pooling(mxnet_nodes, index, network)
         elif json_op == 'SoftmaxOutput' or json_op == 'SoftmaxActivation' or json_op == 'softmax':
-            convert_softmax(mxnet_nodes, index, param_dict, network)
+            convert_softmax(mxnet_nodes, index, network)
         else:
             print('Skipping ' + json_op + ', please check!')
 

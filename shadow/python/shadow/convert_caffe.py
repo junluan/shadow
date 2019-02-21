@@ -15,7 +15,7 @@ def copy_weights(caffe_model, network):
                     if len(blob_shape) == 0:
                         blob_shape = [len(caffe_blob.data)]
                     blob = net_param.blob.add()
-                    blob.name = op_name + '_weights:{}'.format(n)
+                    blob.name = op_name + '/weights:{}'.format(n)
                     blob.shape.extend(blob_shape)
                     blob.data_f.extend(caffe_blob.data)
                     op.bottom.append(blob.name)
