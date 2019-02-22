@@ -1,5 +1,7 @@
 #include "detect_mtcnn.hpp"
 
+#include "util/io.hpp"
+
 namespace Shadow {
 
 inline bool SortBoxesDescend(const BoxInfo &box_a, const BoxInfo &box_b) {

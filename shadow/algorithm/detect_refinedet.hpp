@@ -1,13 +1,15 @@
-#ifndef SHADOW_EXAMPLES_DETECT_SSD_HPP
-#define SHADOW_EXAMPLES_DETECT_SSD_HPP
+#ifndef SHADOW_ALGORITHM_DETECT_REFINEDET_HPP
+#define SHADOW_ALGORITHM_DETECT_REFINEDET_HPP
 
 #include "method.hpp"
 
+#include "core/network.hpp"
+
 namespace Shadow {
 
-class DetectSSD final : public Method {
+class DetectRefineDet final : public Method {
  public:
-  DetectSSD() = default;
+  DetectRefineDet() = default;
 
   void Setup(const std::string &model_file) override;
 
@@ -27,19 +29,21 @@ class DetectSSD final : public Method {
   void GetLocPredictions(const float *loc_data, int num,
                          int num_preds_per_class, int num_loc_classes,
                          bool share_location, VecLabelBBox *loc_preds);
-  void GetConfidenceScores(const float *conf_data, int num,
-                           int num_preds_per_class, int num_classes,
-                           std::vector<std::map<int, VecFloat>> *conf_preds);
+  void OSGetConfidenceScores(const float *conf_data, const float *arm_conf_data,
+                             int num, int num_preds_per_class, int num_classes,
+                             std::vector<std::map<int, VecFloat>> *conf_preds,
+                             float objectness_score);
   void GetPriorBBoxes(const float *prior_data, int num_priors,
                       VecBoxF *prior_bboxes,
                       std::vector<VecFloat> *prior_variances);
 
-  void DecodeBBoxesAll(const VecLabelBBox &all_loc_preds,
-                       const VecBoxF &prior_bboxes,
-                       const std::vector<VecFloat> &prior_variances, int num,
-                       bool share_location, int num_loc_classes,
-                       int background_label_id,
-                       VecLabelBBox *all_decode_bboxes);
+  void CasRegDecodeBBoxesAll(const VecLabelBBox &all_loc_preds,
+                             const VecBoxF &prior_bboxes,
+                             const std::vector<VecFloat> &prior_variances,
+                             int num, bool share_location, int num_loc_classes,
+                             int background_label_id,
+                             VecLabelBBox *all_decode_bboxes,
+                             const VecLabelBBox &all_arm_loc_preds);
   void DecodeBBoxes(const VecBoxF &prior_bboxes,
                     const std::vector<VecFloat> &prior_variances,
                     const VecBoxF &bboxes, VecBoxF *decode_bboxes);
@@ -48,14 +52,14 @@ class DetectSSD final : public Method {
 
   Network net_;
   VecFloat in_data_;
-  std::string in_str_, mbox_loc_str_, mbox_conf_flatten_str_,
-      mbox_priorbox_str_;
+  std::string in_str_, odm_loc_str_, odm_conf_flatten_str_, arm_priorbox_str_,
+      arm_conf_flatten_str_, arm_loc_str_;
   int batch_, in_num_, in_c_, in_h_, in_w_;
   int num_classes_, num_loc_classes_, background_label_id_, top_k_, keep_top_k_;
-  float threshold_, nms_threshold_, confidence_threshold_;
+  float threshold_, nms_threshold_, confidence_threshold_, objectness_score_;
   bool share_location_;
 };
 
 }  // namespace Shadow
 
-#endif  // SHADOW_EXAMPLES_DETECT_SSD_HPP
+#endif  // SHADOW_ALGORITHM_DETECT_REFINEDET_HPP

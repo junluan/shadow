@@ -2,12 +2,12 @@
 
 #include "proto/service.grpc.pb.h"
 
-#include "examples/classify.hpp"
-#include "examples/detect_faster_rcnn.hpp"
-#include "examples/detect_mtcnn.hpp"
-#include "examples/detect_refinedet.hpp"
-#include "examples/detect_ssd.hpp"
-#include "examples/detect_yolo.hpp"
+#include "algorithm/classify.hpp"
+#include "algorithm/detect_faster_rcnn.hpp"
+#include "algorithm/detect_mtcnn.hpp"
+#include "algorithm/detect_refinedet.hpp"
+#include "algorithm/detect_ssd.hpp"
+#include "algorithm/detect_yolo.hpp"
 
 #include <memory>
 

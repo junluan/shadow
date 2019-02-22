@@ -1,10 +1,10 @@
 #include "demo_detect.hpp"
 
-#include "detect_faster_rcnn.hpp"
-#include "detect_mtcnn.hpp"
-#include "detect_refinedet.hpp"
-#include "detect_ssd.hpp"
-#include "detect_yolo.hpp"
+#include "algorithm/detect_faster_rcnn.hpp"
+#include "algorithm/detect_mtcnn.hpp"
+#include "algorithm/detect_refinedet.hpp"
+#include "algorithm/detect_ssd.hpp"
+#include "algorithm/detect_yolo.hpp"
 
 #include "util/jimage_proc.hpp"
 

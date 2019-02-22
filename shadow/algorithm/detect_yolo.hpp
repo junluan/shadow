@@ -1,7 +1,9 @@
-#ifndef SHADOW_EXAMPLES_DETECT_YOLO_HPP
-#define SHADOW_EXAMPLES_DETECT_YOLO_HPP
+#ifndef SHADOW_ALGORITHM_DETECT_YOLO_HPP
+#define SHADOW_ALGORITHM_DETECT_YOLO_HPP
 
 #include "method.hpp"
+
+#include "core/network.hpp"
 
 namespace Shadow {
 
@@ -36,4 +38,4 @@ class DetectYOLO final : public Method {
 
 }  // namespace Shadow
 
-#endif  // SHADOW_EXAMPLES_DETECT_YOLO_HPP
+#endif  // SHADOW_ALGORITHM_DETECT_YOLO_HPP

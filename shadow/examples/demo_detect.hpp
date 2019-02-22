@@ -1,7 +1,9 @@
 #ifndef SHADOW_EXAMPLES_DEMO_DETECT_HPP
 #define SHADOW_EXAMPLES_DEMO_DETECT_HPP
 
-#include "method.hpp"
+#include "algorithm/method.hpp"
+
+#include <memory>
 
 namespace Shadow {
 
@@ -33,11 +35,11 @@ class DemoDetect {
   void PrintStream(const std::string &im_name, const VecBoxF &boxes,
                    std::ostream *os);
 
-  std::shared_ptr<Method> method_ = nullptr;
+  Timer timer_;
   JImage im_ini_;
+  std::shared_ptr<Method> method_ = nullptr;
   VecBoxF boxes_;
   std::vector<VecPointF> Gpoints_;
-  Timer timer_;
 };
 
 }  // namespace Shadow

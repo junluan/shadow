@@ -1,11 +1,13 @@
 set(shadow_cpu_src)
 set(shadow_gpu_src)
+set(shadow_algorithm_src)
 set(shadow_examples_src)
 set(shadow_server_src)
 set(shadow_client_src)
 set(shadow_test_src)
 set(shadow_tools_src)
 
+add_subdirectory(algorithm)
 add_subdirectory(core)
 add_subdirectory(examples)
 add_subdirectory(operators)
@@ -39,7 +41,7 @@ else ()
 endif ()
 
 if (${BUILD_EXAMPLES})
-  add_executable(test_demo "examples/test_demo.cpp" ${shadow_examples_src})
+  add_executable(test_demo ${shadow_examples_src} ${shadow_algorithm_src})
   target_link_libraries(test_demo ${Shadow_LIB})
   install(TARGETS test_demo DESTINATION ${Shadow_INSTALL_BIN_PREFIX})
 endif ()
@@ -52,7 +54,7 @@ if (${BUILD_TOOLS} AND Protobuf_FOUND)
 endif ()
 
 if (${BUILD_SERVICE} AND Protobuf_FOUND)
-  add_executable(shadow_server ${shadow_server_src} ${shadow_examples_src})
+  add_executable(shadow_server ${shadow_server_src} ${shadow_algorithm_src})
   target_link_libraries(shadow_server ${Shadow_LIB} ${Shadow_PROTO_GRPC_LIB} ${CMAKE_THREAD_LIBS_INIT} ${ZLIB_LIBRARIES})
   install(TARGETS shadow_server DESTINATION ${Shadow_INSTALL_BIN_PREFIX})
 
@@ -72,7 +74,7 @@ if (${BUILD_LINT})
   find_program(ClangFormat "clang-format")
   if (ClangFormat)
     set(shadow_src ${shadow_cpu_src} ${shadow_gpu_src}
-                   ${shadow_examples_src}
+                   ${shadow_algorithm_src} ${shadow_examples_src}
                    ${shadow_server_src} ${shadow_client_src}
                    ${shadow_test_src} ${shadow_tools_src})
     add_custom_target(shadow_lint ${ClangFormat} -style="Google" -i ${shadow_src})

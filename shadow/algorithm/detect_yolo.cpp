@@ -1,5 +1,7 @@
 #include "detect_yolo.hpp"
 
+#include "util/io.hpp"
+
 namespace Shadow {
 
 void DetectYOLO::Setup(const std::string &model_file) {

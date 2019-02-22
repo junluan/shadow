@@ -1,5 +1,7 @@
 #include "detect_ssd.hpp"
 
+#include "util/io.hpp"
+
 namespace Shadow {
 
 template <typename T>

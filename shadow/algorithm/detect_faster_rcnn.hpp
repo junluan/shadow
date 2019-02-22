@@ -1,7 +1,9 @@
-#ifndef SHADOW_EXAMPLES_DETECT_FASTER_RCNN_HPP
-#define SHADOW_EXAMPLES_DETECT_FASTER_RCNN_HPP
+#ifndef SHADOW_ALGORITHM_DETECT_FASTER_RCNN_HPP
+#define SHADOW_ALGORITHM_DETECT_FASTER_RCNN_HPP
 
 #include "method.hpp"
+
+#include "core/network.hpp"
 
 namespace Shadow {
 
@@ -37,4 +39,4 @@ class DetectFasterRCNN final : public Method {
 
 }  // namespace Shadow
 
-#endif  // SHADOW_EXAMPLES_DETECT_FASTER_RCNN_HPP
+#endif  // SHADOW_ALGORITHM_DETECT_FASTER_RCNN_HPP

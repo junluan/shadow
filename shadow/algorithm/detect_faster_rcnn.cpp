@@ -1,5 +1,7 @@
 #include "detect_faster_rcnn.hpp"
 
+#include "util/io.hpp"
+
 namespace Shadow {
 
 void DetectFasterRCNN::Setup(const std::string &model_file) {

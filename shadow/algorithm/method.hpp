@@ -1,9 +1,7 @@
-#ifndef SHADOW_EXAMPLES_METHOD_HPP
-#define SHADOW_EXAMPLES_METHOD_HPP
+#ifndef SHADOW_ALGORITHM_METHOD_HPP
+#define SHADOW_ALGORITHM_METHOD_HPP
 
-#include "core/network.hpp"
 #include "util/boxes.hpp"
-#include "util/io.hpp"
 #include "util/jimage.hpp"
 #include "util/util.hpp"
 
@@ -219,4 +217,4 @@ static void ConvertData(const cv::Mat &im_mat, float *data, const RectF &roi,
 
 }  // namespace Shadow
 
-#endif  // SHADOW_EXAMPLES_METHOD_HPP
+#endif  // SHADOW_ALGORITHM_METHOD_HPP

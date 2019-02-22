@@ -1,7 +1,9 @@
-#ifndef SHADOW_EXAMPLES_CLASSIFY_HPP
-#define SHADOW_EXAMPLES_CLASSIFY_HPP
+#ifndef SHADOW_ALGORITHM_CLASSIFY_HPP
+#define SHADOW_ALGORITHM_CLASSIFY_HPP
 
 #include "method.hpp"
+
+#include "core/network.hpp"
 
 namespace Shadow {
 
@@ -30,4 +32,4 @@ class Classify final : public Method {
 
 }  // namespace Shadow
 
-#endif  // SHADOW_EXAMPLES_CLASSIFY_HPP
+#endif  // SHADOW_ALGORITHM_CLASSIFY_HPP

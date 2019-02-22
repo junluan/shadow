@@ -1,6 +1,6 @@
 #include "demo_classify.hpp"
 
-#include "classify.hpp"
+#include "algorithm/classify.hpp"
 
 namespace Shadow {
 

@@ -1,7 +1,9 @@
-#ifndef SHADOW_EXAMPLES_DETECT_MTCNN_HPP
-#define SHADOW_EXAMPLES_DETECT_MTCNN_HPP
+#ifndef SHADOW_ALGORITHM_DETECT_MTCNN_HPP
+#define SHADOW_ALGORITHM_DETECT_MTCNN_HPP
 
 #include "method.hpp"
+
+#include "core/network.hpp"
 
 namespace Shadow {
 
@@ -56,4 +58,4 @@ class DetectMTCNN final : public Method {
 
 }  // namespace Shadow
 
-#endif  // SHADOW_EXAMPLES_DETECT_MTCNN_HPP
+#endif  // SHADOW_ALGORITHM_DETECT_MTCNN_HPP

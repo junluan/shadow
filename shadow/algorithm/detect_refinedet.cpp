@@ -1,5 +1,7 @@
 #include "detect_refinedet.hpp"
 
+#include "util/io.hpp"
+
 namespace Shadow {
 
 template <typename T>

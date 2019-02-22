@@ -1,7 +1,9 @@
 #ifndef SHADOW_EXAMPLES_DEMO_CLASSIFY_HPP
 #define SHADOW_EXAMPLES_DEMO_CLASSIFY_HPP
 
-#include "method.hpp"
+#include "algorithm/method.hpp"
+
+#include <memory>
 
 namespace Shadow {
 
@@ -22,10 +24,10 @@ class DemoClassify {
                    const std::map<std::string, VecFloat> &scores, int top_k,
                    std::ostream *os);
 
-  std::shared_ptr<Method> method_ = nullptr;
-  JImage im_ini_;
-  std::map<std::string, VecFloat> scores_;
   Timer timer_;
+  JImage im_ini_;
+  std::shared_ptr<Method> method_ = nullptr;
+  std::map<std::string, VecFloat> scores_;
 };
 
 }  // namespace Shadow

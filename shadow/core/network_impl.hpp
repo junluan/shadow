@@ -64,6 +64,20 @@ class Network::NetworkImpl {
     return arg_helper_.template GetRepeatedArgument<T>(name, default_value);
   }
 
+  const std::string info() {
+    const auto &registered_ops = OperatorRegistry()->Keys();
+    std::stringstream ss;
+    ss << std::endl;
+    ss << "Shadow version: " << SHADOW_VERSION_STRING << std::endl;
+    ss << "Number of registered ops: " << registered_ops.size() << std::endl;
+    ss << "Registered ops: " << Util::format_vector<std::string>(registered_ops)
+       << std::endl;
+    ss << "Number of operators: " << ops_.size() << std::endl;
+    ss << "Workspace size: " << (ws_.GetWorkspaceSize() >> 20) << " MB + "
+       << (ws_.GetWorkspaceTempSize() >> 20) << " MB" << std::endl;
+    return ss.str();
+  }
+
  private:
   void LoadProtoData(const void *proto_data, int proto_size,
                      shadow::NetParam *net_param);

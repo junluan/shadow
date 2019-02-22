@@ -41,6 +41,8 @@ class Network {
   const std::vector<T> get_repeated_argument(
       const std::string &name, const std::vector<T> &default_value = {}) const;
 
+  const std::string info();
+
  private:
   class NetworkImpl;
   std::shared_ptr<NetworkImpl> engine_ = nullptr;

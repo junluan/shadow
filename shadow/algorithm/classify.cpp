@@ -1,5 +1,7 @@
 #include "classify.hpp"
 
+#include "util/io.hpp"
+
 namespace Shadow {
 
 void Classify::Setup(const std::string &model_file) {
