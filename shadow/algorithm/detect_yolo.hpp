@@ -28,7 +28,7 @@ class DetectYOLO final : public Method {
 
   Network net_;
   VecFloat in_data_;
-  std::vector<VecFloat> biases_;
+  VecFloat biases_;
   std::string in_str_;
   VecString out_str_;
   int batch_, in_num_, in_c_, in_h_, in_w_;

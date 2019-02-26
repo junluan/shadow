@@ -38,19 +38,11 @@ void DetectYOLO::Setup(const std::string &model_file) {
   threshold_ = net_.get_single_argument<float>("threshold", 0.6);
   nms_threshold_ = net_.get_single_argument<float>("nms_threshold", 0.3);
   num_classes_ = net_.get_single_argument<int>("num_classes", 80);
+  version_ = net_.get_single_argument<int>("version", 3);
+  num_km_ = net_.get_single_argument<int>("num_km", 3);
+  biases_ = net_.get_repeated_argument<float>("biases");
 
-  // For yolo v2
-  // biases_ = {{0.57273f, 0.677385f, 1.87446f, 2.06253f, 3.33843f, 5.47434f,
-  //            7.88282f, 3.52778f, 9.77052f, 9.16828f}};
-  // num_km_ = 5;
-  // version_ = 2;
-
-  // For yolo v3
-  biases_ = {{81, 82, 135, 169, 344, 319}, {10, 14, 23, 27, 37, 58}};
-  num_km_ = 3;
-  version_ = 3;
-
-  CHECK_EQ(out_str_.size(), biases_.size());
+  CHECK_EQ(out_str_.size(), biases_.size() / num_km_ / 2);
 }
 
 void DetectYOLO::Predict(const JImage &im_src, const RectF &roi, VecBoxF *boxes,
@@ -112,7 +104,8 @@ void DetectYOLO::Process(const VecFloat &in_data,
 
       VecBoxF boxes;
       ConvertDetections(const_cast<float *>(out_data) + b * out_num,
-                        biases_[n].data(), out_shape[1], out_shape[2], &boxes);
+                        &biases_[n * num_km_ * 2], out_shape[1], out_shape[2],
+                        &boxes);
       all_boxes.insert(all_boxes.begin(), boxes.begin(), boxes.end());
     }
     Gboxes->push_back(Boxes::NMS(all_boxes, nms_threshold_));
