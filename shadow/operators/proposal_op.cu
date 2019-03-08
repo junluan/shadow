@@ -39,7 +39,7 @@ __global__ void KernelProposal(int count, const T *anchor_data,
     T dh = delta_data[delta_offset + spatial_dim * 3];
 
     T pb_cx = anchor_cx + anchor_w * dx, pb_cy = anchor_cy + anchor_h * dy;
-    T pb_w = anchor_w * std::exp(dw), pb_h = anchor_h * std::exp(dh);
+    T pb_w = anchor_w * expf(dw), pb_h = anchor_h * expf(dh);
 
     T pb_xmin = pb_cx - (pb_w - 1) * T(0.5);
     T pb_ymin = pb_cy - (pb_h - 1) * T(0.5);
