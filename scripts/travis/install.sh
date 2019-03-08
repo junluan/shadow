@@ -31,6 +31,7 @@ if [ "$TRAVIS_OS_NAME" = "linux" ]; then
         "cuda-cudart-dev-$CUDA_PKG_VERSION" \
         "cuda-cublas-dev-$CUDA_PKG_VERSION" \
         "cuda-curand-dev-$CUDA_PKG_VERSION" \
+        "libcudnn7=$CUDNN_PKG_VERSION" \
         "libcudnn7-dev=$CUDNN_PKG_VERSION"
 
     sudo ln -sf /usr/local/cuda-$CUDA_VERSION /usr/local/cuda
