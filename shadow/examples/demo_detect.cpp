@@ -2,7 +2,6 @@
 
 #include "algorithm/detect_faster_rcnn.hpp"
 #include "algorithm/detect_mtcnn.hpp"
-#include "algorithm/detect_refinedet.hpp"
 #include "algorithm/detect_ssd.hpp"
 #include "algorithm/detect_yolo.hpp"
 
@@ -15,10 +14,8 @@ DemoDetect::DemoDetect(const std::string &method_name) {
     method_ = std::make_shared<DetectFasterRCNN>();
   } else if (method_name == "mtcnn") {
     method_ = std::make_shared<DetectMTCNN>();
-  } else if (method_name == "ssd") {
+  } else if (method_name == "ssd" || method_name == "refinedet") {
     method_ = std::make_shared<DetectSSD>();
-  } else if (method_name == "refinedet") {
-    method_ = std::make_shared<DetectRefineDet>();
   } else if (method_name == "yolo") {
     method_ = std::make_shared<DetectYOLO>();
   } else {

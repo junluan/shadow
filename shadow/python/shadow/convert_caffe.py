@@ -209,6 +209,33 @@ def convert_conv(caffe_layer, network):
     network.add_conv(layer_name, bottom_names, top_names, num_output, kernel_size, stride, pad, dilation, bias_term, group)
 
 
+def convert_decode_box(caffe_layer, network):
+    layer_name = caffe_layer.name
+    bottom_names = caffe_layer.bottom
+    top_names = caffe_layer.top
+
+    method = 0 if len(bottom_names) == 3 else 1
+    num_classes = 81
+    background_label_id = 0
+    objectness_score = 0.01
+    if caffe_layer.HasField('detection_output_param'):
+        caffe_param = caffe_layer.detection_output_param
+        if caffe_param.HasField('num_classes'):
+            num_classes = caffe_param.num_classes
+        if caffe_param.HasField('background_label_id'):
+            background_label_id = caffe_param.background_label_id
+        if caffe_param.HasField('objectness_score'):
+            objectness_score = caffe_param.objectness_score
+        if caffe_param.HasField('code_type'):
+            assert caffe_param.code_type == 2
+        if caffe_param.HasField('variance_encoded_in_target'):
+            assert caffe_param.variance_encoded_in_target is False
+        if caffe_param.HasField('share_location'):
+            assert caffe_param.share_location is True
+
+    network.add_decode_box(layer_name, bottom_names, top_names, method, num_classes, background_label_id, objectness_score)
+
+
 def convert_deconv(caffe_layer, network):
     layer_name = caffe_layer.name
     bottom_names = caffe_layer.bottom
@@ -576,6 +603,8 @@ def convert_caffe(network, net_info, model_root, model_name, copy_params):
             convert_connected(caffe_layer, network)
         elif layer_type == 'Convolution' or layer_type == 'DepthwiseConvolution':
             convert_conv(caffe_layer, network)
+        elif layer_type == 'DetectionOutput':
+            convert_decode_box(caffe_layer, network)
         elif layer_type == 'Deconvolution':
             convert_deconv(caffe_layer, network)
         elif layer_type == 'Eltwise':

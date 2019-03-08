@@ -86,16 +86,16 @@ def get_config_ssd():
         'mean_value': [103.94, 116.78, 123.68],
         'scale_value': [],
         'arg': {
-            'num_classes_s_i': 3,
-            'out_blob_v_s': ['mbox_loc', 'mbox_conf_flatten', 'mbox_priorbox']
+            'num_classes_s_i': 81,
+            'out_blob_v_s': ['detection_out']
         }
     }
 
     meta_net_info = {
         'model_type': ['caffe'],
-        'model_name': ['adas_model_finetune_reduce_3'],
+        'model_name': ['VGG_coco_SSD_300x300'],
         'model_epoch': [],
-        'save_name': 'adas_model_finetune_reduce_3',
+        'save_name': 'VGG_coco_SSD_300x300',
         'network': [net_info]
     }
 

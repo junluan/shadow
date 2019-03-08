@@ -212,6 +212,39 @@ const shadow::OpParam ParseConv(const JValue &root) {
   return shadow_op;
 }
 
+const shadow::OpParam ParseDecodeBox(const JValue &root) {
+  shadow::OpParam shadow_op;
+
+  ParseCommon(root, &shadow_op);
+
+  int method = 0, num_classes = 1, background_label_id = 0;
+  float objectness_score = 0.01;
+  if (root.HasMember("arg")) {
+    const auto &args = root["arg"];
+    for (int i = 0; i < args.Size(); ++i) {
+      const auto &arg = args[i];
+      CHECK(arg.HasMember("name"));
+      const auto &arg_name = Json::GetString(arg, "name", "");
+      if (arg_name == "method") {
+        method = Json::GetInt(arg, "s_i", 0);
+      } else if (arg_name == "num_classes") {
+        num_classes = Json::GetInt(arg, "s_i", 1);
+      } else if (arg_name == "background_label_id") {
+        background_label_id = Json::GetInt(arg, "s_i", 0);
+      } else if (arg_name == "objectness_score") {
+        objectness_score = Json::GetFloat(arg, "s_f", 0.01);
+      }
+    }
+  }
+
+  add_s_i(&shadow_op, "method", method);
+  add_s_i(&shadow_op, "num_classes", num_classes);
+  add_s_i(&shadow_op, "background_label_id", background_label_id);
+  add_s_f(&shadow_op, "objectness_score", objectness_score);
+
+  return shadow_op;
+}
+
 const shadow::OpParam ParseEltwise(const JValue &root) {
   shadow::OpParam shadow_op;
 
@@ -779,6 +812,7 @@ static const std::map<std::string, ParseFunc> parse_func_map{
     {"Concat", ParseConcat},
     {"Connected", ParseConnected},
     {"Conv", ParseConv},
+    {"DecodeBox", ParseDecodeBox},
     {"Deconv", ParseConv},
     {"Eltwise", ParseEltwise},
     {"Flatten", ParseFlatten},
@@ -1104,6 +1138,34 @@ const shadow::OpParam ParseConv(const std::vector<std::string> &params) {
   add_s_i(&shadow_op, "group", group);
   add_s_i(&shadow_op, "bias_term", bias_term);
   add_s_i(&shadow_op, "type", type);
+
+  return shadow_op;
+}
+
+const shadow::OpParam ParseDecodeBox(const std::vector<std::string> &params) {
+  shadow::OpParam shadow_op;
+
+  const auto &argument = ParseCommon(params, &shadow_op);
+
+  int method = 0, num_classes = 1, background_label_id = 0;
+  float objectness_score = 0.01;
+  if (argument.count("method")) {
+    method = argument.at("method").s_i;
+  }
+  if (argument.count("num_classes")) {
+    num_classes = argument.at("num_classes").s_i;
+  }
+  if (argument.count("background_label_id")) {
+    background_label_id = argument.at("background_label_id").s_i;
+  }
+  if (argument.count("objectness_score")) {
+    objectness_score = argument.at("objectness_score").s_f;
+  }
+
+  add_s_i(&shadow_op, "method", method);
+  add_s_i(&shadow_op, "num_classes", num_classes);
+  add_s_i(&shadow_op, "background_label_id", background_label_id);
+  add_s_f(&shadow_op, "objectness_score", objectness_score);
 
   return shadow_op;
 }
@@ -1549,6 +1611,7 @@ static const std::map<std::string, ParseFunc> parse_func_map{
     {"Concat", ParseConcat},
     {"Connected", ParseConnected},
     {"Conv", ParseConv},
+    {"DecodeBox", ParseDecodeBox},
     {"Deconv", ParseConv},
     {"Eltwise", ParseEltwise},
     {"Flatten", ParseFlatten},

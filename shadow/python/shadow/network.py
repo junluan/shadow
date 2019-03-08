@@ -216,6 +216,15 @@ class Network(object):
         self.add_arg(op_param, 'bias_term', bias_term, 's_i')
         self.add_arg(op_param, 'group', group, 's_i')
 
+    def add_decode_box(self, name, bottoms, tops, method, num_classes, background_label_id, objectness_score):
+        op_param = self.add_net_op()
+        self.add_common(op_param, name, 'DecodeBox', bottoms, tops)
+
+        self.add_arg(op_param, 'method', method, 's_i')
+        self.add_arg(op_param, 'num_classes', num_classes, 's_i')
+        self.add_arg(op_param, 'background_label_id', background_label_id, 's_i')
+        self.add_arg(op_param, 'objectness_score', objectness_score, 's_f')
+
     def add_deconv(self, name, bottoms, tops, num_output, kernel_size, stride=1, pad=0, dilation=1, bias_term=True, group=1):
         op_param = self.add_net_op()
         self.add_common(op_param, name, 'Deconv', bottoms, tops)
