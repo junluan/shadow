@@ -15,7 +15,7 @@
 
 namespace Shadow {
 
-const float EPS = 0.000001f;
+const float EPS = 1e-5f;
 
 class Scalar {
  public:
