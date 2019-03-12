@@ -82,6 +82,4 @@ INSTANTIATE_ARGUMENT(bool);
 INSTANTIATE_ARGUMENT(std::string);
 #undef INSTANTIATE_ARGUMENT
 
-const std::string Network::info() { return engine_->info(); }
-
 }  // namespace Shadow
