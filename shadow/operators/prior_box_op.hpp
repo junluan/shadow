@@ -50,12 +50,7 @@ class PriorBoxOp : public Operator {
     } else if (variance_.empty()) {
       variance_.push_back(0.1);
     }
-    if (has_argument("step")) {
-      step_ = get_single_argument<float>("step", 0);
-      CHECK_GT(step_, 0);
-    } else {
-      step_ = 0;
-    }
+    step_ = get_single_argument<float>("step", 0);
     offset_ = get_single_argument<float>("offset", 0.5);
   }
 

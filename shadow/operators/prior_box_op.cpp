@@ -22,10 +22,11 @@ void PriorBoxOp::Forward() {
   top_data_.resize(top->count());
 
   float step_h, step_w;
-  if (step_ == 0) {
+  if (std::abs(step_) < EPS) {
     step_h = static_cast<float>(im_h) / in_h;
     step_w = static_cast<float>(im_w) / in_w;
   } else {
+    CHECK_GT(step_, 0);
     step_h = step_w = step_;
   }
   int idx = 0;
