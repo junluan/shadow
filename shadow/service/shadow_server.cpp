@@ -5,7 +5,6 @@
 #include "algorithm/classify.hpp"
 #include "algorithm/detect_faster_rcnn.hpp"
 #include "algorithm/detect_mtcnn.hpp"
-#include "algorithm/detect_refinedet.hpp"
 #include "algorithm/detect_ssd.hpp"
 #include "algorithm/detect_yolo.hpp"
 
@@ -27,10 +26,8 @@ class Server final : public shadow::Inference::Service {
       method_ = std::make_shared<DetectFasterRCNN>();
     } else if (method_name_ == "mtcnn") {
       method_ = std::make_shared<DetectMTCNN>();
-    } else if (method_name_ == "ssd") {
+    } else if (method_name_ == "ssd" || method_name_ == "refinedet") {
       method_ = std::make_shared<DetectSSD>();
-    } else if (method_name_ == "refinedet") {
-      method_ = std::make_shared<DetectRefineDet>();
     } else if (method_name_ == "yolo") {
       method_ = std::make_shared<DetectYOLO>();
     } else {
