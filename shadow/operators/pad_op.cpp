@@ -42,10 +42,16 @@ void Pad(const T *in_data, const VecInt &in_shape, const VecInt &paddings,
   for (int b = 0; b < batch; ++b) {
     for (int c = 0; c < channel; ++c) {
       for (int h = 0; h < in_h; ++h) {
+        if (h + paddings[0] < 0 || h >= in_h + paddings[1]) continue;
+        int copy_w = in_w + std::min(paddings[2], 0) + std::min(paddings[3], 0);
         int in_offset = ((b * channel + c) * in_h + h) * in_w;
-        int out_offset =
-            ((b * channel + c) * out_h + h + paddings[0]) * out_w + paddings[2];
-        memcpy(out_data + out_offset, in_data + in_offset, in_w * sizeof(T));
+        int out_offset = ((b * channel + c) * out_h + h + paddings[0]) * out_w;
+        if (paddings[2] < 0) {
+          in_offset -= paddings[2];
+        } else {
+          out_offset += paddings[2];
+        }
+        memcpy(out_data + out_offset, in_data + in_offset, copy_w * sizeof(T));
       }
     }
   }

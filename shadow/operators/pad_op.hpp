@@ -12,9 +12,6 @@ class PadOp : public Operator {
     // [top, bottom, left, right]
     paddings_ = get_repeated_argument<int>("paddings");
     CHECK_EQ(paddings_.size(), 4);
-    for (auto pad : paddings_) {
-      CHECK_GE(pad, 0);
-    }
     value_ = get_single_argument<float>("value", 0);
   }
 
