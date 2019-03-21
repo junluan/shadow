@@ -82,12 +82,6 @@ class Register {
     return registry;                                                         \
   }
 
-#define SHADOW_REGISTER_TYPED_CREATOR(RegistryName, key, ...)                \
-  namespace {                                                                \
-  static Register##RegistryName SHADOW_ANONYMOUS_VARIABLE(g_##RegistryName)( \
-      key, RegistryName(), __VA_ARGS__);                                     \
-  }
-
 #define SHADOW_REGISTER_TYPED_CLASS(RegistryName, key, ...)                  \
   namespace {                                                                \
   static Register##RegistryName SHADOW_ANONYMOUS_VARIABLE(g_##RegistryName)( \
@@ -102,9 +96,6 @@ class Register {
 #define SHADOW_DEFINE_REGISTRY(RegistryName, ObjectType, ...)         \
   SHADOW_DEFINE_TYPED_REGISTRY(RegistryName, std::string, ObjectType, \
                                ##__VA_ARGS__)
-
-#define SHADOW_REGISTER_CREATOR(RegistryName, key, ...) \
-  SHADOW_REGISTER_TYPED_CREATOR(RegistryName, #key, __VA_ARGS__)
 
 #define SHADOW_REGISTER_CLASS(RegistryName, key, ...) \
   SHADOW_REGISTER_TYPED_CLASS(RegistryName, #key, __VA_ARGS__)

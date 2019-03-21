@@ -57,6 +57,18 @@ const std::string Operator::debug_log() const {
   return ss.str();
 }
 
+class StaticLinkingProtector {
+ public:
+  StaticLinkingProtector() {
+    const auto &registered_ops = OperatorRegistry()->Keys();
+    LOG_IF(FATAL, registered_ops.empty())
+        << "You might have made a build error: the Shadow library does not "
+           "seem to be linked with whole-static library option. To do so, use "
+           "-Wl,-force_load (clang) or -Wl,--whole-archive (gcc) to link the "
+           "Shadow library.";
+  }
+};
+
 Operator *CreateOperator(const shadow::OpParam &op_param, Workspace *ws) {
   static StaticLinkingProtector g_protector;
   auto *op = OperatorRegistry()->Create(op_param.type(), op_param, ws);
