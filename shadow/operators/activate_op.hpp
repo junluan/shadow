@@ -14,6 +14,27 @@ class ActivateOp : public Operator {
     channel_shared_ = get_single_argument<bool>("channel_shared", false);
     CHECK_GE(activate_type_, 0);
     CHECK_LE(activate_type_, 5);
+
+#if defined(USE_CUDNN)
+    use_cudnn_ = activate_type_ == kRelu || activate_type_ == kLeaky ||
+                 activate_type_ == kSigmoid || activate_type_ == kTanh;
+    if (use_cudnn_) {
+      cudnn::createActivationDesc<float>(&activate_desc_);
+      cudnn::createTensorDesc<float>(&bottom_top_desc_);
+    }
+#endif
+  }
+  ~ActivateOp() override {
+#if defined(USE_CUDNN)
+    if (activate_desc_ != nullptr) {
+      cudnnDestroyActivationDescriptor(activate_desc_);
+      activate_desc_ = nullptr;
+    }
+    if (bottom_top_desc_ != nullptr) {
+      cudnnDestroyTensorDescriptor(bottom_top_desc_);
+      bottom_top_desc_ = nullptr;
+    }
+#endif
   }
 
   void Forward() override;
@@ -30,7 +51,12 @@ class ActivateOp : public Operator {
 
   int activate_type_;
   float slope_;
-  bool channel_shared_;
+  bool channel_shared_, use_cudnn_ = false;
+
+#if defined(USE_CUDNN)
+  cudnnActivationDescriptor_t activate_desc_ = nullptr;
+  cudnnTensorDescriptor_t bottom_top_desc_ = nullptr;
+#endif
 };
 
 namespace Vision {

@@ -52,6 +52,9 @@ void DeconvOp::Forward() {
     if (bias_term_) {
       cudnn::setTensor4dDesc<float>(&bias_desc_, 1, num_output_, 1, 1);
     }
+    if (activate_type_ == 1) {
+      cudnn::setActivationDesc<float>(&activate_desc_, activate_type_, 0);
+    }
 
     size_t workspace_limit_bytes = group_ == 1 ? 64 * 1024 * 1024 : 0;
 
@@ -61,26 +64,27 @@ void DeconvOp::Forward() {
         CUDNN_CONVOLUTION_BWD_DATA_SPECIFY_WORKSPACE_LIMIT,
         workspace_limit_bytes, &bwd_data_algo_));
 
+    size_t workspace_bwd_size = 0;
+
     CUDNN_CHECK(cudnnGetConvolutionBackwardDataWorkspaceSize(
         cudnnHandle_t(op_ws_->Ctx()->cudnn_handle()), filter_desc_,
         bottom_desc_, conv_desc_, top_desc_, bwd_data_algo_,
-        &workspace_bwd_size_));
+        &workspace_bwd_size));
 
-    BlobUC *workspace_ = nullptr;
-    if (workspace_bwd_size_ > 0) {
-      op_ws_->GrowTempBuffer(static_cast<int>(workspace_bwd_size_),
+    void *workspace_ptr = nullptr;
+    if (workspace_bwd_size > 0) {
+      op_ws_->GrowTempBuffer(static_cast<int>(workspace_bwd_size),
                              sizeof(unsigned char));
-      workspace_ = op_ws_->CreateTempBlob<unsigned char>(
-          {static_cast<int>(workspace_bwd_size_)}, op_name_ + "/workspace");
+      auto *workspace = op_ws_->CreateTempBlob<unsigned char>(
+          {static_cast<int>(workspace_bwd_size)}, op_name_ + "/workspace");
+      workspace_ptr = workspace->mutable_data();
     }
 
-    auto *workspace_ptr =
-        workspace_bwd_size_ > 0 ? workspace_->mutable_data() : nullptr;
     CUDNN_CHECK(cudnnConvolutionBackwardData(
         cudnnHandle_t(op_ws_->Ctx()->cudnn_handle()),
         cudnn::dataType<float>::one, filter_desc_, weight->data(), bottom_desc_,
         bottom->data(), conv_desc_, bwd_data_algo_, workspace_ptr,
-        workspace_bwd_size_, cudnn::dataType<float>::zero, top_desc_,
+        workspace_bwd_size, cudnn::dataType<float>::zero, top_desc_,
         top->mutable_data()));
     if (bias_term_) {
       CUDNN_CHECK(cudnnAddTensor(
@@ -89,9 +93,12 @@ void DeconvOp::Forward() {
           cudnn::dataType<float>::one, top_desc_, top->mutable_data()));
     }
     if (activate_type_ == 1) {
-      Vision::Activate(top->data(), top->mutable_data(), top->count(),
-                       activate_type_);
+      CUDNN_CHECK(cudnnActivationForward(
+          cudnnHandle_t(op_ws_->Ctx()->cudnn_handle()), activate_desc_,
+          cudnn::dataType<float>::one, top_desc_, top->data(),
+          cudnn::dataType<float>::zero, top_desc_, top->mutable_data()));
     }
+
     return;
   }
 #endif

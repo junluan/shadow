@@ -10,6 +10,24 @@ void ActivateOp::Forward() {
     top->reshape(bottom->shape());
   }
 
+#if defined(USE_CUDNN)
+  if (use_cudnn_) {
+    int batch = bottom->shape(0), in_c = bottom->shape(1),
+        in_h = bottom->shape(2), in_w = bottom->shape(3);
+
+    cudnn::setActivationDesc<float>(&activate_desc_, activate_type_,
+                                    static_cast<double>(slope_));
+    cudnn::setTensor4dDesc<float>(&bottom_top_desc_, batch, in_c, in_h, in_w);
+
+    CUDNN_CHECK(cudnnActivationForward(
+        cudnnHandle_t(op_ws_->Ctx()->cudnn_handle()), activate_desc_,
+        cudnn::dataType<float>::one, bottom_top_desc_, bottom->data(),
+        cudnn::dataType<float>::zero, bottom_top_desc_, top->mutable_data()));
+
+    return;
+  }
+#endif
+
   // PRelu: 0, Relu: 1, Leaky: 2, Sigmoid: 3, SoftPlus: 4, Tanh: 5
   if (activate_type_ == kRelu || activate_type_ == kLeaky ||
       activate_type_ == kSigmoid || activate_type_ == kSoftPlus ||
@@ -39,7 +57,7 @@ template <typename T>
 inline T Activate(T x, int type, float slope) {
   switch (type) {
     case 1:
-      return x * (x > 0);
+      return x > 0 ? x : 0;
     case 2:
       return x > 0 ? x : T(slope * x);
     case 3:

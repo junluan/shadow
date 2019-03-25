@@ -36,6 +36,9 @@ class ConvOp : public Operator {
       if (bias_term_) {
         cudnn::createTensorDesc<float>(&bias_desc_);
       }
+      if (activate_type_ == 1) {
+        cudnn::createActivationDesc<float>(&activate_desc_);
+      }
     }
 #endif
   }
@@ -61,6 +64,10 @@ class ConvOp : public Operator {
       cudnnDestroyTensorDescriptor(bias_desc_);
       bias_desc_ = nullptr;
     }
+    if (activate_desc_ != nullptr) {
+      cudnnDestroyActivationDescriptor(activate_desc_);
+      activate_desc_ = nullptr;
+    }
 #endif
   }
 
@@ -82,7 +89,7 @@ class ConvOp : public Operator {
   cudnnFilterDescriptor_t filter_desc_ = nullptr;
   cudnnTensorDescriptor_t bias_desc_ = nullptr;
 
-  size_t workspace_fwd_size_ = 0;
+  cudnnActivationDescriptor_t activate_desc_ = nullptr;
 #endif
 
 #if defined(USE_NNPACK)

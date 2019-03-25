@@ -10,7 +10,7 @@ __device__ float ActivateValue(T x, int type, float slope) {
   // PRelu: 0, Relu: 1, Leaky: 2, Sigmoid: 3, SoftPlus: 4, Tanh: 5
   switch (type) {
     case 1:
-      return x * (x > 0);
+      return x > 0 ? x : 0;
     case 2:
       return x > 0 ? x : T(slope * x);
     case 3:
