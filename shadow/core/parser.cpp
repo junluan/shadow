@@ -376,6 +376,32 @@ const shadow::OpParam ParseLRN(const JValue &root) {
   return shadow_op;
 }
 
+const shadow::OpParam ParseMatMul(const JValue &root) {
+  shadow::OpParam shadow_op;
+
+  ParseCommon(root, &shadow_op);
+
+  int transpose_a = false, transpose_b = false;
+  if (root.HasMember("arg")) {
+    const auto &args = root["arg"];
+    for (int i = 0; i < args.Size(); ++i) {
+      const auto &arg = args[i];
+      CHECK(arg.HasMember("name"));
+      const auto &arg_name = Json::GetString(arg, "name", "");
+      if (arg_name == "transpose_a") {
+        transpose_a = Json::GetInt(arg, "s_i", 0);
+      } else if (arg_name == "transpose_b") {
+        transpose_b = Json::GetInt(arg, "s_i", 0);
+      }
+    }
+  }
+
+  add_s_i(&shadow_op, "transpose_a", transpose_a);
+  add_s_i(&shadow_op, "transpose_b", transpose_b);
+
+  return shadow_op;
+}
+
 const shadow::OpParam ParseNormalize(const JValue &root) {
   shadow::OpParam shadow_op;
 
@@ -819,6 +845,7 @@ static const std::map<std::string, ParseFunc> parse_func_map{
     {"Input", ParseInput},
     {"InstanceNorm", ParseInstanceNorm},
     {"LRN", ParseLRN},
+    {"MatMul", ParseMatMul},
     {"Normalize", ParseNormalize},
     {"Pad", ParsePad},
     {"Permute", ParsePermute},
@@ -1269,6 +1296,25 @@ const shadow::OpParam ParseLRN(const std::vector<std::string> &params) {
   return shadow_op;
 }
 
+const shadow::OpParam ParseMatMul(const std::vector<std::string> &params) {
+  shadow::OpParam shadow_op;
+
+  const auto &argument = ParseCommon(params, &shadow_op);
+
+  int transpose_a = false, transpose_b = false;
+  if (argument.count("transpose_a")) {
+    transpose_a = argument.at("transpose_a").s_i;
+  }
+  if (argument.count("transpose_b")) {
+    transpose_b = argument.at("transpose_b").s_i;
+  }
+
+  add_s_i(&shadow_op, "transpose_a", transpose_a);
+  add_s_i(&shadow_op, "transpose_b", transpose_b);
+
+  return shadow_op;
+}
+
 const shadow::OpParam ParseNormalize(const std::vector<std::string> &params) {
   shadow::OpParam shadow_op;
 
@@ -1618,6 +1664,7 @@ static const std::map<std::string, ParseFunc> parse_func_map{
     {"Input", ParseInput},
     {"InstanceNorm", ParseInstanceNorm},
     {"LRN", ParseLRN},
+    {"MatMul", ParseMatMul},
     {"Normalize", ParseNormalize},
     {"Pad", ParsePad},
     {"Permute", ParsePermute},

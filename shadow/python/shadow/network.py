@@ -306,6 +306,13 @@ class Network(object):
             raise ValueError('Unsupported norm region type', norm_region)
         self.add_arg(op_param, 'k', k, 's_f')
 
+    def add_matmul(self, name, bottoms, tops, transpose_a=False, transpose_b=False):
+        op_param = self.add_net_op()
+        self.add_common(op_param, name, 'MatMul', bottoms, tops)
+
+        self.add_arg(op_param, 'transpose_a', transpose_a, 's_i')
+        self.add_arg(op_param, 'transpose_b', transpose_b, 's_i')
+
     def add_normalize(self, name, bottoms, tops, across_spatial=True, channel_shared=True):
         op_param = self.add_net_op()
         self.add_common(op_param, name, 'Normalize', bottoms, tops)
