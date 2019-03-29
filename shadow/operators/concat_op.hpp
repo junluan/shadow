@@ -9,14 +9,13 @@ class ConcatOp : public Operator {
  public:
   explicit ConcatOp(const shadow::OpParam &op_param, Workspace *ws)
       : Operator(op_param, ws) {
-    concat_axis_ = get_single_argument<int>("axis", 1);
-    CHECK_GE(concat_axis_, 0);
+    axis_ = get_single_argument<int>("axis", 1);
   }
 
   void Forward() override;
 
  private:
-  int concat_axis_;
+  int axis_;
 };
 
 namespace Vision {
