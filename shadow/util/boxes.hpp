@@ -11,27 +11,6 @@ class Box {
   Box() = default;
   Box(Dtype xmin_t, Dtype ymin_t, Dtype xmax_t, Dtype ymax_t)
       : xmin(xmin_t), ymin(ymin_t), xmax(xmax_t), ymax(ymax_t) {}
-  Box(const Box<int> &box) { *this = box; }
-  Box(const Box<float> &box) { *this = box; }
-
-  Box &operator=(const Box<int> &box) {
-    xmin = static_cast<Dtype>(box.xmin);
-    ymin = static_cast<Dtype>(box.ymin);
-    xmax = static_cast<Dtype>(box.xmax);
-    ymax = static_cast<Dtype>(box.ymax);
-    score = box.score;
-    label = box.label;
-    return *this;
-  }
-  Box &operator=(const Box<float> &box) {
-    xmin = static_cast<Dtype>(box.xmin);
-    ymin = static_cast<Dtype>(box.ymin);
-    xmax = static_cast<Dtype>(box.xmax);
-    ymax = static_cast<Dtype>(box.ymax);
-    score = box.score;
-    label = box.label;
-    return *this;
-  }
 
   RectI RectInt() const { return RectI(xmin, ymin, xmax - xmin, ymax - ymin); }
   RectF RectFloat() const {

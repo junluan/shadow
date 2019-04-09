@@ -149,20 +149,18 @@ void DemoDetect::CaptureTest(cv::VideoCapture *capture,
 }
 
 void DemoDetect::DrawDetections(const VecBoxF &boxes, cv::Mat *im_mat) {
-  for (const auto &boxF : boxes) {
-    const BoxI box(boxF);
+  for (const auto &box : boxes) {
     int color_r = (box.label * 100) % 255;
     int color_g = (color_r + 100) % 255;
     int color_b = (color_g + 100) % 255;
     cv::Scalar scalar(color_b, color_g, color_r);
-    cv::rectangle(*im_mat, cv::Point(box.xmin, box.ymin),
-                  cv::Point(box.xmax, box.ymax), scalar, 2);
+    cv::rectangle(*im_mat, cv::Point2f(box.xmin, box.ymin),
+                  cv::Point2f(box.xmax, box.ymax), scalar, 2);
   }
 }
 #endif
 
-void DemoDetect::DrawDetections(const Shadow::VecBoxF &boxes,
-                                Shadow::JImage *im_src) {
+void DemoDetect::DrawDetections(const VecBoxF &boxes, JImage *im_src) {
   for (const auto &box : boxes_) {
     int color_r = (box.label * 100) % 255;
     int color_g = (color_r + 100) % 255;
@@ -172,9 +170,8 @@ void DemoDetect::DrawDetections(const Shadow::VecBoxF &boxes,
   }
 }
 
-void DemoDetect::PrintConsole(const Shadow::VecBoxF &boxes, bool split) {
-  for (const auto &boxF : boxes) {
-    const BoxI box(boxF);
+void DemoDetect::PrintConsole(const VecBoxF &boxes, bool split) {
+  for (const auto &box : boxes) {
     LOG(INFO) << "xmin = " << box.xmin << ", ymin = " << box.ymin
               << ", xmax = " << box.xmax << ", ymax = " << box.ymax
               << ", label = " << box.label << ", score = " << box.score;
@@ -188,8 +185,7 @@ void DemoDetect::PrintStream(const std::string &im_name, const VecBoxF &boxes,
                              std::ostream *os) {
   *os << im_name << ":" << std::endl;
   *os << "objects:" << std::endl;
-  for (const auto &boxF : boxes) {
-    const BoxI box(boxF);
+  for (const auto &box : boxes) {
     *os << "   " << box.xmin << " " << box.ymin << " " << box.xmax << " "
         << box.ymax << " " << box.label << " " << box.score << std::endl;
   }

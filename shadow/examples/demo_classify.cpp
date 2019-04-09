@@ -41,9 +41,8 @@ void DemoClassify::BatchTest(const std::string &list_file) {
             << " ms, each frame: " << time_cost / num_im << " ms";
 }
 
-void DemoClassify::PrintConsole(
-    const std::map<std::string, Shadow::VecFloat> &scores, int top_k,
-    bool split) {
+void DemoClassify::PrintConsole(const std::map<std::string, VecFloat> &scores,
+                                int top_k, bool split) {
   for (const auto &it : scores) {
     const auto &score = it.second;
     const auto &max_k = Util::top_k(score, top_k);
