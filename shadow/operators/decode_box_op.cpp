@@ -12,11 +12,10 @@ void DecodeBoxOp::Forward() {
     const auto *mbox_conf = bottoms<float>(1);
     const auto *mbox_priorbox = bottoms<float>(2);
 
-    int batch = mbox_loc->shape(0);
-    int num_priors = mbox_priorbox->shape(2) / 4;
+    int batch = mbox_loc->shape(0), num_priors = mbox_loc->shape(1) / 4;
 
-    CHECK_EQ(mbox_loc->shape(1) / 4, num_priors);
-    CHECK_EQ(mbox_conf->shape(1) / num_classes_, num_priors);
+    CHECK_EQ(mbox_conf->shape(1), num_priors * num_classes_);
+    CHECK_EQ(mbox_conf->count(1), num_priors * 8);
 
     top->reshape({batch, num_priors, 6});
 
@@ -32,13 +31,12 @@ void DecodeBoxOp::Forward() {
     const auto *arm_conf = bottoms<float>(3);
     const auto *arm_loc = bottoms<float>(4);
 
-    int batch = odm_loc->shape(0);
-    int num_priors = arm_priorbox->shape(2) / 4;
+    int batch = odm_loc->shape(0), num_priors = odm_loc->shape(1) / 4;
 
-    CHECK_EQ(odm_loc->shape(1) / 4, num_priors);
-    CHECK_EQ(odm_conf->shape(1) / num_classes_, num_priors);
-    CHECK_EQ(arm_conf->shape(1) / 2, num_priors);
-    CHECK_EQ(arm_loc->shape(1) / 4, num_priors);
+    CHECK_EQ(odm_conf->shape(1), num_priors * num_classes_);
+    CHECK_EQ(arm_priorbox->count(1), num_priors * 8);
+    CHECK_EQ(arm_conf->shape(1), num_priors * 2);
+    CHECK_EQ(arm_loc->shape(1), num_priors * 4);
 
     top->reshape({batch, num_priors, 6});
 
