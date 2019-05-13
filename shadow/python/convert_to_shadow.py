@@ -3,9 +3,9 @@ from __future__ import print_function
 from config import *
 from shadow import converter
 from shadow import merger
-from shadow import util
 
 import argparse
+import os
 
 
 def parse_args():
@@ -23,7 +23,7 @@ def parse_args():
 if __name__ == '__main__':
     args = parse_args()
 
-    util.mkdir_p(args.save_root)
+    os.makedirs(args.save_root, exist_ok=True)
 
     meta_net_info = eval('get_config_' + args.config_name)()
 
