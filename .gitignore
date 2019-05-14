@@ -1,19 +1,15 @@
-### Example user template
+### User template
 build
 data
 models
 third_party
-__pycache__
-*.py[cod]
 *_pb2.py
 *.pb.cc
 *.pb.h
 
-# IntelliJ project files
+### IDE template
+# IntelliJ files
 .idea
-*.iml
-out
-gen
 
 # Visual Studio files
 *.user
@@ -23,6 +19,9 @@ gen
 *.pdb
 
 ### C++ template
+# Prerequisites
+*.d
+
 # Compiled Object files
 *.slo
 *.lo
@@ -52,3 +51,9 @@ gen
 *.exe
 *.out
 *.app
+
+### Python template
+# Byte-compiled / optimized / DLL files
+__pycache__
+*.py[cod]
+*$py.class
