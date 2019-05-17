@@ -167,7 +167,7 @@ def convert_input(net_info, network, input_infos):
             network.add_scale(input_name, [input_name], [input_name], 1, False, False, scale_value, mean_value)
 
 
-def convert_activate(onnx_nodes, index, onnx_initializer, param_dict, network):
+def convert_activate(onnx_nodes, index, param_dict, network):
     onnx_node = onnx_nodes[index]
     op_input = onnx_node.input
     op_output = onnx_node.output
@@ -177,13 +177,10 @@ def convert_activate(onnx_nodes, index, onnx_initializer, param_dict, network):
     bottom_names = find_inputs(onnx_nodes, index, op_input)
     top_names = op_output
 
-    channel_shared = False
     if op_type == 'PRelu':
         act_type = 'PRelu'
         bottom_names = find_inputs(onnx_nodes, index, op_input[:1])
         param_dict[op_name] = op_input[1:]
-        slope_shape = get_param_shape(onnx_initializer, op_input[1])
-        channel_shared = np.prod(slope_shape) == 1
     elif op_type == 'Relu':
         act_type = 'Relu'
     elif op_type == 'Sigmoid':
@@ -191,7 +188,7 @@ def convert_activate(onnx_nodes, index, onnx_initializer, param_dict, network):
     else:
         raise ValueError('Unsupported activate type', op_type)
 
-    network.add_activate(op_name, bottom_names, top_names, act_type, channel_shared=channel_shared)
+    network.add_activate(op_name, bottom_names, top_names, act_type)
 
 
 def convert_batch_norm(onnx_nodes, index, param_dict, network):
@@ -490,7 +487,7 @@ def convert_onnx(network, net_info, model_root, model_name, copy_params):
     for index, node in enumerate(onnx_nodes):
         op_type = node.op_type
         if op_type == 'Relu' or op_type == 'PRelu' or op_type == 'Sigmoid':
-            convert_activate(onnx_nodes, index, onnx_initializer, param_dict, network)
+            convert_activate(onnx_nodes, index, param_dict, network)
         elif op_type == 'BatchNormalization':
             convert_batch_norm(onnx_nodes, index, param_dict, network)
         elif op_type == 'Add' or op_type == 'Sub' or op_type == 'Mul' or op_type == 'Div':

@@ -38,13 +38,12 @@ void ActivateOp::Forward() {
     CHECK_EQ(bottoms_size(), 2);
     CHECK_GE(bottom->num_axes(), 2);
     const auto *slope = bottoms<float>(1);
-    if (channel_shared_) {
-      CHECK_EQ(slope->count(), 1);
-    } else {
+    bool channel_shared = slope->count() == 1;
+    if (!channel_shared) {
       CHECK_EQ(slope->count(), bottom->shape(1));
     }
     Vision::PRelu(bottom->data(), top->mutable_data(), top->shape(),
-                  channel_shared_, slope->data());
+                  channel_shared, slope->data());
   }
 }
 

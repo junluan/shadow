@@ -135,13 +135,12 @@ class Network(object):
         else:
             print('No input shape, must be supplied manually')
 
-    def add_activate(self, name, bottoms, tops, activate_type='Relu', slope=0.1, channel_shared=False):
+    def add_activate(self, name, bottoms, tops, activate_type='Relu', slope=0.1):
         op_param = self.add_net_op()
         self.add_common(op_param, name, 'Activate', bottoms, tops)
 
         if activate_type == 'PRelu':
             self.add_arg(op_param, 'type', 0, 's_i')
-            self.add_arg(op_param, 'channel_shared', channel_shared, 's_i')
         elif activate_type == 'Relu':
             self.add_arg(op_param, 'type', 1, 's_i')
         elif activate_type == 'Leaky':

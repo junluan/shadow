@@ -11,7 +11,6 @@ class ActivateOp : public Operator {
       : Operator(op_param, ws) {
     activate_type_ = get_single_argument<int>("type", 1);
     slope_ = get_single_argument<float>("slope", 0.1);
-    channel_shared_ = get_single_argument<bool>("channel_shared", false);
     CHECK_GE(activate_type_, 0);
     CHECK_LE(activate_type_, 5);
 
@@ -51,7 +50,7 @@ class ActivateOp : public Operator {
 
   int activate_type_;
   float slope_;
-  bool channel_shared_, use_cudnn_ = false;
+  bool use_cudnn_ = false;
 
 #if defined(USE_CUDNN)
   cudnnActivationDescriptor_t activate_desc_ = nullptr;

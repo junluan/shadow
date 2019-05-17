@@ -29,7 +29,7 @@ const shadow::OpParam ParseActivate(const JValue &root) {
 
   ParseCommon(root, &shadow_op);
 
-  int type = 1, channel_shared = false;
+  int type = 1;
   float slope = 0.1;
   if (root.HasMember("arg")) {
     const auto &args = root["arg"];
@@ -41,15 +41,12 @@ const shadow::OpParam ParseActivate(const JValue &root) {
         type = Json::GetInt(arg, "s_i", 1);
       } else if (arg_name == "slope") {
         slope = Json::GetFloat(arg, "s_f", 0.1);
-      } else if (arg_name == "channel_shared") {
-        channel_shared = Json::GetInt(arg, "s_i", 0);
       }
     }
   }
 
   add_s_i(&shadow_op, "type", type);
   add_s_f(&shadow_op, "slope", slope);
-  add_s_i(&shadow_op, "channel_shared", channel_shared);
 
   return shadow_op;
 }
@@ -1021,7 +1018,7 @@ const shadow::OpParam ParseActivate(const std::vector<std::string> &params) {
 
   const auto &argument = ParseCommon(params, &shadow_op);
 
-  int type = 1, channel_shared = false;
+  int type = 1;
   float slope = 0.1;
   if (argument.count("type")) {
     type = argument.at("type").s_i;
@@ -1029,13 +1026,9 @@ const shadow::OpParam ParseActivate(const std::vector<std::string> &params) {
   if (argument.count("slope")) {
     slope = argument.at("slope").s_f;
   }
-  if (argument.count("channel_shared")) {
-    channel_shared = argument.at("channel_shared").s_i;
-  }
 
   add_s_i(&shadow_op, "type", type);
   add_s_f(&shadow_op, "slope", slope);
-  add_s_i(&shadow_op, "channel_shared", channel_shared);
 
   return shadow_op;
 }
