@@ -36,14 +36,27 @@ def get_param_shape(onnx_initializer, name):
 def get_param_weight(onnx_initializer, name, data_type=np.float32):
     for initializer in onnx_initializer:
         if initializer.name == name:
-            assert initializer.HasField('raw_data')
             if data_type == np.float32:
                 assert initializer.data_type == onnx.TensorProto.FLOAT
+            elif data_type == np.int32:
+                assert initializer.data_type == onnx.TensorProto.INT32
             elif data_type == np.int64:
                 assert initializer.data_type == onnx.TensorProto.INT64
-            param_data = np.frombuffer(initializer.raw_data, dtype=data_type)
-            param_shape = initializer.dims
-            return param_data, param_shape
+
+            if len(initializer.float_data) > 0:
+                assert data_type == np.float32
+                param_data = initializer.float_data
+            elif len(initializer.int32_data) > 0:
+                assert data_type == np.int32
+                param_data = initializer.int32_data
+            elif len(initializer.int64_data) > 0:
+                assert data_type == np.int64
+                param_data = initializer.int64_data
+            else:
+                assert initializer.HasField('raw_data')
+                param_data = np.frombuffer(initializer.raw_data, dtype=data_type)
+
+            return param_data, initializer.dims
     raise ValueError(name, 'not in initializer blobs')
 
 
@@ -354,6 +367,27 @@ def convert_flatten(onnx_nodes, index, network):
     network.add_flatten(op_name, bottom_names, top_names, axis)
 
 
+def convert_pad(onnx_nodes, index, network):
+    onnx_node = onnx_nodes[index]
+    op_input = onnx_node.input
+    op_output = onnx_node.output
+    op_attribute = onnx_node.attribute
+    op_name = onnx_node.name if onnx_node.HasField('name') else 'node_{}'.format(index)
+
+    bottom_names = find_inputs(onnx_nodes, index, op_input)
+    top_names = op_output
+
+    mode = parse_attribute(op_attribute, 'mode', 'constant')
+    pads = parse_attribute(op_attribute, 'pads', None)
+    value = parse_attribute(op_attribute, 'value', 0)
+
+    assert 'constant' in mode
+    assert len(pads) == 8
+    pads = [pads[2], pads[6], pads[3], pads[7]]
+
+    network.add_pad(op_name, bottom_names, top_names, pads, value)
+
+
 def convert_permute(onnx_nodes, index, network):
     onnx_node = onnx_nodes[index]
     op_input = onnx_node.input
@@ -502,6 +536,8 @@ def convert_onnx(network, net_info, model_root, model_name, copy_params):
             convert_deconv(onnx_nodes, index, onnx_initializer, param_dict, network)
         elif op_type == 'Flatten':
             convert_flatten(onnx_nodes, index, network)
+        elif op_type == 'Pad':
+            convert_pad(onnx_nodes, index, network)
         elif op_type == 'Transpose':
             convert_permute(onnx_nodes, index, network)
         elif op_type == 'MaxPool' or op_type == 'AveragePool' or op_type == 'GlobalMaxPool' or op_type == 'GlobalAveragePool':
