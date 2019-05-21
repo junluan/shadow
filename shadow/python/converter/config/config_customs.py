@@ -15,9 +15,9 @@ def get_config_custom():
     }
 
     meta_net_info = {
-        'model_type': ['mxnet'],  # model type: caffe or mxnet
+        'model_type': ['mxnet'],  # model type: caffe, mxnet or onnx
         'model_name': ['squeezenet_v1.1'],  # model file name on disk
-        'model_epoch': [0],  # only for mxnet model
+        'model_epoch': [0],  # model epoch, only for mxnet
         'save_name': 'squeezenet_v1.1',  # shadow model saved name
         'network': [net_info],  # networks
         'arg': {  # meta net arguments, must end with one of 's_i, s_f, s_s, v_i, v_f, v_s'

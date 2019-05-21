@@ -8,22 +8,22 @@ Clone the Shadow repository, and we'll call the directory that you cloned Shadow
 git clone https://github.com/junluan/shadow.git
 ```
 
-If you are going to convert a caffe model, please copy ```caffe.proto``` to ```${Shadow_ROOT}/shadow/python/proto``` directory and generate caffe protobuf's python source file.
+If you are going to convert a caffe model, please copy ```caffe.proto``` to ```${Shadow_ROOT}/shadow/python/converter/proto``` directory and generate caffe protobuf's python source file.
 
 ```
-cd ${Shadow_ROOT}/shadow/python/proto
+cd ${Shadow_ROOT}/shadow/python/converter/proto
 protoc --python_out=./ caffe.proto
 ```
 
 ## Convert
- 
-The working directory for converting models is ```${Shadow_ROOT}/shadow/python```
- 
+
+The working directory for converting models is ```${Shadow_ROOT}/shadow/python/converter```.
+
 ```
-cd ${Shadow_ROOT}/shadow/python
+cd ${Shadow_ROOT}/shadow/python/converter
 ```
 
-Any models must have a config function to return some params, please check and add your config functions in ```${Shadow_ROOT}/shadow/python/config/config_customs.py```. There are some example config functions in ```${Shadow_ROOT}/shadow/python/config/config_examples.py```.
+Any models must have a config function to return some params, please check and add your config functions in ```${Shadow_ROOT}/shadow/python/converter/config/config_customs.py```. There are some example config functions in ```${Shadow_ROOT}/shadow/python/converter/config/config_examples.py```.
 
 ```python
 def get_config_custom():
@@ -40,9 +40,9 @@ def get_config_custom():
     }
 
     meta_net_info = {
-        'model_type': ['mxnet'],  # model type: caffe or mxnet
+        'model_type': ['mxnet'],  # model type: caffe, mxnet or onnx
         'model_name': ['squeezenet_v1.1'],  # model file name on disk
-        'model_epoch': [0],  # only for mxnet model
+        'model_epoch': [0],  # model epoch, only for mxnet
         'save_name': 'squeezenet_v1.1',  # shadow model saved name
         'network': [net_info],  # networks
         'arg': {  # meta net arguments, must end with one of 's_i, s_f, s_s, v_i, v_f, v_s'

@@ -13,9 +13,9 @@ function (GenProtobuf proto_src proto_hdr)
     add_custom_command(
       OUTPUT "${fil_dir}/${fil_we}.pb.cc"
              "${fil_dir}/${fil_we}.pb.h"
-             "${PROJECT_SOURCE_DIR}/shadow/python/proto/${fil_we}_pb2.py"
+             "${PROJECT_SOURCE_DIR}/shadow/python/converter/proto/${fil_we}_pb2.py"
       COMMAND ${Protoc_EXECUTABLE} --proto_path=${fil_dir} --cpp_out=${fil_dir} ${abs_fil}
-      COMMAND ${Protoc_EXECUTABLE} --proto_path=${fil_dir} --python_out=${PROJECT_SOURCE_DIR}/shadow/python/proto ${abs_fil}
+      COMMAND ${Protoc_EXECUTABLE} --proto_path=${fil_dir} --python_out=${PROJECT_SOURCE_DIR}/shadow/python/converter/proto ${abs_fil}
       DEPENDS ${abs_fil}
       COMMENT "Running C++/Python protocol buffer compiler on ${fil}" VERBATIM)
   endforeach ()
