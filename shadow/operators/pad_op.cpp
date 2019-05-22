@@ -18,7 +18,8 @@ void PadOp::Forward() {
   top_shape[3] = out_w;
   top->reshape(top_shape);
 
-  if (out_h == in_h && out_w == in_w) {
+  if (paddings_[0] == 0 && paddings_[1] == 0 && paddings_[2] == 0 &&
+      paddings_[3] == 0) {
     Blas::BlasScopy(bottom->count(), bottom->data(), 0, top->mutable_data(), 0,
                     op_ws_->Ctx()->blas_handle());
   } else {
