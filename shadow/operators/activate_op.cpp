@@ -12,12 +12,11 @@ void ActivateOp::Forward() {
 
 #if defined(USE_CUDNN)
   if (use_cudnn_) {
-    int batch = bottom->shape(0), in_c = bottom->shape(1),
-        in_h = bottom->shape(2), in_w = bottom->shape(3);
+    int batch = bottom->shape(0), num = bottom->num();
 
     cudnn::setActivationDesc<float>(&activate_desc_, activate_type_,
                                     static_cast<double>(slope_));
-    cudnn::setTensor4dDesc<float>(&bottom_top_desc_, batch, in_c, in_h, in_w);
+    cudnn::setTensor4dDesc<float>(&bottom_top_desc_, batch, num, 1, 1);
 
     CUDNN_CHECK(cudnnActivationForward(
         cudnnHandle_t(op_ws_->Ctx()->cudnn_handle()), activate_desc_,

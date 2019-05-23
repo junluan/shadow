@@ -99,9 +99,6 @@ inline void setActivationDesc(cudnnActivationDescriptor_t* activate_desc,
     case 1:
       mode = CUDNN_ACTIVATION_RELU;
       break;
-    case 2:
-      mode = CUDNN_ACTIVATION_CLIPPED_RELU;
-      break;
     case 3:
       mode = CUDNN_ACTIVATION_SIGMOID;
       break;

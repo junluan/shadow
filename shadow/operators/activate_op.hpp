@@ -15,8 +15,8 @@ class ActivateOp : public Operator {
     CHECK_LE(activate_type_, 5);
 
 #if defined(USE_CUDNN)
-    use_cudnn_ = activate_type_ == kRelu || activate_type_ == kLeaky ||
-                 activate_type_ == kSigmoid || activate_type_ == kTanh;
+    use_cudnn_ = activate_type_ == kRelu || activate_type_ == kSigmoid ||
+                 activate_type_ == kTanh;
     if (use_cudnn_) {
       cudnn::createActivationDesc<float>(&activate_desc_);
       cudnn::createTensorDesc<float>(&bottom_top_desc_);
