@@ -33,29 +33,28 @@ def get_param_shape(onnx_initializer, name):
     raise ValueError(name, 'not in initializer blobs')
 
 
-def get_param_weight(onnx_initializer, name, data_type=np.float32):
+def get_param_weight(onnx_initializer, name):
     for initializer in onnx_initializer:
         if initializer.name == name:
-            if data_type == np.float32:
-                assert initializer.data_type == onnx.TensorProto.FLOAT
-            elif data_type == np.int32:
-                assert initializer.data_type == onnx.TensorProto.INT32
-            elif data_type == np.int64:
-                assert initializer.data_type == onnx.TensorProto.INT64
-
             if len(initializer.float_data) > 0:
-                assert data_type == np.float32
                 param_data = initializer.float_data
             elif len(initializer.int32_data) > 0:
-                assert data_type == np.int32
                 param_data = initializer.int32_data
             elif len(initializer.int64_data) > 0:
-                assert data_type == np.int64
                 param_data = initializer.int64_data
             else:
                 assert initializer.HasField('raw_data')
+                if initializer.data_type == onnx.TensorProto.FLOAT:
+                    data_type = np.float32
+                elif initializer.data_type == onnx.TensorProto.DOUBLE:
+                    data_type = np.double
+                elif initializer.data_type == onnx.TensorProto.INT32:
+                    data_type = np.int32
+                elif initializer.data_type == onnx.TensorProto.INT64:
+                    data_type = np.int64
+                else:
+                    raise ValueError(initializer.data_type, 'not supported')
                 param_data = np.frombuffer(initializer.raw_data, dtype=data_type)
-
             return param_data, initializer.dims
     raise ValueError(name, 'not in initializer blobs')
 
@@ -223,7 +222,7 @@ def convert_batch_norm(onnx_nodes, index, param_dict, network):
     network.add_scale(op_name + '_scale', top_names, top_names, 1)
 
 
-def convert_binary(onnx_nodes, index, network):
+def convert_binary(onnx_nodes, index, onnx_initializer, network):
     onnx_node = onnx_nodes[index]
     op_input = onnx_node.input
     op_output = onnx_node.output
@@ -233,6 +232,14 @@ def convert_binary(onnx_nodes, index, network):
 
     bottom_names = find_inputs(onnx_nodes, index, op_input)
     top_names = op_output
+
+    param_name = [i for i in op_input if i not in bottom_names]
+
+    scalar = None
+    if len(param_name) == 1:
+        scalar_data, _ = get_param_weight(onnx_initializer, param_name[0])
+        assert len(scalar_data) == 1
+        scalar = scalar_data[0]
 
     if op_type == 'Add':
         operation_type = 'Add'
@@ -245,7 +252,7 @@ def convert_binary(onnx_nodes, index, network):
     else:
         raise ValueError('Unsupported binary type', op_type)
 
-    network.add_binary(op_name, bottom_names, top_names, operation_type)
+    network.add_binary(op_name, bottom_names, top_names, operation_type, scalar)
 
 
 def convert_concat(onnx_nodes, index, network):
@@ -445,7 +452,7 @@ def convert_reshape(onnx_nodes, index, onnx_initializer, network):
     bottom_names = find_inputs(onnx_nodes, index, op_input[:1])
     top_names = op_output
 
-    shape_data, _ = get_param_weight(onnx_initializer, op_input[1], np.int64)
+    shape_data, _ = get_param_weight(onnx_initializer, op_input[1])
 
     network.add_reshape(op_name, bottom_names, top_names, shape=shape_data)
 
@@ -525,7 +532,7 @@ def convert_onnx(network, net_info, model_root, model_name, copy_params):
         elif op_type == 'BatchNormalization':
             convert_batch_norm(onnx_nodes, index, param_dict, network)
         elif op_type == 'Add' or op_type == 'Sub' or op_type == 'Mul' or op_type == 'Div':
-            convert_binary(onnx_nodes, index, network)
+            convert_binary(onnx_nodes, index, onnx_initializer, network)
         elif op_type == 'Concat':
             convert_concat(onnx_nodes, index, network)
         elif op_type == 'Gemm':
