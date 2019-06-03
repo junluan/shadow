@@ -180,6 +180,8 @@ BLAS_UNARY_FUNC(Acos, y[i] = acosf(a[i]));
 BLAS_UNARY_FUNC(Atan, y[i] = atanf(a[i]));
 BLAS_UNARY_FUNC(Floor, y[i] = floorf(a[i]));
 BLAS_UNARY_FUNC(Ceil, y[i] = ceilf(a[i]));
+BLAS_UNARY_FUNC(Neg, y[i] = -a[i]);
+BLAS_UNARY_FUNC(Reciprocal, y[i] = 1 / a[i]);
 
 // Level 1
 template <typename T>

@@ -39,6 +39,10 @@ void UnaryOp::Forward() {
       return Blas::Floor(count, bottom->data(), 0, top->mutable_data(), 0);
     case kCeil:
       return Blas::Ceil(count, bottom->data(), 0, top->mutable_data(), 0);
+    case kNeg:
+      return Blas::Neg(count, bottom->data(), 0, top->mutable_data(), 0);
+    case kReciprocal:
+      return Blas::Reciprocal(count, bottom->data(), 0, top->mutable_data(), 0);
     default:
       LOG(FATAL) << "Unknown unary operation " << operation_;
   }

@@ -139,6 +139,8 @@ BLAS_UNARY_FUNC_EIGEN(Acos, y_eigen = a_eigen.array().acos());
 BLAS_UNARY_FUNC_EIGEN(Atan, y_eigen = a_eigen.array().atan());
 BLAS_UNARY_FUNC_EIGEN(Floor, y_eigen = a_eigen.array().floor());
 BLAS_UNARY_FUNC_EIGEN(Ceil, y_eigen = a_eigen.array().ceil());
+BLAS_UNARY_FUNC_EIGEN(Neg, y_eigen = -a_eigen.array());
+BLAS_UNARY_FUNC_EIGEN(Reciprocal, y_eigen = a_eigen.array().inverse());
 
 #else
 #define BLAS_BINARY_FUNC(name, operation)                             \
@@ -203,6 +205,8 @@ BLAS_UNARY_FUNC(Acos, y[i] = std::acos(a[i]));
 BLAS_UNARY_FUNC(Atan, y[i] = std::atan(a[i]));
 BLAS_UNARY_FUNC(Floor, y[i] = std::floor(a[i]));
 BLAS_UNARY_FUNC(Ceil, y[i] = std::ceil(a[i]));
+BLAS_UNARY_FUNC(Neg, y[i] = -a[i]);
+BLAS_UNARY_FUNC(Reciprocal, y[i] = 1 / a[i]);
 #endif
 
 // Level 1

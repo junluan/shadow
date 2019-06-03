@@ -495,6 +495,10 @@ class Network(object):
             self.add_arg(op_param, 'operation', 11, 's_i')
         elif operation == 'Ceil':
             self.add_arg(op_param, 'operation', 12, 's_i')
+        elif operation == 'Neg':
+            self.add_arg(op_param, 'operation', 13, 's_i')
+        elif operation == 'Reciprocal':
+            self.add_arg(op_param, 'operation', 14, 's_i')
         else:
             raise ValueError('Unsupported operation type', operation)
 

@@ -77,6 +77,10 @@ template <typename T>
 void Floor(int n, const T *a, int offa, T *y, int offy);
 template <typename T>
 void Ceil(int n, const T *a, int offa, T *y, int offy);
+template <typename T>
+void Neg(int n, const T *a, int offa, T *y, int offy);
+template <typename T>
+void Reciprocal(int n, const T *a, int offa, T *y, int offy);
 
 // Level 1
 template <typename T>

@@ -11,7 +11,7 @@ class UnaryOp : public Operator {
       : Operator(op_param, ws) {
     operation_ = get_single_argument<int>("operation", -1);
     CHECK_GE(operation_, 0);
-    CHECK_LE(operation_, 12);
+    CHECK_LE(operation_, 14);
   }
 
   void Forward() override;
@@ -30,7 +30,9 @@ class UnaryOp : public Operator {
     kAcos = 9,
     kAtan = 10,
     kFloor = 11,
-    kCeil = 12
+    kCeil = 12,
+    kNeg = 13,
+    kReciprocal = 14
   };
 
   int operation_;
