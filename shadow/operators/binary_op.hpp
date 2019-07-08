@@ -25,8 +25,19 @@ class BinaryOp : public Operator {
 
   int operation_;
   float scalar_data_;
-  bool has_scalar_arg_ = false;
+  bool has_scalar_arg_ = false, need_broadcast_ = false;
+  VecInt bottom_shape_, scalar_shape_, top_shape_;
 };
+
+namespace Vision {
+
+template <typename T>
+void BroadcastBinary(const T *in_data, const int *in_shape,
+                     const T *scalar_data, const int *scalar_shape,
+                     int operation, int num_axes, int count,
+                     const int *out_shape, T *out_data);
+
+}  // namespace Vision
 
 }  // namespace Shadow
 
