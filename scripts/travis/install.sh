@@ -10,7 +10,7 @@ if [ "$TRAVIS_OS_NAME" = "linux" ]; then
     sudo dpkg -i "$CUDA_REPO_PKG"
 
     CUDNN_REPO_PKG="nvidia-machine-learning-repo-ubuntu1404_4.0-2_amd64.deb"
-    CUDNN_PKG_VERSION="7.5.0.56-1+cuda10.0"
+    CUDNN_PKG_VERSION="7.6.1.34-1+cuda10.0"
     wget "https://developer.download.nvidia.com/compute/machine-learning/repos/ubuntu1404/x86_64/$CUDNN_REPO_PKG"
     sudo dpkg -i "$CUDNN_REPO_PKG"
 
