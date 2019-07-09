@@ -20,9 +20,9 @@ class BinaryOp : public Operator {
 
   void Forward() override;
 
- private:
   enum { kAdd = 0, kSub = 1, kMul = 2, kDiv = 3, kPow = 4, kMax = 5, kMin = 6 };
 
+ private:
   int operation_;
   float scalar_data_;
   bool has_scalar_arg_ = false, need_broadcast_ = false;

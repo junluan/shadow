@@ -27,7 +27,6 @@ void ActivateOp::Forward() {
   }
 #endif
 
-  // PRelu: 0, Relu: 1, Leaky: 2, Sigmoid: 3, SoftPlus: 4, Tanh: 5
   if (activate_type_ == kRelu || activate_type_ == kLeaky ||
       activate_type_ == kSigmoid || activate_type_ == kSoftPlus ||
       activate_type_ == kTanh) {
@@ -54,15 +53,15 @@ namespace Vision {
 template <typename T>
 inline T Activate(T x, int type, float slope) {
   switch (type) {
-    case 1:
+    case ActivateOp::kRelu:
       return x > 0 ? x : 0;
-    case 2:
+    case ActivateOp::kLeaky:
       return x > 0 ? x : T(slope * x);
-    case 3:
+    case ActivateOp::kSigmoid:
       return 1 / (1 + std::exp(-x));
-    case 4:
+    case ActivateOp::kSoftPlus:
       return std::log(1 + std::exp(x));
-    case 5: {
+    case ActivateOp::kTanh: {
       T exp_2x = std::exp(2 * x);
       return (exp_2x - 1) / (exp_2x + 1);
     }
@@ -73,27 +72,26 @@ inline T Activate(T x, int type, float slope) {
 
 template <typename T>
 void Activate(const T *in_data, T *out_data, int count, int type, float slope) {
-// PRelu: 0, Relu: 1, Leaky: 2, Sigmoid: 3, SoftPlus: 4, Tanh: 5
 #if defined(USE_Eigen)
   const auto &in_eigen = MapVector<T>(const_cast<T *>(in_data), count);
   auto out_eigen = MapVector<T>(out_data, count);
   switch (type) {
-    case 1:
+    case ActivateOp::kRelu:
       out_eigen = in_eigen.cwiseMax(T(0));
       break;
-    case 2:
+    case ActivateOp::kLeaky:
       out_eigen =
           in_eigen.unaryExpr([slope](T x) { return x > 0 ? x : T(slope * x); });
       break;
-    case 3:
+    case ActivateOp::kSigmoid:
       out_eigen =
           in_eigen.unaryExpr([](T x) { return 1 / (1 + std::exp(-x)); });
       break;
-    case 4:
+    case ActivateOp::kSoftPlus:
       out_eigen =
           in_eigen.unaryExpr([](T x) { return std::log(1 + std::exp(x)); });
       break;
-    case 5:
+    case ActivateOp::kTanh:
       out_eigen = in_eigen.unaryExpr([](T x) {
         T exp_2x = std::exp(2 * x);
         return (exp_2x - 1) / (exp_2x + 1);

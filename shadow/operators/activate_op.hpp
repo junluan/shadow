@@ -38,7 +38,6 @@ class ActivateOp : public Operator {
 
   void Forward() override;
 
- private:
   enum {
     kPRelu = 0,
     kRelu = 1,
@@ -48,6 +47,7 @@ class ActivateOp : public Operator {
     kTanh = 5
   };
 
+ private:
   int activate_type_;
   float slope_;
   bool use_cudnn_ = false;

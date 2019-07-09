@@ -138,19 +138,19 @@ namespace Vision {
 template <typename T>
 inline T Binary(T a, T b, int operation) {
   switch (operation) {
-    case 0:
+    case BinaryOp::kAdd:
       return a + b;
-    case 1:
+    case BinaryOp::kSub:
       return a - b;
-    case 2:
+    case BinaryOp::kMul:
       return a * b;
-    case 3:
+    case BinaryOp::kDiv:
       return a / b;
-    case 4:
+    case BinaryOp::kPow:
       return std::pow(a, b);
-    case 5:
+    case BinaryOp::kMax:
       return std::max(a, b);
-    case 6:
+    case BinaryOp::kMin:
       return std::min(a, b);
     default:
       return 0;

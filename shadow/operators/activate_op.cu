@@ -6,18 +6,17 @@ namespace Vision {
 
 #if defined(USE_CUDA)
 template <typename T>
-__device__ float ActivateValue(T x, int type, float slope) {
-  // PRelu: 0, Relu: 1, Leaky: 2, Sigmoid: 3, SoftPlus: 4, Tanh: 5
+__device__ T ActivateValue(T x, int type, float slope) {
   switch (type) {
-    case 1:
+    case ActivateOp::kRelu:
       return x > 0 ? x : 0;
-    case 2:
+    case ActivateOp::kLeaky:
       return x > 0 ? x : T(slope * x);
-    case 3:
+    case ActivateOp::kSigmoid:
       return 1 / (1 + expf(-x));
-    case 4:
+    case ActivateOp::kSoftPlus:
       return logf(1 + expf(x));
-    case 5: {
+    case ActivateOp::kTanh: {
       T exp_2x = expf(2 * x);
       return (exp_2x - 1) / (exp_2x + 1);
     }
