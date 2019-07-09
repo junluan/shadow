@@ -1,4 +1,4 @@
-#include "squeeze.hpp"
+#include "squeeze_op.hpp"
 
 namespace Shadow {
 

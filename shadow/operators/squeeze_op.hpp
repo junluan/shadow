@@ -1,5 +1,5 @@
-#ifndef SHADOW_OPERATORS_SQUEEZE_HPP
-#define SHADOW_OPERATORS_SQUEEZE_HPP
+#ifndef SHADOW_OPERATORS_SQUEEZE_OP_HPP
+#define SHADOW_OPERATORS_SQUEEZE_OP_HPP
 
 #include "core/operator.hpp"
 
@@ -20,4 +20,4 @@ class SqueezeOp : public Operator {
 
 }  // namespace Shadow
 
-#endif  // SHADOW_OPERATORS_SQUEEZE_HPP
+#endif  // SHADOW_OPERATORS_SQUEEZE_OP_HPP
