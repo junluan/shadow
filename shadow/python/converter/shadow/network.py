@@ -502,6 +502,13 @@ class Network(object):
         else:
             raise ValueError('Unsupported operation type', operation)
 
+    def add_unsqueeze(self, name, bottoms, tops, axes=None):
+        op_param = self.add_net_op()
+        self.add_common(op_param, name, 'Unsqueeze', bottoms, tops)
+
+        if axes is not None:
+            self.add_arg(op_param, 'axes', axes, 'v_i')
+
     def find_net_op_by_name(self, name):
         for op in self.net_param.op:
             if op.name == name:
