@@ -286,6 +286,14 @@ class Network(object):
         self.add_arg(op_param, 'axis', axis, 's_i')
         self.add_arg(op_param, 'end_axis', end_axis, 's_i')
 
+    def add_gather(self, name, bottoms, tops, axis=0, indexes=None):
+        op_param = self.add_net_op()
+        self.add_common(op_param, name, 'Gather', bottoms, tops)
+
+        self.add_arg(op_param, 'axis', axis, 's_i')
+        if indexes is not None:
+            self.add_arg(op_param, 'indexes', indexes, 'v_i')
+
     def add_instance_norm(self, name, bottoms, tops, eps=1e-5):
         op_param = self.add_net_op()
         self.add_common(op_param, name, 'InstanceNorm', bottoms, tops)
@@ -383,6 +391,15 @@ class Network(object):
         self.add_arg(op_param, 'output_dim', output_dim, 's_i')
         self.add_arg(op_param, 'group_size', group_size, 's_i')
         self.add_arg(op_param, 'spatial_scale', spatial_scale, 's_f')
+
+    def add_reduce(self, name, bottoms, tops, operation, axes=None, keep_dims=True):
+        op_param = self.add_net_op()
+        self.add_common(op_param, name, 'Reduce', bottoms, tops)
+
+        self.add_arg(op_param, 'operation', operation, 's_i')
+        if axes is not None:
+            self.add_arg(op_param, 'axes', axes, 'v_i')
+        self.add_arg(op_param, 'keep_dims', keep_dims, 's_i')
 
     def add_reorg(self, name, bottoms, tops, stride=2):
         op_param = self.add_net_op()

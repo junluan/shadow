@@ -295,6 +295,33 @@ const shadow::OpParam ParseFlatten(const JValue &root) {
   return shadow_op;
 }
 
+const shadow::OpParam ParseGather(const JValue &root) {
+  shadow::OpParam shadow_op;
+
+  ParseCommon(root, &shadow_op);
+
+  int axis = 0;
+  std::vector<int> indexes;
+  if (root.HasMember("arg")) {
+    const auto &args = root["arg"];
+    for (int i = 0; i < args.Size(); ++i) {
+      const auto &arg = args[i];
+      CHECK(arg.HasMember("name"));
+      const auto &arg_name = Json::GetString(arg, "name", "");
+      if (arg_name == "axis") {
+        axis = Json::GetInt(arg, "s_i", 0);
+      } else if (arg_name == "indexes") {
+        indexes = Json::GetVecInt(arg, "v_i");
+      }
+    }
+  }
+
+  add_s_i(&shadow_op, "axis", axis);
+  add_v_i(&shadow_op, "indexes", indexes);
+
+  return shadow_op;
+}
+
 const shadow::OpParam ParseInput(const JValue &root) {
   shadow::OpParam shadow_op;
 
@@ -558,6 +585,36 @@ const shadow::OpParam ParsePriorBox(const JValue &root) {
     add_s_f(&shadow_op, "step", step);
   }
   add_s_f(&shadow_op, "offset", offset);
+
+  return shadow_op;
+}
+
+const shadow::OpParam ParseReduce(const JValue &root) {
+  shadow::OpParam shadow_op;
+
+  ParseCommon(root, &shadow_op);
+
+  int operation = 0, keep_dims = true;
+  std::vector<int> axes;
+  if (root.HasMember("arg")) {
+    const auto &args = root["arg"];
+    for (int i = 0; i < args.Size(); ++i) {
+      const auto &arg = args[i];
+      CHECK(arg.HasMember("name"));
+      const auto &arg_name = Json::GetString(arg, "name", "");
+      if (arg_name == "operation") {
+        operation = Json::GetInt(arg, "s_i", 0);
+      } else if (arg_name == "axes") {
+        axes = Json::GetVecInt(arg, "v_i");
+      } else if (arg_name == "keep_dims") {
+        keep_dims = Json::GetInt(arg, "s_i", 1);
+      }
+    }
+  }
+
+  add_s_i(&shadow_op, "operation", operation);
+  add_v_i(&shadow_op, "axes", axes);
+  add_s_i(&shadow_op, "keep_dims", keep_dims);
 
   return shadow_op;
 }
@@ -862,6 +919,7 @@ static const std::map<std::string, ParseFunc> parse_func_map{
     {"Deconv", ParseConv},
     {"Eltwise", ParseEltwise},
     {"Flatten", ParseFlatten},
+    {"Gather", ParseGather},
     {"Input", ParseInput},
     {"InstanceNorm", ParseInstanceNorm},
     {"LRN", ParseLRN},
@@ -871,6 +929,7 @@ static const std::map<std::string, ParseFunc> parse_func_map{
     {"Permute", ParsePermute},
     {"Pooling", ParsePooling},
     {"PriorBox", ParsePriorBox},
+    {"Reduce", ParseReduce},
     {"Reorg", ParseReorg},
     {"Reshape", ParseReshape},
     {"Resize", ParseResize},
@@ -1253,6 +1312,26 @@ const shadow::OpParam ParseFlatten(const std::vector<std::string> &params) {
   return shadow_op;
 }
 
+const shadow::OpParam ParseGather(const std::vector<std::string> &params) {
+  shadow::OpParam shadow_op;
+
+  const auto &argument = ParseCommon(params, &shadow_op);
+
+  int axis = 0;
+  std::vector<int> indexes;
+  if (argument.count("axis")) {
+    axis = argument.at("axis").s_i;
+  }
+  if (argument.count("indexes")) {
+    indexes = argument.at("indexes").v_i;
+  }
+
+  add_s_i(&shadow_op, "axis", axis);
+  add_v_i(&shadow_op, "indexes", indexes);
+
+  return shadow_op;
+}
+
 const shadow::OpParam ParseInput(const std::vector<std::string> &params) {
   shadow::OpParam shadow_op;
 
@@ -1465,6 +1544,30 @@ const shadow::OpParam ParsePriorBox(const std::vector<std::string> &params) {
     add_s_f(&shadow_op, "step", step);
   }
   add_s_f(&shadow_op, "offset", offset);
+
+  return shadow_op;
+}
+
+const shadow::OpParam ParseReduce(const std::vector<std::string> &params) {
+  shadow::OpParam shadow_op;
+
+  const auto &argument = ParseCommon(params, &shadow_op);
+
+  int operation = 0, keep_dims = true;
+  std::vector<int> axes;
+  if (argument.count("operation")) {
+    operation = argument.at("operation").s_i;
+  }
+  if (argument.count("axes")) {
+    axes = argument.at("axes").v_i;
+  }
+  if (argument.count("keep_dims")) {
+    keep_dims = argument.at("keep_dims").s_i;
+  }
+
+  add_s_i(&shadow_op, "operation", operation);
+  add_v_i(&shadow_op, "axes", axes);
+  add_s_i(&shadow_op, "keep_dims", keep_dims);
 
   return shadow_op;
 }
@@ -1693,6 +1796,7 @@ static const std::map<std::string, ParseFunc> parse_func_map{
     {"Deconv", ParseConv},
     {"Eltwise", ParseEltwise},
     {"Flatten", ParseFlatten},
+    {"Gather", ParseGather},
     {"Input", ParseInput},
     {"InstanceNorm", ParseInstanceNorm},
     {"LRN", ParseLRN},
@@ -1702,6 +1806,7 @@ static const std::map<std::string, ParseFunc> parse_func_map{
     {"Permute", ParsePermute},
     {"Pooling", ParsePooling},
     {"PriorBox", ParsePriorBox},
+    {"Reduce", ParseReduce},
     {"Reorg", ParseReorg},
     {"Reshape", ParseReshape},
     {"Resize", ParseResize},
