@@ -16,7 +16,7 @@ namespace Shadow {
 
 class Operator {
  public:
-  explicit Operator(const shadow::OpParam &op_param, Workspace *ws);
+  Operator(const shadow::OpParam &op_param, Workspace *ws);
   virtual ~Operator();
 
   virtual void Forward() = 0;
@@ -29,7 +29,7 @@ class Operator {
     return arg_helper_.template GetSingleArgument<T>(name, default_value);
   }
   template <typename T>
-  const std::vector<T> get_repeated_argument(
+  std::vector<T> get_repeated_argument(
       const std::string &name, const std::vector<T> &default_value = {}) const {
     return arg_helper_.template GetRepeatedArgument<T>(name, default_value);
   }
@@ -57,11 +57,11 @@ class Operator {
     CHECK(check_index(n, bottoms_size()));
     mutable_bottoms<T>(n)->set_data(data, count);
   }
-  const std::string &bottoms_name(int n) const {
+  std::string bottoms_name(int n) const {
     CHECK(check_index(n, bottoms_size()));
     return bottom_names_[n];
   }
-  const std::string bottoms_type(int n) const {
+  std::string bottoms_type(int n) const {
     CHECK(check_index(n, bottoms_size()));
     return op_ws_->GetBlobType(bottom_names_[n]);
   }
@@ -87,17 +87,17 @@ class Operator {
     CHECK(check_index(n, tops_size()));
     mutable_tops<T>(n)->set_data(data, count);
   }
-  const std::string tops_name(int n) const {
+  std::string tops_name(int n) const {
     CHECK(check_index(n, tops_size()));
     return top_names_[n];
   }
-  const std::string tops_type(int n) const {
+  std::string tops_type(int n) const {
     CHECK(check_index(n, tops_size()));
     return op_ws_->GetBlobType(top_names_[n]);
   }
   int tops_size() const { return static_cast<int>(top_names_.size()); }
 
-  const std::string debug_log() const;
+  std::string debug_log() const;
 
  protected:
   std::string op_name_, op_type_;

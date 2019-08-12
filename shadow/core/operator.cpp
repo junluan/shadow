@@ -3,7 +3,7 @@
 namespace Shadow {
 
 Operator::Operator(const shadow::OpParam &op_param, Workspace *ws)
-    : op_param_(op_param), arg_helper_(op_param_), op_ws_(ws) {
+    : op_param_(op_param), arg_helper_(op_param), op_ws_(ws) {
   op_name_ = op_param_.name();
   op_type_ = op_param_.type();
   bottom_names_.clear(), top_names_.clear();
@@ -32,9 +32,9 @@ Operator::Operator(const shadow::OpParam &op_param, Workspace *ws)
   }
 }
 
-Operator::~Operator() { op_param_.Clear(); }
+Operator::~Operator() { op_ws_ = nullptr; }
 
-const std::string Operator::debug_log() const {
+std::string Operator::debug_log() const {
   VecString bottom_str, top_str;
   for (int n = 0; n < bottoms_size(); ++n) {
     const auto *bottom = bottoms<float>(n);

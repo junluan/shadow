@@ -6,7 +6,7 @@ bool Workspace::HasBlob(const std::string &name) const {
   return static_cast<bool>(blob_map_.count(name));
 }
 
-const std::string Workspace::GetBlobType(const std::string &name) const {
+std::string Workspace::GetBlobType(const std::string &name) const {
   if (blob_map_.count(name)) {
     return blob_map_.at(name).first;
   }

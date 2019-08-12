@@ -29,16 +29,16 @@ class Network {
   template <typename T>
   const T *GetBlobDataByName(const std::string &blob_name);
   template <typename T>
-  const std::vector<int> GetBlobShapeByName(const std::string &blob_name);
+  std::vector<int> GetBlobShapeByName(const std::string &blob_name) const;
 
-  const std::vector<std::string> in_blob();
-  const std::vector<std::string> out_blob();
+  const std::vector<std::string> &in_blob() const;
+  const std::vector<std::string> &out_blob() const;
 
   bool has_argument(const std::string &name) const;
   template <typename T>
   T get_single_argument(const std::string &name, const T &default_value) const;
   template <typename T>
-  const std::vector<T> get_repeated_argument(
+  std::vector<T> get_repeated_argument(
       const std::string &name, const std::vector<T> &default_value = {}) const;
 
  private:

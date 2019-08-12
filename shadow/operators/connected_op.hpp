@@ -7,7 +7,7 @@ namespace Shadow {
 
 class ConnectedOp : public Operator {
  public:
-  explicit ConnectedOp(const shadow::OpParam &op_param, Workspace *ws)
+  ConnectedOp(const shadow::OpParam &op_param, Workspace *ws)
       : Operator(op_param, ws) {
     CHECK(has_argument("num_output"));
     num_output_ = get_single_argument<int>("num_output", 0);

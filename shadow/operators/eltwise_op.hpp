@@ -7,7 +7,7 @@ namespace Shadow {
 
 class EltwiseOp : public Operator {
  public:
-  explicit EltwiseOp(const shadow::OpParam &op_param, Workspace *ws)
+  EltwiseOp(const shadow::OpParam &op_param, Workspace *ws)
       : Operator(op_param, ws) {
     operation_ = get_single_argument<int>("operation", 1);
     coeff_ = get_repeated_argument<float>("coeff");

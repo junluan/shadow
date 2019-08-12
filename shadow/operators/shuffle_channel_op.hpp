@@ -7,7 +7,7 @@ namespace Shadow {
 
 class ShuffleChannelOp : public Operator {
  public:
-  explicit ShuffleChannelOp(const shadow::OpParam &op_param, Workspace *ws)
+  ShuffleChannelOp(const shadow::OpParam &op_param, Workspace *ws)
       : Operator(op_param, ws) {
     group_ = get_single_argument<int>("group", 0);
     CHECK_GT(group_, 0) << "group must be larger than 0";

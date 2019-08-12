@@ -45,8 +45,8 @@ void Network::Forward(
     return engine_->GetBlobDataByName<T>(blob_name);                     \
   }                                                                      \
   template <>                                                            \
-  const std::vector<int> Network::GetBlobShapeByName<T>(                 \
-      const std::string &blob_name) {                                    \
+  std::vector<int> Network::GetBlobShapeByName<T>(                       \
+      const std::string &blob_name) const {                              \
     return engine_->GetBlobShapeByName<T>(blob_name);                    \
   }
 
@@ -54,9 +54,11 @@ INSTANTIATE_GET_BLOB(float);
 INSTANTIATE_GET_BLOB(int);
 #undef INSTANTIATE_GET_BLOB
 
-const std::vector<std::string> Network::in_blob() { return engine_->in_blob(); }
+const std::vector<std::string> &Network::in_blob() const {
+  return engine_->in_blob();
+}
 
-const std::vector<std::string> Network::out_blob() {
+const std::vector<std::string> &Network::out_blob() const {
   return engine_->out_blob();
 }
 
@@ -71,7 +73,7 @@ bool Network::has_argument(const std::string &name) const {
     return engine_->get_single_argument<T>(name, default_value);            \
   }                                                                         \
   template <>                                                               \
-  const std::vector<T> Network::get_repeated_argument<T>(                   \
+  std::vector<T> Network::get_repeated_argument<T>(                         \
       const std::string &name, const std::vector<T> &default_value) const { \
     return engine_->get_repeated_argument<T>(name, default_value);          \
   }

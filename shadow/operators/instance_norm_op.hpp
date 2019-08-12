@@ -7,7 +7,7 @@ namespace Shadow {
 
 class InstanceNormOp : public Operator {
  public:
-  explicit InstanceNormOp(const shadow::OpParam &op_param, Workspace *ws)
+  InstanceNormOp(const shadow::OpParam &op_param, Workspace *ws)
       : Operator(op_param, ws) {
     eps_ = get_single_argument<float>("eps", 1e-5);
   }

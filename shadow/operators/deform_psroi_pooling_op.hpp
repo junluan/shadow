@@ -7,7 +7,7 @@ namespace Shadow {
 
 class DeformPSROIPoolingOp : public Operator {
  public:
-  explicit DeformPSROIPoolingOp(const shadow::OpParam &op_param, Workspace *ws)
+  DeformPSROIPoolingOp(const shadow::OpParam &op_param, Workspace *ws)
       : Operator(op_param, ws) {
     output_dim_ = get_single_argument<int>("output_dim", 0);
     group_size_ = get_single_argument<int>("group_size", 0);

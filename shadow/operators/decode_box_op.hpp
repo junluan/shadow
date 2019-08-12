@@ -7,7 +7,7 @@ namespace Shadow {
 
 class DecodeBoxOp : public Operator {
  public:
-  explicit DecodeBoxOp(const shadow::OpParam &op_param, Workspace *ws)
+  DecodeBoxOp(const shadow::OpParam &op_param, Workspace *ws)
       : Operator(op_param, ws) {
     method_ = get_single_argument<int>("method", 0);
     num_classes_ = get_single_argument<int>("num_classes", 1);

@@ -7,7 +7,7 @@ namespace Shadow {
 
 class FlattenOp : public Operator {
  public:
-  explicit FlattenOp(const shadow::OpParam &op_param, Workspace *ws)
+  FlattenOp(const shadow::OpParam &op_param, Workspace *ws)
       : Operator(op_param, ws) {
     axis_ = get_single_argument<int>("axis", 1);
     CHECK_GE(axis_, 0);

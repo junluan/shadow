@@ -7,7 +7,7 @@ namespace Shadow {
 
 class ScaleOp : public Operator {
  public:
-  explicit ScaleOp(const shadow::OpParam &op_param, Workspace *ws)
+  ScaleOp(const shadow::OpParam &op_param, Workspace *ws)
       : Operator(op_param, ws) {
     axis_ = get_single_argument<int>("axis", 1);
     has_scale_ = get_single_argument<bool>("has_scale", true);

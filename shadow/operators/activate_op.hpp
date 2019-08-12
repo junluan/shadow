@@ -7,7 +7,7 @@ namespace Shadow {
 
 class ActivateOp : public Operator {
  public:
-  explicit ActivateOp(const shadow::OpParam &op_param, Workspace *ws)
+  ActivateOp(const shadow::OpParam &op_param, Workspace *ws)
       : Operator(op_param, ws) {
     activate_type_ = get_single_argument<int>("type", 1);
     slope_ = get_single_argument<float>("slope", 0.1);

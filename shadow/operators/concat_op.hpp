@@ -7,7 +7,7 @@ namespace Shadow {
 
 class ConcatOp : public Operator {
  public:
-  explicit ConcatOp(const shadow::OpParam &op_param, Workspace *ws)
+  ConcatOp(const shadow::OpParam &op_param, Workspace *ws)
       : Operator(op_param, ws) {
     axis_ = get_single_argument<int>("axis", 1);
   }

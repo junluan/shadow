@@ -7,7 +7,7 @@ namespace Shadow {
 
 class LRNOp : public Operator {
  public:
-  explicit LRNOp(const shadow::OpParam &op_param, Workspace *ws)
+  LRNOp(const shadow::OpParam &op_param, Workspace *ws)
       : Operator(op_param, ws) {
     size_ = get_single_argument<int>("local_size", 5);
     CHECK_EQ(size_ % 2, 1) << "LRN only supports odd values for local_size";

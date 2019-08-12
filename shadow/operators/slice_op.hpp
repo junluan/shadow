@@ -7,7 +7,7 @@ namespace Shadow {
 
 class SliceOp : public Operator {
  public:
-  explicit SliceOp(const shadow::OpParam &op_param, Workspace *ws)
+  SliceOp(const shadow::OpParam &op_param, Workspace *ws)
       : Operator(op_param, ws) {
     slice_axis_ = get_single_argument<int>("axis", 1);
     slice_point_ = get_repeated_argument<int>("slice_point");

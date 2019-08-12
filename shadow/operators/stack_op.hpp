@@ -7,7 +7,7 @@ namespace Shadow {
 
 class StackOp : public Operator {
  public:
-  explicit StackOp(const shadow::OpParam &op_param, Workspace *ws)
+  StackOp(const shadow::OpParam &op_param, Workspace *ws)
       : Operator(op_param, ws) {
     axis_ = get_single_argument<int>("axis", 0);
   }

@@ -29,7 +29,7 @@ class Workspace {
 
   bool HasBlob(const std::string &name) const;
 
-  const std::string GetBlobType(const std::string &name) const;
+  std::string GetBlobType(const std::string &name) const;
 
   template <typename T>
   const Blob<T> *GetBlob(const std::string &name) const {

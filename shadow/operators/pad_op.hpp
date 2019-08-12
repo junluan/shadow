@@ -7,7 +7,7 @@ namespace Shadow {
 
 class PadOp : public Operator {
  public:
-  explicit PadOp(const shadow::OpParam &op_param, Workspace *ws)
+  PadOp(const shadow::OpParam &op_param, Workspace *ws)
       : Operator(op_param, ws) {
     // [top, bottom, left, right]
     paddings_ = get_repeated_argument<int>("paddings");

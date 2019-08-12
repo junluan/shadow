@@ -7,7 +7,7 @@ namespace Shadow {
 
 class PriorBoxOp : public Operator {
  public:
-  explicit PriorBoxOp(const shadow::OpParam &op_param, Workspace *ws)
+  PriorBoxOp(const shadow::OpParam &op_param, Workspace *ws)
       : Operator(op_param, ws) {
     min_sizes_ = get_repeated_argument<float>("min_size");
     CHECK_GT(min_sizes_.size(), 0) << "must provide min_size.";

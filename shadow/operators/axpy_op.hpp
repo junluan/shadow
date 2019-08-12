@@ -16,7 +16,7 @@ namespace Shadow {
  */
 class AxpyOp : public Operator {
  public:
-  explicit AxpyOp(const shadow::OpParam &op_param, Workspace *ws)
+  AxpyOp(const shadow::OpParam &op_param, Workspace *ws)
       : Operator(op_param, ws) {}
 
   void Forward() override;

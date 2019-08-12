@@ -7,7 +7,7 @@ namespace Shadow {
 
 class PoolingOp : public Operator {
  public:
-  explicit PoolingOp(const shadow::OpParam &op_param, Workspace *ws)
+  PoolingOp(const shadow::OpParam &op_param, Workspace *ws)
       : Operator(op_param, ws) {
     pool_type_ = get_single_argument<int>("pool", 0);
     global_pooling_ = get_single_argument<bool>("global_pooling", false);

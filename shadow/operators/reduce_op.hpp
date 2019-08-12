@@ -7,7 +7,7 @@ namespace Shadow {
 
 class ReduceOp : public Operator {
  public:
-  explicit ReduceOp(const shadow::OpParam &op_param, Workspace *ws)
+  ReduceOp(const shadow::OpParam &op_param, Workspace *ws)
       : Operator(op_param, ws) {
     operation_ = get_single_argument<int>("operation", 0);
     axes_ = get_repeated_argument<int>("axes");

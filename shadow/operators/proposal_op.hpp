@@ -30,7 +30,7 @@ static inline VecFloat generate_anchors(int base_size, const VecFloat &ratios,
 
 class ProposalOp : public Operator {
  public:
-  explicit ProposalOp(const shadow::OpParam &op_param, Workspace *ws)
+  ProposalOp(const shadow::OpParam &op_param, Workspace *ws)
       : Operator(op_param, ws) {
     feat_stride_ = get_single_argument<int>("feat_stride", 16);
     pre_nms_top_n_ = get_single_argument<int>("pre_nms_top_n", 6000);

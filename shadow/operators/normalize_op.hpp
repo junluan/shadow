@@ -7,7 +7,7 @@ namespace Shadow {
 
 class NormalizeOp : public Operator {
  public:
-  explicit NormalizeOp(const shadow::OpParam &op_param, Workspace *ws)
+  NormalizeOp(const shadow::OpParam &op_param, Workspace *ws)
       : Operator(op_param, ws) {
     across_spatial_ = get_single_argument<bool>("across_spatial", true);
     channel_shared_ = get_single_argument<bool>("channel_shared", true);

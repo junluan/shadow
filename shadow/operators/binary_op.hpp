@@ -7,7 +7,7 @@ namespace Shadow {
 
 class BinaryOp : public Operator {
  public:
-  explicit BinaryOp(const shadow::OpParam &op_param, Workspace *ws)
+  BinaryOp(const shadow::OpParam &op_param, Workspace *ws)
       : Operator(op_param, ws) {
     operation_ = get_single_argument<int>("operation", -1);
     CHECK_GE(operation_, 0);

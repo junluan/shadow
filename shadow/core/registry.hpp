@@ -33,7 +33,7 @@ class Registry {
 
   bool Has(const SrcType& key) const { return registry_.count(key) > 0; }
 
-  const std::vector<SrcType> Keys() const {
+  std::vector<SrcType> Keys() const {
     std::vector<SrcType> keys;
     for (const auto& it : registry_) {
       keys.push_back(it.first);
@@ -41,7 +41,7 @@ class Registry {
     return keys;
   }
 
-  const std::string HelpMessage(const SrcType& key) const {
+  std::string HelpMessage(const SrcType& key) const {
     if (help_message_.count(key)) {
       return help_message_[key];
     } else {

@@ -70,18 +70,6 @@ void Network::NetworkImpl::Forward(
   DLOG(INFO) << "Forward Network!";
 }
 
-void Network::NetworkImpl::Release() {
-  net_param_.Clear();
-
-  for (auto &op : ops_) {
-    delete op;
-    op = nullptr;
-  }
-  ops_.clear();
-
-  DLOG(INFO) << "Release Network!";
-}
-
 void Network::NetworkImpl::LoadProtoData(const void *proto_data, int proto_size,
                                          shadow::NetParam *net_param) {
 #if defined(USE_Protobuf)
@@ -171,7 +159,7 @@ void Network::NetworkImpl::Initial() {
 
   ops_.clear();
   for (const auto &op_param : net_param_.op()) {
-    auto *op = CreateOperator(op_param, &ws_);
+    std::shared_ptr<Operator> op(CreateOperator(op_param, &ws_));
     ops_.push_back(op);
   }
 

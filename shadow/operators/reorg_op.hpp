@@ -7,7 +7,7 @@ namespace Shadow {
 
 class ReorgOp : public Operator {
  public:
-  explicit ReorgOp(const shadow::OpParam &op_param, Workspace *ws)
+  ReorgOp(const shadow::OpParam &op_param, Workspace *ws)
       : Operator(op_param, ws) {
     stride_ = get_single_argument<int>("stride", 2);
   }

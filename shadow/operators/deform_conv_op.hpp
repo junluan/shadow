@@ -7,7 +7,7 @@ namespace Shadow {
 
 class DeformConvOp : public Operator {
  public:
-  explicit DeformConvOp(const shadow::OpParam &op_param, Workspace *ws)
+  DeformConvOp(const shadow::OpParam &op_param, Workspace *ws)
       : Operator(op_param, ws) {
     num_output_ = get_single_argument<int>("num_output", 0);
     CHECK(has_argument("kernel_size"));

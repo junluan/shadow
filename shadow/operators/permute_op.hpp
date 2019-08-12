@@ -7,7 +7,7 @@ namespace Shadow {
 
 class PermuteOp : public Operator {
  public:
-  explicit PermuteOp(const shadow::OpParam &op_param, Workspace *ws)
+  PermuteOp(const shadow::OpParam &op_param, Workspace *ws)
       : Operator(op_param, ws) {
     permute_order_value_ = get_repeated_argument<int>("order");
   }

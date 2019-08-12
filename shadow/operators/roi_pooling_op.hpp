@@ -7,7 +7,7 @@ namespace Shadow {
 
 class ROIPoolingOp : public Operator {
  public:
-  explicit ROIPoolingOp(const shadow::OpParam &op_param, Workspace *ws)
+  ROIPoolingOp(const shadow::OpParam &op_param, Workspace *ws)
       : Operator(op_param, ws) {
     pooled_h_ = get_single_argument<int>("pooled_h", 0);
     pooled_w_ = get_single_argument<int>("pooled_w", 0);

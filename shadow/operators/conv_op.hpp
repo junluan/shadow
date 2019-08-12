@@ -7,7 +7,7 @@ namespace Shadow {
 
 class ConvOp : public Operator {
  public:
-  explicit ConvOp(const shadow::OpParam &op_param, Workspace *ws)
+  ConvOp(const shadow::OpParam &op_param, Workspace *ws)
       : Operator(op_param, ws) {
     num_output_ = get_single_argument<int>("num_output", 0);
     CHECK(has_argument("kernel_size"));

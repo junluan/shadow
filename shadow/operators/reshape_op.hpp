@@ -7,7 +7,7 @@ namespace Shadow {
 
 class ReshapeOp : public Operator {
  public:
-  explicit ReshapeOp(const shadow::OpParam &op_param, Workspace *ws)
+  ReshapeOp(const shadow::OpParam &op_param, Workspace *ws)
       : Operator(op_param, ws) {
     axis_ = get_single_argument<int>("axis", 0);
     num_axes_ = get_single_argument<int>("num_axes", -1);

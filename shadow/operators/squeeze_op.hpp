@@ -7,7 +7,7 @@ namespace Shadow {
 
 class SqueezeOp : public Operator {
  public:
-  explicit SqueezeOp(const shadow::OpParam &op_param, Workspace *ws)
+  SqueezeOp(const shadow::OpParam &op_param, Workspace *ws)
       : Operator(op_param, ws) {
     axes_ = get_repeated_argument<int>("axes");
   }

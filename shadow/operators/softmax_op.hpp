@@ -7,7 +7,7 @@ namespace Shadow {
 
 class SoftmaxOp : public Operator {
  public:
-  explicit SoftmaxOp(const shadow::OpParam &op_param, Workspace *ws)
+  SoftmaxOp(const shadow::OpParam &op_param, Workspace *ws)
       : Operator(op_param, ws) {
     axis_ = get_single_argument<int>("axis", 1);
 

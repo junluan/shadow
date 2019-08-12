@@ -7,7 +7,7 @@ namespace Shadow {
 
 class GatherOp : public Operator {
  public:
-  explicit GatherOp(const shadow::OpParam &op_param, Workspace *ws)
+  GatherOp(const shadow::OpParam &op_param, Workspace *ws)
       : Operator(op_param, ws) {
     axis_ = get_single_argument<int>("axis", 0);
     indexes_value_ = get_repeated_argument<int>("indexes");

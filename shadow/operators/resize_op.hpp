@@ -7,7 +7,7 @@ namespace Shadow {
 
 class ResizeOp : public Operator {
  public:
-  explicit ResizeOp(const shadow::OpParam& op_param, Workspace* ws)
+  ResizeOp(const shadow::OpParam& op_param, Workspace* ws)
       : Operator(op_param, ws) {
     out_h_ = get_single_argument<int>("out_h", 0);
     out_w_ = get_single_argument<int>("out_w", 0);

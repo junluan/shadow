@@ -7,7 +7,7 @@ namespace Shadow {
 
 class MatMulOp : public Operator {
  public:
-  explicit MatMulOp(const shadow::OpParam &op_param, Workspace *ws)
+  MatMulOp(const shadow::OpParam &op_param, Workspace *ws)
       : Operator(op_param, ws) {
     transpose_a_ = get_single_argument<bool>("transpose_a", false);
     transpose_b_ = get_single_argument<bool>("transpose_b", false);
