@@ -1,5 +1,6 @@
 from __future__ import print_function
 
+import copy
 import numpy as np
 import onnx
 
@@ -37,11 +38,11 @@ def get_param_weight(onnx_initializer, name):
     for initializer in onnx_initializer:
         if initializer.name == name:
             if len(initializer.float_data) > 0:
-                param_data = initializer.float_data
+                param_data = np.asarray(initializer.float_data, dtype=np.float32)
             elif len(initializer.int32_data) > 0:
-                param_data = initializer.int32_data
+                param_data = np.asarray(initializer.int32_data, dtype=np.int32)
             elif len(initializer.int64_data) > 0:
-                param_data = initializer.int64_data
+                param_data = np.asarray(initializer.int64_data, dtype=np.int64)
             else:
                 assert initializer.HasField('raw_data')
                 if initializer.data_type == onnx.TensorProto.FLOAT:
@@ -70,7 +71,14 @@ def copy_weights(onnx_initializer, param_dict, network):
             blob = net_param.blob.add()
             blob.name = op_name + '/weights:{}'.format(n)
             blob.shape.extend(param_shape)
-            blob.data_f.extend(param_data)
+            if param_data.dtype == np.float32:
+                blob.type = 'float'
+                blob.data_f.extend(param_data)
+            elif param_data.dtype == np.int32 or param_data.dtype == np.int64:
+                blob.type = 'int'
+                blob.data_i.extend(param_data.astype(np.int32))
+            else:
+                raise ValueError('Unsupported data type', param_data.dtype)
             op.bottom.append(blob.name)
 
 
@@ -116,13 +124,13 @@ def parse_attribute(attributes, name, default_value):
         elif attribute_type == onnx.AttributeProto.FLOAT:
             return float(attribute.f)
         elif attribute_type == onnx.AttributeProto.STRING:
-            return str(attribute.s)
+            return str(attribute.s, encoding='utf-8')
         elif attribute_type == onnx.AttributeProto.INTS:
             return [int(p) for p in attribute.ints]
         elif attribute_type == onnx.AttributeProto.FLOATS:
             return [float(p) for p in attribute.floats]
         elif attribute_type == onnx.AttributeProto.STRINGS:
-            return [str(p) for p in attribute.strings]
+            return [str(p, encoding='utf-8') for p in attribute.strings]
     else:
         return default_value
 
@@ -149,6 +157,21 @@ def find_inputs(onnx_nodes, index, onnx_inputs):
     return bottom_names
 
 
+def check_inputs(onnx_initializer, onnx_inputs):
+    bottoms, params = [], []
+    for input_name in onnx_inputs:
+        no_constant = True
+        for initializer in onnx_initializer:
+            if input_name == initializer.name:
+                no_constant = False
+                break
+        if no_constant:
+            bottoms.append(input_name)
+        else:
+            params.append(input_name)
+    return bottoms, params
+
+
 def convert_input(net_info, network, input_infos):
     inputs, shapes = [], []
     for input in input_infos:
@@ -160,8 +183,8 @@ def convert_input(net_info, network, input_infos):
 
     num_mean = len(net_info['mean_value'])
     num_scale = len(net_info['scale_value'])
-    mean_value = net_info['mean_value'] if num_mean > 0 else None
-    scale_value = net_info['scale_value'] if num_scale > 0 else None
+    mean_value = copy.deepcopy(net_info['mean_value']) if num_mean > 0 else None
+    scale_value = copy.deepcopy(net_info['scale_value']) if num_scale > 0 else None
     if num_mean > 0 or num_scale > 0:
         max_dim = max(num_mean, num_scale)
         if num_mean == 0 and num_scale > 0:
@@ -222,7 +245,7 @@ def convert_batch_norm(onnx_nodes, index, param_dict, network):
     network.add_scale(op_name + '_scale', top_names, top_names, 1)
 
 
-def convert_binary(onnx_nodes, index, onnx_initializer, network):
+def convert_binary(onnx_nodes, index, onnx_initializer, param_dict, network):
     onnx_node = onnx_nodes[index]
     op_input = onnx_node.input
     op_output = onnx_node.output
@@ -230,16 +253,20 @@ def convert_binary(onnx_nodes, index, onnx_initializer, network):
     op_attribute = onnx_node.attribute
     op_name = onnx_node.name if onnx_node.HasField('name') else 'node_{}'.format(index)
 
-    bottom_names = find_inputs(onnx_nodes, index, op_input)
+    bottoms, params = check_inputs(onnx_initializer, op_input)
+
+    bottom_names = find_inputs(onnx_nodes, index, bottoms)
     top_names = op_output
 
-    param_name = [i for i in op_input if i not in bottom_names]
-
     scalar = None
-    if len(param_name) == 1:
-        scalar_data, _ = get_param_weight(onnx_initializer, param_name[0])
-        assert len(scalar_data) == 1
-        scalar = scalar_data[0]
+    if len(params) == 1:
+        scalar_data, scalar_shape = get_param_weight(onnx_initializer, params[0])
+        if len(scalar_data) == 1:
+            scalar = scalar_data[0]
+        else:
+            param_dict[op_name] = params
+    elif len(params) > 1:
+        raise ValueError('Too many params', params)
 
     if op_type == 'Add':
         operation_type = 'Add'
@@ -374,6 +401,40 @@ def convert_flatten(onnx_nodes, index, network):
     network.add_flatten(op_name, bottom_names, top_names, axis)
 
 
+def convert_gather(onnx_nodes, index, onnx_initializer, param_dict, network):
+    onnx_node = onnx_nodes[index]
+    op_input = onnx_node.input
+    op_output = onnx_node.output
+    op_attribute = onnx_node.attribute
+    op_name = onnx_node.name if onnx_node.HasField('name') else 'node_{}'.format(index)
+
+    bottoms, params = check_inputs(onnx_initializer, op_input)
+
+    bottom_names = find_inputs(onnx_nodes, index, bottoms)
+    top_names = op_output
+    param_dict[op_name] = params
+
+    axis = parse_attribute(op_attribute, 'axis', 0)
+
+    network.add_gather(op_name, bottom_names, top_names, axis)
+
+
+def convert_matmul(onnx_nodes, index, onnx_initializer, param_dict, network):
+    onnx_node = onnx_nodes[index]
+    op_input = onnx_node.input
+    op_output = onnx_node.output
+    op_attribute = onnx_node.attribute
+    op_name = onnx_node.name if onnx_node.HasField('name') else 'node_{}'.format(index)
+
+    bottoms, params = check_inputs(onnx_initializer, op_input)
+
+    bottom_names = find_inputs(onnx_nodes, index, bottoms)
+    top_names = op_output
+    param_dict[op_name] = params
+
+    network.add_matmul(op_name, bottom_names, top_names)
+
+
 def convert_pad(onnx_nodes, index, network):
     onnx_node = onnx_nodes[index]
     op_input = onnx_node.input
@@ -395,15 +456,18 @@ def convert_pad(onnx_nodes, index, network):
     network.add_pad(op_name, bottom_names, top_names, pads, value)
 
 
-def convert_permute(onnx_nodes, index, network):
+def convert_permute(onnx_nodes, index, onnx_initializer, param_dict, network):
     onnx_node = onnx_nodes[index]
     op_input = onnx_node.input
     op_output = onnx_node.output
     op_attribute = onnx_node.attribute
     op_name = onnx_node.name if onnx_node.HasField('name') else 'node_{}'.format(index)
 
-    bottom_names = find_inputs(onnx_nodes, index, op_input)
+    bottoms, params = check_inputs(onnx_initializer, op_input)
+
+    bottom_names = find_inputs(onnx_nodes, index, bottoms)
     top_names = op_output
+    param_dict[op_name] = params
 
     perm = parse_attribute(op_attribute, 'perm', None)
 
@@ -440,6 +504,36 @@ def convert_pooling(onnx_nodes, index, network):
     full_pooling = False
 
     network.add_pooling(op_name, bottom_names, top_names, pool, kernel_size, stride, pad[0:2], global_pooling, full_pooling)
+
+
+def convert_reduce(onnx_nodes, index, network):
+    onnx_node = onnx_nodes[index]
+    op_input = onnx_node.input
+    op_output = onnx_node.output
+    op_type = onnx_node.op_type
+    op_attribute = onnx_node.attribute
+    op_name = onnx_node.name if onnx_node.HasField('name') else 'node_{}'.format(index)
+
+    bottom_names = find_inputs(onnx_nodes, index, op_input)
+    top_names = op_output
+
+    if op_type == 'ReduceProd':
+        operation = 'Prod'
+    elif op_type == 'ReduceSum':
+        operation = 'Sum'
+    elif op_type == 'ReduceMax':
+        operation = 'Max'
+    elif op_type == 'ReduceMin':
+        operation = 'Min'
+    elif op_type == 'ReduceMean':
+        operation = 'Avg'
+    else:
+        raise ValueError('Unsupported reduce type', op_type)
+
+    axes = parse_attribute(op_attribute, 'axes', None)
+    keepdims = parse_attribute(op_attribute, 'keepdims', True)
+
+    network.add_reduce(op_name, bottom_names, top_names, operation, axes, keepdims)
 
 
 def convert_reshape(onnx_nodes, index, onnx_initializer, network):
@@ -507,6 +601,42 @@ def convert_squeeze(onnx_nodes, index, network):
     network.add_squeeze(op_name, bottom_names, top_names, axes)
 
 
+def convert_unsqueeze(onnx_nodes, index, network):
+    onnx_node = onnx_nodes[index]
+    op_input = onnx_node.input
+    op_output = onnx_node.output
+    op_attribute = onnx_node.attribute
+    op_name = onnx_node.name if onnx_node.HasField('name') else 'node_{}'.format(index)
+
+    bottom_names = find_inputs(onnx_nodes, index, op_input)
+    top_names = op_output
+
+    axes = parse_attribute(op_attribute, 'axes', None)
+
+    network.add_unsqueeze(op_name, bottom_names, top_names, axes)
+
+
+def convert_aten(onnx_nodes, index, onnx_initializer, param_dict, network):
+    onnx_node = onnx_nodes[index]
+    op_input = onnx_node.input
+    op_output = onnx_node.output
+    op_attribute = onnx_node.attribute
+    op_name = onnx_node.name if onnx_node.HasField('name') else 'node_{}'.format(index)
+
+    bottom_names = find_inputs(onnx_nodes, index, op_input)
+    top_names = op_output
+
+    operator = parse_attribute(op_attribute, 'operator', None)
+
+    if operator == 'max':
+        dim = parse_attribute(op_attribute, 'dim', None)
+        dim = [dim] if dim is not None else None
+        keepdim = parse_attribute(op_attribute, 'keepdim', True)
+        network.add_reduce(op_name, bottom_names, top_names[:1], 'Max', dim, keepdim)
+    else:
+        raise ValueError('Unsupported aten operator', operator)
+
+
 def convert_onnx(network, net_info, model_root, model_name, copy_params):
     model_file = model_root + '/' + model_name + '.onnx'
 
@@ -532,7 +662,7 @@ def convert_onnx(network, net_info, model_root, model_name, copy_params):
         elif op_type == 'BatchNormalization':
             convert_batch_norm(onnx_nodes, index, param_dict, network)
         elif op_type == 'Add' or op_type == 'Sub' or op_type == 'Mul' or op_type == 'Div':
-            convert_binary(onnx_nodes, index, onnx_initializer, network)
+            convert_binary(onnx_nodes, index, onnx_initializer, param_dict, network)
         elif op_type == 'Concat':
             convert_concat(onnx_nodes, index, network)
         elif op_type == 'Gemm':
@@ -541,14 +671,20 @@ def convert_onnx(network, net_info, model_root, model_name, copy_params):
             convert_conv(onnx_nodes, index, onnx_initializer, param_dict, network)
         elif op_type == 'ConvTranspose':
             convert_deconv(onnx_nodes, index, onnx_initializer, param_dict, network)
+        elif op_type == 'MatMul':
+            convert_matmul(onnx_nodes, index, onnx_initializer, param_dict, network)
         elif op_type == 'Flatten':
             convert_flatten(onnx_nodes, index, network)
+        elif op_type == 'Gather':
+            convert_gather(onnx_nodes, index, onnx_initializer, param_dict, network)
         elif op_type == 'Pad':
             convert_pad(onnx_nodes, index, network)
         elif op_type == 'Transpose':
-            convert_permute(onnx_nodes, index, network)
+            convert_permute(onnx_nodes, index, onnx_initializer, param_dict, network)
         elif op_type == 'MaxPool' or op_type == 'AveragePool' or op_type == 'GlobalMaxPool' or op_type == 'GlobalAveragePool':
             convert_pooling(onnx_nodes, index, network)
+        elif op_type == 'ReduceProd' or op_type == 'ReduceSum' or op_type == 'ReduceMax' or op_type == 'ReduceMin' or op_type == 'ReduceMean':
+            convert_reduce(onnx_nodes, index, network)
         elif op_type == 'Reshape':
             convert_reshape(onnx_nodes, index, onnx_initializer, network)
         elif op_type == 'Upsample':
@@ -557,6 +693,10 @@ def convert_onnx(network, net_info, model_root, model_name, copy_params):
             convert_softmax(onnx_nodes, index, network)
         elif op_type == 'Squeeze':
             convert_squeeze(onnx_nodes, index, network)
+        elif op_type == 'Unsqueeze':
+            convert_unsqueeze(onnx_nodes, index, network)
+        elif op_type == 'ATen':
+            convert_aten(onnx_nodes, index, onnx_initializer, param_dict, network)
         else:
             print('Skipping ' + op_type + ', please check!')
 

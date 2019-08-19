@@ -398,7 +398,18 @@ class Network(object):
         op_param = self.add_net_op()
         self.add_common(op_param, name, 'Reduce', bottoms, tops)
 
-        self.add_arg(op_param, 'operation', operation, 's_i')
+        if operation == 'Prod':
+            self.add_arg(op_param, 'operation', 0, 's_i')
+        elif operation == 'Sum':
+            self.add_arg(op_param, 'operation', 1, 's_i')
+        elif operation == 'Max':
+            self.add_arg(op_param, 'operation', 2, 's_i')
+        elif operation == 'Min':
+            self.add_arg(op_param, 'operation', 3, 's_i')
+        elif operation == 'Avg':
+            self.add_arg(op_param, 'operation', 4, 's_i')
+        else:
+            raise ValueError('Unsupported reduce type', operation)
         if axes is not None:
             self.add_arg(op_param, 'axes', axes, 'v_i')
         self.add_arg(op_param, 'keep_dims', keep_dims, 's_i')
@@ -492,7 +503,7 @@ class Network(object):
 
     def add_unary(self, name, bottoms, tops, operation):
         op_param = self.add_net_op()
-        self.add_common(op_param, name, 'Binary', bottoms, tops)
+        self.add_common(op_param, name, 'Unary', bottoms, tops)
 
         if operation == 'Abs':
             self.add_arg(op_param, 'operation', 0, 's_i')

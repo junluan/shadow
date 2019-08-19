@@ -1,5 +1,6 @@
 from __future__ import print_function
 
+import copy
 import json
 import mxnet as mx
 
@@ -88,8 +89,8 @@ def convert_input(net_info, network):
 
     num_mean = len(net_info['mean_value'])
     num_scale = len(net_info['scale_value'])
-    mean_value = net_info['mean_value'] if num_mean > 0 else None
-    scale_value = net_info['scale_value'] if num_scale > 0 else None
+    mean_value = copy.deepcopy(net_info['mean_value']) if num_mean > 0 else None
+    scale_value = copy.deepcopy(net_info['scale_value']) if num_scale > 0 else None
     if num_mean > 0 or num_scale > 0:
         max_dim = max(num_mean, num_scale)
         if num_mean == 0 and num_scale > 0:
