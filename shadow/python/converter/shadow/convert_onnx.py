@@ -468,13 +468,13 @@ def convert_resize(onnx_nodes, index, onnx_initializer, network):
     top_names = op_output
 
     mode = parse_attribute(op_attribute, 'mode', 'nearest')
-    resize_type = 0 if mode == 'nearest' else 1
+    if mode == 'linear':
+        mode = 'bilinear'
 
     scale_data, _ = get_param_weight(onnx_initializer, op_input[1])
     assert len(scale_data) == 4
-    assert scale_data[2] == scale_data[3]
 
-    network.add_resize(op_name, bottom_names, top_names, scale=scale_data[2], type=resize_type)
+    network.add_resize(op_name, bottom_names, top_names, scale_h=scale_data[2], scale_w=scale_data[3], resize_type=mode)
 
 
 def convert_softmax(onnx_nodes, index, network):

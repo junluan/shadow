@@ -418,14 +418,20 @@ class Network(object):
         self.add_arg(op_param, 'axis', axis, 's_i')
         self.add_arg(op_param, 'num_axes', num_axes, 's_i')
 
-    def add_resize(self, name, bottoms, tops, out_h=0, out_w=0, scale=1, type=1):
+    def add_resize(self, name, bottoms, tops, out_h=0, out_w=0, scale_h=1, scale_w=1, resize_type='bilinear'):
         op_param = self.add_net_op()
         self.add_common(op_param, name, 'Resize', bottoms, tops)
 
         self.add_arg(op_param, 'out_h', out_h, 's_i')
         self.add_arg(op_param, 'out_w', out_w, 's_i')
-        self.add_arg(op_param, 'scale', scale, 's_f')
-        self.add_arg(op_param, 'type', type, 's_i')
+        self.add_arg(op_param, 'scale_h', scale_h, 's_f')
+        self.add_arg(op_param, 'scale_w', scale_w, 's_f')
+        if resize_type == 'nearest':
+            self.add_arg(op_param, 'type', 0, 's_i')
+        elif resize_type == 'bilinear':
+            self.add_arg(op_param, 'type', 1, 's_i')
+        else:
+            raise ValueError('Unsupported resize type', resize_type)
 
     def add_roi_pooling(self, name, bottoms, tops, pooled_h, pooled_w, spatial_scale):
         op_param = self.add_net_op()
