@@ -20,6 +20,10 @@ __device__ T ActivateValue(T x, int type, float slope) {
       T exp_2x = expf(2 * x);
       return (exp_2x - 1) / (exp_2x + 1);
     }
+    case ActivateOp::kRelu6: {
+      x = x > 0 ? x : 0;
+      return x < 6 ? x : 6;
+    }
     default:
       return x;
   }

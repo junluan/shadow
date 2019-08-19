@@ -29,7 +29,7 @@ void ActivateOp::Forward() {
 
   if (activate_type_ == kRelu || activate_type_ == kLeaky ||
       activate_type_ == kSigmoid || activate_type_ == kSoftPlus ||
-      activate_type_ == kTanh) {
+      activate_type_ == kTanh || activate_type_ == kRelu6) {
     Vision::Activate(bottom->data(), top->mutable_data(), top->count(),
                      activate_type_, slope_);
   } else if (activate_type_ == kPRelu) {
@@ -65,6 +65,10 @@ inline T Activate(T x, int type, float slope) {
       T exp_2x = std::exp(2 * x);
       return (exp_2x - 1) / (exp_2x + 1);
     }
+    case ActivateOp::kRelu6: {
+      x = x > 0 ? x : 0;
+      return x < 6 ? x : 6;
+    }
     default:
       return x;
   }
@@ -96,6 +100,9 @@ void Activate(const T *in_data, T *out_data, int count, int type, float slope) {
         T exp_2x = std::exp(2 * x);
         return (exp_2x - 1) / (exp_2x + 1);
       });
+      break;
+    case ActivateOp::kRelu6:
+      out_eigen = in_eigen.cwiseMax(T(0)).cwiseMin(T(6));
       break;
     default:
       return;

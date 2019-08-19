@@ -12,7 +12,7 @@ class ActivateOp : public Operator {
     activate_type_ = get_single_argument<int>("type", 1);
     slope_ = get_single_argument<float>("slope", 0.1);
     CHECK_GE(activate_type_, 0);
-    CHECK_LE(activate_type_, 5);
+    CHECK_LE(activate_type_, 6);
 
 #if defined(USE_CUDNN)
     use_cudnn_ = activate_type_ == kRelu || activate_type_ == kSigmoid ||
@@ -44,7 +44,8 @@ class ActivateOp : public Operator {
     kLeaky = 2,
     kSigmoid = 3,
     kSoftPlus = 4,
-    kTanh = 5
+    kTanh = 5,
+    kRelu6 = 6
   };
 
  private:
