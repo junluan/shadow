@@ -184,8 +184,8 @@ def convert_conv(caffe_layer, network):
     stride = 1
     pad = 0
     dilation = 1
-    bias_term = True
     group = 1
+    bias_term = True
     if caffe_layer.HasField('convolution_param'):
         caffe_param = caffe_layer.convolution_param
         if caffe_param.HasField('num_output'):
@@ -193,21 +193,21 @@ def convert_conv(caffe_layer, network):
         else:
             raise ValueError('num_output must be supplied')
         if len(caffe_param.kernel_size) > 0:
-            kernel_size = caffe_param.kernel_size[0]
+            kernel_size = caffe_param.kernel_size
         else:
             raise ValueError('kernel_size must be supplied')
         if len(caffe_param.stride) > 0:
-            stride = caffe_param.stride[0]
+            stride = caffe_param.stride
         if len(caffe_param.pad) > 0:
-            pad = caffe_param.pad[0]
+            pad = caffe_param.pad
         if len(caffe_param.dilation) > 0:
             dilation = caffe_param.dilation[0]
-        if caffe_param.HasField('bias_term'):
-            bias_term = caffe_param.bias_term
         if caffe_param.HasField('group'):
             group = caffe_param.group
+        if caffe_param.HasField('bias_term'):
+            bias_term = caffe_param.bias_term
 
-    network.add_conv(layer_name, bottom_names, top_names, num_output, kernel_size, stride, pad, dilation, bias_term, group)
+    network.add_conv(layer_name, bottom_names, top_names, num_output, kernel_size, stride, pad, dilation, group, bias_term)
 
 
 def convert_decode_box(caffe_layer, network):

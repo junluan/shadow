@@ -11,9 +11,34 @@ class ConvOp : public Operator {
       : Operator(op_param, ws) {
     num_output_ = get_single_argument<int>("num_output", 0);
     CHECK(has_argument("kernel_size"));
-    kernel_size_ = get_single_argument<int>("kernel_size", 0);
-    stride_ = get_single_argument<int>("stride", 1);
-    pad_ = get_single_argument<int>("pad", 0);
+    const auto &kernel_size = get_repeated_argument<int>("kernel_size");
+    CHECK_LE(kernel_size.size(), 2);
+    if (kernel_size.empty()) {
+      kernel_size_h_ = kernel_size_w_ =
+          get_single_argument<int>("kernel_size", 0);
+    } else if (kernel_size.size() == 1) {
+      kernel_size_h_ = kernel_size_w_ = kernel_size[0];
+    } else {
+      kernel_size_h_ = kernel_size[0], kernel_size_w_ = kernel_size[1];
+    }
+    const auto &stride = get_repeated_argument<int>("stride");
+    CHECK_LE(stride.size(), 2);
+    if (stride.empty()) {
+      stride_h_ = stride_w_ = get_single_argument<int>("stride", 1);
+    } else if (stride.size() == 1) {
+      stride_h_ = stride_w_ = stride[0];
+    } else {
+      stride_h_ = stride[0], stride_w_ = stride[1];
+    }
+    const auto &pad = get_repeated_argument<int>("pad");
+    CHECK_LE(pad.size(), 2);
+    if (pad.empty()) {
+      pad_h_ = pad_w_ = get_single_argument<int>("pad", 0);
+    } else if (pad.size() == 1) {
+      pad_h_ = pad_w_ = pad[0];
+    } else {
+      pad_h_ = pad[0], pad_w_ = pad[1];
+    }
     dilation_ = get_single_argument<int>("dilation", 1);
     group_ = get_single_argument<int>("group", 1);
     CHECK_EQ(num_output_ % group_, 0);
@@ -74,8 +99,8 @@ class ConvOp : public Operator {
   void Forward() override;
 
  private:
-  int num_output_, kernel_size_, stride_, pad_, dilation_, group_,
-      activate_type_, out_spatial_dim_, kernel_dim_;
+  int num_output_, kernel_size_h_, kernel_size_w_, stride_h_, stride_w_, pad_h_,
+      pad_w_, dilation_, group_, activate_type_, out_spatial_dim_, kernel_dim_;
   int weight_offset_, col_offset_, output_offset_;
   bool bias_term_, use_cudnn_ = false, use_nnpack_ = false,
                    use_depthwise_ = false;
@@ -112,13 +137,15 @@ namespace Vision {
 
 template <typename T>
 void Im2Col(const T *in_data, const VecInt &in_shape, int offset,
-            int kernel_size, int stride, int pad, int dilation, int zero_point,
+            int kernel_size_h, int kernel_size_w, int stride_h, int stride_w,
+            int pad_h, int pad_w, int dilation, int zero_point,
             const VecInt &out_shape, T *col_data);
 
 template <typename T>
 void Depthwise(const T *in_data, const VecInt &in_shape, const T *weight_data,
-               const T *bias_data, int kernel_size, int stride, int pad,
-               int bias_term, const VecInt &out_shape, T *out_data);
+               const T *bias_data, int kernel_size_h, int kernel_size_w,
+               int stride_h, int stride_w, int pad_h, int pad_w, int bias_term,
+               const VecInt &out_shape, T *out_data);
 
 }  // namespace Vision
 

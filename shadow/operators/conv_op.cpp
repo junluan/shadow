@@ -24,12 +24,14 @@ void ConvOp::Forward() {
 
   auto top_shape = bottom->shape();
   top_shape[1] = num_output_;
-  top_shape[2] = conv_out_size(in_h, kernel_size_, stride_, pad_, dilation_);
-  top_shape[3] = conv_out_size(in_w, kernel_size_, stride_, pad_, dilation_);
+  top_shape[2] =
+      conv_out_size(in_h, kernel_size_h_, stride_h_, pad_h_, dilation_);
+  top_shape[3] =
+      conv_out_size(in_w, kernel_size_w_, stride_w_, pad_w_, dilation_);
   top->reshape(top_shape);
 
   out_spatial_dim_ = top->count(2);
-  kernel_dim_ = kernel_size_ * kernel_size_ * in_c / group_;
+  kernel_dim_ = kernel_size_h_ * kernel_size_w_ * in_c / group_;
 
   weight_offset_ = num_output_ * kernel_dim_ / group_;
   col_offset_ = kernel_dim_ * out_spatial_dim_;
@@ -44,11 +46,12 @@ void ConvOp::Forward() {
         activate_type_ == 1 ? nnp_activation_relu : nnp_activation_identity;
     nnp_input_size_.height = static_cast<size_t>(in_h);
     nnp_input_size_.width = static_cast<size_t>(in_w);
-    nnp_pad_.top = nnp_pad_.bottom = nnp_pad_.left = nnp_pad_.right =
-        static_cast<size_t>(pad_);
-    nnp_kernel_size_.height = nnp_kernel_size_.width =
-        static_cast<size_t>(kernel_size_);
-    nnp_stride_.height = nnp_stride_.width = static_cast<size_t>(stride_);
+    nnp_kernel_size_.height = static_cast<size_t>(kernel_size_h_);
+    nnp_kernel_size_.width = static_cast<size_t>(kernel_size_w_);
+    nnp_stride_.height = static_cast<size_t>(stride_h_);
+    nnp_stride_.width = static_cast<size_t>(stride_w_);
+    nnp_pad_.top = nnp_pad_.bottom = static_cast<size_t>(pad_h_);
+    nnp_pad_.left = nnp_pad_.right = static_cast<size_t>(pad_w_);
 
     int out_c = top->shape(1);
     auto status = nnp_convolution_inference(
@@ -64,13 +67,13 @@ void ConvOp::Forward() {
 
 #if defined(USE_CUDNN)
   if (use_cudnn_) {
-    cudnn::setConvolution2dDesc<float>(&conv_desc_, pad_, pad_, stride_,
-                                       stride_, dilation_, dilation_, group_);
+    cudnn::setConvolution2dDesc<float>(&conv_desc_, pad_h_, pad_w_, stride_h_,
+                                       stride_w_, dilation_, dilation_, group_);
     cudnn::setTensor4dDesc<float>(&bottom_desc_, batch, in_c, in_h, in_w);
     cudnn::setTensor4dDesc<float>(&top_desc_, batch, num_output_, top_shape[2],
                                   top_shape[3]);
     cudnn::setFilter4dDesc<float>(&filter_desc_, num_output_, in_c / group_,
-                                  kernel_size_, kernel_size_);
+                                  kernel_size_h_, kernel_size_w_);
     if (bias_term_) {
       cudnn::setTensor4dDesc<float>(&bias_desc_, 1, num_output_, 1, 1);
     }
@@ -128,12 +131,14 @@ void ConvOp::Forward() {
   if (use_depthwise_) {
     if (bias_term_) {
       Vision::Depthwise(bottom->data(), bottom->shape(), weight->data(),
-                        bottoms<float>(2)->data(), kernel_size_, stride_, pad_,
+                        bottoms<float>(2)->data(), kernel_size_h_,
+                        kernel_size_w_, stride_h_, stride_w_, pad_h_, pad_w_,
                         bias_term_, top->shape(), top->mutable_data());
     } else {
       Vision::Depthwise(bottom->data(), bottom->shape(), weight->data(),
                         static_cast<decltype(weight->data())>(nullptr),
-                        kernel_size_, stride_, pad_, bias_term_, top->shape(),
+                        kernel_size_h_, kernel_size_w_, stride_h_, stride_w_,
+                        pad_h_, pad_w_, bias_term_, top->shape(),
                         top->mutable_data());
     }
   } else {
@@ -153,7 +158,8 @@ void ConvOp::Forward() {
     int top_num = top->num(), bottom_num = bottom->num();
     for (int b = 0; b < batch; ++b) {
       Vision::Im2Col(bottom->data(), bottom->shape(), b * bottom_num,
-                     kernel_size_, stride_, pad_, dilation_, 0, top->shape(),
+                     kernel_size_h_, kernel_size_w_, stride_h_, stride_w_,
+                     pad_h_, pad_w_, dilation_, 0, top->shape(),
                      col_image->mutable_data());
       for (int g = 0; g < group_; ++g) {
         Blas::BlasSgemm(0, 0, num_output_ / group_, out_spatial_dim_,
@@ -188,21 +194,22 @@ inline bool check_border(int a, int b) {
 
 template <typename T>
 void Im2Col(const T *in_data, const VecInt &in_shape, int offset,
-            int kernel_size, int stride, int pad, int dilation, int zero_point,
+            int kernel_size_h, int kernel_size_w, int stride_h, int stride_w,
+            int pad_h, int pad_w, int dilation, int zero_point,
             const VecInt &out_shape, T *col_data) {
   in_data += offset;
   int in_c = in_shape[1], in_h = in_shape[2], in_w = in_shape[3];
   int out_h = out_shape[2], out_w = out_shape[3];
   int spatial_dim = in_h * in_w;
   for (int k_c = 0; k_c < in_c; ++k_c, in_data += spatial_dim) {
-    for (int k_s = 0; k_s < kernel_size * kernel_size; ++k_s) {
-      int k_h = k_s / kernel_size;
-      int k_w = k_s % kernel_size;
-      int im_row = -pad + k_h * dilation;
-      for (int h = 0; h < out_h; ++h, im_row += stride) {
+    for (int k_s = 0; k_s < kernel_size_h * kernel_size_w; ++k_s) {
+      int k_h = k_s / kernel_size_w;
+      int k_w = k_s % kernel_size_w;
+      int im_row = -pad_h + k_h * dilation;
+      for (int h = 0; h < out_h; ++h, im_row += stride_h) {
         if (check_border(im_row, in_h)) {
-          int im_col = -pad + k_w * dilation;
-          for (int w = 0; w < out_w; ++w, im_col += stride) {
+          int im_col = -pad_w + k_w * dilation;
+          for (int w = 0; w < out_w; ++w, im_col += stride_w) {
             if (check_border(im_col, in_w)) {
               *(col_data++) = in_data[im_row * in_w + im_col];
             } else {
@@ -220,40 +227,44 @@ void Im2Col(const T *in_data, const VecInt &in_shape, int offset,
 }
 
 template void Im2Col(const float *in_data, const VecInt &in_shape, int offset,
-                     int kernel_size, int stride, int pad, int dilation,
+                     int kernel_size_h, int kernel_size_w, int stride_h,
+                     int stride_w, int pad_h, int pad_w, int dilation,
                      int zero_point, const VecInt &out_shape, float *col_data);
 template void Im2Col(const unsigned char *in_data, const VecInt &in_shape,
-                     int offset, int kernel_size, int stride, int pad,
+                     int offset, int kernel_size_h, int kernel_size_w,
+                     int stride_h, int stride_w, int pad_h, int pad_w,
                      int dilation, int zero_point, const VecInt &out_shape,
                      unsigned char *col_data);
 
 template <typename T>
 void Depthwise(const T *in_data, const VecInt &in_shape, const T *weight_data,
-               const T *bias_data, int kernel_size, int stride, int pad,
-               int bias_term, const VecInt &out_shape, T *out_data) {
+               const T *bias_data, int kernel_size_h, int kernel_size_w,
+               int stride_h, int stride_w, int pad_h, int pad_w, int bias_term,
+               const VecInt &out_shape, T *out_data) {
   int batch = in_shape[0];
   int in_c = in_shape[1], in_h = in_shape[2], in_w = in_shape[3];
   int out_h = out_shape[2], out_w = out_shape[3];
   for (int b = 0; b < batch; ++b) {
     for (int c = 0; c < in_c; ++c) {
       const T *in_offset_data = in_data + (b * in_c + c) * in_h * in_w;
-      const T *weight_offset_data = weight_data + c * kernel_size * kernel_size;
+      const T *weight_offset_data =
+          weight_data + c * kernel_size_h * kernel_size_w;
       T *out_offset_data = out_data + (b * in_c + c) * out_h * out_w;
       for (int h = 0; h < out_h; ++h) {
         for (int w = 0; w < out_w; ++w) {
-          int hstart = h * stride - pad, wstart = w * stride - pad;
-          int hend = std::min(hstart + kernel_size, in_h + pad);
-          int wend = std::min(wstart + kernel_size, in_w + pad);
+          int hstart = h * stride_h - pad_h, wstart = w * stride_w - pad_w;
+          int hend = std::min(hstart + kernel_size_h, in_h + pad_h);
+          int wend = std::min(wstart + kernel_size_w, in_w + pad_w);
           hstart = std::max(hstart, 0), wstart = std::max(wstart, 0);
           hend = std::min(hend, in_h), wend = std::min(wend, in_w);
-          int khstart = hend < kernel_size ? (kernel_size - hend) : 0;
-          int kwstart = wend < kernel_size ? (kernel_size - wend) : 0;
+          int khstart = hend < kernel_size_h ? (kernel_size_h - hend) : 0;
+          int kwstart = wend < kernel_size_w ? (kernel_size_w - wend) : 0;
           auto sum_val = T(0);
           for (int kh = hstart; kh < hend; ++kh) {
             for (int kw = wstart; kw < wend; ++kw) {
               sum_val +=
                   in_offset_data[kh * in_w + kw] *
-                  weight_offset_data[(khstart + kh - hstart) * kernel_size +
+                  weight_offset_data[(khstart + kh - hstart) * kernel_size_w +
                                      kwstart + kw - wstart];
             }
           }
@@ -269,7 +280,8 @@ void Depthwise(const T *in_data, const VecInt &in_shape, const T *weight_data,
 
 template void Depthwise(const float *in_data, const VecInt &in_shape,
                         const float *weight_data, const float *bias_data,
-                        int kernel_size, int stride, int pad, int bias_term,
+                        int kernel_size_h, int kernel_size_w, int stride_h,
+                        int stride_w, int pad_h, int pad_w, int bias_term,
                         const VecInt &out_shape, float *out_data);
 #endif
 
