@@ -52,6 +52,17 @@ inline void setTensor4dDesc(cudnnTensorDescriptor_t* desc, int n, int c, int h,
 }
 
 template <typename Dtype>
+inline void setTensorNdDesc(cudnnTensorDescriptor_t* desc, int n, int* dim) {
+  int stride[CUDNN_DIM_MAX] = {};
+  stride[n - 1] = 1;
+  for (int d = n - 2; d >= 0; --d) {
+    stride[d] = dim[d + 1] * stride[d + 1];
+  }
+  CUDNN_CHECK(
+      cudnnSetTensorNdDescriptor(*desc, dataType<Dtype>::type, n, dim, stride));
+}
+
+template <typename Dtype>
 inline void createFilterDesc(cudnnFilterDescriptor_t* desc) {
   CUDNN_CHECK(cudnnCreateFilterDescriptor(desc));
 }
@@ -135,6 +146,39 @@ inline void setPooling2dDesc(cudnnPoolingDescriptor_t* pool_desc, int pool_type,
   CUDNN_CHECK(cudnnSetPooling2dDescriptor(*pool_desc, mode, CUDNN_PROPAGATE_NAN,
                                           window_h, window_w, pad_h, pad_w,
                                           stride_h, stride_w));
+}
+
+template <typename Dtype>
+inline void createReduceDesc(cudnnReduceTensorDescriptor_t* reduce_desc) {
+  CUDNN_CHECK(cudnnCreateReduceTensorDescriptor(reduce_desc));
+}
+
+template <typename Dtype>
+inline void setReduceDesc(cudnnReduceTensorDescriptor_t* reduce_desc,
+                          int reduce_type) {
+  cudnnReduceTensorOp_t mode{};
+  switch (reduce_type) {
+    case 0:
+      mode = CUDNN_REDUCE_TENSOR_MUL;
+      break;
+    case 1:
+      mode = CUDNN_REDUCE_TENSOR_ADD;
+      break;
+    case 2:
+      mode = CUDNN_REDUCE_TENSOR_MAX;
+      break;
+    case 3:
+      mode = CUDNN_REDUCE_TENSOR_MIN;
+      break;
+    case 4:
+      mode = CUDNN_REDUCE_TENSOR_AVG;
+      break;
+    default:
+      LOG(FATAL) << "Unsupported reduce type " << reduce_type;
+  }
+  CUDNN_CHECK(cudnnSetReduceTensorDescriptor(
+      *reduce_desc, mode, dataType<Dtype>::type, CUDNN_PROPAGATE_NAN,
+      CUDNN_REDUCE_TENSOR_NO_INDICES, CUDNN_32BIT_INDICES));
 }
 
 }  // namespace cudnn

@@ -52,6 +52,47 @@ void ReduceOp::Forward() {
     top->reshape(top_shape_);
   }
 
+#if defined(USE_CUDNN)
+  cudnn::setReduceDesc<float>(&reduce_desc_, operation_);
+  if (num_axes > 4) {
+    cudnn::setTensorNdDesc<float>(&bottom_desc_, num_axes,
+                                  bottom_shape_.data());
+    cudnn::setTensorNdDesc<float>(&top_desc_, num_axes, top_shape_.data());
+  } else {
+    auto bottom_shape = bottom->shape(), top_shape = top->shape();
+    for (int n = num_axes; n < 4; ++n) {
+      bottom_shape.push_back(1);
+      top_shape.push_back(1);
+    }
+    cudnn::setTensor4dDesc<float>(&bottom_desc_, bottom_shape[0],
+                                  bottom_shape[1], bottom_shape[2],
+                                  bottom_shape[3]);
+    cudnn::setTensor4dDesc<float>(&top_desc_, top_shape[0], top_shape[1],
+                                  top_shape[2], top_shape[3]);
+  }
+
+  size_t workspace_size = 0;
+
+  CUDNN_CHECK(cudnnGetReductionWorkspaceSize(
+      cudnnHandle_t(op_ws_->Ctx()->cudnn_handle()), reduce_desc_, bottom_desc_,
+      top_desc_, &workspace_size));
+
+  void *workspace_ptr = nullptr;
+  if (workspace_size > 0) {
+    op_ws_->GrowTempBuffer(static_cast<int>(workspace_size),
+                           sizeof(unsigned char));
+    auto *workspace = op_ws_->CreateTempBlob<unsigned char>(
+        {static_cast<int>(workspace_size)}, op_name_ + "/workspace");
+    workspace_ptr = workspace->mutable_data();
+  }
+
+  CUDNN_CHECK(cudnnReduceTensor(
+      cudnnHandle_t(op_ws_->Ctx()->cudnn_handle()), reduce_desc_, nullptr, 0,
+      workspace_ptr, workspace_size, cudnn::dataType<float>::one, bottom_desc_,
+      bottom->data(), cudnn::dataType<float>::zero, top_desc_,
+      top->mutable_data()));
+
+#else
   int num_list = static_cast<int>(list_value_.size());
   int num_offset = static_cast<int>(offset_value_.size());
 
@@ -66,6 +107,7 @@ void ReduceOp::Forward() {
 
   Vision::Reduce(bottom->data(), list->data(), offset->data(), num_list,
                  operation_, top->count(), top->mutable_data());
+#endif
 
   if (!keep_dims_) {
     VecInt shape;

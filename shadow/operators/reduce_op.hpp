@@ -12,6 +12,28 @@ class ReduceOp : public Operator {
     operation_ = get_single_argument<int>("operation", 0);
     axes_ = get_repeated_argument<int>("axes");
     keep_dims_ = get_single_argument<bool>("keep_dims", true);
+
+#if defined(USE_CUDNN)
+    cudnn::createReduceDesc<float>(&reduce_desc_);
+    cudnn::createTensorDesc<float>(&bottom_desc_);
+    cudnn::createTensorDesc<float>(&top_desc_);
+#endif
+  }
+  ~ReduceOp() override {
+#if defined(USE_CUDNN)
+    if (reduce_desc_ != nullptr) {
+      cudnnDestroyReduceTensorDescriptor(reduce_desc_);
+      reduce_desc_ = nullptr;
+    }
+    if (bottom_desc_ != nullptr) {
+      cudnnDestroyTensorDescriptor(bottom_desc_);
+      bottom_desc_ = nullptr;
+    }
+    if (top_desc_ != nullptr) {
+      cudnnDestroyTensorDescriptor(top_desc_);
+      top_desc_ = nullptr;
+    }
+#endif
   }
 
   void Forward() override;
@@ -22,6 +44,11 @@ class ReduceOp : public Operator {
   int operation_;
   bool keep_dims_;
   VecInt axes_, bottom_shape_, top_shape_, list_value_, offset_value_;
+
+#if defined(USE_CUDNN)
+  cudnnReduceTensorDescriptor_t reduce_desc_ = nullptr;
+  cudnnTensorDescriptor_t bottom_desc_ = nullptr, top_desc_ = nullptr;
+#endif
 };
 
 namespace Vision {
