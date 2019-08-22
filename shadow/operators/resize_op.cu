@@ -45,13 +45,13 @@ __global__ void KernelResizeBilinear(const T* in_data, int count, int channel,
     float src_h_f = (h_out + 0.5f) * fh - 0.5f;
     int src_h = static_cast<int>(src_h_f);
     float sh = src_h_f - src_h;
-    src_h = src_h < in_h - 2 ? src_h : in_h - 2;
+    src_h = src_h < in_h - 1 ? src_h : in_h - 2;
     src_h = src_h < 0 ? 0 : src_h;
 
     float src_w_f = (w_out + 0.5f) * fw - 0.5f;
     int src_w = static_cast<int>(src_w_f);
     float sw = src_w_f - src_w;
-    src_w = src_w < in_w - 2 ? src_w : in_w - 2;
+    src_w = src_w < in_w - 1 ? src_w : in_w - 2;
     src_w = src_w < 0 ? 0 : src_w;
 
     int src_index_0 = ((b_out * channel + c_out) * in_h + src_h) * in_w + src_w;

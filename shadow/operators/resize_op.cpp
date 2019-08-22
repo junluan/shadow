@@ -85,13 +85,13 @@ inline void ResizeBilinear(const T* in_data, int batch, int channel, int in_h,
         float src_h_f = (h + 0.5f) * fh - 0.5f;
         int src_h = static_cast<int>(src_h_f);
         float sh = src_h_f - src_h;
-        src_h = src_h < in_h - 2 ? src_h : in_h - 2;
+        src_h = src_h < in_h - 1 ? src_h : in_h - 2;
         src_h = src_h < 0 ? 0 : src_h;
         for (int w = 0; w < out_w; ++w) {
           float src_w_f = (w + 0.5f) * fw - 0.5f;
           int src_w = static_cast<int>(src_w_f);
           float sw = src_w_f - src_w;
-          src_w = src_w < in_w - 2 ? src_w : in_w - 2;
+          src_w = src_w < in_w - 1 ? src_w : in_w - 2;
           src_w = src_w < 0 ? 0 : src_w;
           int src_index_0 = ((b * channel + c) * in_h + src_h) * in_w + src_w;
           int src_index_1 =

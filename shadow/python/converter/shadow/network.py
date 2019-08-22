@@ -205,17 +205,26 @@ class Network(object):
         self.add_arg(op_param, 'bias_term', bias_term, 's_i')
         self.add_arg(op_param, 'transpose', transpose, 's_i')
 
-    def add_conv(self, name, bottoms, tops, num_output, kernel_size, stride=1, pad=0, dilation=1, bias_term=True, group=1):
+    def add_conv(self, name, bottoms, tops, num_output, kernel_size, stride=1, pad=0, dilation=1, group=1, bias_term=True):
         op_param = self.add_net_op()
         self.add_common(op_param, name, 'Conv', bottoms, tops)
 
         self.add_arg(op_param, 'num_output', num_output, 's_i')
-        self.add_arg(op_param, 'kernel_size', kernel_size, 's_i')
-        self.add_arg(op_param, 'stride', stride, 's_i')
-        self.add_arg(op_param, 'pad', pad, 's_i')
+        if isinstance(kernel_size, int):
+            self.add_arg(op_param, 'kernel_size', kernel_size, 's_i')
+        else:
+            self.add_arg(op_param, 'kernel_size', kernel_size, 'v_i')
+        if isinstance(stride, int):
+            self.add_arg(op_param, 'stride', stride, 's_i')
+        else:
+            self.add_arg(op_param, 'stride', stride, 'v_i')
+        if isinstance(pad, int):
+            self.add_arg(op_param, 'pad', pad, 's_i')
+        else:
+            self.add_arg(op_param, 'pad', pad, 'v_i')
         self.add_arg(op_param, 'dilation', dilation, 's_i')
-        self.add_arg(op_param, 'bias_term', bias_term, 's_i')
         self.add_arg(op_param, 'group', group, 's_i')
+        self.add_arg(op_param, 'bias_term', bias_term, 's_i')
 
     def add_decode_box(self, name, bottoms, tops, method, num_classes, background_label_id, objectness_score):
         op_param = self.add_net_op()
@@ -429,14 +438,18 @@ class Network(object):
         self.add_arg(op_param, 'axis', axis, 's_i')
         self.add_arg(op_param, 'num_axes', num_axes, 's_i')
 
-    def add_resize(self, name, bottoms, tops, out_h=0, out_w=0, scale_h=1, scale_w=1, resize_type='bilinear'):
+    def add_resize(self, name, bottoms, tops, size=0, scale=1.0, resize_type='bilinear'):
         op_param = self.add_net_op()
         self.add_common(op_param, name, 'Resize', bottoms, tops)
 
-        self.add_arg(op_param, 'out_h', out_h, 's_i')
-        self.add_arg(op_param, 'out_w', out_w, 's_i')
-        self.add_arg(op_param, 'scale_h', scale_h, 's_f')
-        self.add_arg(op_param, 'scale_w', scale_w, 's_f')
+        if isinstance(size, int):
+            self.add_arg(op_param, 'size', size, 's_i')
+        else:
+            self.add_arg(op_param, 'size', size, 'v_i')
+        if isinstance(scale, float):
+            self.add_arg(op_param, 'scale', scale, 's_f')
+        else:
+            self.add_arg(op_param, 'scale', scale, 'v_f')
         if resize_type == 'nearest':
             self.add_arg(op_param, 'type', 0, 's_i')
         elif resize_type == 'bilinear':

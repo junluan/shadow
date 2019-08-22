@@ -571,7 +571,7 @@ def convert_resize(onnx_nodes, index, onnx_initializer, network):
     scale_data, _ = get_param_weight(onnx_initializer, op_input[1])
     assert len(scale_data) == 4
 
-    network.add_resize(op_name, bottom_names, top_names, scale_h=scale_data[2], scale_w=scale_data[3], resize_type=mode)
+    network.add_resize(op_name, bottom_names, top_names, scale=scale_data[2:], resize_type=mode)
 
 
 def convert_softmax(onnx_nodes, index, network):
