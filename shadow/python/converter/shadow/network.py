@@ -305,6 +305,23 @@ class Network(object):
         if indexes is not None:
             self.add_arg(op_param, 'indexes', indexes, 'v_i')
 
+    def add_grid_sample(self, name, bottoms, tops, mode='bilinear', padding_mode='zeros'):
+        op_param = self.add_net_op()
+        self.add_common(op_param, name, 'GridSample', bottoms, tops)
+
+        if mode == 'nearest':
+            self.add_arg(op_param, 'mode', 0, 's_i')
+        elif mode == 'bilinear':
+            self.add_arg(op_param, 'mode', 1, 's_i')
+        else:
+            raise ValueError('Unsupported grid sample mode', mode)
+        if padding_mode == 'zeros':
+            self.add_arg(op_param, 'padding_mode', 0, 's_i')
+        elif padding_mode == 'border':
+            self.add_arg(op_param, 'padding_mode', 1, 's_i')
+        else:
+            raise ValueError('Unsupported grid sample padding mode', padding_mode)
+
     def add_instance_norm(self, name, bottoms, tops, eps=1e-5):
         op_param = self.add_net_op()
         self.add_common(op_param, name, 'InstanceNorm', bottoms, tops)

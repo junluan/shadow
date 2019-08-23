@@ -181,6 +181,22 @@ inline void setReduceDesc(cudnnReduceTensorDescriptor_t* reduce_desc,
       CUDNN_REDUCE_TENSOR_NO_INDICES, CUDNN_32BIT_INDICES));
 }
 
+template <typename Dtype>
+inline void createSpatialTransformerDesc(
+    cudnnSpatialTransformerDescriptor_t* spatial_transformer_desc) {
+  CUDNN_CHECK(
+      cudnnCreateSpatialTransformerDescriptor(spatial_transformer_desc));
+}
+
+template <typename Dtype>
+inline void setSpatialTransformerDesc(
+    cudnnSpatialTransformerDescriptor_t* spatial_transformer_desc, int n,
+    int* dim) {
+  CUDNN_CHECK(cudnnSetSpatialTransformerNdDescriptor(
+      *spatial_transformer_desc, CUDNN_SAMPLER_BILINEAR,
+      cudnn::dataType<Dtype>::type, n, dim));
+}
+
 }  // namespace cudnn
 
 #endif
