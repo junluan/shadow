@@ -24,15 +24,17 @@ void DeconvOp::Forward() {
 
   auto top_shape = bottom->shape();
   top_shape[1] = num_output_;
-  top_shape[2] = deconv_out_size(in_h, kernel_size_, stride_, pad_, dilation_);
-  top_shape[3] = deconv_out_size(in_w, kernel_size_, stride_, pad_, dilation_);
+  top_shape[2] =
+      deconv_out_size(in_h, kernel_size_h_, stride_h_, pad_h_, dilation_);
+  top_shape[3] =
+      deconv_out_size(in_w, kernel_size_w_, stride_w_, pad_w_, dilation_);
   top->reshape(top_shape);
 
   conv_in_c = num_output_, conv_out_c = in_c;
 
   conv_out_spatial_dim_ = bottom->count(2);
   out_spatial_dim_ = top->count(2);
-  kernel_dim_ = kernel_size_ * kernel_size_ * conv_in_c / group_;
+  kernel_dim_ = kernel_size_h_ * kernel_size_w_ * conv_in_c / group_;
 
   weight_offset_ = conv_out_c * kernel_dim_ / group_;
   col_offset_ = kernel_dim_ * conv_out_spatial_dim_;
@@ -42,13 +44,13 @@ void DeconvOp::Forward() {
 
 #if defined(USE_CUDNN)
   if (use_cudnn_) {
-    cudnn::setConvolution2dDesc<float>(&conv_desc_, pad_, pad_, stride_,
-                                       stride_, dilation_, dilation_, group_);
+    cudnn::setConvolution2dDesc<float>(&conv_desc_, pad_h_, pad_w_, stride_h_,
+                                       stride_w_, dilation_, dilation_, group_);
     cudnn::setTensor4dDesc<float>(&bottom_desc_, batch, in_c, in_h, in_w);
     cudnn::setTensor4dDesc<float>(&top_desc_, batch, num_output_, top_shape[2],
                                   top_shape[3]);
     cudnn::setFilter4dDesc<float>(&filter_desc_, conv_out_c, conv_in_c / group_,
-                                  kernel_size_, kernel_size_);
+                                  kernel_size_h_, kernel_size_w_);
     if (bias_term_) {
       cudnn::setTensor4dDesc<float>(&bias_desc_, 1, num_output_, 1, 1);
     }
@@ -125,9 +127,9 @@ void DeconvOp::Forward() {
           b * bottom_num + output_offset_ * g, 0, col_image->mutable_data(),
           col_offset_ * g, op_ws_->Ctx()->blas_handle());
     }
-    Vision::Col2Im(col_image->data(), top->shape(), b * top_num, kernel_size_,
-                   stride_, pad_, dilation_, bottom->shape(),
-                   top->mutable_data());
+    Vision::Col2Im(col_image->data(), top->shape(), b * top_num, kernel_size_h_,
+                   kernel_size_w_, stride_h_, stride_w_, pad_h_, pad_w_,
+                   dilation_, bottom->shape(), top->mutable_data());
     if (bias_term_) {
       Blas::BlasSgemm(0, 0, num_output_, out_spatial_dim_, 1, 1,
                       bottoms<float>(2)->data(), 0, biases_multiplier->data(),
@@ -153,21 +155,22 @@ inline bool check_border(int a, int b) {
 
 template <typename T>
 void Col2Im(const T *col_data, const VecInt &in_shape, int offset,
-            int kernel_size, int stride, int pad, int dilation,
-            const VecInt &out_shape, T *in_data) {
+            int kernel_size_h, int kernel_size_w, int stride_h, int stride_w,
+            int pad_h, int pad_w, int dilation, const VecInt &out_shape,
+            T *in_data) {
   in_data += offset;
   int in_c = in_shape[1], in_h = in_shape[2], in_w = in_shape[3];
   int out_h = out_shape[2], out_w = out_shape[3];
   int spatial_dim = in_h * in_w;
   for (int k_c = 0; k_c < in_c; ++k_c, in_data += spatial_dim) {
-    for (int k_s = 0; k_s < kernel_size * kernel_size; ++k_s) {
-      int k_h = k_s / kernel_size;
-      int k_w = k_s % kernel_size;
-      int im_row = -pad + k_h * dilation;
-      for (int h = 0; h < out_h; ++h, im_row += stride) {
+    for (int k_s = 0; k_s < kernel_size_h * kernel_size_w; ++k_s) {
+      int k_h = k_s / kernel_size_w;
+      int k_w = k_s % kernel_size_w;
+      int im_row = -pad_h + k_h * dilation;
+      for (int h = 0; h < out_h; ++h, im_row += stride_h) {
         if (check_border(im_row, in_h)) {
-          int im_col = -pad + k_w * dilation;
-          for (int w = 0; w < out_w; ++w, ++col_data, im_col += stride) {
+          int im_col = -pad_w + k_w * dilation;
+          for (int w = 0; w < out_w; ++w, ++col_data, im_col += stride_w) {
             if (check_border(im_col, in_w)) {
               in_data[im_row * in_w + im_col] += *(col_data);
             }
@@ -181,7 +184,8 @@ void Col2Im(const T *col_data, const VecInt &in_shape, int offset,
 }
 
 template void Col2Im(const float *col_data, const VecInt &in_shape, int offset,
-                     int kernel_size, int stride, int pad, int dilation,
+                     int kernel_size_h, int kernel_size_w, int stride_h,
+                     int stride_w, int pad_h, int pad_w, int dilation,
                      const VecInt &out_shape, float *in_data);
 #endif
 

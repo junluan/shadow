@@ -167,8 +167,8 @@ const shadow::OpParam ParseConv(const JValue &root) {
 
   ParseCommon(root, &shadow_op);
 
-  int num_output = -1, kernel_size = -1, stride = 1, pad = 0, dilation = 1,
-      group = 1, bias_term = true, type = -1;
+  int num_output = 0, dilation = 1, group = 1, bias_term = true, type = -1;
+  std::vector<int> kernel_size, stride, pad;
   if (root.HasMember("arg")) {
     const auto &args = root["arg"];
     for (int i = 0; i < args.Size(); ++i) {
@@ -176,13 +176,22 @@ const shadow::OpParam ParseConv(const JValue &root) {
       CHECK(arg.HasMember("name"));
       const auto &arg_name = Json::GetString(arg, "name", "");
       if (arg_name == "num_output") {
-        num_output = Json::GetInt(arg, "s_i", -1);
+        num_output = Json::GetInt(arg, "s_i", 0);
       } else if (arg_name == "kernel_size") {
-        kernel_size = Json::GetInt(arg, "s_i", -1);
+        kernel_size = Json::GetVecInt(arg, "v_i");
+        if (kernel_size.empty()) {
+          kernel_size.push_back(Json::GetInt(arg, "s_i", 0));
+        }
       } else if (arg_name == "stride") {
-        stride = Json::GetInt(arg, "s_i", 1);
+        stride = Json::GetVecInt(arg, "v_i");
+        if (stride.empty()) {
+          stride.push_back(Json::GetInt(arg, "s_i", 1));
+        }
       } else if (arg_name == "pad") {
-        pad = Json::GetInt(arg, "s_i", 0);
+        pad = Json::GetVecInt(arg, "v_i");
+        if (pad.empty()) {
+          pad.push_back(Json::GetInt(arg, "s_i", 0));
+        }
       } else if (arg_name == "dilation") {
         dilation = Json::GetInt(arg, "s_i", 1);
       } else if (arg_name == "group") {
@@ -195,12 +204,10 @@ const shadow::OpParam ParseConv(const JValue &root) {
     }
   }
 
-  CHECK_GT(num_output, 0);
-  CHECK_GT(kernel_size, 0);
   add_s_i(&shadow_op, "num_output", num_output);
-  add_s_i(&shadow_op, "kernel_size", kernel_size);
-  add_s_i(&shadow_op, "stride", stride);
-  add_s_i(&shadow_op, "pad", pad);
+  add_v_i(&shadow_op, "kernel_size", kernel_size);
+  add_v_i(&shadow_op, "stride", stride);
+  add_v_i(&shadow_op, "pad", pad);
   add_s_i(&shadow_op, "dilation", dilation);
   add_s_i(&shadow_op, "group", group);
   add_s_i(&shadow_op, "bias_term", bias_term);
@@ -677,29 +684,33 @@ const shadow::OpParam ParseResize(const JValue &root) {
 
   ParseCommon(root, &shadow_op);
 
-  int out_h = 0, out_w = 0, type = 1;
-  float scale = 1;
+  int type = 1;
+  std::vector<int> size;
+  std::vector<float> scale;
   if (root.HasMember("arg")) {
     const auto &args = root["arg"];
     for (int i = 0; i < args.Size(); ++i) {
       const auto &arg = args[i];
       CHECK(arg.HasMember("name"));
       const auto &arg_name = Json::GetString(arg, "name", "");
-      if (arg_name == "out_h") {
-        out_h = Json::GetInt(arg, "s_i", 0);
-      } else if (arg_name == "out_w") {
-        out_w = Json::GetInt(arg, "s_i", 0);
+      if (arg_name == "size") {
+        size = Json::GetVecInt(arg, "v_i");
+        if (size.empty()) {
+          size.push_back(Json::GetInt(arg, "s_i", 0));
+        }
       } else if (arg_name == "scale") {
-        scale = Json::GetFloat(arg, "s_f", 1);
+        scale = Json::GetVecFloat(arg, "v_f");
+        if (scale.empty()) {
+          scale.push_back(Json::GetFloat(arg, "s_f", 1));
+        }
       } else if (arg_name == "type") {
         type = Json::GetInt(arg, "s_i", 1);
       }
     }
   }
 
-  add_s_i(&shadow_op, "out_h", out_h);
-  add_s_i(&shadow_op, "out_w", out_w);
-  add_s_f(&shadow_op, "scale", scale);
+  add_v_i(&shadow_op, "size", size);
+  add_v_f(&shadow_op, "scale", scale);
   add_s_i(&shadow_op, "type", type);
 
   return shadow_op;
@@ -1204,19 +1215,28 @@ const shadow::OpParam ParseConv(const std::vector<std::string> &params) {
 
   const auto &argument = ParseCommon(params, &shadow_op);
 
-  int num_output = -1, kernel_size = -1, stride = 1, pad = 0, dilation = 1,
-      group = 1, bias_term = true, type = -1;
+  int num_output = -1, dilation = 1, group = 1, bias_term = true, type = -1;
+  std::vector<int> kernel_size, stride, pad;
   if (argument.count("num_output")) {
     num_output = argument.at("num_output").s_i;
   }
   if (argument.count("kernel_size")) {
-    kernel_size = argument.at("kernel_size").s_i;
+    kernel_size = argument.at("kernel_size").v_i;
+    if (kernel_size.empty()) {
+      kernel_size.push_back(argument.at("kernel_size").s_i);
+    }
   }
   if (argument.count("stride")) {
-    stride = argument.at("stride").s_i;
+    stride = argument.at("stride").v_i;
+    if (stride.empty()) {
+      stride.push_back(argument.at("stride").s_i);
+    }
   }
   if (argument.count("pad")) {
-    pad = argument.at("pad").s_i;
+    pad = argument.at("pad").v_i;
+    if (pad.empty()) {
+      pad.push_back(argument.at("pad").s_i);
+    }
   }
   if (argument.count("dilation")) {
     dilation = argument.at("dilation").s_i;
@@ -1231,12 +1251,10 @@ const shadow::OpParam ParseConv(const std::vector<std::string> &params) {
     type = argument.at("type").s_i;
   }
 
-  CHECK_GT(num_output, 0);
-  CHECK_GT(kernel_size, 0);
   add_s_i(&shadow_op, "num_output", num_output);
-  add_s_i(&shadow_op, "kernel_size", kernel_size);
-  add_s_i(&shadow_op, "stride", stride);
-  add_s_i(&shadow_op, "pad", pad);
+  add_v_i(&shadow_op, "kernel_size", kernel_size);
+  add_v_i(&shadow_op, "stride", stride);
+  add_v_i(&shadow_op, "pad", pad);
   add_s_i(&shadow_op, "dilation", dilation);
   add_s_i(&shadow_op, "group", group);
   add_s_i(&shadow_op, "bias_term", bias_term);
@@ -1616,24 +1634,27 @@ const shadow::OpParam ParseResize(const std::vector<std::string> &params) {
 
   const auto &argument = ParseCommon(params, &shadow_op);
 
-  int out_h = 0, out_w = 0, type = 1;
-  float scale = 1;
-  if (argument.count("out_h")) {
-    out_h = argument.at("out_h").s_i;
-  }
-  if (argument.count("out_w")) {
-    out_w = argument.at("out_w").s_i;
+  int type = 1;
+  std::vector<int> size;
+  std::vector<float> scale;
+  if (argument.count("size")) {
+    size = argument.at("size").v_i;
+    if (size.empty()) {
+      size.push_back(argument.at("size").s_i);
+    }
   }
   if (argument.count("scale")) {
-    scale = argument.at("scale").s_f;
+    scale = argument.at("scale").v_f;
+    if (scale.empty()) {
+      scale.push_back(argument.at("scale").s_f);
+    }
   }
   if (argument.count("type")) {
     type = argument.at("type").s_i;
   }
 
-  add_s_i(&shadow_op, "out_h", out_h);
-  add_s_i(&shadow_op, "out_w", out_w);
-  add_s_f(&shadow_op, "scale", scale);
+  add_v_i(&shadow_op, "size", size);
+  add_v_f(&shadow_op, "scale", scale);
   add_s_i(&shadow_op, "type", type);
 
   return shadow_op;

@@ -385,7 +385,10 @@ def convert_deconv(onnx_nodes, index, onnx_initializer, param_dict, network):
     assert kernel_size[0] == weight_shape[2]
     assert kernel_size[1] == weight_shape[3]
 
-    network.add_deconv(op_name, bottom_names, top_names, num_output, kernel_size[0], stride[0], pad[0], dilate[0], bias_term, group)
+    assert pad[0] == pad[2]
+    assert pad[1] == pad[3]
+
+    network.add_deconv(op_name, bottom_names, top_names, num_output, kernel_size, stride, pad[:2], dilate[0], group, bias_term)
 
 
 def convert_flatten(onnx_nodes, index, network):
