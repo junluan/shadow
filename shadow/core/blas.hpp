@@ -6,19 +6,6 @@ namespace Shadow {
 namespace Blas {
 
 template <typename T>
-void ChannelMax(int num, int channels, int spatial_dim, const T *data,
-                T *val_max);
-template <typename T>
-void ChannelSub(int count, int num, int channels, int spatial_dim,
-                const T *val_sub, T *data);
-template <typename T>
-void ChannelSum(int num, int channels, int spatial_dim, const T *data,
-                T *val_sum);
-template <typename T>
-void ChannelDiv(int count, int num, int channels, int spatial_dim,
-                const T *val_div, T *data);
-
-template <typename T>
 void Set(int n, float val, T *y, int offy);
 
 template <typename T>

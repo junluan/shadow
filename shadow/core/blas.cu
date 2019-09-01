@@ -10,86 +10,6 @@ namespace Blas {
 
 #if defined(USE_CUDA)
 template <typename T>
-__global__ void KernelChannelMax(int num, int channels, int spatial_dim,
-                                 const T *data, T *val_max) {
-  CUDA_KERNEL_LOOP(globalid, num * spatial_dim) {
-    int n = globalid / spatial_dim;
-    int s = globalid % spatial_dim;
-    T max_val = -FLT_MAX;
-    for (int c = 0; c < channels; ++c) {
-      max_val = fmaxf(data[(n * channels + c) * spatial_dim + s], max_val);
-    }
-    val_max[globalid] = max_val;
-  }
-}
-
-template <typename T>
-void ChannelMax(int num, int channels, int spatial_dim, const T *data,
-                T *val_max) {
-  KernelChannelMax<T><<<GetBlocks(num * spatial_dim), NumThreads>>>(
-      num, channels, spatial_dim, data, val_max);
-  CUDA_CHECK(cudaPeekAtLastError());
-}
-
-template <typename T>
-__global__ void KernelChannelSub(int count, int num, int channels,
-                                 int spatial_dim, const T *val_sub, T *data) {
-  CUDA_KERNEL_LOOP(globalid, count) {
-    int n = globalid / channels / spatial_dim;
-    int s = globalid % spatial_dim;
-    data[globalid] -= val_sub[n * spatial_dim + s];
-  }
-}
-
-template <typename T>
-void ChannelSub(int count, int num, int channels, int spatial_dim,
-                const T *val_sub, T *data) {
-  KernelChannelSub<T><<<GetBlocks(count), NumThreads>>>(
-      count, num, channels, spatial_dim, val_sub, data);
-  CUDA_CHECK(cudaPeekAtLastError());
-}
-
-template <typename T>
-__global__ void KernelChannelSum(int num, int channels, int spatial_dim,
-                                 const T *data, T *val_sum) {
-  CUDA_KERNEL_LOOP(globalid, num * spatial_dim) {
-    int n = globalid / spatial_dim;
-    int s = globalid % spatial_dim;
-    T sum = T(0);
-    for (int c = 0; c < channels; ++c) {
-      sum += data[(n * channels + c) * spatial_dim + s];
-    }
-    val_sum[globalid] = sum;
-  }
-}
-
-template <typename T>
-void ChannelSum(int num, int channels, int spatial_dim, const T *data,
-                T *val_sum) {
-  KernelChannelSum<T><<<GetBlocks(num * spatial_dim), NumThreads>>>(
-      num, channels, spatial_dim, data, val_sum);
-  CUDA_CHECK(cudaPeekAtLastError());
-}
-
-template <typename T>
-__global__ void KernelChannelDiv(int count, int num, int channels,
-                                 int spatial_dim, const T *val_div, T *data) {
-  CUDA_KERNEL_LOOP(globalid, count) {
-    int n = globalid / channels / spatial_dim;
-    int s = globalid % spatial_dim;
-    data[globalid] /= val_div[n * spatial_dim + s];
-  }
-}
-
-template <typename T>
-void ChannelDiv(int count, int num, int channels, int spatial_dim,
-                const T *val_div, T *data) {
-  KernelChannelDiv<T><<<GetBlocks(count), NumThreads>>>(
-      count, num, channels, spatial_dim, val_div, data);
-  CUDA_CHECK(cudaPeekAtLastError());
-}
-
-template <typename T>
 __global__ void KernelSet(int n, float val, T *y, int offy) {
   CUDA_KERNEL_LOOP(globalid, n) { y[offy + globalid] = val; }
 }
@@ -228,15 +148,6 @@ void BlasSgemm(int TA, int TB, int M, int N, int K, float alpha, const T *A,
 }
 
 // Explicit instantiation
-template void ChannelMax(int num, int channels, int spatial_dim,
-                         const float *data, float *val_max);
-template void ChannelSub(int count, int num, int channels, int spatial_dim,
-                         const float *val_sub, float *data);
-template void ChannelSum(int num, int channels, int spatial_dim,
-                         const float *data, float *val_sum);
-template void ChannelDiv(int count, int num, int channels, int spatial_dim,
-                         const float *val_div, float *data);
-
 template void Set(int n, float val, float *y, int offy);
 
 // Level 1

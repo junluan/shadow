@@ -18,57 +18,6 @@ namespace Blas {
 
 #if !defined(USE_CUDA)
 template <typename T>
-void ChannelMax(int num, int channels, int spatial_dim, const T *data,
-                T *val_max) {
-  for (int n = 0; n < num; ++n) {
-    for (int s = 0; s < spatial_dim; ++s) {
-      float max_val = -FLT_MAX;
-      for (int c = 0; c < channels; ++c) {
-        max_val = std::max(data[(n * channels + c) * spatial_dim + s], max_val);
-      }
-      val_max[n * spatial_dim + s] = max_val;
-    }
-  }
-}
-template <typename T>
-void ChannelSub(int count, int num, int channels, int spatial_dim,
-                const T *val_sub, T *data) {
-  for (int n = 0; n < num; ++n) {
-    int offset = n * spatial_dim;
-    for (int c = 0; c < channels; ++c) {
-      for (int s = 0; s < spatial_dim; ++s) {
-        data[(n * channels + c) * spatial_dim + s] -= val_sub[offset + s];
-      }
-    }
-  }
-}
-template <typename T>
-void ChannelSum(int num, int channels, int spatial_dim, const T *data,
-                T *val_sum) {
-  for (int n = 0; n < num; ++n) {
-    for (int s = 0; s < spatial_dim; ++s) {
-      float sum = 0;
-      for (int c = 0; c < channels; ++c) {
-        sum += data[(n * channels + c) * spatial_dim + s];
-      }
-      val_sum[n * spatial_dim + s] = sum;
-    }
-  }
-}
-template <typename T>
-void ChannelDiv(int count, int num, int channels, int spatial_dim,
-                const T *val_div, T *data) {
-  for (int n = 0; n < num; ++n) {
-    int offset = n * spatial_dim;
-    for (int c = 0; c < channels; ++c) {
-      for (int s = 0; s < spatial_dim; ++s) {
-        data[(n * channels + c) * spatial_dim + s] /= val_div[offset + s];
-      }
-    }
-  }
-}
-
-template <typename T>
 void Set(int n, float val, T *y, int offy) {
 #if defined(USE_Eigen)
   auto y_eigen = MapVector<T>(y + offy, n);
@@ -424,15 +373,6 @@ void BlasSgemm(int TA, int TB, int M, int N, int K, float alpha, const T *A,
 }
 
 // Explicit instantiation
-template void ChannelMax(int num, int channels, int spatial_dim,
-                         const float *data, float *val_max);
-template void ChannelSub(int count, int num, int channels, int spatial_dim,
-                         const float *val_sub, float *data);
-template void ChannelSum(int num, int channels, int spatial_dim,
-                         const float *data, float *val_sum);
-template void ChannelDiv(int count, int num, int channels, int spatial_dim,
-                         const float *val_div, float *data);
-
 template void Set(int n, float val, float *y, int offy);
 
 // Level 1

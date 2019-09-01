@@ -34,6 +34,14 @@ class SoftmaxOp : public Operator {
 #endif
 };
 
+namespace Vision {
+
+template <typename T>
+void Softmax(const T *in_data, int outer_num, int channels, int inner_num,
+             T *val_data, T *out_data);
+
+}  // namespace Vision
+
 }  // namespace Shadow
 
 #endif  // SHADOW_OPERATORS_SOFTMAX_OP_HPP
