@@ -19,9 +19,15 @@ void ConnectedOp::Forward() {
   top->reshape(top_shape);
 
   if (batch == 1) {
-    Blas::BlasSgemv(0, num_output_, bottom_num, 1, weight->data(), 0,
-                    bottom->data(), 0, 0, top->mutable_data(), 0,
-                    op_ws_->Ctx()->blas_handle());
+    if (transpose_) {
+      Blas::BlasSgemv(0, num_output_, bottom_num, 1, weight->data(), 0,
+                      bottom->data(), 0, 0, top->mutable_data(), 0,
+                      op_ws_->Ctx()->blas_handle());
+    } else {
+      Blas::BlasSgemv(1, bottom_num, num_output_, 1, weight->data(), 0,
+                      bottom->data(), 0, 0, top->mutable_data(), 0,
+                      op_ws_->Ctx()->blas_handle());
+    }
     if (bias_term_) {
       Blas::BlasSaxpy(num_output_, 1, bottoms<float>(2)->data(), 0,
                       top->mutable_data(), 0, op_ws_->Ctx()->blas_handle());
