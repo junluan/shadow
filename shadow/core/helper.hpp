@@ -22,6 +22,12 @@ class ArgumentHelper {
       const std::string &name,
       const std::vector<T> &default_value = std::vector<T>()) const;
 
+  template <typename T>
+  void AddSingleArgument(const std::string &name, const T &value);
+  template <typename T>
+  void AddRepeatedArgument(const std::string &name,
+                           const std::vector<T> &value);
+
  private:
   std::map<std::string, shadow::Argument> arg_map_;
 };
