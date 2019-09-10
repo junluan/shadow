@@ -1,7 +1,7 @@
 #ifndef SHADOW_CORE_NETWORK_HPP
 #define SHADOW_CORE_NETWORK_HPP
 
-#include "params.hpp"
+#include "helper.hpp"
 
 #include <map>
 #include <memory>
@@ -22,6 +22,9 @@ class Network {
   void LoadModel(const std::string &proto_str,
                  const std::vector<const void *> &weights);
   void LoadModel(const std::string &proto_str, const void *weights_data);
+
+  void LoadXModel(const shadow::NetParam &net_param,
+                  const ArgumentHelper &arguments);
 
   void Forward(const std::map<std::string, float *> &data_map,
                const std::map<std::string, std::vector<int>> &shape_map = {});

@@ -6,6 +6,7 @@ set(shadow_server_src)
 set(shadow_client_src)
 
 add_subdirectory(algorithm)
+add_subdirectory(backends)
 add_subdirectory(core)
 add_subdirectory(examples)
 add_subdirectory(operators)
@@ -25,7 +26,8 @@ if (${USE_Protobuf} AND Protobuf_FOUND)
   target_link_libraries(shadow ${Shadow_PROTO_LIB})
 endif ()
 install(TARGETS shadow DESTINATION ${Shadow_INSTALL_LIB_PREFIX})
-install(FILES core/network.hpp core/params.hpp DESTINATION ${Shadow_INSTALL_INCLUDE_PREFIX}/core)
+install(FILES core/helper.hpp core/network.hpp core/params.hpp
+        DESTINATION ${Shadow_INSTALL_INCLUDE_PREFIX}/core)
 
 if (BUILD_SHARED_LIBS)
   set(Shadow_LIB shadow)

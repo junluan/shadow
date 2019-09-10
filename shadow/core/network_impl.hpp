@@ -3,6 +3,7 @@
 
 #include "network.hpp"
 
+#include "backend.hpp"
 #include "operator.hpp"
 #include "workspace.hpp"
 
@@ -19,8 +20,11 @@ class Network::NetworkImpl {
                  const std::vector<const void *> &weights);
   void LoadModel(const std::string &proto_str, const void *weights_data);
 
+  void LoadXModel(const shadow::NetParam &net_param,
+                  const ArgumentHelper &arguments);
+
   void Forward(const std::map<std::string, float *> &data_map,
-               const std::map<std::string, std::vector<int>> &shape_map = {});
+               const std::map<std::string, std::vector<int>> &shape_map);
 
   template <typename T>
   const T *GetBlobDataByName(const std::string &blob_name) {
@@ -80,6 +84,8 @@ class Network::NetworkImpl {
   shadow::NetParam net_param_;
 
   std::vector<std::string> in_blob_, out_blob_;
+
+  std::shared_ptr<Backend> backend_ = nullptr;
 };
 
 }  // namespace Shadow

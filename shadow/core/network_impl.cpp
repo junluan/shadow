@@ -35,10 +35,22 @@ void Network::NetworkImpl::LoadModel(const std::string &proto_str,
   CopyWeights(weights_data);
 }
 
+void Network::NetworkImpl::LoadXModel(const shadow::NetParam &net_param,
+                                      const ArgumentHelper &arguments) {
+  backend_.reset(CreateBackend(arguments, &ws_));
+  backend_->LoadModel(net_param);
+  in_blob_ = backend_->in_blob(), out_blob_ = backend_->out_blob();
+  arg_helper_ = ArgumentHelper(net_param);
+}
+
 void Network::NetworkImpl::Forward(
     const std::map<std::string, float *> &data_map,
     const std::map<std::string, std::vector<int>> &shape_map) {
   ws_.Ctx()->SwitchDevice();
+
+  if (backend_ != nullptr) {
+    return backend_->Forward(data_map, shape_map);
+  }
 
   if (ops_.empty()) return;
 

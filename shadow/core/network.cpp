@@ -33,6 +33,11 @@ void Network::LoadModel(const std::string &proto_str,
   engine_->LoadModel(proto_str, weights_data);
 }
 
+void Network::LoadXModel(const shadow::NetParam &net_param,
+                         const ArgumentHelper &arguments) {
+  engine_->LoadXModel(net_param, arguments);
+}
+
 void Network::Forward(
     const std::map<std::string, float *> &data_map,
     const std::map<std::string, std::vector<int>> &shape_map) {
