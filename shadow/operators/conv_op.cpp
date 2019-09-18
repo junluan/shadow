@@ -127,18 +127,19 @@ void ConvOp::Forward() {
   }
 #endif
 
-  use_depthwise_ = dilation_ == 1 && group_ == in_c && group_ == num_output_;
+  use_depthwise_ = group_ == in_c && group_ == num_output_;
   if (use_depthwise_) {
     if (bias_term_) {
       Vision::Depthwise(bottom->data(), bottom->shape(), weight->data(),
                         bottoms<float>(2)->data(), kernel_size_h_,
                         kernel_size_w_, stride_h_, stride_w_, pad_h_, pad_w_,
-                        bias_term_, top->shape(), top->mutable_data());
+                        dilation_, bias_term_, top->shape(),
+                        top->mutable_data());
     } else {
       Vision::Depthwise(bottom->data(), bottom->shape(), weight->data(),
                         static_cast<decltype(weight->data())>(nullptr),
                         kernel_size_h_, kernel_size_w_, stride_h_, stride_w_,
-                        pad_h_, pad_w_, bias_term_, top->shape(),
+                        pad_h_, pad_w_, dilation_, bias_term_, top->shape(),
                         top->mutable_data());
     }
   } else {
@@ -239,33 +240,29 @@ template void Im2Col(const unsigned char *in_data, const VecInt &in_shape,
 template <typename T>
 void Depthwise(const T *in_data, const VecInt &in_shape, const T *weight_data,
                const T *bias_data, int kernel_size_h, int kernel_size_w,
-               int stride_h, int stride_w, int pad_h, int pad_w, int bias_term,
-               const VecInt &out_shape, T *out_data) {
+               int stride_h, int stride_w, int pad_h, int pad_w, int dilation,
+               int bias_term, const VecInt &out_shape, T *out_data) {
   int batch = in_shape[0];
   int in_c = in_shape[1], in_h = in_shape[2], in_w = in_shape[3];
   int out_h = out_shape[2], out_w = out_shape[3];
   for (int b = 0; b < batch; ++b) {
     for (int c = 0; c < in_c; ++c) {
       const T *in_offset_data = in_data + (b * in_c + c) * in_h * in_w;
-      const T *weight_offset_data =
-          weight_data + c * kernel_size_h * kernel_size_w;
       T *out_offset_data = out_data + (b * in_c + c) * out_h * out_w;
       for (int h = 0; h < out_h; ++h) {
         for (int w = 0; w < out_w; ++w) {
-          int hstart = h * stride_h - pad_h, wstart = w * stride_w - pad_w;
-          int hend = std::min(hstart + kernel_size_h, in_h + pad_h);
-          int wend = std::min(wstart + kernel_size_w, in_w + pad_w);
-          hstart = std::max(hstart, 0), wstart = std::max(wstart, 0);
-          hend = std::min(hend, in_h), wend = std::min(wend, in_w);
-          int khstart = hend < kernel_size_h ? (kernel_size_h - hend) : 0;
-          int kwstart = wend < kernel_size_w ? (kernel_size_w - wend) : 0;
+          const T *weight_offset_data =
+              weight_data + c * kernel_size_h * kernel_size_w;
           auto sum_val = T(0);
-          for (int kh = hstart; kh < hend; ++kh) {
-            for (int kw = wstart; kw < wend; ++kw) {
-              sum_val +=
-                  in_offset_data[kh * in_w + kw] *
-                  weight_offset_data[(khstart + kh - hstart) * kernel_size_w +
-                                     kwstart + kw - wstart];
+          for (int kh = 0; kh < kernel_size_h; ++kh) {
+            for (int kw = 0; kw < kernel_size_w; ++kw) {
+              int h_in = h * stride_h - pad_h + kh * dilation;
+              int w_in = w * stride_w - pad_w + kw * dilation;
+              if (h_in >= 0 && h_in < in_h && w_in >= 0 && w_in < in_w) {
+                sum_val +=
+                    in_offset_data[h_in * in_w + w_in] * *weight_offset_data;
+              }
+              weight_offset_data++;
             }
           }
           if (bias_term) {
@@ -281,8 +278,9 @@ void Depthwise(const T *in_data, const VecInt &in_shape, const T *weight_data,
 template void Depthwise(const float *in_data, const VecInt &in_shape,
                         const float *weight_data, const float *bias_data,
                         int kernel_size_h, int kernel_size_w, int stride_h,
-                        int stride_w, int pad_h, int pad_w, int bias_term,
-                        const VecInt &out_shape, float *out_data);
+                        int stride_w, int pad_h, int pad_w, int dilation,
+                        int bias_term, const VecInt &out_shape,
+                        float *out_data);
 #endif
 
 }  // namespace Vision

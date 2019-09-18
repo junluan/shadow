@@ -144,8 +144,8 @@ void Im2Col(const T *in_data, const VecInt &in_shape, int offset,
 template <typename T>
 void Depthwise(const T *in_data, const VecInt &in_shape, const T *weight_data,
                const T *bias_data, int kernel_size_h, int kernel_size_w,
-               int stride_h, int stride_w, int pad_h, int pad_w, int bias_term,
-               const VecInt &out_shape, T *out_data);
+               int stride_h, int stride_w, int pad_h, int pad_w, int dilation,
+               int bias_term, const VecInt &out_shape, T *out_data);
 
 }  // namespace Vision
 
