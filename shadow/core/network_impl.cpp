@@ -57,17 +57,13 @@ void Network::NetworkImpl::Forward(
   for (const auto &in_map : data_map) {
     const auto &blob_name = in_map.first;
     const auto *blob_data = in_map.second;
-    CHECK_NOTNULL(blob_data) << blob_name << " has null data";
     auto *in_blob = ws_.GetBlob<float>(blob_name);
-    if (in_blob != nullptr) {
-      if (shape_map.count(blob_name)) {
-        const auto &blob_shape = shape_map.at(blob_name);
-        in_blob->reshape(blob_shape);
-      }
-      in_blob->set_data(blob_data, in_blob->count());
-    } else {
-      LOG(FATAL) << "Can not find blob " << blob_name;
+    CHECK_NOTNULL(blob_data) << blob_name << " has null data";
+    CHECK_NOTNULL(in_blob) << "Can not find blob " << blob_name;
+    if (shape_map.count(blob_name)) {
+      in_blob->reshape(shape_map.at(blob_name));
     }
+    in_blob->set_data(blob_data, in_blob->count());
   }
 
   for (auto &op : ops_) {
@@ -128,7 +124,7 @@ void Network::NetworkImpl::Initial() {
       shape.push_back(dim);
     }
     const auto &blob_name = blob.name();
-    const auto blob_type = blob.has_type() ? blob.type() : "float";
+    const auto blob_type = blob.has_type() ? blob.type() : std::string("float");
     if (blob_type == "float") {
       auto *blob_ptr = ws_.CreateBlob<float>(shape, blob_name, true);
       CHECK_NOTNULL(blob_ptr) << "Failed to create float blob " << blob_name;
@@ -178,8 +174,13 @@ void Network::NetworkImpl::Initial() {
   arg_helper_ = ArgumentHelper(net_param_);
 
   in_blob_.clear();
-  for (const auto &blob : net_param_.op(0).top()) {
-    in_blob_.push_back(blob);
+  for (const auto &op_param : net_param_.op()) {
+    if (op_param.type() == "Input") {
+      for (const auto &blob_name : op_param.top()) {
+        in_blob_.push_back(blob_name);
+      }
+      break;
+    }
   }
 
   CHECK(has_argument("out_blob")) << "Network must have out_blob argument";
