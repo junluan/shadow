@@ -13,6 +13,10 @@
 #include "nnpack.h"
 #endif
 
+#if defined(USE_DNNL)
+#include "idnnl.hpp"
+#endif
+
 #include <cstdlib>
 
 namespace Shadow {

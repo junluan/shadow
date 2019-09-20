@@ -8,9 +8,11 @@ export USE_CUDNN=OFF
 export USE_Eigen=ON
 export USE_BLAS=OFF
 export USE_NNPACK=ON
+export USE_DNNL=ON
 export USE_Protobuf=ON
 export USE_JSON=OFF
 export USE_OpenCV=ON
+export BUILD_EXAMPLES=ON
 export BUILD_SHARED_LIBS=ON
 
 if [ "$BUILD" = "linux-cpu" ]; then

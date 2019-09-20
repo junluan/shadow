@@ -65,6 +65,39 @@ void ConvOp::Forward() {
   }
 #endif
 
+#if defined(USE_DNNL)
+  if (!use_nnpack_) {
+    const auto &src_desc = idnnl::create_memory_desc<float>(bottom->shape());
+    const auto &dst_desc = idnnl::create_memory_desc<float>(top->shape());
+    dnnl::memory::desc weight_desc;
+    if (group_ == 1) {
+      weight_desc = idnnl::create_memory_desc<float>(
+          {num_output_, in_c, kernel_size_h_, kernel_size_w_},
+          dnnl::memory::format_tag::oihw);
+    } else {
+      weight_desc = idnnl::create_memory_desc<float>(
+          {group_, num_output_ / group_, in_c / group_, kernel_size_h_,
+           kernel_size_w_},
+          dnnl::memory::format_tag::goihw);
+    }
+    const auto &bias_desc = idnnl::create_memory_desc<float>(
+        {num_output_}, bias_term_ ? dnnl::memory::format_tag::x
+                                  : dnnl::memory::format_tag::undef);
+
+    const auto &conv_desc = idnnl::create_convolution_desc(
+        src_desc, weight_desc, bias_desc, dst_desc, pad_h_, pad_w_, stride_h_,
+        stride_w_, dilation_, dilation_);
+
+    idnnl::convolution_forward(op_ws_->Ctx()->dnnl_engine(),
+                               op_ws_->Ctx()->dnnl_stream(), conv_desc,
+                               bottom->data(), weight->data(),
+                               bias_term_ ? bottoms<float>(2)->data() : nullptr,
+                               top->mutable_data(), activate_type_);
+
+    return;
+  }
+#endif
+
 #if defined(USE_CUDNN)
   if (use_cudnn_) {
     cudnn::setConvolution2dDesc<float>(&conv_desc_, pad_h_, pad_w_, stride_h_,

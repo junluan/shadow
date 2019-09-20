@@ -7,6 +7,7 @@ option(USE_CUDNN "Use CUDNN for acceleration" ON)
 option(USE_Eigen "Use Eigen in CPU mode" ON)
 option(USE_BLAS "Use BLAS library in CPU mode" OFF)
 option(USE_NNPACK "Use NNPACK library in CPU mode" ON)
+option(USE_DNNL "Use DNNL library in CPU mode" OFF)
 
 option(USE_Protobuf "Use Protobuf" ON)
 option(USE_JSON "Use JSON" OFF)

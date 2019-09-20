@@ -47,8 +47,47 @@ void* Context::nnpack_handle() {
 #endif
 }
 
+void* Context::dnnl_engine() {
+#if defined(USE_DNNL)
+  CHECK_NOTNULL(dnnl_engine_);
+  return dnnl_engine_;
+#else
+  return nullptr;
+#endif
+}
+
+void* Context::dnnl_stream() {
+#if defined(USE_DNNL)
+  CHECK_NOTNULL(dnnl_stream_);
+  return dnnl_stream_;
+#else
+  return nullptr;
+#endif
+}
+
+inline void check_device(int device_id) {
+#if defined(USE_CUDA)
+  int num_devices = 0;
+  CUDA_CHECK(cudaGetDeviceCount(&num_devices));
+  CHECK_GE(device_id, 0);
+  CHECK_LT(device_id, num_devices);
+  cudaDeviceProp prop{};
+  CUDA_CHECK(cudaGetDeviceProperties(&prop, device_id));
+  DLOG(INFO) << "GPU ID: " << device_id << ", Type: " << prop.name
+             << ", Capability: " << prop.major << "." << prop.minor;
+#endif
+
+#if defined(USE_DNNL)
+  auto num_devices = dnnl::engine::get_count(dnnl::engine::kind::cpu);
+  CHECK_GE(device_id, 0);
+  CHECK_LT(device_id, num_devices);
+#endif
+}
+
 void Context::Init(int device_id) {
   device_id_ = device_id;
+
+  check_device(device_id_);
 
   SwitchDevice();
 
@@ -73,6 +112,16 @@ void Context::Init(int device_id) {
     CHECK_NOTNULL(nnpack_handle_);
   }
 #endif
+
+#if defined(USE_DNNL)
+  if (dnnl_engine_ == nullptr) {
+    dnnl_engine_ = new dnnl::engine(dnnl::engine::kind::cpu,
+                                    static_cast<size_t>(device_id));
+  }
+  if (dnnl_stream_ == nullptr) {
+    dnnl_stream_ = new dnnl::stream(*(dnnl::engine*)dnnl_engine_);
+  }
+#endif
 }
 
 void Context::Clear() {
@@ -95,6 +144,17 @@ void Context::Clear() {
     CHECK_EQ(nnp_deinitialize(), nnp_status_success);
     pthreadpool_destroy(pthreadpool_t(nnpack_handle_));
     nnpack_handle_ = nullptr;
+  }
+#endif
+
+#if defined(USE_DNNL)
+  if (dnnl_engine_ != nullptr) {
+    delete (dnnl::engine*)dnnl_engine_;
+    dnnl_engine_ = nullptr;
+  }
+  if (dnnl_stream_ != nullptr) {
+    delete (dnnl::stream*)dnnl_stream_;
+    dnnl_stream_ = nullptr;
   }
 #endif
 }

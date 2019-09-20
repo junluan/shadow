@@ -15,12 +15,16 @@ class Context {
   void* blas_handle();
   void* cudnn_handle();
   void* nnpack_handle();
+  void* dnnl_engine();
+  void* dnnl_stream();
 
  private:
   int device_id_ = 0;
   void* blas_handle_ = nullptr;
   void* cudnn_handle_ = nullptr;
   void* nnpack_handle_ = nullptr;
+  void* dnnl_engine_ = nullptr;
+  void* dnnl_stream_ = nullptr;
 
   void Init(int device_id);
   void Clear();
