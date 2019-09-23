@@ -1,13 +1,10 @@
-from __future__ import print_function
-
 from google.protobuf import text_format
 from proto import shadow_pb2
 
 
 class Network(object):
     def __init__(self, name):
-        self.meta_net_param = shadow_pb2.MetaNetParam()
-        self.meta_net_param.name = name
+        self.meta_net_param = shadow_pb2.MetaNetParam(name=name)
         self.net_param = None
         self.net_index = -1
 
@@ -30,8 +27,7 @@ class Network(object):
         return self.meta_net_param.name
 
     def set_meta_net_network(self, network):
-        for net in network:
-            self.add_meta_net_network().CopyFrom(net)
+        self.meta_net_param.network.extend(network)
 
     def get_meta_net_network(self):
         return self.meta_net_param.network
@@ -40,8 +36,7 @@ class Network(object):
         return self.meta_net_param.network.add()
 
     def set_meta_net_arg(self, arg):
-        for ar in arg:
-            self.add_meta_net_arg().CopyFrom(ar)
+        self.meta_net_param.arg.extend(arg)
 
     def get_meta_net_arg(self):
         return self.meta_net_param.arg
@@ -56,8 +51,7 @@ class Network(object):
         return self.net_param.name
 
     def set_net_blob(self, blob):
-        for b in blob:
-            self.add_net_blob().CopyFrom(b)
+        self.net_param.blob.extend(blob)
 
     def get_net_blob(self):
         return self.net_param.blob
@@ -66,8 +60,7 @@ class Network(object):
         return self.net_param.blob.add()
 
     def set_net_op(self, op):
-        for o in op:
-            self.add_net_op().CopyFrom(o)
+        self.net_param.op.extend(op)
 
     def get_net_op(self):
         return self.net_param.op
@@ -76,8 +69,7 @@ class Network(object):
         return self.net_param.op.add()
 
     def set_net_arg(self, arg):
-        for ar in arg:
-            self.add_net_arg().CopyFrom(ar)
+        self.net_param.arg.extend(arg)
 
     def get_net_arg(self):
         return self.net_param.arg
@@ -127,10 +119,10 @@ class Network(object):
         self.add_common(op_param, name, 'Input', bottoms, tops)
 
         if len(tops) == len(shapes):
-            for n in range(0, len(tops)):
+            for n in range(len(tops)):
                 self.add_arg(op_param, tops[n], shapes[n], 'v_i')
         elif len(shapes) == 1:
-            for n in range(0, len(tops)):
+            for n in range(len(tops)):
                 self.add_arg(op_param, tops[n], shapes[0], 'v_i')
         else:
             print('No input shape, must be supplied manually')
@@ -584,11 +576,9 @@ class Network(object):
         if axes is not None:
             self.add_arg(op_param, 'axes', axes, 'v_i')
 
-    def find_net_op_by_name(self, name):
-        for op in self.net_param.op:
-            if op.name == name:
-                return op
-        return None
+    def clear_all_blobs(self):
+        for net_param in self.meta_net_param.network:
+            net_param.ClearField('blob')
 
     def write_proto_to_txt(self, file_path, net_index=-1):
         with open(file_path, 'w') as proto_file:

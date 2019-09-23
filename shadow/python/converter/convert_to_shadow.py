@@ -1,8 +1,6 @@
-from __future__ import print_function
-
 from config import *
 from shadow import converter
-from shadow import merger
+from shadow import optimizer
 
 import argparse
 import os
@@ -29,23 +27,17 @@ if __name__ == '__main__':
 
     network = converter.convert(args.model_root, meta_net_info, args.copy_params)
 
-    network_merged = merger.merge(network, args.copy_params) if args.merge_op else None
+    if args.merge_op:
+        optimizer.optimize(network)
 
-    save_name = args.save_root + '/' + meta_net_info['save_name']
+    save_name = '{}/{}'.format(args.save_root, meta_net_info['save_name'])
 
     if args.copy_params:
-        save_path = save_name + '.shadowmodel'
+        save_path = save_name + ('_merged.shadowmodel' if args.merge_op else '.shadowmodel')
         network.write_proto_to_binary(save_path)
-        print('Convert successful, model has been written to ' + save_path)
-        if network_merged is not None:
-            save_path = save_name + '_merged.shadowmodel'
-            network_merged.write_proto_to_binary(save_path)
-            print('Merge successful, merged model has been written to ' + save_path)
     else:
-        save_path = save_name + '.shadowtxt'
+        save_path = save_name + ('_merged.shadowtxt' if args.merge_op else '.shadowtxt')
+        network.clear_all_blobs()
         network.write_proto_to_txt(save_path)
-        print('Convert successful, model has been written to ' + save_path)
-        if network_merged is not None:
-            save_path = save_name + '_merged.shadowtxt'
-            network_merged.write_proto_to_txt(save_path)
-            print('Merge successful, merged model has been written to ' + save_path)
+
+    print('Convert successful, model has been written to ' + save_path)

@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 from .network import Network
 
 
@@ -20,14 +18,14 @@ def convert(model_root, meta_net_info, copy_params=False):
         network.set_net(n)
         if type == 'caffe':
             from .convert_caffe import convert_caffe
-            convert_caffe(network, net_info[n], model_root, model_name[n], copy_params)
+            convert_caffe(network, net_info[n], model_root, model_name[n], True)
         elif type == 'mxnet':
             from .convert_mxnet import convert_mxnet
             assert n < len(model_epoch)
-            convert_mxnet(network, net_info[n], model_root, model_name[n], model_epoch[n], copy_params)
+            convert_mxnet(network, net_info[n], model_root, model_name[n], model_epoch[n], True)
         elif type == 'onnx':
             from .convert_onnx import convert_onnx
-            convert_onnx(network, net_info[n], model_root, model_name[n], copy_params)
+            convert_onnx(network, net_info[n], model_root, model_name[n], True)
         else:
             raise ValueError('Currently only support convert caffe, mxnet or onnx model!', type)
 

@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 import copy
 from google.protobuf import text_format
 from proto import caffe_pb2
