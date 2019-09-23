@@ -23,6 +23,7 @@ __global__ void KernelResizeNearest(const T* in_data, int count, int channel,
     int src_w = static_cast<int>(w_out * fw);
 
     int src_index = ((b_out * channel + c_out) * in_h + src_h) * in_w + src_w;
+
     out_data[globalid] = in_data[src_index];
   }
 }
@@ -54,13 +55,13 @@ __global__ void KernelResizeBilinear(const T* in_data, int count, int channel,
     src_w = src_w < in_w - 1 ? src_w : in_w - 2;
     src_w = src_w < 0 ? 0 : src_w;
 
-    int src_index_0 = ((b_out * channel + c_out) * in_h + src_h) * in_w + src_w;
-    int src_index_1 =
-        ((b_out * channel + c_out) * in_h + src_h + 1) * in_w + src_w;
-    int src_index_2 =
-        ((b_out * channel + c_out) * in_h + src_h) * in_w + src_w + 1;
-    int src_index_3 =
-        ((b_out * channel + c_out) * in_h + src_h + 1) * in_w + src_w + 1;
+    int src_h_off = (b_out * channel + c_out) * in_h + src_h;
+
+    int src_index_0 = src_h_off * in_w + src_w;
+    int src_index_1 = (src_h_off + 1) * in_w + src_w;
+    int src_index_2 = src_h_off * in_w + src_w + 1;
+    int src_index_3 = (src_h_off + 1) * in_w + src_w + 1;
+
     out_data[globalid] = static_cast<T>(
         (1 - sh) * (1 - sw) * in_data[src_index_0] +
         sh * (1 - sw) * in_data[src_index_1] +

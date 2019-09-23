@@ -87,19 +87,17 @@ inline void ResizeBilinear(const T* in_data, int batch, int channel, int in_h,
         float sh = src_h_f - src_h;
         src_h = src_h < in_h - 1 ? src_h : in_h - 2;
         src_h = src_h < 0 ? 0 : src_h;
+        int src_h_off = (b * channel + c) * in_h + src_h;
         for (int w = 0; w < out_w; ++w) {
           float src_w_f = (w + 0.5f) * fw - 0.5f;
           int src_w = static_cast<int>(src_w_f);
           float sw = src_w_f - src_w;
           src_w = src_w < in_w - 1 ? src_w : in_w - 2;
           src_w = src_w < 0 ? 0 : src_w;
-          int src_index_0 = ((b * channel + c) * in_h + src_h) * in_w + src_w;
-          int src_index_1 =
-              ((b * channel + c) * in_h + src_h + 1) * in_w + src_w;
-          int src_index_2 =
-              ((b * channel + c) * in_h + src_h) * in_w + src_w + 1;
-          int src_index_3 =
-              ((b * channel + c) * in_h + src_h + 1) * in_w + src_w + 1;
+          int src_index_0 = src_h_off * in_w + src_w;
+          int src_index_1 = (src_h_off + 1) * in_w + src_w;
+          int src_index_2 = src_h_off * in_w + src_w + 1;
+          int src_index_3 = (src_h_off + 1) * in_w + src_w + 1;
           *out_data++ =
               static_cast<T>((1 - sh) * (1 - sw) * in_data[src_index_0] +
                              sh * (1 - sw) * in_data[src_index_1] +
