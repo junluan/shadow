@@ -15,7 +15,7 @@ void DecodeBoxOp::Forward() {
     int batch = mbox_loc->shape(0), num_priors = mbox_loc->shape(1) / 4;
 
     CHECK_EQ(mbox_conf->shape(1), num_priors * num_classes_);
-    CHECK_EQ(mbox_conf->count(1), num_priors * 8);
+    CHECK_EQ(mbox_priorbox->count(1), num_priors * 8);
 
     top->reshape({batch, num_priors, 6});
 
