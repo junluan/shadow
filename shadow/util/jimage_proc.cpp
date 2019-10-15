@@ -49,8 +49,8 @@ VecPointI GetLinePoints(const PointI &start, const PointI &end, int step,
   return points;
 }
 
-template <typename Dtype>
-void Line(JImage *im, const Point<Dtype> &start, const Point<Dtype> &end,
+template <typename T>
+void Line(JImage *im, const Point<T> &start, const Point<T> &end,
           const Scalar &scalar) {
   CHECK_NOTNULL(im);
   CHECK_NOTNULL(im->data());
@@ -94,8 +94,8 @@ void Line(JImage *im, const Point<Dtype> &start, const Point<Dtype> &end,
   }
 }
 
-template <typename Dtype>
-void Rectangle(JImage *im, const Rect<Dtype> &rect, const Scalar &scalar) {
+template <typename T>
+void Rectangle(JImage *im, const Rect<T> &rect, const Scalar &scalar) {
   CHECK_NOTNULL(im);
   CHECK_NOTNULL(im->data());
 
@@ -403,8 +403,8 @@ void Resize(const JImage &im_src, JImage *im_res, int height, int width) {
   }
 }
 
-template <typename Dtype>
-void Crop(const JImage &im_src, JImage *im_crop, const Rect<Dtype> &crop) {
+template <typename T>
+void Crop(const JImage &im_src, JImage *im_crop, const Rect<T> &crop) {
   CHECK_NOTNULL(im_src.data());
   CHECK_NOTNULL(im_crop);
   CHECK_NE(im_src.data(), im_crop->data());
@@ -444,8 +444,8 @@ void Crop(const JImage &im_src, JImage *im_crop, const Rect<Dtype> &crop) {
   }
 }
 
-template <typename Dtype>
-void CropResize(const JImage &im_src, JImage *im_res, const Rect<Dtype> &crop,
+template <typename T>
+void CropResize(const JImage &im_src, JImage *im_res, const Rect<T> &crop,
                 int height, int width) {
   CHECK_NOTNULL(im_src.data());
   CHECK_NOTNULL(im_res);
@@ -498,9 +498,9 @@ void CropResize(const JImage &im_src, JImage *im_res, const Rect<Dtype> &crop,
   }
 }
 
-template <typename Dtype>
-void CropResize2Gray(const JImage &im_src, JImage *im_gray,
-                     const Rect<Dtype> &crop, int height, int width) {
+template <typename T>
+void CropResize2Gray(const JImage &im_src, JImage *im_gray, const Rect<T> &crop,
+                     int height, int width) {
   CHECK_NOTNULL(im_src.data());
   CHECK_NOTNULL(im_gray);
   CHECK_NE(im_src.data(), im_gray->data());

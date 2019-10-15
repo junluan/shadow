@@ -5,11 +5,11 @@
 
 namespace Shadow {
 
-template <class Dtype>
+template <typename T>
 class Box {
  public:
   Box() = default;
-  Box(Dtype xmin_t, Dtype ymin_t, Dtype xmax_t, Dtype ymax_t)
+  Box(T xmin_t, T ymin_t, T xmax_t, T ymax_t)
       : xmin(xmin_t), ymin(ymin_t), xmax(xmax_t), ymax(ymax_t) {}
 
   RectI RectInt() const { return RectI(xmin, ymin, xmax - xmin, ymax - ymin); }
@@ -17,7 +17,7 @@ class Box {
     return RectF(xmin, ymin, xmax - xmin, ymax - ymin);
   }
 
-  Dtype xmin = 0, ymin = 0, xmax = 0, ymax = 0;
+  T xmin = 0, ymin = 0, xmax = 0, ymax = 0;
   float score = 0;
   int label = -1;
 };
@@ -30,36 +30,35 @@ using VecBoxF = std::vector<BoxF>;
 
 namespace Boxes {
 
-template <typename Dtype>
-void Clip(const Box<Dtype> &box, Box<Dtype> *clip_box, Dtype min, Dtype max);
+template <typename T>
+void Clip(const Box<T> &box, Box<T> *clip_box, T min, T max);
 
-template <typename Dtype>
-Dtype Size(const Box<Dtype> &box);
+template <typename T>
+T Size(const Box<T> &box);
 
-template <typename Dtype>
-float Intersection(const Box<Dtype> &box_a, const Box<Dtype> &box_b);
+template <typename T>
+float Intersection(const Box<T> &box_a, const Box<T> &box_b);
 
-template <typename Dtype>
-float Union(const Box<Dtype> &box_a, const Box<Dtype> &box_b);
+template <typename T>
+float Union(const Box<T> &box_a, const Box<T> &box_b);
 
-template <typename Dtype>
-float IoU(const Box<Dtype> &box_a, const Box<Dtype> &box_b);
+template <typename T>
+float IoU(const Box<T> &box_a, const Box<T> &box_b);
 
-template <typename Dtype>
-std::vector<Box<Dtype>> NMS(const std::vector<Box<Dtype>> &boxes,
-                            float iou_threshold);
-template <typename Dtype>
-std::vector<Box<Dtype>> NMS(const std::vector<std::vector<Box<Dtype>>> &Gboxes,
-                            float iou_threshold);
+template <typename T>
+std::vector<Box<T>> NMS(const std::vector<Box<T>> &boxes, float iou_threshold);
+template <typename T>
+std::vector<Box<T>> NMS(const std::vector<std::vector<Box<T>>> &Gboxes,
+                        float iou_threshold);
 
-template <typename Dtype>
-void Smooth(const Box<Dtype> &old_box, Box<Dtype> *new_box, float smooth);
-template <typename Dtype>
-void Smooth(const std::vector<Box<Dtype>> &old_boxes,
-            std::vector<Box<Dtype>> *new_boxes, float smooth);
+template <typename T>
+void Smooth(const Box<T> &old_box, Box<T> *new_box, float smooth);
+template <typename T>
+void Smooth(const std::vector<Box<T>> &old_boxes,
+            std::vector<Box<T>> *new_boxes, float smooth);
 
-template <typename Dtype>
-void Amend(std::vector<std::vector<Box<Dtype>>> *Gboxes, const VecRectF &crops,
+template <typename T>
+void Amend(std::vector<std::vector<Box<T>>> *Gboxes, const VecRectF &crops,
            int height = 1, int width = 1);
 
 }  // namespace Boxes

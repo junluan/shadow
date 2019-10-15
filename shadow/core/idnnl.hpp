@@ -13,7 +13,7 @@ namespace Shadow {
 
 namespace idnnl {
 
-template <typename Dtype>
+template <typename T>
 inline dnnl::memory::desc create_memory_desc(
     const std::vector<int> &shape,
     dnnl::memory::format_tag format_tag = dnnl::memory::format_tag::nchw) {
@@ -22,11 +22,11 @@ inline dnnl::memory::desc create_memory_desc(
     dims.push_back(dim);
   }
   auto data_type = dnnl::memory::data_type::undef;
-  if (std::is_same<Dtype, float>::value) {
+  if (std::is_same<T, float>::value) {
     data_type = dnnl::memory::data_type::f32;
-  } else if (std::is_same<Dtype, int>::value) {
+  } else if (std::is_same<T, int>::value) {
     data_type = dnnl::memory::data_type::s32;
-  } else if (std::is_same<Dtype, unsigned char>::value) {
+  } else if (std::is_same<T, unsigned char>::value) {
     data_type = dnnl::memory::data_type::u8;
   }
   return dnnl::memory::desc(dims, data_type, format_tag);

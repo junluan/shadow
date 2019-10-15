@@ -28,37 +28,35 @@ class Scalar {
   unsigned char r = 0, g = 0, b = 0;
 };
 
-template <class Dtype>
+template <typename T>
 class Point {
  public:
   Point() = default;
-  Point(Dtype x_t, Dtype y_t, float score_t = -1)
-      : x(x_t), y(y_t), score(score_t) {}
+  Point(T x_t, T y_t, float score_t = -1) : x(x_t), y(y_t), score(score_t) {}
   Point(const Point<int> &p) : x(p.x), y(p.y), score(p.score) {}
   Point(const Point<float> &p) : x(p.x), y(p.y), score(p.score) {}
-  Dtype x = 0, y = 0;
+  T x = 0, y = 0;
   float score = -1;
 };
 
-template <class Dtype>
+template <typename T>
 class Rect {
  public:
   Rect() = default;
-  Rect(Dtype x_t, Dtype y_t, Dtype w_t, Dtype h_t)
-      : x(x_t), y(y_t), w(w_t), h(h_t) {}
+  Rect(T x_t, T y_t, T w_t, T h_t) : x(x_t), y(y_t), w(w_t), h(h_t) {}
   Rect(const Rect<int> &rect) : x(rect.x), y(rect.y), w(rect.w), h(rect.h) {}
   Rect(const Rect<float> &rect) : x(rect.x), y(rect.y), w(rect.w), h(rect.h) {}
-  Dtype x = 0, y = 0, w = 0, h = 0;
+  T x = 0, y = 0, w = 0, h = 0;
 };
 
-template <class Dtype>
+template <typename T>
 class Size {
  public:
   Size() = default;
-  Size(Dtype w_t, Dtype h_t) : w(w_t), h(h_t) {}
+  Size(T w_t, T h_t) : w(w_t), h(h_t) {}
   Size(const Size<int> &size) : w(size.w), h(size.h) {}
   Size(const Size<float> &size) : w(size.w), h(size.h) {}
-  Dtype w = 0, h = 0;
+  T w = 0, h = 0;
 };
 
 using PointI = Point<int>;

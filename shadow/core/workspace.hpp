@@ -72,22 +72,22 @@ class Workspace {
     return GetBlob<T>(name);
   }
 
-  template <typename Dtype>
-  Blob<Dtype> *CreateTempBlob(const VecInt &shape, const std::string &name) {
-    Blob<Dtype> *blob = nullptr;
+  template <typename T>
+  Blob<T> *CreateTempBlob(const VecInt &shape, const std::string &name) {
+    Blob<T> *blob = nullptr;
     if (!HasBlob(name)) {
-      blob_map_[name].first = typeid(Dtype).name();
-      blob_map_[name].second = new Blob<Dtype>(name);
+      blob_map_[name].first = typeid(T).name();
+      blob_map_[name].second = new Blob<T>(name);
     }
-    blob = GetBlob<Dtype>(name);
+    blob = GetBlob<T>(name);
     CHECK_NOTNULL(blob);
     blob->clear();
     blob->set_shape(shape);
     size_t cou = 1;
     for (const auto dim : shape) cou *= dim;
     CHECK_GT(cou, 0);
-    int size = sizeof(Dtype) / sizeof(unsigned char);
-    blob->share_data(reinterpret_cast<Dtype *>(GetTempPtr(cou, size)), shape);
+    int size = sizeof(T) / sizeof(unsigned char);
+    blob->share_data(reinterpret_cast<T *>(GetTempPtr(cou, size)), shape);
     return blob;
   }
 

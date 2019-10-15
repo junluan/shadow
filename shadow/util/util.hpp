@@ -34,8 +34,8 @@ namespace Shadow {
 
 namespace Util {
 
-template <typename Dtype>
-inline int round(Dtype x) {
+template <typename T>
+inline int round(T x) {
 #if (defined(__linux__) && !defined(ANDROID)) || defined(__APPLE__)
   return std::round(x);
 #elif defined(_WIN32) || defined(ANDROID)
@@ -50,8 +50,8 @@ inline float rand_uniform(float min, float max) {
   return distribute(generator);
 }
 
-template <typename Dtype>
-inline Dtype constrain(Dtype min, Dtype max, Dtype value) {
+template <typename T>
+inline T constrain(T min, T max, T value) {
   if (value < min) return min;
   if (value > max) return max;
   return value;
@@ -101,8 +101,8 @@ inline float stof(const std::string &str) {
   return num;
 }
 
-template <typename Dtype>
-inline std::string to_string(const Dtype val) {
+template <typename T>
+inline std::string to_string(const T &val) {
   std::stringstream ss;
   ss << val;
   return ss.str();
@@ -121,8 +121,8 @@ inline std::string format_process(int current, int total) {
   return ss.str();
 }
 
-template <typename Dtype>
-inline std::string format_vector(const std::vector<Dtype> &vector,
+template <typename T>
+inline std::string format_vector(const std::vector<T> &vector,
                                  const std::string &split = ",",
                                  const std::string &prefix = "",
                                  const std::string &postfix = "") {

@@ -21,10 +21,10 @@ __global__ void KernelPermute(const T *in_data, int count, int num_axes,
   }
 }
 
-template <typename T, typename Dtype>
+template <typename T>
 void Permute(const T *in_data, int count, int num_axes,
-             const Dtype *permute_order, const Dtype *old_steps,
-             const Dtype *new_steps, T *out_data) {
+             const int *permute_order, const int *old_steps,
+             const int *new_steps, T *out_data) {
   KernelPermute<T><<<GetBlocks(count), NumThreads>>>(
       in_data, count, num_axes, permute_order, old_steps, new_steps, out_data);
   CUDA_CHECK(cudaPeekAtLastError());

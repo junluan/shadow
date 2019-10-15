@@ -23,11 +23,11 @@ namespace JImageProc {
 VecPointI GetLinePoints(const PointI &start, const PointI &end, int step = 1,
                         int slice_axis = -1);
 
-template <typename Dtype>
-void Line(JImage *im, const Point<Dtype> &start, const Point<Dtype> &end,
+template <typename T>
+void Line(JImage *im, const Point<T> &start, const Point<T> &end,
           const Scalar &scalar = Scalar(0, 255, 0));
-template <typename Dtype>
-void Rectangle(JImage *im, const Rect<Dtype> &rect,
+template <typename T>
+void Rectangle(JImage *im, const Rect<T> &rect,
                const Scalar &scalar = Scalar(0, 255, 0));
 
 void FormatTransform(const JImage &im_src, JImage *im_dst,
@@ -35,14 +35,14 @@ void FormatTransform(const JImage &im_src, JImage *im_dst,
 
 void Resize(const JImage &im_src, JImage *im_res, int height, int width);
 
-template <typename Dtype>
-void Crop(const JImage &im_src, JImage *im_crop, const Rect<Dtype> &crop);
-template <typename Dtype>
-void CropResize(const JImage &im_src, JImage *im_res, const Rect<Dtype> &crop,
+template <typename T>
+void Crop(const JImage &im_src, JImage *im_crop, const Rect<T> &crop);
+template <typename T>
+void CropResize(const JImage &im_src, JImage *im_res, const Rect<T> &crop,
                 int height, int width);
-template <typename Dtype>
-void CropResize2Gray(const JImage &im_src, JImage *im_gray,
-                     const Rect<Dtype> &crop, int height, int width);
+template <typename T>
+void CropResize2Gray(const JImage &im_src, JImage *im_gray, const Rect<T> &crop,
+                     int height, int width);
 
 void Filter1D(const JImage &im_src, JImage *im_filter, const float *kernel,
               int kernel_size, int direction = 0);

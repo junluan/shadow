@@ -20,10 +20,10 @@ class PermuteOp : public Operator {
 
 namespace Vision {
 
-template <typename T, typename Dtype>
+template <typename T>
 void Permute(const T *in_data, int count, int num_axes,
-             const Dtype *permute_order, const Dtype *old_steps,
-             const Dtype *new_steps, T *out_data);
+             const int *permute_order, const int *old_steps,
+             const int *new_steps, T *out_data);
 
 }  // namespace Vision
 

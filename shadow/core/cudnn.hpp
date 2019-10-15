@@ -22,7 +22,7 @@ namespace Shadow {
 
 namespace cudnn {
 
-template <typename Dtype>
+template <typename T>
 class dataType;
 template <>
 class dataType<float> {
@@ -39,19 +39,19 @@ class dataType<double> {
   static const void *one, *zero;
 };
 
-template <typename Dtype>
+template <typename T>
 inline void createTensorDesc(cudnnTensorDescriptor_t* desc) {
   CUDNN_CHECK(cudnnCreateTensorDescriptor(desc));
 }
 
-template <typename Dtype>
+template <typename T>
 inline void setTensor4dDesc(cudnnTensorDescriptor_t* desc, int n, int c, int h,
                             int w) {
   CUDNN_CHECK(cudnnSetTensor4dDescriptor(*desc, CUDNN_TENSOR_NCHW,
-                                         dataType<Dtype>::type, n, c, h, w));
+                                         dataType<T>::type, n, c, h, w));
 }
 
-template <typename Dtype>
+template <typename T>
 inline void setTensorNdDesc(cudnnTensorDescriptor_t* desc, int n, int* dim) {
   int stride[CUDNN_DIM_MAX] = {};
   stride[n - 1] = 1;
@@ -59,45 +59,45 @@ inline void setTensorNdDesc(cudnnTensorDescriptor_t* desc, int n, int* dim) {
     stride[d] = dim[d + 1] * stride[d + 1];
   }
   CUDNN_CHECK(
-      cudnnSetTensorNdDescriptor(*desc, dataType<Dtype>::type, n, dim, stride));
+      cudnnSetTensorNdDescriptor(*desc, dataType<T>::type, n, dim, stride));
 }
 
-template <typename Dtype>
+template <typename T>
 inline void createFilterDesc(cudnnFilterDescriptor_t* desc) {
   CUDNN_CHECK(cudnnCreateFilterDescriptor(desc));
 }
 
-template <typename Dtype>
+template <typename T>
 inline void setFilter4dDesc(cudnnFilterDescriptor_t* desc, int n, int c, int h,
                             int w) {
-  CUDNN_CHECK(cudnnSetFilter4dDescriptor(*desc, dataType<Dtype>::type,
+  CUDNN_CHECK(cudnnSetFilter4dDescriptor(*desc, dataType<T>::type,
                                          CUDNN_TENSOR_NCHW, n, c, h, w));
 }
 
-template <typename Dtype>
+template <typename T>
 inline void createConvolutionDesc(cudnnConvolutionDescriptor_t* conv_desc) {
   CUDNN_CHECK(cudnnCreateConvolutionDescriptor(conv_desc));
 }
 
-template <typename Dtype>
+template <typename T>
 inline void setConvolution2dDesc(cudnnConvolutionDescriptor_t* conv_desc,
                                  int pad_h, int pad_w, int stride_h,
                                  int stride_w, int dilation_h, int dilation_w,
                                  int group) {
   CUDNN_CHECK(cudnnSetConvolution2dDescriptor(
       *conv_desc, pad_h, pad_w, stride_h, stride_w, dilation_h, dilation_w,
-      CUDNN_CROSS_CORRELATION, dataType<Dtype>::type));
+      CUDNN_CROSS_CORRELATION, dataType<T>::type));
 #if CUDNN_VERSION_MIN(7, 0, 1)
   CUDNN_CHECK(cudnnSetConvolutionGroupCount(*conv_desc, group));
 #endif
 }
 
-template <typename Dtype>
+template <typename T>
 inline void createActivationDesc(cudnnActivationDescriptor_t* activate_desc) {
   CUDNN_CHECK(cudnnCreateActivationDescriptor(activate_desc));
 }
 
-template <typename Dtype>
+template <typename T>
 inline void setActivationDesc(cudnnActivationDescriptor_t* activate_desc,
                               int activate_type, double coef) {
   cudnnActivationMode_t mode{};
@@ -123,12 +123,12 @@ inline void setActivationDesc(cudnnActivationDescriptor_t* activate_desc,
                                            CUDNN_NOT_PROPAGATE_NAN, coef));
 }
 
-template <typename Dtype>
+template <typename T>
 inline void createPoolingDesc(cudnnPoolingDescriptor_t* pool_desc) {
   CUDNN_CHECK(cudnnCreatePoolingDescriptor(pool_desc));
 }
 
-template <typename Dtype>
+template <typename T>
 inline void setPooling2dDesc(cudnnPoolingDescriptor_t* pool_desc, int pool_type,
                              int window_h, int window_w, int pad_h, int pad_w,
                              int stride_h, int stride_w) {
@@ -148,12 +148,12 @@ inline void setPooling2dDesc(cudnnPoolingDescriptor_t* pool_desc, int pool_type,
                                           stride_h, stride_w));
 }
 
-template <typename Dtype>
+template <typename T>
 inline void createReduceDesc(cudnnReduceTensorDescriptor_t* reduce_desc) {
   CUDNN_CHECK(cudnnCreateReduceTensorDescriptor(reduce_desc));
 }
 
-template <typename Dtype>
+template <typename T>
 inline void setReduceDesc(cudnnReduceTensorDescriptor_t* reduce_desc,
                           int reduce_type) {
   cudnnReduceTensorOp_t mode{};
@@ -177,24 +177,24 @@ inline void setReduceDesc(cudnnReduceTensorDescriptor_t* reduce_desc,
       LOG(FATAL) << "Unsupported reduce type " << reduce_type;
   }
   CUDNN_CHECK(cudnnSetReduceTensorDescriptor(
-      *reduce_desc, mode, dataType<Dtype>::type, CUDNN_PROPAGATE_NAN,
+      *reduce_desc, mode, dataType<T>::type, CUDNN_PROPAGATE_NAN,
       CUDNN_REDUCE_TENSOR_NO_INDICES, CUDNN_32BIT_INDICES));
 }
 
-template <typename Dtype>
+template <typename T>
 inline void createSpatialTransformerDesc(
     cudnnSpatialTransformerDescriptor_t* spatial_transformer_desc) {
   CUDNN_CHECK(
       cudnnCreateSpatialTransformerDescriptor(spatial_transformer_desc));
 }
 
-template <typename Dtype>
+template <typename T>
 inline void setSpatialTransformerDesc(
     cudnnSpatialTransformerDescriptor_t* spatial_transformer_desc, int n,
     int* dim) {
   CUDNN_CHECK(cudnnSetSpatialTransformerNdDescriptor(
       *spatial_transformer_desc, CUDNN_SAMPLER_BILINEAR,
-      cudnn::dataType<Dtype>::type, n, dim));
+      cudnn::dataType<T>::type, n, dim));
 }
 
 }  // namespace cudnn
