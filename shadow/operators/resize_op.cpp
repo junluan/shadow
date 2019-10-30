@@ -18,7 +18,7 @@ void ResizeOp::Forward() {
       CHECK_EQ(size->num_axes(), 1);
       CHECK_EQ(size->count(), 2);
       VecInt size_data(2, 0);
-      size->read_data(size_data.data(), 2);
+      size->get_data(size_data.data(), 2);
       out_h = size_data[0], out_w = size_data[1];
     } else if (size_type == float_id) {
       const auto* size = bottoms<float>(1);

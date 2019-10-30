@@ -46,7 +46,7 @@ void BatchNormOp::Forward() {
     if (bottoms_size() == 4) {
       float scale = 1;
       CHECK_EQ(bottoms<float>(3)->count(), 1);
-      bottoms<float>(3)->read_data(&scale, 1);
+      bottoms<float>(3)->get_data(&scale, 1);
       float scale_factor = scale == 0 ? 0 : 1 / scale;
       Blas::Mul(mean_cudnn->count(), bottoms<float>(1)->data(), 0, scale_factor,
                 mean_cudnn->mutable_data(), 0);
@@ -91,7 +91,7 @@ void BatchNormOp::Forward() {
     float scale = 1;
     if (bottoms_size() == 4) {
       CHECK_EQ(bottoms<float>(3)->count(), 1);
-      bottoms<float>(3)->read_data(&scale, 1);
+      bottoms<float>(3)->get_data(&scale, 1);
     }
     float scale_factor = scale == 0 ? 0 : 1 / scale;
     Blas::Mul(mean->count(), bottoms<float>(1)->data(), 0, scale_factor,

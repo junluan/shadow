@@ -69,7 +69,7 @@ void NormalizeOp::Forward() {
       if (channel_shared_) {
         CHECK_EQ(scale->count(), 1);
         float scale_data = 1;
-        scale->read_data(&scale_data, 1);
+        scale->get_data(&scale_data, 1);
         Blas::BlasSscal(num, scale_data, top->mutable_data(), data_offset,
                         op_ws_->Ctx()->blas_handle());
       } else {

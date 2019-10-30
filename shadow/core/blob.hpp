@@ -29,7 +29,7 @@ class Blob {
 #if defined(USE_CUDA)
     auto cou = count();
     cpu_data_.resize(cou, 0);
-    read_data(cpu_data_.data(), cou);
+    get_data(cpu_data_.data(), cou);
     return cpu_data_.data();
 
 #else
@@ -53,14 +53,14 @@ class Blob {
 #endif
   }
 
-  void read_data(T *data, int read_count, int offset = 0) const {
+  void get_data(T *data, int get_count, int offset = 0) const {
     CHECK_NOTNULL(data);
-    CHECK_LE(read_count + offset, count());
+    CHECK_LE(get_count + offset, count());
 #if defined(USE_CUDA)
-    Kernel::ReadBuffer(read_count, data_ + offset, data);
+    Kernel::ReadBuffer(get_count, data_ + offset, data);
 
 #else
-    memcpy(data, data_ + offset, read_count * sizeof(T));
+    memcpy(data, data_ + offset, get_count * sizeof(T));
 #endif
   }
 
@@ -87,28 +87,14 @@ class Blob {
     }
     set_shape(shape);
   }
-  void reshape(int batch, int channel, int height, int width,
-               bool shared = false, int align = MALLOC_ALIGN) {
-    auto cstep = align_size(height * width * sizeof(T), align) / sizeof(T);
-    auto cou = batch * channel * cstep;
-    CHECK_GT(cou, 0);
-    if (data_ == nullptr || cou > capacity_) {
-      clear();
-      allocate_data(cou, shared, align);
-    }
-    set_shape(VecInt{batch, channel, height, width});
-    set_cstep(cstep);
-  }
 
   const std::string &name() const { return name_; }
   Device device() const { return device_; }
-  size_t cstep() const { return cstep_; }
   size_t capacity() const { return capacity_; }
   bool shared() const { return shared_; }
 
   void set_name(const std::string &name) { name_ = name; }
   void set_device(Device device) { device_ = device; }
-  void set_cstep(size_t cstep) { cstep_ = cstep; }
   void set_capacity(size_t capacity) { capacity_ = capacity; }
   void set_shared(bool shared) { shared_ = shared; }
 
@@ -158,7 +144,6 @@ class Blob {
     data_ = nullptr;
     cpu_data_.clear();
     shape_.clear();
-    cstep_ = 0;
     capacity_ = 0;
     shared_ = false;
   }
@@ -192,7 +177,7 @@ class Blob {
   std::string name_;
   VecInt shape_{};
   Device device_ = kCPU;
-  size_t cstep_ = 0, capacity_ = 0;
+  size_t capacity_ = 0;
   bool shared_ = false;
 
   DISABLE_COPY_AND_ASSIGN(Blob<T>);
