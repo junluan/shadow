@@ -378,9 +378,18 @@ class Network(object):
             self.add_arg(op_param, 'pool', 0, 's_i')
         else:
             self.add_arg(op_param, 'pool', 1, 's_i')
-        self.add_arg(op_param, 'kernel_size', kernel_size, 'v_i')
-        self.add_arg(op_param, 'stride', stride, 'v_i')
-        self.add_arg(op_param, 'pad', pad, 'v_i')
+        if isinstance(kernel_size, int):
+            self.add_arg(op_param, 'kernel_size', kernel_size, 's_i')
+        else:
+            self.add_arg(op_param, 'kernel_size', kernel_size, 'v_i')
+        if isinstance(stride, int):
+            self.add_arg(op_param, 'stride', stride, 's_i')
+        else:
+            self.add_arg(op_param, 'stride', stride, 'v_i')
+        if isinstance(pad, int):
+            self.add_arg(op_param, 'pad', pad, 's_i')
+        else:
+            self.add_arg(op_param, 'pad', pad, 'v_i')
         self.add_arg(op_param, 'global_pooling', global_pooling, 's_i')
         self.add_arg(op_param, 'full_pooling', full_pooling, 's_i')
 
