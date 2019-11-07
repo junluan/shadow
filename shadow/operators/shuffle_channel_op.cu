@@ -30,8 +30,7 @@ void ShuffleChannel(const T *in_data, int batch, int channel, int spatial_dim,
   CUDA_CHECK(cudaPeekAtLastError());
 }
 
-template void ShuffleChannel(const float *in_data, int batch, int channel,
-                             int spatial_dim, int group, float *out_data);
+template void ShuffleChannel(const float *, int, int, int, int, float *);
 #endif
 
 }  // namespace Vision

@@ -49,10 +49,8 @@ void Im2Col(const T *in_data, const VecInt &in_shape, int offset,
   CUDA_CHECK(cudaPeekAtLastError());
 }
 
-template void Im2Col(const float *in_data, const VecInt &in_shape, int offset,
-                     int kernel_size_h, int kernel_size_w, int stride_h,
-                     int stride_w, int pad_h, int pad_w, int dilation,
-                     int zero_point, const VecInt &out_shape, float *col_data);
+template void Im2Col(const float *, const VecInt &, int, int, int, int, int,
+                     int, int, int, int, const VecInt &, float *);
 
 template <typename T>
 __global__ void KernelDepthwise(const T *in_data, int count,
@@ -106,12 +104,9 @@ void Depthwise(const T *in_data, const VecInt &in_shape, const T *weight_data,
   CUDA_CHECK(cudaPeekAtLastError());
 }
 
-template void Depthwise(const float *in_data, const VecInt &in_shape,
-                        const float *weight_data, const float *bias_data,
-                        int kernel_size_h, int kernel_size_w, int stride_h,
-                        int stride_w, int pad_h, int pad_w, int dilation,
-                        int bias_term, const VecInt &out_shape,
-                        float *out_data);
+template void Depthwise(const float *, const VecInt &, const float *,
+                        const float *, int, int, int, int, int, int, int, int,
+                        const VecInt &, float *);
 #endif
 
 }  // namespace Vision

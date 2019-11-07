@@ -67,8 +67,7 @@ void Softmax(const T *in_data, int outer_num, int channels, int inner_num,
   CUDA_CHECK(cudaPeekAtLastError());
 }
 
-template void Softmax(const float *in_data, int outer_num, int channels,
-                      int inner_num, float *val_data, float *out_data);
+template void Softmax(const float *, int, int, int, float *, float *);
 
 #endif
 

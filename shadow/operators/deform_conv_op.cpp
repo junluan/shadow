@@ -163,11 +163,9 @@ void DeformIm2Col(const T *in_data, const VecInt &in_shape,
   }
 }
 
-template void DeformIm2Col(const float *in_data, const VecInt &in_shape,
-                           const float *offset_data, int offset,
-                           int deform_group, int kernel_size, int stride,
-                           int pad, int dilation, int zero_point,
-                           const VecInt &out_shape, float *out_data);
+template void DeformIm2Col(const float *, const VecInt &, const float *, int,
+                           int, int, int, int, int, int, const VecInt &,
+                           float *);
 #endif
 
 }  // namespace Vision

@@ -146,14 +146,9 @@ void DeformPSROIPooling(const T *in_data, const VecInt &in_shape,
   }
 }
 
-template void DeformPSROIPooling(const float *in_data, const VecInt &in_shape,
-                                 const float *roi_data, const float *trans_data,
-                                 const VecInt &trans_shape, int num_rois,
-                                 int output_dim, int group_size,
-                                 int pooled_size, int part_size,
-                                 int sample_per_part, float spatial_scale,
-                                 float trans_std, bool no_trans,
-                                 float *out_data);
+template void DeformPSROIPooling(const float *, const VecInt &, const float *,
+                                 const float *, const VecInt &, int, int, int,
+                                 int, int, int, float, float, bool, float *);
 #endif
 
 }  // namespace Vision

@@ -28,9 +28,7 @@ void Stack(const T *in_data, int count, int num_stacks, int stack_size,
   CUDA_CHECK(cudaPeekAtLastError());
 }
 
-template void Stack(const float *in_data, int count, int num_stacks,
-                    int stack_size, int top_stack_axis, int offset_concat_axis,
-                    float *out_data);
+template void Stack(const float *, int, int, int, int, int, float *);
 #endif
 
 }  // namespace Vision

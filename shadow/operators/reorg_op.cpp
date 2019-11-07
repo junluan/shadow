@@ -50,8 +50,7 @@ void Reorg(const T *in_data, const VecInt &in_shape, int stride, T *out_data) {
   }
 }
 
-template void Reorg(const float *in_data, const VecInt &in_shape, int stride,
-                    float *out_data);
+template void Reorg(const float *, const VecInt &, int, float *);
 #endif
 
 }  // namespace Vision

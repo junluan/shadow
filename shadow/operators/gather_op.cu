@@ -28,9 +28,7 @@ void Gather(const T *in_data, const int *indexes_data, int num_indexes,
   CUDA_CHECK(cudaPeekAtLastError());
 }
 
-template void Gather(const float *in_data, const int *indexes_data,
-                     int num_indexes, int gather_dim, int inner_num, int count,
-                     float *out_data);
+template void Gather(const float *, const int *, int, int, int, int, float *);
 #endif
 
 }  // namespace Vision

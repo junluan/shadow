@@ -88,9 +88,8 @@ void Scale(const T *in_data, int count, const T *scale_data, const T *bias_data,
   }
 }
 
-template void Scale(const float *in_data, int count, const float *scale_data,
-                    const float *bias_data, int scale_dim, int inner_dim,
-                    float *out_data);
+template void Scale(const float *, int, const float *, const float *, int, int,
+                    float *);
 #endif
 
 }  // namespace Vision

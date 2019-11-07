@@ -70,9 +70,8 @@ void LRN(const T *in_data, const VecInt &in_shape, int size, float alpha,
   CUDA_CHECK(cudaPeekAtLastError());
 }
 
-template void LRN(const float *in_data, const VecInt &in_shape, int size,
-                  float alpha, float beta, float k, float *scale_data,
-                  float *out_data);
+template void LRN(const float *, const VecInt &, int, float, float, float,
+                  float *, float *);
 #endif
 
 }  // namespace Vision

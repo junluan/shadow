@@ -67,9 +67,8 @@ void Reduce(const T *in_data, const int *list_data, const int *offset_data,
   CUDA_CHECK(cudaPeekAtLastError());
 }
 
-template void Reduce(const float *in_data, const int *list_data,
-                     const int *offset_data, int num_list, int operation,
-                     int count, float *out_data);
+template void Reduce(const float *, const int *, const int *, int, int, int,
+                     float *);
 #endif
 
 }  // namespace Vision

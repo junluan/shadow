@@ -183,10 +183,8 @@ void Col2Im(const T *col_data, const VecInt &in_shape, int offset,
   }
 }
 
-template void Col2Im(const float *col_data, const VecInt &in_shape, int offset,
-                     int kernel_size_h, int kernel_size_w, int stride_h,
-                     int stride_w, int pad_h, int pad_w, int dilation,
-                     const VecInt &out_shape, float *in_data);
+template void Col2Im(const float *, const VecInt &, int, int, int, int, int,
+                     int, int, int, const VecInt &, float *);
 #endif
 
 }  // namespace Vision

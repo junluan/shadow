@@ -181,10 +181,8 @@ void BroadcastBinary(const T *in_data, const int *in_shape,
   }
 }
 
-template void BroadcastBinary(const float *in_data, const int *in_shape,
-                              const float *scalar_data, const int *scalar_shape,
-                              int operation, int num_axes, int count,
-                              const int *out_shape, float *out_data);
+template void BroadcastBinary(const float *, const int *, const float *,
+                              const int *, int, int, int, const int *, float *);
 #endif
 
 }  // namespace Vision

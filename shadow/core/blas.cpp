@@ -37,18 +37,16 @@ void Set(int n, float val, T *y, int offy) {
     auto y_eigen = MapVector<T>(y + offy, n);                         \
     operation;                                                        \
   }                                                                   \
-  template void name(int n, const float *a, int offa, const float *b, \
-                     int offb, float *y, int offy);
+  template void name(int, const float *, int, const float *, int, float *, int);
 
-#define BLAS_BINARY_SCALAR_FUNC_EIGEN(name, operation)                       \
-  template <typename T>                                                      \
-  void name(int n, const T *a, int offa, float alpha, T *y, int offy) {      \
-    const auto &a_eigen = MapVector<T>(const_cast<T *>(a + offa), n);        \
-    auto y_eigen = MapVector<T>(y + offy, n);                                \
-    operation;                                                               \
-  }                                                                          \
-  template void name(int n, const float *a, int offa, float alpha, float *y, \
-                     int offy);
+#define BLAS_BINARY_SCALAR_FUNC_EIGEN(name, operation)                  \
+  template <typename T>                                                 \
+  void name(int n, const T *a, int offa, float alpha, T *y, int offy) { \
+    const auto &a_eigen = MapVector<T>(const_cast<T *>(a + offa), n);   \
+    auto y_eigen = MapVector<T>(y + offy, n);                           \
+    operation;                                                          \
+  }                                                                     \
+  template void name(int, const float *, int, float, float *, int);
 
 #define BLAS_UNARY_FUNC_EIGEN(name, operation)                        \
   template <typename T>                                               \
@@ -57,7 +55,7 @@ void Set(int n, float val, T *y, int offy) {
     auto y_eigen = MapVector<T>(y + offy, n);                         \
     operation;                                                        \
   }                                                                   \
-  template void name(int n, const float *a, int offa, float *y, int offy);
+  template void name(int, const float *, int, float *, int);
 
 BLAS_BINARY_FUNC_EIGEN(Add, y_eigen = a_eigen.array() + b_eigen.array());
 BLAS_BINARY_FUNC_EIGEN(Sub, y_eigen = a_eigen.array() - b_eigen.array());
@@ -92,28 +90,26 @@ BLAS_UNARY_FUNC_EIGEN(Neg, y_eigen = -a_eigen.array());
 BLAS_UNARY_FUNC_EIGEN(Reciprocal, y_eigen = a_eigen.array().inverse());
 
 #else
-#define BLAS_BINARY_FUNC(name, operation)                             \
-  template <typename T>                                               \
-  void name(int n, const T *a, int offa, const T *b, int offb, T *y,  \
-            int offy) {                                               \
-    a += offa, b += offb, y += offy;                                  \
-    for (int i = 0; i < n; ++i) {                                     \
-      operation;                                                      \
-    }                                                                 \
-  }                                                                   \
-  template void name(int n, const float *a, int offa, const float *b, \
-                     int offb, float *y, int offy);
+#define BLAS_BINARY_FUNC(name, operation)                            \
+  template <typename T>                                              \
+  void name(int n, const T *a, int offa, const T *b, int offb, T *y, \
+            int offy) {                                              \
+    a += offa, b += offb, y += offy;                                 \
+    for (int i = 0; i < n; ++i) {                                    \
+      operation;                                                     \
+    }                                                                \
+  }                                                                  \
+  template void name(int, const float *, int, const float *, int, float *, int);
 
-#define BLAS_BINARY_SCALAR_FUNC(name, operation)                             \
-  template <typename T>                                                      \
-  void name(int n, const T *a, int offa, float alpha, T *y, int offy) {      \
-    a += offa, y += offy;                                                    \
-    for (int i = 0; i < n; ++i) {                                            \
-      operation;                                                             \
-    }                                                                        \
-  }                                                                          \
-  template void name(int n, const float *a, int offa, float alpha, float *y, \
-                     int offy);
+#define BLAS_BINARY_SCALAR_FUNC(name, operation)                        \
+  template <typename T>                                                 \
+  void name(int n, const T *a, int offa, float alpha, T *y, int offy) { \
+    a += offa, y += offy;                                               \
+    for (int i = 0; i < n; ++i) {                                       \
+      operation;                                                        \
+    }                                                                   \
+  }                                                                     \
+  template void name(int, const float *, int, float, float *, int);
 
 #define BLAS_UNARY_FUNC(name, operation)                   \
   template <typename T>                                    \
@@ -123,7 +119,7 @@ BLAS_UNARY_FUNC_EIGEN(Reciprocal, y_eigen = a_eigen.array().inverse());
       operation;                                           \
     }                                                      \
   }                                                        \
-  template void name(int n, const float *a, int offa, float *y, int offy);
+  template void name(int, const float *, int, float *, int);
 
 BLAS_BINARY_FUNC(Add, y[i] = a[i] + b[i]);
 BLAS_BINARY_FUNC(Sub, y[i] = a[i] - b[i]);
@@ -373,25 +369,21 @@ void BlasSgemm(int TA, int TB, int M, int N, int K, float alpha, const T *A,
 }
 
 // Explicit instantiation
-template void Set(int n, float val, float *y, int offy);
+template void Set(int, float, float *, int);
 
 // Level 1
-template void BlasSscal(int n, float alpha, float *x, int offx, void *ctx);
-template void BlasScopy(int n, const float *x, int offx, float *y, int offy,
-                        void *ctx);
-template void BlasSaxpy(int n, float alpha, const float *x, int offx, float *y,
-                        int offy, void *ctx);
-template void BlasSasum(int n, const float *x, int offx, float *y, void *ctx);
+template void BlasSscal(int, float, float *, int, void *);
+template void BlasScopy(int, const float *, int, float *, int, void *);
+template void BlasSaxpy(int, float, const float *, int, float *, int, void *);
+template void BlasSasum(int, const float *, int, float *, void *);
 
 // Level 2
-template void BlasSgemv(int TA, int M, int N, float alpha, const float *A,
-                        int offA, const float *x, int offx, float beta,
-                        float *y, int offy, void *ctx);
+template void BlasSgemv(int, int, int, float, const float *, int, const float *,
+                        int, float, float *, int, void *);
 
 // Level 3
-template void BlasSgemm(int TA, int TB, int M, int N, int K, float alpha,
-                        const float *A, int offA, const float *B, int offB,
-                        float beta, float *C, int offC, void *ctx);
+template void BlasSgemm(int, int, int, int, int, float, const float *, int,
+                        const float *, int, float, float *, int, void *);
 #endif
 
 }  // namespace Blas

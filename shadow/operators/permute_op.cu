@@ -30,9 +30,8 @@ void Permute(const T *in_data, int count, int num_axes,
   CUDA_CHECK(cudaPeekAtLastError());
 }
 
-template void Permute(const float *in_data, int count, int num_axes,
-                      const int *permute_order, const int *old_steps,
-                      const int *new_steps, float *out_data);
+template void Permute(const float *, int, int, const int *, const int *,
+                      const int *, float *);
 #endif
 
 }  // namespace Vision

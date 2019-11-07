@@ -88,8 +88,7 @@ void Resize(const T* in_data, const VecInt& in_shape, int type,
   CUDA_CHECK(cudaPeekAtLastError());
 }
 
-template void Resize(const float* in_data, const VecInt& in_shape, int type,
-                     const VecInt& out_shape, float* out_data);
+template void Resize(const float*, const VecInt&, int, const VecInt&, float*);
 #endif
 
 }  // namespace Vision

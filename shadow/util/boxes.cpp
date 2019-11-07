@@ -136,39 +136,35 @@ void Amend(std::vector<std::vector<Box<T>>> *Gboxes, const VecRectF &crops,
 }
 
 // Explicit instantiation
-template void Clip(const BoxI &box, BoxI *clip_box, int min, int max);
-template void Clip(const BoxF &box, BoxF *clip_box, float min, float max);
+template void Clip(const BoxI &, BoxI *, int, int);
+template void Clip(const BoxF &, BoxF *, float, float);
 
-template int Size(const BoxI &box);
-template float Size(const BoxF &box);
+template int Size(const BoxI &);
+template float Size(const BoxF &);
 
-template float Intersection(const BoxI &box_a, const BoxI &box_b);
-template float Intersection(const BoxF &box_a, const BoxF &box_b);
+template float Intersection(const BoxI &, const BoxI &);
+template float Intersection(const BoxF &, const BoxF &);
 
-template float Union(const BoxI &box_a, const BoxI &box_b);
-template float Union(const BoxF &box_a, const BoxF &box_b);
+template float Union(const BoxI &, const BoxI &);
+template float Union(const BoxF &, const BoxF &);
 
-template float IoU(const BoxI &box_a, const BoxI &box_b);
-template float IoU(const BoxF &box_a, const BoxF &box_b);
+template float IoU(const BoxI &, const BoxI &);
+template float IoU(const BoxF &, const BoxF &);
 
-template VecBoxI NMS(const VecBoxI &boxes, float iou_threshold);
-template VecBoxF NMS(const VecBoxF &boxes, float iou_threshold);
+template VecBoxI NMS(const VecBoxI &, float);
+template VecBoxF NMS(const VecBoxF &, float);
 
-template VecBoxI NMS(const std::vector<VecBoxI> &Gboxes, float iou_threshold);
-template VecBoxF NMS(const std::vector<VecBoxF> &Gboxes, float iou_threshold);
+template VecBoxI NMS(const std::vector<VecBoxI> &, float);
+template VecBoxF NMS(const std::vector<VecBoxF> &, float);
 
-template void Smooth(const BoxI &old_boxes, BoxI *new_boxes, float smooth);
-template void Smooth(const BoxF &old_boxes, BoxF *new_boxes, float smooth);
+template void Smooth(const BoxI &, BoxI *, float);
+template void Smooth(const BoxF &, BoxF *, float);
 
-template void Smooth(const VecBoxI &old_boxes, VecBoxI *new_boxes,
-                     float smooth);
-template void Smooth(const VecBoxF &old_boxes, VecBoxF *new_boxes,
-                     float smooth);
+template void Smooth(const VecBoxI &, VecBoxI *, float);
+template void Smooth(const VecBoxF &, VecBoxF *, float);
 
-template void Amend(std::vector<VecBoxI> *Gboxes, const VecRectF &crops,
-                    int height, int width);
-template void Amend(std::vector<VecBoxF> *Gboxes, const VecRectF &crops,
-                    int height, int width);
+template void Amend(std::vector<VecBoxI> *, const VecRectF &, int, int);
+template void Amend(std::vector<VecBoxF> *, const VecRectF &, int, int);
 
 }  // namespace Boxes
 

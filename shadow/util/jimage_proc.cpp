@@ -897,26 +897,22 @@ void Gradient(const JImage &im_src, int *grad_x, int *grad_y, int *magnitude,
 }
 
 // Explicit instantiation
-template void Line(JImage *im, const PointI &start, const PointI &end,
-                   const Scalar &scalar);
-template void Line(JImage *im, const PointF &start, const PointF &end,
-                   const Scalar &scalar);
+template void Line(JImage *, const PointI &, const PointI &, const Scalar &);
+template void Line(JImage *, const PointF &, const PointF &, const Scalar &);
 
-template void Rectangle(JImage *im, const RectI &rect, const Scalar &scalar);
-template void Rectangle(JImage *im, const RectF &rect, const Scalar &scalar);
+template void Rectangle(JImage *, const RectI &, const Scalar &);
+template void Rectangle(JImage *, const RectF &, const Scalar &);
 
-template void Crop(const JImage &im_src, JImage *im_crop, const RectI &crop);
-template void Crop(const JImage &im_src, JImage *im_crop, const RectF &crop);
+template void Crop(const JImage &, JImage *, const RectI &);
+template void Crop(const JImage &, JImage *, const RectF &);
 
-template void CropResize(const JImage &im_src, JImage *im_res,
-                         const RectI &crop, int height, int width);
-template void CropResize(const JImage &im_src, JImage *im_res,
-                         const RectF &crop, int height, int width);
+template void CropResize(const JImage &, JImage *, const RectI &, int, int);
+template void CropResize(const JImage &, JImage *, const RectF &, int, int);
 
-template void CropResize2Gray(const JImage &im_src, JImage *im_gray,
-                              const RectI &crop, int height, int width);
-template void CropResize2Gray(const JImage &im_src, JImage *im_gray,
-                              const RectF &crop, int height, int width);
+template void CropResize2Gray(const JImage &, JImage *, const RectI &, int,
+                              int);
+template void CropResize2Gray(const JImage &, JImage *, const RectF &, int,
+                              int);
 
 }  // namespace JImageProc
 

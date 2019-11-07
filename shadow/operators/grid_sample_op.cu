@@ -112,9 +112,8 @@ void GridSample(const T* in_data, const VecInt& in_shape,
   CUDA_CHECK(cudaPeekAtLastError());
 }
 
-template void GridSample(const float* in_data, const VecInt& in_shape,
-                         const float* grid_data, int mode, int padding_mode,
-                         const VecInt& out_shape, float* out_data);
+template void GridSample(const float*, const VecInt&, const float*, int, int,
+                         const VecInt&, float*);
 #endif
 
 }  // namespace Vision

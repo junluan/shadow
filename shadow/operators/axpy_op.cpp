@@ -48,9 +48,8 @@ void Axpy(const T *scale_data, const T *x_data, const T *y_data,
   }
 }
 
-template void Axpy(const float *scale_data, const float *x_data,
-                   const float *y_data, const VecInt &in_shape,
-                   float *out_data);
+template void Axpy(const float *, const float *, const float *, const VecInt &,
+                   float *);
 #endif
 
 }  // namespace Vision

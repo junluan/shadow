@@ -170,10 +170,8 @@ void Proposal(const T *anchor_data, const T *score_data, const T *delta_data,
   }
 }
 
-template void Proposal(const float *anchor_data, const float *score_data,
-                       const float *delta_data, const float *info_data,
-                       const VecInt &in_shape, int num_anchors, int feat_stride,
-                       int min_size, float *proposal_data);
+template void Proposal(const float *, const float *, const float *,
+                       const float *, const VecInt &, int, int, int, float *);
 #endif
 
 }  // namespace Vision

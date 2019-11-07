@@ -107,10 +107,8 @@ void DecodeSSDBoxes(const T *mbox_loc, const T *mbox_conf,
   }
 }
 
-template void DecodeSSDBoxes(const float *mbox_loc, const float *mbox_conf,
-                             const float *mbox_priorbox, int batch,
-                             int num_priors, int num_classes,
-                             float *decode_box);
+template void DecodeSSDBoxes(const float *, const float *, const float *, int,
+                             int, int, float *);
 
 template <typename T>
 void DecodeRefineDetBoxes(const T *odm_loc, const T *odm_conf,
@@ -150,12 +148,9 @@ void DecodeRefineDetBoxes(const T *odm_loc, const T *odm_conf,
   }
 }
 
-template void DecodeRefineDetBoxes(const float *odm_loc, const float *odm_conf,
-                                   const float *arm_priorbox,
-                                   const float *arm_conf, const float *arm_loc,
-                                   int batch, int num_priors, int num_classes,
-                                   int background_label_id,
-                                   float objectness_score, float *decode_box);
+template void DecodeRefineDetBoxes(const float *, const float *, const float *,
+                                   const float *, const float *, int, int, int,
+                                   int, float, float *);
 #endif
 
 }  // namespace Vision

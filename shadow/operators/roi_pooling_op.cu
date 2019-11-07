@@ -64,9 +64,8 @@ void ROIPooling(const T *in_data, const VecInt &in_shape, const T *roi_data,
   CUDA_CHECK(cudaPeekAtLastError());
 }
 
-template void ROIPooling(const float *in_data, const VecInt &in_shape,
-                         const float *roi_data, int num_rois, int pooled_h,
-                         int pooled_w, float spatial_scale, float *out_data);
+template void ROIPooling(const float *, const VecInt &, const float *, int, int,
+                         int, float, float *);
 #endif
 
 }  // namespace Vision

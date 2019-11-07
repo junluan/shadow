@@ -31,9 +31,7 @@ void Slice(const T *in_data, int count, int num_slices, int slice_size,
   CUDA_CHECK(cudaPeekAtLastError());
 }
 
-template void Slice(const float *in_data, int count, int num_slices,
-                    int slice_size, int bottom_slice_axis, int top_slice_axis,
-                    int offset_slice_axis, float *out_data);
+template void Slice(const float *, int, int, int, int, int, int, float *);
 #endif
 
 }  // namespace Vision

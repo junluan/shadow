@@ -58,9 +58,8 @@ void Pad(const T *in_data, const VecInt &in_shape, const VecInt &paddings,
   }
 }
 
-template void Pad(const float *in_data, const VecInt &in_shape,
-                  const VecInt &paddings, const VecInt &out_shape,
-                  float *out_data);
+template void Pad(const float *, const VecInt &, const VecInt &, const VecInt &,
+                  float *);
 #endif
 
 }  // namespace Vision

@@ -67,11 +67,9 @@ void PRelu(const T *in_data, T *out_data, const VecInt &in_shape,
   CUDA_CHECK(cudaPeekAtLastError());
 }
 
-template void Activate(const float *in_data, float *out_data, int count,
-                       int type, float slope);
-template void PRelu(const float *in_data, float *out_data,
-                    const VecInt &in_shape, bool channel_shared,
-                    const float *slope_data);
+template void Activate(const float *, float *, int, int, float);
+template void PRelu(const float *, float *, const VecInt &, bool,
+                    const float *);
 #endif
 
 }  // namespace Vision

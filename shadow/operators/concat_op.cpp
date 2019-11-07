@@ -60,10 +60,7 @@ void Concat(const T *in_data, int count, int num_concats, int concat_size,
   }
 }
 
-template void Concat(const float *in_data, int count, int num_concats,
-                     int concat_size, int top_concat_axis,
-                     int bottom_concat_axis, int offset_concat_axis,
-                     float *out_data);
+template void Concat(const float *, int, int, int, int, int, int, float *);
 #endif
 
 }  // namespace Vision

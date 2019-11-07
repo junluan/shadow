@@ -44,34 +44,32 @@ void ReleaseBuffer(T *buffer) {
 }
 
 // Explicit instantiation
-template int *MakeBuffer<int, int>(size_t size, int *host_ptr);
-template float *MakeBuffer<float, float>(size_t size, float *host_ptr);
+template int *MakeBuffer<int, int>(size_t, int *);
+template float *MakeBuffer<float, float>(size_t, float *);
 template unsigned char *MakeBuffer<unsigned char, unsigned char>(
-    size_t size, unsigned char *host_ptr);
+    size_t, unsigned char *);
 
-template void ReadBuffer<int, int>(size_t size, const int *src, int *des);
-template void ReadBuffer<float, float>(size_t size, const float *src,
-                                       float *des);
-template void ReadBuffer<unsigned char, unsigned char>(size_t size,
-                                                       const unsigned char *src,
-                                                       unsigned char *des);
+template void ReadBuffer<int, int>(size_t, const int *, int *);
+template void ReadBuffer<float, float>(size_t, const float *, float *);
+template void ReadBuffer<unsigned char, unsigned char>(size_t,
+                                                       const unsigned char *,
+                                                       unsigned char *);
 
-template void WriteBuffer<int, int>(size_t size, const int *src, int *des);
-template void WriteBuffer<float, float>(size_t size, const float *src,
-                                        float *des);
-template void WriteBuffer<unsigned char, unsigned char>(
-    size_t size, const unsigned char *src, unsigned char *des);
+template void WriteBuffer<int, int>(size_t, const int *, int *);
+template void WriteBuffer<float, float>(size_t, const float *, float *);
+template void WriteBuffer<unsigned char, unsigned char>(size_t,
+                                                        const unsigned char *,
+                                                        unsigned char *);
 
-template void CopyBuffer<int, int>(size_t size, const int *src, int *des);
-template void CopyBuffer<float, float>(size_t size, const float *src,
-                                       float *des);
-template void CopyBuffer<unsigned char, unsigned char>(size_t size,
-                                                       const unsigned char *src,
-                                                       unsigned char *des);
+template void CopyBuffer<int, int>(size_t, const int *, int *);
+template void CopyBuffer<float, float>(size_t, const float *, float *);
+template void CopyBuffer<unsigned char, unsigned char>(size_t,
+                                                       const unsigned char *,
+                                                       unsigned char *);
 
-template void ReleaseBuffer<int>(int *buffer);
-template void ReleaseBuffer<float>(float *buffer);
-template void ReleaseBuffer<unsigned char>(unsigned char *buffer);
+template void ReleaseBuffer<int>(int *);
+template void ReleaseBuffer<float>(float *);
+template void ReleaseBuffer<unsigned char>(unsigned char *);
 #endif
 
 }  // namespace Kernel
