@@ -38,6 +38,7 @@ REGISTER_OPERATOR(Softmax, SoftmaxOp);
 
 namespace Vision {
 
+#if !defined(USE_CUDA)
 template <typename T>
 void Softmax(const T *in_data, int outer_num, int channels, int inner_num,
              T *val_data, T *out_data) {
@@ -75,6 +76,7 @@ void Softmax(const T *in_data, int outer_num, int channels, int inner_num,
 }
 
 template void Softmax(const float *, int, int, int, float *, float *);
+#endif
 
 }  // namespace Vision
 
