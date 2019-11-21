@@ -24,7 +24,7 @@ void BatchNormOp::Forward() {
 #if defined(USE_CUDNN)
   if (use_cudnn_) {
     cudnn::setTensor4dDesc<float>(&bottom_top_desc_, batch, channel,
-                                  bottom->shape(2), bottom->shape(3));
+                                  spatial_dim, 1);
     cudnn::setTensor4dDesc<float>(&param_desc_, 1, channel, 1, 1);
 
     op_ws_->GrowTempBuffer(4 * channel, sizeof(float));
