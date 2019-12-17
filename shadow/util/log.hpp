@@ -12,12 +12,12 @@
 
 namespace Shadow {
 
-#define LOG_INFO LogMessage("INFO", __FILE__, __LINE__)
-#define LOG_WARNING LogMessage("WARNING", __FILE__, __LINE__)
-#define LOG_ERROR LogMessage("ERROR", __FILE__, __LINE__)
-#define LOG_FATAL LogMessage("FATAL", __FILE__, __LINE__)
+#define SLOG_INFO LogMessage("INFO", __FILE__, __LINE__)
+#define SLOG_WARNING LogMessage("WARNING", __FILE__, __LINE__)
+#define SLOG_ERROR LogMessage("ERROR", __FILE__, __LINE__)
+#define SLOG_FATAL LogMessage("FATAL", __FILE__, __LINE__)
 
-#define LOG(severity) LOG_##severity.stream()
+#define LOG(severity) SLOG_##severity.stream()
 #define LOG_IF(severity, condition) \
   if ((condition)) LOG(severity)
 
