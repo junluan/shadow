@@ -10,6 +10,8 @@
 
 namespace Shadow {
 
+class NetworkImpl;
+
 class Network {
  public:
   Network();
@@ -45,7 +47,6 @@ class Network {
       const std::string &name, const std::vector<T> &default_value = {}) const;
 
  private:
-  class NetworkImpl;
   std::shared_ptr<NetworkImpl> engine_ = nullptr;
 };
 

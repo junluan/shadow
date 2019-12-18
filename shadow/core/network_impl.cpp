@@ -4,46 +4,46 @@
 
 namespace Shadow {
 
-void Network::NetworkImpl::Setup(int device_id) { ws_.CreateCtx(device_id); }
+void NetworkImpl::Setup(int device_id) { ws_.CreateCtx(device_id); }
 
-void Network::NetworkImpl::LoadModel(const shadow::NetParam &net_param) {
+void NetworkImpl::LoadModel(const shadow::NetParam &net_param) {
   net_param_ = net_param;
   Initial();
 }
 
-void Network::NetworkImpl::LoadModel(const void *proto_data, int proto_size) {
+void NetworkImpl::LoadModel(const void *proto_data, int proto_size) {
   LoadProtoData(proto_data, proto_size, &net_param_);
   Initial();
 }
 
-void Network::NetworkImpl::LoadModel(const std::string &proto_bin) {
+void NetworkImpl::LoadModel(const std::string &proto_bin) {
   LoadProtoBin(proto_bin, &net_param_);
   Initial();
 }
 
-void Network::NetworkImpl::LoadModel(const std::string &proto_str,
-                                     const std::vector<const void *> &weights) {
+void NetworkImpl::LoadModel(const std::string &proto_str,
+                            const std::vector<const void *> &weights) {
   LoadProtoStrOrText(proto_str, &net_param_);
   Initial();
   CopyWeights(weights);
 }
 
-void Network::NetworkImpl::LoadModel(const std::string &proto_str,
-                                     const void *weights_data) {
+void NetworkImpl::LoadModel(const std::string &proto_str,
+                            const void *weights_data) {
   LoadProtoStrOrText(proto_str, &net_param_);
   Initial();
   CopyWeights(weights_data);
 }
 
-void Network::NetworkImpl::LoadXModel(const shadow::NetParam &net_param,
-                                      const ArgumentHelper &arguments) {
+void NetworkImpl::LoadXModel(const shadow::NetParam &net_param,
+                             const ArgumentHelper &arguments) {
   backend_.reset(CreateBackend(arguments, &ws_));
   backend_->LoadModel(net_param);
   in_blob_ = backend_->in_blob(), out_blob_ = backend_->out_blob();
   arg_helper_ = ArgumentHelper(net_param);
 }
 
-void Network::NetworkImpl::Forward(
+void NetworkImpl::Forward(
     const std::map<std::string, float *> &data_map,
     const std::map<std::string, std::vector<int>> &shape_map) {
   ws_.Ctx()->SwitchDevice();
@@ -78,8 +78,8 @@ void Network::NetworkImpl::Forward(
   DLOG(INFO) << "Forward Network!";
 }
 
-void Network::NetworkImpl::LoadProtoData(const void *proto_data, int proto_size,
-                                         shadow::NetParam *net_param) {
+void NetworkImpl::LoadProtoData(const void *proto_data, int proto_size,
+                                shadow::NetParam *net_param) {
 #if defined(USE_Protobuf)
   CHECK(IO::ReadProtoFromArray(proto_data, proto_size, net_param))
       << "Error when loading proto array data";
@@ -90,8 +90,8 @@ void Network::NetworkImpl::LoadProtoData(const void *proto_data, int proto_size,
 #endif
 }
 
-void Network::NetworkImpl::LoadProtoBin(const std::string &proto_bin,
-                                        shadow::NetParam *net_param) {
+void NetworkImpl::LoadProtoBin(const std::string &proto_bin,
+                               shadow::NetParam *net_param) {
 #if defined(USE_Protobuf)
   CHECK(IO::ReadProtoFromBinaryFile(proto_bin, net_param))
       << "Error when loading proto binary file: " << proto_bin;
@@ -102,8 +102,8 @@ void Network::NetworkImpl::LoadProtoBin(const std::string &proto_bin,
 #endif
 }
 
-void Network::NetworkImpl::LoadProtoStrOrText(
-    const std::string &proto_str_or_text, shadow::NetParam *net_param) {
+void NetworkImpl::LoadProtoStrOrText(const std::string &proto_str_or_text,
+                                     shadow::NetParam *net_param) {
   bool success;
   Path path(proto_str_or_text);
   if (path.is_file()) {
@@ -115,7 +115,7 @@ void Network::NetworkImpl::LoadProtoStrOrText(
       << "Error when loading proto: " << proto_str_or_text;
 }
 
-void Network::NetworkImpl::Initial() {
+void NetworkImpl::Initial() {
   for (const auto &blob : net_param_.blob()) {
     VecInt shape;
     int cc = 1;
@@ -189,8 +189,7 @@ void Network::NetworkImpl::Initial() {
   DLOG(INFO) << "Initial Network!";
 }
 
-void Network::NetworkImpl::CopyWeights(
-    const std::vector<const void *> &weights) {
+void NetworkImpl::CopyWeights(const std::vector<const void *> &weights) {
   int weights_count = 0;
   for (const auto &blob : net_param_.blob()) {
     CHECK_LT(weights_count, weights.size());
@@ -215,7 +214,7 @@ void Network::NetworkImpl::CopyWeights(
   }
 }
 
-void Network::NetworkImpl::CopyWeights(const void *weights_data) {
+void NetworkImpl::CopyWeights(const void *weights_data) {
   for (const auto &blob : net_param_.blob()) {
     const auto &blob_name = blob.name();
     const auto &blob_type = ws_.GetBlobType(blob_name);

@@ -9,7 +9,7 @@
 
 namespace Shadow {
 
-class Network::NetworkImpl {
+class NetworkImpl {
  public:
   void Setup(int device_id = 0);
 
