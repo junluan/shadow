@@ -13,7 +13,7 @@ find_path(Protobuf_INCLUDE_DIRS
 find_library(Protobuf_LIBRARIES
              NAMES protobuf libprotobuf
              PATHS ${Protobuf_DIR}
-             PATH_SUFFIXES lib lib64 lib/x86_64 lib/x86_64-linux-gnu lib/x64 lib/x86
+             PATH_SUFFIXES lib lib64 lib/x86_64 lib/x64 lib/x86_64-linux-gnu lib/aarch64-linux-gnu
              NO_DEFAULT_PATH)
 
 find_program(Protoc_EXECUTABLE
@@ -22,7 +22,9 @@ find_program(Protoc_EXECUTABLE
              PATH_SUFFIXES bin
              NO_DEFAULT_PATH)
 
-find_package_handle_standard_args(Protobuf DEFAULT_MSG Protobuf_INCLUDE_DIRS Protobuf_LIBRARIES Protoc_EXECUTABLE)
+set(__looked_for Protobuf_INCLUDE_DIRS Protobuf_LIBRARIES Protoc_EXECUTABLE)
+
+find_package_handle_standard_args(Protobuf DEFAULT_MSG ${__looked_for})
 
 if (Protobuf_FOUND)
   parse_header(${Protobuf_INCLUDE_DIRS}/google/protobuf/stubs/common.h
@@ -42,7 +44,7 @@ if (Protobuf_FOUND)
     message(STATUS "Found Protobuf: ${Protobuf_INCLUDE_DIRS}, ${Protobuf_LIBRARIES} (found version ${Protobuf_VERSION})")
     message(STATUS "Found Protoc: ${Protoc_EXECUTABLE} (found version ${Protoc_VERSION})")
   endif ()
-  mark_as_advanced(Protobuf_ROOT_DIR Protobuf_INCLUDE_DIRS Protobuf_LIBRARIES Protoc_EXECUTABLE)
+  mark_as_advanced(Protobuf_ROOT_DIR ${__looked_for})
 else ()
   if (Protobuf_FIND_REQUIRED)
     message(FATAL_ERROR "Could not find Protobuf")

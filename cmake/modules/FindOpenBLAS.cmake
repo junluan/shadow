@@ -13,10 +13,12 @@ find_path(OpenBLAS_INCLUDE_DIRS
 find_library(OpenBLAS_LIBRARIES
              NAMES openblas libopenblas
              PATHS ${OpenBLAS_DIR}
-             PATH_SUFFIXES lib lib64 lib/x86_64 lib/x64 lib/x86
+             PATH_SUFFIXES lib lib64 lib/x86_64 lib/x64 lib/x86_64-linux-gnu lib/aarch64-linux-gnu
              NO_DEFAULT_PATH)
 
-find_package_handle_standard_args(OpenBLAS DEFAULT_MSG OpenBLAS_INCLUDE_DIRS OpenBLAS_LIBRARIES)
+set(__looked_for OpenBLAS_INCLUDE_DIRS OpenBLAS_LIBRARIES)
+
+find_package_handle_standard_args(OpenBLAS DEFAULT_MSG ${__looked_for})
 
 if (OpenBLAS_FOUND)
   parse_header_single_define(${OpenBLAS_INCLUDE_DIRS}/openblas_config.h
@@ -30,7 +32,7 @@ if (OpenBLAS_FOUND)
   if (NOT OpenBLAS_FIND_QUIETLY)
     message(STATUS "Found OpenBLAS: ${OpenBLAS_INCLUDE_DIRS}, ${OpenBLAS_LIBRARIES} (found version ${OpenBLAS_VERSION})")
   endif ()
-  mark_as_advanced(OpenBLAS_ROOT_DIR OpenBLAS_INCLUDE_DIRS OpenBLAS_LIBRARIES)
+  mark_as_advanced(OpenBLAS_ROOT_DIR ${__looked_for})
 else ()
   if (OpenBLAS_FIND_REQUIRED)
     message(FATAL_ERROR "Could not find OpenBLAS")

@@ -16,13 +16,15 @@ find_library(GoogleTest_LIBRARIES
              PATH_SUFFIXES lib lib64 lib/x86_64 lib/x64 lib/x86
              NO_DEFAULT_PATH)
 
-find_package_handle_standard_args(GoogleTest DEFAULT_MSG GoogleTest_INCLUDE_DIRS GoogleTest_LIBRARIES)
+set(__looked_for GoogleTest_INCLUDE_DIRS GoogleTest_LIBRARIES)
+
+find_package_handle_standard_args(GoogleTest DEFAULT_MSG ${__looked_for})
 
 if (GoogleTest_FOUND)
   if (NOT GoogleTest_FIND_QUIETLY)
     message(STATUS "Found googletest: ${GoogleTest_INCLUDE_DIRS}, ${GoogleTest_LIBRARIES}")
   endif ()
-  mark_as_advanced(GoogleTest_ROOT_DIR GoogleTest_INCLUDE_DIRS GoogleTest_LIBRARIES)
+  mark_as_advanced(GoogleTest_ROOT_DIR ${__looked_for})
 else ()
   if (GoogleTest_FIND_REQUIRED)
     message(FATAL_ERROR "Could not find googletest")

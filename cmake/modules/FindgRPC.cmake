@@ -32,10 +32,8 @@ foreach (__grpc_lib ${__grpc_libs})
   find_library(${__grpc_lib_upper}_LIBRARY
                NAMES ${__grpc_lib}
                PATHS ${gRPC_DIR}
-               PATH_SUFFIXES lib lib64 lib/x86_64 lib/x64 lib/x86
-               DOC "The path to gRPC ${__grpc_lib} library"
+               PATH_SUFFIXES lib lib64 lib/x86_64 lib/x64
                NO_DEFAULT_PATH)
-  mark_as_advanced(${__grpc_lib_upper}_LIBRARY)
   list(APPEND __looked_for ${__grpc_lib_upper}_LIBRARY)
   list(APPEND gRPC_LIBRARIES ${${__grpc_lib_upper}_LIBRARY})
 endforeach ()
@@ -46,7 +44,7 @@ if (gRPC_FOUND)
   if (NOT gRPC_FIND_QUIETLY)
     message(STATUS "Found gRPC: ${gRPC_INCLUDE_DIRS}, ${gRPC_LIBRARIES}")
   endif ()
-  mark_as_advanced(gRPC_ROOT_DIR gRPC_INCLUDE_DIRS gRPC_CPP_PLUGIN)
+  mark_as_advanced(gRPC_ROOT_DIR ${__looked_for})
 else ()
   if (gRPC_FIND_REQUIRED)
     message(FATAL_ERROR "Could not find gRPC")

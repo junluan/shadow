@@ -41,9 +41,7 @@ foreach (__lib ${__mkl_libs})
                NAMES ${__mkl_lib}
                PATHS ${MKL_ROOT_DIR}
                PATH_SUFFIXES lib lib/intel64
-               DOC "The path to Intel(R) MKL ${__mkl_lib} library"
                NO_DEFAULT_PATH)
-  mark_as_advanced(${__mkl_lib_upper}_LIBRARY)
   list(APPEND __looked_for ${__mkl_lib_upper}_LIBRARY)
   list(APPEND MKL_LIBRARIES ${${__mkl_lib_upper}_LIBRARY})
 endforeach ()
@@ -63,9 +61,7 @@ if (NOT MKL_USE_SINGLE_DYNAMIC_LIBRARY)
   find_library(MKL_RTL_LIBRARY ${__iomp5_libs}
                PATHS ${INTEL_ROOT_DIR} ${INTEL_ROOT_DIR}/compiler
                PATH_SUFFIXES lib lib/intel64
-               DOC "Path to OpenMP runtime library"
                NO_DEFAULT_PATH)
-  mark_as_advanced(MKL_RTL_LIBRARY)
   list(APPEND __looked_for MKL_RTL_LIBRARY)
   list(APPEND MKL_LIBRARIES ${MKL_RTL_LIBRARY})
 endif ()
@@ -83,7 +79,7 @@ if (MKL_FOUND)
   if (NOT MKL_FIND_QUIETLY)
     message(STATUS "Found MKL: ${MKL_INCLUDE_DIRS}, ${MKL_LIBRARIES} (found version ${MKL_VERSION})")
   endif ()
-  mark_as_advanced(INTEL_ROOT_DIR INTEL_INCLUDE_DIRS MKL_ROOT_DIR MKL_INCLUDE_DIRS)
+  mark_as_advanced(INTEL_ROOT_DIR ${__looked_for})
 else ()
   if (MKL_FIND_REQUIRED)
     message(FATAL_ERROR "Could not find MKL")

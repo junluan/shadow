@@ -1,6 +1,6 @@
 include(FindPackageHandleStandardArgs)
 
-set(CUDNN_ROOT_DIR "" CACHE PATH "Folder contains NVIDIA cuDNN")
+set(CUDNN_ROOT_DIR ${PROJECT_SOURCE_DIR}/third_party/cudnn CACHE PATH "Folder contains NVIDIA cuDNN")
 
 set(CUDNN_DIR ${CUDNN_ROOT_DIR} ${CUDA_TOOLKIT_ROOT_DIR} /usr /usr/local)
 
@@ -13,10 +13,12 @@ find_path(CUDNN_INCLUDE_DIRS
 find_library(CUDNN_LIBRARIES
              NAMES cudnn
              PATHS ${CUDNN_DIR}
-             PATH_SUFFIXES lib lib64 lib/x86_64 lib/x86_64-linux-gnu lib/x64 lib/x86
+             PATH_SUFFIXES lib lib64 lib/x86_64 lib/x64 lib/x86_64-linux-gnu lib/aarch64-linux-gnu
              NO_DEFAULT_PATH)
 
-find_package_handle_standard_args(CUDNN DEFAULT_MSG CUDNN_INCLUDE_DIRS CUDNN_LIBRARIES)
+set(__looked_for CUDNN_INCLUDE_DIRS CUDNN_LIBRARIES)
+
+find_package_handle_standard_args(CUDNN DEFAULT_MSG ${__looked_for})
 
 if (CUDNN_FOUND)
   parse_header(${CUDNN_INCLUDE_DIRS}/cudnn.h
@@ -29,7 +31,7 @@ if (CUDNN_FOUND)
   if (NOT CUDNN_FIND_QUIETLY)
     message(STATUS "Found CUDNN: ${CUDNN_INCLUDE_DIRS}, ${CUDNN_LIBRARIES} (found version ${CUDNN_VERSION})")
   endif ()
-  mark_as_advanced(CUDNN_ROOT_DIR CUDNN_INCLUDE_DIRS CUDNN_LIBRARIES)
+  mark_as_advanced(CUDNN_ROOT_DIR ${__looked_for})
 else ()
   if (CUDNN_FIND_REQUIRED)
     message(FATAL_ERROR "Could not find CUDNN")
