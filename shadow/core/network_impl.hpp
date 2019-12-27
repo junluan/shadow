@@ -48,6 +48,8 @@ class NetworkImpl {
     return std::vector<int>();
   }
 
+  std::shared_ptr<Backend> &GetBackend() { return backend_; }
+
   const std::vector<std::string> &in_blob() const { return in_blob_; }
   const std::vector<std::string> &out_blob() const { return out_blob_; }
 

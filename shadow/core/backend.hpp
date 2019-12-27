@@ -5,6 +5,8 @@
 #include "registry.hpp"
 #include "workspace.hpp"
 
+#include "util/queue.hpp"
+
 namespace Shadow {
 
 class Backend {
@@ -18,10 +20,14 @@ class Backend {
       const std::map<std::string, float *> &data_map,
       const std::map<std::string, std::vector<int>> &shape_map) = 0;
 
-  virtual void SaveEngine(const std::string &save_path) = 0;
+  virtual void SaveEngine(const std::string &save_path,
+                          std::vector<char> *save_data = nullptr) = 0;
 
   const std::vector<std::string> &in_blob() const { return in_blob_; }
   const std::vector<std::string> &out_blob() const { return out_blob_; }
+
+  static Queue<std::shared_ptr<std::vector<char>>> &data_exchange_queue(
+      const std::string &key, unsigned int max_size = 16);
 
  protected:
   Workspace *ws_ = nullptr;
