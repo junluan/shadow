@@ -5,17 +5,57 @@
 namespace Shadow {
 
 void InstanceNormOp::Forward() {
+  CHECK(bottoms_size() == 1 || bottoms_size() == 3);
+
   const auto *bottom = bottoms<float>(0);
   auto *top = mutable_tops<float>(0);
 
-  if (bottom != top) {
-    top->reshape(bottom->shape());
-    Blas::BlasScopy(bottom->count(), bottom->data(), 0, top->mutable_data(), 0,
-                    op_ws_->Ctx()->blas_handle());
-  }
+  top->reshape(bottom->shape());
 
   int batch = bottom->shape(0), channel = bottom->shape(1),
       spatial_dim = bottom->count(2);
+
+#if defined(USE_CUDNN)
+  cudnn::setTensor4dDesc<float>(&bottom_top_desc_, 1, batch * channel,
+                                spatial_dim, 1);
+  cudnn::setTensor4dDesc<float>(&param_desc_, 1, batch * channel, 1, 1);
+
+  op_ws_->GrowTempBuffer(2 * batch * channel, sizeof(float));
+
+  auto *scale_cudnn = op_ws_->CreateTempBlob<float>({1, batch * channel},
+                                                    op_name_ + "/scale_cudnn");
+  auto *bias_cudnn = op_ws_->CreateTempBlob<float>({1, batch * channel},
+                                                   op_name_ + "/bias_cudnn");
+
+  if (bottoms_size() == 1) {
+    Blas::Set(batch * channel, 1, scale_cudnn->mutable_data(), 0);
+    Blas::Set(batch * channel, 0, bias_cudnn->mutable_data(), 0);
+  } else {
+    const auto *scale = bottoms<float>(1);
+    const auto *bias = bottoms<float>(2);
+    CHECK_EQ(scale->count(), channel);
+    CHECK_EQ(bias->count(), channel);
+    for (int b = 0; b < batch; ++b) {
+      Blas::BlasScopy(channel, scale->data(), 0, scale_cudnn->mutable_data(),
+                      b * channel, op_ws_->Ctx()->blas_handle());
+      Blas::BlasScopy(channel, bias->data(), 0, bias_cudnn->mutable_data(),
+                      b * channel, op_ws_->Ctx()->blas_handle());
+    }
+  }
+
+  double eps = eps_ > CUDNN_BN_MIN_EPSILON ? eps_ : CUDNN_BN_MIN_EPSILON;
+  CUDNN_CHECK(cudnnBatchNormalizationForwardTraining(
+      cudnnHandle_t(op_ws_->Ctx()->cudnn_handle()), CUDNN_BATCHNORM_SPATIAL,
+      cudnn::dataType<float>::one, cudnn::dataType<float>::zero,
+      bottom_top_desc_, bottom->data(), bottom_top_desc_, top->mutable_data(),
+      param_desc_, scale_cudnn->data(), bias_cudnn->data(), 1., nullptr,
+      nullptr, eps, nullptr, nullptr));
+
+#else
+  if (bottom != top) {
+    Blas::BlasScopy(bottom->count(), bottom->data(), 0, top->mutable_data(), 0,
+                    op_ws_->Ctx()->blas_handle());
+  }
 
   int temp_count = batch * channel + bottom->count() + spatial_dim;
   op_ws_->GrowTempBuffer(temp_count, sizeof(float));
@@ -47,8 +87,7 @@ void InstanceNormOp::Forward() {
   Blas::Div(top->count(), top->data(), 0, temp->data(), 0, top->mutable_data(),
             0);
 
-  if (bottoms_size() > 1) {
-    CHECK_EQ(bottoms_size(), 3);
+  if (bottoms_size() == 3) {
     const auto *scale = bottoms<float>(1);
     const auto *bias = bottoms<float>(2);
     CHECK_EQ(scale->count(), channel);
@@ -56,6 +95,7 @@ void InstanceNormOp::Forward() {
     Vision::Scale(top->data(), top->count(), scale->data(), bias->data(),
                   channel, spatial_dim, top->mutable_data());
   }
+#endif
 }
 
 REGISTER_OPERATOR(InstanceNorm, InstanceNormOp);
