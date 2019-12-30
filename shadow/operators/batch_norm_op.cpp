@@ -12,11 +12,7 @@ void BatchNormOp::Forward() {
   const auto *bottom = bottoms<float>(0);
   auto *top = mutable_tops<float>(0);
 
-  if (bottom != top) {
-    top->reshape(bottom->shape());
-    Blas::BlasScopy(bottom->count(), bottom->data(), 0, top->mutable_data(), 0,
-                    op_ws_->Ctx()->blas_handle());
-  }
+  top->reshape(bottom->shape());
 
   int batch = bottom->shape(0), channel = bottom->shape(1),
       spatial_dim = bottom->count(2);
@@ -67,6 +63,11 @@ void BatchNormOp::Forward() {
     return;
   }
 #endif
+
+  if (bottom != top) {
+    Blas::BlasScopy(bottom->count(), bottom->data(), 0, top->mutable_data(), 0,
+                    op_ws_->Ctx()->blas_handle());
+  }
 
   int temp_count =
       2 * channel + bottom->count() + batch * channel + batch + spatial_dim;
