@@ -323,6 +323,13 @@ class Network(object):
         else:
             raise ValueError('Unsupported grid sample padding mode', padding_mode)
 
+    def add_group_norm(self, name, bottoms, tops, group, eps=1e-5):
+        op_param = self.add_net_op()
+        self.add_common(op_param, name, 'GroupNorm', bottoms, tops)
+
+        self.add_arg(op_param, 'group', group, 's_i')
+        self.add_arg(op_param, 'eps', eps, 's_f')
+
     def add_instance_norm(self, name, bottoms, tops, eps=1e-5):
         op_param = self.add_net_op()
         self.add_common(op_param, name, 'InstanceNorm', bottoms, tops)
