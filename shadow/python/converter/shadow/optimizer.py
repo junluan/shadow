@@ -1,6 +1,6 @@
 import numpy as np
 import networkx as nx
-from proto import shadow_pb2
+from proto import OpParam
 
 
 def add_arg(op_param, arg_name, arg_type, arg_value):
@@ -151,7 +151,7 @@ def fuse_conv_activate(graph, subgraphs):
         if get_arg(activate_param, 'type', 's_i', -1) != 1:
             continue
 
-        fused_param = shadow_pb2.OpParam(name=conv_param.name, type=conv_param.type)
+        fused_param = OpParam(name=conv_param.name, type=conv_param.type)
         fused_param.bottom.extend(conv_param.bottom)
         fused_param.top.extend(activate_param.top)
 
@@ -222,7 +222,7 @@ def fuse_conv_bn_scale(graph, subgraphs):
         add_blob(net_param, merged_weight_name, conv_weight.shape, conv_weight)
         add_blob(net_param, merged_bias_name, conv_bias.shape, conv_bias)
 
-        fused_param = shadow_pb2.OpParam(name=conv_param.name, type=conv_param.type)
+        fused_param = OpParam(name=conv_param.name, type=conv_param.type)
         fused_param.bottom.extend([conv_param.bottom[0], merged_weight_name, merged_bias_name])
         fused_param.top.extend(scale_param.top)
 
@@ -286,7 +286,7 @@ def fuse_consecutive_permute(graph, subgraphs):
         for order in orders:
             fused_order = np.choose(fused_order, order)
 
-        fused_param = shadow_pb2.OpParam(name=permute_params[0].name, type=permute_params[0].type)
+        fused_param = OpParam(name=permute_params[0].name, type=permute_params[0].type)
         fused_param.bottom.extend(permute_params[0].bottom)
         fused_param.top.extend(permute_params[-1].top)
 
@@ -319,7 +319,7 @@ def fuse_consecutive_squeeze(graph, subgraphs):
         else:
             axes = [d for d in range(10) if d not in left_axes]
 
-        fused_param = shadow_pb2.OpParam(name=squeeze_params[0].name, type=squeeze_params[0].type)
+        fused_param = OpParam(name=squeeze_params[0].name, type=squeeze_params[0].type)
         fused_param.bottom.extend(squeeze_params[0].bottom)
         fused_param.top.extend(squeeze_params[-1].top)
 

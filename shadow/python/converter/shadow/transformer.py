@@ -1,6 +1,6 @@
 from google.protobuf import text_format
 from google.protobuf import json_format
-from proto import shadow_pb2
+from proto import NetParam
 
 
 def find_replace(string, old_str, new_str):
@@ -72,7 +72,7 @@ def write_defines(net_param, root, model_name):
     model_name_hpp = model_name + '.hpp'
     model_name_weights_hpp = model_name + '_weights.hpp'
 
-    net = shadow_pb2.NetParam()
+    net = NetParam()
     net.CopyFrom(net_param)
 
     blob_counts, blob_names, blob_types = [], [], []

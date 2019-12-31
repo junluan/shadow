@@ -1,10 +1,10 @@
 from google.protobuf import text_format
-from proto import shadow_pb2
+from proto import MetaNetParam
 
 
 class Network(object):
     def __init__(self, name):
-        self.meta_net_param = shadow_pb2.MetaNetParam(name=name)
+        self.meta_net_param = MetaNetParam(name=name)
         self.net_param = None
         self.net_index = -1
 
@@ -473,7 +473,7 @@ class Network(object):
             self.add_arg(op_param, 'size', size, 's_i')
         else:
             self.add_arg(op_param, 'size', size, 'v_i')
-        if isinstance(scale, float):
+        if isinstance(scale, float) or isinstance(scale, int):
             self.add_arg(op_param, 'scale', scale, 's_f')
         else:
             self.add_arg(op_param, 'scale', scale, 'v_f')
