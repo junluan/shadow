@@ -12,25 +12,10 @@ Network::Network() {
 void Network::Setup(int device_id) { engine_->Setup(device_id); }
 
 void Network::LoadModel(const shadow::NetParam &net_param) {
-  engine_->LoadModel(net_param);
-}
+  ArgumentHelper arguments;
+  arguments.AddSingleArgument<std::string>("backend_type", "Native");
 
-void Network::LoadModel(const void *proto_data, int proto_size) {
-  engine_->LoadModel(proto_data, proto_size);
-}
-
-void Network::LoadModel(const std::string &proto_bin) {
-  engine_->LoadModel(proto_bin);
-}
-
-void Network::LoadModel(const std::string &proto_str,
-                        const std::vector<const void *> &weights) {
-  engine_->LoadModel(proto_str, weights);
-}
-
-void Network::LoadModel(const std::string &proto_str,
-                        const void *weights_data) {
-  engine_->LoadModel(proto_str, weights_data);
+  engine_->LoadXModel(net_param, arguments);
 }
 
 void Network::LoadXModel(const shadow::NetParam &net_param,
@@ -44,15 +29,16 @@ void Network::Forward(
   engine_->Forward(data_map, shape_map);
 }
 
-#define INSTANTIATE_GET_BLOB(T)                                          \
-  template <>                                                            \
-  const T *Network::GetBlobDataByName<T>(const std::string &blob_name) { \
-    return engine_->GetBlobDataByName<T>(blob_name);                     \
-  }                                                                      \
-  template <>                                                            \
-  std::vector<int> Network::GetBlobShapeByName<T>(                       \
-      const std::string &blob_name) const {                              \
-    return engine_->GetBlobShapeByName<T>(blob_name);                    \
+#define INSTANTIATE_GET_BLOB(T)                                        \
+  template <>                                                          \
+  const T *Network::GetBlobDataByName<T>(const std::string &blob_name, \
+                                         const std::string &locate) {  \
+    return engine_->GetBlobDataByName<T>(blob_name, locate);           \
+  }                                                                    \
+  template <>                                                          \
+  std::vector<int> Network::GetBlobShapeByName<T>(                     \
+      const std::string &blob_name) const {                            \
+    return engine_->GetBlobShapeByName<T>(blob_name);                  \
   }
 
 INSTANTIATE_GET_BLOB(float);

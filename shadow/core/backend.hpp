@@ -21,7 +21,9 @@ class Backend {
       const std::map<std::string, std::vector<int>> &shape_map) = 0;
 
   virtual void SaveEngine(const std::string &save_path,
-                          std::vector<char> *save_data = nullptr) = 0;
+                          std::vector<char> *save_data) = 0;
+
+  const ArgumentHelper &arg_helper() const { return arg_helper_; }
 
   const std::vector<std::string> &in_blob() const { return in_blob_; }
   const std::vector<std::string> &out_blob() const { return out_blob_; }
@@ -30,6 +32,8 @@ class Backend {
       const std::string &key, unsigned int max_size = 16);
 
  protected:
+  ArgumentHelper arg_helper_;
+
   Workspace *ws_ = nullptr;
   std::vector<std::string> in_blob_, out_blob_;
 

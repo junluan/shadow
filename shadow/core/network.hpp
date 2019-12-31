@@ -19,11 +19,6 @@ class Network {
   void Setup(int device_id = 0);
 
   void LoadModel(const shadow::NetParam &net_param);
-  void LoadModel(const void *proto_data, int proto_size);
-  void LoadModel(const std::string &proto_bin);
-  void LoadModel(const std::string &proto_str,
-                 const std::vector<const void *> &weights);
-  void LoadModel(const std::string &proto_str, const void *weights_data);
 
   void LoadXModel(const shadow::NetParam &net_param,
                   const ArgumentHelper &arguments);
@@ -32,7 +27,8 @@ class Network {
                const std::map<std::string, std::vector<int>> &shape_map = {});
 
   template <typename T>
-  const T *GetBlobDataByName(const std::string &blob_name);
+  const T *GetBlobDataByName(const std::string &blob_name,
+                             const std::string &locate = "host");
   template <typename T>
   std::vector<int> GetBlobShapeByName(const std::string &blob_name) const;
 
