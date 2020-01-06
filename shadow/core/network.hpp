@@ -23,7 +23,7 @@ class Network {
   void LoadXModel(const shadow::NetParam &net_param,
                   const ArgumentHelper &arguments);
 
-  void Forward(const std::map<std::string, float *> &data_map,
+  void Forward(const std::map<std::string, void *> &data_map,
                const std::map<std::string, std::vector<int>> &shape_map = {});
 
   template <typename T>

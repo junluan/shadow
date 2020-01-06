@@ -24,7 +24,7 @@ void Network::LoadXModel(const shadow::NetParam &net_param,
 }
 
 void Network::Forward(
-    const std::map<std::string, float *> &data_map,
+    const std::map<std::string, void *> &data_map,
     const std::map<std::string, std::vector<int>> &shape_map) {
   engine_->Forward(data_map, shape_map);
 }

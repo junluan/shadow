@@ -88,7 +88,7 @@ void DetectFasterRCNN::Predict(const cv::Mat &im_mat, const RectF &roi,
 void DetectFasterRCNN::Process(const VecFloat &in_data, const VecInt &in_shape,
                                const VecFloat &im_info, float height,
                                float width, VecBoxF *boxes) {
-  std::map<std::string, float *> data_map;
+  std::map<std::string, void *> data_map;
   std::map<std::string, VecInt> shape_map;
   data_map[in_str_] = const_cast<float *>(in_data.data());
   data_map[im_info_str_] = const_cast<float *>(im_info.data());

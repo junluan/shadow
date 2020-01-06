@@ -17,7 +17,7 @@ class Backend {
   virtual void LoadModel(const shadow::NetParam &net_param) = 0;
 
   virtual void Forward(
-      const std::map<std::string, float *> &data_map,
+      const std::map<std::string, void *> &data_map,
       const std::map<std::string, std::vector<int>> &shape_map) = 0;
 
   virtual void SaveEngine(const std::string &save_path,

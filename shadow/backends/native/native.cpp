@@ -32,27 +32,31 @@ void Native::LoadModel(const std::string &proto_str, const void *weights_data) {
   CopyWeights(weights_data);
 }
 
-void Native::Forward(const std::map<std::string, float *> &data_map,
+void Native::Forward(const std::map<std::string, void *> &data_map,
                      const std::map<std::string, std::vector<int>> &shape_map) {
   if (ops_.empty()) return;
 
   for (const auto &in_map : data_map) {
     const auto &blob_name = in_map.first;
     const auto *blob_data = in_map.second;
-    auto *in_blob = ws_->GetBlob<float>(blob_name);
     CHECK_NOTNULL(blob_data) << blob_name << " has null data";
-    CHECK_NOTNULL(in_blob) << "Can not find blob " << blob_name;
-    if (shape_map.count(blob_name)) {
-      in_blob->reshape(shape_map.at(blob_name));
-    }
-    if (device_input_) {
-#if defined(USE_CUDA)
-      Kernel::CopyBuffer(in_blob->count(), blob_data, in_blob->mutable_data());
-#else
-      LOG(FATAL) << "device input is only supported when USE_CUDA is ON";
-#endif
+
+    const auto &blob_shape = shape_map.count(blob_name)
+                                 ? shape_map.at(blob_name)
+                                 : std::vector<int>{};
+
+    const auto &blob_type = ws_->GetBlobType(blob_name);
+
+    if (blob_type == float_id) {
+      SetData(blob_name, blob_shape, static_cast<const float *>(blob_data));
+    } else if (blob_type == int_id) {
+      SetData(blob_name, blob_shape, static_cast<const int *>(blob_data));
+    } else if (blob_type == uchar_id) {
+      SetData(blob_name, blob_shape,
+              static_cast<const unsigned char *>(blob_data));
     } else {
-      in_blob->set_data(blob_data, in_blob->count());
+      LOG(FATAL) << "Blob " << blob_name << " has unsupported type "
+                 << blob_type;
     }
   }
 
@@ -110,7 +114,7 @@ void Native::LoadProtoStrOrText(const std::string &proto_str_or_text,
 
 void Native::Initial() {
   for (const auto &blob : net_param_.blob()) {
-    VecInt shape;
+    std::vector<int> shape;
     int cc = 1;
     for (auto dim : blob.shape()) {
       cc *= dim;
@@ -234,6 +238,25 @@ void Native::CopyWeights(const void *weights_data) {
     } else {
       LOG(FATAL) << "Unknown blob type " << blob_type;
     }
+  }
+}
+
+template <typename T>
+void Native::SetData(const std::string &blob_name,
+                     const std::vector<int> &blob_shape, const T *blob_data) {
+  auto *blob = ws_->GetBlob<T>(blob_name);
+  CHECK_NOTNULL(blob) << "Can not find blob " << blob_name;
+  if (!blob_shape.empty()) {
+    blob->reshape(blob_shape);
+  }
+  if (device_input_) {
+#if defined(USE_CUDA)
+    Kernel::CopyBuffer<T, T>(blob->count(), blob_data, blob->mutable_data());
+#else
+    LOG(FATAL) << "device input is only supported when USE_CUDA is ON";
+#endif
+  } else {
+    blob->set_data(blob_data, blob->count());
   }
 }
 

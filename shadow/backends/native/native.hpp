@@ -21,7 +21,7 @@ class Native : public Backend {
   void LoadModel(const std::string &proto_str, const void *weights_data);
 
   void Forward(
-      const std::map<std::string, float *> &data_map,
+      const std::map<std::string, void *> &data_map,
       const std::map<std::string, std::vector<int>> &shape_map) override;
 
   void SaveEngine(const std::string &save_path,
@@ -39,6 +39,10 @@ class Native : public Backend {
 
   void CopyWeights(const std::vector<const void *> &weights);
   void CopyWeights(const void *weights_data);
+
+  template <typename T>
+  void SetData(const std::string &blob_name, const std::vector<int> &blob_shape,
+               const T *blob_data);
 
   bool device_input_ = false;
 

@@ -81,7 +81,7 @@ void DetectSSD::Predict(const cv::Mat &im_mat, const RectF &roi, VecBoxF *boxes,
 #endif
 
 void DetectSSD::Process(const VecFloat &in_data, std::vector<VecBoxF> *Gboxes) {
-  std::map<std::string, float *> data_map;
+  std::map<std::string, void *> data_map;
   data_map[in_str_] = const_cast<float *>(in_data.data());
 
   net_.Forward(data_map);

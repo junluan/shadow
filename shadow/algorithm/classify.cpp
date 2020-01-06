@@ -58,7 +58,7 @@ void Classify::Predict(const cv::Mat &im_mat, const RectF &roi,
 
 void Classify::Process(const VecFloat &in_data,
                        std::map<std::string, VecFloat> *scores) {
-  std::map<std::string, float *> data_map;
+  std::map<std::string, void *> data_map;
   data_map[in_str_] = const_cast<float *>(in_data.data());
 
   net_.Forward(data_map);

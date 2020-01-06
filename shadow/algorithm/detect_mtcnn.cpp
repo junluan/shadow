@@ -236,7 +236,7 @@ void DetectMTCNN::Predict(const cv::Mat &im_mat, const RectF &roi,
 void DetectMTCNN::Process_net_p(const float *data, const VecInt &in_shape,
                                 float threshold, float scale,
                                 VecBoxInfo *boxes) {
-  std::map<std::string, float *> data_map;
+  std::map<std::string, void *> data_map;
   std::map<std::string, VecInt> shape_map;
   data_map[in_p_str_] = const_cast<float *>(data);
   shape_map[in_p_str_] = in_shape;
@@ -276,7 +276,7 @@ void DetectMTCNN::Process_net_p(const float *data, const VecInt &in_shape,
 void DetectMTCNN::Process_net_r(const float *data, const VecInt &in_shape,
                                 float threshold, const VecBoxInfo &net_12_boxes,
                                 VecBoxInfo *boxes) {
-  std::map<std::string, float *> data_map;
+  std::map<std::string, void *> data_map;
   std::map<std::string, VecInt> shape_map;
   data_map[in_r_str_] = const_cast<float *>(data);
   shape_map[in_r_str_] = in_shape;
@@ -306,7 +306,7 @@ void DetectMTCNN::Process_net_r(const float *data, const VecInt &in_shape,
 void DetectMTCNN::Process_net_o(const float *data, const VecInt &in_shape,
                                 float threshold, const VecBoxInfo &net_24_boxes,
                                 VecBoxInfo *boxes) {
-  std::map<std::string, float *> data_map;
+  std::map<std::string, void *> data_map;
   std::map<std::string, VecInt> shape_map;
   data_map[in_o_str_] = const_cast<float *>(data);
   shape_map[in_o_str_] = in_shape;
