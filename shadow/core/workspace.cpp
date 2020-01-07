@@ -14,10 +14,27 @@ std::string Workspace::GetBlobType(const std::string &name) const {
   return std::string();
 }
 
+std::vector<int> Workspace::GetBlobShape(const std::string &name) const {
+  if (blob_map_.count(name)) {
+    const auto &blob_type = blob_map_.at(name).first;
+    if (blob_type == int_id) {
+      return static_cast<const BlobI *>(blob_map_.at(name).second)->shape();
+    } else if (blob_type == float_id) {
+      return static_cast<const BlobF *>(blob_map_.at(name).second)->shape();
+    } else if (blob_type == uchar_id) {
+      return static_cast<const BlobUC *>(blob_map_.at(name).second)->shape();
+    } else {
+      LOG(FATAL) << "Unknown blob type " << blob_type;
+    }
+  }
+  DLOG(WARNING) << "Blob " << name << " not in the workspace.";
+  return std::vector<int>();
+}
+
 void Workspace::GrowTempBuffer(int count, int elem_size) {
   if (blob_temp_ == nullptr) {
-    blob_temp_ =
-        std::make_shared<Blob<unsigned char>>(VecInt{count, elem_size});
+    blob_temp_ = std::make_shared<Blob<unsigned char>>(
+        std::vector<int>{count, elem_size});
   } else {
     auto required = static_cast<size_t>(count) * elem_size;
     if (required > blob_temp_->mem_count()) {

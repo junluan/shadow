@@ -30,6 +30,7 @@ class Workspace {
   bool HasBlob(const std::string &name) const;
 
   std::string GetBlobType(const std::string &name) const;
+  std::vector<int> GetBlobShape(const std::string &name) const;
 
   template <typename T>
   const Blob<T> *GetBlob(const std::string &name) const {
@@ -54,7 +55,7 @@ class Workspace {
     return CreateBlob<T>({}, name);
   }
   template <typename T>
-  Blob<T> *CreateBlob(const VecInt &shape, const std::string &name,
+  Blob<T> *CreateBlob(const std::vector<int> &shape, const std::string &name,
                       bool shared = false) {
     if (HasBlob(name)) {
       if (!shape.empty()) {
@@ -73,7 +74,8 @@ class Workspace {
   }
 
   template <typename T>
-  Blob<T> *CreateTempBlob(const VecInt &shape, const std::string &name) {
+  Blob<T> *CreateTempBlob(const std::vector<int> &shape,
+                          const std::string &name) {
     Blob<T> *blob = nullptr;
     if (!HasBlob(name)) {
       blob_map_[name].first = typeid(T).name();

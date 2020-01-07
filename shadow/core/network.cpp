@@ -41,8 +41,9 @@ void Network::Forward(
     return engine_->GetBlobShapeByName<T>(blob_name);                  \
   }
 
-INSTANTIATE_GET_BLOB(float);
 INSTANTIATE_GET_BLOB(int);
+INSTANTIATE_GET_BLOB(float);
+INSTANTIATE_GET_BLOB(unsigned char);
 #undef INSTANTIATE_GET_BLOB
 
 const std::vector<std::string> &Network::in_blob() const {

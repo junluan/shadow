@@ -4,12 +4,14 @@
 #include "blas.hpp"
 #include "blob.hpp"
 #include "helper.hpp"
+#include "kernel.hpp"
 #include "params.hpp"
 #include "registry.hpp"
 #include "workspace.hpp"
 
 #include "util/json_helper.hpp"
 #include "util/log.hpp"
+#include "util/type.hpp"
 #include "util/util.hpp"
 
 namespace Shadow {

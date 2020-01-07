@@ -43,14 +43,14 @@ void Native::Forward(const std::map<std::string, void *> &data_map,
 
     const auto &blob_shape = shape_map.count(blob_name)
                                  ? shape_map.at(blob_name)
-                                 : std::vector<int>{};
+                                 : std::vector<int>();
 
     const auto &blob_type = ws_->GetBlobType(blob_name);
 
-    if (blob_type == float_id) {
-      SetData(blob_name, blob_shape, static_cast<const float *>(blob_data));
-    } else if (blob_type == int_id) {
+    if (blob_type == int_id) {
       SetData(blob_name, blob_shape, static_cast<const int *>(blob_data));
+    } else if (blob_type == float_id) {
+      SetData(blob_name, blob_shape, static_cast<const float *>(blob_data));
     } else if (blob_type == uchar_id) {
       SetData(blob_name, blob_shape,
               static_cast<const unsigned char *>(blob_data));
@@ -122,16 +122,7 @@ void Native::Initial() {
     }
     const auto &blob_name = blob.name();
     const auto blob_type = blob.has_type() ? blob.type() : std::string("float");
-    if (blob_type == "float") {
-      auto *blob_ptr = ws_->CreateBlob<float>(shape, blob_name, true);
-      CHECK_NOTNULL(blob_ptr) << "Failed to create float blob " << blob_name;
-      int data_f_size = blob.data_f_size();
-      if (data_f_size > 0) {
-        CHECK_EQ(data_f_size, cc)
-            << "Blob float data size and blob shape are mismatch";
-        blob_ptr->set_data(blob.data_f().data(), data_f_size);
-      }
-    } else if (blob_type == "int") {
+    if (blob_type == "int") {
       auto *blob_ptr = ws_->CreateBlob<int>(shape, blob_name, true);
       CHECK_NOTNULL(blob_ptr) << "Failed to create int blob " << blob_name;
       int data_i_size = blob.data_i_size();
@@ -139,6 +130,15 @@ void Native::Initial() {
         CHECK_EQ(data_i_size, cc)
             << "Blob int data size and blob shape are mismatch";
         blob_ptr->set_data(blob.data_i().data(), data_i_size);
+      }
+    } else if (blob_type == "float") {
+      auto *blob_ptr = ws_->CreateBlob<float>(shape, blob_name, true);
+      CHECK_NOTNULL(blob_ptr) << "Failed to create float blob " << blob_name;
+      int data_f_size = blob.data_f_size();
+      if (data_f_size > 0) {
+        CHECK_EQ(data_f_size, cc)
+            << "Blob float data size and blob shape are mismatch";
+        blob_ptr->set_data(blob.data_f().data(), data_f_size);
       }
     } else if (blob_type == "unsigned char") {
       auto *blob_ptr = ws_->CreateBlob<unsigned char>(shape, blob_name, true);

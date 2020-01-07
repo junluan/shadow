@@ -2,20 +2,21 @@
 #define SHADOW_CORE_BLOB_HPP
 
 #include "common.hpp"
-#include "kernel.hpp"
 
 #include "util/log.hpp"
-#include "util/type.hpp"
+
+#include <string>
+#include <vector>
 
 namespace Shadow {
 
-enum Device { kCPU, kGPU };
+enum class Device { kCPU, kGPU };
 
 template <typename T>
 class Blob {
  public:
   explicit Blob(const std::string &name = "") : name_(name) { set_device(); }
-  explicit Blob(const VecInt &shape, const std::string &name = "",
+  explicit Blob(const std::vector<int> &shape, const std::string &name = "",
                 bool shared = false)
       : Blob(name) {
     reshape(shape, shared);
@@ -37,34 +38,10 @@ class Blob {
 #endif
   }
 
-  void set_data(const T *data, int set_count, int offset = 0) {
-    CHECK_NOTNULL(data);
-    CHECK_LE(set_count + offset, count());
-#if defined(USE_CUDA)
-    Kernel::WriteBuffer(set_count, data, data_ + offset);
+  void set_data(const T *data, int set_count, int offset = 0);
+  void get_data(T *data, int get_count, int offset = 0) const;
 
-#else
-    if (!shared_) {
-      memcpy(data_ + offset, data, set_count * sizeof(T));
-    } else {
-      CHECK_EQ(offset, 0);
-      data_ = const_cast<T *>(data);
-    }
-#endif
-  }
-
-  void get_data(T *data, int get_count, int offset = 0) const {
-    CHECK_NOTNULL(data);
-    CHECK_LE(get_count + offset, count());
-#if defined(USE_CUDA)
-    Kernel::ReadBuffer(get_count, data_ + offset, data);
-
-#else
-    memcpy(data, data_ + offset, get_count * sizeof(T));
-#endif
-  }
-
-  void share_data(const T *data, const VecInt &shape) {
+  void share_data(const T *data, const std::vector<int> &shape) {
     CHECK_NOTNULL(data);
     size_t cou = 1;
     for (const auto dim : shape) cou *= dim;
@@ -77,7 +54,8 @@ class Blob {
   }
   void share_data(const Blob<T> &from) { share_data(from.data_, from.shape_); }
 
-  void reshape(const VecInt &shape, bool shared = false, int align = 1) {
+  void reshape(const std::vector<int> &shape, bool shared = false,
+               int align = 1) {
     size_t cou = 1;
     for (const auto dim : shape) cou *= dim;
     CHECK_GT(cou, 0);
@@ -98,12 +76,12 @@ class Blob {
   void set_capacity(size_t capacity) { capacity_ = capacity; }
   void set_shared(bool shared) { shared_ = shared; }
 
-  const VecInt &shape() const { return shape_; }
+  const std::vector<int> &shape() const { return shape_; }
   int shape(int index) const { return shape_[canonical_index(index)]; }
   void set_shape(int index, int value) {
     shape_[canonical_index(index)] = value;
   }
-  void set_shape(const VecInt &shape) { shape_ = shape; }
+  void set_shape(const std::vector<int> &shape) { shape_ = shape; }
   void add_shape(int value) { shape_.push_back(value); }
 
   int num_axes() const { return static_cast<int>(shape_.size()); }
@@ -132,42 +110,17 @@ class Blob {
     return index;
   }
 
-  void clear() {
-    if (data_ != nullptr && !shared_) {
-#if defined(USE_CUDA)
-      Kernel::ReleaseBuffer(data_);
-
-#else
-      fast_free(data_);
-#endif
-    }
-    data_ = nullptr;
-    cpu_data_.clear();
-    shape_.clear();
-    capacity_ = 0;
-    shared_ = false;
-  }
+  void clear();
 
  private:
-  void allocate_data(size_t count, bool shared, int align) {
-    capacity_ = count;
-#if defined(USE_CUDA)
-    data_ = Kernel::MakeBuffer<T>(count, static_cast<T *>(nullptr));
-
-#else
-    if (!shared) {
-      data_ = static_cast<T *>(fast_malloc(count * sizeof(T), align));
-    }
-    shared_ = shared;
-#endif
-  }
+  void allocate_data(size_t count, bool shared, int align);
 
   void set_device() {
 #if defined(USE_CUDA)
-    device_ = kGPU;
+    device_ = Device::kGPU;
 
 #else
-    device_ = kCPU;
+    device_ = Device::kCPU;
 #endif
   }
 
@@ -175,8 +128,8 @@ class Blob {
   std::vector<T> cpu_data_{};
 
   std::string name_;
-  VecInt shape_{};
-  Device device_ = kCPU;
+  std::vector<int> shape_{};
+  Device device_ = Device::kCPU;
   size_t capacity_ = 0;
   bool shared_ = false;
 

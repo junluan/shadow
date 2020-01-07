@@ -4,8 +4,7 @@ namespace Shadow {
 
 Operator::Operator(const shadow::OpParam &op_param, Workspace *ws)
     : op_param_(op_param), arg_helper_(op_param), op_ws_(ws) {
-  op_name_ = op_param_.name();
-  op_type_ = op_param_.type();
+  op_name_ = op_param_.name(), op_type_ = op_param_.type();
   bottom_names_.clear(), top_names_.clear();
   for (const auto &bottom_name : op_param_.bottom()) {
     CHECK(ws->HasBlob(bottom_name))
@@ -16,10 +15,10 @@ Operator::Operator(const shadow::OpParam &op_param, Workspace *ws)
     const auto &top_type =
         get_single_argument<std::string>(top_name + "_type", "float");
     void *top_blob = nullptr;
-    if (top_type == "float") {
-      top_blob = ws->CreateBlob<float>(top_name);
-    } else if (top_type == "int") {
+    if (top_type == "int") {
       top_blob = ws->CreateBlob<int>(top_name);
+    } else if (top_type == "float") {
+      top_blob = ws->CreateBlob<float>(top_name);
     } else if (top_type == "unsigned char") {
       top_blob = ws->CreateBlob<unsigned char>(top_name);
     } else {
