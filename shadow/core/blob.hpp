@@ -1,6 +1,7 @@
 #ifndef SHADOW_CORE_BLOB_HPP
 #define SHADOW_CORE_BLOB_HPP
 
+#include "allocator.hpp"
 #include "common.hpp"
 
 #include "util/log.hpp"
@@ -9,8 +10,6 @@
 #include <vector>
 
 namespace Shadow {
-
-enum class Device { kCPU, kGPU };
 
 template <typename T>
 class Blob {
@@ -38,8 +37,27 @@ class Blob {
 #endif
   }
 
-  void set_data(const T *data, int set_count, int offset = 0);
-  void get_data(T *data, int get_count, int offset = 0) const;
+  void set_data(const T *data, int set_count, int offset = 0) {
+    CHECK_NOTNULL(data);
+    CHECK_LE(set_count + offset, count());
+#if defined(USE_CUDA)
+    Allocator::WriteBuffer<T>(set_count, data, data_ + offset);
+
+#else
+    if (!shared_) {
+      Allocator::WriteBuffer<T>(set_count, data, data_ + offset);
+    } else {
+      CHECK_EQ(offset, 0);
+      data_ = const_cast<T *>(data);
+    }
+#endif
+  }
+
+  void get_data(T *data, int get_count, int offset = 0) const {
+    CHECK_NOTNULL(data);
+    CHECK_LE(get_count + offset, count());
+    Allocator::ReadBuffer<T>(get_count, data_ + offset, data);
+  }
 
   void share_data(const T *data, const std::vector<int> &shape) {
     CHECK_NOTNULL(data);
@@ -110,10 +128,30 @@ class Blob {
     return index;
   }
 
-  void clear();
+  void clear() {
+    if (data_ != nullptr && !shared_) {
+      Allocator::ReleaseBuffer<T>(data_);
+    }
+    data_ = nullptr;
+    cpu_data_.clear();
+    shape_.clear();
+    capacity_ = 0;
+    shared_ = false;
+  }
 
  private:
-  void allocate_data(size_t count, bool shared, int align);
+  void allocate_data(size_t count, bool shared, int align) {
+    capacity_ = count;
+#if defined(USE_CUDA)
+    data_ = static_cast<T *>(Allocator::MakeBuffer<T>(count, nullptr, align));
+
+#else
+    if (!shared) {
+      data_ = static_cast<T *>(Allocator::MakeBuffer<T>(count, nullptr, align));
+    }
+    shared_ = shared;
+#endif
+  }
 
   void set_device() {
 #if defined(USE_CUDA)

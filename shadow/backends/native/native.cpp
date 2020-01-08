@@ -65,10 +65,6 @@ void Native::Forward(const std::map<std::string, void *> &data_map,
     DLOG(INFO) << op->debug_log();
   }
 
-#if defined(USE_CUDA)
-  Kernel::Synchronize();
-#endif
-
   DLOG(INFO) << "Forward Network!";
 }
 
@@ -251,7 +247,7 @@ void Native::SetData(const std::string &blob_name,
   }
   if (device_input_) {
 #if defined(USE_CUDA)
-    Kernel::CopyBuffer<T, T>(blob->count(), blob_data, blob->mutable_data());
+    Allocator::CopyBuffer<T>(blob->count(), blob_data, blob->mutable_data());
 #else
     LOG(FATAL) << "device input is only supported when USE_CUDA is ON";
 #endif

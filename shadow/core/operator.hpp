@@ -3,8 +3,8 @@
 
 #include "blas.hpp"
 #include "blob.hpp"
+#include "common.hpp"
 #include "helper.hpp"
-#include "kernel.hpp"
 #include "params.hpp"
 #include "registry.hpp"
 #include "workspace.hpp"

@@ -1,7 +1,13 @@
 #ifndef SHADOW_CORE_COMMON_HPP
 #define SHADOW_CORE_COMMON_HPP
 
-#include <cstdlib>
+#if defined(USE_CUDA)
+#include "cublas_v2.h"
+#include "cuda_runtime.h"
+#include "device_launch_parameters.h"
+
+#include "cudnn.hpp"
+#endif
 
 #if defined(USE_Eigen)
 #include "Eigen/Eigen"
@@ -9,6 +15,14 @@ template <typename T>
 using MapVector = Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, 1>>;
 template <typename T>
 using MapMatrix = Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>>;
+#endif
+
+#if defined(USE_NNPACK)
+#include "nnpack.h"
+#endif
+
+#if defined(USE_DNNL)
+#include "idnnl.hpp"
 #endif
 
 #define SHADOW_STRINGIFY_IMPL(s) #s
@@ -30,36 +44,38 @@ using MapMatrix = Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>>;
   SHADOW_STRINGIFY(           \
       SHADOW_VERSION_MAJOR.SHADOW_VERSION_MINOR.SHADOW_VERSION_PATCH)
 
-namespace Shadow {
-
-#define MALLOC_ALIGN 16
-
-static inline size_t align_size(int sz, int n) { return (sz + n - 1) & -n; }
-
-template <typename T>
-static inline T* align_ptr(T* ptr, int n = sizeof(T)) {
-  return (T*)(((size_t)ptr + n - 1) & -n);
-}
-
-static inline void* fast_malloc(size_t size, int align) {
-  auto* u_data = new unsigned char[size + sizeof(void*) + align]();
-  unsigned char** a_data = align_ptr((unsigned char**)u_data + 1, align);
-  a_data[-1] = u_data;
-  return a_data;
-}
-
-static inline void fast_free(void* ptr) {
-  if (ptr != nullptr) {
-    unsigned char* u_data = ((unsigned char**)ptr)[-1];
-    delete[] u_data;
-  }
-}
-
-#ifndef DISABLE_COPY_AND_ASSIGN
 #define DISABLE_COPY_AND_ASSIGN(classname) \
  private:                                  \
   classname(const classname&) = delete;    \
   classname& operator=(const classname&) = delete
+
+namespace Shadow {
+
+#if defined(USE_CUDA)
+
+// CUDA: use 512 threads per block
+const int NumThreads = 512;
+
+// CUDA: number of blocks for threads
+inline int GetBlocks(const int N) { return (N + NumThreads - 1) / NumThreads; }
+
+// CUDA: grid stride looping
+#define CUDA_KERNEL_LOOP(i, n)                                 \
+  for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < (n); \
+       i += blockDim.x * gridDim.x)
+
+#define CUDA_CHECK(condition)                                  \
+  do {                                                         \
+    cudaError_t error = condition;                             \
+    CHECK_EQ(error, cudaSuccess) << cudaGetErrorString(error); \
+  } while (0)
+
+#define CUBLAS_CHECK(condition)              \
+  do {                                       \
+    cublasStatus_t status = condition;       \
+    CHECK_EQ(status, CUBLAS_STATUS_SUCCESS); \
+  } while (0)
+
 #endif
 
 }  // namespace Shadow

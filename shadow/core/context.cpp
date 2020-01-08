@@ -1,6 +1,7 @@
 #include "context.hpp"
 
-#include "kernel.hpp"
+#include "common.hpp"
+
 #include "util/log.hpp"
 
 namespace Shadow {
@@ -19,6 +20,14 @@ void Context::SwitchDevice() {
   CUDA_CHECK(cudaSetDevice(device_id_));
 #endif
 }
+
+void Context::Synchronize() {
+#if defined(USE_CUDA)
+  CUDA_CHECK(cudaDeviceSynchronize());
+#endif
+}
+
+int Context::device_id() { return device_id_; }
 
 void* Context::blas_handle() {
 #if defined(USE_CUDA)

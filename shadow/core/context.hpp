@@ -11,6 +11,9 @@ class Context {
 
   void Reset(int device_id);
   void SwitchDevice();
+  void Synchronize();
+
+  int device_id();
 
   void* blas_handle();
   void* cudnn_handle();
@@ -19,15 +22,16 @@ class Context {
   void* dnnl_stream();
 
  private:
+  void Init(int device_id);
+  void Clear();
+
   int device_id_ = 0;
+
   void* blas_handle_ = nullptr;
   void* cudnn_handle_ = nullptr;
   void* nnpack_handle_ = nullptr;
   void* dnnl_engine_ = nullptr;
   void* dnnl_stream_ = nullptr;
-
-  void Init(int device_id);
-  void Clear();
 };
 
 }  // namespace Shadow

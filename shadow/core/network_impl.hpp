@@ -21,6 +21,8 @@ class NetworkImpl {
 
     CHECK_NOTNULL(backend_);
     backend_->Forward(data_map, shape_map);
+
+    ws_.Ctx()->Synchronize();
   }
 
   template <typename T>
