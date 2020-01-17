@@ -33,6 +33,7 @@ class ResizeOp : public Operator {
       scale_h_ = scale[0], scale_w_ = scale[1];
     }
     type_ = get_single_argument<int>("type", 1);
+    align_corners_ = get_single_argument<bool>("align_corners", false);
   }
 
   void Forward() override;
@@ -40,13 +41,14 @@ class ResizeOp : public Operator {
  private:
   int out_h_, out_w_, type_;
   float scale_h_, scale_w_;
+  bool align_corners_;
 };
 
 namespace Vision {
 
 template <typename T>
 void Resize(const T* in_data, const VecInt& in_shape, int type,
-            const VecInt& out_shape, T* out_data);
+            bool align_corners, const VecInt& out_shape, T* out_data);
 
 }  // namespace Vision
 
