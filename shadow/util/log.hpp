@@ -4,18 +4,27 @@
 #include <cstdlib>
 #include <iostream>
 #include <sstream>
+#include <stdexcept>
 #include <string>
 
 #if defined(__ANDROID__) || defined(ANDROID)
 #include <android/log.h>
 #endif
 
+#if defined(__linux__) || defined(__APPLE__)
+#define __FUNCTION_NAME __PRETTY_FUNCTION__
+#elif defined(_WIN32)
+#define __FUNCTION_NAME __FUNCSIG__
+#else
+#define __FUNCTION_NAME __func__
+#endif
+
 namespace Shadow {
 
-#define SLOG_INFO LogMessage("INFO", __FILE__, __LINE__)
-#define SLOG_WARNING LogMessage("WARNING", __FILE__, __LINE__)
-#define SLOG_ERROR LogMessage("ERROR", __FILE__, __LINE__)
-#define SLOG_FATAL LogMessage("FATAL", __FILE__, __LINE__)
+#define SLOG_INFO LogMessage("INFO", __FILE__, __LINE__, __FUNCTION_NAME)
+#define SLOG_WARNING LogMessage("WARNING", __FILE__, __LINE__, __FUNCTION_NAME)
+#define SLOG_ERROR LogMessage("ERROR", __FILE__, __LINE__, __FUNCTION_NAME)
+#define SLOG_FATAL LogMessage("FATAL", __FILE__, __LINE__, __FUNCTION_NAME)
 
 #define LOG(severity) SLOG_##severity.stream()
 #define LOG_IF(severity, condition) \
@@ -76,13 +85,14 @@ namespace Shadow {
 
 class LogMessage {
  public:
-  LogMessage(const std::string& severity, const char* file, int line)
-      : severity_(severity) {
+  LogMessage(const std::string& severity, const char* file, int line,
+             const char* function)
+      : severity_(severity), function_(function) {
     std::string file_str(file);
     std::string file_name = file_str.substr(file_str.find_last_of("/\\") + 1);
     stream_ << severity << ": " << file_name << ":" << line << "] ";
   }
-  ~LogMessage() {
+  ~LogMessage() noexcept(false) {
     stream_ << '\n';
 #if defined(__ANDROID__) || defined(ANDROID)
     if (severity_ == "INFO") {
@@ -98,7 +108,7 @@ class LogMessage {
     std::cerr << stream_.str();
 #endif
     if (severity_ == "FATAL") {
-      abort();
+      throw std::runtime_error(function_);
     }
   }
   std::stringstream& stream() { return stream_; }
@@ -113,7 +123,7 @@ class LogMessage {
   const char* tag_ = "";
 #endif
 
-  std::string severity_;
+  std::string severity_, function_;
   std::stringstream stream_;
 };
 
