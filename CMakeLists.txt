@@ -14,7 +14,6 @@ option(USE_JSON "Use JSON" OFF)
 option(USE_OpenCV "Use OpenCV to read, write and show image" ON)
 
 option(BUILD_EXAMPLES "Build examples" ON)
-option(BUILD_SERVICE "Build grpc server and client" OFF)
 option(BUILD_LINT "Build clang-format lint" OFF)
 
 option(BUILD_SHARED_LIBS "Build shared library" ON)
