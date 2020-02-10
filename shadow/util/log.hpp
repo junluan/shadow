@@ -6,25 +6,23 @@
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <vector>
 
 #if defined(__ANDROID__) || defined(ANDROID)
 #include <android/log.h>
 #endif
 
 #if defined(__linux__) || defined(__APPLE__)
-#define __FUNCTION_NAME __PRETTY_FUNCTION__
-#elif defined(_WIN32)
-#define __FUNCTION_NAME __FUNCSIG__
-#else
-#define __FUNCTION_NAME __func__
+#include <cxxabi.h>
+#include <execinfo.h>
 #endif
 
 namespace Shadow {
 
-#define SLOG_INFO LogMessage("INFO", __FILE__, __LINE__, __FUNCTION_NAME)
-#define SLOG_WARNING LogMessage("WARNING", __FILE__, __LINE__, __FUNCTION_NAME)
-#define SLOG_ERROR LogMessage("ERROR", __FILE__, __LINE__, __FUNCTION_NAME)
-#define SLOG_FATAL LogMessage("FATAL", __FILE__, __LINE__, __FUNCTION_NAME)
+#define SLOG_INFO LogMessage("INFO", __FILE__, __LINE__)
+#define SLOG_WARNING LogMessage("WARNING", __FILE__, __LINE__)
+#define SLOG_ERROR LogMessage("ERROR", __FILE__, __LINE__)
+#define SLOG_FATAL LogMessage("FATAL", __FILE__, __LINE__)
 
 #define LOG(severity) SLOG_##severity.stream()
 #define LOG_IF(severity, condition) \
@@ -85,45 +83,89 @@ namespace Shadow {
 
 class LogMessage {
  public:
-  LogMessage(const std::string& severity, const char* file, int line,
-             const char* function)
-      : severity_(severity), function_(function) {
+  LogMessage(const std::string& severity, const char* file, int line)
+      : severity_(severity) {
     std::string file_str(file);
-    std::string file_name = file_str.substr(file_str.find_last_of("/\\") + 1);
+    const auto& file_name = file_str.substr(file_str.find_last_of("/\\") + 1);
     stream_ << severity << ": " << file_name << ":" << line << "] ";
   }
   ~LogMessage() noexcept(false) {
-    stream_ << '\n';
+    const auto& msg = stream_.str();
 #if defined(__ANDROID__) || defined(ANDROID)
     if (severity_ == "INFO") {
-      __android_log_print(ANDROID_LOG_INFO, tag_, "%s", stream_.str().c_str());
+      __android_log_print(ANDROID_LOG_INFO, "native", "%s\n", msg.c_str());
     } else if (severity_ == "WARNING") {
-      __android_log_print(ANDROID_LOG_WARN, tag_, "%s", stream_.str().c_str());
+      __android_log_print(ANDROID_LOG_WARN, "native", "%s\n", msg.c_str());
     } else if (severity_ == "ERROR") {
-      __android_log_print(ANDROID_LOG_ERROR, tag_, "%s", stream_.str().c_str());
+      __android_log_print(ANDROID_LOG_ERROR, "native", "%s\n", msg.c_str());
     } else if (severity_ == "FATAL") {
-      __android_log_print(ANDROID_LOG_FATAL, tag_, "%s", stream_.str().c_str());
+      __android_log_print(ANDROID_LOG_FATAL, "native", "%s\n", msg.c_str());
     }
 #else
-    std::cerr << stream_.str();
+    if (severity_ == "INFO") {
+      std::cout << msg << std::endl;
+    } else {
+      std::cerr << msg << std::endl;
+    }
 #endif
     if (severity_ == "FATAL") {
-      throw std::runtime_error(function_);
+      const auto& trace = stack_trace(0);
+      if (!trace.empty()) {
+        std::cerr << trace;
+      }
+      throw std::runtime_error(msg);
     }
   }
+
   std::stringstream& stream() { return stream_; }
 
   LogMessage(const LogMessage&) = delete;
   void operator=(const LogMessage&) = delete;
 
  private:
-#if defined(__ANDROID__) || defined(ANDROID)
-  const char* tag_ = "native";
-#else
-  const char* tag_ = "";
+  std::string demangle(const char* symbol) {
+    std::string symbol_str(symbol);
+#if defined(__linux__) || defined(__APPLE__)
+    auto func_start = symbol_str.find("_Z");
+    if (func_start != std::string::npos) {
+      auto func_end = symbol_str.find_first_of(" +", func_start);
+      const auto& func_symbol =
+          symbol_str.substr(func_start, func_end - func_start);
+      int status = 0;
+      size_t length = 0;
+      auto demangle_func_symbol =
+          abi::__cxa_demangle(func_symbol.c_str(), 0, &length, &status);
+      if (demangle_func_symbol != nullptr && status == 0 && length > 0) {
+        symbol_str = symbol_str.substr(0, func_start) + demangle_func_symbol +
+                     symbol_str.substr(func_end);
+      }
+      free(demangle_func_symbol);
+    }
 #endif
+    return symbol_str;
+  }
 
-  std::string severity_, function_;
+  std::string stack_trace(int start_frame, int stack_size = 20) {
+    std::stringstream ss;
+#if defined(__linux__) || defined(__APPLE__)
+    std::vector<void*> stack(stack_size, nullptr);
+    stack_size = backtrace(stack.data(), stack_size);
+    ss << "Stack trace:" << std::endl;
+    auto symbols = backtrace_symbols(stack.data(), stack_size);
+    if (symbols != nullptr) {
+      for (int n = start_frame; n < stack_size; ++n) {
+        const auto& demangle_symbol = demangle(symbols[n]);
+        if (demangle_symbol.find("LogMessage") == std::string::npos) {
+          ss << "  [bt] " << demangle_symbol << std::endl;
+        }
+      }
+    }
+    free(symbols);
+#endif
+    return ss.str();
+  }
+
+  std::string severity_;
   std::stringstream stream_;
 };
 
