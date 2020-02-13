@@ -28,12 +28,12 @@ class Operator {
   }
   template <typename T>
   T get_single_argument(const std::string &name, const T &default_value) const {
-    return arg_helper_.template GetSingleArgument<T>(name, default_value);
+    return arg_helper_.GetSingleArgument<T>(name, default_value);
   }
   template <typename T>
   std::vector<T> get_repeated_argument(
       const std::string &name, const std::vector<T> &default_value = {}) const {
-    return arg_helper_.template GetRepeatedArgument<T>(name, default_value);
+    return arg_helper_.GetRepeatedArgument<T>(name, default_value);
   }
 
   const std::string &name() const { return op_name_; }

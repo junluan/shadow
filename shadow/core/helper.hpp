@@ -10,8 +10,9 @@ namespace Shadow {
 class ArgumentHelper {
  public:
   ArgumentHelper() = default;
-  explicit ArgumentHelper(const shadow::NetParam &def);
-  explicit ArgumentHelper(const shadow::OpParam &def);
+
+  template <typename T>
+  explicit ArgumentHelper(const T &def);
 
   bool HasArgument(const std::string &name) const;
 
@@ -29,7 +30,7 @@ class ArgumentHelper {
                            const std::vector<T> &value);
 
  private:
-  std::map<std::string, shadow::Argument> arg_map_;
+  std::map<std::string, shadow::Argument> arguments_;
 };
 
 #define DECLARE_ADD_SINGLE_ARGUMENT(fieldname, T)                        \

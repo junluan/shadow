@@ -4,26 +4,27 @@
 
 namespace Shadow {
 
-ArgumentHelper::ArgumentHelper(const shadow::NetParam& def) {
+template <typename T>
+ArgumentHelper::ArgumentHelper(const T& def) {
   for (const auto& arg : def.arg()) {
     CHECK(!HasArgument(arg.name()))
         << "Duplicated argument name: " << arg.name()
-        << " found in network def: " << def.name();
-    arg_map_[arg.name()] = arg;
+        << " found in def: " << def.name();
+    arguments_[arg.name()] = arg;
   }
 }
 
-ArgumentHelper::ArgumentHelper(const shadow::OpParam& def) {
-  for (const auto& arg : def.arg()) {
-    CHECK(!HasArgument(arg.name()))
-        << "Duplicated argument name: " << arg.name()
-        << " found in operator def: " << def.name();
-    arg_map_[arg.name()] = arg;
-  }
+template ArgumentHelper::ArgumentHelper(const shadow::NetParam&);
+template ArgumentHelper::ArgumentHelper(const shadow::OpParam&);
+
+template <>
+ArgumentHelper::ArgumentHelper(
+    const std::map<std::string, shadow::Argument>& arguments) {
+  arguments_ = arguments;
 }
 
 bool ArgumentHelper::HasArgument(const std::string& name) const {
-  return arg_map_.count(name) > 0;
+  return arguments_.count(name) > 0;
 }
 
 #define INSTANTIATE_SINGLE_ARGUMENT(fieldname, T)                        \
@@ -33,16 +34,16 @@ bool ArgumentHelper::HasArgument(const std::string& name) const {
     if (!HasArgument(name)) {                                            \
       return default_value;                                              \
     }                                                                    \
-    CHECK(arg_map_.at(name).has_##fieldname());                          \
-    return arg_map_.at(name).fieldname();                                \
+    CHECK(arguments_.at(name).has_##fieldname());                        \
+    return arguments_.at(name).fieldname();                              \
   }                                                                      \
   template <>                                                            \
   void ArgumentHelper::AddSingleArgument<T>(const std::string& name,     \
                                             const T& value) {            \
     CHECK(!HasArgument(name)) << "Duplicated argument name: " << name;   \
-    arg_map_[name] = {};                                                 \
-    arg_map_[name].set_name(name);                                       \
-    arg_map_[name].set_##fieldname(value);                               \
+    arguments_[name] = {};                                               \
+    arguments_[name].set_name(name);                                     \
+    arguments_[name].set_##fieldname(value);                             \
   }
 
 INSTANTIATE_SINGLE_ARGUMENT(s_f, float);
@@ -59,7 +60,7 @@ INSTANTIATE_SINGLE_ARGUMENT(s_s, std::string);
       return default_value;                                                  \
     }                                                                        \
     std::vector<T> values;                                                   \
-    for (auto v : arg_map_.at(name).fieldname()) {                           \
+    for (auto v : arguments_.at(name).fieldname()) {                         \
       values.push_back(v);                                                   \
     }                                                                        \
     return values;                                                           \
@@ -68,10 +69,10 @@ INSTANTIATE_SINGLE_ARGUMENT(s_s, std::string);
   void ArgumentHelper::AddRepeatedArgument<T>(const std::string& name,       \
                                               const std::vector<T>& value) { \
     CHECK(!HasArgument(name)) << "Duplicated argument name: " << name;       \
-    arg_map_[name] = {};                                                     \
-    arg_map_[name].set_name(name);                                           \
+    arguments_[name] = {};                                                   \
+    arguments_[name].set_name(name);                                         \
     for (auto v : value) {                                                   \
-      arg_map_[name].add_##fieldname(v);                                     \
+      arguments_[name].add_##fieldname(v);                                   \
     }                                                                        \
   }
 
