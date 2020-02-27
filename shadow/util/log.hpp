@@ -8,13 +8,13 @@
 #include <string>
 #include <vector>
 
-#if defined(__ANDROID__) || defined(ANDROID)
-#include <android/log.h>
-#endif
-
 #if defined(__linux__) || defined(__APPLE__)
 #include <cxxabi.h>
+#if defined(__ANDROID__) || defined(ANDROID)
+#include <android/log.h>
+#else
 #include <execinfo.h>
+#endif
 #endif
 
 namespace Shadow {
@@ -134,7 +134,7 @@ class LogMessage {
       int status = 0;
       size_t length = 0;
       auto demangle_func_symbol =
-          abi::__cxa_demangle(func_symbol.c_str(), 0, &length, &status);
+          abi::__cxa_demangle(func_symbol.c_str(), nullptr, &length, &status);
       if (demangle_func_symbol != nullptr && status == 0 && length > 0) {
         symbol_str = symbol_str.substr(0, func_start) + demangle_func_symbol +
                      symbol_str.substr(func_end);
@@ -148,6 +148,7 @@ class LogMessage {
   std::string stack_trace(int start_frame, int stack_size = 20) {
     std::stringstream ss;
 #if defined(__linux__) || defined(__APPLE__)
+#if !defined(__ANDROID__) && !defined(ANDROID)
     std::vector<void*> stack(stack_size, nullptr);
     stack_size = backtrace(stack.data(), stack_size);
     ss << "Stack trace:" << std::endl;
@@ -161,6 +162,7 @@ class LogMessage {
       }
     }
     free(symbols);
+#endif
 #endif
     return ss.str();
   }
