@@ -60,11 +60,8 @@ void ReshapeOp::Forward() {
     top_shape[start_axis + inferred_axis] = bottom->count() / explicit_count;
   }
 
-  top->clear();
-  top->set_shape(top_shape);
+  top->share_data(bottom->data(), top_shape);
   CHECK_EQ(top->count(), bottom->count());
-
-  top->share_data(*bottom);
 }
 
 REGISTER_OPERATOR(Reshape, ReshapeOp);

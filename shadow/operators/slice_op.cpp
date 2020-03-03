@@ -3,51 +3,49 @@
 namespace Shadow {
 
 void SliceOp::Forward() {
+  CHECK_GE(tops_size(), 2);
+
   const auto *bottom = bottoms<float>(0);
 
   int num_tops = tops_size();
-  auto top_shape = bottom->shape();
-  if (num_tops > 1) {
-    VecInt slices;
-    int bottom_slice_axis = bottom->shape(slice_axis_);
-    if (slice_point_.empty()) {
-      CHECK_EQ(bottom_slice_axis % num_tops, 0);
-      slices.resize(num_tops, bottom_slice_axis / num_tops);
-    } else {
-      CHECK_EQ(slice_point_.size(), num_tops - 1);
-      int prev = 0;
-      for (auto point : slice_point_) {
-        CHECK_GT(point, prev);
-        slices.push_back(point - prev);
-        prev = point;
-      }
-      CHECK_GT(bottom_slice_axis, prev);
-      slices.push_back(bottom_slice_axis - prev);
-    }
-    int count = 0;
-    for (int n = 0; n < num_tops; ++n) {
-      auto *top = mutable_tops<float>(n);
-      top_shape[slice_axis_] = slices[n];
-      top->reshape(top_shape);
-      count += top->count();
-    }
-    CHECK_EQ(count, bottom->count());
 
-    int offset_slice_axis = 0;
-    int num_slices = bottom->count(0, slice_axis_);
-    int slice_size = bottom->count(slice_axis_ + 1);
-    for (int n = 0; n < tops_size(); ++n) {
-      auto *top = mutable_tops<float>(n);
-      int top_slice_axis = top->shape(slice_axis_);
-      Vision::Slice(bottom->data(), top->count(), num_slices, slice_size,
-                    bottom_slice_axis, top_slice_axis, offset_slice_axis,
-                    top->mutable_data());
-      offset_slice_axis += top_slice_axis;
-    }
+  VecInt slices;
+  int bottom_slice_axis = bottom->shape(slice_axis_);
+  if (slice_point_.empty()) {
+    CHECK_EQ(bottom_slice_axis % num_tops, 0);
+    slices.resize(num_tops, bottom_slice_axis / num_tops);
   } else {
-    auto *top = mutable_tops<float>(0);
-    top->set_shape(top_shape);
-    top->share_data(*bottom);
+    CHECK_EQ(slice_point_.size(), num_tops - 1);
+    int prev = 0;
+    for (auto point : slice_point_) {
+      CHECK_GT(point, prev);
+      slices.push_back(point - prev);
+      prev = point;
+    }
+    CHECK_GT(bottom_slice_axis, prev);
+    slices.push_back(bottom_slice_axis - prev);
+  }
+
+  int count = 0;
+  auto top_shape = bottom->shape();
+  for (int n = 0; n < num_tops; ++n) {
+    auto *top = mutable_tops<float>(n);
+    top_shape[slice_axis_] = slices[n];
+    top->reshape(top_shape);
+    count += top->count();
+  }
+  CHECK_EQ(count, bottom->count());
+
+  int offset_slice_axis = 0;
+  int num_slices = bottom->count(0, slice_axis_);
+  int slice_size = bottom->count(slice_axis_ + 1);
+  for (int n = 0; n < tops_size(); ++n) {
+    auto *top = mutable_tops<float>(n);
+    int top_slice_axis = top->shape(slice_axis_);
+    Vision::Slice(bottom->data(), top->count(), num_slices, slice_size,
+                  bottom_slice_axis, top_slice_axis, offset_slice_axis,
+                  top->mutable_data());
+    offset_slice_axis += top_slice_axis;
   }
 }
 

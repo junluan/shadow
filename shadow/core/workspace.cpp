@@ -33,14 +33,9 @@ std::vector<int> Workspace::GetBlobShape(const std::string &name) const {
 
 void Workspace::GrowTempBuffer(int count, int elem_size) {
   if (blob_temp_ == nullptr) {
-    blob_temp_ = std::make_shared<Blob<unsigned char>>(
-        std::vector<int>{count, elem_size});
-  } else {
-    auto required = static_cast<size_t>(count) * elem_size;
-    if (required > blob_temp_->mem_count()) {
-      blob_temp_->reshape({count, elem_size});
-    }
+    blob_temp_ = std::make_shared<Blob<unsigned char>>("temp_buffer");
   }
+  blob_temp_->reshape({count, elem_size});
   temp_offset_ = 0;
 }
 

@@ -35,18 +35,23 @@ class Native : public Backend {
   static void LoadProtoStrOrText(const std::string &proto_str_or_text,
                                  shadow::NetParam *net_param);
 
-  void Initial();
-
-  void CopyWeights(const std::vector<const void *> &weights);
-  void CopyWeights(const void *weights_data);
+  void Initial(const shadow::NetParam &net_param);
 
   template <typename T>
-  void SetData(const std::string &blob_name, const std::vector<int> &blob_shape,
-               const T *blob_data);
+  void SetInputData(const std::string &blob_name,
+                    const std::vector<int> &blob_shape, const void *blob_data);
+
+  template <typename T>
+  int SetWeightData(const std::string &blob_name,
+                    const std::vector<int> &blob_shape, const void *blob_data,
+                    bool share_data);
+
+  void CopyWeights(const shadow::NetParam &net_param,
+                   const std::vector<const void *> &weights);
+  void CopyWeights(const shadow::NetParam &net_param, const void *weights_data);
 
   bool device_input_ = false;
 
-  shadow::NetParam net_param_;
   std::vector<std::shared_ptr<Operator>> ops_;
 };
 

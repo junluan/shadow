@@ -30,11 +30,8 @@ void UnsqueezeOp::Forward() {
   }
   CHECK_EQ(d, num_axes);
 
-  top->clear();
-  top->set_shape(top_shape);
+  top->share_data(bottom->data(), top_shape);
   CHECK_EQ(top->count(), bottom->count());
-
-  top->share_data(*bottom);
 }
 
 REGISTER_OPERATOR(Unsqueeze, UnsqueezeOp);

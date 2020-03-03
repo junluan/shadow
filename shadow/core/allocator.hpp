@@ -9,21 +9,23 @@ enum class Device { kCPU, kGPU };
 
 class Allocator {
  public:
-  template <typename T>
-  static void *MakeBuffer(size_t size, const void *host_ptr, int align = 1);
+  virtual ~Allocator() = default;
 
-  template <typename T>
-  static void ReadBuffer(size_t size, const void *src, void *des);
+  virtual Device GetDevice() const = 0;
 
-  template <typename T>
-  static void WriteBuffer(size_t size, const void *src, void *des);
+  virtual void *MakeBuffer(size_t size, const void *host_ptr) const = 0;
 
-  template <typename T>
-  static void CopyBuffer(size_t size, const void *src, void *des);
+  virtual void ReadBuffer(size_t size, const void *src, void *dst) const = 0;
 
-  template <typename T>
-  static void ReleaseBuffer(void *device_ptr);
+  virtual void WriteBuffer(size_t size, const void *src, void *dst) const = 0;
+
+  virtual void CopyBuffer(size_t size, const void *src, void *dst) const = 0;
+
+  virtual void ReleaseBuffer(void *ptr) const = 0;
 };
+
+template <Device D>
+Allocator *GetAllocator();
 
 }  // namespace Shadow
 

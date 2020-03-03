@@ -6,47 +6,39 @@ namespace Shadow {
 
 #if defined(USE_CUDA)
 
-template <typename T>
-void *Allocator::MakeBuffer(size_t size, const void *host_ptr, int align) {
-  T *device_ptr;
-  CUDA_CHECK(cudaMalloc(&device_ptr, size * sizeof(T)));
-  if (host_ptr != nullptr) {
-    WriteBuffer<T>(size, host_ptr, device_ptr);
+class GPUAllocator : public Allocator {
+ public:
+  Device GetDevice() const override { return Device::kGPU; }
+
+  void *MakeBuffer(size_t size, const void *host_ptr) const override {
+    void *ptr;
+    CUDA_CHECK(cudaMalloc(&ptr, size));
+    if (host_ptr != nullptr) {
+      WriteBuffer(size, host_ptr, ptr);
+    }
+    return ptr;
   }
-  return device_ptr;
+
+  void ReadBuffer(size_t size, const void *src, void *dst) const override {
+    CUDA_CHECK(cudaMemcpy(dst, src, size, cudaMemcpyDeviceToHost));
+  }
+
+  void WriteBuffer(size_t size, const void *src, void *dst) const override {
+    CUDA_CHECK(cudaMemcpy(dst, src, size, cudaMemcpyHostToDevice));
+  }
+
+  void CopyBuffer(size_t size, const void *src, void *dst) const override {
+    CUDA_CHECK(cudaMemcpy(dst, src, size, cudaMemcpyDeviceToDevice));
+  }
+
+  void ReleaseBuffer(void *ptr) const override { CUDA_CHECK(cudaFree(ptr)); }
+};
+
+template <>
+Allocator *GetAllocator<Device::kGPU>() {
+  static GPUAllocator allocator;
+  return &allocator;
 }
-
-template <typename T>
-void Allocator::ReadBuffer(size_t size, const void *src, void *des) {
-  CUDA_CHECK(cudaMemcpy(des, src, size * sizeof(T), cudaMemcpyDeviceToHost));
-}
-
-template <typename T>
-void Allocator::WriteBuffer(size_t size, const void *src, void *des) {
-  CUDA_CHECK(cudaMemcpy(des, src, size * sizeof(T), cudaMemcpyHostToDevice));
-}
-
-template <typename T>
-void Allocator::CopyBuffer(size_t size, const void *src, void *des) {
-  CUDA_CHECK(cudaMemcpy(des, src, size * sizeof(T), cudaMemcpyDeviceToDevice));
-}
-
-template <typename T>
-void Allocator::ReleaseBuffer(void *device_ptr) {
-  CUDA_CHECK(cudaFree(device_ptr));
-}
-
-#define INSTANTIATE_ALLOCATOR(T)                                            \
-  template void *Allocator::MakeBuffer<T>(size_t, const void *, int align); \
-  template void Allocator::ReadBuffer<T>(size_t, const void *, void *);     \
-  template void Allocator::WriteBuffer<T>(size_t, const void *, void *);    \
-  template void Allocator::CopyBuffer<T>(size_t, const void *, void *);     \
-  template void Allocator::ReleaseBuffer<T>(void *);
-
-INSTANTIATE_ALLOCATOR(int)
-INSTANTIATE_ALLOCATOR(float)
-INSTANTIATE_ALLOCATOR(unsigned char)
-#undef INSTANTIATE_BUFFER_OPERATION
 
 #endif
 
