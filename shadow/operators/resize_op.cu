@@ -4,7 +4,6 @@ namespace Shadow {
 
 namespace Vision {
 
-#if defined(USE_CUDA)
 template <typename T>
 __global__ void KernelResizeNearest(const T* in_data, int count, int channel,
                                     int in_h, int in_w, int out_h, int out_w,
@@ -104,7 +103,6 @@ void Resize(const T* in_data, const VecInt& in_shape, int type,
 
 template void Resize(const float*, const VecInt&, int, bool, const VecInt&,
                      float*);
-#endif
 
 }  // namespace Vision
 

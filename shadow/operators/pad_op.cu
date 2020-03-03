@@ -4,7 +4,6 @@ namespace Shadow {
 
 namespace Vision {
 
-#if defined(USE_CUDA)
 template <typename T>
 __global__ void KernelPad(const T* in_data, int count, int channel, int in_h,
                           int in_w, int out_h, int out_w, int pad_t, int pad_b,
@@ -43,7 +42,6 @@ void Pad(const T* in_data, const VecInt& in_shape, const VecInt& paddings,
 
 template void Pad(const float*, const VecInt&, const VecInt&, const VecInt&,
                   float*);
-#endif
 
 }  // namespace Vision
 

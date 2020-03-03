@@ -4,7 +4,6 @@ namespace Shadow {
 
 namespace Vision {
 
-#if defined(USE_CUDA)
 template <typename T>
 __global__ void KernelReorg(const T *in_data, int count, int in_c, int in_h,
                             int in_w, int out_c, int stride, T *out_data) {
@@ -39,7 +38,6 @@ void Reorg(const T *in_data, const VecInt &in_shape, int stride, T *out_data) {
 }
 
 template void Reorg(const float *, const VecInt &, int, float *);
-#endif
 
 }  // namespace Vision
 

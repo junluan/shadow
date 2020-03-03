@@ -10,7 +10,6 @@ namespace Shadow {
 
 namespace Blas {
 
-#if defined(USE_CUDA)
 template <typename T>
 __global__ void KernelSet(int n, float val, T *y, int offy) {
   CUDA_KERNEL_LOOP(globalid, n) { y[offy + globalid] = val; }
@@ -163,7 +162,6 @@ template void BlasSgemv(int, int, int, float, const float *, int, const float *,
 // Level 3
 template void BlasSgemm(int, int, int, int, int, float, const float *, int,
                         const float *, int, float, float *, int, void *);
-#endif
 
 }  // namespace Blas
 

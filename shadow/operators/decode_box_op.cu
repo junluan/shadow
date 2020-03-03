@@ -4,7 +4,6 @@ namespace Shadow {
 
 namespace Vision {
 
-#if defined(USE_CUDA)
 template <typename T>
 __device__ void decode(const T *encode_box, const T *prior_box,
                        const T *prior_var, T *decode_box) {
@@ -126,7 +125,6 @@ void DecodeRefineDetBoxes(const T *odm_loc, const T *odm_conf,
 template void DecodeRefineDetBoxes(const float *, const float *, const float *,
                                    const float *, const float *, int, int, int,
                                    int, float, float *);
-#endif
 
 }  // namespace Vision
 

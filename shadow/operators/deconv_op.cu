@@ -4,7 +4,6 @@ namespace Shadow {
 
 namespace Vision {
 
-#if defined(USE_CUDA)
 template <typename T>
 __global__ void KernelCol2Im(const T *col_data, int offset, int count, int in_c,
                              int in_h, int in_w, int kernel_size_h,
@@ -59,7 +58,6 @@ void Col2Im(const T *col_data, const VecInt &in_shape, int offset,
 
 template void Col2Im(const float *, const VecInt &, int, int, int, int, int,
                      int, int, int, const VecInt &, float *);
-#endif
 
 }  // namespace Vision
 

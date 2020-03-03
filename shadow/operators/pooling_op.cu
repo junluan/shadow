@@ -4,7 +4,6 @@ namespace Shadow {
 
 namespace Vision {
 
-#if defined(USE_CUDA)
 template <typename T>
 __global__ void KernelPooling(const T *in_data, int count, int in_c, int in_h,
                               int in_w, int kernel_size_h, int kernel_size_w,
@@ -55,7 +54,6 @@ void Pooling(const T *in_data, const VecInt &in_shape, int kernel_size_h,
 
 template void Pooling(const float *, const VecInt &, int, int, int, int, int,
                       int, int, const VecInt &, float *);
-#endif
 
 }  // namespace Vision
 

@@ -4,7 +4,6 @@ namespace Shadow {
 
 namespace Vision {
 
-#if defined(USE_CUDA)
 template <typename T>
 __device__ T Reduce(const T *data, const int *list, int num_list, int offset,
                     int operation) {
@@ -69,7 +68,6 @@ void Reduce(const T *in_data, const int *list_data, const int *offset_data,
 
 template void Reduce(const float *, const int *, const int *, int, int, int,
                      float *);
-#endif
 
 }  // namespace Vision
 

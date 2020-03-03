@@ -4,7 +4,6 @@ namespace Shadow {
 
 namespace Vision {
 
-#if defined(USE_CUDA)
 template <typename T>
 __global__ void KernelPOIAlign(const T *in_data, int count, const T *roi_data,
                                int in_c, int in_h, int in_w, int pooled_h,
@@ -63,7 +62,6 @@ void ROIAlign(const T *in_data, const VecInt &in_shape, const T *roi_data,
 
 template void ROIAlign(const float *, const VecInt &, const float *, int, int,
                        int, float, float *);
-#endif
 
 }  // namespace Vision
 

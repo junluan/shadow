@@ -4,7 +4,6 @@ namespace Shadow {
 
 namespace Vision {
 
-#if defined(USE_CUDA)
 template <typename T>
 __global__ void KernelGridSampleNearest(const T* in_data,
                                         const float* grid_data, int count,
@@ -114,7 +113,6 @@ void GridSample(const T* in_data, const VecInt& in_shape,
 
 template void GridSample(const float*, const VecInt&, const float*, int, int,
                          const VecInt&, float*);
-#endif
 
 }  // namespace Vision
 

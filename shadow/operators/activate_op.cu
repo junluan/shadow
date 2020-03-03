@@ -4,7 +4,6 @@ namespace Shadow {
 
 namespace Vision {
 
-#if defined(USE_CUDA)
 template <typename T>
 __device__ T ActivateValue(T x, int type, float slope) {
   switch (type) {
@@ -70,7 +69,6 @@ void PRelu(const T *in_data, T *out_data, const VecInt &in_shape,
 template void Activate(const float *, float *, int, int, float);
 template void PRelu(const float *, float *, const VecInt &, bool,
                     const float *);
-#endif
 
 }  // namespace Vision
 

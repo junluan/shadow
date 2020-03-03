@@ -4,7 +4,6 @@ namespace Shadow {
 
 namespace Vision {
 
-#if defined(USE_CUDA)
 template <typename T>
 __global__ void KernelConcat(const T *in_data, int count, int num_concats,
                              int concat_size, int top_concat_axis,
@@ -32,7 +31,6 @@ void Concat(const T *in_data, int count, int num_concats, int concat_size,
 }
 
 template void Concat(const float *, int, int, int, int, int, int, float *);
-#endif
 
 }  // namespace Vision
 

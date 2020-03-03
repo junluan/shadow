@@ -4,8 +4,6 @@
 
 namespace Shadow {
 
-#if defined(USE_CUDA)
-
 class GPUAllocator : public Allocator {
  public:
   Device GetDevice() const override { return Device::kGPU; }
@@ -39,7 +37,5 @@ Allocator *GetAllocator<Device::kGPU>() {
   static GPUAllocator allocator;
   return &allocator;
 }
-
-#endif
 
 }  // namespace Shadow

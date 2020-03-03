@@ -4,7 +4,6 @@ namespace Shadow {
 
 namespace Vision {
 
-#if defined(USE_CUDA)
 template <typename T>
 __device__ T deform_im2col_bilinear(const T *bottom_data, int data_width,
                                     int height, int width, T h, T w) {
@@ -110,7 +109,6 @@ void DeformIm2Col(const T *in_data, const VecInt &in_shape,
 template void DeformIm2Col(const float *, const VecInt &, const float *, int,
                            int, int, int, int, int, int, const VecInt &,
                            float *);
-#endif
 
 }  // namespace Vision
 

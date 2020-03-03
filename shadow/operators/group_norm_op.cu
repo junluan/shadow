@@ -4,7 +4,6 @@ namespace Shadow {
 
 namespace Vision {
 
-#if defined(USE_CUDA)
 template <typename T>
 __global__ void KernelComputeGroup(const T *in_data, int count, int channel,
                                    int group, T *out_data) {
@@ -88,7 +87,6 @@ template void SubtractMean(const float *, const float *, int, int, int, int,
                            float *);
 template void DivideVariance(const float *, const float *, int, int, int, int,
                              float, float *);
-#endif
 
 }  // namespace Vision
 

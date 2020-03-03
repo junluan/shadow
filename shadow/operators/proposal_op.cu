@@ -4,7 +4,6 @@ namespace Shadow {
 
 namespace Vision {
 
-#if defined(USE_CUDA)
 template <typename T>
 __global__ void KernelProposal(int count, const T *anchor_data,
                                const T *score_data, const T *delta_data,
@@ -71,7 +70,6 @@ void Proposal(const T *anchor_data, const T *score_data, const T *delta_data,
 
 template void Proposal(const float *, const float *, const float *,
                        const float *, const VecInt &, int, int, int, float *);
-#endif
 
 }  // namespace Vision
 

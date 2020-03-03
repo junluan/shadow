@@ -4,7 +4,6 @@ namespace Shadow {
 
 namespace Vision {
 
-#if defined(USE_CUDA)
 template <typename T>
 __device__ T Binary(T a, T b, int operation) {
   switch (operation) {
@@ -67,7 +66,6 @@ void BroadcastBinary(const T *in_data, const int *in_shape,
 
 template void BroadcastBinary(const float *, const int *, const float *,
                               const int *, int, int, int, const int *, float *);
-#endif
 
 }  // namespace Vision
 

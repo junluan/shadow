@@ -1,8 +1,9 @@
 file(GLOB_RECURSE tmp "*.cpp" "*.hpp")
-set(shadow_cpu_src ${shadow_cpu_src} ${tmp})
+set(shadow_lib_src ${shadow_lib_src} ${tmp})
 
-file(GLOB_RECURSE tmp "*.cu")
-set(shadow_gpu_src ${shadow_gpu_src} ${tmp})
+if (${USE_CUDA})
+  file(GLOB_RECURSE tmp "*.cu")
+  set(shadow_lib_src ${shadow_lib_src} ${tmp})
+endif ()
 
-set(shadow_cpu_src ${shadow_cpu_src} PARENT_SCOPE)
-set(shadow_gpu_src ${shadow_gpu_src} PARENT_SCOPE)
+set(shadow_lib_src ${shadow_lib_src} PARENT_SCOPE)

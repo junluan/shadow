@@ -4,7 +4,6 @@ namespace Shadow {
 
 namespace Vision {
 
-#if defined(USE_CUDA)
 template <typename T>
 __global__ void KernelGather(const T *in_data, const int *indexes_data,
                              int num_indexes, int gather_dim, int inner_num,
@@ -29,7 +28,6 @@ void Gather(const T *in_data, const int *indexes_data, int num_indexes,
 }
 
 template void Gather(const float *, const int *, int, int, int, int, float *);
-#endif
 
 }  // namespace Vision
 

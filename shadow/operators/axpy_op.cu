@@ -4,7 +4,6 @@ namespace Shadow {
 
 namespace Vision {
 
-#if defined(USE_CUDA)
 template <typename T>
 __global__ void KernelAxpy(int count, int spatial_dim, const T *scale_data,
                            const T *x_data, const T *y_data, T *out_data) {
@@ -26,7 +25,6 @@ void Axpy(const T *scale_data, const T *x_data, const T *y_data,
 
 template void Axpy(const float *, const float *, const float *, const VecInt &,
                    float *);
-#endif
 
 }  // namespace Vision
 

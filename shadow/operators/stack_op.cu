@@ -4,7 +4,6 @@ namespace Shadow {
 
 namespace Vision {
 
-#if defined(USE_CUDA)
 template <typename T>
 __global__ void KernelStack(const T *in_data, int count, int num_stacks,
                             int stack_size, int top_stack_axis,
@@ -29,7 +28,6 @@ void Stack(const T *in_data, int count, int num_stacks, int stack_size,
 }
 
 template void Stack(const float *, int, int, int, int, int, float *);
-#endif
 
 }  // namespace Vision
 

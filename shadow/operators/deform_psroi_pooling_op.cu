@@ -4,7 +4,6 @@ namespace Shadow {
 
 namespace Vision {
 
-#if defined(USE_CUDA)
 template <typename T>
 __device__ T bilinear_interp(const T *data, T x, T y, int width, int height) {
   int x1 = floor(x);
@@ -130,7 +129,6 @@ void DeformPSROIPooling(const T *in_data, const VecInt &in_shape,
 template void DeformPSROIPooling(const float *, const VecInt &, const float *,
                                  const float *, const VecInt &, int, int, int,
                                  int, int, int, float, float, bool, float *);
-#endif
 
 }  // namespace Vision
 

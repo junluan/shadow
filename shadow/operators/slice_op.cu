@@ -4,7 +4,6 @@ namespace Shadow {
 
 namespace Vision {
 
-#if defined(USE_CUDA)
 template <typename T>
 __global__ void KernelSlice(const T *in_data, int count, int num_slices,
                             int slice_size, int bottom_slice_axis,
@@ -32,7 +31,6 @@ void Slice(const T *in_data, int count, int num_slices, int slice_size,
 }
 
 template void Slice(const float *, int, int, int, int, int, int, float *);
-#endif
 
 }  // namespace Vision
 

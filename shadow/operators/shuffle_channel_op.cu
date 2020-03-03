@@ -4,7 +4,6 @@ namespace Shadow {
 
 namespace Vision {
 
-#if defined(USE_CUDA)
 template <typename T>
 __global__ void KernelShuffleChannel(const T *in_data, int count, int channel,
                                      int spatial_dim, int group, T *out_data) {
@@ -31,7 +30,6 @@ void ShuffleChannel(const T *in_data, int batch, int channel, int spatial_dim,
 }
 
 template void ShuffleChannel(const float *, int, int, int, int, float *);
-#endif
 
 }  // namespace Vision
 

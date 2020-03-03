@@ -4,7 +4,6 @@ namespace Shadow {
 
 namespace Vision {
 
-#if defined(USE_CUDA)
 template <typename T>
 __global__ void KernelLRNFillScale(const T *in_data, int count, int in_c,
                                    int in_h, int in_w, int size,
@@ -72,7 +71,6 @@ void LRN(const T *in_data, const VecInt &in_shape, int size, float alpha,
 
 template void LRN(const float *, const VecInt &, int, float, float, float,
                   float *, float *);
-#endif
 
 }  // namespace Vision
 

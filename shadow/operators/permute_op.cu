@@ -4,7 +4,6 @@ namespace Shadow {
 
 namespace Vision {
 
-#if defined(USE_CUDA)
 template <typename T>
 __global__ void KernelPermute(const T *in_data, int count, int num_axes,
                               const int *permute_order, const int *old_steps,
@@ -32,7 +31,6 @@ void Permute(const T *in_data, int count, int num_axes,
 
 template void Permute(const float *, int, int, const int *, const int *,
                       const int *, float *);
-#endif
 
 }  // namespace Vision
 
