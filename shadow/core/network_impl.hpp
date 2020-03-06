@@ -7,28 +7,35 @@ namespace Shadow {
 
 class NetworkImpl {
  public:
-  void Setup(int device_id = 0) { ws_.CreateCtx(device_id); }
+  void Setup(int device_id = 0) {
+    ArgumentHelper arguments;
+    arguments.AddSingleArgument<int>("device_id", device_id);
+    ws_ = std::make_shared<Workspace>(arguments);
+  }
 
   void LoadXModel(const shadow::NetParam &net_param,
                   const ArgumentHelper &arguments) {
-    backend_.reset(CreateBackend(arguments, &ws_));
+    if (ws_ == nullptr) {
+      ws_ = std::make_shared<Workspace>(arguments);
+    }
+    backend_.reset(CreateBackend(arguments, ws_.get()));
     backend_->LoadModel(net_param);
   }
 
   void Forward(const std::map<std::string, void *> &data_map,
                const std::map<std::string, std::vector<int>> &shape_map) {
-    ws_.Ctx()->SwitchDevice();
+    ws_->Ctx()->switch_device();
 
     CHECK_NOTNULL(backend_);
     backend_->Forward(data_map, shape_map);
 
-    ws_.Ctx()->Synchronize();
+    ws_->Ctx()->synchronize();
   }
 
   template <typename T>
   const T *GetBlobDataByName(const std::string &blob_name,
                              const std::string &locate) {
-    auto *blob = ws_.GetBlob<T>(blob_name);
+    auto *blob = ws_->GetBlob<T>(blob_name);
     CHECK_NOTNULL(blob) << "Unknown blob: " + blob_name;
     if (locate == "host") {
       return blob->cpu_data();
@@ -39,7 +46,7 @@ class NetworkImpl {
 
   template <typename T>
   std::vector<int> GetBlobShapeByName(const std::string &blob_name) const {
-    auto *blob = ws_.GetBlob<T>(blob_name);
+    auto *blob = ws_->GetBlob<T>(blob_name);
     CHECK_NOTNULL(blob) << "Unknown blob: " + blob_name;
     return blob->shape();
   }
@@ -67,8 +74,7 @@ class NetworkImpl {
   }
 
  private:
-  Workspace ws_;
-
+  std::shared_ptr<Workspace> ws_ = nullptr;
   std::shared_ptr<Backend> backend_ = nullptr;
 };
 

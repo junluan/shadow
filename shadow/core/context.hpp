@@ -1,38 +1,32 @@
 #ifndef SHADOW_CORE_CONTEXT_HPP
 #define SHADOW_CORE_CONTEXT_HPP
 
+#include "allocator.hpp"
+#include "helper.hpp"
+
 namespace Shadow {
 
 class Context {
  public:
-  Context() = default;
-  explicit Context(int device_id);
-  ~Context();
+  virtual ~Context() = default;
 
-  void Reset(int device_id);
-  void SwitchDevice();
-  void Synchronize();
+  virtual Allocator* allocator() const = 0;
 
-  int device_id();
+  virtual DeviceType device_type() const = 0;
+  virtual int device_id() const = 0;
 
-  void* blas_handle();
-  void* cudnn_handle();
-  void* nnpack_handle();
-  void* dnnl_engine();
-  void* dnnl_stream();
+  virtual void switch_device() = 0;
+  virtual void synchronize() = 0;
 
- private:
-  void Init(int device_id);
-  void Clear();
-
-  int device_id_ = 0;
-
-  void* blas_handle_ = nullptr;
-  void* cudnn_handle_ = nullptr;
-  void* nnpack_handle_ = nullptr;
-  void* dnnl_engine_ = nullptr;
-  void* dnnl_stream_ = nullptr;
+  virtual void* blas_handle() const { return nullptr; }
+  virtual void* cudnn_handle() const { return nullptr; }
+  virtual void* nnpack_handle() const { return nullptr; }
+  virtual void* dnnl_engine() const { return nullptr; }
+  virtual void* dnnl_stream() const { return nullptr; }
 };
+
+template <DeviceType D>
+std::shared_ptr<Context> GetContext(const ArgumentHelper& arguments);
 
 }  // namespace Shadow
 

@@ -2,6 +2,19 @@
 
 namespace Shadow {
 
+Workspace::Workspace(const ArgumentHelper &arguments) {
+#if defined(USE_CUDA)
+  context_ = GetContext<DeviceType::kGPU>(arguments);
+#else
+  context_ = GetContext<DeviceType::kCPU>(arguments);
+#endif
+}
+
+Context *Workspace::Ctx() {
+  CHECK_NOTNULL(context_);
+  return context_.get();
+}
+
 bool Workspace::HasBlob(const std::string &name) const {
   return static_cast<bool>(blob_map_.count(name));
 }
@@ -32,10 +45,9 @@ std::vector<int> Workspace::GetBlobShape(const std::string &name) const {
 }
 
 void Workspace::GrowTempBuffer(int count, int elem_size) {
-  if (blob_temp_ == nullptr) {
-    blob_temp_ = std::make_shared<Blob<unsigned char>>("temp_buffer");
-  }
-  blob_temp_->reshape({count, elem_size});
+  auto *temp_blob = CreateBlob<unsigned char>("temp_blob");
+  CHECK_NOTNULL(temp_blob);
+  temp_blob->reshape({count, elem_size});
   temp_offset_ = 0;
 }
 
@@ -60,20 +72,8 @@ size_t Workspace::GetWorkspaceSize() const {
 }
 
 size_t Workspace::GetWorkspaceTempSize() const {
-  return blob_temp_->mem_count();
-}
-
-void Workspace::CreateCtx(int device_id) {
-  if (context_ == nullptr) {
-    context_ = std::make_shared<Context>(device_id);
-  } else {
-    context_->Reset(device_id);
-  }
-}
-
-Context *Workspace::Ctx() {
-  CHECK_NOTNULL(context_);
-  return context_.get();
+  const auto *temp_blob = GetBlob<unsigned char>("temp_blob");
+  return temp_blob != nullptr ? temp_blob->mem_count() : 0;
 }
 
 void Workspace::ClearBlob(const std::string &blob_type, void *blob) {
@@ -91,10 +91,12 @@ void Workspace::ClearBlob(const std::string &blob_type, void *blob) {
   }
 }
 
-void *Workspace::GetTempPtr(size_t count, int elem_size) {
+const void *Workspace::GetTempPtr(size_t count, int elem_size) {
+  const auto *temp_blob = GetBlob<unsigned char>("temp_blob");
+  CHECK_NOTNULL(temp_blob);
   auto required = count * elem_size;
-  CHECK_LE(temp_offset_ + required, blob_temp_->mem_count());
-  auto *ptr = blob_temp_->mutable_data() + temp_offset_;
+  CHECK_LE(temp_offset_ + required, temp_blob->mem_count());
+  const auto *ptr = temp_blob->data() + temp_offset_;
   temp_offset_ += required;
   return ptr;
 }

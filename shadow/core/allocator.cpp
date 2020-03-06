@@ -27,33 +27,33 @@ inline void fast_free(void *ptr) {
 
 class CPUAllocator : public Allocator {
  public:
-  Device GetDevice() const override { return Device::kCPU; }
+  DeviceType device_type() const override { return DeviceType::kCPU; }
 
-  void *MakeBuffer(size_t size, const void *host_ptr) const override {
+  void *malloc(size_t size, const void *host_ptr) const override {
     auto *ptr = fast_malloc(size, 1);
     if (host_ptr != nullptr) {
-      WriteBuffer(size, host_ptr, ptr);
+      write(size, host_ptr, ptr);
     }
     return ptr;
   }
 
-  void ReadBuffer(size_t size, const void *src, void *dst) const override {
+  void read(size_t size, const void *src, void *dst) const override {
     memcpy(dst, src, size);
   }
 
-  void WriteBuffer(size_t size, const void *src, void *dst) const override {
+  void write(size_t size, const void *src, void *dst) const override {
     memcpy(dst, src, size);
   }
 
-  void CopyBuffer(size_t size, const void *src, void *dst) const override {
+  void copy(size_t size, const void *src, void *dst) const override {
     memcpy(dst, src, size);
   }
 
-  void ReleaseBuffer(void *ptr) const override { fast_free(ptr); }
+  void free(void *ptr) const override { fast_free(ptr); }
 };
 
 template <>
-Allocator *GetAllocator<Device::kCPU>() {
+Allocator *GetAllocator<DeviceType::kCPU>() {
   static CPUAllocator allocator;
   return &allocator;
 }

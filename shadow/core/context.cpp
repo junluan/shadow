@@ -6,166 +6,91 @@
 
 namespace Shadow {
 
-Context::Context(int device_id) { Init(device_id); }
+class CPUContext : public Context {
+ public:
+  explicit CPUContext(const ArgumentHelper& arguments) {
+    device_id_ = arguments.GetSingleArgument<int>("device_id", 0);
 
-Context::~Context() { Clear(); }
-
-void Context::Reset(int device_id) {
-  Clear();
-  Init(device_id);
-}
-
-void Context::SwitchDevice() {
-#if defined(USE_CUDA)
-  CUDA_CHECK(cudaSetDevice(device_id_));
-#endif
-}
-
-void Context::Synchronize() {
-#if defined(USE_CUDA)
-  CUDA_CHECK(cudaDeviceSynchronize());
-#endif
-}
-
-int Context::device_id() { return device_id_; }
-
-void* Context::blas_handle() {
-#if defined(USE_CUDA)
-  CHECK_NOTNULL(blas_handle_);
-  return blas_handle_;
-#else
-  return nullptr;
-#endif
-}
-
-void* Context::cudnn_handle() {
-#if defined(USE_CUDNN)
-  CHECK_NOTNULL(cudnn_handle_);
-  return cudnn_handle_;
-#else
-  return nullptr;
-#endif
-}
-
-void* Context::nnpack_handle() {
-#if defined(USE_NNPACK)
-  CHECK_NOTNULL(nnpack_handle_);
-  return nnpack_handle_;
-#else
-  return nullptr;
-#endif
-}
-
-void* Context::dnnl_engine() {
-#if defined(USE_DNNL)
-  CHECK_NOTNULL(dnnl_engine_);
-  return dnnl_engine_;
-#else
-  return nullptr;
-#endif
-}
-
-void* Context::dnnl_stream() {
-#if defined(USE_DNNL)
-  CHECK_NOTNULL(dnnl_stream_);
-  return dnnl_stream_;
-#else
-  return nullptr;
-#endif
-}
-
-inline void check_device(int device_id) {
-#if defined(USE_CUDA)
-  int num_devices = 0;
-  CUDA_CHECK(cudaGetDeviceCount(&num_devices));
-  CHECK_GE(device_id, 0);
-  CHECK_LT(device_id, num_devices);
-  cudaDeviceProp prop{};
-  CUDA_CHECK(cudaGetDeviceProperties(&prop, device_id));
-  DLOG(INFO) << "GPU ID: " << device_id << ", Type: " << prop.name
-             << ", Capability: " << prop.major << "." << prop.minor;
-#endif
-
-#if defined(USE_DNNL)
-  auto num_devices = dnnl::engine::get_count(dnnl::engine::kind::cpu);
-  CHECK_GE(device_id, 0);
-  CHECK_LT(device_id, num_devices);
-#endif
-}
-
-void Context::Init(int device_id) {
-  device_id_ = device_id;
-
-  check_device(device_id_);
-
-  SwitchDevice();
-
-#if defined(USE_CUDA)
-  if (blas_handle_ == nullptr) {
-    CUBLAS_CHECK(cublasCreate((cublasHandle_t*)&blas_handle_));
-    CHECK_NOTNULL(blas_handle_);
-  }
-#endif
-
-#if defined(USE_CUDNN)
-  if (cudnn_handle_ == nullptr) {
-    CUDNN_CHECK(cudnnCreate((cudnnHandle_t*)&cudnn_handle_));
-    CHECK_NOTNULL(cudnn_handle_);
-  }
-#endif
+    check_device(device_id_);
 
 #if defined(USE_NNPACK)
-  if (nnpack_handle_ == nullptr) {
     CHECK_EQ(nnp_initialize(), nnp_status_success);
     nnpack_handle_ = pthreadpool_create(0);
     CHECK_NOTNULL(nnpack_handle_);
-  }
 #endif
 
 #if defined(USE_DNNL)
-  if (dnnl_engine_ == nullptr) {
-    dnnl_engine_ = new dnnl::engine(dnnl::engine::kind::cpu,
-                                    static_cast<size_t>(device_id));
-  }
-  if (dnnl_stream_ == nullptr) {
-    dnnl_stream_ = new dnnl::stream(*(dnnl::engine*)dnnl_engine_);
-  }
+    dnnl_engine_ = std::make_shared<dnnl::engine>(
+        dnnl::engine::kind::cpu, static_cast<size_t>(device_id_));
+    dnnl_stream_ = std::make_shared<dnnl::stream>(*dnnl_engine_);
 #endif
-}
+  }
+  ~CPUContext() override {
+#if defined(USE_NNPACK)
+    if (nnpack_handle_ != nullptr) {
+      CHECK_EQ(nnp_deinitialize(), nnp_status_success);
+      pthreadpool_destroy(pthreadpool_t(nnpack_handle_));
+      nnpack_handle_ = nullptr;
+    }
+#endif
+  }
 
-void Context::Clear() {
-#if defined(USE_CUDA)
-  if (blas_handle_ != nullptr) {
-    CUBLAS_CHECK(cublasDestroy(cublasHandle_t(blas_handle_)));
-    blas_handle_ = nullptr;
+  Allocator* allocator() const override {
+    return GetAllocator<DeviceType::kCPU>();
   }
-#endif
 
-#if defined(USE_CUDNN)
-  if (cudnn_handle_ != nullptr) {
-    CUDNN_CHECK(cudnnDestroy(cudnnHandle_t(cudnn_handle_)));
-    cudnn_handle_ = nullptr;
-  }
-#endif
+  DeviceType device_type() const override { return DeviceType::kCPU; }
+
+  int device_id() const override { return device_id_; }
+
+  void switch_device() override {}
+
+  void synchronize() override {}
 
 #if defined(USE_NNPACK)
-  if (nnpack_handle_ != nullptr) {
-    CHECK_EQ(nnp_deinitialize(), nnp_status_success);
-    pthreadpool_destroy(pthreadpool_t(nnpack_handle_));
-    nnpack_handle_ = nullptr;
+  void* nnpack_handle() const override {
+    CHECK_NOTNULL(nnpack_handle_);
+    return nnpack_handle_;
   }
 #endif
 
 #if defined(USE_DNNL)
-  if (dnnl_engine_ != nullptr) {
-    delete (dnnl::engine*)dnnl_engine_;
-    dnnl_engine_ = nullptr;
+  void* dnnl_engine() const override {
+    CHECK_NOTNULL(dnnl_engine_);
+    return dnnl_engine_.get();
   }
-  if (dnnl_stream_ != nullptr) {
-    delete (dnnl::stream*)dnnl_stream_;
-    dnnl_stream_ = nullptr;
+
+  void* dnnl_stream() const override {
+    CHECK_NOTNULL(dnnl_stream_);
+    return dnnl_stream_.get();
   }
 #endif
+
+ private:
+  static void check_device(int device_id) {
+#if defined(USE_DNNL)
+    auto num_devices = dnnl::engine::get_count(dnnl::engine::kind::cpu);
+    CHECK_GE(device_id, 0);
+    CHECK_LT(device_id, num_devices);
+#endif
+  }
+
+  int device_id_ = 0;
+
+#if defined(USE_NNPACK)
+  pthreadpool_t nnpack_handle_ = nullptr;
+#endif
+
+#if defined(USE_DNNL)
+  std::shared_ptr<dnnl::engine> dnnl_engine_ = nullptr;
+  std::shared_ptr<dnnl::stream> dnnl_stream_ = nullptr;
+#endif
+};
+
+template <>
+std::shared_ptr<Context> GetContext<DeviceType::kCPU>(
+    const ArgumentHelper& arguments) {
+  return std::make_shared<CPUContext>(arguments);
 }
 
 }  // namespace Shadow

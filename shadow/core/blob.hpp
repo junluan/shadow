@@ -14,16 +14,13 @@ namespace Shadow {
 template <typename T>
 class Blob {
  public:
-  explicit Blob(std::string name) : name_(std::move(name)) {
-#if defined(USE_CUDA)
-    allocator_ = GetAllocator<Device::kGPU>();
-#else
-    allocator_ = GetAllocator<Device::kCPU>();
-#endif
+  Blob(std::string name, Allocator *allocator)
+      : name_(std::move(name)), allocator_(allocator) {
+    CHECK_NOTNULL(allocator_);
   }
   ~Blob() {
     if (data_ != nullptr && !shared_) {
-      allocator_->ReleaseBuffer(data_);
+      allocator_->free(data_);
     }
     data_ = nullptr;
     allocator_ = nullptr;
@@ -33,7 +30,7 @@ class Blob {
   T *mutable_data() { return data_; }
 
   const T *cpu_data() {
-    if (allocator_->GetDevice() == Device::kGPU) {
+    if (allocator_->device_type() == DeviceType::kGPU) {
       auto cou = count();
       cpu_data_.resize(cou, 0);
       get_data(cpu_data_.data(), cou);
@@ -47,20 +44,20 @@ class Blob {
     CHECK_NOTNULL(cpu_data);
     CHECK_LE(set_count + offset, count());
     CHECK_NOTNULL(data_);
-    allocator_->WriteBuffer(set_count * sizeof(T), cpu_data, data_ + offset);
+    allocator_->write(set_count * sizeof(T), cpu_data, data_ + offset);
   }
 
   void get_data(T *cpu_data, int get_count, int offset = 0) const {
     CHECK_NOTNULL(cpu_data);
     CHECK_LE(get_count + offset, count());
     CHECK_NOTNULL(data_);
-    allocator_->ReadBuffer(get_count * sizeof(T), data_ + offset, cpu_data);
+    allocator_->read(get_count * sizeof(T), data_ + offset, cpu_data);
   }
 
   void share_data(const T *data, const std::vector<int> &shape) {
     CHECK_NOTNULL(data);
     if (data_ != nullptr && !shared_) {
-      allocator_->ReleaseBuffer(data_);
+      allocator_->free(data_);
     }
     data_ = const_cast<T *>(data);
     shape_ = shape;
@@ -74,11 +71,10 @@ class Blob {
     for (const auto dim : shape) cou *= dim;
     CHECK_GT(cou, 0);
     if (data_ != nullptr && !shared_ && cou > capacity_) {
-      allocator_->ReleaseBuffer(data_);
+      allocator_->free(data_);
     }
     if (data_ == nullptr || shared_ || cou > capacity_) {
-      data_ =
-          static_cast<T *>(allocator_->MakeBuffer(cou * sizeof(T), nullptr));
+      data_ = static_cast<T *>(allocator_->malloc(cou * sizeof(T), nullptr));
       capacity_ = cou;
     }
     shape_ = shape;
