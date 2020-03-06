@@ -66,17 +66,19 @@ __global__ void KernelPSROIPooling(const T *in_data, int count,
 template <typename T>
 void PSROIPooling(const T *in_data, const VecInt &in_shape, const T *roi_data,
                   int num_rois, int output_dim, int group_size, int pooled_h,
-                  int pooled_w, float spatial_scale, T *out_data) {
+                  int pooled_w, float spatial_scale, T *out_data,
+                  Context *context) {
   int in_c = in_shape[1], in_h = in_shape[2], in_w = in_shape[3];
   int count = num_rois * output_dim * pooled_h * pooled_w;
-  KernelPSROIPooling<T><<<GetBlocks(count), NumThreads>>>(
+  KernelPSROIPooling<T><<<GetBlocks(count), NumThreads, 0,
+                          cudaStream_t(context->cuda_stream())>>>(
       in_data, count, roi_data, in_c, in_h, in_w, output_dim, group_size,
       pooled_h, pooled_w, spatial_scale, out_data);
   CUDA_CHECK(cudaPeekAtLastError());
 }
 
 template void PSROIPooling(const float *, const VecInt &, const float *, int,
-                           int, int, int, int, float, float *);
+                           int, int, int, int, float, float *, Context *);
 
 }  // namespace Vision
 

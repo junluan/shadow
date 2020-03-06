@@ -44,7 +44,7 @@ void SliceOp::Forward() {
     int top_slice_axis = top->shape(slice_axis_);
     Vision::Slice(bottom->data(), top->count(), num_slices, slice_size,
                   bottom_slice_axis, top_slice_axis, offset_slice_axis,
-                  top->mutable_data());
+                  top->mutable_data(), op_ws_->Ctx());
     offset_slice_axis += top_slice_axis;
   }
 }
@@ -57,7 +57,7 @@ namespace Vision {
 template <typename T>
 void Slice(const T *in_data, int count, int num_slices, int slice_size,
            int bottom_slice_axis, int top_slice_axis, int offset_slice_axis,
-           T *out_data) {
+           T *out_data, Context *context) {
   for (int n = 0; n < num_slices; ++n) {
     memcpy(out_data + n * top_slice_axis * slice_size,
            in_data + (n * bottom_slice_axis + offset_slice_axis) * slice_size,
@@ -65,7 +65,8 @@ void Slice(const T *in_data, int count, int num_slices, int slice_size,
   }
 }
 
-template void Slice(const float *, int, int, int, int, int, int, float *);
+template void Slice(const float *, int, int, int, int, int, int, float *,
+                    Context *);
 #endif
 
 }  // namespace Vision

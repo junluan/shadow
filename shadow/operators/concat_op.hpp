@@ -23,7 +23,7 @@ namespace Vision {
 template <typename T>
 void Concat(const T *in_data, int count, int num_concats, int concat_size,
             int top_concat_axis, int bottom_concat_axis, int offset_concat_axis,
-            T *out_data);
+            T *out_data, Context *context);
 
 }  // namespace Vision
 

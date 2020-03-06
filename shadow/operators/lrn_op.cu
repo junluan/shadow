@@ -56,21 +56,23 @@ __global__ void KernelLRN(const T *in_data, int count, const T *scale_data,
 
 template <typename T>
 void LRN(const T *in_data, const VecInt &in_shape, int size, float alpha,
-         float beta, float k, T *scale_data, T *out_data) {
+         float beta, float k, T *scale_data, T *out_data, Context *context) {
   int batch = in_shape[0], in_c = in_shape[1];
   int in_h = in_shape[2], in_w = in_shape[3];
   int count = batch * in_h * in_w;
-  KernelLRNFillScale<T><<<GetBlocks(count), NumThreads>>>(
+  KernelLRNFillScale<T><<<GetBlocks(count), NumThreads, 0,
+                          cudaStream_t(context->cuda_stream())>>>(
       in_data, count, in_c, in_h, in_w, size, alpha / size, k, scale_data);
   CUDA_CHECK(cudaPeekAtLastError());
   count *= in_c;
-  KernelLRN<T><<<GetBlocks(count), NumThreads>>>(in_data, count, scale_data,
-                                                 -beta, out_data);
+  KernelLRN<T><<<GetBlocks(count), NumThreads, 0,
+                 cudaStream_t(context->cuda_stream())>>>(
+      in_data, count, scale_data, -beta, out_data);
   CUDA_CHECK(cudaPeekAtLastError());
 }
 
 template void LRN(const float *, const VecInt &, int, float, float, float,
-                  float *, float *);
+                  float *, float *, Context *);
 
 }  // namespace Vision
 

@@ -57,15 +57,17 @@ template <typename T>
 void BroadcastBinary(const T *in_data, const int *in_shape,
                      const T *scalar_data, const int *scalar_shape,
                      int operation, int num_axes, int count,
-                     const int *out_shape, T *out_data) {
-  KernelBroadcastBinary<T><<<GetBlocks(count), NumThreads>>>(
+                     const int *out_shape, T *out_data, Context *context) {
+  KernelBroadcastBinary<T><<<GetBlocks(count), NumThreads, 0,
+                             cudaStream_t(context->cuda_stream())>>>(
       in_data, in_shape, scalar_data, scalar_shape, operation, num_axes, count,
       out_shape, out_data);
   CUDA_CHECK(cudaPeekAtLastError());
 }
 
 template void BroadcastBinary(const float *, const int *, const float *,
-                              const int *, int, int, int, const int *, float *);
+                              const int *, int, int, int, const int *, float *,
+                              Context *);
 
 }  // namespace Vision
 

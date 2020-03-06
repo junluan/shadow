@@ -16,7 +16,7 @@ void ROIPoolingOp::Forward() {
 
   Vision::ROIPooling(bottom_fea->data(), bottom_fea->shape(),
                      bottom_roi->data(), num_rois, pooled_h_, pooled_w_,
-                     spatial_scale_, top->mutable_data());
+                     spatial_scale_, top->mutable_data(), op_ws_->Ctx());
 }
 
 REGISTER_OPERATOR(ROIPooling, ROIPoolingOp);
@@ -27,7 +27,7 @@ namespace Vision {
 template <typename T>
 void ROIPooling(const T *in_data, const VecInt &in_shape, const T *roi_data,
                 int num_rois, int pooled_h, int pooled_w, float spatial_scale,
-                T *out_data) {
+                T *out_data, Context *context) {
   int batch = in_shape[0];
   int in_c = in_shape[1], in_h = in_shape[2], in_w = in_shape[3];
   int in_num = in_c * in_h * in_w, out_num = in_c * pooled_h * pooled_w;
@@ -76,7 +76,7 @@ void ROIPooling(const T *in_data, const VecInt &in_shape, const T *roi_data,
 }
 
 template void ROIPooling(const float *, const VecInt &, const float *, int, int,
-                         int, float, float *);
+                         int, float, float *, Context *);
 #endif
 }  // namespace Vision
 

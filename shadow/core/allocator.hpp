@@ -1,7 +1,7 @@
 #ifndef SHADOW_CORE_ALLOCATOR_HPP
 #define SHADOW_CORE_ALLOCATOR_HPP
 
-#include <cstdlib>
+#include <memory>
 
 namespace Shadow {
 
@@ -22,10 +22,12 @@ class Allocator {
   virtual void copy(size_t size, const void *src, void *dst) const = 0;
 
   virtual void free(void *ptr) const = 0;
+
+  virtual void set_stream(void *stream) = 0;
 };
 
 template <DeviceType D>
-Allocator *GetAllocator();
+std::shared_ptr<Allocator> GetAllocator();
 
 }  // namespace Shadow
 

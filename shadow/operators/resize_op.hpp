@@ -48,7 +48,8 @@ namespace Vision {
 
 template <typename T>
 void Resize(const T* in_data, const VecInt& in_shape, int type,
-            bool align_corners, const VecInt& out_shape, T* out_data);
+            bool align_corners, const VecInt& out_shape, T* out_data,
+            Context* context);
 
 }  // namespace Vision
 

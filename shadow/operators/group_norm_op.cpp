@@ -32,29 +32,30 @@ void GroupNormOp::Forward() {
   auto *sum_spatial_multiplier = op_ws_->CreateTempBlob<float>(
       {1, 1, spatial_dim}, op_name_ + "/sum_spatial_multiplier");
 
-  Blas::Set(spatial_dim, 1, sum_spatial_multiplier->mutable_data(), 0);
+  Blas::Set(spatial_dim, 1, sum_spatial_multiplier->mutable_data(), 0,
+            op_ws_->Ctx());
 
   Blas::BlasSgemv(0, batch * channel, spatial_dim, 1.f / spatial_dim,
                   bottom->data(), 0, sum_spatial_multiplier->data(), 0, 0,
-                  batch_by_channel->mutable_data(), 0,
-                  op_ws_->Ctx()->blas_handle());
+                  batch_by_channel->mutable_data(), 0, op_ws_->Ctx());
   Vision::ComputeGroup(batch_by_channel->data(), batch, channel, group_,
-                       mean->mutable_data());
+                       mean->mutable_data(), op_ws_->Ctx());
 
   Vision::SubtractMean(bottom->data(), mean->data(), batch, channel,
-                       spatial_dim, group_, top->mutable_data());
+                       spatial_dim, group_, top->mutable_data(), op_ws_->Ctx());
 
-  Blas::Pow(top->count(), top->data(), 0, 2, temp->mutable_data(), 0);
+  Blas::Pow(top->count(), top->data(), 0, 2, temp->mutable_data(), 0,
+            op_ws_->Ctx());
 
   Blas::BlasSgemv(0, batch * channel, spatial_dim, 1.f / spatial_dim,
                   temp->data(), 0, sum_spatial_multiplier->data(), 0, 0,
-                  batch_by_channel->mutable_data(), 0,
-                  op_ws_->Ctx()->blas_handle());
+                  batch_by_channel->mutable_data(), 0, op_ws_->Ctx());
   Vision::ComputeGroup(batch_by_channel->data(), batch, channel, group_,
-                       variance->mutable_data());
+                       variance->mutable_data(), op_ws_->Ctx());
 
   Vision::DivideVariance(top->data(), variance->data(), batch, channel,
-                         spatial_dim, group_, eps_, top->mutable_data());
+                         spatial_dim, group_, eps_, top->mutable_data(),
+                         op_ws_->Ctx());
 
   if (bottoms_size() == 3) {
     const auto *scale = bottoms<float>(1);
@@ -62,7 +63,7 @@ void GroupNormOp::Forward() {
     CHECK_EQ(scale->count(), channel);
     CHECK_EQ(bias->count(), channel);
     Vision::Scale(top->data(), top->count(), scale->data(), bias->data(),
-                  channel, spatial_dim, top->mutable_data());
+                  channel, spatial_dim, top->mutable_data(), op_ws_->Ctx());
   }
 }
 
@@ -73,7 +74,7 @@ namespace Vision {
 #if !defined(USE_CUDA)
 template <typename T>
 void ComputeGroup(const T *in_data, int batch, int channel, int group,
-                  T *out_data) {
+                  T *out_data, Context *context) {
   int num_val = channel / group;
   for (int b = 0; b < batch; ++b) {
     for (int g = 0; g < group; ++g) {
@@ -88,7 +89,7 @@ void ComputeGroup(const T *in_data, int batch, int channel, int group,
 
 template <typename T>
 void SubtractMean(const T *in_data, const T *mean_data, int batch, int channel,
-                  int spatial_dim, int group, T *out_data) {
+                  int spatial_dim, int group, T *out_data, Context *context) {
   int num_val = channel / group;
   for (int b = 0; b < batch; ++b, mean_data += group) {
     for (int c = 0; c < channel; ++c) {
@@ -103,7 +104,7 @@ void SubtractMean(const T *in_data, const T *mean_data, int batch, int channel,
 template <typename T>
 void DivideVariance(const T *in_data, const T *variance_data, int batch,
                     int channel, int spatial_dim, int group, float eps,
-                    T *out_data) {
+                    T *out_data, Context *context) {
   int num_val = channel / group;
   for (int b = 0; b < batch; ++b, variance_data += group) {
     for (int c = 0; c < channel; ++c) {
@@ -115,11 +116,11 @@ void DivideVariance(const T *in_data, const T *variance_data, int batch,
   }
 }
 
-template void ComputeGroup(const float *, int, int, int, float *);
+template void ComputeGroup(const float *, int, int, int, float *, Context *);
 template void SubtractMean(const float *, const float *, int, int, int, int,
-                           float *);
+                           float *, Context *);
 template void DivideVariance(const float *, const float *, int, int, int, int,
-                             float, float *);
+                             float, float *, Context *);
 #endif
 
 }  // namespace Vision

@@ -28,8 +28,9 @@ void InstanceNormOp::Forward() {
                                                    op_name_ + "/bias_cudnn");
 
   if (bottoms_size() == 1) {
-    Blas::Set(batch * channel, 1, scale_cudnn->mutable_data(), 0);
-    Blas::Set(batch * channel, 0, bias_cudnn->mutable_data(), 0);
+    Blas::Set(batch * channel, 1, scale_cudnn->mutable_data(), 0,
+              op_ws_->Ctx());
+    Blas::Set(batch * channel, 0, bias_cudnn->mutable_data(), 0, op_ws_->Ctx());
   } else {
     const auto *scale = bottoms<float>(1);
     const auto *bias = bottoms<float>(2);
@@ -37,9 +38,9 @@ void InstanceNormOp::Forward() {
     CHECK_EQ(bias->count(), channel);
     for (int b = 0; b < batch; ++b) {
       Blas::BlasScopy(channel, scale->data(), 0, scale_cudnn->mutable_data(),
-                      b * channel, op_ws_->Ctx()->blas_handle());
+                      b * channel, op_ws_->Ctx());
       Blas::BlasScopy(channel, bias->data(), 0, bias_cudnn->mutable_data(),
-                      b * channel, op_ws_->Ctx()->blas_handle());
+                      b * channel, op_ws_->Ctx());
     }
   }
 
@@ -54,7 +55,7 @@ void InstanceNormOp::Forward() {
 #else
   if (bottom != top) {
     Blas::BlasScopy(bottom->count(), bottom->data(), 0, top->mutable_data(), 0,
-                    op_ws_->Ctx()->blas_handle());
+                    op_ws_->Ctx());
   }
 
   int temp_count = batch * channel + bottom->count() + spatial_dim;
@@ -67,25 +68,29 @@ void InstanceNormOp::Forward() {
   auto *sum_spatial_multiplier = op_ws_->CreateTempBlob<float>(
       {1, 1, spatial_dim}, op_name_ + "/sum_spatial_multiplier");
 
-  Blas::Set(spatial_dim, 1, sum_spatial_multiplier->mutable_data(), 0);
+  Blas::Set(spatial_dim, 1, sum_spatial_multiplier->mutable_data(), 0,
+            op_ws_->Ctx());
 
   Blas::BlasSgemv(0, batch * channel, spatial_dim, 1.f / spatial_dim,
                   bottom->data(), 0, sum_spatial_multiplier->data(), 0, 0,
-                  stats->mutable_data(), 0, op_ws_->Ctx()->blas_handle());
+                  stats->mutable_data(), 0, op_ws_->Ctx());
   Blas::BlasSgemm(0, 0, batch * channel, spatial_dim, 1, -1, stats->data(), 0,
                   sum_spatial_multiplier->data(), 0, 1, top->mutable_data(), 0,
-                  op_ws_->Ctx()->blas_handle());
-  Blas::Pow(top->count(), top->data(), 0, 2, temp->mutable_data(), 0);
+                  op_ws_->Ctx());
+  Blas::Pow(top->count(), top->data(), 0, 2, temp->mutable_data(), 0,
+            op_ws_->Ctx());
   Blas::BlasSgemv(0, batch * channel, spatial_dim, 1.f / spatial_dim,
                   temp->data(), 0, sum_spatial_multiplier->data(), 0, 0,
-                  stats->mutable_data(), 0, op_ws_->Ctx()->blas_handle());
-  Blas::Add(stats->count(), stats->data(), 0, eps_, stats->mutable_data(), 0);
-  Blas::Pow(stats->count(), stats->data(), 0, 0.5, stats->mutable_data(), 0);
+                  stats->mutable_data(), 0, op_ws_->Ctx());
+  Blas::Add(stats->count(), stats->data(), 0, eps_, stats->mutable_data(), 0,
+            op_ws_->Ctx());
+  Blas::Pow(stats->count(), stats->data(), 0, 0.5, stats->mutable_data(), 0,
+            op_ws_->Ctx());
   Blas::BlasSgemm(0, 0, batch * channel, spatial_dim, 1, 1, stats->data(), 0,
                   sum_spatial_multiplier->data(), 0, 0, temp->mutable_data(), 0,
-                  op_ws_->Ctx()->blas_handle());
+                  op_ws_->Ctx());
   Blas::Div(top->count(), top->data(), 0, temp->data(), 0, top->mutable_data(),
-            0);
+            0, op_ws_->Ctx());
 
   if (bottoms_size() == 3) {
     const auto *scale = bottoms<float>(1);
@@ -93,7 +98,7 @@ void InstanceNormOp::Forward() {
     CHECK_EQ(scale->count(), channel);
     CHECK_EQ(bias->count(), channel);
     Vision::Scale(top->data(), top->count(), scale->data(), bias->data(),
-                  channel, spatial_dim, top->mutable_data());
+                  channel, spatial_dim, top->mutable_data(), op_ws_->Ctx());
   }
 #endif
 }

@@ -167,13 +167,13 @@ void ConvOp::Forward() {
                         bottoms<float>(2)->data(), kernel_size_h_,
                         kernel_size_w_, stride_h_, stride_w_, pad_h_, pad_w_,
                         dilation_, bias_term_, top->shape(),
-                        top->mutable_data());
+                        top->mutable_data(), op_ws_->Ctx());
     } else {
       Vision::Depthwise(bottom->data(), bottom->shape(), weight->data(),
                         static_cast<decltype(weight->data())>(nullptr),
                         kernel_size_h_, kernel_size_w_, stride_h_, stride_w_,
                         pad_h_, pad_w_, dilation_, bias_term_, top->shape(),
-                        top->mutable_data());
+                        top->mutable_data(), op_ws_->Ctx());
     }
   } else {
     int temp_count = kernel_dim_ * group_ * out_spatial_dim_;
@@ -187,32 +187,32 @@ void ConvOp::Forward() {
     if (bias_term_) {
       biases_multiplier = op_ws_->CreateTempBlob<float>(
           {out_spatial_dim_}, op_name_ + "/biases_multiplier");
-      Blas::Set(out_spatial_dim_, 1, biases_multiplier->mutable_data(), 0);
+      Blas::Set(out_spatial_dim_, 1, biases_multiplier->mutable_data(), 0,
+                op_ws_->Ctx());
     }
     int top_num = top->num(), bottom_num = bottom->num();
     for (int b = 0; b < batch; ++b) {
       Vision::Im2Col(bottom->data(), bottom->shape(), b * bottom_num,
                      kernel_size_h_, kernel_size_w_, stride_h_, stride_w_,
                      pad_h_, pad_w_, dilation_, 0, top->shape(),
-                     col_image->mutable_data());
+                     col_image->mutable_data(), op_ws_->Ctx());
       for (int g = 0; g < group_; ++g) {
         Blas::BlasSgemm(0, 0, num_output_ / group_, out_spatial_dim_,
                         kernel_dim_, 1, weight->data(), weight_offset_ * g,
                         col_image->data(), col_offset_ * g, 0,
                         top->mutable_data(), b * top_num + output_offset_ * g,
-                        op_ws_->Ctx()->blas_handle());
+                        op_ws_->Ctx());
       }
       if (bias_term_) {
         Blas::BlasSgemm(0, 0, num_output_, out_spatial_dim_, 1, 1,
                         bottoms<float>(2)->data(), 0, biases_multiplier->data(),
-                        0, 1, top->mutable_data(), b * top_num,
-                        op_ws_->Ctx()->blas_handle());
+                        0, 1, top->mutable_data(), b * top_num, op_ws_->Ctx());
       }
     }
   }
   if (activate_type_ == 1) {
     Vision::Activate(top->data(), top->mutable_data(), top->count(),
-                     activate_type_);
+                     activate_type_, 0, op_ws_->Ctx());
   }
 }
 
@@ -230,7 +230,7 @@ template <typename T>
 void Im2Col(const T *in_data, const VecInt &in_shape, int offset,
             int kernel_size_h, int kernel_size_w, int stride_h, int stride_w,
             int pad_h, int pad_w, int dilation, int zero_point,
-            const VecInt &out_shape, T *col_data) {
+            const VecInt &out_shape, T *col_data, Context *context) {
   in_data += offset;
   int in_c = in_shape[1], in_h = in_shape[2], in_w = in_shape[3];
   int out_h = out_shape[2], out_w = out_shape[3];
@@ -261,13 +261,14 @@ void Im2Col(const T *in_data, const VecInt &in_shape, int offset,
 }
 
 template void Im2Col(const float *, const VecInt &, int, int, int, int, int,
-                     int, int, int, int, const VecInt &, float *);
+                     int, int, int, int, const VecInt &, float *, Context *);
 
 template <typename T>
 void Depthwise(const T *in_data, const VecInt &in_shape, const T *weight_data,
                const T *bias_data, int kernel_size_h, int kernel_size_w,
                int stride_h, int stride_w, int pad_h, int pad_w, int dilation,
-               int bias_term, const VecInt &out_shape, T *out_data) {
+               int bias_term, const VecInt &out_shape, T *out_data,
+               Context *context) {
   int batch = in_shape[0];
   int in_c = in_shape[1], in_h = in_shape[2], in_w = in_shape[3];
   int out_h = out_shape[2], out_w = out_shape[3];
@@ -303,7 +304,7 @@ void Depthwise(const T *in_data, const VecInt &in_shape, const T *weight_data,
 
 template void Depthwise(const float *, const VecInt &, const float *,
                         const float *, int, int, int, int, int, int, int, int,
-                        const VecInt &, float *);
+                        const VecInt &, float *, Context *);
 #endif
 
 }  // namespace Vision

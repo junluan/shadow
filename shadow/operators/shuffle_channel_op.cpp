@@ -16,7 +16,7 @@ void ShuffleChannelOp::Forward() {
   top->reshape(bottom->shape());
 
   Vision::ShuffleChannel(bottom->data(), batch, channel, spatial_dim, group_,
-                         top->mutable_data());
+                         top->mutable_data(), op_ws_->Ctx());
 }
 
 REGISTER_OPERATOR(ShuffleChannel, ShuffleChannelOp);
@@ -26,7 +26,7 @@ namespace Vision {
 #if !defined(USE_CUDA)
 template <typename T>
 void ShuffleChannel(const T *in_data, int batch, int channel, int spatial_dim,
-                    int group, T *out_data) {
+                    int group, T *out_data, Context *context) {
   int num = channel * spatial_dim;
   int group_column = channel / group;
   for (int b = 0; b < batch; ++b, in_data += num, out_data += num) {
@@ -38,7 +38,8 @@ void ShuffleChannel(const T *in_data, int batch, int channel, int spatial_dim,
   }
 }
 
-template void ShuffleChannel(const float *, int, int, int, int, float *);
+template void ShuffleChannel(const float *, int, int, int, int, float *,
+                             Context *);
 #endif
 
 }  // namespace Vision

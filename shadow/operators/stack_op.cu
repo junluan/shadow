@@ -20,14 +20,16 @@ __global__ void KernelStack(const T *in_data, int count, int num_stacks,
 
 template <typename T>
 void Stack(const T *in_data, int count, int num_stacks, int stack_size,
-           int top_stack_axis, int offset_stack_axis, T *out_data) {
-  KernelStack<T><<<GetBlocks(count), NumThreads>>>(in_data, count, num_stacks,
-                                                   stack_size, top_stack_axis,
-                                                   offset_stack_axis, out_data);
+           int top_stack_axis, int offset_stack_axis, T *out_data,
+           Context *context) {
+  KernelStack<T><<<GetBlocks(count), NumThreads, 0,
+                   cudaStream_t(context->cuda_stream())>>>(
+      in_data, count, num_stacks, stack_size, top_stack_axis, offset_stack_axis,
+      out_data);
   CUDA_CHECK(cudaPeekAtLastError());
 }
 
-template void Stack(const float *, int, int, int, int, int, float *);
+template void Stack(const float *, int, int, int, int, int, float *, Context *);
 
 }  // namespace Vision
 

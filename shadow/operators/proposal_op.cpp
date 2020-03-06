@@ -75,7 +75,8 @@ void ProposalOp::Forward() {
 
   Vision::Proposal(anchors->data(), bottom_score->data(), bottom_delta->data(),
                    bottom_info->data(), bottom_score->shape(), num_anchors_,
-                   feat_stride_, min_size_, proposals->mutable_data());
+                   feat_stride_, min_size_, proposals->mutable_data(),
+                   op_ws_->Ctx());
 
   const auto *proposal_data = proposals->cpu_data();
 
@@ -126,7 +127,8 @@ namespace Vision {
 template <typename T>
 void Proposal(const T *anchor_data, const T *score_data, const T *delta_data,
               const T *info_data, const VecInt &in_shape, int num_anchors,
-              int feat_stride, int min_size, T *proposal_data) {
+              int feat_stride, int min_size, T *proposal_data,
+              Context *context) {
   int in_h = in_shape[2], in_w = in_shape[3], spatial_dim = in_h * in_w;
   int num_proposals = spatial_dim * num_anchors;
   T im_h = info_data[0], im_w = info_data[1], im_scale = info_data[2];
@@ -171,7 +173,8 @@ void Proposal(const T *anchor_data, const T *score_data, const T *delta_data,
 }
 
 template void Proposal(const float *, const float *, const float *,
-                       const float *, const VecInt &, int, int, int, float *);
+                       const float *, const VecInt &, int, int, int, float *,
+                       Context *);
 #endif
 
 }  // namespace Vision

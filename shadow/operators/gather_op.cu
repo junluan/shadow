@@ -20,14 +20,17 @@ __global__ void KernelGather(const T *in_data, const int *indexes_data,
 
 template <typename T>
 void Gather(const T *in_data, const int *indexes_data, int num_indexes,
-            int gather_dim, int inner_num, int count, T *out_data) {
-  KernelGather<T><<<GetBlocks(count), NumThreads>>>(in_data, indexes_data,
-                                                    num_indexes, gather_dim,
-                                                    inner_num, count, out_data);
+            int gather_dim, int inner_num, int count, T *out_data,
+            Context *context) {
+  KernelGather<T><<<GetBlocks(count), NumThreads, 0,
+                    cudaStream_t(context->cuda_stream())>>>(
+      in_data, indexes_data, num_indexes, gather_dim, inner_num, count,
+      out_data);
   CUDA_CHECK(cudaPeekAtLastError());
 }
 
-template void Gather(const float *, const int *, int, int, int, int, float *);
+template void Gather(const float *, const int *, int, int, int, int, float *,
+                     Context *);
 
 }  // namespace Vision
 

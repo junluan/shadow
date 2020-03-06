@@ -83,16 +83,19 @@ __global__ void KernelResizeBilinear(const T* in_data, int count, int channel,
 
 template <typename T>
 void Resize(const T* in_data, const VecInt& in_shape, int type,
-            bool align_corners, const VecInt& out_shape, T* out_data) {
+            bool align_corners, const VecInt& out_shape, T* out_data,
+            Context* context) {
   int batch = in_shape[0], channel = in_shape[1];
   int in_h = in_shape[2], in_w = in_shape[3];
   int out_h = out_shape[2], out_w = out_shape[3];
   int count = batch * channel * out_h * out_w;
   if (type == 0) {
-    KernelResizeNearest<T><<<GetBlocks(count), NumThreads>>>(
+    KernelResizeNearest<T><<<GetBlocks(count), NumThreads, 0,
+                             cudaStream_t(context->cuda_stream())>>>(
         in_data, count, channel, in_h, in_w, out_h, out_w, out_data);
   } else if (type == 1) {
-    KernelResizeBilinear<T><<<GetBlocks(count), NumThreads>>>(
+    KernelResizeBilinear<T><<<GetBlocks(count), NumThreads, 0,
+                              cudaStream_t(context->cuda_stream())>>>(
         in_data, count, channel, in_h, in_w, out_h, out_w, align_corners,
         out_data);
   } else {
@@ -102,7 +105,7 @@ void Resize(const T* in_data, const VecInt& in_shape, int type,
 }
 
 template void Resize(const float*, const VecInt&, int, bool, const VecInt&,
-                     float*);
+                     float*, Context*);
 
 }  // namespace Vision
 

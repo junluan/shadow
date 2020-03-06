@@ -95,7 +95,8 @@ namespace Vision {
 template <typename T>
 void Pooling(const T *in_data, const VecInt &in_shape, int kernel_size_h,
              int kernel_size_w, int stride_h, int stride_w, int pad_h,
-             int pad_w, int mode, const VecInt &out_shape, T *out_data);
+             int pad_w, int mode, const VecInt &out_shape, T *out_data,
+             Context *context);
 
 }  // namespace Vision
 

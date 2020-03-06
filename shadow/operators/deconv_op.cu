@@ -46,18 +46,19 @@ template <typename T>
 void Col2Im(const T *col_data, const VecInt &in_shape, int offset,
             int kernel_size_h, int kernel_size_w, int stride_h, int stride_w,
             int pad_h, int pad_w, int dilation, const VecInt &out_shape,
-            T *in_data) {
+            T *in_data, Context *context) {
   int in_c = in_shape[1], in_h = in_shape[2], in_w = in_shape[3];
   int out_h = out_shape[2], out_w = out_shape[3];
   int count = in_c * in_h * in_w;
-  KernelCol2Im<T><<<GetBlocks(count), NumThreads>>>(
+  KernelCol2Im<T><<<GetBlocks(count), NumThreads, 0,
+                    cudaStream_t(context->cuda_stream())>>>(
       col_data, offset, count, in_c, in_h, in_w, kernel_size_h, kernel_size_w,
       stride_h, stride_w, pad_h, pad_w, dilation, out_h, out_w, in_data);
   CUDA_CHECK(cudaPeekAtLastError());
 }
 
 template void Col2Im(const float *, const VecInt &, int, int, int, int, int,
-                     int, int, int, const VecInt &, float *);
+                     int, int, int, const VecInt &, float *, Context *);
 
 }  // namespace Vision
 

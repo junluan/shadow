@@ -22,14 +22,16 @@ __global__ void KernelShuffleChannel(const T *in_data, int count, int channel,
 
 template <typename T>
 void ShuffleChannel(const T *in_data, int batch, int channel, int spatial_dim,
-                    int group, T *out_data) {
+                    int group, T *out_data, Context *context) {
   int count = batch * channel * spatial_dim;
-  KernelShuffleChannel<T><<<GetBlocks(count), NumThreads>>>(
+  KernelShuffleChannel<T><<<GetBlocks(count), NumThreads, 0,
+                            cudaStream_t(context->cuda_stream())>>>(
       in_data, count, channel, spatial_dim, group, out_data);
   CUDA_CHECK(cudaPeekAtLastError());
 }
 
-template void ShuffleChannel(const float *, int, int, int, int, float *);
+template void ShuffleChannel(const float *, int, int, int, int, float *,
+                             Context *);
 
 }  // namespace Vision
 

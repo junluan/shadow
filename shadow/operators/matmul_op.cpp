@@ -48,8 +48,7 @@ void MatMulOp::Forward() {
   for (int n = 0; n < outer_num; ++n) {
     Blas::BlasSgemm(transpose_a_, transpose_b_, M, N, K, 1, bottom_a->data(),
                     n * inner_num_a, bottom_b->data(), n * inner_num_b, 0,
-                    top->mutable_data(), n * inner_num,
-                    op_ws_->Ctx()->blas_handle());
+                    top->mutable_data(), n * inner_num, op_ws_->Ctx());
   }
 }
 

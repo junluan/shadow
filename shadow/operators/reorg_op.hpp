@@ -21,7 +21,8 @@ class ReorgOp : public Operator {
 namespace Vision {
 
 template <typename T>
-void Reorg(const T *in_data, const VecInt &in_shape, int stride, T *out_data);
+void Reorg(const T *in_data, const VecInt &in_shape, int stride, T *out_data,
+           Context *context);
 
 }  // namespace Vision
 

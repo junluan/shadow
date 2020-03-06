@@ -23,14 +23,16 @@ __global__ void KernelConcat(const T *in_data, int count, int num_concats,
 template <typename T>
 void Concat(const T *in_data, int count, int num_concats, int concat_size,
             int top_concat_axis, int bottom_concat_axis, int offset_concat_axis,
-            T *out_data) {
-  KernelConcat<T><<<GetBlocks(count), NumThreads>>>(
+            T *out_data, Context *context) {
+  KernelConcat<T><<<GetBlocks(count), NumThreads, 0,
+                    cudaStream_t(context->cuda_stream())>>>(
       in_data, count, num_concats, concat_size, top_concat_axis,
       bottom_concat_axis, offset_concat_axis, out_data);
   CUDA_CHECK(cudaPeekAtLastError());
 }
 
-template void Concat(const float *, int, int, int, int, int, int, float *);
+template void Concat(const float *, int, int, int, int, int, int, float *,
+                     Context *);
 
 }  // namespace Vision
 

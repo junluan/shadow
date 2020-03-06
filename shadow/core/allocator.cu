@@ -18,24 +18,45 @@ class GPUAllocator : public Allocator {
   }
 
   void read(size_t size, const void *src, void *dst) const override {
-    CUDA_CHECK(cudaMemcpy(dst, src, size, cudaMemcpyDeviceToHost));
+    if (cuda_stream_ == nullptr) {
+      CUDA_CHECK(cudaMemcpy(dst, src, size, cudaMemcpyDeviceToHost));
+    } else {
+      CUDA_CHECK(cudaMemcpyAsync(dst, src, size, cudaMemcpyDeviceToHost,
+                                 cuda_stream_));
+    }
   }
 
   void write(size_t size, const void *src, void *dst) const override {
-    CUDA_CHECK(cudaMemcpy(dst, src, size, cudaMemcpyHostToDevice));
+    if (cuda_stream_ == nullptr) {
+      CUDA_CHECK(cudaMemcpy(dst, src, size, cudaMemcpyHostToDevice));
+    } else {
+      CUDA_CHECK(cudaMemcpyAsync(dst, src, size, cudaMemcpyHostToDevice,
+                                 cuda_stream_));
+    }
   }
 
   void copy(size_t size, const void *src, void *dst) const override {
-    CUDA_CHECK(cudaMemcpy(dst, src, size, cudaMemcpyDeviceToDevice));
+    if (cuda_stream_ == nullptr) {
+      CUDA_CHECK(cudaMemcpy(dst, src, size, cudaMemcpyDeviceToDevice));
+    } else {
+      CUDA_CHECK(cudaMemcpyAsync(dst, src, size, cudaMemcpyDeviceToDevice,
+                                 cuda_stream_));
+    }
   }
 
   void free(void *ptr) const override { CUDA_CHECK(cudaFree(ptr)); }
+
+  void set_stream(void *stream) override {
+    cuda_stream_ = cudaStream_t(stream);
+  }
+
+ private:
+  cudaStream_t cuda_stream_ = nullptr;
 };
 
 template <>
-Allocator *GetAllocator<DeviceType::kGPU>() {
-  static GPUAllocator allocator;
-  return &allocator;
+std::shared_ptr<Allocator> GetAllocator<DeviceType::kGPU>() {
+  return std::make_shared<GPUAllocator>();
 }
 
 }  // namespace Shadow

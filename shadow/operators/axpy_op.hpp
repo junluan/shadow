@@ -26,7 +26,7 @@ namespace Vision {
 
 template <typename T>
 void Axpy(const T *scale_data, const T *x_data, const T *y_data,
-          const VecInt &in_shape, T *out_data);
+          const VecInt &in_shape, T *out_data, Context *context);
 
 }  // namespace Vision
 

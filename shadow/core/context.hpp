@@ -4,6 +4,8 @@
 #include "allocator.hpp"
 #include "helper.hpp"
 
+#include <memory>
+
 namespace Shadow {
 
 class Context {
@@ -18,7 +20,8 @@ class Context {
   virtual void switch_device() = 0;
   virtual void synchronize() = 0;
 
-  virtual void* blas_handle() const { return nullptr; }
+  virtual void* cuda_stream() const { return nullptr; }
+  virtual void* cublas_handle() const { return nullptr; }
   virtual void* cudnn_handle() const { return nullptr; }
   virtual void* nnpack_handle() const { return nullptr; }
   virtual void* dnnl_engine() const { return nullptr; }

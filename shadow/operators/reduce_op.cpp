@@ -106,7 +106,7 @@ void ReduceOp::Forward() {
   offset->set_data(offset_value_.data(), num_offset);
 
   Vision::Reduce(bottom->data(), list->data(), offset->data(), num_list,
-                 operation_, top->count(), top->mutable_data());
+                 operation_, top->count(), top->mutable_data(), op_ws_->Ctx());
 #endif
 
   if (!keep_dims_) {
@@ -181,7 +181,8 @@ inline T Reduce(const T *data, const int *list, int num_list, int offset,
 
 template <typename T>
 void Reduce(const T *in_data, const int *list_data, const int *offset_data,
-            int num_list, int operation, int count, T *out_data) {
+            int num_list, int operation, int count, T *out_data,
+            Context *context) {
   for (int i = 0; i < count; ++i) {
     out_data[i] =
         Reduce(in_data, list_data, num_list, offset_data[i], operation);
@@ -189,7 +190,7 @@ void Reduce(const T *in_data, const int *list_data, const int *offset_data,
 }
 
 template void Reduce(const float *, const int *, const int *, int, int, int,
-                     float *);
+                     float *, Context *);
 #endif
 
 }  // namespace Vision

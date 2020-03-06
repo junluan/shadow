@@ -42,7 +42,7 @@ void PermuteOp::Forward() {
 
   Vision::Permute(bottom->data(), bottom->count(), bottom->num_axes(),
                   permute_order->data(), old_steps->data(), new_steps->data(),
-                  top->mutable_data());
+                  top->mutable_data(), op_ws_->Ctx());
 }
 
 REGISTER_OPERATOR(Permute, PermuteOp);
@@ -53,7 +53,7 @@ namespace Vision {
 template <typename T>
 void Permute(const T *in_data, int count, int num_axes,
              const int *permute_order, const int *old_steps,
-             const int *new_steps, T *out_data) {
+             const int *new_steps, T *out_data, Context *context) {
   for (int i = 0; i < count; ++i) {
     int old_idx = 0;
     int idx = i;
@@ -67,7 +67,7 @@ void Permute(const T *in_data, int count, int num_axes,
 }
 
 template void Permute(const float *, int, int, const int *, const int *,
-                      const int *, float *);
+                      const int *, float *, Context *);
 #endif
 }  // namespace Vision
 

@@ -35,7 +35,7 @@ template <typename T>
 void BroadcastBinary(const T *in_data, const int *in_shape,
                      const T *scalar_data, const int *scalar_shape,
                      int operation, int num_axes, int count,
-                     const int *out_shape, T *out_data);
+                     const int *out_shape, T *out_data, Context *context);
 
 }  // namespace Vision
 

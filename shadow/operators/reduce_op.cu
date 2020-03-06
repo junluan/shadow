@@ -60,14 +60,16 @@ __global__ void KernelReduce(const T *in_data, const int *list_data,
 
 template <typename T>
 void Reduce(const T *in_data, const int *list_data, const int *offset_data,
-            int num_list, int operation, int count, T *out_data) {
-  KernelReduce<T><<<GetBlocks(count), NumThreads>>>(
+            int num_list, int operation, int count, T *out_data,
+            Context *context) {
+  KernelReduce<T><<<GetBlocks(count), NumThreads, 0,
+                    cudaStream_t(context->cuda_stream())>>>(
       in_data, list_data, offset_data, num_list, operation, count, out_data);
   CUDA_CHECK(cudaPeekAtLastError());
 }
 
 template void Reduce(const float *, const int *, const int *, int, int, int,
-                     float *);
+                     float *, Context *);
 
 }  // namespace Vision
 

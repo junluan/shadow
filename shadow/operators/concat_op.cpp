@@ -36,7 +36,7 @@ void ConcatOp::Forward() {
     int bottom_concat_axis = bottom->shape(axis_);
     Vision::Concat(bottom->data(), bottom->count(), num_concats, concat_size,
                    top_concat_axis, bottom_concat_axis, offset_concat_axis,
-                   top->mutable_data());
+                   top->mutable_data(), op_ws_->Ctx());
     offset_concat_axis += bottom_concat_axis;
   }
 }
@@ -49,7 +49,7 @@ namespace Vision {
 template <typename T>
 void Concat(const T *in_data, int count, int num_concats, int concat_size,
             int top_concat_axis, int bottom_concat_axis, int offset_concat_axis,
-            T *out_data) {
+            T *out_data, Context *context) {
   for (int n = 0; n < num_concats; ++n) {
     memcpy(out_data + (n * top_concat_axis + offset_concat_axis) * concat_size,
            in_data + n * bottom_concat_axis * concat_size,
@@ -57,7 +57,8 @@ void Concat(const T *in_data, int count, int num_concats, int concat_size,
   }
 }
 
-template void Concat(const float *, int, int, int, int, int, int, float *);
+template void Concat(const float *, int, int, int, int, int, int, float *,
+                     Context *);
 #endif
 
 }  // namespace Vision

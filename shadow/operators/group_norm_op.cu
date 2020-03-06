@@ -26,9 +26,10 @@ __global__ void KernelComputeGroup(const T *in_data, int count, int channel,
 
 template <typename T>
 void ComputeGroup(const T *in_data, int batch, int channel, int group,
-                  T *out_data) {
+                  T *out_data, Context *context) {
   int count = batch * group;
-  KernelComputeGroup<T><<<GetBlocks(count), NumThreads>>>(
+  KernelComputeGroup<T><<<GetBlocks(count), NumThreads, 0,
+                          cudaStream_t(context->cuda_stream())>>>(
       in_data, count, channel, group, out_data);
   CUDA_CHECK(cudaPeekAtLastError());
 }
@@ -49,9 +50,10 @@ __global__ void KernelSubtractMean(const T *in_data, const T *mean_data,
 
 template <typename T>
 void SubtractMean(const T *in_data, const T *mean_data, int batch, int channel,
-                  int spatial_dim, int group, T *out_data) {
+                  int spatial_dim, int group, T *out_data, Context *context) {
   int count = batch * channel * spatial_dim;
-  KernelSubtractMean<T><<<GetBlocks(count), NumThreads>>>(
+  KernelSubtractMean<T><<<GetBlocks(count), NumThreads, 0,
+                          cudaStream_t(context->cuda_stream())>>>(
       in_data, mean_data, count, channel, spatial_dim, group, out_data);
   CUDA_CHECK(cudaPeekAtLastError());
 }
@@ -74,19 +76,20 @@ __global__ void KernelDivideVariance(const T *in_data, const T *variance_data,
 template <typename T>
 void DivideVariance(const T *in_data, const T *variance_data, int batch,
                     int channel, int spatial_dim, int group, float eps,
-                    T *out_data) {
+                    T *out_data, Context *context) {
   int count = batch * channel * spatial_dim;
-  KernelDivideVariance<T>
-      <<<GetBlocks(count), NumThreads>>>(in_data, variance_data, count, channel,
-                                         spatial_dim, group, eps, out_data);
+  KernelDivideVariance<T><<<GetBlocks(count), NumThreads, 0,
+                            cudaStream_t(context->cuda_stream())>>>(
+      in_data, variance_data, count, channel, spatial_dim, group, eps,
+      out_data);
   CUDA_CHECK(cudaPeekAtLastError());
 }
 
-template void ComputeGroup(const float *, int, int, int, float *);
+template void ComputeGroup(const float *, int, int, int, float *, Context *);
 template void SubtractMean(const float *, const float *, int, int, int, int,
-                           float *);
+                           float *, Context *);
 template void DivideVariance(const float *, const float *, int, int, int, int,
-                             float, float *);
+                             float, float *, Context *);
 
 }  // namespace Vision
 

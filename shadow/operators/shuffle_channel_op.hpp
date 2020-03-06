@@ -23,7 +23,7 @@ namespace Vision {
 
 template <typename T>
 void ShuffleChannel(const T *in_data, int batch, int channel, int spatial_dim,
-                    int group, T *out_data);
+                    int group, T *out_data, Context *context);
 
 }  // namespace Vision
 

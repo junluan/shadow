@@ -21,7 +21,7 @@ void DecodeBoxOp::Forward() {
 
     Vision::DecodeSSDBoxes(mbox_loc->data(), mbox_conf->data(),
                            mbox_priorbox->data(), batch, num_priors,
-                           num_classes_, top->mutable_data());
+                           num_classes_, top->mutable_data(), op_ws_->Ctx());
   } else if (method_ == kRefineDet) {
     CHECK_EQ(bottoms_size(), 5);
 
@@ -43,7 +43,8 @@ void DecodeBoxOp::Forward() {
     Vision::DecodeRefineDetBoxes(
         odm_loc->data(), odm_conf->data(), arm_priorbox->data(),
         arm_conf->data(), arm_loc->data(), batch, num_priors, num_classes_,
-        background_label_id_, objectness_score_, top->mutable_data());
+        background_label_id_, objectness_score_, top->mutable_data(),
+        op_ws_->Ctx());
   } else {
     LOG(FATAL) << "Currently only support SSD or RefineDet";
   }
@@ -81,7 +82,7 @@ inline void decode(const T *encode_box, const T *prior_box, const T *prior_var,
 template <typename T>
 void DecodeSSDBoxes(const T *mbox_loc, const T *mbox_conf,
                     const T *mbox_priorbox, int batch, int num_priors,
-                    int num_classes, T *decode_box) {
+                    int num_classes, T *decode_box, Context *context) {
   for (int b = 0; b < batch; ++b) {
     auto *prior_box = mbox_priorbox;
     auto *prior_var = mbox_priorbox + num_priors * 4;
@@ -108,14 +109,15 @@ void DecodeSSDBoxes(const T *mbox_loc, const T *mbox_conf,
 }
 
 template void DecodeSSDBoxes(const float *, const float *, const float *, int,
-                             int, int, float *);
+                             int, int, float *, Context *);
 
 template <typename T>
 void DecodeRefineDetBoxes(const T *odm_loc, const T *odm_conf,
                           const T *arm_priorbox, const T *arm_conf,
                           const T *arm_loc, int batch, int num_priors,
                           int num_classes, int background_label_id,
-                          float objectness_score, T *decode_box) {
+                          float objectness_score, T *decode_box,
+                          Context *context) {
   for (int b = 0; b < batch; ++b) {
     auto *prior_box = arm_priorbox;
     auto *prior_var = arm_priorbox + num_priors * 4;
@@ -150,7 +152,7 @@ void DecodeRefineDetBoxes(const T *odm_loc, const T *odm_conf,
 
 template void DecodeRefineDetBoxes(const float *, const float *, const float *,
                                    const float *, const float *, int, int, int,
-                                   int, float, float *);
+                                   int, float, float *, Context *);
 #endif
 
 }  // namespace Vision

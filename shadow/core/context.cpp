@@ -24,6 +24,8 @@ class CPUContext : public Context {
         dnnl::engine::kind::cpu, static_cast<size_t>(device_id_));
     dnnl_stream_ = std::make_shared<dnnl::stream>(*dnnl_engine_);
 #endif
+
+    allocator_ = GetAllocator<DeviceType::kCPU>();
   }
   ~CPUContext() override {
 #if defined(USE_NNPACK)
@@ -35,9 +37,7 @@ class CPUContext : public Context {
 #endif
   }
 
-  Allocator* allocator() const override {
-    return GetAllocator<DeviceType::kCPU>();
-  }
+  Allocator* allocator() const override { return allocator_.get(); }
 
   DeviceType device_type() const override { return DeviceType::kCPU; }
 
@@ -76,6 +76,8 @@ class CPUContext : public Context {
   }
 
   int device_id_ = 0;
+
+  std::shared_ptr<Allocator> allocator_ = nullptr;
 
 #if defined(USE_NNPACK)
   pthreadpool_t nnpack_handle_ = nullptr;

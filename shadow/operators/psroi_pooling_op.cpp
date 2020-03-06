@@ -18,7 +18,7 @@ void PSROIPoolingOp::Forward() {
   Vision::PSROIPooling(bottom_fea->data(), bottom_fea->shape(),
                        bottom_roi->data(), num_rois, output_dim_, group_size_,
                        pooled_h_, pooled_w_, spatial_scale_,
-                       top->mutable_data());
+                       top->mutable_data(), op_ws_->Ctx());
 }
 
 REGISTER_OPERATOR(PSROIPooling, PSROIPoolingOp);
@@ -29,7 +29,8 @@ namespace Vision {
 template <typename T>
 void PSROIPooling(const T *in_data, const VecInt &in_shape, const T *roi_data,
                   int num_rois, int output_dim, int group_size, int pooled_h,
-                  int pooled_w, float spatial_scale, T *out_data) {
+                  int pooled_w, float spatial_scale, T *out_data,
+                  Context *context) {
   int batch = in_shape[0];
   int in_c = in_shape[1], in_h = in_shape[2], in_w = in_shape[3];
   int in_num = in_c * in_h * in_w, out_num = output_dim * pooled_h * pooled_w;
@@ -87,7 +88,7 @@ void PSROIPooling(const T *in_data, const VecInt &in_shape, const T *roi_data,
 }
 
 template void PSROIPooling(const float *, const VecInt &, const float *, int,
-                           int, int, int, int, float, float *);
+                           int, int, int, int, float, float *, Context *);
 #endif
 
 }  // namespace Vision

@@ -48,7 +48,7 @@ void PoolingOp::Forward() {
 #else
   Vision::Pooling(bottom->data(), bottom->shape(), kernel_size_h_,
                   kernel_size_w_, stride_h_, stride_w_, pad_h_, pad_w_,
-                  pool_type_, top->shape(), top->mutable_data());
+                  pool_type_, top->shape(), top->mutable_data(), op_ws_->Ctx());
 #endif
 }
 
@@ -60,7 +60,8 @@ namespace Vision {
 template <typename T>
 void Pooling(const T *in_data, const VecInt &in_shape, int kernel_size_h,
              int kernel_size_w, int stride_h, int stride_w, int pad_h,
-             int pad_w, int mode, const VecInt &out_shape, T *out_data) {
+             int pad_w, int mode, const VecInt &out_shape, T *out_data,
+             Context *context) {
   int batch = in_shape[0];
   int in_c = in_shape[1], in_h = in_shape[2], in_w = in_shape[3];
   int out_h = out_shape[2], out_w = out_shape[3];
@@ -93,7 +94,7 @@ void Pooling(const T *in_data, const VecInt &in_shape, int kernel_size_h,
 }
 
 template void Pooling(const float *, const VecInt &, int, int, int, int, int,
-                      int, int, const VecInt &, float *);
+                      int, int, const VecInt &, float *, Context *);
 #endif
 
 }  // namespace Vision

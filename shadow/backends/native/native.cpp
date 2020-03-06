@@ -199,8 +199,8 @@ void Native::SetInputData(const std::string &blob_name,
   }
   if (device_input_) {
 #if defined(USE_CUDA)
-    GetAllocator<DeviceType::kGPU>()->copy(blob->count() * sizeof(T), blob_data,
-                                           blob->mutable_data());
+    ws_->Ctx()->allocator()->copy(blob->count() * sizeof(T), blob_data,
+                                  blob->mutable_data());
 #else
     LOG(FATAL) << "device input is only supported when USE_CUDA is ON";
 #endif

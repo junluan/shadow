@@ -28,7 +28,7 @@ namespace Vision {
 template <typename T>
 void ROIPooling(const T *in_data, const VecInt &in_shape, const T *roi_data,
                 int num_rois, int pooled_h, int pooled_w, float spatial_scale,
-                T *out_data);
+                T *out_data, Context *context);
 
 }  // namespace Vision
 

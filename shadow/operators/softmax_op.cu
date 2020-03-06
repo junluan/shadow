@@ -53,20 +53,25 @@ __global__ void KernelChannelDiv(const T *val_data, int count, int channels,
 
 template <typename T>
 void Softmax(const T *in_data, int outer_num, int channels, int inner_num,
-             T *val_data, T *out_data) {
+             T *val_data, T *out_data, Context *context) {
   int val_count = outer_num * inner_num, count = val_count * channels;
-  KernelChannelMax<T><<<GetBlocks(val_count), NumThreads>>>(
+  KernelChannelMax<T><<<GetBlocks(val_count), NumThreads, 0,
+                        cudaStream_t(context->cuda_stream())>>>(
       in_data, val_count, channels, inner_num, val_data);
-  KernelChannelSubExp<T><<<GetBlocks(count), NumThreads>>>(
+  KernelChannelSubExp<T><<<GetBlocks(count), NumThreads, 0,
+                           cudaStream_t(context->cuda_stream())>>>(
       in_data, val_data, count, channels, inner_num, out_data);
-  KernelChannelSum<T><<<GetBlocks(val_count), NumThreads>>>(
+  KernelChannelSum<T><<<GetBlocks(val_count), NumThreads, 0,
+                        cudaStream_t(context->cuda_stream())>>>(
       out_data, val_count, channels, inner_num, val_data);
-  KernelChannelDiv<T><<<GetBlocks(count), NumThreads>>>(
+  KernelChannelDiv<T><<<GetBlocks(count), NumThreads, 0,
+                        cudaStream_t(context->cuda_stream())>>>(
       val_data, count, channels, inner_num, out_data);
   CUDA_CHECK(cudaPeekAtLastError());
 }
 
-template void Softmax(const float *, int, int, int, float *, float *);
+template void Softmax(const float *, int, int, int, float *, float *,
+                      Context *);
 
 }  // namespace Vision
 

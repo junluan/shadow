@@ -55,7 +55,8 @@ namespace Vision {
 
 template <typename T>
 void Reduce(const T *in_data, const int *list_data, const int *offset_data,
-            int num_list, int operation, int count, T *out_data);
+            int num_list, int operation, int count, T *out_data,
+            Context *context);
 
 }  // namespace Vision
 

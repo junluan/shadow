@@ -23,14 +23,15 @@ __global__ void KernelPermute(const T *in_data, int count, int num_axes,
 template <typename T>
 void Permute(const T *in_data, int count, int num_axes,
              const int *permute_order, const int *old_steps,
-             const int *new_steps, T *out_data) {
-  KernelPermute<T><<<GetBlocks(count), NumThreads>>>(
+             const int *new_steps, T *out_data, Context *context) {
+  KernelPermute<T><<<GetBlocks(count), NumThreads, 0,
+                     cudaStream_t(context->cuda_stream())>>>(
       in_data, count, num_axes, permute_order, old_steps, new_steps, out_data);
   CUDA_CHECK(cudaPeekAtLastError());
 }
 
 template void Permute(const float *, int, int, const int *, const int *,
-                      const int *, float *);
+                      const int *, float *, Context *);
 
 }  // namespace Vision
 

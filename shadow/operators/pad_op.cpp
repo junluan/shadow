@@ -21,11 +21,11 @@ void PadOp::Forward() {
   if (paddings_[0] == 0 && paddings_[1] == 0 && paddings_[2] == 0 &&
       paddings_[3] == 0) {
     Blas::BlasScopy(bottom->count(), bottom->data(), 0, top->mutable_data(), 0,
-                    op_ws_->Ctx()->blas_handle());
+                    op_ws_->Ctx());
   } else {
-    Blas::Set(top->count(), value_, top->mutable_data(), 0);
+    Blas::Set(top->count(), value_, top->mutable_data(), 0, op_ws_->Ctx());
     Vision::Pad(bottom->data(), bottom->shape(), paddings_, top->shape(),
-                top->mutable_data());
+                top->mutable_data(), op_ws_->Ctx());
   }
 }
 
@@ -36,7 +36,7 @@ namespace Vision {
 #if !defined(USE_CUDA)
 template <typename T>
 void Pad(const T *in_data, const VecInt &in_shape, const VecInt &paddings,
-         const VecInt &out_shape, T *out_data) {
+         const VecInt &out_shape, T *out_data, Context *context) {
   int batch = in_shape[0], channel = in_shape[1];
   int in_h = in_shape[2], in_w = in_shape[3];
   int out_h = out_shape[2], out_w = out_shape[3];
@@ -59,7 +59,7 @@ void Pad(const T *in_data, const VecInt &in_shape, const VecInt &paddings,
 }
 
 template void Pad(const float *, const VecInt &, const VecInt &, const VecInt &,
-                  float *);
+                  float *, Context *);
 #endif
 
 }  // namespace Vision

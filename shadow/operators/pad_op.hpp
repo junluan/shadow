@@ -26,7 +26,7 @@ namespace Vision {
 
 template <typename T>
 void Pad(const T *in_data, const VecInt &in_shape, const VecInt &paddings,
-         const VecInt &out_shape, T *out_data);
+         const VecInt &out_shape, T *out_data, Context *context);
 
 }  // namespace Vision
 

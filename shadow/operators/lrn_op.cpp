@@ -15,7 +15,7 @@ void LRNOp::Forward() {
       op_ws_->CreateTempBlob<float>(bottom->shape(), op_name_ + "/scale");
 
   Vision::LRN(bottom->data(), bottom->shape(), size_, alpha_, beta_, k_,
-              scale->mutable_data(), top->mutable_data());
+              scale->mutable_data(), top->mutable_data(), op_ws_->Ctx());
 }
 
 REGISTER_OPERATOR(LRN, LRNOp);
@@ -25,7 +25,7 @@ namespace Vision {
 #if !defined(USE_CUDA)
 template <typename T>
 void LRN(const T *in_data, const VecInt &in_shape, int size, float alpha,
-         float beta, float k, T *scale_data, T *out_data) {
+         float beta, float k, T *scale_data, T *out_data, Context *context) {
   int batch = in_shape[0], in_c = in_shape[1];
   int in_h = in_shape[2], in_w = in_shape[3];
   int step = in_h * in_w, count = batch * in_c * step;
@@ -70,7 +70,7 @@ void LRN(const T *in_data, const VecInt &in_shape, int size, float alpha,
 }
 
 template void LRN(const float *, const VecInt &, int, float, float, float,
-                  float *, float *);
+                  float *, float *, Context *);
 #endif
 
 }  // namespace Vision

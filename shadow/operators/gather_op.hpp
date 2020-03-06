@@ -24,7 +24,8 @@ namespace Vision {
 
 template <typename T>
 void Gather(const T *in_data, const int *indexes_data, int num_indexes,
-            int gather_dim, int inner_num, int count, T *out_data);
+            int gather_dim, int inner_num, int count, T *out_data,
+            Context *context);
 
 }  // namespace Vision
 

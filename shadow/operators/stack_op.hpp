@@ -22,7 +22,8 @@ namespace Vision {
 
 template <typename T>
 void Stack(const T *in_data, int count, int num_stacks, int stack_size,
-           int top_stack_axis, int offset_stack_axis, T *out_data);
+           int top_stack_axis, int offset_stack_axis, T *out_data,
+           Context *context);
 
 }  // namespace Vision
 

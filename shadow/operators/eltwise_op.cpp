@@ -30,33 +30,33 @@ void EltwiseOp::Forward() {
   switch (operation_) {
     case kProd:
       Blas::Mul(count, bottoms<float>(0)->data(), 0, bottoms<float>(1)->data(),
-                0, top->mutable_data(), 0);
+                0, top->mutable_data(), 0, op_ws_->Ctx());
       for (int n = 2; n < bottoms_size(); ++n) {
         Blas::Mul(count, top->data(), 0, bottoms<float>(n)->data(), 0,
-                  top->mutable_data(), 0);
+                  top->mutable_data(), 0, op_ws_->Ctx());
       }
       break;
     case kSum:
-      Blas::Set(count, 0, top->mutable_data(), 0);
+      Blas::Set(count, 0, top->mutable_data(), 0, op_ws_->Ctx());
       for (int n = 0; n < bottoms_size(); ++n) {
         Blas::BlasSaxpy(count, coeff[n], bottoms<float>(n)->data(), 0,
-                        top->mutable_data(), 0, op_ws_->Ctx()->blas_handle());
+                        top->mutable_data(), 0, op_ws_->Ctx());
       }
       break;
     case kMax:
       Blas::Max(count, bottoms<float>(0)->data(), 0, bottoms<float>(1)->data(),
-                0, top->mutable_data(), 0);
+                0, top->mutable_data(), 0, op_ws_->Ctx());
       for (int n = 2; n < bottoms_size(); ++n) {
         Blas::Max(count, top->data(), 0, bottoms<float>(n)->data(), 0,
-                  top->mutable_data(), 0);
+                  top->mutable_data(), 0, op_ws_->Ctx());
       }
       break;
     case kMin:
       Blas::Min(count, bottoms<float>(0)->data(), 0, bottoms<float>(1)->data(),
-                0, top->mutable_data(), 0);
+                0, top->mutable_data(), 0, op_ws_->Ctx());
       for (int n = 2; n < bottoms_size(); ++n) {
         Blas::Min(count, top->data(), 0, bottoms<float>(n)->data(), 0,
-                  top->mutable_data(), 0);
+                  top->mutable_data(), 0, op_ws_->Ctx());
       }
       break;
     default:

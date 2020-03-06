@@ -42,11 +42,11 @@ void ResizeOp::Forward() {
 
   if (out_h == in_h && out_w == in_w) {
     Blas::BlasScopy(bottom->count(), bottom->data(), 0, top->mutable_data(), 0,
-                    op_ws_->Ctx()->blas_handle());
+                    op_ws_->Ctx());
   } else {
     // Nearest: 0, Bilinear: 1
     Vision::Resize(bottom->data(), bottom->shape(), type_, align_corners_,
-                   top->shape(), top->mutable_data());
+                   top->shape(), top->mutable_data(), op_ws_->Ctx());
   }
 }
 
@@ -128,7 +128,8 @@ inline void ResizeBilinear(const T* in_data, int batch, int channel, int in_h,
 
 template <typename T>
 void Resize(const T* in_data, const VecInt& in_shape, int type,
-            bool align_corners, const VecInt& out_shape, T* out_data) {
+            bool align_corners, const VecInt& out_shape, T* out_data,
+            Context* context) {
   int batch = in_shape[0], channel = in_shape[1];
   int in_h = in_shape[2], in_w = in_shape[3];
   int out_h = out_shape[2], out_w = out_shape[3];
@@ -143,7 +144,7 @@ void Resize(const T* in_data, const VecInt& in_shape, int type,
 }
 
 template void Resize(const float*, const VecInt&, int, bool, const VecInt&,
-                     float*);
+                     float*, Context*);
 #endif
 
 }  // namespace Vision

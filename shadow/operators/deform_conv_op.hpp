@@ -46,7 +46,8 @@ template <typename T>
 void DeformIm2Col(const T *in_data, const VecInt &in_shape,
                   const T *offset_data, int offset, int deform_group,
                   int kernel_size, int stride, int pad, int dilation,
-                  int zero_point, const VecInt &out_shape, T *out_data);
+                  int zero_point, const VecInt &out_shape, T *out_data,
+                  Context *context);
 
 }  // namespace Vision
 

@@ -44,7 +44,8 @@ void GridSampleOp::Forward() {
   // Nearest: 0, Bilinear: 1
   // Zeros: 0, Border: 1
   Vision::GridSample(bottom->data(), bottom->shape(), grid->data(), mode_,
-                     padding_mode_, top->shape(), top->mutable_data());
+                     padding_mode_, top->shape(), top->mutable_data(),
+                     op_ws_->Ctx());
 }
 
 REGISTER_OPERATOR(GridSample, GridSampleOp);
@@ -139,7 +140,7 @@ inline void GridSampleBilinear(const T *in_data, const float *grid_data,
 template <typename T>
 void GridSample(const T *in_data, const VecInt &in_shape,
                 const float *grid_data, int mode, int padding_mode,
-                const VecInt &out_shape, T *out_data) {
+                const VecInt &out_shape, T *out_data, Context *context) {
   int batch = in_shape[0], channel = in_shape[1];
   int in_h = in_shape[2], in_w = in_shape[3];
   int out_h = out_shape[2], out_w = out_shape[3];
@@ -155,7 +156,7 @@ void GridSample(const T *in_data, const VecInt &in_shape,
 }
 
 template void GridSample(const float *, const VecInt &, const float *, int, int,
-                         const VecInt &, float *);
+                         const VecInt &, float *, Context *);
 #endif
 
 }  // namespace Vision

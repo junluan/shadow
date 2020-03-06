@@ -23,7 +23,7 @@ void StackOp::Forward() {
   for (int n = 0; n < bottoms_size(); ++n) {
     const auto *bottom = bottoms<float>(n);
     Vision::Stack(bottom->data(), bottom->count(), num_stacks, stack_size,
-                  top_stack_axis, n, top->mutable_data());
+                  top_stack_axis, n, top->mutable_data(), op_ws_->Ctx());
   }
 }
 
@@ -34,14 +34,15 @@ namespace Vision {
 #if !defined(USE_CUDA)
 template <typename T>
 void Stack(const T *in_data, int count, int num_stacks, int stack_size,
-           int top_stack_axis, int offset_stack_axis, T *out_data) {
+           int top_stack_axis, int offset_stack_axis, T *out_data,
+           Context *context) {
   for (int n = 0; n < num_stacks; ++n) {
     memcpy(out_data + (n * top_stack_axis + offset_stack_axis) * stack_size,
            in_data + n * stack_size, stack_size * sizeof(T));
   }
 }
 
-template void Stack(const float *, int, int, int, int, int, float *);
+template void Stack(const float *, int, int, int, int, int, float *, Context *);
 #endif
 
 }  // namespace Vision

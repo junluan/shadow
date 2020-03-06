@@ -38,7 +38,7 @@ namespace Vision {
 
 template <typename T>
 void Softmax(const T *in_data, int outer_num, int channels, int inner_num,
-             T *val_data, T *out_data);
+             T *val_data, T *out_data, Context *context);
 
 }  // namespace Vision
 

@@ -59,17 +59,20 @@ __global__ void KernelProposal(int count, const T *anchor_data,
 template <typename T>
 void Proposal(const T *anchor_data, const T *score_data, const T *delta_data,
               const T *info_data, const VecInt &in_shape, int num_anchors,
-              int feat_stride, int min_size, T *proposal_data) {
+              int feat_stride, int min_size, T *proposal_data,
+              Context *context) {
   int in_h = in_shape[2], in_w = in_shape[3];
   int count = in_h * in_w * num_anchors;
-  KernelProposal<T><<<GetBlocks(count), NumThreads>>>(
+  KernelProposal<T><<<GetBlocks(count), NumThreads, 0,
+                      cudaStream_t(context->cuda_stream())>>>(
       count, anchor_data, score_data, delta_data, info_data, in_h, in_w,
       num_anchors, feat_stride, min_size, proposal_data);
   CUDA_CHECK(cudaPeekAtLastError());
 }
 
 template void Proposal(const float *, const float *, const float *,
-                       const float *, const VecInt &, int, int, int, float *);
+                       const float *, const VecInt &, int, int, int, float *,
+                       Context *);
 
 }  // namespace Vision
 

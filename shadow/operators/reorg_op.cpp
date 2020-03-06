@@ -19,7 +19,8 @@ void ReorgOp::Forward() {
   top_shape[3] = in_w / stride_;
   top->reshape(top_shape);
 
-  Vision::Reorg(bottom->data(), bottom->shape(), stride_, top->mutable_data());
+  Vision::Reorg(bottom->data(), bottom->shape(), stride_, top->mutable_data(),
+                op_ws_->Ctx());
 }
 
 REGISTER_OPERATOR(Reorg, ReorgOp);
@@ -28,7 +29,8 @@ namespace Vision {
 
 #if !defined(USE_CUDA)
 template <typename T>
-void Reorg(const T *in_data, const VecInt &in_shape, int stride, T *out_data) {
+void Reorg(const T *in_data, const VecInt &in_shape, int stride, T *out_data,
+           Context *context) {
   int batch = in_shape[0], in_c = in_shape[1];
   int in_h = in_shape[2], in_w = in_shape[3];
   int out_c = in_c / (stride * stride);
@@ -50,7 +52,7 @@ void Reorg(const T *in_data, const VecInt &in_shape, int stride, T *out_data) {
   }
 }
 
-template void Reorg(const float *, const VecInt &, int, float *);
+template void Reorg(const float *, const VecInt &, int, float *, Context *);
 #endif
 
 }  // namespace Vision

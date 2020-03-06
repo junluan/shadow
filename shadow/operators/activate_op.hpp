@@ -62,12 +62,12 @@ class ActivateOp : public Operator {
 namespace Vision {
 
 template <typename T>
-void Activate(const T *in_data, T *out_data, int count, int type,
-              float slope = 0.1);
+void Activate(const T *in_data, T *out_data, int count, int type, float slope,
+              Context *context);
 
 template <typename T>
 void PRelu(const T *in_data, T *out_data, const VecInt &in_shape,
-           bool channel_shared, const T *slope_data);
+           bool channel_shared, const T *slope_data, Context *context);
 
 }  // namespace Vision
 

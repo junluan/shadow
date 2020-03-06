@@ -31,7 +31,7 @@ void ActivateOp::Forward() {
       activate_type_ == kSigmoid || activate_type_ == kSoftPlus ||
       activate_type_ == kTanh || activate_type_ == kRelu6) {
     Vision::Activate(bottom->data(), top->mutable_data(), top->count(),
-                     activate_type_, slope_);
+                     activate_type_, slope_, op_ws_->Ctx());
   } else if (activate_type_ == kPRelu) {
     CHECK_EQ(bottoms_size(), 2);
     CHECK_GE(bottom->num_axes(), 2);
@@ -41,7 +41,7 @@ void ActivateOp::Forward() {
       CHECK_EQ(slope->count(), bottom->shape(1));
     }
     Vision::PRelu(bottom->data(), top->mutable_data(), top->shape(),
-                  channel_shared, slope->data());
+                  channel_shared, slope->data(), op_ws_->Ctx());
   }
 }
 
@@ -75,7 +75,8 @@ inline T Activate(T x, int type, float slope) {
 }
 
 template <typename T>
-void Activate(const T *in_data, T *out_data, int count, int type, float slope) {
+void Activate(const T *in_data, T *out_data, int count, int type, float slope,
+              Context *context) {
 #if defined(USE_Eigen)
   const auto &in_eigen = MapVector<T>(const_cast<T *>(in_data), count);
   auto out_eigen = MapVector<T>(out_data, count);
@@ -116,7 +117,7 @@ void Activate(const T *in_data, T *out_data, int count, int type, float slope) {
 
 template <typename T>
 void PRelu(const T *in_data, T *out_data, const VecInt &in_shape,
-           bool channel_shared, const T *slope_data) {
+           bool channel_shared, const T *slope_data, Context *context) {
   int channels = in_shape[1], dim = 1;
   for (int i = 2; i < in_shape.size(); ++i) dim *= in_shape[i];
   int count = in_shape[0] * channels * dim;
@@ -127,9 +128,9 @@ void PRelu(const T *in_data, T *out_data, const VecInt &in_shape,
   }
 }
 
-template void Activate(const float *, float *, int, int, float);
-template void PRelu(const float *, float *, const VecInt &, bool,
-                    const float *);
+template void Activate(const float *, float *, int, int, float, Context *);
+template void PRelu(const float *, float *, const VecInt &, bool, const float *,
+                    Context *);
 #endif
 
 }  // namespace Vision

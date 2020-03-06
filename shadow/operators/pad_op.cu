@@ -29,19 +29,20 @@ __global__ void KernelPad(const T* in_data, int count, int channel, int in_h,
 
 template <typename T>
 void Pad(const T* in_data, const VecInt& in_shape, const VecInt& paddings,
-         const VecInt& out_shape, T* out_data) {
+         const VecInt& out_shape, T* out_data, Context* context) {
   int batch = in_shape[0], channel = in_shape[1];
   int in_h = in_shape[2], in_w = in_shape[3];
   int out_h = out_shape[2], out_w = out_shape[3];
   int count = batch * channel * in_h * in_w;
-  KernelPad<T><<<GetBlocks(count), NumThreads>>>(
+  KernelPad<T><<<GetBlocks(count), NumThreads, 0,
+                 cudaStream_t(context->cuda_stream())>>>(
       in_data, count, channel, in_h, in_w, out_h, out_w, paddings[0],
       paddings[1], paddings[2], paddings[3], out_data);
   CUDA_CHECK(cudaPeekAtLastError());
 }
 
 template void Pad(const float*, const VecInt&, const VecInt&, const VecInt&,
-                  float*);
+                  float*, Context*);
 
 }  // namespace Vision
 

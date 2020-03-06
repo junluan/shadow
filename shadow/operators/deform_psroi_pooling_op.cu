@@ -114,12 +114,14 @@ void DeformPSROIPooling(const T *in_data, const VecInt &in_shape,
                         const VecInt &trans_shape, int num_rois, int output_dim,
                         int group_size, int pooled_size, int part_size,
                         int sample_per_part, float spatial_scale,
-                        float trans_std, bool no_trans, T *out_data) {
+                        float trans_std, bool no_trans, T *out_data,
+                        Context *context) {
   int in_c = in_shape[1], in_h = in_shape[2], in_w = in_shape[3];
   int num_classes = no_trans ? 1 : trans_shape[1] / 2;
   int channels_each_class = no_trans ? output_dim : output_dim / num_classes;
   int count = num_rois * output_dim * pooled_size * pooled_size;
-  DeformPSROIPoolForwardKernel<T><<<GetBlocks(count), NumThreads>>>(
+  DeformPSROIPoolForwardKernel<T><<<GetBlocks(count), NumThreads, 0,
+                                    cudaStream_t(context->cuda_stream())>>>(
       count, in_data, spatial_scale, in_c, in_h, in_w, pooled_size, pooled_size,
       roi_data, trans_data, no_trans, trans_std, sample_per_part, output_dim,
       group_size, part_size, num_classes, channels_each_class, out_data);
@@ -128,7 +130,8 @@ void DeformPSROIPooling(const T *in_data, const VecInt &in_shape,
 
 template void DeformPSROIPooling(const float *, const VecInt &, const float *,
                                  const float *, const VecInt &, int, int, int,
-                                 int, int, int, float, float, bool, float *);
+                                 int, int, int, float, float, bool, float *,
+                                 Context *);
 
 }  // namespace Vision
 

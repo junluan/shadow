@@ -61,16 +61,17 @@ __global__ void KernelDecodeSSDBoxes(int count, const T *mbox_loc,
 template <typename T>
 void DecodeSSDBoxes(const T *mbox_loc, const T *mbox_conf,
                     const T *mbox_priorbox, int batch, int num_priors,
-                    int num_classes, T *decode_box) {
+                    int num_classes, T *decode_box, Context *context) {
   int count = batch * num_priors;
-  KernelDecodeSSDBoxes<T><<<GetBlocks(count), NumThreads>>>(
+  KernelDecodeSSDBoxes<T><<<GetBlocks(count), NumThreads, 0,
+                            cudaStream_t(context->cuda_stream())>>>(
       count, mbox_loc, mbox_conf, mbox_priorbox, num_priors, num_classes,
       decode_box);
   CUDA_CHECK(cudaPeekAtLastError());
 }
 
 template void DecodeSSDBoxes(const float *, const float *, const float *, int,
-                             int, int, float *);
+                             int, int, float *, Context *);
 
 template <typename T>
 __global__ void KernelDecodeRefineDetBoxes(
@@ -114,9 +115,11 @@ void DecodeRefineDetBoxes(const T *odm_loc, const T *odm_conf,
                           const T *arm_priorbox, const T *arm_conf,
                           const T *arm_loc, int batch, int num_priors,
                           int num_classes, int background_label_id,
-                          float objectness_score, T *decode_box) {
+                          float objectness_score, T *decode_box,
+                          Context *context) {
   int count = batch * num_priors;
-  KernelDecodeRefineDetBoxes<T><<<GetBlocks(count), NumThreads>>>(
+  KernelDecodeRefineDetBoxes<T><<<GetBlocks(count), NumThreads, 0,
+                                  cudaStream_t(context->cuda_stream())>>>(
       count, odm_loc, odm_conf, arm_priorbox, arm_conf, arm_loc, num_priors,
       num_classes, background_label_id, objectness_score, decode_box);
   CUDA_CHECK(cudaPeekAtLastError());
@@ -124,7 +127,7 @@ void DecodeRefineDetBoxes(const T *odm_loc, const T *odm_conf,
 
 template void DecodeRefineDetBoxes(const float *, const float *, const float *,
                                    const float *, const float *, int, int, int,
-                                   int, float, float *);
+                                   int, float, float *, Context *);
 
 }  // namespace Vision
 

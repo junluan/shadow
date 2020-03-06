@@ -130,7 +130,7 @@ template <typename T>
 void Col2Im(const T *col_data, const VecInt &in_shape, int offset,
             int kernel_size_h, int kernel_size_w, int stride_h, int stride_w,
             int pad_h, int pad_w, int dilation, const VecInt &out_shape,
-            T *in_data);
+            T *in_data, Context *context);
 
 }  // namespace Vision
 

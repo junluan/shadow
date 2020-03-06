@@ -24,16 +24,16 @@ namespace Vision {
 
 template <typename T>
 void ComputeGroup(const T* in_data, int batch, int channel, int group,
-                  T* out_data);
+                  T* out_data, Context* context);
 
 template <typename T>
 void SubtractMean(const T* in_data, const T* mean_data, int batch, int channel,
-                  int spatial_dim, int group, T* out_data);
+                  int spatial_dim, int group, T* out_data, Context* context);
 
 template <typename T>
 void DivideVariance(const T* in_data, const T* variance_data, int batch,
                     int channel, int spatial_dim, int group, float eps,
-                    T* out_data);
+                    T* out_data, Context* context);
 
 }  // namespace Vision
 

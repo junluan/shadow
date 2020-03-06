@@ -26,7 +26,7 @@ namespace Vision {
 template <typename T>
 void Slice(const T *in_data, int count, int num_slices, int slice_size,
            int bottom_slice_axis, int top_slice_axis, int offset_slice_axis,
-           T *out_data);
+           T *out_data, Context *context);
 
 }  // namespace Vision
 

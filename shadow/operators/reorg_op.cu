@@ -27,17 +27,19 @@ __global__ void KernelReorg(const T *in_data, int count, int in_c, int in_h,
 }
 
 template <typename T>
-void Reorg(const T *in_data, const VecInt &in_shape, int stride, T *out_data) {
+void Reorg(const T *in_data, const VecInt &in_shape, int stride, T *out_data,
+           Context *context) {
   int batch = in_shape[0];
   int in_c = in_shape[1], in_h = in_shape[2], in_w = in_shape[3];
   int out_c = in_c / (stride * stride);
   int count = batch * in_c * in_h * in_w;
-  KernelReorg<T><<<GetBlocks(count), NumThreads>>>(
+  KernelReorg<T><<<GetBlocks(count), NumThreads, 0,
+                   cudaStream_t(context->cuda_stream())>>>(
       in_data, count, in_c, in_h, in_w, out_c, stride, out_data);
   CUDA_CHECK(cudaPeekAtLastError());
 }
 
-template void Reorg(const float *, const VecInt &, int, float *);
+template void Reorg(const float *, const VecInt &, int, float *, Context *);
 
 }  // namespace Vision
 

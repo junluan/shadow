@@ -30,7 +30,7 @@ namespace Vision {
 
 template <typename T>
 void LRN(const T *in_data, const VecInt &in_shape, int size, float alpha,
-         float beta, float k, T *scale_data, T *out_data);
+         float beta, float k, T *scale_data, T *out_data, Context *context);
 
 }  // namespace Vision
 

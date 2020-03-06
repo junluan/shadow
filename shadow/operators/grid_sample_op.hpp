@@ -56,7 +56,7 @@ namespace Vision {
 template <typename T>
 void GridSample(const T* in_data, const VecInt& in_shape,
                 const float* grid_data, int mode, int padding_mode,
-                const VecInt& out_shape, T* out_data);
+                const VecInt& out_shape, T* out_data, Context* context);
 
 }  // namespace Vision
 

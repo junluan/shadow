@@ -41,19 +41,21 @@ __global__ void KernelPooling(const T *in_data, int count, int in_c, int in_h,
 template <typename T>
 void Pooling(const T *in_data, const VecInt &in_shape, int kernel_size_h,
              int kernel_size_w, int stride_h, int stride_w, int pad_h,
-             int pad_w, int mode, const VecInt &out_shape, T *out_data) {
+             int pad_w, int mode, const VecInt &out_shape, T *out_data,
+             Context *context) {
   int batch = in_shape[0];
   int in_c = in_shape[1], in_h = in_shape[2], in_w = in_shape[3];
   int out_h = out_shape[2], out_w = out_shape[3];
   int count = batch * in_c * out_h * out_w;
-  KernelPooling<T><<<GetBlocks(count), NumThreads>>>(
+  KernelPooling<T><<<GetBlocks(count), NumThreads, 0,
+                     cudaStream_t(context->cuda_stream())>>>(
       in_data, count, in_c, in_h, in_w, kernel_size_h, kernel_size_w, stride_h,
       stride_w, pad_h, pad_w, mode, out_h, out_w, out_data);
   CUDA_CHECK(cudaPeekAtLastError());
 }
 
 template void Pooling(const float *, const VecInt &, int, int, int, int, int,
-                      int, int, const VecInt &, float *);
+                      int, int, const VecInt &, float *, Context *);
 
 }  // namespace Vision
 

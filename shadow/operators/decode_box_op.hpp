@@ -30,14 +30,15 @@ namespace Vision {
 template <typename T>
 void DecodeSSDBoxes(const T *mbox_loc, const T *mbox_conf,
                     const T *mbox_priorbox, int batch, int num_priors,
-                    int num_classes, T *decode_box);
+                    int num_classes, T *decode_box, Context *context);
 
 template <typename T>
 void DecodeRefineDetBoxes(const T *odm_loc, const T *odm_conf,
                           const T *arm_priorbox, const T *arm_conf,
                           const T *arm_loc, int batch, int num_priors,
                           int num_classes, int background_label_id,
-                          float objectness_score, T *decode_box);
+                          float objectness_score, T *decode_box,
+                          Context *context);
 
 }  // namespace Vision
 

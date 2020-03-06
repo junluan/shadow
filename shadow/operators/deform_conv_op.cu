@@ -94,12 +94,14 @@ template <typename T>
 void DeformIm2Col(const T *in_data, const VecInt &in_shape,
                   const T *offset_data, int offset, int deform_group,
                   int kernel_size, int stride, int pad, int dilation,
-                  int zero_point, const VecInt &out_shape, T *out_data) {
+                  int zero_point, const VecInt &out_shape, T *out_data,
+                  Context *context) {
   int in_c = in_shape[1], in_h = in_shape[2], in_w = in_shape[3];
   int out_h = out_shape[2], out_w = out_shape[3];
   int channel_per_deform_group = in_c / deform_group;
   int count = in_c * out_h * out_w;
-  deform_im2col_gpu_kernel<T><<<GetBlocks(count), NumThreads>>>(
+  deform_im2col_gpu_kernel<T><<<GetBlocks(count), NumThreads, 0,
+                                cudaStream_t(context->cuda_stream())>>>(
       count, in_data, offset_data, offset, in_h, in_w, kernel_size, kernel_size,
       pad, pad, stride, stride, dilation, dilation, zero_point,
       channel_per_deform_group, out_h, out_w, out_data);
@@ -108,7 +110,7 @@ void DeformIm2Col(const T *in_data, const VecInt &in_shape,
 
 template void DeformIm2Col(const float *, const VecInt &, const float *, int,
                            int, int, int, int, int, int, const VecInt &,
-                           float *);
+                           float *, Context *);
 
 }  // namespace Vision
 

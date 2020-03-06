@@ -28,7 +28,7 @@ namespace Vision {
 
 template <typename T>
 void Scale(const T *in_data, int count, const T *scale_data, const T *bias_data,
-           int scale_dim, int inner_dim, T *out_data);
+           int scale_dim, int inner_dim, T *out_data, Context *context);
 
 }  // namespace Vision
 

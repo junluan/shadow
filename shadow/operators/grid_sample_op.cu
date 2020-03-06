@@ -92,17 +92,19 @@ __global__ void KernelGridSampleBilinear(const T* in_data,
 template <typename T>
 void GridSample(const T* in_data, const VecInt& in_shape,
                 const float* grid_data, int mode, int padding_mode,
-                const VecInt& out_shape, T* out_data) {
+                const VecInt& out_shape, T* out_data, Context* context) {
   int batch = in_shape[0], channel = in_shape[1];
   int in_h = in_shape[2], in_w = in_shape[3];
   int out_h = out_shape[2], out_w = out_shape[3];
   int count = batch * channel * out_h * out_w;
   if (mode == 0) {
-    KernelGridSampleNearest<T><<<GetBlocks(count), NumThreads>>>(
+    KernelGridSampleNearest<T><<<GetBlocks(count), NumThreads, 0,
+                                 cudaStream_t(context->cuda_stream())>>>(
         in_data, grid_data, count, channel, in_h, in_w, out_h, out_w,
         padding_mode, out_data);
   } else if (mode == 1) {
-    KernelGridSampleBilinear<T><<<GetBlocks(count), NumThreads>>>(
+    KernelGridSampleBilinear<T><<<GetBlocks(count), NumThreads, 0,
+                                  cudaStream_t(context->cuda_stream())>>>(
         in_data, grid_data, count, channel, in_h, in_w, out_h, out_w,
         padding_mode, out_data);
   } else {
@@ -112,7 +114,7 @@ void GridSample(const T* in_data, const VecInt& in_shape,
 }
 
 template void GridSample(const float*, const VecInt&, const float*, int, int,
-                         const VecInt&, float*);
+                         const VecInt&, float*, Context*);
 
 }  // namespace Vision
 

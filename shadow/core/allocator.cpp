@@ -50,12 +50,13 @@ class CPUAllocator : public Allocator {
   }
 
   void free(void *ptr) const override { fast_free(ptr); }
+
+  void set_stream(void *stream) override {}
 };
 
 template <>
-Allocator *GetAllocator<DeviceType::kCPU>() {
-  static CPUAllocator allocator;
-  return &allocator;
+std::shared_ptr<Allocator> GetAllocator<DeviceType::kCPU>() {
+  return std::make_shared<CPUAllocator>();
 }
 
 }  // namespace Shadow

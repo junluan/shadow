@@ -30,7 +30,7 @@ void SoftmaxOp::Forward() {
                                                op_name_ + "/scalar");
 
   Vision::Softmax(bottom->data(), outer_num, channels, inner_num,
-                  scalar->mutable_data(), top->mutable_data());
+                  scalar->mutable_data(), top->mutable_data(), op_ws_->Ctx());
 #endif
 }
 
@@ -41,7 +41,7 @@ namespace Vision {
 #if !defined(USE_CUDA)
 template <typename T>
 void Softmax(const T *in_data, int outer_num, int channels, int inner_num,
-             T *val_data, T *out_data) {
+             T *val_data, T *out_data, Context *context) {
   int val_count = outer_num * inner_num, count = val_count * channels;
 
   for (int i = 0; i < val_count; ++i) {
@@ -75,7 +75,8 @@ void Softmax(const T *in_data, int outer_num, int channels, int inner_num,
   }
 }
 
-template void Softmax(const float *, int, int, int, float *, float *);
+template void Softmax(const float *, int, int, int, float *, float *,
+                      Context *);
 #endif
 
 }  // namespace Vision

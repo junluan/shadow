@@ -60,10 +60,10 @@ void BinaryOp::Forward() {
     scalar_shape->set_data(scalar_shape_.data(), num_axes);
     top_shape->set_data(top_shape_.data(), num_axes);
 
-    return Vision::BroadcastBinary(bottom->data(), bottom_shape->data(),
-                                   scalar->data(), scalar_shape->data(),
-                                   operation_, num_axes, top->count(),
-                                   top_shape->data(), top->mutable_data());
+    return Vision::BroadcastBinary(
+        bottom->data(), bottom_shape->data(), scalar->data(),
+        scalar_shape->data(), operation_, num_axes, top->count(),
+        top_shape->data(), top->mutable_data(), op_ws_->Ctx());
   }
 
   int count = top->count();
@@ -72,58 +72,58 @@ void BinaryOp::Forward() {
     case kAdd:
       if (has_scalar_arg_) {
         return Blas::Add(count, bottom->data(), 0, scalar_data_,
-                         top->mutable_data(), 0);
+                         top->mutable_data(), 0, op_ws_->Ctx());
       } else {
         return Blas::Add(count, bottom->data(), 0, scalar->data(), 0,
-                         top->mutable_data(), 0);
+                         top->mutable_data(), 0, op_ws_->Ctx());
       }
     case kSub:
       if (has_scalar_arg_) {
         return Blas::Sub(count, bottom->data(), 0, scalar_data_,
-                         top->mutable_data(), 0);
+                         top->mutable_data(), 0, op_ws_->Ctx());
       } else {
         return Blas::Sub(count, bottom->data(), 0, scalar->data(), 0,
-                         top->mutable_data(), 0);
+                         top->mutable_data(), 0, op_ws_->Ctx());
       }
     case kMul:
       if (has_scalar_arg_) {
         return Blas::Mul(count, bottom->data(), 0, scalar_data_,
-                         top->mutable_data(), 0);
+                         top->mutable_data(), 0, op_ws_->Ctx());
       } else {
         return Blas::Mul(count, bottom->data(), 0, scalar->data(), 0,
-                         top->mutable_data(), 0);
+                         top->mutable_data(), 0, op_ws_->Ctx());
       }
     case kDiv:
       if (has_scalar_arg_) {
         return Blas::Div(count, bottom->data(), 0, scalar_data_,
-                         top->mutable_data(), 0);
+                         top->mutable_data(), 0, op_ws_->Ctx());
       } else {
         return Blas::Div(count, bottom->data(), 0, scalar->data(), 0,
-                         top->mutable_data(), 0);
+                         top->mutable_data(), 0, op_ws_->Ctx());
       }
     case kPow:
       if (has_scalar_arg_) {
         return Blas::Pow(count, bottom->data(), 0, scalar_data_,
-                         top->mutable_data(), 0);
+                         top->mutable_data(), 0, op_ws_->Ctx());
       } else {
         return Blas::Pow(count, bottom->data(), 0, scalar->data(), 0,
-                         top->mutable_data(), 0);
+                         top->mutable_data(), 0, op_ws_->Ctx());
       }
     case kMax:
       if (has_scalar_arg_) {
         return Blas::Max(count, bottom->data(), 0, scalar_data_,
-                         top->mutable_data(), 0);
+                         top->mutable_data(), 0, op_ws_->Ctx());
       } else {
         return Blas::Max(count, bottom->data(), 0, scalar->data(), 0,
-                         top->mutable_data(), 0);
+                         top->mutable_data(), 0, op_ws_->Ctx());
       }
     case kMin:
       if (has_scalar_arg_) {
         return Blas::Min(count, bottom->data(), 0, scalar_data_,
-                         top->mutable_data(), 0);
+                         top->mutable_data(), 0, op_ws_->Ctx());
       } else {
         return Blas::Min(count, bottom->data(), 0, scalar->data(), 0,
-                         top->mutable_data(), 0);
+                         top->mutable_data(), 0, op_ws_->Ctx());
       }
     default:
       LOG(FATAL) << "Unknown binary operation " << operation_;
@@ -161,7 +161,7 @@ template <typename T>
 void BroadcastBinary(const T *in_data, const int *in_shape,
                      const T *scalar_data, const int *scalar_shape,
                      int operation, int num_axes, int count,
-                     const int *out_shape, T *out_data) {
+                     const int *out_shape, T *out_data, Context *context) {
   VecInt in_shape_acc(1, 1), scalar_shape_acc(1, 1);
   for (int n = num_axes - 1; n > 0; --n) {
     in_shape_acc.insert(in_shape_acc.begin(), in_shape[n] * in_shape_acc[0]);
@@ -182,7 +182,8 @@ void BroadcastBinary(const T *in_data, const int *in_shape,
 }
 
 template void BroadcastBinary(const float *, const int *, const float *,
-                              const int *, int, int, int, const int *, float *);
+                              const int *, int, int, int, const int *, float *,
+                              Context *);
 #endif
 
 }  // namespace Vision

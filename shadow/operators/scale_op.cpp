@@ -22,13 +22,13 @@ void ScaleOp::Forward() {
       op_ws_->GrowTempBuffer(scale->count(), sizeof(float));
       bias = op_ws_->CreateTempBlob<float>(scale->shape(),
                                            op_name_ + "/bias_value");
-      Blas::Set(bias->count(), 0, bias->mutable_data(), 0);
+      Blas::Set(bias->count(), 0, bias->mutable_data(), 0, op_ws_->Ctx());
     } else {
       bias = const_cast<BlobF *>(bottoms<float>(1));
       op_ws_->GrowTempBuffer(bias->count(), sizeof(float));
       scale = op_ws_->CreateTempBlob<float>(bias->shape(),
                                             op_name_ + "/scale_value");
-      Blas::Set(scale->count(), 1, scale->mutable_data(), 0);
+      Blas::Set(scale->count(), 1, scale->mutable_data(), 0, op_ws_->Ctx());
     }
   } else {
     int dim = bottom->shape(axis_);
@@ -71,7 +71,7 @@ void ScaleOp::Forward() {
   inner_dim_ = bottom->count(axis_ + scale->num_axes());
 
   Vision::Scale(bottom->data(), bottom->count(), scale->data(), bias->data(),
-                scale_dim_, inner_dim_, top->mutable_data());
+                scale_dim_, inner_dim_, top->mutable_data(), op_ws_->Ctx());
 }
 
 REGISTER_OPERATOR(Scale, ScaleOp);
@@ -81,7 +81,7 @@ namespace Vision {
 #if !defined(USE_CUDA)
 template <typename T>
 void Scale(const T *in_data, int count, const T *scale_data, const T *bias_data,
-           int scale_dim, int inner_dim, T *out_data) {
+           int scale_dim, int inner_dim, T *out_data, Context *context) {
   for (int i = 0; i < count; ++i) {
     int index = (i / inner_dim) % scale_dim;
     out_data[i] = in_data[i] * scale_data[index] + bias_data[index];
@@ -89,7 +89,7 @@ void Scale(const T *in_data, int count, const T *scale_data, const T *bias_data,
 }
 
 template void Scale(const float *, int, const float *, const float *, int, int,
-                    float *);
+                    float *, Context *);
 #endif
 
 }  // namespace Vision

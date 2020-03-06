@@ -37,11 +37,12 @@ template <typename T>
 void Im2Col(const T *in_data, const VecInt &in_shape, int offset,
             int kernel_size_h, int kernel_size_w, int stride_h, int stride_w,
             int pad_h, int pad_w, int dilation, int zero_point,
-            const VecInt &out_shape, T *col_data) {
+            const VecInt &out_shape, T *col_data, Context *context) {
   int in_c = in_shape[1], in_h = in_shape[2], in_w = in_shape[3];
   int out_h = out_shape[2], out_w = out_shape[3];
   int count = in_c * out_h * out_w;
-  KernelIm2Col<T><<<GetBlocks(count), NumThreads>>>(
+  KernelIm2Col<T><<<GetBlocks(count), NumThreads, 0,
+                    cudaStream_t(context->cuda_stream())>>>(
       in_data, offset, count, in_c, in_h, in_w, kernel_size_h, kernel_size_w,
       stride_h, stride_w, pad_h, pad_w, dilation, zero_point, out_h, out_w,
       col_data);
@@ -49,7 +50,7 @@ void Im2Col(const T *in_data, const VecInt &in_shape, int offset,
 }
 
 template void Im2Col(const float *, const VecInt &, int, int, int, int, int,
-                     int, int, int, int, const VecInt &, float *);
+                     int, int, int, int, const VecInt &, float *, Context *);
 
 template <typename T>
 __global__ void KernelDepthwise(const T *in_data, int count,
@@ -91,12 +92,14 @@ template <typename T>
 void Depthwise(const T *in_data, const VecInt &in_shape, const T *weight_data,
                const T *bias_data, int kernel_size_h, int kernel_size_w,
                int stride_h, int stride_w, int pad_h, int pad_w, int dilation,
-               int bias_term, const VecInt &out_shape, T *out_data) {
+               int bias_term, const VecInt &out_shape, T *out_data,
+               Context *context) {
   int batch = in_shape[0];
   int in_c = in_shape[1], in_h = in_shape[2], in_w = in_shape[3];
   int out_h = out_shape[2], out_w = out_shape[3];
   int count = batch * in_c * out_h * out_w;
-  KernelDepthwise<T><<<GetBlocks(count), NumThreads>>>(
+  KernelDepthwise<T><<<GetBlocks(count), NumThreads, 0,
+                       cudaStream_t(context->cuda_stream())>>>(
       in_data, count, weight_data, bias_data, in_c, in_h, in_w, out_h, out_w,
       kernel_size_h, kernel_size_w, stride_h, stride_w, pad_h, pad_w, dilation,
       bias_term, out_data);
@@ -105,7 +108,7 @@ void Depthwise(const T *in_data, const VecInt &in_shape, const T *weight_data,
 
 template void Depthwise(const float *, const VecInt &, const float *,
                         const float *, int, int, int, int, int, int, int, int,
-                        const VecInt &, float *);
+                        const VecInt &, float *, Context *);
 
 }  // namespace Vision
 

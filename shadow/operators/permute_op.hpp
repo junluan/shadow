@@ -23,7 +23,7 @@ namespace Vision {
 template <typename T>
 void Permute(const T *in_data, int count, int num_axes,
              const int *permute_order, const int *old_steps,
-             const int *new_steps, T *out_data);
+             const int *new_steps, T *out_data, Context *context);
 
 }  // namespace Vision
 
