@@ -4,6 +4,12 @@
 
 namespace Shadow {
 
+#if defined(__ANDROID__) || defined(ANDROID)
+const int MemoryAlignment = 64;
+#else
+const int MemoryAlignment = 32;
+#endif
+
 inline size_t align_size(int sz, int n) { return (sz + n - 1) & -n; }
 
 template <typename T>
@@ -30,7 +36,7 @@ class CPUAllocator : public Allocator {
   DeviceType device_type() const override { return DeviceType::kCPU; }
 
   void *malloc(size_t size, const void *host_ptr) const override {
-    auto *ptr = fast_malloc(size, 1);
+    auto *ptr = fast_malloc(size, MemoryAlignment);
     if (host_ptr != nullptr) {
       write(size, host_ptr, ptr);
     }
