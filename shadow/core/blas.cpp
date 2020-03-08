@@ -1,6 +1,6 @@
 #include "blas.hpp"
 
-#include "common.hpp"
+#include "external.hpp"
 
 #if defined(USE_OpenBLAS)
 #include "cblas.h"

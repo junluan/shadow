@@ -4,6 +4,7 @@
 #include "blas.hpp"
 #include "blob.hpp"
 #include "common.hpp"
+#include "external.hpp"
 #include "helper.hpp"
 #include "params.hpp"
 #include "registry.hpp"

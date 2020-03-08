@@ -1,8 +1,6 @@
 #include "context.hpp"
 
-#include "common.hpp"
-
-#include "util/log.hpp"
+#include "external.hpp"
 
 namespace Shadow {
 

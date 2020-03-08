@@ -1,8 +1,6 @@
 #include "blas.hpp"
 
-#include "common.hpp"
-
-#include "util/log.hpp"
+#include "external.hpp"
 
 #include <cfloat>
 

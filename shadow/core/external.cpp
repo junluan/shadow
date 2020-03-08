@@ -1,11 +1,30 @@
-#ifndef SHADOW_CORE_IDNNL_HPP
-#define SHADOW_CORE_IDNNL_HPP
+#include "external.hpp"
 
-#include "util/log.hpp"
+namespace Shadow {
 
-#if defined(USE_DNNL)
-#include "dnnl.hpp"
+#if defined(USE_CUDNN)
+
+namespace cudnn {
+
+float dataType<float>::oneval = 1.0;
+float dataType<float>::zeroval = 0.0;
+const void *dataType<float>::one =
+    static_cast<void *>(&dataType<float>::oneval);
+const void *dataType<float>::zero =
+    static_cast<void *>(&dataType<float>::zeroval);
+
+double dataType<double>::oneval = 1.0;
+double dataType<double>::zeroval = 0.0;
+const void *dataType<double>::one =
+    static_cast<void *>(&dataType<double>::oneval);
+const void *dataType<double>::zero =
+    static_cast<void *>(&dataType<double>::zeroval);
+
+}  // namespace cudnn
+
 #endif
+
+}  // namespace Shadow
 
 namespace Shadow {
 
@@ -13,30 +32,11 @@ namespace Shadow {
 
 namespace idnnl {
 
-template <typename T>
-inline dnnl::memory::desc create_memory_desc(
-    const std::vector<int> &shape,
-    dnnl::memory::format_tag format_tag = dnnl::memory::format_tag::nchw) {
-  dnnl::memory::dims dims;
-  for (auto dim : shape) {
-    dims.push_back(dim);
-  }
-  auto data_type = dnnl::memory::data_type::undef;
-  if (std::is_same<T, float>::value) {
-    data_type = dnnl::memory::data_type::f32;
-  } else if (std::is_same<T, int>::value) {
-    data_type = dnnl::memory::data_type::s32;
-  } else if (std::is_same<T, unsigned char>::value) {
-    data_type = dnnl::memory::data_type::u8;
-  }
-  return dnnl::memory::desc(dims, data_type, format_tag);
-}
-
-inline dnnl::convolution_forward::desc create_convolution_desc(
+dnnl::convolution_forward::desc create_convolution_desc(
     const dnnl::memory::desc &src_desc, const dnnl::memory::desc &weight_desc,
     const dnnl::memory::desc &bias_desc, const dnnl::memory::desc &dst_desc,
-    int pad_h, int pad_w, int stride_h, int stride_w, int dilation_h = 1,
-    int dilation_w = 1) {
+    int pad_h, int pad_w, int stride_h, int stride_w, int dilation_h,
+    int dilation_w) {
   if (dilation_h == 1 && dilation_w == 1) {
     return dnnl::convolution_forward::desc(
         dnnl::prop_kind::forward_inference, dnnl::algorithm::convolution_auto,
@@ -50,11 +50,11 @@ inline dnnl::convolution_forward::desc create_convolution_desc(
   }
 }
 
-inline void convolution_forward(
-    void *dnnl_engine, void *dnnl_stream,
-    const dnnl::convolution_forward::desc &conv_desc, const void *src_data,
-    const void *weight_data, const void *bias_data, void *dst_data,
-    int activate_type = -1) {
+void convolution_forward(void *dnnl_engine, void *dnnl_stream,
+                         const dnnl::convolution_forward::desc &conv_desc,
+                         const void *src_data, const void *weight_data,
+                         const void *bias_data, void *dst_data,
+                         int activate_type) {
   const auto *engine = (dnnl::engine *)dnnl_engine;
   auto *stream = (dnnl::stream *)dnnl_stream;
   auto conv_primitive_desc =
@@ -88,5 +88,3 @@ inline void convolution_forward(
 #endif
 
 }  // namespace Shadow
-
-#endif  // SHADOW_CORE_IDNNL_HPP
