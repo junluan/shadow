@@ -5,7 +5,7 @@ namespace Shadow {
 void SliceOp::Forward() {
   CHECK_GE(tops_size(), 2);
 
-  const auto *bottom = bottoms<float>(0);
+  const auto bottom = bottoms(0);
 
   int num_tops = tops_size();
 
@@ -29,7 +29,7 @@ void SliceOp::Forward() {
   int count = 0;
   auto top_shape = bottom->shape();
   for (int n = 0; n < num_tops; ++n) {
-    auto *top = mutable_tops<float>(n);
+    auto top = tops(n);
     top_shape[slice_axis_] = slices[n];
     top->reshape(top_shape);
     count += top->count();
@@ -40,11 +40,11 @@ void SliceOp::Forward() {
   int num_slices = bottom->count(0, slice_axis_);
   int slice_size = bottom->count(slice_axis_ + 1);
   for (int n = 0; n < tops_size(); ++n) {
-    auto *top = mutable_tops<float>(n);
+    auto top = tops(n);
     int top_slice_axis = top->shape(slice_axis_);
-    Vision::Slice(bottom->data(), top->count(), num_slices, slice_size,
+    Vision::Slice(bottom->data<float>(), top->count(), num_slices, slice_size,
                   bottom_slice_axis, top_slice_axis, offset_slice_axis,
-                  top->mutable_data(), op_ws_->Ctx());
+                  top->mutable_data<float>(), ws_->Ctx());
     offset_slice_axis += top_slice_axis;
   }
 }

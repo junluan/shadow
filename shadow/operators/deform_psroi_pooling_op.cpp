@@ -5,9 +5,9 @@ namespace Shadow {
 void DeformPSROIPoolingOp::Forward() {
   CHECK_GE(bottoms_size(), 2);
 
-  const auto *bottom_fea = bottoms<float>(0);
-  const auto *bottom_roi = bottoms<float>(1);
-  auto *top = mutable_tops<float>(0);
+  const auto bottom_fea = bottoms(0);
+  const auto bottom_roi = bottoms(1);
+  auto top = tops(0);
 
   CHECK_NE(bottom_fea, top);
 
@@ -18,19 +18,21 @@ void DeformPSROIPoolingOp::Forward() {
   if (no_trans_) {
     CHECK_EQ(bottoms_size(), 2);
     Vision::DeformPSROIPooling(
-        bottom_fea->data(), bottom_fea->shape(), bottom_roi->data(),
-        static_cast<decltype(bottom_roi->data())>(nullptr), VecInt{}, num_rois,
-        output_dim_, group_size_, pooled_size_, part_size_, sample_per_part_,
-        spatial_scale_, trans_std_, no_trans_, top->mutable_data(),
-        op_ws_->Ctx());
+        bottom_fea->data<float>(), bottom_fea->shape(),
+        bottom_roi->data<float>(),
+        static_cast<decltype(bottom_roi->data<float>())>(nullptr), VecInt{},
+        num_rois, output_dim_, group_size_, pooled_size_, part_size_,
+        sample_per_part_, spatial_scale_, trans_std_, no_trans_,
+        top->mutable_data<float>(), ws_->Ctx());
   } else {
     CHECK_EQ(bottoms_size(), 3);
-    const auto *bottom_trans = bottoms<float>(2);
+    const auto bottom_trans = bottoms(2);
     Vision::DeformPSROIPooling(
-        bottom_fea->data(), bottom_fea->shape(), bottom_roi->data(),
-        bottom_trans->data(), bottom_trans->shape(), num_rois, output_dim_,
-        group_size_, pooled_size_, part_size_, sample_per_part_, spatial_scale_,
-        trans_std_, no_trans_, top->mutable_data(), op_ws_->Ctx());
+        bottom_fea->data<float>(), bottom_fea->shape(),
+        bottom_roi->data<float>(), bottom_trans->data<float>(),
+        bottom_trans->shape(), num_rois, output_dim_, group_size_, pooled_size_,
+        part_size_, sample_per_part_, spatial_scale_, trans_std_, no_trans_,
+        top->mutable_data<float>(), ws_->Ctx());
   }
 }
 

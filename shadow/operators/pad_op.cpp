@@ -3,8 +3,8 @@
 namespace Shadow {
 
 void PadOp::Forward() {
-  const auto *bottom = bottoms<float>(0);
-  auto *top = mutable_tops<float>(0);
+  const auto bottom = bottoms(0);
+  auto top = tops(0);
 
   CHECK_NE(bottom, top);
 
@@ -20,12 +20,12 @@ void PadOp::Forward() {
 
   if (paddings_[0] == 0 && paddings_[1] == 0 && paddings_[2] == 0 &&
       paddings_[3] == 0) {
-    Blas::BlasScopy(bottom->count(), bottom->data(), 0, top->mutable_data(), 0,
-                    op_ws_->Ctx());
+    Blas::BlasScopy(bottom->count(), bottom->data<float>(), 0,
+                    top->mutable_data<float>(), 0, ws_->Ctx());
   } else {
-    Blas::Set(top->count(), value_, top->mutable_data(), 0, op_ws_->Ctx());
-    Vision::Pad(bottom->data(), bottom->shape(), paddings_, top->shape(),
-                top->mutable_data(), op_ws_->Ctx());
+    Blas::Set(top->count(), value_, top->mutable_data<float>(), 0, ws_->Ctx());
+    Vision::Pad(bottom->data<float>(), bottom->shape(), paddings_, top->shape(),
+                top->mutable_data<float>(), ws_->Ctx());
   }
 }
 

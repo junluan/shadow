@@ -3,19 +3,19 @@
 namespace Shadow {
 
 void LRNOp::Forward() {
-  const auto *bottom = bottoms<float>(0);
-  auto *top = mutable_tops<float>(0);
+  const auto bottom = bottoms(0);
+  auto top = tops(0);
 
   if (bottom != top) {
     top->reshape(bottom->shape());
   }
 
-  op_ws_->GrowTempBuffer(bottom->count(), sizeof(float));
-  auto *scale =
-      op_ws_->CreateTempBlob<float>(bottom->shape(), op_name_ + "/scale");
+  ws_->GrowTempBuffer(bottom->raw_size());
+  auto scale = ws_->CreateTempBlob(bottom->shape(), DataType::kF32);
 
-  Vision::LRN(bottom->data(), bottom->shape(), size_, alpha_, beta_, k_,
-              scale->mutable_data(), top->mutable_data(), op_ws_->Ctx());
+  Vision::LRN(bottom->data<float>(), bottom->shape(), size_, alpha_, beta_, k_,
+              scale->mutable_data<float>(), top->mutable_data<float>(),
+              ws_->Ctx());
 }
 
 REGISTER_OPERATOR(LRN, LRNOp);

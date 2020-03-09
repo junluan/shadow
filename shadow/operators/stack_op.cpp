@@ -3,8 +3,8 @@
 namespace Shadow {
 
 void StackOp::Forward() {
-  const auto *bottom_0 = bottoms<float>(0);
-  auto *top = mutable_tops<float>(0);
+  const auto bottom_0 = bottoms(0);
+  auto top = tops(0);
 
   int num_axes = bottom_0->num_axes();
   CHECK(axis_ >= -(num_axes + 1) && axis_ < num_axes + 1)
@@ -21,9 +21,10 @@ void StackOp::Forward() {
   int stack_size = bottom_0->count(axis_);
   int top_stack_axis = top->shape(axis_);
   for (int n = 0; n < bottoms_size(); ++n) {
-    const auto *bottom = bottoms<float>(n);
-    Vision::Stack(bottom->data(), bottom->count(), num_stacks, stack_size,
-                  top_stack_axis, n, top->mutable_data(), op_ws_->Ctx());
+    const auto bottom = bottoms(n);
+    Vision::Stack(bottom->data<float>(), bottom->count(), num_stacks,
+                  stack_size, top_stack_axis, n, top->mutable_data<float>(),
+                  ws_->Ctx());
   }
 }
 

@@ -3,17 +3,17 @@
 namespace Shadow {
 
 void BinaryOp::Forward() {
-  const auto *bottom = bottoms<float>(0);
-  auto *top = mutable_tops<float>(0);
+  const auto bottom = bottoms(0);
+  auto top = tops(0);
 
   bottom_shape_ = bottom->shape();
 
-  BlobF *scalar = nullptr;
+  std::shared_ptr<Blob> scalar = nullptr;
   if (has_scalar_arg_) {
     top_shape_ = bottom_shape_;
   } else {
     CHECK_EQ(bottoms_size(), 2);
-    scalar = const_cast<BlobF *>(bottoms<float>(1));
+    scalar = bottoms(1);
     scalar_shape_ = scalar->shape();
     need_broadcast_ = bottom_shape_ != scalar_shape_;
     if (need_broadcast_) {
@@ -47,23 +47,20 @@ void BinaryOp::Forward() {
   if (!has_scalar_arg_ && need_broadcast_) {
     int num_axes = static_cast<int>(top_shape_.size());
 
-    op_ws_->GrowTempBuffer(3 * num_axes, sizeof(int));
+    ws_->GrowTempBuffer(3 * num_axes * sizeof(int));
 
-    auto *bottom_shape =
-        op_ws_->CreateTempBlob<int>({num_axes}, op_name_ + "/bottom_shape");
-    auto *scalar_shape =
-        op_ws_->CreateTempBlob<int>({num_axes}, op_name_ + "/scalar_shape");
-    auto *top_shape =
-        op_ws_->CreateTempBlob<int>({num_axes}, op_name_ + "/top_shape");
+    auto bottom_shape = ws_->CreateTempBlob({num_axes}, DataType::kI32);
+    auto scalar_shape = ws_->CreateTempBlob({num_axes}, DataType::kI32);
+    auto top_shape = ws_->CreateTempBlob({num_axes}, DataType::kI32);
 
-    bottom_shape->set_data(bottom_shape_.data(), num_axes);
-    scalar_shape->set_data(scalar_shape_.data(), num_axes);
-    top_shape->set_data(top_shape_.data(), num_axes);
+    bottom_shape->set_data<int>(bottom_shape_.data(), num_axes);
+    scalar_shape->set_data<int>(scalar_shape_.data(), num_axes);
+    top_shape->set_data<int>(top_shape_.data(), num_axes);
 
     return Vision::BroadcastBinary(
-        bottom->data(), bottom_shape->data(), scalar->data(),
-        scalar_shape->data(), operation_, num_axes, top->count(),
-        top_shape->data(), top->mutable_data(), op_ws_->Ctx());
+        bottom->data<float>(), bottom_shape->data<int>(), scalar->data<float>(),
+        scalar_shape->data<int>(), operation_, num_axes, top->count(),
+        top_shape->data<int>(), top->mutable_data<float>(), ws_->Ctx());
   }
 
   int count = top->count();
@@ -71,59 +68,59 @@ void BinaryOp::Forward() {
   switch (operation_) {
     case kAdd:
       if (has_scalar_arg_) {
-        return Blas::Add(count, bottom->data(), 0, scalar_data_,
-                         top->mutable_data(), 0, op_ws_->Ctx());
+        return Blas::Add(count, bottom->data<float>(), 0, scalar_data_,
+                         top->mutable_data<float>(), 0, ws_->Ctx());
       } else {
-        return Blas::Add(count, bottom->data(), 0, scalar->data(), 0,
-                         top->mutable_data(), 0, op_ws_->Ctx());
+        return Blas::Add(count, bottom->data<float>(), 0, scalar->data<float>(),
+                         0, top->mutable_data<float>(), 0, ws_->Ctx());
       }
     case kSub:
       if (has_scalar_arg_) {
-        return Blas::Sub(count, bottom->data(), 0, scalar_data_,
-                         top->mutable_data(), 0, op_ws_->Ctx());
+        return Blas::Sub(count, bottom->data<float>(), 0, scalar_data_,
+                         top->mutable_data<float>(), 0, ws_->Ctx());
       } else {
-        return Blas::Sub(count, bottom->data(), 0, scalar->data(), 0,
-                         top->mutable_data(), 0, op_ws_->Ctx());
+        return Blas::Sub(count, bottom->data<float>(), 0, scalar->data<float>(),
+                         0, top->mutable_data<float>(), 0, ws_->Ctx());
       }
     case kMul:
       if (has_scalar_arg_) {
-        return Blas::Mul(count, bottom->data(), 0, scalar_data_,
-                         top->mutable_data(), 0, op_ws_->Ctx());
+        return Blas::Mul(count, bottom->data<float>(), 0, scalar_data_,
+                         top->mutable_data<float>(), 0, ws_->Ctx());
       } else {
-        return Blas::Mul(count, bottom->data(), 0, scalar->data(), 0,
-                         top->mutable_data(), 0, op_ws_->Ctx());
+        return Blas::Mul(count, bottom->data<float>(), 0, scalar->data<float>(),
+                         0, top->mutable_data<float>(), 0, ws_->Ctx());
       }
     case kDiv:
       if (has_scalar_arg_) {
-        return Blas::Div(count, bottom->data(), 0, scalar_data_,
-                         top->mutable_data(), 0, op_ws_->Ctx());
+        return Blas::Div(count, bottom->data<float>(), 0, scalar_data_,
+                         top->mutable_data<float>(), 0, ws_->Ctx());
       } else {
-        return Blas::Div(count, bottom->data(), 0, scalar->data(), 0,
-                         top->mutable_data(), 0, op_ws_->Ctx());
+        return Blas::Div(count, bottom->data<float>(), 0, scalar->data<float>(),
+                         0, top->mutable_data<float>(), 0, ws_->Ctx());
       }
     case kPow:
       if (has_scalar_arg_) {
-        return Blas::Pow(count, bottom->data(), 0, scalar_data_,
-                         top->mutable_data(), 0, op_ws_->Ctx());
+        return Blas::Pow(count, bottom->data<float>(), 0, scalar_data_,
+                         top->mutable_data<float>(), 0, ws_->Ctx());
       } else {
-        return Blas::Pow(count, bottom->data(), 0, scalar->data(), 0,
-                         top->mutable_data(), 0, op_ws_->Ctx());
+        return Blas::Pow(count, bottom->data<float>(), 0, scalar->data<float>(),
+                         0, top->mutable_data<float>(), 0, ws_->Ctx());
       }
     case kMax:
       if (has_scalar_arg_) {
-        return Blas::Max(count, bottom->data(), 0, scalar_data_,
-                         top->mutable_data(), 0, op_ws_->Ctx());
+        return Blas::Max(count, bottom->data<float>(), 0, scalar_data_,
+                         top->mutable_data<float>(), 0, ws_->Ctx());
       } else {
-        return Blas::Max(count, bottom->data(), 0, scalar->data(), 0,
-                         top->mutable_data(), 0, op_ws_->Ctx());
+        return Blas::Max(count, bottom->data<float>(), 0, scalar->data<float>(),
+                         0, top->mutable_data<float>(), 0, ws_->Ctx());
       }
     case kMin:
       if (has_scalar_arg_) {
-        return Blas::Min(count, bottom->data(), 0, scalar_data_,
-                         top->mutable_data(), 0, op_ws_->Ctx());
+        return Blas::Min(count, bottom->data<float>(), 0, scalar_data_,
+                         top->mutable_data<float>(), 0, ws_->Ctx());
       } else {
-        return Blas::Min(count, bottom->data(), 0, scalar->data(), 0,
-                         top->mutable_data(), 0, op_ws_->Ctx());
+        return Blas::Min(count, bottom->data<float>(), 0, scalar->data<float>(),
+                         0, top->mutable_data<float>(), 0, ws_->Ctx());
       }
     default:
       LOG(FATAL) << "Unknown binary operation " << operation_;

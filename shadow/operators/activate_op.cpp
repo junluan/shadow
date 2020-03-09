@@ -3,8 +3,8 @@
 namespace Shadow {
 
 void ActivateOp::Forward() {
-  const auto *bottom = bottoms<float>(0);
-  auto *top = mutable_tops<float>(0);
+  const auto bottom = bottoms(0);
+  auto top = tops(0);
 
   if (bottom != top) {
     top->reshape(bottom->shape());
@@ -19,9 +19,10 @@ void ActivateOp::Forward() {
     cudnn::setTensor4dDesc<float>(&bottom_top_desc_, batch, num, 1, 1);
 
     CUDNN_CHECK(cudnnActivationForward(
-        cudnnHandle_t(op_ws_->Ctx()->cudnn_handle()), activate_desc_,
-        cudnn::dataType<float>::one, bottom_top_desc_, bottom->data(),
-        cudnn::dataType<float>::zero, bottom_top_desc_, top->mutable_data()));
+        cudnnHandle_t(ws_->Ctx()->cudnn_handle()), activate_desc_,
+        cudnn::dataType<float>::one, bottom_top_desc_, bottom->data<float>(),
+        cudnn::dataType<float>::zero, bottom_top_desc_,
+        top->mutable_data<float>()));
 
     return;
   }
@@ -30,18 +31,19 @@ void ActivateOp::Forward() {
   if (activate_type_ == kRelu || activate_type_ == kLeaky ||
       activate_type_ == kSigmoid || activate_type_ == kSoftPlus ||
       activate_type_ == kTanh || activate_type_ == kRelu6) {
-    Vision::Activate(bottom->data(), top->mutable_data(), top->count(),
-                     activate_type_, slope_, op_ws_->Ctx());
+    Vision::Activate(bottom->data<float>(), top->mutable_data<float>(),
+                     top->count(), activate_type_, slope_, ws_->Ctx());
   } else if (activate_type_ == kPRelu) {
     CHECK_EQ(bottoms_size(), 2);
     CHECK_GE(bottom->num_axes(), 2);
-    const auto *slope = bottoms<float>(1);
+    const auto slope = bottoms(1);
     bool channel_shared = slope->count() == 1;
     if (!channel_shared) {
       CHECK_EQ(slope->count(), bottom->shape(1));
     }
-    Vision::PRelu(bottom->data(), top->mutable_data(), top->shape(),
-                  channel_shared, slope->data(), op_ws_->Ctx());
+    Vision::PRelu(bottom->data<float>(), top->mutable_data<float>(),
+                  top->shape(), channel_shared, slope->data<float>(),
+                  ws_->Ctx());
   }
 }
 

@@ -38,7 +38,7 @@ void Network::Forward(
   template <>                                                          \
   std::vector<int> Network::GetBlobShapeByName<T>(                     \
       const std::string &blob_name) const {                            \
-    return engine_->GetBlobShapeByName<T>(blob_name);                  \
+    return engine_->GetBlobShapeByName(blob_name);                     \
   }
 
 INSTANTIATE_GET_BLOB(int);

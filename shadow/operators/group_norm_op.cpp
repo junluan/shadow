@@ -7,8 +7,8 @@ namespace Shadow {
 void GroupNormOp::Forward() {
   CHECK(bottoms_size() == 1 || bottoms_size() == 3);
 
-  const auto *bottom = bottoms<float>(0);
-  auto *top = mutable_tops<float>(0);
+  const auto bottom = bottoms(0);
+  auto top = tops(0);
 
   top->reshape(bottom->shape());
 
@@ -19,51 +19,50 @@ void GroupNormOp::Forward() {
 
   int temp_count =
       2 * batch * group_ + bottom->count() + batch * channel + spatial_dim;
-  op_ws_->GrowTempBuffer(temp_count, sizeof(float));
+  ws_->GrowTempBuffer(temp_count * sizeof(float));
 
-  auto *mean =
-      op_ws_->CreateTempBlob<float>({batch, group_}, op_name_ + "/mean");
-  auto *variance =
-      op_ws_->CreateTempBlob<float>({batch, group_}, op_name_ + "/variance");
-  auto *temp =
-      op_ws_->CreateTempBlob<float>(bottom->shape(), op_name_ + "/temp");
-  auto *batch_by_channel = op_ws_->CreateTempBlob<float>(
-      {batch, channel}, op_name_ + "/batch_by_channel");
-  auto *sum_spatial_multiplier = op_ws_->CreateTempBlob<float>(
-      {1, 1, spatial_dim}, op_name_ + "/sum_spatial_multiplier");
+  auto mean = ws_->CreateTempBlob({batch, group_}, DataType::kF32);
+  auto variance = ws_->CreateTempBlob({batch, group_}, DataType::kF32);
+  auto temp = ws_->CreateTempBlob(bottom->shape(), DataType::kF32);
+  auto batch_by_channel = ws_->CreateTempBlob({batch, channel}, DataType::kF32);
+  auto sum_spatial_multiplier =
+      ws_->CreateTempBlob({1, 1, spatial_dim}, DataType::kF32);
 
-  Blas::Set(spatial_dim, 1, sum_spatial_multiplier->mutable_data(), 0,
-            op_ws_->Ctx());
+  Blas::Set(spatial_dim, 1, sum_spatial_multiplier->mutable_data<float>(), 0,
+            ws_->Ctx());
 
   Blas::BlasSgemv(0, batch * channel, spatial_dim, 1.f / spatial_dim,
-                  bottom->data(), 0, sum_spatial_multiplier->data(), 0, 0,
-                  batch_by_channel->mutable_data(), 0, op_ws_->Ctx());
-  Vision::ComputeGroup(batch_by_channel->data(), batch, channel, group_,
-                       mean->mutable_data(), op_ws_->Ctx());
+                  bottom->data<float>(), 0,
+                  sum_spatial_multiplier->data<float>(), 0, 0,
+                  batch_by_channel->mutable_data<float>(), 0, ws_->Ctx());
+  Vision::ComputeGroup(batch_by_channel->data<float>(), batch, channel, group_,
+                       mean->mutable_data<float>(), ws_->Ctx());
 
-  Vision::SubtractMean(bottom->data(), mean->data(), batch, channel,
-                       spatial_dim, group_, top->mutable_data(), op_ws_->Ctx());
+  Vision::SubtractMean(bottom->data<float>(), mean->data<float>(), batch,
+                       channel, spatial_dim, group_, top->mutable_data<float>(),
+                       ws_->Ctx());
 
-  Blas::Pow(top->count(), top->data(), 0, 2, temp->mutable_data(), 0,
-            op_ws_->Ctx());
+  Blas::Pow(top->count(), top->data<float>(), 0, 2, temp->mutable_data<float>(),
+            0, ws_->Ctx());
 
   Blas::BlasSgemv(0, batch * channel, spatial_dim, 1.f / spatial_dim,
-                  temp->data(), 0, sum_spatial_multiplier->data(), 0, 0,
-                  batch_by_channel->mutable_data(), 0, op_ws_->Ctx());
-  Vision::ComputeGroup(batch_by_channel->data(), batch, channel, group_,
-                       variance->mutable_data(), op_ws_->Ctx());
+                  temp->data<float>(), 0, sum_spatial_multiplier->data<float>(),
+                  0, 0, batch_by_channel->mutable_data<float>(), 0, ws_->Ctx());
+  Vision::ComputeGroup(batch_by_channel->data<float>(), batch, channel, group_,
+                       variance->mutable_data<float>(), ws_->Ctx());
 
-  Vision::DivideVariance(top->data(), variance->data(), batch, channel,
-                         spatial_dim, group_, eps_, top->mutable_data(),
-                         op_ws_->Ctx());
+  Vision::DivideVariance(top->data<float>(), variance->data<float>(), batch,
+                         channel, spatial_dim, group_, eps_,
+                         top->mutable_data<float>(), ws_->Ctx());
 
   if (bottoms_size() == 3) {
-    const auto *scale = bottoms<float>(1);
-    const auto *bias = bottoms<float>(2);
+    const auto scale = bottoms(1);
+    const auto bias = bottoms(2);
     CHECK_EQ(scale->count(), channel);
     CHECK_EQ(bias->count(), channel);
-    Vision::Scale(top->data(), top->count(), scale->data(), bias->data(),
-                  channel, spatial_dim, top->mutable_data(), op_ws_->Ctx());
+    Vision::Scale(top->data<float>(), top->count(), scale->data<float>(),
+                  bias->data<float>(), channel, spatial_dim,
+                  top->mutable_data<float>(), ws_->Ctx());
   }
 }
 

@@ -5,18 +5,18 @@ namespace Shadow {
 void ROIAlignOp::Forward() {
   CHECK_EQ(bottoms_size(), 2);
 
-  const auto *bottom_fea = bottoms<float>(0);
-  const auto *bottom_roi = bottoms<float>(1);
-  auto *top = mutable_tops<float>(0);
+  const auto bottom_fea = bottoms(0);
+  const auto bottom_roi = bottoms(1);
+  auto top = tops(0);
 
   CHECK_NE(bottom_fea, top);
 
   int in_c = bottom_fea->shape(1), num_rois = bottom_roi->shape(0);
   top->reshape({num_rois, in_c, pooled_h_, pooled_w_});
 
-  Vision::ROIAlign(bottom_fea->data(), bottom_fea->shape(), bottom_roi->data(),
-                   num_rois, pooled_h_, pooled_w_, spatial_scale_,
-                   top->mutable_data(), op_ws_->Ctx());
+  Vision::ROIAlign(bottom_fea->data<float>(), bottom_fea->shape(),
+                   bottom_roi->data<float>(), num_rois, pooled_h_, pooled_w_,
+                   spatial_scale_, top->mutable_data<float>(), ws_->Ctx());
 }
 
 REGISTER_OPERATOR(ROIAlign, ROIAlignOp);

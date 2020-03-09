@@ -3,8 +3,8 @@
 namespace Shadow {
 
 void UnaryOp::Forward() {
-  const auto *bottom = bottoms<float>(0);
-  auto *top = mutable_tops<float>(0);
+  const auto bottom = bottoms(0);
+  auto top = tops(0);
 
   if (bottom != top) {
     top->reshape(bottom->shape());
@@ -14,50 +14,50 @@ void UnaryOp::Forward() {
 
   switch (operation_) {
     case kAbs:
-      return Blas::Abs(count, bottom->data(), 0, top->mutable_data(), 0,
-                       op_ws_->Ctx());
+      return Blas::Abs(count, bottom->data<float>(), 0,
+                       top->mutable_data<float>(), 0, ws_->Ctx());
     case kSquare:
-      return Blas::Square(count, bottom->data(), 0, top->mutable_data(), 0,
-                          op_ws_->Ctx());
+      return Blas::Square(count, bottom->data<float>(), 0,
+                          top->mutable_data<float>(), 0, ws_->Ctx());
     case kSqrt:
-      return Blas::Sqrt(count, bottom->data(), 0, top->mutable_data(), 0,
-                        op_ws_->Ctx());
+      return Blas::Sqrt(count, bottom->data<float>(), 0,
+                        top->mutable_data<float>(), 0, ws_->Ctx());
     case kLog:
-      return Blas::Log(count, bottom->data(), 0, top->mutable_data(), 0,
-                       op_ws_->Ctx());
+      return Blas::Log(count, bottom->data<float>(), 0,
+                       top->mutable_data<float>(), 0, ws_->Ctx());
     case kExp:
-      return Blas::Exp(count, bottom->data(), 0, top->mutable_data(), 0,
-                       op_ws_->Ctx());
+      return Blas::Exp(count, bottom->data<float>(), 0,
+                       top->mutable_data<float>(), 0, ws_->Ctx());
     case kSin:
-      return Blas::Sin(count, bottom->data(), 0, top->mutable_data(), 0,
-                       op_ws_->Ctx());
+      return Blas::Sin(count, bottom->data<float>(), 0,
+                       top->mutable_data<float>(), 0, ws_->Ctx());
     case kCos:
-      return Blas::Cos(count, bottom->data(), 0, top->mutable_data(), 0,
-                       op_ws_->Ctx());
+      return Blas::Cos(count, bottom->data<float>(), 0,
+                       top->mutable_data<float>(), 0, ws_->Ctx());
     case kTan:
-      return Blas::Tan(count, bottom->data(), 0, top->mutable_data(), 0,
-                       op_ws_->Ctx());
+      return Blas::Tan(count, bottom->data<float>(), 0,
+                       top->mutable_data<float>(), 0, ws_->Ctx());
     case kAsin:
-      return Blas::Asin(count, bottom->data(), 0, top->mutable_data(), 0,
-                        op_ws_->Ctx());
+      return Blas::Asin(count, bottom->data<float>(), 0,
+                        top->mutable_data<float>(), 0, ws_->Ctx());
     case kAcos:
-      return Blas::Acos(count, bottom->data(), 0, top->mutable_data(), 0,
-                        op_ws_->Ctx());
+      return Blas::Acos(count, bottom->data<float>(), 0,
+                        top->mutable_data<float>(), 0, ws_->Ctx());
     case kAtan:
-      return Blas::Atan(count, bottom->data(), 0, top->mutable_data(), 0,
-                        op_ws_->Ctx());
+      return Blas::Atan(count, bottom->data<float>(), 0,
+                        top->mutable_data<float>(), 0, ws_->Ctx());
     case kFloor:
-      return Blas::Floor(count, bottom->data(), 0, top->mutable_data(), 0,
-                         op_ws_->Ctx());
+      return Blas::Floor(count, bottom->data<float>(), 0,
+                         top->mutable_data<float>(), 0, ws_->Ctx());
     case kCeil:
-      return Blas::Ceil(count, bottom->data(), 0, top->mutable_data(), 0,
-                        op_ws_->Ctx());
+      return Blas::Ceil(count, bottom->data<float>(), 0,
+                        top->mutable_data<float>(), 0, ws_->Ctx());
     case kNeg:
-      return Blas::Neg(count, bottom->data(), 0, top->mutable_data(), 0,
-                       op_ws_->Ctx());
+      return Blas::Neg(count, bottom->data<float>(), 0,
+                       top->mutable_data<float>(), 0, ws_->Ctx());
     case kReciprocal:
-      return Blas::Reciprocal(count, bottom->data(), 0, top->mutable_data(), 0,
-                              op_ws_->Ctx());
+      return Blas::Reciprocal(count, bottom->data<float>(), 0,
+                              top->mutable_data<float>(), 0, ws_->Ctx());
     default:
       LOG(FATAL) << "Unknown unary operation " << operation_;
   }

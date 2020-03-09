@@ -3,8 +3,8 @@
 namespace Shadow {
 
 void PermuteOp::Forward() {
-  const auto *bottom = bottoms<float>(0);
-  auto *top = mutable_tops<float>(0);
+  const auto bottom = bottoms(0);
+  auto top = tops(0);
 
   CHECK_NE(bottom, top);
 
@@ -27,22 +27,20 @@ void PermuteOp::Forward() {
     }
   }
 
-  op_ws_->GrowTempBuffer(3 * num_axes, sizeof(int));
+  ws_->GrowTempBuffer(3 * num_axes * sizeof(int));
 
-  auto *permute_order =
-      op_ws_->CreateTempBlob<int>({num_axes}, op_name_ + "/permute_order");
-  auto *old_steps =
-      op_ws_->CreateTempBlob<int>({num_axes}, op_name_ + "/old_steps");
-  auto *new_steps =
-      op_ws_->CreateTempBlob<int>({num_axes}, op_name_ + "/new_steps");
+  auto permute_order = ws_->CreateTempBlob({num_axes}, DataType::kI32);
+  auto old_steps = ws_->CreateTempBlob({num_axes}, DataType::kI32);
+  auto new_steps = ws_->CreateTempBlob({num_axes}, DataType::kI32);
 
-  permute_order->set_data(permute_order_value_.data(), num_axes);
-  old_steps->set_data(old_steps_value.data(), num_axes);
-  new_steps->set_data(new_steps_value.data(), num_axes);
+  permute_order->set_data<int>(permute_order_value_.data(), num_axes);
+  old_steps->set_data<int>(old_steps_value.data(), num_axes);
+  new_steps->set_data<int>(new_steps_value.data(), num_axes);
 
-  Vision::Permute(bottom->data(), bottom->count(), bottom->num_axes(),
-                  permute_order->data(), old_steps->data(), new_steps->data(),
-                  top->mutable_data(), op_ws_->Ctx());
+  Vision::Permute(bottom->data<float>(), bottom->count(), bottom->num_axes(),
+                  permute_order->data<int>(), old_steps->data<int>(),
+                  new_steps->data<int>(), top->mutable_data<float>(),
+                  ws_->Ctx());
 }
 
 REGISTER_OPERATOR(Permute, PermuteOp);

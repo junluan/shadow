@@ -3,14 +3,14 @@
 namespace Shadow {
 
 void DecodeBoxOp::Forward() {
-  auto *top = mutable_tops<float>(0);
+  auto top = tops(0);
 
   if (method_ == kSSD) {
     CHECK_EQ(bottoms_size(), 3);
 
-    const auto *mbox_loc = bottoms<float>(0);
-    const auto *mbox_conf = bottoms<float>(1);
-    const auto *mbox_priorbox = bottoms<float>(2);
+    const auto mbox_loc = bottoms(0);
+    const auto mbox_conf = bottoms(1);
+    const auto mbox_priorbox = bottoms(2);
 
     int batch = mbox_loc->shape(0), num_priors = mbox_loc->shape(1) / 4;
 
@@ -19,17 +19,18 @@ void DecodeBoxOp::Forward() {
 
     top->reshape({batch, num_priors, 6});
 
-    Vision::DecodeSSDBoxes(mbox_loc->data(), mbox_conf->data(),
-                           mbox_priorbox->data(), batch, num_priors,
-                           num_classes_, top->mutable_data(), op_ws_->Ctx());
+    Vision::DecodeSSDBoxes(mbox_loc->data<float>(), mbox_conf->data<float>(),
+                           mbox_priorbox->data<float>(), batch, num_priors,
+                           num_classes_, top->mutable_data<float>(),
+                           ws_->Ctx());
   } else if (method_ == kRefineDet) {
     CHECK_EQ(bottoms_size(), 5);
 
-    const auto *odm_loc = bottoms<float>(0);
-    const auto *odm_conf = bottoms<float>(1);
-    const auto *arm_priorbox = bottoms<float>(2);
-    const auto *arm_conf = bottoms<float>(3);
-    const auto *arm_loc = bottoms<float>(4);
+    const auto odm_loc = bottoms(0);
+    const auto odm_conf = bottoms(1);
+    const auto arm_priorbox = bottoms(2);
+    const auto arm_conf = bottoms(3);
+    const auto arm_loc = bottoms(4);
 
     int batch = odm_loc->shape(0), num_priors = odm_loc->shape(1) / 4;
 
@@ -41,10 +42,11 @@ void DecodeBoxOp::Forward() {
     top->reshape({batch, num_priors, 6});
 
     Vision::DecodeRefineDetBoxes(
-        odm_loc->data(), odm_conf->data(), arm_priorbox->data(),
-        arm_conf->data(), arm_loc->data(), batch, num_priors, num_classes_,
-        background_label_id_, objectness_score_, top->mutable_data(),
-        op_ws_->Ctx());
+        odm_loc->data<float>(), odm_conf->data<float>(),
+        arm_priorbox->data<float>(), arm_conf->data<float>(),
+        arm_loc->data<float>(), batch, num_priors, num_classes_,
+        background_label_id_, objectness_score_, top->mutable_data<float>(),
+        ws_->Ctx());
   } else {
     LOG(FATAL) << "Currently only support SSD or RefineDet";
   }

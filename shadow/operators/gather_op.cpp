@@ -3,22 +3,21 @@
 namespace Shadow {
 
 void GatherOp::Forward() {
-  const auto *bottom = bottoms<float>(0);
-  auto *top = mutable_tops<float>(0);
+  const auto bottom = bottoms(0);
+  auto top = tops(0);
 
   CHECK_NE(bottom, top);
 
-  BlobI *indexes = nullptr;
+  std::shared_ptr<Blob> indexes = nullptr;
   if (indexes_value_.empty()) {
     CHECK_EQ(bottoms_size(), 2);
-    indexes = const_cast<BlobI *>(bottoms<int>(1));
+    indexes = bottoms(1);
     CHECK_EQ(indexes->num_axes(), 1);
   } else {
     int num_indexes = static_cast<int>(indexes_value_.size());
-    op_ws_->GrowTempBuffer(num_indexes, sizeof(int));
-    indexes =
-        op_ws_->CreateTempBlob<int>({num_indexes}, op_name_ + "/indexes_value");
-    indexes->set_data(indexes_value_.data(), indexes->count());
+    ws_->GrowTempBuffer(num_indexes * sizeof(int));
+    indexes = ws_->CreateTempBlob({num_indexes}, DataType::kI32);
+    indexes->set_data<int>(indexes_value_.data(), indexes->count());
   }
 
   int num_indexes = indexes->count();
@@ -31,8 +30,9 @@ void GatherOp::Forward() {
 
   int gather_dim = bottom->shape(axis_), inner_num = bottom->count(axis_ + 1);
 
-  Vision::Gather(bottom->data(), indexes->data(), num_indexes, gather_dim,
-                 inner_num, top->count(), top->mutable_data(), op_ws_->Ctx());
+  Vision::Gather(bottom->data<float>(), indexes->data<int>(), num_indexes,
+                 gather_dim, inner_num, top->count(),
+                 top->mutable_data<float>(), ws_->Ctx());
 }
 
 REGISTER_OPERATOR(Gather, GatherOp);

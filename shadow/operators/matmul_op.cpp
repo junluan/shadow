@@ -5,9 +5,9 @@ namespace Shadow {
 void MatMulOp::Forward() {
   CHECK_EQ(bottoms_size(), 2);
 
-  const auto *bottom_a = bottoms<float>(0);
-  const auto *bottom_b = bottoms<float>(1);
-  auto *top = mutable_tops<float>(0);
+  const auto bottom_a = bottoms(0);
+  const auto bottom_b = bottoms(1);
+  auto top = tops(0);
 
   int num_axes_a = bottom_a->num_axes(), num_axes_b = bottom_b->num_axes();
 
@@ -46,9 +46,10 @@ void MatMulOp::Forward() {
   int inner_num_b = num_axes_a <= num_axes_b ? (rows_b * cols_b) : 0;
 
   for (int n = 0; n < outer_num; ++n) {
-    Blas::BlasSgemm(transpose_a_, transpose_b_, M, N, K, 1, bottom_a->data(),
-                    n * inner_num_a, bottom_b->data(), n * inner_num_b, 0,
-                    top->mutable_data(), n * inner_num, op_ws_->Ctx());
+    Blas::BlasSgemm(transpose_a_, transpose_b_, M, N, K, 1,
+                    bottom_a->data<float>(), n * inner_num_a,
+                    bottom_b->data<float>(), n * inner_num_b, 0,
+                    top->mutable_data<float>(), n * inner_num, ws_->Ctx());
   }
 }
 

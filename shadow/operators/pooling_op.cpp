@@ -3,8 +3,8 @@
 namespace Shadow {
 
 void PoolingOp::Forward() {
-  const auto *bottom = bottoms<float>(0);
-  auto *top = mutable_tops<float>(0);
+  const auto bottom = bottoms(0);
+  auto top = tops(0);
 
   CHECK_NE(bottom, top);
 
@@ -41,14 +41,15 @@ void PoolingOp::Forward() {
   cudnn::setTensor4dDesc<float>(&top_desc_, batch, in_c, out_h, out_w);
 
   CUDNN_CHECK(cudnnPoolingForward(
-      cudnnHandle_t(op_ws_->Ctx()->cudnn_handle()), pooling_desc_,
-      cudnn::dataType<float>::one, bottom_desc_, bottom->data(),
-      cudnn::dataType<float>::zero, top_desc_, top->mutable_data()));
+      cudnnHandle_t(ws_->Ctx()->cudnn_handle()), pooling_desc_,
+      cudnn::dataType<float>::one, bottom_desc_, bottom->data<float>(),
+      cudnn::dataType<float>::zero, top_desc_, top->mutable_data<float>()));
 
 #else
-  Vision::Pooling(bottom->data(), bottom->shape(), kernel_size_h_,
+  Vision::Pooling(bottom->data<float>(), bottom->shape(), kernel_size_h_,
                   kernel_size_w_, stride_h_, stride_w_, pad_h_, pad_w_,
-                  pool_type_, top->shape(), top->mutable_data(), op_ws_->Ctx());
+                  pool_type_, top->shape(), top->mutable_data<float>(),
+                  ws_->Ctx());
 #endif
 }
 

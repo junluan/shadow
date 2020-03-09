@@ -5,9 +5,9 @@ namespace Shadow {
 void PSROIPoolingOp::Forward() {
   CHECK_EQ(bottoms_size(), 2);
 
-  const auto *bottom_fea = bottoms<float>(0);
-  const auto *bottom_roi = bottoms<float>(1);
-  auto *top = mutable_tops<float>(0);
+  const auto bottom_fea = bottoms(0);
+  const auto bottom_roi = bottoms(1);
+  auto top = tops(0);
 
   CHECK_NE(bottom_fea, top);
 
@@ -15,10 +15,10 @@ void PSROIPoolingOp::Forward() {
 
   top->reshape({num_rois, output_dim_, pooled_h_, pooled_w_});
 
-  Vision::PSROIPooling(bottom_fea->data(), bottom_fea->shape(),
-                       bottom_roi->data(), num_rois, output_dim_, group_size_,
-                       pooled_h_, pooled_w_, spatial_scale_,
-                       top->mutable_data(), op_ws_->Ctx());
+  Vision::PSROIPooling(bottom_fea->data<float>(), bottom_fea->shape(),
+                       bottom_roi->data<float>(), num_rois, output_dim_,
+                       group_size_, pooled_h_, pooled_w_, spatial_scale_,
+                       top->mutable_data<float>(), ws_->Ctx());
 }
 
 REGISTER_OPERATOR(PSROIPooling, PSROIPoolingOp);

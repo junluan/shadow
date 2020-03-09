@@ -7,87 +7,41 @@
 #include <map>
 #include <memory>
 #include <string>
-#include <typeinfo>
 
 namespace Shadow {
-
-static const std::string int_id(typeid(int).name());
-static const std::string float_id(typeid(float).name());
-static const std::string uchar_id(typeid(unsigned char).name());
 
 class Workspace {
  public:
   explicit Workspace(const ArgumentHelper &arguments);
-  ~Workspace() {
-    for (auto &blob_it : blob_map_) {
-      const auto &blob_type = blob_it.second.first;
-      auto *blob = blob_it.second.second;
-      ClearBlob(blob_type, blob);
-    }
-    blob_map_.clear();
-  }
 
   Context *Ctx();
 
   bool HasBlob(const std::string &name) const;
 
-  std::string GetBlobType(const std::string &name) const;
+  DataType GetBlobDataType(const std::string &name) const;
   std::vector<int> GetBlobShape(const std::string &name) const;
 
-  template <typename T>
-  const Blob<T> *GetBlob(const std::string &name) const {
-    if (blob_map_.count(name)) {
-      const auto &blob_type = blob_map_.at(name).first;
-      const auto ask_type = typeid(T).name();
-      CHECK(blob_type == ask_type) << "Blob " << name << " has type "
-                                   << blob_type << ", but ask for " << ask_type;
-      return static_cast<const Blob<T> *>(blob_map_.at(name).second);
-    }
-    DLOG(WARNING) << "Blob " << name << " not in the workspace.";
-    return nullptr;
-  }
-  template <typename T>
-  Blob<T> *GetBlob(const std::string &name) {
-    return const_cast<Blob<T> *>(
-        static_cast<const Workspace *>(this)->GetBlob<T>(name));
-  }
+  std::shared_ptr<Blob> GetBlob(const std::string &name) const;
 
-  template <typename T>
-  Blob<T> *CreateBlob(const std::string &name) {
-    if (!HasBlob(name)) {
-      blob_map_[name].first = typeid(T).name();
-      blob_map_[name].second = new Blob<T>(name, context_->allocator());
-    }
-    return GetBlob<T>(name);
-  }
+  std::shared_ptr<Blob> CreateBlob(const std::string &name, DataType data_type,
+                                   Allocator *allocator = nullptr);
 
-  template <typename T>
-  Blob<T> *CreateTempBlob(const std::vector<int> &shape,
-                          const std::string &name) {
-    auto *blob = CreateBlob<T>("temp_blob/" + name);
-    CHECK_NOTNULL(blob);
-    size_t cou = 1;
-    for (const auto dim : shape) cou *= dim;
-    CHECK_GT(cou, 0);
-    int size = sizeof(T) / sizeof(unsigned char);
-    blob->share_data(reinterpret_cast<const T *>(GetTempPtr(cou, size)), shape);
-    return blob;
-  }
+  std::shared_ptr<Blob> CreateTempBlob(const std::vector<int> &shape,
+                                       DataType data_type);
 
-  void GrowTempBuffer(int count, int elem_size);
+  void GrowTempBuffer(size_t raw_size);
 
   size_t GetWorkspaceSize() const;
   size_t GetWorkspaceTempSize() const;
 
  private:
-  void ClearBlob(const std::string &blob_type, void *blob);
+  const void *GetTempPtr(size_t raw_size);
 
-  const void *GetTempPtr(size_t count, int elem_size);
+  std::shared_ptr<Context> context_{nullptr};
 
-  std::shared_ptr<Context> context_ = nullptr;
+  std::map<std::string, std::shared_ptr<Blob>> blob_map_;
 
-  std::map<std::string, std::pair<std::string, void *>> blob_map_;
-  size_t temp_offset_ = 0;
+  size_t temp_offset_{0};
 
   DISABLE_COPY_AND_ASSIGN(Workspace);
 };

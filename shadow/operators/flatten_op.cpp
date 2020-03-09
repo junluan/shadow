@@ -3,8 +3,8 @@
 namespace Shadow {
 
 void FlattenOp::Forward() {
-  const auto *bottom = bottoms<float>(0);
-  auto *top = mutable_tops<float>(0);
+  const auto bottom = bottoms(0);
+  auto top = tops(0);
 
   CHECK_NE(bottom, top);
 
@@ -24,7 +24,7 @@ void FlattenOp::Forward() {
     top_shape.push_back(bottom->shape(d));
   }
 
-  top->share_data(bottom->data(), top_shape);
+  top->share_data(bottom->data<float>(), top_shape);
   CHECK_EQ(top->count(), bottom->count());
 }
 

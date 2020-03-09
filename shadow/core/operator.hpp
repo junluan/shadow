@@ -40,71 +40,32 @@ class Operator {
   const std::string &name() const { return op_name_; }
   const std::string &type() const { return op_type_; }
 
-  template <typename T>
-  const Blob<T> *bottoms(int n) const {
-    CHECK(check_index(n, bottoms_size()));
-    return op_ws_->GetBlob<T>(bottom_names_[n]);
+  std::shared_ptr<Blob> bottoms(int n) const {
+    auto blob = ws_->GetBlob(bottoms_name(n));
+    CHECK_NOTNULL(blob);
+    return blob;
   }
-  template <typename T>
-  Blob<T> *mutable_bottoms(int n) {
-    return const_cast<Blob<T> *>(
-        static_cast<const Operator *>(this)->bottoms<T>(n));
-  }
-  template <typename T>
-  void add_bottoms(const std::string &bottom_name) {
-    op_ws_->CreateBlob<T>(bottom_name);
-    bottom_names_.push_back(bottom_name);
-  }
-  template <typename T>
-  void set_bottoms(int n, int count, const T *data) {
-    CHECK(check_index(n, bottoms_size()));
-    mutable_bottoms<T>(n)->set_data(data, count);
-  }
-  std::string bottoms_name(int n) const {
+  const std::string &bottoms_name(int n) const {
     CHECK(check_index(n, bottoms_size()));
     return bottom_names_[n];
   }
-  std::string bottoms_type(int n) const {
-    CHECK(check_index(n, bottoms_size()));
-    return op_ws_->GetBlobType(bottom_names_[n]);
-  }
   int bottoms_size() const { return static_cast<int>(bottom_names_.size()); }
 
-  template <typename T>
-  const Blob<T> *tops(int n) const {
-    CHECK(check_index(n, tops_size()));
-    return op_ws_->GetBlob<T>(top_names_[n]);
+  std::shared_ptr<Blob> tops(int n) const {
+    auto blob = ws_->GetBlob(tops_name(n));
+    CHECK_NOTNULL(blob);
+    return blob;
   }
-  template <typename T>
-  Blob<T> *mutable_tops(int n) {
-    return const_cast<Blob<T> *>(
-        static_cast<const Operator *>(this)->tops<T>(n));
-  }
-  template <typename T>
-  void add_tops(const std::string &top_name) {
-    op_ws_->CreateBlob<T>(top_name);
-    top_names_.push_back(top_name);
-  }
-  template <typename T>
-  void set_tops(int n, int count, const T *data) {
-    CHECK(check_index(n, tops_size()));
-    mutable_tops<T>(n)->set_data(data, count);
-  }
-  std::string tops_name(int n) const {
+  const std::string &tops_name(int n) const {
     CHECK(check_index(n, tops_size()));
     return top_names_[n];
-  }
-  std::string tops_type(int n) const {
-    CHECK(check_index(n, tops_size()));
-    return op_ws_->GetBlobType(top_names_[n]);
   }
   int tops_size() const { return static_cast<int>(top_names_.size()); }
 
   std::string debug_log() const;
 
  protected:
-  std::string op_name_, op_type_;
-  Workspace *op_ws_ = nullptr;
+  Workspace *ws_ = nullptr;
 
  private:
   bool check_index(int i, int size) const { return i >= 0 && i < size; }
@@ -114,6 +75,7 @@ class Operator {
   shadow::OpParam op_param_;
   ArgumentHelper arg_helper_;
 
+  std::string op_name_, op_type_;
   VecString bottom_names_, top_names_;
 
   DISABLE_COPY_AND_ASSIGN(Operator);

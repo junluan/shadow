@@ -48,17 +48,16 @@ void Native::Forward(const std::map<std::string, void *> &data_map,
                                  ? shape_map.at(blob_name)
                                  : std::vector<int>();
 
-    const auto &blob_type = ws_->GetBlobType(blob_name);
+    const auto &blob_type = ws_->GetBlobDataType(blob_name);
 
-    if (blob_type == int_id) {
+    if (blob_type == DataType::kI32) {
       SetInputData<int>(blob_name, blob_shape, blob_data);
-    } else if (blob_type == float_id) {
+    } else if (blob_type == DataType::kF32) {
       SetInputData<float>(blob_name, blob_shape, blob_data);
-    } else if (blob_type == uchar_id) {
+    } else if (blob_type == DataType::kU8) {
       SetInputData<unsigned char>(blob_name, blob_shape, blob_data);
     } else {
-      LOG(FATAL) << "Blob " << blob_name << " has unsupported type "
-                 << blob_type;
+      LOG(FATAL) << "Blob " << blob_name << " has unsupported type";
     }
   }
 
@@ -121,29 +120,25 @@ void Native::Initial(const shadow::NetParam &net_param) {
     const auto &blob_name = blob.name();
     const auto blob_type = blob.has_type() ? blob.type() : std::string("float");
     if (blob_type == "int") {
-      auto *blob_ptr = ws_->CreateBlob<int>(blob_name);
-      CHECK_NOTNULL(blob_ptr) << "Failed to create int blob " << blob_name;
+      auto blob_ptr = ws_->CreateBlob(blob_name, DataType::kI32);
       int data_i_size = blob.data_i_size();
       if (data_i_size > 0) {
         CHECK_EQ(data_i_size, cc)
             << "Blob int data size and blob shape are mismatch";
         blob_ptr->reshape(shape);
-        blob_ptr->set_data(blob.data_i().data(), data_i_size);
+        blob_ptr->set_data<int>(blob.data_i().data(), data_i_size);
       }
     } else if (blob_type == "float") {
-      auto *blob_ptr = ws_->CreateBlob<float>(blob_name);
-      CHECK_NOTNULL(blob_ptr) << "Failed to create float blob " << blob_name;
+      auto blob_ptr = ws_->CreateBlob(blob_name, DataType::kF32);
       int data_f_size = blob.data_f_size();
       if (data_f_size > 0) {
         CHECK_EQ(data_f_size, cc)
             << "Blob float data size and blob shape are mismatch";
         blob_ptr->reshape(shape);
-        blob_ptr->set_data(blob.data_f().data(), data_f_size);
+        blob_ptr->set_data<float>(blob.data_f().data(), data_f_size);
       }
     } else if (blob_type == "unsigned char") {
-      auto *blob_ptr = ws_->CreateBlob<unsigned char>(blob_name);
-      CHECK_NOTNULL(blob_ptr)
-          << "Failed to create unsigned char blob " << blob_name;
+      auto blob_ptr = ws_->CreateBlob(blob_name, DataType::kU8);
       int data_b_size = 0;
       if (blob.data_b_size() > 0) {
         CHECK_EQ(blob.data_b_size(), 1);
@@ -155,7 +150,7 @@ void Native::Initial(const shadow::NetParam &net_param) {
         auto uc_data_ptr = static_cast<unsigned char *>(
             static_cast<void *>(const_cast<char *>(blob.data_b(0).data())));
         blob_ptr->reshape(shape);
-        blob_ptr->set_data(uc_data_ptr, data_b_size);
+        blob_ptr->set_data<unsigned char>(uc_data_ptr, data_b_size);
       }
     } else {
       LOG(FATAL) << "Failed to create blob " << blob_name << ", asked for type "
@@ -192,61 +187,58 @@ template <typename T>
 void Native::SetInputData(const std::string &blob_name,
                           const std::vector<int> &blob_shape,
                           const void *blob_data) {
-  auto *blob = ws_->GetBlob<T>(blob_name);
+  auto blob = ws_->GetBlob(blob_name);
   CHECK_NOTNULL(blob) << "Can not find blob " << blob_name;
   if (!blob_shape.empty()) {
     blob->reshape(blob_shape);
   }
   if (device_input_) {
 #if defined(USE_CUDA)
-    ws_->Ctx()->allocator()->copy(blob->count() * sizeof(T), blob_data,
-                                  blob->mutable_data());
+    ws_->Ctx()->allocator()->copy(blob->raw_size(), blob_data,
+                                  blob->mutable_data<T>());
 #else
     LOG(FATAL) << "device input is only supported when USE_CUDA is ON";
 #endif
   } else {
-    blob->set_data(static_cast<const T *>(blob_data), blob->count());
+    blob->set_data<T>(blob_data, blob->count());
   }
 }
 
-template <typename T>
-int Native::SetWeightData(const std::string &blob_name,
-                          const std::vector<int> &blob_shape,
-                          const void *blob_data, bool share_data) {
-  auto *blob = ws_->GetBlob<T>(blob_name);
+size_t Native::SetWeightData(const std::string &blob_name,
+                             const std::vector<int> &blob_shape,
+                             const void *blob_data, bool share_data) {
+  auto blob = ws_->GetBlob(blob_name);
   CHECK_NOTNULL(blob) << "Can not find blob " << blob_name;
   if (share_data) {
-    blob->share_data(static_cast<const T *>(blob_data), blob_shape);
+    blob->share_data(blob_data, blob_shape);
   } else {
     blob->reshape(blob_shape);
-    blob->set_data(static_cast<const T *>(blob_data), blob->count());
+    const auto &data_type = blob->data_type();
+    if (data_type == DataType::kI32) {
+      blob->set_data<int>(blob_data, blob->count());
+    } else if (data_type == DataType::kF32) {
+      blob->set_data<float>(blob_data, blob->count());
+    } else if (data_type == DataType::kU8) {
+      blob->set_data<unsigned char>(blob_data, blob->count());
+    } else {
+      LOG(FATAL) << "Invalid data type";
+    }
   }
-  return blob->count();
+  return blob->raw_size();
 }
 
 void Native::CopyWeights(const shadow::NetParam &net_param,
                          const std::vector<const void *> &weights) {
   bool share_weight =
       arg_helper_.GetSingleArgument<bool>("share_weight", false);
-  int weights_count = 0;
-  for (const auto &blob : net_param.blob()) {
+  CHECK_EQ(net_param.blob_size(), weights.size());
+  for (int n = 0; n < net_param.blob_size(); ++n) {
+    const auto &blob = net_param.blob(n);
     std::vector<int> blob_shape;
     for (auto dim : blob.shape()) {
       blob_shape.push_back(dim);
     }
-    CHECK_LT(weights_count, weights.size());
-    const auto *weight = weights[weights_count++];
-    const auto &blob_name = blob.name();
-    const auto &blob_type = ws_->GetBlobType(blob_name);
-    if (blob_type == int_id) {
-      SetWeightData<int>(blob_name, blob_shape, weight, share_weight);
-    } else if (blob_type == float_id) {
-      SetWeightData<float>(blob_name, blob_shape, weight, share_weight);
-    } else if (blob_type == uchar_id) {
-      SetWeightData<unsigned char>(blob_name, blob_shape, weight, share_weight);
-    } else {
-      LOG(FATAL) << "Unknown blob type " << blob_type;
-    }
+    SetWeightData(blob.name(), blob_shape, weights[n], share_weight);
   }
 }
 
@@ -254,30 +246,14 @@ void Native::CopyWeights(const shadow::NetParam &net_param,
                          const void *weights_data) {
   bool share_weight =
       arg_helper_.GetSingleArgument<bool>("share_weight", false);
-  int weights_count = 0;
   for (const auto &blob : net_param.blob()) {
     std::vector<int> blob_shape;
     for (auto dim : blob.shape()) {
       blob_shape.push_back(dim);
     }
-    const auto &blob_name = blob.name();
-    const auto &blob_type = ws_->GetBlobType(blob_name);
-    if (blob_type == int_id) {
-      weights_count =
-          SetWeightData<int>(blob_name, blob_shape, weights_data, share_weight);
-      weights_data = static_cast<const int *>(weights_data) + weights_count;
-    } else if (blob_type == float_id) {
-      weights_count = SetWeightData<float>(blob_name, blob_shape, weights_data,
-                                           share_weight);
-      weights_data = static_cast<const float *>(weights_data) + weights_count;
-    } else if (blob_type == uchar_id) {
-      weights_count = SetWeightData<unsigned char>(blob_name, blob_shape,
-                                                   weights_data, share_weight);
-      weights_data =
-          static_cast<const unsigned char *>(weights_data) + weights_count;
-    } else {
-      LOG(FATAL) << "Unknown blob type " << blob_type;
-    }
+    auto offset =
+        SetWeightData(blob.name(), blob_shape, weights_data, share_weight);
+    weights_data = static_cast<const unsigned char *>(weights_data) + offset;
   }
 }
 

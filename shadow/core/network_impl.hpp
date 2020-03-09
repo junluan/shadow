@@ -7,7 +7,7 @@ namespace Shadow {
 
 class NetworkImpl {
  public:
-  void Setup(int device_id = 0) {
+  void Setup(int device_id) {
     ArgumentHelper arguments;
     arguments.AddSingleArgument<int>("device_id", device_id);
     ws_ = std::make_shared<Workspace>(arguments);
@@ -35,20 +35,17 @@ class NetworkImpl {
   template <typename T>
   const T *GetBlobDataByName(const std::string &blob_name,
                              const std::string &locate) {
-    auto *blob = ws_->GetBlob<T>(blob_name);
+    auto blob = ws_->GetBlob(blob_name);
     CHECK_NOTNULL(blob) << "Unknown blob: " + blob_name;
     if (locate == "host") {
-      return blob->cpu_data();
+      return blob->cpu_data<T>();
     } else {
-      return blob->data();
+      return blob->data<T>();
     }
   }
 
-  template <typename T>
   std::vector<int> GetBlobShapeByName(const std::string &blob_name) const {
-    auto *blob = ws_->GetBlob<T>(blob_name);
-    CHECK_NOTNULL(blob) << "Unknown blob: " + blob_name;
-    return blob->shape();
+    return ws_->GetBlobShape(blob_name);
   }
 
   std::shared_ptr<Backend> &GetBackend() { return backend_; }

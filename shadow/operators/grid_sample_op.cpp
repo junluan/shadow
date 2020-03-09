@@ -5,9 +5,9 @@ namespace Shadow {
 void GridSampleOp::Forward() {
   CHECK_EQ(bottoms_size(), 2);
 
-  const auto *bottom = bottoms<float>(0);
-  const auto *grid = bottoms<float>(1);
-  auto *top = mutable_tops<float>(0);
+  const auto bottom = bottoms(0);
+  const auto grid = bottoms(1);
+  auto top = tops(0);
 
   CHECK_NE(bottom, top);
 
@@ -33,9 +33,10 @@ void GridSampleOp::Forward() {
     cudnn::setTensor4dDesc<float>(&top_desc_, batch, channel, out_h, out_w);
 
     CUDNN_CHECK(cudnnSpatialTfSamplerForward(
-        cudnnHandle_t(op_ws_->Ctx()->cudnn_handle()), spatial_transformer_desc_,
-        cudnn::dataType<float>::one, bottom_desc_, bottom->data(), grid->data(),
-        cudnn::dataType<float>::zero, top_desc_, top->mutable_data()));
+        cudnnHandle_t(ws_->Ctx()->cudnn_handle()), spatial_transformer_desc_,
+        cudnn::dataType<float>::one, bottom_desc_, bottom->data<float>(),
+        grid->data<float>(), cudnn::dataType<float>::zero, top_desc_,
+        top->mutable_data<float>()));
 
     return;
   }
@@ -43,9 +44,9 @@ void GridSampleOp::Forward() {
 
   // Nearest: 0, Bilinear: 1
   // Zeros: 0, Border: 1
-  Vision::GridSample(bottom->data(), bottom->shape(), grid->data(), mode_,
-                     padding_mode_, top->shape(), top->mutable_data(),
-                     op_ws_->Ctx());
+  Vision::GridSample(bottom->data<float>(), bottom->shape(),
+                     grid->data<float>(), mode_, padding_mode_, top->shape(),
+                     top->mutable_data<float>(), ws_->Ctx());
 }
 
 REGISTER_OPERATOR(GridSample, GridSampleOp);

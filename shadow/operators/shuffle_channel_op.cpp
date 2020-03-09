@@ -3,8 +3,8 @@
 namespace Shadow {
 
 void ShuffleChannelOp::Forward() {
-  const auto *bottom = bottoms<float>(0);
-  auto *top = mutable_tops<float>(0);
+  const auto bottom = bottoms(0);
+  auto top = tops(0);
 
   CHECK_NE(bottom, top);
 
@@ -15,8 +15,8 @@ void ShuffleChannelOp::Forward() {
 
   top->reshape(bottom->shape());
 
-  Vision::ShuffleChannel(bottom->data(), batch, channel, spatial_dim, group_,
-                         top->mutable_data(), op_ws_->Ctx());
+  Vision::ShuffleChannel(bottom->data<float>(), batch, channel, spatial_dim,
+                         group_, top->mutable_data<float>(), ws_->Ctx());
 }
 
 REGISTER_OPERATOR(ShuffleChannel, ShuffleChannelOp);

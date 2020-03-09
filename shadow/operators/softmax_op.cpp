@@ -3,8 +3,8 @@
 namespace Shadow {
 
 void SoftmaxOp::Forward() {
-  const auto *bottom = bottoms<float>(0);
-  auto *top = mutable_tops<float>(0);
+  const auto bottom = bottoms(0);
+  auto top = tops(0);
 
   int axis = bottom->canonical_index(axis_);
 
@@ -18,19 +18,19 @@ void SoftmaxOp::Forward() {
                                 inner_num, 1);
 
   CUDNN_CHECK(cudnnSoftmaxForward(
-      cudnnHandle_t(op_ws_->Ctx()->cudnn_handle()), CUDNN_SOFTMAX_ACCURATE,
+      cudnnHandle_t(ws_->Ctx()->cudnn_handle()), CUDNN_SOFTMAX_ACCURATE,
       CUDNN_SOFTMAX_MODE_CHANNEL, cudnn::dataType<float>::one, bottom_top_desc_,
-      bottom->data(), cudnn::dataType<float>::zero, bottom_top_desc_,
-      top->mutable_data()));
+      bottom->data<float>(), cudnn::dataType<float>::zero, bottom_top_desc_,
+      top->mutable_data<float>()));
 
 #else
-  op_ws_->GrowTempBuffer(outer_num * inner_num, sizeof(float));
+  ws_->GrowTempBuffer(outer_num * inner_num * sizeof(float));
 
-  auto *scalar = op_ws_->CreateTempBlob<float>({outer_num, inner_num},
-                                               op_name_ + "/scalar");
+  auto scalar = ws_->CreateTempBlob({outer_num, inner_num}, DataType::kF32);
 
-  Vision::Softmax(bottom->data(), outer_num, channels, inner_num,
-                  scalar->mutable_data(), top->mutable_data(), op_ws_->Ctx());
+  Vision::Softmax(bottom->data<float>(), outer_num, channels, inner_num,
+                  scalar->mutable_data<float>(), top->mutable_data<float>(),
+                  ws_->Ctx());
 #endif
 }
 

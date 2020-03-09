@@ -3,9 +3,9 @@
 namespace Shadow {
 
 void PriorBoxOp::Forward() {
-  const auto *bottom = bottoms<float>(0);
-  const auto *bottom_im = bottoms<float>(1);
-  auto *top = mutable_tops<float>(0);
+  const auto bottom = bottoms(0);
+  const auto bottom_im = bottoms(1);
+  auto top = tops(0);
 
   if (is_initial_) {
     return;
@@ -92,7 +92,7 @@ void PriorBoxOp::Forward() {
       }
     }
   }
-  top->set_data(top_data_.data(), top_data_.size());
+  top->set_data<float>(top_data_.data(), top_data_.size());
   is_initial_ = true;
 }
 

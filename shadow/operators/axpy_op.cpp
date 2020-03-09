@@ -6,10 +6,10 @@ void AxpyOp::Forward() {
   CHECK_EQ(bottoms_size(), 3)
       << "This op must have three bottoms: scale, x and y";
 
-  const auto *scale = bottoms<float>(0);
-  const auto *x = bottoms<float>(1);
-  const auto *y = bottoms<float>(2);
-  auto *top = mutable_tops<float>(0);
+  const auto scale = bottoms(0);
+  const auto x = bottoms(1);
+  const auto y = bottoms(2);
+  auto top = tops(0);
 
   CHECK_EQ(scale->shape(0), x->shape(0));
   CHECK_EQ(scale->shape(1), x->shape(1));
@@ -21,8 +21,8 @@ void AxpyOp::Forward() {
 
   top->reshape(x->shape());
 
-  Vision::Axpy(scale->data(), x->data(), y->data(), x->shape(),
-               top->mutable_data(), op_ws_->Ctx());
+  Vision::Axpy(scale->data<float>(), x->data<float>(), y->data<float>(),
+               x->shape(), top->mutable_data<float>(), ws_->Ctx());
 }
 
 REGISTER_OPERATOR(Axpy, AxpyOp);

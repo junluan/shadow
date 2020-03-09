@@ -3,8 +3,8 @@
 namespace Shadow {
 
 void ResizeOp::Forward() {
-  const auto* bottom = bottoms<float>(0);
-  auto* top = mutable_tops<float>(0);
+  const auto bottom = bottoms(0);
+  auto top = tops(0);
 
   CHECK_NE(bottom, top);
 
@@ -12,16 +12,15 @@ void ResizeOp::Forward() {
   int out_h = out_h_, out_w = out_w_;
 
   if (bottoms_size() > 1) {
-    const auto& size_type = bottoms_type(1);
-    if (size_type == int_id) {
-      const auto* size = bottoms<int>(1);
+    const auto size = bottoms(1);
+    auto size_type = size->data_type();
+    if (size_type == DataType::kI32) {
       CHECK_EQ(size->num_axes(), 1);
       CHECK_EQ(size->count(), 2);
       VecInt size_data(2, 0);
-      size->get_data(size_data.data(), 2);
+      size->get_data<int>(size_data.data(), 2);
       out_h = size_data[0], out_w = size_data[1];
-    } else if (size_type == float_id) {
-      const auto* size = bottoms<float>(1);
+    } else if (size_type == DataType::kF32) {
       CHECK_EQ(size->num_axes(), 4);
       out_h = size->shape(2), out_w = size->shape(3);
     }
@@ -41,12 +40,13 @@ void ResizeOp::Forward() {
   top->reshape(top_shape);
 
   if (out_h == in_h && out_w == in_w) {
-    Blas::BlasScopy(bottom->count(), bottom->data(), 0, top->mutable_data(), 0,
-                    op_ws_->Ctx());
+    Blas::BlasScopy(bottom->count(), bottom->data<float>(), 0,
+                    top->mutable_data<float>(), 0, ws_->Ctx());
   } else {
     // Nearest: 0, Bilinear: 1
-    Vision::Resize(bottom->data(), bottom->shape(), type_, align_corners_,
-                   top->shape(), top->mutable_data(), op_ws_->Ctx());
+    Vision::Resize(bottom->data<float>(), bottom->shape(), type_,
+                   align_corners_, top->shape(), top->mutable_data<float>(),
+                   ws_->Ctx());
   }
 }
 

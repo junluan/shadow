@@ -41,10 +41,9 @@ class Native : public Backend {
   void SetInputData(const std::string &blob_name,
                     const std::vector<int> &blob_shape, const void *blob_data);
 
-  template <typename T>
-  int SetWeightData(const std::string &blob_name,
-                    const std::vector<int> &blob_shape, const void *blob_data,
-                    bool share_data);
+  size_t SetWeightData(const std::string &blob_name,
+                       const std::vector<int> &blob_shape,
+                       const void *blob_data, bool share_data);
 
   void CopyWeights(const shadow::NetParam &net_param,
                    const std::vector<const void *> &weights);

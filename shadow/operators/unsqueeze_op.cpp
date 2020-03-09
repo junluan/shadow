@@ -3,8 +3,8 @@
 namespace Shadow {
 
 void UnsqueezeOp::Forward() {
-  const auto *bottom = bottoms<float>(0);
-  auto *top = mutable_tops<float>(0);
+  const auto bottom = bottoms(0);
+  auto top = tops(0);
 
   CHECK_NE(bottom, top);
 
@@ -30,7 +30,7 @@ void UnsqueezeOp::Forward() {
   }
   CHECK_EQ(d, num_axes);
 
-  top->share_data(bottom->data(), top_shape);
+  top->share_data(bottom->data<float>(), top_shape);
   CHECK_EQ(top->count(), bottom->count());
 }
 

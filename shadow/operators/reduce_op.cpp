@@ -3,8 +3,8 @@
 namespace Shadow {
 
 void ReduceOp::Forward() {
-  const auto *bottom = bottoms<float>(0);
-  auto *top = mutable_tops<float>(0);
+  const auto bottom = bottoms(0);
+  auto top = tops(0);
 
   CHECK_NE(bottom, top);
 
@@ -74,39 +74,39 @@ void ReduceOp::Forward() {
   size_t workspace_size = 0;
 
   CUDNN_CHECK(cudnnGetReductionWorkspaceSize(
-      cudnnHandle_t(op_ws_->Ctx()->cudnn_handle()), reduce_desc_, bottom_desc_,
+      cudnnHandle_t(ws_->Ctx()->cudnn_handle()), reduce_desc_, bottom_desc_,
       top_desc_, &workspace_size));
 
-  void *workspace_ptr = nullptr;
+  std::shared_ptr<Blob> workspace = nullptr;
+  const void *workspace_ptr = nullptr;
   if (workspace_size > 0) {
-    op_ws_->GrowTempBuffer(static_cast<int>(workspace_size),
-                           sizeof(unsigned char));
-    auto *workspace = op_ws_->CreateTempBlob<unsigned char>(
-        {static_cast<int>(workspace_size)}, op_name_ + "/workspace");
-    workspace_ptr = workspace->mutable_data();
+    ws_->GrowTempBuffer(workspace_size);
+    workspace =
+        ws_->CreateTempBlob({static_cast<int>(workspace_size)}, DataType::kU8);
+    workspace_ptr = workspace->data<unsigned char>();
   }
 
   CUDNN_CHECK(cudnnReduceTensor(
-      cudnnHandle_t(op_ws_->Ctx()->cudnn_handle()), reduce_desc_, nullptr, 0,
-      workspace_ptr, workspace_size, cudnn::dataType<float>::one, bottom_desc_,
-      bottom->data(), cudnn::dataType<float>::zero, top_desc_,
-      top->mutable_data()));
+      cudnnHandle_t(ws_->Ctx()->cudnn_handle()), reduce_desc_, nullptr, 0,
+      const_cast<void *>(workspace_ptr), workspace_size,
+      cudnn::dataType<float>::one, bottom_desc_, bottom->data<float>(),
+      cudnn::dataType<float>::zero, top_desc_, top->mutable_data<float>()));
 
 #else
   int num_list = static_cast<int>(list_value_.size());
   int num_offset = static_cast<int>(offset_value_.size());
 
-  op_ws_->GrowTempBuffer(num_list + num_offset, sizeof(int));
+  ws_->GrowTempBuffer((num_list + num_offset) * sizeof(int));
 
-  auto *list = op_ws_->CreateTempBlob<int>({num_list}, op_name_ + "/list");
-  auto *offset =
-      op_ws_->CreateTempBlob<int>({num_offset}, op_name_ + "/offset");
+  auto list = ws_->CreateTempBlob({num_list}, DataType::kI32);
+  auto offset = ws_->CreateTempBlob({num_offset}, DataType::kI32);
 
-  list->set_data(list_value_.data(), num_list);
-  offset->set_data(offset_value_.data(), num_offset);
+  list->set_data<int>(list_value_.data(), num_list);
+  offset->set_data<int>(offset_value_.data(), num_offset);
 
-  Vision::Reduce(bottom->data(), list->data(), offset->data(), num_list,
-                 operation_, top->count(), top->mutable_data(), op_ws_->Ctx());
+  Vision::Reduce(bottom->data<float>(), list->data<int>(), offset->data<int>(),
+                 num_list, operation_, top->count(), top->mutable_data<float>(),
+                 ws_->Ctx());
 #endif
 
   if (!keep_dims_) {

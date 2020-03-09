@@ -5,15 +5,15 @@ namespace Shadow {
 void ConcatOp::Forward() {
   CHECK_GE(bottoms_size(), 2);
 
-  const auto *bottom_0 = bottoms<float>(0);
-  auto *top = mutable_tops<float>(0);
+  const auto bottom_0 = bottoms(0);
+  auto top = tops(0);
 
   axis_ = bottom_0->canonical_index(axis_);
 
   auto top_shape = bottom_0->shape();
   int num_axes = bottom_0->num_axes();
   for (int n = 1; n < bottoms_size(); ++n) {
-    const auto *bottom = bottoms<float>(n);
+    const auto bottom = bottoms(n);
     CHECK_EQ(num_axes, bottom->num_axes())
         << "Bottoms must have the same axes!";
     for (int d = 0; d < num_axes; ++d) {
@@ -32,11 +32,11 @@ void ConcatOp::Forward() {
   int concat_size = bottom_0->count(axis_ + 1);
   int top_concat_axis = top->shape(axis_);
   for (int n = 0; n < bottoms_size(); ++n) {
-    const auto *bottom = bottoms<float>(n);
+    const auto bottom = bottoms(n);
     int bottom_concat_axis = bottom->shape(axis_);
-    Vision::Concat(bottom->data(), bottom->count(), num_concats, concat_size,
-                   top_concat_axis, bottom_concat_axis, offset_concat_axis,
-                   top->mutable_data(), op_ws_->Ctx());
+    Vision::Concat(bottom->data<float>(), bottom->count(), num_concats,
+                   concat_size, top_concat_axis, bottom_concat_axis,
+                   offset_concat_axis, top->mutable_data<float>(), ws_->Ctx());
     offset_concat_axis += bottom_concat_axis;
   }
 }

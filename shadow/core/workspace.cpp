@@ -19,85 +19,74 @@ bool Workspace::HasBlob(const std::string &name) const {
   return static_cast<bool>(blob_map_.count(name));
 }
 
-std::string Workspace::GetBlobType(const std::string &name) const {
-  if (blob_map_.count(name)) {
-    return blob_map_.at(name).first;
-  }
-  DLOG(WARNING) << "Blob " << name << " not in the workspace.";
-  return std::string();
+DataType Workspace::GetBlobDataType(const std::string &name) const {
+  CHECK(HasBlob(name)) << "Unknown blob: " + name;
+  return blob_map_.at(name)->data_type();
 }
 
 std::vector<int> Workspace::GetBlobShape(const std::string &name) const {
-  if (blob_map_.count(name)) {
-    const auto &blob_type = blob_map_.at(name).first;
-    if (blob_type == int_id) {
-      return static_cast<const BlobI *>(blob_map_.at(name).second)->shape();
-    } else if (blob_type == float_id) {
-      return static_cast<const BlobF *>(blob_map_.at(name).second)->shape();
-    } else if (blob_type == uchar_id) {
-      return static_cast<const BlobUC *>(blob_map_.at(name).second)->shape();
-    } else {
-      LOG(FATAL) << "Unknown blob type " << blob_type;
-    }
-  }
-  DLOG(WARNING) << "Blob " << name << " not in the workspace.";
-  return std::vector<int>();
+  CHECK(HasBlob(name)) << "Unknown blob: " + name;
+  return blob_map_.at(name)->shape();
 }
 
-void Workspace::GrowTempBuffer(int count, int elem_size) {
-  auto *temp_blob = CreateBlob<unsigned char>("temp_blob");
-  CHECK_NOTNULL(temp_blob);
-  temp_blob->reshape({count, elem_size});
+std::shared_ptr<Blob> Workspace::GetBlob(const std::string &name) const {
+  if (HasBlob(name)) {
+    return blob_map_.at(name);
+  } else {
+    DLOG(WARNING) << "Blob " << name << " not in the workspace.";
+    return nullptr;
+  }
+}
+
+std::shared_ptr<Blob> Workspace::CreateBlob(const std::string &name,
+                                            DataType data_type,
+                                            Allocator *allocator) {
+  if (!HasBlob(name)) {
+    blob_map_[name] = std::make_shared<Blob>(
+        name, data_type,
+        (allocator == nullptr) ? context_->allocator() : allocator);
+  }
+  return GetBlob(name);
+}
+
+std::shared_ptr<Blob> Workspace::CreateTempBlob(const std::vector<int> &shape,
+                                                DataType data_type) {
+  auto count =
+      std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<size_t>());
+  CHECK_GT(count, 0);
+  auto temp_blob =
+      std::make_shared<Blob>("temp", data_type, context_->allocator());
+  temp_blob->share_data(GetTempPtr(count * temp_blob->elem_size()), shape);
+  return temp_blob;
+}
+
+void Workspace::GrowTempBuffer(size_t raw_size) {
+  auto temp_blob = CreateBlob("temp_blob", DataType::kI32);
+  size_t num_int = raw_size / temp_blob->elem_size() + 1;
+  CHECK_LE(num_int, std::numeric_limits<int>::max());
+  temp_blob->reshape({static_cast<int>(num_int)});
   temp_offset_ = 0;
 }
 
 size_t Workspace::GetWorkspaceSize() const {
-  size_t count = 0;
+  size_t mem_size = 0;
   for (const auto &blob_it : blob_map_) {
-    const auto &blob_type = blob_it.second.first;
-    auto *blob = blob_it.second.second;
-    if (blob != nullptr) {
-      if (blob_type == int_id) {
-        count += static_cast<BlobI *>(blob)->mem_count();
-      } else if (blob_type == float_id) {
-        count += static_cast<BlobF *>(blob)->mem_count();
-      } else if (blob_type == uchar_id) {
-        count += static_cast<BlobUC *>(blob)->mem_count();
-      } else {
-        LOG(FATAL) << "Unknown blob type " << blob_type;
-      }
-    }
+    mem_size += blob_it.second->max_size();
   }
-  return count;
+  return mem_size;
 }
 
 size_t Workspace::GetWorkspaceTempSize() const {
-  const auto *temp_blob = GetBlob<unsigned char>("temp_blob");
-  return temp_blob != nullptr ? temp_blob->mem_count() : 0;
+  const auto temp_blob = GetBlob("temp_blob");
+  return temp_blob != nullptr ? temp_blob->max_size() : 0;
 }
 
-void Workspace::ClearBlob(const std::string &blob_type, void *blob) {
-  if (blob != nullptr) {
-    if (blob_type == int_id) {
-      delete static_cast<BlobI *>(blob);
-    } else if (blob_type == float_id) {
-      delete static_cast<BlobF *>(blob);
-    } else if (blob_type == uchar_id) {
-      delete static_cast<BlobUC *>(blob);
-    } else {
-      LOG(FATAL) << "Unknown blob type " << blob_type;
-    }
-    blob = nullptr;
-  }
-}
-
-const void *Workspace::GetTempPtr(size_t count, int elem_size) {
-  const auto *temp_blob = GetBlob<unsigned char>("temp_blob");
+const void *Workspace::GetTempPtr(size_t raw_size) {
+  const auto temp_blob = GetBlob("temp_blob");
   CHECK_NOTNULL(temp_blob);
-  auto required = count * elem_size;
-  CHECK_LE(temp_offset_ + required, temp_blob->mem_count());
-  const auto *ptr = temp_blob->data() + temp_offset_;
-  temp_offset_ += required;
+  CHECK_LE(temp_offset_ + raw_size, temp_blob->max_size());
+  const auto *ptr = temp_blob->data<unsigned char>() + temp_offset_;
+  temp_offset_ += raw_size;
   return ptr;
 }
 

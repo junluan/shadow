@@ -11,9 +11,9 @@ void DeconvOp::Forward() {
     CHECK_EQ(bottoms_size(), 2);
   }
 
-  const auto *bottom = bottoms<float>(0);
-  const auto *weight = bottoms<float>(1);
-  auto *top = mutable_tops<float>(0);
+  const auto bottom = bottoms(0);
+  const auto weight = bottoms(1);
+  auto top = tops(0);
 
   CHECK_NE(bottom, top);
 
@@ -40,7 +40,7 @@ void DeconvOp::Forward() {
   col_offset_ = kernel_dim_ * conv_out_spatial_dim_;
   output_offset_ = conv_out_c * conv_out_spatial_dim_ / group_;
 
-  Blas::Set(top->count(), 0, top->mutable_data(), 0, op_ws_->Ctx());
+  Blas::Set(top->count(), 0, top->mutable_data<float>(), 0, ws_->Ctx());
 
 #if defined(USE_CUDNN)
   if (use_cudnn_) {
@@ -61,44 +61,43 @@ void DeconvOp::Forward() {
     size_t workspace_limit_bytes = group_ == 1 ? 64 * 1024 * 1024 : 0;
 
     CUDNN_CHECK(cudnnGetConvolutionBackwardDataAlgorithm(
-        cudnnHandle_t(op_ws_->Ctx()->cudnn_handle()), filter_desc_,
-        bottom_desc_, conv_desc_, top_desc_,
+        cudnnHandle_t(ws_->Ctx()->cudnn_handle()), filter_desc_, bottom_desc_,
+        conv_desc_, top_desc_,
         CUDNN_CONVOLUTION_BWD_DATA_SPECIFY_WORKSPACE_LIMIT,
         workspace_limit_bytes, &bwd_data_algo_));
 
     size_t workspace_bwd_size = 0;
 
     CUDNN_CHECK(cudnnGetConvolutionBackwardDataWorkspaceSize(
-        cudnnHandle_t(op_ws_->Ctx()->cudnn_handle()), filter_desc_,
-        bottom_desc_, conv_desc_, top_desc_, bwd_data_algo_,
-        &workspace_bwd_size));
+        cudnnHandle_t(ws_->Ctx()->cudnn_handle()), filter_desc_, bottom_desc_,
+        conv_desc_, top_desc_, bwd_data_algo_, &workspace_bwd_size));
 
-    void *workspace_ptr = nullptr;
+    std::shared_ptr<Blob> workspace = nullptr;
+    const void *workspace_ptr = nullptr;
     if (workspace_bwd_size > 0) {
-      op_ws_->GrowTempBuffer(static_cast<int>(workspace_bwd_size),
-                             sizeof(unsigned char));
-      auto *workspace = op_ws_->CreateTempBlob<unsigned char>(
-          {static_cast<int>(workspace_bwd_size)}, op_name_ + "/workspace");
-      workspace_ptr = workspace->mutable_data();
+      ws_->GrowTempBuffer(workspace_bwd_size);
+      workspace = ws_->CreateTempBlob({static_cast<int>(workspace_bwd_size)},
+                                      DataType::kU8);
+      workspace_ptr = workspace->data<unsigned char>();
     }
 
     CUDNN_CHECK(cudnnConvolutionBackwardData(
-        cudnnHandle_t(op_ws_->Ctx()->cudnn_handle()),
-        cudnn::dataType<float>::one, filter_desc_, weight->data(), bottom_desc_,
-        bottom->data(), conv_desc_, bwd_data_algo_, workspace_ptr,
-        workspace_bwd_size, cudnn::dataType<float>::zero, top_desc_,
-        top->mutable_data()));
+        cudnnHandle_t(ws_->Ctx()->cudnn_handle()), cudnn::dataType<float>::one,
+        filter_desc_, weight->data<float>(), bottom_desc_,
+        bottom->data<float>(), conv_desc_, bwd_data_algo_,
+        const_cast<void *>(workspace_ptr), workspace_bwd_size,
+        cudnn::dataType<float>::zero, top_desc_, top->mutable_data<float>()));
     if (bias_term_) {
       CUDNN_CHECK(cudnnAddTensor(
-          cudnnHandle_t(op_ws_->Ctx()->cudnn_handle()),
-          cudnn::dataType<float>::one, bias_desc_, bottoms<float>(2)->data(),
-          cudnn::dataType<float>::one, top_desc_, top->mutable_data()));
+          cudnnHandle_t(ws_->Ctx()->cudnn_handle()),
+          cudnn::dataType<float>::one, bias_desc_, bottoms(2)->data<float>(),
+          cudnn::dataType<float>::one, top_desc_, top->mutable_data<float>()));
     }
     if (activate_type_ == 1) {
       CUDNN_CHECK(cudnnActivationForward(
-          cudnnHandle_t(op_ws_->Ctx()->cudnn_handle()), activate_desc_,
-          cudnn::dataType<float>::one, top_desc_, top->data(),
-          cudnn::dataType<float>::zero, top_desc_, top->mutable_data()));
+          cudnnHandle_t(ws_->Ctx()->cudnn_handle()), activate_desc_,
+          cudnn::dataType<float>::one, top_desc_, top->data<float>(),
+          cudnn::dataType<float>::zero, top_desc_, top->mutable_data<float>()));
     }
 
     return;
@@ -109,38 +108,38 @@ void DeconvOp::Forward() {
   if (bias_term_) {
     temp_count += out_spatial_dim_;
   }
-  op_ws_->GrowTempBuffer(temp_count, sizeof(float));
-  auto *col_image = op_ws_->CreateTempBlob<float>(
-      {kernel_dim_ * group_, conv_out_spatial_dim_}, op_name_ + "/col_image");
-  BlobF *biases_multiplier = nullptr;
+  ws_->GrowTempBuffer(temp_count * sizeof(float));
+  auto col_image = ws_->CreateTempBlob(
+      {kernel_dim_ * group_, conv_out_spatial_dim_}, DataType::kF32);
+  std::shared_ptr<Blob> biases_multiplier = nullptr;
   if (bias_term_) {
-    biases_multiplier = op_ws_->CreateTempBlob<float>(
-        {out_spatial_dim_}, op_name_ + "/biases_multiplier");
-    Blas::Set(out_spatial_dim_, 1, biases_multiplier->mutable_data(), 0,
-              op_ws_->Ctx());
+    biases_multiplier = ws_->CreateTempBlob({out_spatial_dim_}, DataType::kF32);
+    Blas::Set(out_spatial_dim_, 1, biases_multiplier->mutable_data<float>(), 0,
+              ws_->Ctx());
   }
   int top_num = top->num(), bottom_num = bottom->num();
   for (int b = 0; b < batch; ++b) {
     for (int g = 0; g < group_; ++g) {
       Blas::BlasSgemm(
           1, 0, kernel_dim_, conv_out_spatial_dim_, conv_out_c / group_, 1,
-          weight->data(), weight_offset_ * g, bottom->data(),
-          b * bottom_num + output_offset_ * g, 0, col_image->mutable_data(),
-          col_offset_ * g, op_ws_->Ctx());
+          weight->data<float>(), weight_offset_ * g, bottom->data<float>(),
+          b * bottom_num + output_offset_ * g, 0,
+          col_image->mutable_data<float>(), col_offset_ * g, ws_->Ctx());
     }
-    Vision::Col2Im(col_image->data(), top->shape(), b * top_num, kernel_size_h_,
-                   kernel_size_w_, stride_h_, stride_w_, pad_h_, pad_w_,
-                   dilation_, bottom->shape(), top->mutable_data(),
-                   op_ws_->Ctx());
+    Vision::Col2Im(col_image->data<float>(), top->shape(), b * top_num,
+                   kernel_size_h_, kernel_size_w_, stride_h_, stride_w_, pad_h_,
+                   pad_w_, dilation_, bottom->shape(),
+                   top->mutable_data<float>(), ws_->Ctx());
     if (bias_term_) {
       Blas::BlasSgemm(0, 0, num_output_, out_spatial_dim_, 1, 1,
-                      bottoms<float>(2)->data(), 0, biases_multiplier->data(),
-                      0, 1, top->mutable_data(), b * top_num, op_ws_->Ctx());
+                      bottoms(2)->data<float>(), 0,
+                      biases_multiplier->data<float>(), 0, 1,
+                      top->mutable_data<float>(), b * top_num, ws_->Ctx());
     }
   }
   if (activate_type_ == 1) {
-    Vision::Activate(top->data(), top->mutable_data(), top->count(),
-                     activate_type_, 0, op_ws_->Ctx());
+    Vision::Activate(top->data<float>(), top->mutable_data<float>(),
+                     top->count(), activate_type_, 0, ws_->Ctx());
   }
 }
 

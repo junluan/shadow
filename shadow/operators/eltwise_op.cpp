@@ -3,12 +3,12 @@
 namespace Shadow {
 
 void EltwiseOp::Forward() {
-  const auto *bottom_0 = bottoms<float>(0);
-  auto *top = mutable_tops<float>(0);
+  const auto bottom_0 = bottoms(0);
+  auto top = tops(0);
 
   CHECK_GE(bottoms_size(), 2);
   for (int n = 1; n < bottoms_size(); ++n) {
-    CHECK(bottoms<float>(n)->shape() == bottom_0->shape());
+    CHECK(bottoms(n)->shape() == bottom_0->shape());
   }
   top->reshape(bottom_0->shape());
 
@@ -29,34 +29,34 @@ void EltwiseOp::Forward() {
   // Prod: 0, Sum: 1, Max: 2, Min: 3
   switch (operation_) {
     case kProd:
-      Blas::Mul(count, bottoms<float>(0)->data(), 0, bottoms<float>(1)->data(),
-                0, top->mutable_data(), 0, op_ws_->Ctx());
+      Blas::Mul(count, bottoms(0)->data<float>(), 0, bottoms(1)->data<float>(),
+                0, top->mutable_data<float>(), 0, ws_->Ctx());
       for (int n = 2; n < bottoms_size(); ++n) {
-        Blas::Mul(count, top->data(), 0, bottoms<float>(n)->data(), 0,
-                  top->mutable_data(), 0, op_ws_->Ctx());
+        Blas::Mul(count, top->data<float>(), 0, bottoms(n)->data<float>(), 0,
+                  top->mutable_data<float>(), 0, ws_->Ctx());
       }
       break;
     case kSum:
-      Blas::Set(count, 0, top->mutable_data(), 0, op_ws_->Ctx());
+      Blas::Set(count, 0, top->mutable_data<float>(), 0, ws_->Ctx());
       for (int n = 0; n < bottoms_size(); ++n) {
-        Blas::BlasSaxpy(count, coeff[n], bottoms<float>(n)->data(), 0,
-                        top->mutable_data(), 0, op_ws_->Ctx());
+        Blas::BlasSaxpy(count, coeff[n], bottoms(n)->data<float>(), 0,
+                        top->mutable_data<float>(), 0, ws_->Ctx());
       }
       break;
     case kMax:
-      Blas::Max(count, bottoms<float>(0)->data(), 0, bottoms<float>(1)->data(),
-                0, top->mutable_data(), 0, op_ws_->Ctx());
+      Blas::Max(count, bottoms(0)->data<float>(), 0, bottoms(1)->data<float>(),
+                0, top->mutable_data<float>(), 0, ws_->Ctx());
       for (int n = 2; n < bottoms_size(); ++n) {
-        Blas::Max(count, top->data(), 0, bottoms<float>(n)->data(), 0,
-                  top->mutable_data(), 0, op_ws_->Ctx());
+        Blas::Max(count, top->data<float>(), 0, bottoms(n)->data<float>(), 0,
+                  top->mutable_data<float>(), 0, ws_->Ctx());
       }
       break;
     case kMin:
-      Blas::Min(count, bottoms<float>(0)->data(), 0, bottoms<float>(1)->data(),
-                0, top->mutable_data(), 0, op_ws_->Ctx());
+      Blas::Min(count, bottoms(0)->data<float>(), 0, bottoms(1)->data<float>(),
+                0, top->mutable_data<float>(), 0, ws_->Ctx());
       for (int n = 2; n < bottoms_size(); ++n) {
-        Blas::Min(count, top->data(), 0, bottoms<float>(n)->data(), 0,
-                  top->mutable_data(), 0, op_ws_->Ctx());
+        Blas::Min(count, top->data<float>(), 0, bottoms(n)->data<float>(), 0,
+                  top->mutable_data<float>(), 0, ws_->Ctx());
       }
       break;
     default:

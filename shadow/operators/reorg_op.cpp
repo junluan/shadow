@@ -3,8 +3,8 @@
 namespace Shadow {
 
 void ReorgOp::Forward() {
-  const auto *bottom = bottoms<float>(0);
-  auto *top = mutable_tops<float>(0);
+  const auto bottom = bottoms(0);
+  auto top = tops(0);
 
   CHECK_NE(bottom, top);
 
@@ -19,8 +19,8 @@ void ReorgOp::Forward() {
   top_shape[3] = in_w / stride_;
   top->reshape(top_shape);
 
-  Vision::Reorg(bottom->data(), bottom->shape(), stride_, top->mutable_data(),
-                op_ws_->Ctx());
+  Vision::Reorg(bottom->data<float>(), bottom->shape(), stride_,
+                top->mutable_data<float>(), ws_->Ctx());
 }
 
 REGISTER_OPERATOR(Reorg, ReorgOp);

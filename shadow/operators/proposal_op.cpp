@@ -48,10 +48,10 @@ inline VecInt nms_sorted(const std::vector<RectInfo> &rects,
 }
 
 void ProposalOp::Forward() {
-  const auto *bottom_score = bottoms<float>(0);
-  const auto *bottom_delta = bottoms<float>(1);
-  const auto *bottom_info = bottoms<float>(2);
-  auto *top = mutable_tops<float>(0);
+  const auto bottom_score = bottoms(0);
+  const auto bottom_delta = bottoms(1);
+  const auto bottom_info = bottoms(2);
+  auto top = tops(0);
 
   int batch = bottom_score->shape(0), in_h = bottom_score->shape(2),
       in_w = bottom_score->shape(3);
@@ -64,21 +64,20 @@ void ProposalOp::Forward() {
   CHECK_EQ(num_info, 3);
 
   int temp_count = num_anchors_ * 4 + in_h * in_w * num_anchors_ * 6;
-  op_ws_->GrowTempBuffer(temp_count, sizeof(float));
+  ws_->GrowTempBuffer(temp_count * sizeof(float));
 
-  auto *anchors =
-      op_ws_->CreateTempBlob<float>({num_anchors_, 4}, op_name_ + "/anchors");
-  anchors->set_data(anchors_.data(), anchors->count());
+  auto anchors = ws_->CreateTempBlob({num_anchors_, 4}, DataType::kF32);
+  anchors->set_data<float>(anchors_.data(), anchors->count());
 
-  auto *proposals = op_ws_->CreateTempBlob<float>(
-      {in_h * in_w * num_anchors_, 6}, op_name_ + "/proposals");
+  auto proposals =
+      ws_->CreateTempBlob({in_h * in_w * num_anchors_, 6}, DataType::kF32);
 
-  Vision::Proposal(anchors->data(), bottom_score->data(), bottom_delta->data(),
-                   bottom_info->data(), bottom_score->shape(), num_anchors_,
-                   feat_stride_, min_size_, proposals->mutable_data(),
-                   op_ws_->Ctx());
+  Vision::Proposal(anchors->data<float>(), bottom_score->data<float>(),
+                   bottom_delta->data<float>(), bottom_info->data<float>(),
+                   bottom_score->shape(), num_anchors_, feat_stride_, min_size_,
+                   proposals->mutable_data<float>(), ws_->Ctx());
 
-  const auto *proposal_data = proposals->cpu_data();
+  const auto *proposal_data = proposals->cpu_data<float>();
 
   std::vector<RectInfo> rectangles;
   for (int n = 0; n < proposals->shape(0); ++n) {
@@ -116,7 +115,7 @@ void ProposalOp::Forward() {
   }
 
   top->reshape({picked_count, 5});
-  top->set_data(selected_rois_.data(), selected_rois_.size());
+  top->set_data<float>(selected_rois_.data(), selected_rois_.size());
 }
 
 REGISTER_OPERATOR(Proposal, ProposalOp);

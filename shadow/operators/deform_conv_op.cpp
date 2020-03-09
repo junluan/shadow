@@ -11,10 +11,10 @@ void DeformConvOp::Forward() {
     CHECK_EQ(bottoms_size(), 3);
   }
 
-  const auto *bottom = bottoms<float>(0);
-  const auto *offset_blob = bottoms<float>(1);
-  const auto *weight = bottoms<float>(2);
-  auto *top = mutable_tops<float>(0);
+  const auto bottom = bottoms(0);
+  const auto offset_blob = bottoms(1);
+  const auto weight = bottoms(2);
+  auto top = tops(0);
 
   CHECK_NE(bottom, top);
 
@@ -43,37 +43,38 @@ void DeformConvOp::Forward() {
   if (bias_term_) {
     temp_count += out_spatial_dim_;
   }
-  op_ws_->GrowTempBuffer(temp_count, sizeof(float));
-  auto *col_image = op_ws_->CreateTempBlob<float>(
-      {kernel_dim_ * group_, out_spatial_dim_}, op_name_ + "/col_image");
-  BlobF *biases_multiplier = nullptr;
+  ws_->GrowTempBuffer(temp_count * sizeof(float));
+  auto col_image = ws_->CreateTempBlob({kernel_dim_ * group_, out_spatial_dim_},
+                                       DataType::kF32);
+  std::shared_ptr<Blob> biases_multiplier = nullptr;
   if (bias_term_) {
-    biases_multiplier = op_ws_->CreateTempBlob<float>(
-        {out_spatial_dim_}, op_name_ + "/biases_multiplier");
-    Blas::Set(out_spatial_dim_, 1, biases_multiplier->mutable_data(), 0,
-              op_ws_->Ctx());
+    biases_multiplier = ws_->CreateTempBlob({out_spatial_dim_}, DataType::kF32);
+    Blas::Set(out_spatial_dim_, 1, biases_multiplier->mutable_data<float>(), 0,
+              ws_->Ctx());
   }
   int top_num = top->num(), bottom_num = bottom->num();
   for (int b = 0; b < batch; ++b) {
-    Vision::DeformIm2Col(bottom->data(), bottom->shape(), offset_blob->data(),
-                         b * bottom_num, deform_group_, kernel_size_, stride_,
-                         pad_, dilation_, 0, top->shape(),
-                         col_image->mutable_data(), op_ws_->Ctx());
+    Vision::DeformIm2Col(
+        bottom->data<float>(), bottom->shape(), offset_blob->data<float>(),
+        b * bottom_num, deform_group_, kernel_size_, stride_, pad_, dilation_,
+        0, top->shape(), col_image->mutable_data<float>(), ws_->Ctx());
     for (int g = 0; g < group_; ++g) {
       Blas::BlasSgemm(0, 0, num_output_ / group_, out_spatial_dim_, kernel_dim_,
-                      1, weight->data(), weight_offset_ * g, col_image->data(),
-                      col_offset_ * g, 0, top->mutable_data(),
-                      b * top_num + output_offset_ * g, op_ws_->Ctx());
+                      1, weight->data<float>(), weight_offset_ * g,
+                      col_image->data<float>(), col_offset_ * g, 0,
+                      top->mutable_data<float>(),
+                      b * top_num + output_offset_ * g, ws_->Ctx());
     }
     if (bias_term_) {
       Blas::BlasSgemm(0, 0, num_output_, out_spatial_dim_, 1, 1,
-                      bottoms<float>(3)->data(), 0, biases_multiplier->data(),
-                      0, 1, top->mutable_data(), b * top_num, op_ws_->Ctx());
+                      bottoms(3)->data<float>(), 0,
+                      biases_multiplier->data<float>(), 0, 1,
+                      top->mutable_data<float>(), b * top_num, ws_->Ctx());
     }
   }
   if (activate_type_ == 1) {
-    Vision::Activate(top->data(), top->mutable_data(), top->count(),
-                     activate_type_, 0, op_ws_->Ctx());
+    Vision::Activate(top->data<float>(), top->mutable_data<float>(),
+                     top->count(), activate_type_, 0, ws_->Ctx());
   }
 }
 

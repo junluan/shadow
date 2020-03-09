@@ -6,16 +6,18 @@
 
 #include "util/log.hpp"
 
+#include <numeric>
 #include <string>
 #include <vector>
 
 namespace Shadow {
 
-template <typename T>
+enum class DataType { kI32, kF32, kU8 };
+
 class Blob {
  public:
-  Blob(std::string name, Allocator *allocator)
-      : name_(std::move(name)), allocator_(allocator) {
+  Blob(std::string name, DataType data_type, Allocator *allocator)
+      : name_(std::move(name)), data_type_(data_type), allocator_(allocator) {
     CHECK_NOTNULL(allocator_);
   }
   ~Blob() {
@@ -26,40 +28,54 @@ class Blob {
     allocator_ = nullptr;
   }
 
-  const T *data() const { return data_; }
-  T *mutable_data() { return data_; }
+  template <typename T>
+  const T *data() const {
+    return const_cast<const T *>(static_cast<T *>(data_));
+  }
 
+  template <typename T>
+  T *mutable_data() {
+    return const_cast<T *>(data<T>());
+  }
+
+  template <typename T>
   const T *cpu_data() {
+    check_data_type<T>(data_type_);
     if (allocator_->device_type() == DeviceType::kGPU) {
-      auto cou = count();
-      cpu_data_.resize(cou, 0);
-      get_data(cpu_data_.data(), cou);
-      return cpu_data_.data();
+      cpu_data_.resize(raw_size(), 0);
+      get_data<T>(cpu_data_.data(), count());
+      return const_cast<const T *>(
+          static_cast<T *>(static_cast<void *>(cpu_data_.data())));
     } else {
-      return data_;
+      return data<T>();
     }
   }
 
-  void set_data(const T *cpu_data, int set_count, int offset = 0) {
+  template <typename T>
+  void set_data(const void *cpu_data, int set_count, int offset = 0) {
+    check_data_type<T>(data_type_);
     CHECK_NOTNULL(cpu_data);
     CHECK_LE(set_count + offset, count());
     CHECK_NOTNULL(data_);
-    allocator_->write(set_count * sizeof(T), cpu_data, data_ + offset);
+    allocator_->write(set_count * elem_size(), cpu_data,
+                      mutable_data<T>() + offset);
   }
 
-  void get_data(T *cpu_data, int get_count, int offset = 0) const {
+  template <typename T>
+  void get_data(void *cpu_data, int get_count, int offset = 0) const {
+    check_data_type<T>(data_type_);
     CHECK_NOTNULL(cpu_data);
     CHECK_LE(get_count + offset, count());
     CHECK_NOTNULL(data_);
-    allocator_->read(get_count * sizeof(T), data_ + offset, cpu_data);
+    allocator_->read(get_count * elem_size(), data<T>() + offset, cpu_data);
   }
 
-  void share_data(const T *data, const std::vector<int> &shape) {
+  void share_data(const void *data, const std::vector<int> &shape) {
     CHECK_NOTNULL(data);
     if (data_ != nullptr && !shared_) {
       allocator_->free(data_);
     }
-    data_ = const_cast<T *>(data);
+    data_ = const_cast<void *>(data);
     shape_ = shape;
     capacity_ = 0;
     shared_ = true;
@@ -67,14 +83,15 @@ class Blob {
   }
 
   void reshape(const std::vector<int> &shape) {
-    size_t cou = 1;
-    for (const auto dim : shape) cou *= dim;
+    auto cou = std::accumulate(shape.begin(), shape.end(), 1,
+                               std::multiplies<size_t>());
     CHECK_GT(cou, 0);
     if (data_ != nullptr && !shared_ && cou > capacity_) {
       allocator_->free(data_);
+      data_ = nullptr;
     }
-    if (data_ == nullptr || shared_ || cou > capacity_) {
-      data_ = static_cast<T *>(allocator_->malloc(cou * sizeof(T), nullptr));
+    if (data_ == nullptr || shared_) {
+      data_ = allocator_->malloc(cou * elem_size(), nullptr);
       capacity_ = cou;
     }
     shape_ = shape;
@@ -82,10 +99,12 @@ class Blob {
   }
 
   const std::string &name() const { return name_; }
+  const DataType &data_type() const { return data_type_; }
   size_t capacity() const { return capacity_; }
   bool shared() const { return shared_; }
 
   void set_name(const std::string &name) { name_ = name; }
+  void set_data_type(const DataType &data_type) { data_type_ = data_type; }
   void set_capacity(size_t capacity) { capacity_ = capacity; }
   void set_shared(bool shared) { shared_ = shared; }
 
@@ -112,7 +131,19 @@ class Blob {
     return cou;
   }
 
-  size_t mem_count() const { return capacity_ * sizeof(T); }
+  size_t raw_size() const { return count() * elem_size(); }
+  size_t max_size() const { return capacity_ * elem_size(); }
+  size_t elem_size() const {
+    if (data_type_ == DataType::kI32) {
+      return sizeof(int);
+    } else if (data_type_ == DataType::kF32) {
+      return sizeof(float);
+    } else if (data_type_ == DataType::kU8) {
+      return sizeof(unsigned char);
+    } else {
+      return 0;
+    }
+  }
 
   int canonical_index(int index) const {
     CHECK_GE(index, -num_axes());
@@ -124,26 +155,32 @@ class Blob {
   }
 
  private:
-  Allocator *allocator_{nullptr};
+  template <typename T>
+  static void check_data_type(DataType data_type) {
+    if (std::is_same<T, int>::value) {
+      CHECK(data_type == DataType::kI32);
+    } else if (std::is_same<T, float>::value) {
+      CHECK(data_type == DataType::kF32);
+    } else if (std::is_same<T, unsigned char>::value) {
+      CHECK(data_type == DataType::kU8);
+    } else {
+      LOG(FATAL) << "Invalid template typename " << typeid(T).name();
+    }
+  }
 
-  std::string name_{""};
-  T *data_{nullptr};
+  std::string name_;
+  DataType data_type_;
+  Allocator *allocator_;
+
+  void *data_{nullptr};
   std::vector<int> shape_{};
   size_t capacity_{0};
   bool shared_{false};
 
-  std::vector<T> cpu_data_{};
+  std::vector<unsigned char> cpu_data_{};
 
-  DISABLE_COPY_AND_ASSIGN(Blob<T>);
+  DISABLE_COPY_AND_ASSIGN(Blob);
 };
-
-using BlobI = Blob<int>;
-using BlobF = Blob<float>;
-using BlobUC = Blob<unsigned char>;
-
-using VecBlobI = std::vector<BlobI *>;
-using VecBlobF = std::vector<BlobF *>;
-using VecBlobUC = std::vector<BlobUC *>;
 
 }  // namespace Shadow
 
