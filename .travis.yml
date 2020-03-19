@@ -15,11 +15,6 @@ matrix:
     - os: osx
       compiler: clang
       env: BUILD=osx
-      addons:
-        homebrew:
-          packages:
-            - opencv
-            - protobuf
 
 before_install:
   - source scripts/travis/setup.sh

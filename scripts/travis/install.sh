@@ -33,4 +33,7 @@ if [ "$TRAVIS_OS_NAME" = "linux" ]; then
         "libcudnn7-dev=$CUDNN_PKG_VERSION"
 
     sudo ln -sf /usr/local/cuda-$CUDA_VERSION /usr/local/cuda
+elif [ "$TRAVIS_OS_NAME" = "osx" ]; then
+    brew update
+    brew install --force --ignore-dependencies opencv
 fi
