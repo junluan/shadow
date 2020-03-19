@@ -11,7 +11,7 @@ echo "Building Shadow ... "
 echo "Building directory $SHADOW_BUILD_ROOT"
 echo "============================================================"
 
-mkdir -p $SHADOW_BUILD_ROOT && cd $SHADOW_BUILD_ROOT
+mkdir -p "$SHADOW_BUILD_ROOT" && cd "$SHADOW_BUILD_ROOT"
 
 CMAKE_ARGS=()
 CMAKE_ARGS+=("-DCMAKE_INSTALL_PREFIX=$SHADOW_BUILD_ROOT")
