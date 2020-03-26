@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(shadow)
+project(shadow VERSION 0.1.0)
 
 option(USE_CUDA "Use CUDA" ON)
 option(USE_CUDNN "Use CUDNN for acceleration" ON)

@@ -1,6 +1,8 @@
 #ifndef SHADOW_CORE_PARAMS_HPP
 #define SHADOW_CORE_PARAMS_HPP
 
+#include "config.hpp"
+
 #if defined(USE_Protobuf)
 #include "proto/shadow.pb.h"
 #endif

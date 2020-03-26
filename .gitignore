@@ -3,6 +3,7 @@ build
 data
 models
 third_party
+config.hpp
 *_pb2.py
 *.pb.cc
 *.pb.h

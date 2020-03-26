@@ -22,7 +22,7 @@ if (${USE_Protobuf})
   target_link_libraries(shadow ${Shadow_PROTO_LIB})
 endif ()
 install(TARGETS shadow DESTINATION ${Shadow_INSTALL_LIB_PREFIX})
-install(FILES core/helper.hpp core/network.hpp core/params.hpp
+install(FILES core/config.hpp core/helper.hpp core/network.hpp core/params.hpp
         DESTINATION ${Shadow_INSTALL_INCLUDE_PREFIX}/core)
 
 if (BUILD_SHARED_LIBS)
