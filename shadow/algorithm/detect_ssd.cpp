@@ -5,14 +5,15 @@
 namespace Shadow {
 
 void DetectSSD::Setup(const std::string &model_file) {
-  net_.Setup();
-
 #if defined(USE_Protobuf)
   shadow::MetaNetParam meta_net_param;
   CHECK(IO::ReadProtoFromBinaryFile(model_file, &meta_net_param))
       << "Error when loading proto binary file: " << model_file;
 
-  net_.LoadModel(meta_net_param.network(0));
+  ArgumentHelper arguments;
+  arguments.AddSingleArgument<std::string>("backend_type", "Native");
+
+  net_.LoadXModel(meta_net_param.network(0), arguments);
 
 #else
   LOG(FATAL) << "Unsupported load binary model, recompiled with USE_Protobuf";

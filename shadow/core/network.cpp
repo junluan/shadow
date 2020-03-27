@@ -3,20 +3,9 @@
 
 namespace Shadow {
 
-Network::Network() {
-  if (engine_ == nullptr) {
-    engine_ = std::make_shared<NetworkImpl>();
-  }
-}
+Network::Network() { engine_ = std::make_shared<NetworkImpl>(); }
 
 void Network::Setup(int device_id) { engine_->Setup(device_id); }
-
-void Network::LoadModel(const shadow::NetParam &net_param) {
-  ArgumentHelper arguments;
-  arguments.AddSingleArgument<std::string>("backend_type", "Native");
-
-  engine_->LoadXModel(net_param, arguments);
-}
 
 void Network::LoadXModel(const shadow::NetParam &net_param,
                          const ArgumentHelper &arguments) {
