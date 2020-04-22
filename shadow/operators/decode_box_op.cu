@@ -129,6 +129,65 @@ template void DecodeRefineDetBoxes(const float *, const float *, const float *,
                                    const float *, const float *, int, int, int,
                                    int, float, float *, Context *);
 
+template <typename T>
+__global__ void KernelDecodeYoloV3Boxes(int count, const T *in_data,
+                                        const T *biases, int num_priors,
+                                        int out_h, int out_w, int mask,
+                                        int num_classes, T *decode_box) {
+  CUDA_KERNEL_LOOP(globalid, count) {
+    int temp = globalid / mask;
+    int km_out = globalid % mask;
+    int w_out = temp % out_w;
+    temp /= out_w;
+    int h_out = temp % out_h;
+    int b_out = temp / out_h;
+
+    in_data += globalid * (4 + 1 + num_classes);
+    decode_box +=
+        (b_out * num_priors + (h_out * out_w + w_out) * mask + km_out) * 6;
+
+    float x = (1.f / (1 + expf(-in_data[0])) + w_out) / out_w;
+    float y = (1.f / (1 + expf(-in_data[1])) + h_out) / out_h;
+    float w = expf(in_data[2]) * biases[2 * km_out];
+    float h = expf(in_data[3]) * biases[2 * km_out + 1];
+
+    int max_index = -1;
+    auto max_score = -FLT_MAX;
+    float scale = 1.f / (1 + expf(-in_data[4]));
+    for (int c = 0; c < num_classes; ++c) {
+      float score = scale * 1.f / (1 + expf(-in_data[5 + c]));
+      if (score > max_score) {
+        max_index = c;
+        max_score = score;
+      }
+    }
+
+    decode_box[0] = max_index;
+    decode_box[1] = max_score;
+    decode_box[2] = x;
+    decode_box[3] = y;
+    decode_box[4] = w;
+    decode_box[5] = h;
+  }
+}
+
+template <typename T>
+void DecodeYoloV3Boxes(const T *in_data, const T *biases, int batch,
+                       int num_priors, int out_h, int out_w, int mask,
+                       int num_classes, T *decode_box, Context *context) {
+  int count = batch * out_h * out_w * mask;
+  KernelDecodeYoloV3Boxes<T><<<GetBlocks(count), NumThreads, 0,
+                               cudaStream_t(context->cuda_stream())>>>(
+      count, in_data, biases, num_priors, out_h, out_w, mask, num_classes,
+      decode_box);
+  CUDA_CHECK(cudaPeekAtLastError());
+}
+
+template void DecodeYoloV3Boxes(const float *in_data, const float *biases,
+                                int batch, int num_priors, int out_h, int out_w,
+                                int mask, int num_classes, float *decode_box,
+                                Context *context);
+
 }  // namespace Vision
 
 }  // namespace Shadow

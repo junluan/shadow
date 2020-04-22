@@ -14,15 +14,17 @@ class DecodeBoxOp : public Operator {
     CHECK_GT(num_classes_, 1);
     background_label_id_ = get_single_argument<int>("background_label_id", 0);
     objectness_score_ = get_single_argument<float>("objectness_score", 0.01f);
+    masks_ = get_repeated_argument<int>("masks");
   }
 
   void Forward() override;
 
  private:
-  enum { kSSD = 0, kRefineDet = 1 };
+  enum { kSSD = 0, kRefineDet = 1, kYoloV3 = 2 };
 
   int method_, num_classes_, background_label_id_;
   float objectness_score_;
+  VecInt masks_;
 };
 
 namespace Vision {
@@ -39,6 +41,11 @@ void DecodeRefineDetBoxes(const T *odm_loc, const T *odm_conf,
                           int num_classes, int background_label_id,
                           float objectness_score, T *decode_box,
                           Context *context);
+
+template <typename T>
+void DecodeYoloV3Boxes(const T *in_data, const T *biases, int batch,
+                       int num_priors, int out_h, int out_w, int mask,
+                       int num_classes, T *decode_box, Context *context);
 
 }  // namespace Vision
 

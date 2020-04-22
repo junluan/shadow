@@ -47,8 +47,40 @@ void DecodeBoxOp::Forward() {
         arm_loc->data<float>(), batch, num_priors, num_classes_,
         background_label_id_, objectness_score_, top->mutable_data<float>(),
         ws_->Ctx());
+  } else if (method_ == kYoloV3) {
+    CHECK_EQ(bottoms_size(), masks_.size() + 1);
+
+    const auto biases = bottoms(bottoms_size() - 1);
+
+    CHECK_EQ(biases->count(),
+             std::accumulate(masks_.begin(), masks_.end(), 0) * 2);
+
+    int num_priors = 0;
+    for (int n = 0; n < masks_.size(); ++n) {
+      int mask = masks_[n];
+      const auto bottom = bottoms(n);
+      CHECK_EQ(bottom->shape(3), (4 + 1 + num_classes_) * mask);
+      num_priors += bottom->count(1, 3) * mask;
+    }
+
+    int batch = bottoms(0)->shape(0);
+
+    top->reshape({batch, num_priors, 6});
+
+    const auto *biases_data = biases->data<float>();
+    auto *top_data = top->mutable_data<float>();
+
+    for (int n = 0; n < masks_.size(); ++n) {
+      const auto bottom = bottoms(n);
+      int mask = masks_[n], out_h = bottom->shape(1), out_w = bottom->shape(2);
+      Vision::DecodeYoloV3Boxes(bottom->data<float>(), biases_data, batch,
+                                num_priors, out_h, out_w, mask, num_classes_,
+                                top_data, ws_->Ctx());
+      biases_data += mask * 2;
+      top_data += (out_h * out_w * mask) * 6;
+    }
   } else {
-    LOG(FATAL) << "Currently only support SSD or RefineDet";
+    LOG(FATAL) << "Currently only support SSD, RefineDet or YoloV3";
   }
 }
 
@@ -155,6 +187,50 @@ void DecodeRefineDetBoxes(const T *odm_loc, const T *odm_conf,
 template void DecodeRefineDetBoxes(const float *, const float *, const float *,
                                    const float *, const float *, int, int, int,
                                    int, float, float *, Context *);
+
+template <typename T>
+void DecodeYoloV3Boxes(const T *in_data, const T *biases, int batch,
+                       int num_priors, int out_h, int out_w, int mask,
+                       int num_classes, T *decode_box, Context *context) {
+  for (int b = 0; b < batch; ++b) {
+    auto *decode_box_offset = decode_box + b * num_priors * 6;
+    for (int n = 0; n < out_h * out_w * mask; ++n) {
+      int s = n / mask, k = n % mask;
+      int h_out = s / out_w, w_out = s % out_w;
+
+      float x = (1.f / (1 + std::exp(-in_data[0])) + w_out) / out_w;
+      float y = (1.f / (1 + std::exp(-in_data[1])) + h_out) / out_h;
+      float w = std::exp(in_data[2]) * biases[2 * k];
+      float h = std::exp(in_data[3]) * biases[2 * k + 1];
+
+      int max_index = -1;
+      auto max_score = std::numeric_limits<float>::lowest();
+      float scale = 1.f / (1 + std::exp(-in_data[4]));
+      for (int c = 0; c < num_classes; ++c) {
+        float score = scale * 1.f / (1 + std::exp(-in_data[5 + c]));
+        if (score > max_score) {
+          max_index = c;
+          max_score = score;
+        }
+      }
+
+      decode_box_offset[0] = max_index;
+      decode_box_offset[1] = max_score;
+      decode_box_offset[2] = x;
+      decode_box_offset[3] = y;
+      decode_box_offset[4] = w;
+      decode_box_offset[5] = h;
+
+      in_data += 4 + 1 + num_classes;
+      decode_box_offset += 6;
+    }
+  }
+}
+
+template void DecodeYoloV3Boxes(const float *in_data, const float *biases,
+                                int batch, int num_priors, int out_h, int out_w,
+                                int mask, int num_classes, float *decode_box,
+                                Context *context);
 #endif
 
 }  // namespace Vision
