@@ -5,7 +5,7 @@ project(dnnl-download NONE)
 include(ExternalProject)
 
 ExternalProject_Add(dnnl
-                    GIT_REPOSITORY "https://github.com/intel/mkl-dnn.git"
+                    GIT_REPOSITORY "https://github.com/oneapi-src/oneDNN.git"
                     GIT_TAG "master"
                     SOURCE_DIR "${PROJECT_SOURCE_DIR}/third_party/dnnl"
                     BINARY_DIR "${CMAKE_BINARY_DIR}/dnnl-build"

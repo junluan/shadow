@@ -6,7 +6,7 @@ include(ExternalProject)
 
 ExternalProject_Add(nnpack
                     GIT_REPOSITORY "https://github.com/Maratyszcza/NNPACK.git"
-                    GIT_TAG "1e005b0c2777f39972a4ac15bea03e0e315a3d92"
+                    GIT_TAG "master"
                     SOURCE_DIR "${PROJECT_SOURCE_DIR}/third_party/nnpack"
                     BINARY_DIR "${CMAKE_BINARY_DIR}/nnpack-build"
                     CMAKE_ARGS "-DCMAKE_INSTALL_PREFIX=${PROJECT_SOURCE_DIR}/third_party/nnpack/build"

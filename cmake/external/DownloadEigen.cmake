@@ -5,7 +5,7 @@ project(eigen-download NONE)
 include(ExternalProject)
 
 ExternalProject_Add(eigen
-                    GIT_REPOSITORY "https://github.com/eigenteam/eigen-git-mirror.git"
+                    GIT_REPOSITORY "https://gitlab.com/libeigen/eigen.git"
                     GIT_TAG "3.3.7"
                     SOURCE_DIR "${PROJECT_SOURCE_DIR}/third_party/eigen3"
                     BINARY_DIR "${CMAKE_BINARY_DIR}/eigen-build"
