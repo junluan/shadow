@@ -5,6 +5,8 @@ namespace Shadow {
 void DecodeBoxOp::Forward() {
   auto top = tops(0);
 
+  int out_stride = output_max_score_ ? 6 : (4 + num_classes_);
+
   if (method_ == kSSD) {
     CHECK_EQ(bottoms_size(), 3);
 
@@ -17,12 +19,12 @@ void DecodeBoxOp::Forward() {
     CHECK_EQ(mbox_conf->shape(1), num_priors * num_classes_);
     CHECK_EQ(mbox_priorbox->count(1), num_priors * 8);
 
-    top->reshape({batch, num_priors, 6});
+    top->reshape({batch, num_priors, out_stride});
 
     Vision::DecodeSSDBoxes(mbox_loc->data<float>(), mbox_conf->data<float>(),
                            mbox_priorbox->data<float>(), batch, num_priors,
-                           num_classes_, top->mutable_data<float>(),
-                           ws_->Ctx());
+                           num_classes_, output_max_score_,
+                           top->mutable_data<float>(), ws_->Ctx());
   } else if (method_ == kRefineDet) {
     CHECK_EQ(bottoms_size(), 5);
 
@@ -39,14 +41,14 @@ void DecodeBoxOp::Forward() {
     CHECK_EQ(arm_conf->shape(1), num_priors * 2);
     CHECK_EQ(arm_loc->shape(1), num_priors * 4);
 
-    top->reshape({batch, num_priors, 6});
+    top->reshape({batch, num_priors, out_stride});
 
     Vision::DecodeRefineDetBoxes(
         odm_loc->data<float>(), odm_conf->data<float>(),
         arm_priorbox->data<float>(), arm_conf->data<float>(),
         arm_loc->data<float>(), batch, num_priors, num_classes_,
-        background_label_id_, objectness_score_, top->mutable_data<float>(),
-        ws_->Ctx());
+        background_label_id_, objectness_score_, output_max_score_,
+        top->mutable_data<float>(), ws_->Ctx());
   } else if (method_ == kYoloV3) {
     CHECK_EQ(bottoms_size(), masks_.size() + 1);
 
@@ -65,7 +67,7 @@ void DecodeBoxOp::Forward() {
 
     int batch = bottoms(0)->shape(0);
 
-    top->reshape({batch, num_priors, 6});
+    top->reshape({batch, num_priors, out_stride});
 
     const auto *biases_data = biases->data<float>();
     auto *top_data = top->mutable_data<float>();
@@ -75,9 +77,9 @@ void DecodeBoxOp::Forward() {
       int mask = masks_[n], out_h = bottom->shape(1), out_w = bottom->shape(2);
       Vision::DecodeYoloV3Boxes(bottom->data<float>(), biases_data, batch,
                                 num_priors, out_h, out_w, mask, num_classes_,
-                                top_data, ws_->Ctx());
+                                output_max_score_, top_data, ws_->Ctx());
       biases_data += mask * 2;
-      top_data += (out_h * out_w * mask) * 6;
+      top_data += (out_h * out_w * mask) * out_stride;
     }
   } else {
     LOG(FATAL) << "Currently only support SSD, RefineDet or YoloV3";
@@ -116,84 +118,101 @@ inline void decode(const T *encode_box, const T *prior_box, const T *prior_var,
 template <typename T>
 void DecodeSSDBoxes(const T *mbox_loc, const T *mbox_conf,
                     const T *mbox_priorbox, int batch, int num_priors,
-                    int num_classes, T *decode_box, Context *context) {
+                    int num_classes, bool output_max_score, T *decode_box,
+                    Context *context) {
   for (int b = 0; b < batch; ++b) {
-    auto *prior_box = mbox_priorbox;
-    auto *prior_var = mbox_priorbox + num_priors * 4;
+    const auto *prior_box = mbox_priorbox;
+    const auto *prior_var = mbox_priorbox + num_priors * 4;
     for (int n = 0; n < num_priors; ++n) {
-      decode<T>(mbox_loc, prior_box, prior_var, decode_box + 2);
-
-      int max_index = -1;
-      T max_score = std::numeric_limits<T>::lowest();
-      for (int c = 0; c < num_classes; ++c) {
-        T score = mbox_conf[c];
-        if (score > max_score) {
-          max_index = c;
-          max_score = score;
+      if (output_max_score) {
+        decode(mbox_loc, prior_box, prior_var, decode_box + 2);
+        int max_index = -1;
+        auto max_score = std::numeric_limits<T>::lowest();
+        for (int c = 0; c < num_classes; ++c) {
+          auto score = mbox_conf[c];
+          if (score > max_score) {
+            max_index = c;
+            max_score = score;
+          }
         }
+        decode_box[0] = max_index, decode_box[1] = max_score;
+        decode_box += 6;
+      } else {
+        decode(mbox_loc, prior_box, prior_var, decode_box);
+        for (int c = 0; c < num_classes; ++c) {
+          decode_box[4 + c] = mbox_conf[c];
+        }
+        decode_box += 4 + num_classes;
       }
-      decode_box[0] = max_index;
-      decode_box[1] = max_score;
-
       prior_box += 4, prior_var += 4;
       mbox_loc += 4, mbox_conf += num_classes;
-      decode_box += 6;
     }
   }
 }
 
 template void DecodeSSDBoxes(const float *, const float *, const float *, int,
-                             int, int, float *, Context *);
+                             int, int, bool, float *, Context *);
 
 template <typename T>
 void DecodeRefineDetBoxes(const T *odm_loc, const T *odm_conf,
                           const T *arm_priorbox, const T *arm_conf,
                           const T *arm_loc, int batch, int num_priors,
                           int num_classes, int background_label_id,
-                          float objectness_score, T *decode_box,
-                          Context *context) {
+                          float objectness_score, bool output_max_score,
+                          T *decode_box, Context *context) {
   for (int b = 0; b < batch; ++b) {
-    auto *prior_box = arm_priorbox;
-    auto *prior_var = arm_priorbox + num_priors * 4;
+    const auto *prior_box = arm_priorbox;
+    const auto *prior_var = arm_priorbox + num_priors * 4;
     for (int n = 0; n < num_priors; ++n) {
-      decode<T>(arm_loc, prior_box, prior_var, decode_box + 2);
-      decode<T>(odm_loc, decode_box + 2, prior_var, decode_box + 2);
-
-      if (arm_conf[1] < objectness_score) {
-        decode_box[0] = background_label_id;
-        decode_box[1] = 1;
-      } else {
-        int max_index = -1;
-        T max_score = std::numeric_limits<T>::lowest();
-        for (int c = 0; c < num_classes; ++c) {
-          T score = odm_conf[c];
-          if (score > max_score) {
-            max_index = c;
-            max_score = score;
+      bool is_background = arm_conf[1] < objectness_score;
+      if (output_max_score) {
+        decode(arm_loc, prior_box, prior_var, decode_box + 2);
+        decode(odm_loc, decode_box + 2, prior_var, decode_box + 2);
+        if (is_background) {
+          decode_box[0] = background_label_id, decode_box[1] = 1;
+        } else {
+          int max_index = -1;
+          auto max_score = std::numeric_limits<T>::lowest();
+          for (int c = 0; c < num_classes; ++c) {
+            auto score = odm_conf[c];
+            if (score > max_score) {
+              max_index = c;
+              max_score = score;
+            }
           }
+          decode_box[0] = max_index, decode_box[1] = max_score;
         }
-        decode_box[0] = max_index;
-        decode_box[1] = max_score;
+        decode_box += 6;
+      } else {
+        decode(arm_loc, prior_box, prior_var, decode_box);
+        decode(odm_loc, decode_box, prior_var, decode_box);
+        if (is_background) {
+          memset(decode_box + 4, 0, num_classes * sizeof(T));
+          decode_box[4 + background_label_id] = 1;
+        } else {
+          memcpy(decode_box + 4, odm_conf, num_classes * sizeof(T));
+        }
+        decode_box += 4 + num_classes;
       }
-
       prior_box += 4, prior_var += 4;
       odm_loc += 4, odm_conf += num_classes;
       arm_conf += 2, arm_loc += 4;
-      decode_box += 6;
     }
   }
 }
 
 template void DecodeRefineDetBoxes(const float *, const float *, const float *,
                                    const float *, const float *, int, int, int,
-                                   int, float, float *, Context *);
+                                   int, float, bool, float *, Context *);
 
 template <typename T>
 void DecodeYoloV3Boxes(const T *in_data, const T *biases, int batch,
                        int num_priors, int out_h, int out_w, int mask,
-                       int num_classes, T *decode_box, Context *context) {
+                       int num_classes, bool output_max_score, T *decode_box,
+                       Context *context) {
+  int out_stride = output_max_score ? 6 : (4 + num_classes);
   for (int b = 0; b < batch; ++b) {
-    auto *decode_box_offset = decode_box + b * num_priors * 6;
+    auto *box = decode_box + b * num_priors * out_stride;
     for (int n = 0; n < out_h * out_w * mask; ++n) {
       int s = n / mask, k = n % mask;
       int h_out = s / out_w, w_out = s % out_w;
@@ -203,34 +222,37 @@ void DecodeYoloV3Boxes(const T *in_data, const T *biases, int batch,
       float w = std::exp(in_data[2]) * biases[2 * k];
       float h = std::exp(in_data[3]) * biases[2 * k + 1];
 
-      int max_index = -1;
-      auto max_score = std::numeric_limits<float>::lowest();
       float scale = 1.f / (1 + std::exp(-in_data[4]));
-      for (int c = 0; c < num_classes; ++c) {
-        float score = scale * 1.f / (1 + std::exp(-in_data[5 + c]));
-        if (score > max_score) {
-          max_index = c;
-          max_score = score;
+
+      if (output_max_score) {
+        int max_index = -1;
+        auto max_score = std::numeric_limits<float>::lowest();
+        for (int c = 0; c < num_classes; ++c) {
+          float score = scale / (1 + std::exp(-in_data[5 + c]));
+          if (score > max_score) {
+            max_index = c;
+            max_score = score;
+          }
+        }
+        box[0] = max_index, box[1] = max_score;
+        box[2] = x, box[3] = y, box[4] = w, box[5] = h;
+      } else {
+        box[0] = x, box[1] = y, box[2] = w, box[3] = h;
+        for (int c = 0; c < num_classes; ++c) {
+          box[4 + c] = scale / (1 + std::exp(-in_data[5 + c]));
         }
       }
 
-      decode_box_offset[0] = max_index;
-      decode_box_offset[1] = max_score;
-      decode_box_offset[2] = x;
-      decode_box_offset[3] = y;
-      decode_box_offset[4] = w;
-      decode_box_offset[5] = h;
-
       in_data += 4 + 1 + num_classes;
-      decode_box_offset += 6;
+      box += out_stride;
     }
   }
 }
 
 template void DecodeYoloV3Boxes(const float *in_data, const float *biases,
                                 int batch, int num_priors, int out_h, int out_w,
-                                int mask, int num_classes, float *decode_box,
-                                Context *context);
+                                int mask, int num_classes, bool,
+                                float *decode_box, Context *context);
 #endif
 
 }  // namespace Vision

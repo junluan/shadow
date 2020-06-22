@@ -218,14 +218,17 @@ class Network(object):
         self.add_arg(op_param, 'group', group, 's_i')
         self.add_arg(op_param, 'bias_term', bias_term, 's_i')
 
-    def add_decode_box(self, name, bottoms, tops, method, num_classes, background_label_id, objectness_score):
+    def add_decode_box(self, name, bottoms, tops, method, num_classes, output_max_score=True, background_label_id=0, objectness_score=0.01, masks=None):
         op_param = self.add_net_op()
         self.add_common(op_param, name, 'DecodeBox', bottoms, tops)
 
         self.add_arg(op_param, 'method', method, 's_i')
         self.add_arg(op_param, 'num_classes', num_classes, 's_i')
+        self.add_arg(op_param, 'output_max_score', output_max_score, 's_i')
         self.add_arg(op_param, 'background_label_id', background_label_id, 's_i')
         self.add_arg(op_param, 'objectness_score', objectness_score, 's_f')
+        if masks is not None:
+            self.add_arg(op_param, 'masks', masks, 'v_i')
 
     def add_deconv(self, name, bottoms, tops, num_output, kernel_size, stride=1, pad=0, dilation=1, group=1, bias_term=True):
         op_param = self.add_net_op()
@@ -491,6 +494,14 @@ class Network(object):
         else:
             raise ValueError('Unsupported resize type', resize_type)
         self.add_arg(op_param, 'align_corners', align_corners, 's_i')
+
+    def add_roi_align(self, name, bottoms, tops, pooled_h, pooled_w, spatial_scale):
+        op_param = self.add_net_op()
+        self.add_common(op_param, name, 'ROIAlign', bottoms, tops)
+
+        self.add_arg(op_param, 'pooled_h', pooled_h, 's_i')
+        self.add_arg(op_param, 'pooled_w', pooled_w, 's_i')
+        self.add_arg(op_param, 'spatial_scale', spatial_scale, 's_f')
 
     def add_roi_pooling(self, name, bottoms, tops, pooled_h, pooled_w, spatial_scale):
         op_param = self.add_net_op()
