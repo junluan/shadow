@@ -5,8 +5,6 @@ namespace Shadow {
 
 Network::Network() { engine_ = std::make_shared<NetworkImpl>(); }
 
-void Network::Setup(int device_id) { engine_->Setup(device_id); }
-
 void Network::LoadXModel(const shadow::NetParam &net_param,
                          const ArgumentHelper &arguments) {
   engine_->LoadXModel(net_param, arguments);

@@ -7,17 +7,9 @@ namespace Shadow {
 
 class NetworkImpl {
  public:
-  void Setup(int device_id) {
-    ArgumentHelper arguments;
-    arguments.AddSingleArgument<int>("device_id", device_id);
-    ws_ = std::make_shared<Workspace>(arguments);
-  }
-
   void LoadXModel(const shadow::NetParam &net_param,
                   const ArgumentHelper &arguments) {
-    if (ws_ == nullptr) {
-      ws_ = std::make_shared<Workspace>(arguments);
-    }
+    ws_ = std::make_shared<Workspace>(arguments);
     backend_.reset(CreateBackend(arguments, ws_.get()));
     backend_->LoadModel(net_param);
   }

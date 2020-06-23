@@ -16,8 +16,6 @@ class Network {
  public:
   Network();
 
-  void Setup(int device_id = 0);
-
   void LoadXModel(const shadow::NetParam &net_param,
                   const ArgumentHelper &arguments);
 
