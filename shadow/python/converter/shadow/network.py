@@ -127,6 +127,8 @@ class Network(object):
         else:
             print('No input shape, must be supplied manually')
 
+        return op_param
+
     def add_activate(self, name, bottoms, tops, activate_type='Relu', slope=0.1):
         op_param = self.add_net_op()
         self.add_common(op_param, name, 'Activate', bottoms, tops)
@@ -149,9 +151,13 @@ class Network(object):
         else:
             raise ValueError('Unsupported activate type', activate_type)
 
+        return op_param
+
     def add_axpy(self, name, bottoms, tops):
         op_param = self.add_net_op()
         self.add_common(op_param, name, 'Axpy', bottoms, tops)
+
+        return op_param
 
     def add_batch_norm(self, name, bottoms, tops, use_global_stats=True, eps=1e-5):
         op_param = self.add_net_op()
@@ -159,6 +165,8 @@ class Network(object):
 
         self.add_arg(op_param, 'use_global_stats', use_global_stats, 's_i')
         self.add_arg(op_param, 'eps', eps, 's_f')
+
+        return op_param
 
     def add_binary(self, name, bottoms, tops, operation, scalar=None):
         op_param = self.add_net_op()
@@ -183,11 +191,15 @@ class Network(object):
         if scalar is not None:
             self.add_arg(op_param, 'scalar', scalar, 's_f')
 
+        return op_param
+
     def add_concat(self, name, bottoms, tops, axis=1):
         op_param = self.add_net_op()
         self.add_common(op_param, name, 'Concat', bottoms, tops)
 
         self.add_arg(op_param, 'axis', axis, 's_i')
+
+        return op_param
 
     def add_connected(self, name, bottoms, tops, num_output, bias_term=True, transpose=True):
         op_param = self.add_net_op()
@@ -196,6 +208,8 @@ class Network(object):
         self.add_arg(op_param, 'num_output', num_output, 's_i')
         self.add_arg(op_param, 'bias_term', bias_term, 's_i')
         self.add_arg(op_param, 'transpose', transpose, 's_i')
+
+        return op_param
 
     def add_conv(self, name, bottoms, tops, num_output, kernel_size, stride=1, pad=0, dilation=1, group=1, bias_term=True):
         op_param = self.add_net_op()
@@ -218,6 +232,8 @@ class Network(object):
         self.add_arg(op_param, 'group', group, 's_i')
         self.add_arg(op_param, 'bias_term', bias_term, 's_i')
 
+        return op_param
+
     def add_decode_box(self, name, bottoms, tops, method, num_classes, output_max_score=True, background_label_id=0, objectness_score=0.01, masks=None):
         op_param = self.add_net_op()
         self.add_common(op_param, name, 'DecodeBox', bottoms, tops)
@@ -229,6 +245,8 @@ class Network(object):
         self.add_arg(op_param, 'objectness_score', objectness_score, 's_f')
         if masks is not None:
             self.add_arg(op_param, 'masks', masks, 'v_i')
+
+        return op_param
 
     def add_deconv(self, name, bottoms, tops, num_output, kernel_size, stride=1, pad=0, dilation=1, group=1, bias_term=True):
         op_param = self.add_net_op()
@@ -251,6 +269,8 @@ class Network(object):
         self.add_arg(op_param, 'group', group, 's_i')
         self.add_arg(op_param, 'bias_term', bias_term, 's_i')
 
+        return op_param
+
     def add_deform_conv(self, name, bottoms, tops, num_output, kernel_size, stride=1, pad=0, dilation=1, bias_term=True, group=1, deform_group=1):
         op_param = self.add_net_op()
         self.add_common(op_param, name, 'DeformConv', bottoms, tops)
@@ -264,6 +284,8 @@ class Network(object):
         self.add_arg(op_param, 'group', group, 's_i')
         self.add_arg(op_param, 'deform_group', deform_group, 's_i')
 
+        return op_param
+
     def add_deform_psroi_pooling(self, name, bottoms, tops, output_dim, group_size, pooled_size, part_size, sample_per_part, spatial_scale, trans_std, no_trans=False):
         op_param = self.add_net_op()
         self.add_common(op_param, name, 'DeformPSROIPooling', bottoms, tops)
@@ -276,6 +298,8 @@ class Network(object):
         self.add_arg(op_param, 'spatial_scale', spatial_scale, 's_f')
         self.add_arg(op_param, 'trans_std', trans_std, 's_f')
         self.add_arg(op_param, 'no_trans', no_trans, 's_i')
+
+        return op_param
 
     def add_eltwise(self, name, bottoms, tops, operation, coeff=None):
         op_param = self.add_net_op()
@@ -294,12 +318,16 @@ class Network(object):
         if coeff is not None:
             self.add_arg(op_param, 'coeff', coeff, 'v_f')
 
+        return op_param
+
     def add_flatten(self, name, bottoms, tops, axis=1, end_axis=-1):
         op_param = self.add_net_op()
         self.add_common(op_param, name, 'Flatten', bottoms, tops)
 
         self.add_arg(op_param, 'axis', axis, 's_i')
         self.add_arg(op_param, 'end_axis', end_axis, 's_i')
+
+        return op_param
 
     def add_gather(self, name, bottoms, tops, axis=0, indexes=None):
         op_param = self.add_net_op()
@@ -308,6 +336,8 @@ class Network(object):
         self.add_arg(op_param, 'axis', axis, 's_i')
         if indexes is not None:
             self.add_arg(op_param, 'indexes', indexes, 'v_i')
+
+        return op_param
 
     def add_grid_sample(self, name, bottoms, tops, mode='bilinear', padding_mode='zeros'):
         op_param = self.add_net_op()
@@ -326,6 +356,8 @@ class Network(object):
         else:
             raise ValueError('Unsupported grid sample padding mode', padding_mode)
 
+        return op_param
+
     def add_group_norm(self, name, bottoms, tops, group, eps=1e-5):
         op_param = self.add_net_op()
         self.add_common(op_param, name, 'GroupNorm', bottoms, tops)
@@ -333,11 +365,15 @@ class Network(object):
         self.add_arg(op_param, 'group', group, 's_i')
         self.add_arg(op_param, 'eps', eps, 's_f')
 
+        return op_param
+
     def add_instance_norm(self, name, bottoms, tops, eps=1e-5):
         op_param = self.add_net_op()
         self.add_common(op_param, name, 'InstanceNorm', bottoms, tops)
 
         self.add_arg(op_param, 'eps', eps, 's_f')
+
+        return op_param
 
     def add_lrn(self, name, bottoms, tops, local_size=5, alpha=1, beta=0.75, norm_region='AcrossChannels', k=1):
         op_param = self.add_net_op()
@@ -352,12 +388,16 @@ class Network(object):
             raise ValueError('Unsupported norm region type', norm_region)
         self.add_arg(op_param, 'k', k, 's_f')
 
+        return op_param
+
     def add_matmul(self, name, bottoms, tops, transpose_a=False, transpose_b=False):
         op_param = self.add_net_op()
         self.add_common(op_param, name, 'MatMul', bottoms, tops)
 
         self.add_arg(op_param, 'transpose_a', transpose_a, 's_i')
         self.add_arg(op_param, 'transpose_b', transpose_b, 's_i')
+
+        return op_param
 
     def add_normalize(self, name, bottoms, tops, across_spatial=True, channel_shared=True):
         op_param = self.add_net_op()
@@ -366,6 +406,8 @@ class Network(object):
         self.add_arg(op_param, 'across_spatial', across_spatial, 's_i')
         self.add_arg(op_param, 'channel_shared', channel_shared, 's_i')
 
+        return op_param
+
     def add_pad(self, name, bottoms, tops, paddings, value=0):
         op_param = self.add_net_op()
         self.add_common(op_param, name, 'Pad', bottoms, tops)
@@ -373,12 +415,16 @@ class Network(object):
         self.add_arg(op_param, 'paddings', paddings, 'v_i')
         self.add_arg(op_param, 'value', value, 's_f')
 
+        return op_param
+
     def add_permute(self, name, bottoms, tops, order=None):
         op_param = self.add_net_op()
         self.add_common(op_param, name, 'Permute', bottoms, tops)
 
         if order is not None:
             self.add_arg(op_param, 'order', order, 'v_i')
+
+        return op_param
 
     def add_pooling(self, name, bottoms, tops, pool, kernel_size, stride, pad, global_pooling=False, full_pooling=True):
         op_param = self.add_net_op()
@@ -403,6 +449,8 @@ class Network(object):
         self.add_arg(op_param, 'global_pooling', global_pooling, 's_i')
         self.add_arg(op_param, 'full_pooling', full_pooling, 's_i')
 
+        return op_param
+
     def add_prior_box(self, name, bottoms, tops, min_size=None, max_size=None, aspect_ratio=None, flip=True, clip=True, variance=None, step=0, offset=0.5):
         op_param = self.add_net_op()
         self.add_common(op_param, name, 'PriorBox', bottoms, tops)
@@ -420,6 +468,8 @@ class Network(object):
         self.add_arg(op_param, 'step', step, 's_f')
         self.add_arg(op_param, 'offset', offset, 's_f')
 
+        return op_param
+
     def add_proposal(self, name, bottoms, tops, feat_stride=16, pre_nms_top_n=6000, post_nms_top_n=300, min_size=16, nms_thresh=0.7, ratios=[0.5, 1, 2], scales=[8, 16, 32]):
         op_param = self.add_net_op()
         self.add_common(op_param, name, 'Proposal', bottoms, tops)
@@ -432,6 +482,8 @@ class Network(object):
         self.add_arg(op_param, 'ratios', ratios, 'v_f')
         self.add_arg(op_param, 'scales', scales, 'v_f')
 
+        return op_param
+
     def add_psroi_pooling(self, name, bottoms, tops, output_dim, group_size, spatial_scale):
         op_param = self.add_net_op()
         self.add_common(op_param, name, 'PSROIPooling', bottoms, tops)
@@ -439,6 +491,8 @@ class Network(object):
         self.add_arg(op_param, 'output_dim', output_dim, 's_i')
         self.add_arg(op_param, 'group_size', group_size, 's_i')
         self.add_arg(op_param, 'spatial_scale', spatial_scale, 's_f')
+
+        return op_param
 
     def add_reduce(self, name, bottoms, tops, operation, axes=None, keep_dims=True):
         op_param = self.add_net_op()
@@ -460,11 +514,15 @@ class Network(object):
             self.add_arg(op_param, 'axes', axes, 'v_i')
         self.add_arg(op_param, 'keep_dims', keep_dims, 's_i')
 
+        return op_param
+
     def add_reorg(self, name, bottoms, tops, stride=2):
         op_param = self.add_net_op()
         self.add_common(op_param, name, 'Reorg', bottoms, tops)
 
         self.add_arg(op_param, 'stride', stride, 's_i')
+
+        return op_param
 
     def add_reshape(self, name, bottoms, tops, shape=None, axis=0, num_axes=-1):
         op_param = self.add_net_op()
@@ -474,6 +532,8 @@ class Network(object):
             self.add_arg(op_param, 'shape', shape, 'v_i')
         self.add_arg(op_param, 'axis', axis, 's_i')
         self.add_arg(op_param, 'num_axes', num_axes, 's_i')
+
+        return op_param
 
     def add_resize(self, name, bottoms, tops, size=0, scale=1.0, resize_type='bilinear', align_corners=False):
         op_param = self.add_net_op()
@@ -495,6 +555,8 @@ class Network(object):
             raise ValueError('Unsupported resize type', resize_type)
         self.add_arg(op_param, 'align_corners', align_corners, 's_i')
 
+        return op_param
+
     def add_roi_align(self, name, bottoms, tops, pooled_h, pooled_w, spatial_scale):
         op_param = self.add_net_op()
         self.add_common(op_param, name, 'ROIAlign', bottoms, tops)
@@ -503,6 +565,8 @@ class Network(object):
         self.add_arg(op_param, 'pooled_w', pooled_w, 's_i')
         self.add_arg(op_param, 'spatial_scale', spatial_scale, 's_f')
 
+        return op_param
+
     def add_roi_pooling(self, name, bottoms, tops, pooled_h, pooled_w, spatial_scale):
         op_param = self.add_net_op()
         self.add_common(op_param, name, 'ROIPooling', bottoms, tops)
@@ -510,6 +574,8 @@ class Network(object):
         self.add_arg(op_param, 'pooled_h', pooled_h, 's_i')
         self.add_arg(op_param, 'pooled_w', pooled_w, 's_i')
         self.add_arg(op_param, 'spatial_scale', spatial_scale, 's_f')
+
+        return op_param
 
     def add_scale(self, name, bottoms, tops, axis=1, has_scale=True, has_bias=True, scale_value=None, bias_value=None):
         op_param = self.add_net_op()
@@ -527,11 +593,15 @@ class Network(object):
         has_scalar = scale_value is not None or bias_value is not None
         assert has_blob != has_scalar
 
+        return op_param
+
     def add_shuffle_channel(self, name, bottoms, tops, group):
         op_param = self.add_net_op()
         self.add_common(op_param, name, 'ShuffleChannel', bottoms, tops)
 
         self.add_arg(op_param, 'group', group, 's_i')
+
+        return op_param
 
     def add_slice(self, name, bottoms, tops, axis=1, slice_point=None):
         op_param = self.add_net_op()
@@ -541,11 +611,15 @@ class Network(object):
         if slice_point is not None:
             self.add_arg(op_param, 'slice_point', slice_point, 'v_i')
 
+        return op_param
+
     def add_softmax(self, name, bottoms, tops, axis=1):
         op_param = self.add_net_op()
         self.add_common(op_param, name, 'Softmax', bottoms, tops)
 
         self.add_arg(op_param, 'axis', axis, 's_i')
+
+        return op_param
 
     def add_squeeze(self, name, bottoms, tops, axes=None):
         op_param = self.add_net_op()
@@ -554,11 +628,15 @@ class Network(object):
         if axes is not None:
             self.add_arg(op_param, 'axes', axes, 'v_i')
 
+        return op_param
+
     def add_stack(self, name, bottoms, tops, axis=0):
         op_param = self.add_net_op()
         self.add_common(op_param, name, 'Stack', bottoms, tops)
 
         self.add_arg(op_param, 'axis', axis, 's_i')
+
+        return op_param
 
     def add_unary(self, name, bottoms, tops, operation):
         op_param = self.add_net_op()
@@ -597,12 +675,16 @@ class Network(object):
         else:
             raise ValueError('Unsupported operation type', operation)
 
+        return op_param
+
     def add_unsqueeze(self, name, bottoms, tops, axes=None):
         op_param = self.add_net_op()
         self.add_common(op_param, name, 'Unsqueeze', bottoms, tops)
 
         if axes is not None:
             self.add_arg(op_param, 'axes', axes, 'v_i')
+
+        return op_param
 
     def clear_all_blobs(self):
         for net_param in self.meta_net_param.network:
