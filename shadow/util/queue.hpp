@@ -1,5 +1,5 @@
-#ifndef SHADOW_UTIL_QUEUE_HPP
-#define SHADOW_UTIL_QUEUE_HPP
+#ifndef SHADOW_UTIL_QUEUE_HPP_
+#define SHADOW_UTIL_QUEUE_HPP_
 
 #include <atomic>
 #include <condition_variable>
@@ -77,4 +77,4 @@ class Queue {
 
 }  // namespace Shadow
 
-#endif  // SHADOW_UTIL_QUEUE_HPP
+#endif  // SHADOW_UTIL_QUEUE_HPP_

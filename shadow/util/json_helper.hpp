@@ -1,5 +1,5 @@
-#ifndef SHADOW_CORE_JSON_HELPER_HPP
-#define SHADOW_CORE_JSON_HELPER_HPP
+#ifndef SHADOW_UTIL_JSON_HELPER_HPP_
+#define SHADOW_UTIL_JSON_HELPER_HPP_
 
 #include <map>
 #include <memory>
@@ -217,4 +217,4 @@ class JsonForwarder {
 
 }  // namespace Shadow
 
-#endif  // SHADOW_CORE_JSON_HELPER_HPP
+#endif  // SHADOW_UTIL_JSON_HELPER_HPP_

@@ -1,7 +1,7 @@
 #include "jimage.hpp"
 #include "util.hpp"
 
-//#define USE_STB
+// #define USE_STB
 #if defined(USE_STB)
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb/stb_image.h"
@@ -11,7 +11,7 @@
 
 namespace Shadow {
 
-void JImage::Read(const std::string &im_path) {
+void JImage::Read(const std::string& im_path) {
   CHECK(Path(im_path).is_file()) << "Can not find " << im_path;
   if (data_ != nullptr) {
     delete[] data_;
@@ -31,7 +31,7 @@ void JImage::Read(const std::string &im_path) {
 #endif
 }
 
-void JImage::Write(const std::string &im_path) const {
+void JImage::Write(const std::string& im_path) const {
   CHECK_NOTNULL(data_);
 
 #if defined(USE_OpenCV)
@@ -40,7 +40,7 @@ void JImage::Write(const std::string &im_path) const {
 #elif defined(USE_STB)
   int is_ok = -1;
   int step = w_ * c_;
-  const auto &path = Util::change_extension(im_path, ".png");
+  const auto& path = Util::change_extension(im_path, ".png");
   if (order_ == kRGB) {
     is_ok = stbi_write_png(path.c_str(), w_, h_, c_, data_, step);
   } else if (order_ == kBGR) {
@@ -58,7 +58,7 @@ void JImage::Write(const std::string &im_path) const {
 #endif
 }
 
-void JImage::Show(const std::string &show_name, int wait_time) const {
+void JImage::Show(const std::string& show_name, int wait_time) const {
   CHECK_NOTNULL(data_);
 
 #if defined(USE_OpenCV)
@@ -73,7 +73,7 @@ void JImage::Show(const std::string &show_name, int wait_time) const {
 #endif
 }
 
-void JImage::CopyTo(JImage *im_copy) const {
+void JImage::CopyTo(JImage* im_copy) const {
   CHECK_NOTNULL(im_copy);
   CHECK_NOTNULL(data_);
 
@@ -81,7 +81,7 @@ void JImage::CopyTo(JImage *im_copy) const {
   im_copy->SetData(data_, count());
 }
 
-void JImage::FromRGBA(const unsigned char *data, int h, int w, Order order) {
+void JImage::FromRGBA(const unsigned char* data, int h, int w, Order order) {
   CHECK_NOTNULL(data);
 
   int loc_r = 0, loc_g = 1, loc_b = 2;
@@ -98,7 +98,7 @@ void JImage::FromRGBA(const unsigned char *data, int h, int w, Order order) {
   int spatial_dim = h * w;
   if (order == kGray) {
     Reshape(1, h, w, order);
-    unsigned char *data_index = data_;
+    unsigned char* data_index = data_;
     for (int i = 0; i < spatial_dim; ++i, data_index += c_, data += 4) {
       auto val = static_cast<int>(0.299f * data[0] + 0.587f * data[1] +
                                   0.114f * data[2]);
@@ -106,7 +106,7 @@ void JImage::FromRGBA(const unsigned char *data, int h, int w, Order order) {
     }
   } else if (order == kRGB || order == kBGR) {
     Reshape(3, h, w, order);
-    unsigned char *data_index = data_;
+    unsigned char* data_index = data_;
     for (int i = 0; i < spatial_dim; ++i, data_index += c_, data += 4) {
       data_index[loc_r] = data[0];
       data_index[loc_g] = data[1];
@@ -118,7 +118,7 @@ void JImage::FromRGBA(const unsigned char *data, int h, int w, Order order) {
 }
 
 #if defined(USE_OpenCV)
-void JImage::FromMat(const cv::Mat &im_mat, bool shared) {
+void JImage::FromMat(const cv::Mat& im_mat, bool shared) {
   CHECK(!im_mat.empty()) << "Mat data is empty!";
 
   if (shared) {
@@ -153,12 +153,12 @@ void JImage::Release() {
   }
 }
 
-void JImage::GetInv(unsigned char *im_inv) const {
+void JImage::GetInv(unsigned char* im_inv) const {
   CHECK_NOTNULL(data_);
 
   if (order_ == kRGB || order_ == kBGR) {
     int spatial_dim = h_ * w_;
-    unsigned char *data_index = data_;
+    unsigned char* data_index = data_;
     for (int i = 0; i < spatial_dim; ++i, data_index += c_) {
       *(im_inv++) = *(data_index + c_ - 1);
       *(im_inv++) = *(data_index + 1);

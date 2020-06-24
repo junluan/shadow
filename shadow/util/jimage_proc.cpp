@@ -5,7 +5,7 @@ namespace Shadow {
 
 namespace JImageProc {
 
-VecPointI GetLinePoints(const PointI &start, const PointI &end, int step,
+VecPointI GetLinePoints(const PointI& start, const PointI& end, int step,
                         int slice_axis) {
   PointI start_p(start), end_p(end);
 
@@ -50,19 +50,19 @@ VecPointI GetLinePoints(const PointI &start, const PointI &end, int step,
 }
 
 template <typename T>
-void Line(JImage *im, const Point<T> &start, const Point<T> &end,
-          const Scalar &scalar) {
+void Line(JImage* im, const Point<T>& start, const Point<T>& end,
+          const Scalar& scalar) {
   CHECK_NOTNULL(im);
   CHECK_NOTNULL(im->data());
 
   int c_ = im->c_, h_ = im->h_, w_ = im->w_;
-  const auto &order_ = im->order();
+  const auto& order_ = im->order();
 
   if (order_ != kGray && order_ != kRGB && order_ != kBGR) {
     LOG(FATAL) << "Unsupported format " << order_ << " to draw line!";
   }
 
-  auto *data = im->data();
+  auto* data = im->data();
 
   int loc_r = 0, loc_g = 1, loc_b = 2;
   if (order_ == kRGB) {
@@ -77,10 +77,10 @@ void Line(JImage *im, const Point<T> &start, const Point<T> &end,
 
   auto gray = std::max(std::max(scalar.r, scalar.g), scalar.b);
 
-  const auto &points = GetLinePoints(PointI(start), PointI(end));
+  const auto& points = GetLinePoints(PointI(start), PointI(end));
 
   int offset, x, y;
-  for (const auto &point : points) {
+  for (const auto& point : points) {
     x = point.x, y = point.y;
     if (x < 0 || y < 0 || x >= w_ || y >= h_) continue;
     offset = (w_ * y + x) * c_;
@@ -95,12 +95,12 @@ void Line(JImage *im, const Point<T> &start, const Point<T> &end,
 }
 
 template <typename T>
-void Rectangle(JImage *im, const Rect<T> &rect, const Scalar &scalar) {
+void Rectangle(JImage* im, const Rect<T>& rect, const Scalar& scalar) {
   CHECK_NOTNULL(im);
   CHECK_NOTNULL(im->data());
 
   int h_ = im->h_, w_ = im->w_;
-  const auto &order_ = im->order();
+  const auto& order_ = im->order();
 
   if (order_ != kGray && order_ != kRGB && order_ != kBGR) {
     LOG(FATAL) << "Unsupported format " << order_ << " to draw rectangle!";
@@ -119,19 +119,19 @@ void Rectangle(JImage *im, const Rect<T> &rect, const Scalar &scalar) {
   Line(im, PointI(x2, y1), PointI(x2, y2), scalar);
 }
 
-void Color2Gray(const JImage &im_src, JImage *im_gray,
-                const Transformer &transformer) {
+void Color2Gray(const JImage& im_src, JImage* im_gray,
+                const Transformer& transformer) {
   CHECK_NOTNULL(im_src.data());
   CHECK_NOTNULL(im_gray);
   CHECK_NE(im_src.data(), im_gray->data());
 
   int h_ = im_src.h_, w_ = im_src.w_, spatial_dim_ = h_ * w_;
-  const auto &order_ = im_src.order();
+  const auto& order_ = im_src.order();
 
   im_gray->Reshape(1, h_, w_, kGray);
 
-  const auto *data_src = im_src.data();
-  auto *data_gray = im_gray->data();
+  const auto* data_src = im_src.data();
+  auto* data_gray = im_gray->data();
 
   if (transformer == kRGB2Gray) {
     CHECK((order_ == kRGB));
@@ -162,13 +162,13 @@ void Color2Gray(const JImage &im_src, JImage *im_gray,
   }
 }
 
-void RGB2BGR(const JImage &im_src, JImage *im_dst,
-             const Transformer &transformer) {
+void RGB2BGR(const JImage& im_src, JImage* im_dst,
+             const Transformer& transformer) {
   CHECK_NOTNULL(im_src.data());
   CHECK_NOTNULL(im_dst);
 
   int h_ = im_src.h_, w_ = im_src.w_, spatial_dim_ = h_ * w_;
-  const auto &order_ = im_src.order();
+  const auto& order_ = im_src.order();
 
   if (transformer == kRGB2BGR) {
     CHECK((order_ == kRGB));
@@ -181,8 +181,8 @@ void RGB2BGR(const JImage &im_src, JImage *im_dst,
                << ", currently supported: kRGB2BGR, kBGR2RGB";
   }
 
-  const auto *data_src = im_src.data();
-  auto *data_dst = im_dst->data();
+  const auto* data_src = im_src.data();
+  auto* data_dst = im_dst->data();
 
   for (int i = 0; i < spatial_dim_; ++i, data_src += 3, data_dst += 3) {
     auto c_0 = *data_src, c_1 = *(data_src + 1), c_2 = *(data_src + 2);
@@ -200,15 +200,15 @@ void RGB2BGR(const JImage &im_src, JImage *im_dst,
 #define yuvCr fix(0.713, 10)
 #define yuvCb fix(0.564, 10)
 
-void RGB2I420(const JImage &im_src, JImage *im_i420,
-              const Transformer &transformer) {
+void RGB2I420(const JImage& im_src, JImage* im_i420,
+              const Transformer& transformer) {
   CHECK_NOTNULL(im_src.data());
   CHECK_NOTNULL(im_i420);
   CHECK_NE(im_src.data(), im_i420->data());
 
   int src_h_ = (im_src.h_ >> 1) << 1, src_w_ = (im_src.w_ >> 1) << 1;
   int src_step_ = im_src.w_ * 3;
-  const auto &order_ = im_src.order();
+  const auto& order_ = im_src.order();
 
   int loc_r = 0, loc_g = 1, loc_b = 2;
   if (transformer == kRGB2I420) {
@@ -224,8 +224,8 @@ void RGB2I420(const JImage &im_src, JImage *im_i420,
 
   im_i420->Reshape(3, src_h_, src_w_, kI420);
 
-  const auto *data_src = im_src.data();
-  auto *data_i420 = im_i420->data();
+  const auto* data_src = im_src.data();
+  auto* data_i420 = im_i420->data();
 
   int r, g, b;
   int dst_h = src_h_ >> 1, dst_w = src_w_ >> 1;
@@ -289,14 +289,14 @@ void RGB2I420(const JImage &im_src, JImage *im_i420,
   }
 }
 
-void I4202RGB(const JImage &im_src, JImage *im_dst,
-              const Transformer &transformer) {
+void I4202RGB(const JImage& im_src, JImage* im_dst,
+              const Transformer& transformer) {
   CHECK_NOTNULL(im_src.data());
   CHECK_NOTNULL(im_dst);
   CHECK_NE(im_src.data(), im_dst->data());
 
   int src_h_ = im_src.h_, src_w_ = im_src.w_, spatial_dim_ = src_h_ * src_w_;
-  const auto &order_ = im_src.order();
+  const auto& order_ = im_src.order();
 
   CHECK((order_ == kI420));
   int loc_r = 0, loc_g = 1, loc_b = 2;
@@ -311,10 +311,10 @@ void I4202RGB(const JImage &im_src, JImage *im_dst,
                << ", currently supported: kI4202RGB, kI4202BGR";
   }
 
-  const auto *data_src_y = im_src.data();
-  const auto *data_src_u = data_src_y + spatial_dim_;
-  const auto *data_src_v = data_src_y + spatial_dim_ * 5 / 4;
-  auto *data_dst = im_dst->data();
+  const auto* data_src_y = im_src.data();
+  const auto* data_src_u = data_src_y + spatial_dim_;
+  const auto* data_src_v = data_src_y + spatial_dim_ * 5 / 4;
+  auto* data_dst = im_dst->data();
 
   for (int h = 0; h < src_h_; ++h) {
     for (int w = 0; w < src_w_; ++w) {
@@ -337,8 +337,8 @@ void I4202RGB(const JImage &im_src, JImage *im_dst,
 }
 
 // Format transform
-void FormatTransform(const JImage &im_src, JImage *im_dst,
-                     const Transformer &transformer) {
+void FormatTransform(const JImage& im_src, JImage* im_dst,
+                     const Transformer& transformer) {
   switch (transformer) {
     case kRGB2Gray:
     case kBGR2Gray:
@@ -369,13 +369,13 @@ void FormatTransform(const JImage &im_src, JImage *im_dst,
 }
 
 // Resize and Crop.
-void Resize(const JImage &im_src, JImage *im_res, int height, int width) {
+void Resize(const JImage& im_src, JImage* im_res, int height, int width) {
   CHECK_NOTNULL(im_src.data());
   CHECK_NOTNULL(im_res);
   CHECK_NE(im_src.data(), im_res->data());
 
   int c_ = im_src.c_, h_ = im_src.h_, w_ = im_src.w_;
-  const auto &order_ = im_src.order();
+  const auto& order_ = im_src.order();
 
   if (order_ != kGray && order_ != kRGB && order_ != kBGR) {
     LOG(FATAL) << "Unsupported format " << order_ << " to resize!";
@@ -383,8 +383,8 @@ void Resize(const JImage &im_src, JImage *im_res, int height, int width) {
 
   im_res->Reshape(c_, height, width, order_);
 
-  const auto *data_src = im_src.data();
-  auto *data_gray = im_res->data();
+  const auto* data_src = im_src.data();
+  auto* data_gray = im_res->data();
 
   float step_h = static_cast<float>(h_) / im_res->h_;
   float step_w = static_cast<float>(w_) / im_res->w_;
@@ -404,13 +404,13 @@ void Resize(const JImage &im_src, JImage *im_res, int height, int width) {
 }
 
 template <typename T>
-void Crop(const JImage &im_src, JImage *im_crop, const Rect<T> &crop) {
+void Crop(const JImage& im_src, JImage* im_crop, const Rect<T>& crop) {
   CHECK_NOTNULL(im_src.data());
   CHECK_NOTNULL(im_crop);
   CHECK_NE(im_src.data(), im_crop->data());
 
   int c_ = im_src.c_, h_ = im_src.h_, w_ = im_src.w_;
-  const auto &order_ = im_src.order();
+  const auto& order_ = im_src.order();
 
   if (order_ != kGray && order_ != kRGB && order_ != kBGR) {
     LOG(FATAL) << "Unsupported format " << order_ << " to crop!";
@@ -445,14 +445,14 @@ void Crop(const JImage &im_src, JImage *im_crop, const Rect<T> &crop) {
 }
 
 template <typename T>
-void CropResize(const JImage &im_src, JImage *im_res, const Rect<T> &crop,
+void CropResize(const JImage& im_src, JImage* im_res, const Rect<T>& crop,
                 int height, int width) {
   CHECK_NOTNULL(im_src.data());
   CHECK_NOTNULL(im_res);
   CHECK_NE(im_src.data(), im_res->data());
 
   int c_ = im_src.c_, h_ = im_src.h_, w_ = im_src.w_;
-  const auto &order_ = im_src.order();
+  const auto& order_ = im_src.order();
 
   if (order_ != kGray && order_ != kRGB && order_ != kBGR) {
     LOG(FATAL) << "Unsupported format " << order_ << " to crop and resize!";
@@ -474,8 +474,8 @@ void CropResize(const JImage &im_src, JImage *im_res, const Rect<T> &crop,
 
   im_res->Reshape(c_, height, width, order_);
 
-  const auto *data_src = im_src.data();
-  auto *data_res = im_res->data();
+  const auto* data_src = im_src.data();
+  auto* data_res = im_res->data();
 
   float step_h =
       (crop.h <= 1 ? crop.h * h_ : crop.h) / static_cast<float>(height);
@@ -499,14 +499,14 @@ void CropResize(const JImage &im_src, JImage *im_res, const Rect<T> &crop,
 }
 
 template <typename T>
-void CropResize2Gray(const JImage &im_src, JImage *im_gray, const Rect<T> &crop,
+void CropResize2Gray(const JImage& im_src, JImage* im_gray, const Rect<T>& crop,
                      int height, int width) {
   CHECK_NOTNULL(im_src.data());
   CHECK_NOTNULL(im_gray);
   CHECK_NE(im_src.data(), im_gray->data());
 
   int c_ = im_src.c_, h_ = im_src.h_, w_ = im_src.w_;
-  const auto &order_ = im_src.order();
+  const auto& order_ = im_src.order();
 
   int loc_r = 0, loc_g = 1, loc_b = 2;
   if (order_ == kRGB) {
@@ -536,8 +536,8 @@ void CropResize2Gray(const JImage &im_src, JImage *im_gray, const Rect<T> &crop,
 
   im_gray->Reshape(1, height, width, kGray);
 
-  const auto *data_src = im_src.data();
-  auto *data_gray = im_gray->data();
+  const auto* data_src = im_src.data();
+  auto* data_gray = im_gray->data();
 
   float step_h =
       (crop.h <= 1 ? crop.h * h_ : crop.h) / static_cast<float>(height);
@@ -561,18 +561,18 @@ void CropResize2Gray(const JImage &im_src, JImage *im_gray, const Rect<T> &crop,
 }
 
 // Filter, Gaussian Blur and Canny.
-void Filter1D(const JImage &im_src, JImage *im_filter, const float *kernel,
+void Filter1D(const JImage& im_src, JImage* im_filter, const float* kernel,
               int kernel_size, int direction) {
   CHECK_NOTNULL(im_src.data());
   CHECK_NOTNULL(im_filter);
 
   int c_ = im_src.c_, h_ = im_src.h_, w_ = im_src.w_;
-  const auto &order_ = im_src.order();
+  const auto& order_ = im_src.order();
 
   im_filter->Reshape(c_, h_, w_, order_);
 
-  const auto *data_src = im_src.data();
-  auto *data_filter = im_filter->data();
+  const auto* data_src = im_src.data();
+  auto* data_filter = im_filter->data();
 
   float val_c0, val_c1, val_c2, val_kernel;
   int p, p_loc, l_, im_index, center = kernel_size >> 1;
@@ -605,18 +605,18 @@ void Filter1D(const JImage &im_src, JImage *im_filter, const float *kernel,
   }
 }
 
-void Filter2D(const JImage &im_src, JImage *im_filter, const float *kernel,
+void Filter2D(const JImage& im_src, JImage* im_filter, const float* kernel,
               int height, int width) {
   CHECK_NOTNULL(im_src.data());
   CHECK_NOTNULL(im_filter);
 
   int c_ = im_src.c_, h_ = im_src.h_, w_ = im_src.w_;
-  const auto &order_ = im_src.order();
+  const auto& order_ = im_src.order();
 
   im_filter->Reshape(c_, h_, w_, order_);
 
-  const auto *data_src = im_src.data();
-  auto *data_filter = im_filter->data();
+  const auto* data_src = im_src.data();
+  auto* data_filter = im_filter->data();
 
   float val_c0, val_c1, val_c2, val_kernel;
   int im_h, im_w, im_index;
@@ -651,18 +651,18 @@ void Filter2D(const JImage &im_src, JImage *im_filter, const float *kernel,
   }
 }
 
-void GaussianBlur(const JImage &im_src, JImage *im_blur, int kernel_size,
+void GaussianBlur(const JImage& im_src, JImage* im_blur, int kernel_size,
                   float sigma) {
   CHECK_NOTNULL(im_src.data());
   CHECK_NOTNULL(im_blur);
 
   int c_ = im_src.c_, h_ = im_src.h_, w_ = im_src.w_;
-  const auto &order_ = im_src.order();
+  const auto& order_ = im_src.order();
 
   im_blur->Reshape(c_, h_, w_, order_);
 
-  const auto *data_src = im_src.data();
-  auto *data_blur = im_blur->data();
+  const auto* data_src = im_src.data();
+  auto* data_blur = im_blur->data();
 
   auto kernel = std::vector<float>(kernel_size, 0);
   GetGaussianKernel(kernel.data(), kernel_size, sigma);
@@ -671,7 +671,7 @@ void GaussianBlur(const JImage &im_src, JImage *im_blur, int kernel_size,
   int im_h, im_w, im_index, center = kernel_size >> 1;
 
   auto data_w = std::vector<float>(c_ * h_ * w_, 0);
-  float *data_w_index = data_w.data();
+  float* data_w_index = data_w.data();
   for (int h = 0; h < h_; ++h) {
     for (int w = 0; w < w_; ++w) {
       val_c0 = 0.f, val_c1 = 0.f, val_c2 = 0.f;
@@ -720,11 +720,11 @@ void GaussianBlur(const JImage &im_src, JImage *im_blur, int kernel_size,
   }
 }
 
-void Canny(const JImage &im_src, JImage *im_canny, float thresh_low,
+void Canny(const JImage& im_src, JImage* im_canny, float thresh_low,
            float thresh_high, bool L2) {
   CHECK_NOTNULL(im_src.data());
 
-  const auto &order = im_src.order();
+  const auto& order = im_src.order();
 
   if (order == kRGB) {
     FormatTransform(im_src, im_canny, kRGB2Gray);
@@ -737,7 +737,7 @@ void Canny(const JImage &im_src, JImage *im_canny, float thresh_low,
   }
 
   int h_ = im_canny->h_, w_ = im_canny->w_;
-  auto *data_ = im_canny->data();
+  auto* data_ = im_canny->data();
 
   auto grad_x = std::vector<int>(h_ * w_, 0);
   auto grad_y = std::vector<int>(h_ * w_, 0);
@@ -816,13 +816,13 @@ void Canny(const JImage &im_src, JImage *im_canny, float thresh_low,
     }
   }
 
-  auto *data_index = data_;
+  auto* data_index = data_;
   for (int i = 0; i < h_ * w_; ++i, ++data_index) {
     *data_index = (unsigned char)-(*data_index >> 1);
   }
 }
 
-void GetGaussianKernel(float *kernel, int n, float sigma) {
+void GetGaussianKernel(float* kernel, int n, float sigma) {
   const int SMALL_GAUSSIAN_SIZE = 7;
   static const float small_gaussian_tab[][SMALL_GAUSSIAN_SIZE] = {
       {1.f},
@@ -830,7 +830,7 @@ void GetGaussianKernel(float *kernel, int n, float sigma) {
       {0.0625f, 0.25f, 0.375f, 0.25f, 0.0625f},
       {0.03125f, 0.109375f, 0.21875f, 0.28125f, 0.21875f, 0.109375f, 0.03125f}};
 
-  const float *fixed_kernel =
+  const float* fixed_kernel =
       n % 2 == 1 && n <= SMALL_GAUSSIAN_SIZE && sigma <= 0
           ? small_gaussian_tab[n >> 1]
           : nullptr;
@@ -853,14 +853,14 @@ void GetGaussianKernel(float *kernel, int n, float sigma) {
   }
 }
 
-void Gradient(const JImage &im_src, int *grad_x, int *grad_y, int *magnitude,
+void Gradient(const JImage& im_src, int* grad_x, int* grad_y, int* magnitude,
               bool L2) {
   CHECK_NOTNULL(im_src.data());
 
-  const auto *data_src = im_src.data();
+  const auto* data_src = im_src.data();
   int h_ = im_src.h_, w_ = im_src.w_;
 
-  JImage *im_gray = nullptr;
+  JImage* im_gray = nullptr;
   if (im_src.order() != kGray) {
     im_gray = new JImage();
     im_src.CopyTo(im_gray);
@@ -897,22 +897,20 @@ void Gradient(const JImage &im_src, int *grad_x, int *grad_y, int *magnitude,
 }
 
 // Explicit instantiation
-template void Line(JImage *, const PointI &, const PointI &, const Scalar &);
-template void Line(JImage *, const PointF &, const PointF &, const Scalar &);
+template void Line(JImage*, const PointI&, const PointI&, const Scalar&);
+template void Line(JImage*, const PointF&, const PointF&, const Scalar&);
 
-template void Rectangle(JImage *, const RectI &, const Scalar &);
-template void Rectangle(JImage *, const RectF &, const Scalar &);
+template void Rectangle(JImage*, const RectI&, const Scalar&);
+template void Rectangle(JImage*, const RectF&, const Scalar&);
 
-template void Crop(const JImage &, JImage *, const RectI &);
-template void Crop(const JImage &, JImage *, const RectF &);
+template void Crop(const JImage&, JImage*, const RectI&);
+template void Crop(const JImage&, JImage*, const RectF&);
 
-template void CropResize(const JImage &, JImage *, const RectI &, int, int);
-template void CropResize(const JImage &, JImage *, const RectF &, int, int);
+template void CropResize(const JImage&, JImage*, const RectI&, int, int);
+template void CropResize(const JImage&, JImage*, const RectF&, int, int);
 
-template void CropResize2Gray(const JImage &, JImage *, const RectI &, int,
-                              int);
-template void CropResize2Gray(const JImage &, JImage *, const RectF &, int,
-                              int);
+template void CropResize2Gray(const JImage&, JImage*, const RectI&, int, int);
+template void CropResize2Gray(const JImage&, JImage*, const RectF&, int, int);
 
 }  // namespace JImageProc
 

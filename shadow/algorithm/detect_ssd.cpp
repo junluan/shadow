@@ -4,7 +4,7 @@
 
 namespace Shadow {
 
-void DetectSSD::Setup(const std::string &model_file) {
+void DetectSSD::Setup(const std::string& model_file) {
 #if defined(USE_Protobuf)
   shadow::MetaNetParam meta_net_param;
   CHECK(IO::ReadProtoFromBinaryFile(model_file, &meta_net_param))
@@ -19,15 +19,15 @@ void DetectSSD::Setup(const std::string &model_file) {
   LOG(FATAL) << "Unsupported load binary model, recompiled with USE_Protobuf";
 #endif
 
-  const auto &in_blob = net_.in_blob();
+  const auto& in_blob = net_.in_blob();
   CHECK_EQ(in_blob.size(), 1);
   in_str_ = in_blob[0];
 
-  const auto &out_blob = net_.out_blob();
+  const auto& out_blob = net_.out_blob();
   CHECK_EQ(out_blob.size(), 1);
   out_str_ = out_blob[0];
 
-  const auto &data_shape = net_.GetBlobShapeByName<float>(in_str_);
+  const auto& data_shape = net_.GetBlobShapeByName<float>(in_str_);
   CHECK_EQ(data_shape.size(), 4);
 
   batch_ = data_shape[0];
@@ -43,15 +43,15 @@ void DetectSSD::Setup(const std::string &model_file) {
   nms_threshold_ = net_.get_single_argument<float>("nms_threshold", 0.3);
 }
 
-void DetectSSD::Predict(const JImage &im_src, const RectF &roi, VecBoxF *boxes,
-                        std::vector<VecPointF> *Gpoints) {
+void DetectSSD::Predict(const JImage& im_src, const RectF& roi, VecBoxF* boxes,
+                        std::vector<VecPointF>* Gpoints) {
   ConvertData(im_src, in_data_.data(), roi, in_c_, in_h_, in_w_);
 
   std::vector<VecBoxF> Gboxes;
   Process(in_data_, &Gboxes);
 
   float height = roi.h, width = roi.w;
-  for (auto &box : Gboxes[0]) {
+  for (auto& box : Gboxes[0]) {
     box.xmin *= width;
     box.xmax *= width;
     box.ymin *= height;
@@ -62,15 +62,15 @@ void DetectSSD::Predict(const JImage &im_src, const RectF &roi, VecBoxF *boxes,
 }
 
 #if defined(USE_OpenCV)
-void DetectSSD::Predict(const cv::Mat &im_mat, const RectF &roi, VecBoxF *boxes,
-                        std::vector<VecPointF> *Gpoints) {
+void DetectSSD::Predict(const cv::Mat& im_mat, const RectF& roi, VecBoxF* boxes,
+                        std::vector<VecPointF>* Gpoints) {
   ConvertData(im_mat, in_data_.data(), roi, in_c_, in_h_, in_w_);
 
   std::vector<VecBoxF> Gboxes;
   Process(in_data_, &Gboxes);
 
   float height = roi.h, width = roi.w;
-  for (auto &box : Gboxes[0]) {
+  for (auto& box : Gboxes[0]) {
     box.xmin *= width;
     box.xmax *= width;
     box.ymin *= height;
@@ -81,14 +81,14 @@ void DetectSSD::Predict(const cv::Mat &im_mat, const RectF &roi, VecBoxF *boxes,
 }
 #endif
 
-void DetectSSD::Process(const VecFloat &in_data, std::vector<VecBoxF> *Gboxes) {
-  std::map<std::string, void *> data_map;
-  data_map[in_str_] = const_cast<float *>(in_data.data());
+void DetectSSD::Process(const VecFloat& in_data, std::vector<VecBoxF>* Gboxes) {
+  std::map<std::string, void*> data_map;
+  data_map[in_str_] = const_cast<float*>(in_data.data());
 
   net_.Forward(data_map);
 
-  const auto &out_shape = net_.GetBlobShapeByName<float>(out_str_);
-  const auto *out_data = net_.GetBlobDataByName<float>(out_str_);
+  const auto& out_shape = net_.GetBlobShapeByName<float>(out_str_);
+  const auto* out_data = net_.GetBlobDataByName<float>(out_str_);
 
   int batch = out_shape[0], num_priors = out_shape[1], num_data = out_shape[2];
 

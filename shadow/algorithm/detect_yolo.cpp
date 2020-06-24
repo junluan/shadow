@@ -4,7 +4,7 @@
 
 namespace Shadow {
 
-void DetectYOLO::Setup(const std::string &model_file) {
+void DetectYOLO::Setup(const std::string& model_file) {
 #if defined(USE_Protobuf)
   shadow::MetaNetParam meta_net_param;
   CHECK(IO::ReadProtoFromBinaryFile(model_file, &meta_net_param))
@@ -19,13 +19,13 @@ void DetectYOLO::Setup(const std::string &model_file) {
   LOG(FATAL) << "Unsupported load binary model, recompiled with USE_Protobuf";
 #endif
 
-  const auto &in_blob = net_.in_blob();
+  const auto& in_blob = net_.in_blob();
   CHECK_EQ(in_blob.size(), 1);
   in_str_ = in_blob[0];
 
   out_str_ = net_.out_blob();
 
-  const auto &data_shape = net_.GetBlobShapeByName<float>(in_str_);
+  const auto& data_shape = net_.GetBlobShapeByName<float>(in_str_);
   CHECK_EQ(data_shape.size(), 4);
 
   batch_ = data_shape[0];
@@ -46,15 +46,15 @@ void DetectYOLO::Setup(const std::string &model_file) {
   CHECK_EQ(out_str_.size(), biases_.size() / num_km_ / 2);
 }
 
-void DetectYOLO::Predict(const JImage &im_src, const RectF &roi, VecBoxF *boxes,
-                         std::vector<VecPointF> *Gpoints) {
+void DetectYOLO::Predict(const JImage& im_src, const RectF& roi, VecBoxF* boxes,
+                         std::vector<VecPointF>* Gpoints) {
   ConvertData(im_src, in_data_.data(), roi, in_c_, in_h_, in_w_, 0);
 
   std::vector<VecBoxF> Gboxes;
   Process(in_data_, &Gboxes);
 
   float height = roi.h, width = roi.w;
-  for (auto &box : Gboxes[0]) {
+  for (auto& box : Gboxes[0]) {
     box.xmin *= width;
     box.xmax *= width;
     box.ymin *= height;
@@ -65,15 +65,15 @@ void DetectYOLO::Predict(const JImage &im_src, const RectF &roi, VecBoxF *boxes,
 }
 
 #if defined(USE_OpenCV)
-void DetectYOLO::Predict(const cv::Mat &im_mat, const RectF &roi,
-                         VecBoxF *boxes, std::vector<VecPointF> *Gpoints) {
+void DetectYOLO::Predict(const cv::Mat& im_mat, const RectF& roi,
+                         VecBoxF* boxes, std::vector<VecPointF>* Gpoints) {
   ConvertData(im_mat, in_data_.data(), roi, in_c_, in_h_, in_w_, 0);
 
   std::vector<VecBoxF> Gboxes;
   Process(in_data_, &Gboxes);
 
   float height = roi.h, width = roi.w;
-  for (auto &box : Gboxes[0]) {
+  for (auto& box : Gboxes[0]) {
     box.xmin *= width;
     box.xmax *= width;
     box.ymin *= height;
@@ -84,10 +84,10 @@ void DetectYOLO::Predict(const cv::Mat &im_mat, const RectF &roi,
 }
 #endif
 
-void DetectYOLO::Process(const VecFloat &in_data,
-                         std::vector<VecBoxF> *Gboxes) {
-  std::map<std::string, void *> data_map;
-  data_map[in_str_] = const_cast<float *>(in_data.data());
+void DetectYOLO::Process(const VecFloat& in_data,
+                         std::vector<VecBoxF>* Gboxes) {
+  std::map<std::string, void*> data_map;
+  data_map[in_str_] = const_cast<float*>(in_data.data());
 
   net_.Forward(data_map);
 
@@ -95,8 +95,8 @@ void DetectYOLO::Process(const VecFloat &in_data,
   for (int b = 0; b < batch_; ++b) {
     VecBoxF all_boxes;
     for (int n = 0; n < out_str_.size(); ++n) {
-      const auto &out_shape = net_.GetBlobShapeByName<float>(out_str_[n]);
-      const auto *out_data = net_.GetBlobDataByName<float>(out_str_[n]);
+      const auto& out_shape = net_.GetBlobShapeByName<float>(out_str_[n]);
+      const auto* out_data = net_.GetBlobDataByName<float>(out_str_[n]);
 
       int out_num = 1;
       for (int d = 1; d < out_shape.size(); ++d) {
@@ -104,7 +104,7 @@ void DetectYOLO::Process(const VecFloat &in_data,
       }
 
       VecBoxF boxes;
-      ConvertDetections(const_cast<float *>(out_data) + b * out_num,
+      ConvertDetections(const_cast<float*>(out_data) + b * out_num,
                         &biases_[n * num_km_ * 2], out_shape[1], out_shape[2],
                         &boxes);
       all_boxes.insert(all_boxes.begin(), boxes.begin(), boxes.end());
@@ -115,7 +115,7 @@ void DetectYOLO::Process(const VecFloat &in_data,
 
 inline float activate(float x) { return 1.f / (1 + std::exp(-x)); }
 
-inline void softmax(float *scores, int n) {
+inline void softmax(float* scores, int n) {
   float largest = -FLT_MAX;
   double sum = 0;
   for (int i = 0; i < n; ++i) {
@@ -131,7 +131,7 @@ inline void softmax(float *scores, int n) {
   }
 }
 
-inline void ActivateSoftmax(int version, float *data, int classes, int num_km,
+inline void ActivateSoftmax(int version, float* data, int classes, int num_km,
                             int out_h, int out_w) {
   for (int n = 0; n < out_h * out_w * num_km; ++n) {
     int offset = n * (4 + 1 + classes);
@@ -150,9 +150,9 @@ inline void ActivateSoftmax(int version, float *data, int classes, int num_km,
   }
 }
 
-inline void ConvertBoxes(int version, const float *data, const float *biases,
+inline void ConvertBoxes(int version, const float* data, const float* biases,
                          int classes, int num_km, int in_h, int in_w, int out_h,
-                         int out_w, float threshold, VecBoxF *boxes) {
+                         int out_w, float threshold, VecBoxF* boxes) {
   boxes->clear();
   for (int n = 0; n < out_h * out_w * num_km; ++n) {
     int s = n / num_km, k = n % num_km;
@@ -192,8 +192,8 @@ inline void ConvertBoxes(int version, const float *data, const float *biases,
   }
 }
 
-void DetectYOLO::ConvertDetections(float *data, const float *biases, int out_h,
-                                   int out_w, VecBoxF *boxes) {
+void DetectYOLO::ConvertDetections(float* data, const float* biases, int out_h,
+                                   int out_w, VecBoxF* boxes) {
   ActivateSoftmax(version_, data, num_classes_, num_km_, out_h, out_w);
   ConvertBoxes(version_, data, biases, num_classes_, num_km_, in_h_, in_w_,
                out_h, out_w, threshold_, boxes);

@@ -1,5 +1,5 @@
-#ifndef SHADOW_UTIL_LOG_HPP
-#define SHADOW_UTIL_LOG_HPP
+#ifndef SHADOW_UTIL_LOG_HPP_
+#define SHADOW_UTIL_LOG_HPP_
 
 #include <cstdlib>
 #include <iostream>
@@ -173,4 +173,4 @@ class LogMessage {
 
 }  // namespace Shadow
 
-#endif  // SHADOW_UTIL_LOG_HPP
+#endif  // SHADOW_UTIL_LOG_HPP_

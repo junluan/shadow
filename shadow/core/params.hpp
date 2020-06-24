@@ -1,5 +1,5 @@
-#ifndef SHADOW_CORE_PARAMS_HPP
-#define SHADOW_CORE_PARAMS_HPP
+#ifndef SHADOW_CORE_PARAMS_HPP_
+#define SHADOW_CORE_PARAMS_HPP_
 
 #include "config.hpp"
 
@@ -16,23 +16,23 @@
 namespace shadow {
 
 #define REPEATED_FIELD_FUNC(NAME, TYPE)                                     \
-  const std::vector<TYPE> &NAME() const { return NAME##_; }                 \
-  std::vector<TYPE> *mutable_##NAME() { return &NAME##_; }                  \
-  void set_##NAME(int index, const TYPE &value) { NAME##_[index] = value; } \
-  TYPE *add_##NAME() {                                                      \
+  const std::vector<TYPE>& NAME() const { return NAME##_; }                 \
+  std::vector<TYPE>* mutable_##NAME() { return &NAME##_; }                  \
+  void set_##NAME(int index, const TYPE& value) { NAME##_[index] = value; } \
+  TYPE* add_##NAME() {                                                      \
     NAME##_.resize(NAME##_.size() + 1);                                     \
     return &NAME##_[NAME##_.size() - 1];                                    \
   }                                                                         \
-  void add_##NAME(const TYPE &value) { NAME##_.push_back(value); }          \
-  const TYPE &NAME(int index) const { return NAME##_[index]; }              \
-  TYPE *mutable_##NAME(int index) { return &NAME##_[index]; }               \
+  void add_##NAME(const TYPE& value) { NAME##_.push_back(value); }          \
+  const TYPE& NAME(int index) const { return NAME##_[index]; }              \
+  TYPE* mutable_##NAME(int index) { return &NAME##_[index]; }               \
   int NAME##_size() const { return static_cast<int>(NAME##_.size()); }      \
   bool has_##NAME() const { return !NAME##_.empty(); }                      \
   void clear_##NAME() { NAME##_.clear(); }
 
 #define OPTIONAL_FIELD_FUNC(NAME, TYPE, DEFAULT)    \
-  const TYPE &NAME() const { return NAME##_; }      \
-  void set_##NAME(const TYPE &value) {              \
+  const TYPE& NAME() const { return NAME##_; }      \
+  void set_##NAME(const TYPE& value) {              \
     NAME##_ = value;                                \
     has_##NAME##_ = true;                           \
   }                                                 \
@@ -44,9 +44,9 @@ namespace shadow {
 
 #define DEFAULT_CONSTRUCTOR_WITH_EQUAL_OPERATOR_FUNC(NAME) \
   NAME() = default;                                        \
-  NAME(const NAME &from) { *this = from; }                 \
+  NAME(const NAME& from) { *this = from; }                 \
   ~NAME() { Clear(); }                                     \
-  NAME &operator=(const NAME &from) {                      \
+  NAME& operator=(const NAME& from) {                      \
     CopyFrom(from);                                        \
     return *this;                                          \
   }
@@ -55,7 +55,7 @@ class Blob {
  public:
   DEFAULT_CONSTRUCTOR_WITH_EQUAL_OPERATOR_FUNC(Blob);
 
-  void CopyFrom(const Blob &from) {
+  void CopyFrom(const Blob& from) {
     if (&from == this) return;
     Clear();
     name_ = from.name_;
@@ -97,7 +97,7 @@ class Argument {
  public:
   DEFAULT_CONSTRUCTOR_WITH_EQUAL_OPERATOR_FUNC(Argument);
 
-  void CopyFrom(const Argument &from) {
+  void CopyFrom(const Argument& from) {
     if (&from == this) return;
     Clear();
     name_ = from.name_;
@@ -146,7 +146,7 @@ class OpParam {
  public:
   DEFAULT_CONSTRUCTOR_WITH_EQUAL_OPERATOR_FUNC(OpParam);
 
-  void CopyFrom(const OpParam &from) {
+  void CopyFrom(const OpParam& from) {
     if (&from == this) return;
     Clear();
     name_ = from.name_;
@@ -184,7 +184,7 @@ class NetParam {
  public:
   DEFAULT_CONSTRUCTOR_WITH_EQUAL_OPERATOR_FUNC(NetParam);
 
-  void CopyFrom(const NetParam &from) {
+  void CopyFrom(const NetParam& from) {
     if (&from == this) return;
     Clear();
     name_ = from.name_;
@@ -218,7 +218,7 @@ class MetaNetParam {
  public:
   DEFAULT_CONSTRUCTOR_WITH_EQUAL_OPERATOR_FUNC(MetaNetParam);
 
-  void CopyFrom(const MetaNetParam &from) {
+  void CopyFrom(const MetaNetParam& from) {
     if (&from == this) return;
     Clear();
     name_ = from.name_;
@@ -248,4 +248,4 @@ class MetaNetParam {
 
 #endif
 
-#endif  // SHADOW_CORE_PARAMS_HPP
+#endif  // SHADOW_CORE_PARAMS_HPP_

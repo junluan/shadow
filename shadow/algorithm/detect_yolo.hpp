@@ -1,5 +1,5 @@
-#ifndef SHADOW_ALGORITHM_DETECT_YOLO_HPP
-#define SHADOW_ALGORITHM_DETECT_YOLO_HPP
+#ifndef SHADOW_ALGORITHM_DETECT_YOLO_HPP_
+#define SHADOW_ALGORITHM_DETECT_YOLO_HPP_
 
 #include "method.hpp"
 
@@ -11,20 +11,20 @@ class DetectYOLO final : public Method {
  public:
   DetectYOLO() = default;
 
-  void Setup(const std::string &model_file) override;
+  void Setup(const std::string& model_file) override;
 
-  void Predict(const JImage &im_src, const RectF &roi, VecBoxF *boxes,
-               std::vector<VecPointF> *Gpoints) override;
+  void Predict(const JImage& im_src, const RectF& roi, VecBoxF* boxes,
+               std::vector<VecPointF>* Gpoints) override;
 #if defined(USE_OpenCV)
-  void Predict(const cv::Mat &im_mat, const RectF &roi, VecBoxF *boxes,
-               std::vector<VecPointF> *Gpoints) override;
+  void Predict(const cv::Mat& im_mat, const RectF& roi, VecBoxF* boxes,
+               std::vector<VecPointF>* Gpoints) override;
 #endif
 
  private:
-  void Process(const VecFloat &in_data, std::vector<VecBoxF> *Gboxes);
+  void Process(const VecFloat& in_data, std::vector<VecBoxF>* Gboxes);
 
-  void ConvertDetections(float *data, const float *biases, int out_h, int out_w,
-                         VecBoxF *boxes);
+  void ConvertDetections(float* data, const float* biases, int out_h, int out_w,
+                         VecBoxF* boxes);
 
   Network net_;
   VecFloat in_data_;
@@ -38,4 +38,4 @@ class DetectYOLO final : public Method {
 
 }  // namespace Shadow
 
-#endif  // SHADOW_ALGORITHM_DETECT_YOLO_HPP
+#endif  // SHADOW_ALGORITHM_DETECT_YOLO_HPP_

@@ -1,5 +1,5 @@
-#ifndef SHADOW_UTIL_TYPE_HPP
-#define SHADOW_UTIL_TYPE_HPP
+#ifndef SHADOW_UTIL_TYPE_HPP_
+#define SHADOW_UTIL_TYPE_HPP_
 
 #if defined(_WIN32)
 #pragma warning(disable : 4244)
@@ -33,8 +33,8 @@ class Point {
  public:
   Point() = default;
   Point(T x_t, T y_t, float score_t = -1) : x(x_t), y(y_t), score(score_t) {}
-  Point(const Point<int> &p) : x(p.x), y(p.y), score(p.score) {}
-  Point(const Point<float> &p) : x(p.x), y(p.y), score(p.score) {}
+  Point(const Point<int>& p) : x(p.x), y(p.y), score(p.score) {}
+  Point(const Point<float>& p) : x(p.x), y(p.y), score(p.score) {}
   T x = 0, y = 0;
   float score = -1;
 };
@@ -44,8 +44,8 @@ class Rect {
  public:
   Rect() = default;
   Rect(T x_t, T y_t, T w_t, T h_t) : x(x_t), y(y_t), w(w_t), h(h_t) {}
-  Rect(const Rect<int> &rect) : x(rect.x), y(rect.y), w(rect.w), h(rect.h) {}
-  Rect(const Rect<float> &rect) : x(rect.x), y(rect.y), w(rect.w), h(rect.h) {}
+  Rect(const Rect<int>& rect) : x(rect.x), y(rect.y), w(rect.w), h(rect.h) {}
+  Rect(const Rect<float>& rect) : x(rect.x), y(rect.y), w(rect.w), h(rect.h) {}
   T x = 0, y = 0, w = 0, h = 0;
 };
 
@@ -54,8 +54,8 @@ class Size {
  public:
   Size() = default;
   Size(T w_t, T h_t) : w(w_t), h(h_t) {}
-  Size(const Size<int> &size) : w(size.w), h(size.h) {}
-  Size(const Size<float> &size) : w(size.w), h(size.h) {}
+  Size(const Size<int>& size) : w(size.w), h(size.h) {}
+  Size(const Size<float>& size) : w(size.w), h(size.h) {}
   T w = 0, h = 0;
 };
 
@@ -90,4 +90,4 @@ using ListString = std::list<std::string>;
 
 }  // namespace Shadow
 
-#endif  // SHADOW_UTIL_TYPE_HPP
+#endif  // SHADOW_UTIL_TYPE_HPP_

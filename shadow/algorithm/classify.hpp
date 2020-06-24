@@ -1,5 +1,5 @@
-#ifndef SHADOW_ALGORITHM_CLASSIFY_HPP
-#define SHADOW_ALGORITHM_CLASSIFY_HPP
+#ifndef SHADOW_ALGORITHM_CLASSIFY_HPP_
+#define SHADOW_ALGORITHM_CLASSIFY_HPP_
 
 #include "method.hpp"
 
@@ -11,18 +11,18 @@ class Classify final : public Method {
  public:
   Classify() = default;
 
-  void Setup(const std::string &model_file) override;
+  void Setup(const std::string& model_file) override;
 
-  void Predict(const JImage &im_src, const RectF &roi,
-               std::map<std::string, VecFloat> *scores) override;
+  void Predict(const JImage& im_src, const RectF& roi,
+               std::map<std::string, VecFloat>* scores) override;
 #if defined(USE_OpenCV)
-  void Predict(const cv::Mat &im_mat, const RectF &roi,
-               std::map<std::string, VecFloat> *scores) override;
+  void Predict(const cv::Mat& im_mat, const RectF& roi,
+               std::map<std::string, VecFloat>* scores) override;
 #endif
 
  private:
-  void Process(const VecFloat &in_data,
-               std::map<std::string, VecFloat> *scores);
+  void Process(const VecFloat& in_data,
+               std::map<std::string, VecFloat>* scores);
 
   Network net_;
   VecFloat in_data_;
@@ -32,4 +32,4 @@ class Classify final : public Method {
 
 }  // namespace Shadow
 
-#endif  // SHADOW_ALGORITHM_CLASSIFY_HPP
+#endif  // SHADOW_ALGORITHM_CLASSIFY_HPP_

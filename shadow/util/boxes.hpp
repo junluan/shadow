@@ -1,5 +1,5 @@
-#ifndef SHADOW_UTIL_BOXES_HPP
-#define SHADOW_UTIL_BOXES_HPP
+#ifndef SHADOW_UTIL_BOXES_HPP_
+#define SHADOW_UTIL_BOXES_HPP_
 
 #include "type.hpp"
 
@@ -31,38 +31,38 @@ using VecBoxF = std::vector<BoxF>;
 namespace Boxes {
 
 template <typename T>
-void Clip(const Box<T> &box, Box<T> *clip_box, T min, T max);
+void Clip(const Box<T>& box, Box<T>* clip_box, T min, T max);
 
 template <typename T>
-T Size(const Box<T> &box);
+T Size(const Box<T>& box);
 
 template <typename T>
-float Intersection(const Box<T> &box_a, const Box<T> &box_b);
+float Intersection(const Box<T>& box_a, const Box<T>& box_b);
 
 template <typename T>
-float Union(const Box<T> &box_a, const Box<T> &box_b);
+float Union(const Box<T>& box_a, const Box<T>& box_b);
 
 template <typename T>
-float IoU(const Box<T> &box_a, const Box<T> &box_b);
+float IoU(const Box<T>& box_a, const Box<T>& box_b);
 
 template <typename T>
-std::vector<Box<T>> NMS(const std::vector<Box<T>> &boxes, float iou_threshold);
+std::vector<Box<T>> NMS(const std::vector<Box<T>>& boxes, float iou_threshold);
 template <typename T>
-std::vector<Box<T>> NMS(const std::vector<std::vector<Box<T>>> &Gboxes,
+std::vector<Box<T>> NMS(const std::vector<std::vector<Box<T>>>& Gboxes,
                         float iou_threshold);
 
 template <typename T>
-void Smooth(const Box<T> &old_box, Box<T> *new_box, float smooth);
+void Smooth(const Box<T>& old_box, Box<T>* new_box, float smooth);
 template <typename T>
-void Smooth(const std::vector<Box<T>> &old_boxes,
-            std::vector<Box<T>> *new_boxes, float smooth);
+void Smooth(const std::vector<Box<T>>& old_boxes,
+            std::vector<Box<T>>* new_boxes, float smooth);
 
 template <typename T>
-void Amend(std::vector<std::vector<Box<T>>> *Gboxes, const VecRectF &crops,
+void Amend(std::vector<std::vector<Box<T>>>* Gboxes, const VecRectF& crops,
            int height = 1, int width = 1);
 
 }  // namespace Boxes
 
 }  // namespace Shadow
 
-#endif  // SHADOW_UTIL_BOXES_HPP
+#endif  // SHADOW_UTIL_BOXES_HPP_

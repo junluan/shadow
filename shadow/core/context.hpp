@@ -1,5 +1,5 @@
-#ifndef SHADOW_CORE_CONTEXT_HPP
-#define SHADOW_CORE_CONTEXT_HPP
+#ifndef SHADOW_CORE_CONTEXT_HPP_
+#define SHADOW_CORE_CONTEXT_HPP_
 
 #include "allocator.hpp"
 #include "helper.hpp"
@@ -33,4 +33,4 @@ std::shared_ptr<Context> GetContext(const ArgumentHelper& arguments);
 
 }  // namespace Shadow
 
-#endif  // SHADOW_CORE_CONTEXT_HPP
+#endif  // SHADOW_CORE_CONTEXT_HPP_

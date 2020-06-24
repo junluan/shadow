@@ -1,5 +1,5 @@
-#ifndef SHADOW_ALGORITHM_DETECT_MTCNN_HPP
-#define SHADOW_ALGORITHM_DETECT_MTCNN_HPP
+#ifndef SHADOW_ALGORITHM_DETECT_MTCNN_HPP_
+#define SHADOW_ALGORITHM_DETECT_MTCNN_HPP_
 
 #include "method.hpp"
 
@@ -18,30 +18,30 @@ class DetectMTCNN final : public Method {
  public:
   DetectMTCNN() = default;
 
-  void Setup(const std::string &model_file) override;
+  void Setup(const std::string& model_file) override;
 
-  void Predict(const JImage &im_src, const RectF &roi, VecBoxF *boxes,
-               std::vector<VecPointF> *Gpoints) override;
+  void Predict(const JImage& im_src, const RectF& roi, VecBoxF* boxes,
+               std::vector<VecPointF>* Gpoints) override;
 #if defined(USE_OpenCV)
-  void Predict(const cv::Mat &im_mat, const RectF &roi, VecBoxF *boxes,
-               std::vector<VecPointF> *Gpoints) override;
+  void Predict(const cv::Mat& im_mat, const RectF& roi, VecBoxF* boxes,
+               std::vector<VecPointF>* Gpoints) override;
 #endif
 
  private:
-  void Process_net_p(const float *data, const VecInt &in_shape, float threshold,
-                     float scale, VecBoxInfo *boxes);
-  void Process_net_r(const float *data, const VecInt &in_shape, float threshold,
-                     const VecBoxInfo &net_12_boxes, VecBoxInfo *boxes);
-  void Process_net_o(const float *data, const VecInt &in_shape, float threshold,
-                     const VecBoxInfo &net_24_boxes, VecBoxInfo *boxes);
+  void Process_net_p(const float* data, const VecInt& in_shape, float threshold,
+                     float scale, VecBoxInfo* boxes);
+  void Process_net_r(const float* data, const VecInt& in_shape, float threshold,
+                     const VecBoxInfo& net_12_boxes, VecBoxInfo* boxes);
+  void Process_net_o(const float* data, const VecInt& in_shape, float threshold,
+                     const VecBoxInfo& net_24_boxes, VecBoxInfo* boxes);
 
   void CalculateScales(float height, float width, float factor, float max_side,
-                       float min_side, VecFloat *scales);
+                       float min_side, VecFloat* scales);
 
-  void BoxRegression(VecBoxInfo &boxes);
+  void BoxRegression(VecBoxInfo& boxes);
 
-  void Box2SquareWithConstrain(VecBoxInfo &boxes, float height, float width);
-  void BoxWithConstrain(VecBoxInfo &boxes, float height, float width);
+  void Box2SquareWithConstrain(VecBoxInfo& boxes, float height, float width);
+  void BoxWithConstrain(VecBoxInfo& boxes, float height, float width);
 
   Network net_p_, net_r_, net_o_;
   VecFloat net_p_in_data_, net_r_in_data_, net_o_in_data_, thresholds_, scales_;
@@ -58,4 +58,4 @@ class DetectMTCNN final : public Method {
 
 }  // namespace Shadow
 
-#endif  // SHADOW_ALGORITHM_DETECT_MTCNN_HPP
+#endif  // SHADOW_ALGORITHM_DETECT_MTCNN_HPP_

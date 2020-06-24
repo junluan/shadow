@@ -1,51 +1,51 @@
-#include "stack_op.hpp"
+#include "core/operator.hpp"
+
+#include "kernels/stack.hpp"
 
 namespace Shadow {
 
-void StackOp::Forward() {
-  const auto bottom_0 = bottoms(0);
-  auto top = tops(0);
+class StackOp : public Operator {
+ public:
+  StackOp(const shadow::OpParam& op_param, Workspace* ws)
+      : Operator(op_param, ws) {
+    axis_ = get_single_argument<int>("axis", 0);
 
-  int num_axes = bottom_0->num_axes();
-  CHECK(axis_ >= -(num_axes + 1) && axis_ < num_axes + 1)
-      << "axis out of bound.";
-  if (axis_ < 0) {
-    axis_ += num_axes + 1;
+    kernel_ = std::dynamic_pointer_cast<StackKernel>(
+        CreateKernel(op_param.type(), ws_->Ctx()->device_type()));
+    CHECK_NOTNULL(kernel_);
   }
 
-  auto top_shape = bottom_0->shape();
-  top_shape.insert(top_shape.begin() + axis_, bottoms_size());
-  top->reshape(top_shape);
+  void Forward() override {
+    CHECK_GE(bottoms_size(), 2);
 
-  int num_stacks = bottom_0->count(0, axis_);
-  int stack_size = bottom_0->count(axis_);
-  int top_stack_axis = top->shape(axis_);
-  for (int n = 0; n < bottoms_size(); ++n) {
-    const auto bottom = bottoms(n);
-    Vision::Stack(bottom->data<float>(), bottom->count(), num_stacks,
-                  stack_size, top_stack_axis, n, top->mutable_data<float>(),
-                  ws_->Ctx());
+    const auto bottom_0 = bottoms(0);
+    auto top = tops(0);
+
+    int num_axes = bottom_0->num_axes();
+    CHECK(axis_ >= -(num_axes + 1) && axis_ < num_axes + 1)
+        << "axis out of bound.";
+    if (axis_ < 0) {
+      axis_ += num_axes + 1;
+    }
+
+    auto top_shape = bottom_0->shape();
+    top_shape.insert(top_shape.begin() + axis_, bottoms_size());
+    top->reshape(top_shape);
+
+    std::vector<std::shared_ptr<Blob>> bottom_blobs;
+    for (int n = 0; n < bottoms_size(); ++n) {
+      bottom_blobs.push_back(bottoms(n));
+    }
+
+    kernel_->Run(bottom_blobs, top, ws_, axis_);
   }
-}
+
+ private:
+  int axis_;
+
+  std::shared_ptr<StackKernel> kernel_ = nullptr;
+};
 
 REGISTER_OPERATOR(Stack, StackOp);
-
-namespace Vision {
-
-#if !defined(USE_CUDA)
-template <typename T>
-void Stack(const T *in_data, int count, int num_stacks, int stack_size,
-           int top_stack_axis, int offset_stack_axis, T *out_data,
-           Context *context) {
-  for (int n = 0; n < num_stacks; ++n) {
-    memcpy(out_data + (n * top_stack_axis + offset_stack_axis) * stack_size,
-           in_data + n * stack_size, stack_size * sizeof(T));
-  }
-}
-
-template void Stack(const float *, int, int, int, int, int, float *, Context *);
-#endif
-
-}  // namespace Vision
 
 }  // namespace Shadow

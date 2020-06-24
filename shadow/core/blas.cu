@@ -8,38 +8,35 @@ namespace Shadow {
 
 namespace Blas {
 
-template <typename T>
-__global__ void KernelSet(int n, float val, T *y, int offy) {
+__global__ void KernelSet(int n, float val, float* y, int offy) {
   CUDA_KERNEL_LOOP(globalid, n) { y[offy + globalid] = val; }
 }
 
-template <typename T>
-void Set(int n, float val, T *y, int offy, Context *context) {
-  KernelSet<T>
-      <<<GetBlocks(n), NumThreads, 0, cudaStream_t(context->cuda_stream())>>>(
-          n, val, y, offy);
+template <>
+void Set<DeviceType::kGPU, float>(int n, float val, float* y, int offy,
+                                  Context* context) {
+  KernelSet<<<GetBlocks(n), NumThreads, 0,
+              cudaStream_t(context->cuda_stream())>>>(n, val, y, offy);
   CUDA_CHECK(cudaPeekAtLastError());
 }
 
 #define DEFINE_BLAS_BINARY_FUNC(name, operation)                               \
-  template <typename T>                                                        \
-  __global__ void Kernel##name(int n, const T *a, int offa, const T *b,        \
-                               int offb, T *y, int offy) {                     \
+  __global__ void Kernel##name(int n, const float* a, int offa,                \
+                               const float* b, int offb, float* y, int offy) { \
     CUDA_KERNEL_LOOP(i, n) {                                                   \
       a += offa, b += offb, y += offy;                                         \
       operation;                                                               \
     }                                                                          \
   }                                                                            \
-  template <typename T>                                                        \
-  void name(int n, const T *a, int offa, const T *b, int offb, T *y, int offy, \
-            Context *context) {                                                \
-    Kernel##name<T><<<GetBlocks(n), NumThreads, 0,                             \
-                      cudaStream_t(context->cuda_stream())>>>(n, a, offa, b,   \
-                                                              offb, y, offy);  \
+  template <>                                                                  \
+  void name<DeviceType::kGPU, float>(int n, const float* a, int offa,          \
+                                     const float* b, int offb, float* y,       \
+                                     int offy, Context* context) {             \
+    Kernel##name<<<GetBlocks(n), NumThreads, 0,                                \
+                   cudaStream_t(context->cuda_stream())>>>(n, a, offa, b,      \
+                                                           offb, y, offy);     \
     CUDA_CHECK(cudaPeekAtLastError());                                         \
-  }                                                                            \
-  template void name(int, const float *, int, const float *, int, float *,     \
-                     int, Context *);
+  }
 
 DEFINE_BLAS_BINARY_FUNC(Add, y[i] = a[i] + b[i]);
 DEFINE_BLAS_BINARY_FUNC(Sub, y[i] = a[i] - b[i]);
@@ -50,24 +47,23 @@ DEFINE_BLAS_BINARY_FUNC(Max, y[i] = fmaxf(a[i], b[i]));
 DEFINE_BLAS_BINARY_FUNC(Min, y[i] = fminf(a[i], b[i]));
 #undef DEFINE_BLAS_BINARY_FUNC
 
-#define DEFINE_BLAS_BINARY_SCALAR_FUNC(name, operation)                        \
-  template <typename T>                                                        \
-  __global__ void Kernel##name(int n, const T *a, int offa, float alpha, T *y, \
-                               int offy) {                                     \
-    CUDA_KERNEL_LOOP(i, n) {                                                   \
-      a += offa, y += offy;                                                    \
-      operation;                                                               \
-    }                                                                          \
-  }                                                                            \
-  template <typename T>                                                        \
-  void name(int n, const T *a, int offa, float alpha, T *y, int offy,          \
-            Context *context) {                                                \
-    Kernel##name<T><<<GetBlocks(n), NumThreads, 0,                             \
-                      cudaStream_t(context->cuda_stream())>>>(n, a, offa,      \
-                                                              alpha, y, offy); \
-    CUDA_CHECK(cudaPeekAtLastError());                                         \
-  }                                                                            \
-  template void name(int, const float *, int, float, float *, int, Context *);
+#define DEFINE_BLAS_BINARY_SCALAR_FUNC(name, operation)                       \
+  __global__ void Kernel##name(int n, const float* a, int offa, float alpha,  \
+                               float* y, int offy) {                          \
+    CUDA_KERNEL_LOOP(i, n) {                                                  \
+      a += offa, y += offy;                                                   \
+      operation;                                                              \
+    }                                                                         \
+  }                                                                           \
+  template <>                                                                 \
+  void name<DeviceType::kGPU, float>(int n, const float* a, int offa,         \
+                                     float alpha, float* y, int offy,         \
+                                     Context* context) {                      \
+    Kernel##name<<<GetBlocks(n), NumThreads, 0,                               \
+                   cudaStream_t(context->cuda_stream())>>>(n, a, offa, alpha, \
+                                                           y, offy);          \
+    CUDA_CHECK(cudaPeekAtLastError());                                        \
+  }
 
 DEFINE_BLAS_BINARY_SCALAR_FUNC(Add, y[i] = a[i] + alpha);
 DEFINE_BLAS_BINARY_SCALAR_FUNC(Sub, y[i] = a[i] - alpha);
@@ -78,22 +74,22 @@ DEFINE_BLAS_BINARY_SCALAR_FUNC(Max, y[i] = fmaxf(a[i], alpha));
 DEFINE_BLAS_BINARY_SCALAR_FUNC(Min, y[i] = fminf(a[i], alpha));
 #undef DEFINE_BLAS_BINARY_SCALAR_FUNC
 
-#define DEFINE_BLAS_UNARY_FUNC(name, operation)                               \
-  template <typename T>                                                       \
-  __global__ void Kernel##name(int n, const T *a, int offa, T *y, int offy) { \
-    CUDA_KERNEL_LOOP(i, n) {                                                  \
-      a += offa, y += offy;                                                   \
-      operation;                                                              \
-    }                                                                         \
-  }                                                                           \
-  template <typename T>                                                       \
-  void name(int n, const T *a, int offa, T *y, int offy, Context *context) {  \
-    Kernel##name<T>                                                           \
-        <<<GetBlocks(n), NumThreads, 0,                                       \
-           cudaStream_t(context->cuda_stream())>>>(n, a, offa, y, offy);      \
-    CUDA_CHECK(cudaPeekAtLastError());                                        \
-  }                                                                           \
-  template void name(int, const float *, int, float *, int, Context *);
+#define DEFINE_BLAS_UNARY_FUNC(name, operation)                              \
+  __global__ void Kernel##name(int n, const float* a, int offa, float* y,    \
+                               int offy) {                                   \
+    CUDA_KERNEL_LOOP(i, n) {                                                 \
+      a += offa, y += offy;                                                  \
+      operation;                                                             \
+    }                                                                        \
+  }                                                                          \
+  template <>                                                                \
+  void name<DeviceType::kGPU, float>(int n, const float* a, int offa,        \
+                                     float* y, int offy, Context* context) { \
+    Kernel##name<<<GetBlocks(n), NumThreads, 0,                              \
+                   cudaStream_t(context->cuda_stream())>>>(n, a, offa, y,    \
+                                                           offy);            \
+    CUDA_CHECK(cudaPeekAtLastError());                                       \
+  }
 
 DEFINE_BLAS_UNARY_FUNC(Abs, y[i] = fabsf(a[i]));
 DEFINE_BLAS_UNARY_FUNC(Square, y[i] = a[i] * a[i]);
@@ -113,36 +109,41 @@ DEFINE_BLAS_UNARY_FUNC(Reciprocal, y[i] = 1 / a[i]);
 #undef DEFINE_BLAS_UNARY_FUNC
 
 // Level 1
-template <typename T>
-void BlasSscal(int n, float alpha, T *x, int offx, Context *context) {
+template <>
+void BlasSscal<DeviceType::kGPU, float>(int n, float alpha, float* x, int offx,
+                                        Context* context) {
   CUBLAS_CHECK(cublasSscal(cublasHandle_t(context->cublas_handle()), n, &alpha,
                            x + offx, 1));
 }
 
-template <typename T>
-void BlasScopy(int n, const T *x, int offx, T *y, int offy, Context *context) {
+template <>
+void BlasScopy<DeviceType::kGPU, float>(int n, const float* x, int offx,
+                                        float* y, int offy, Context* context) {
   CUBLAS_CHECK(cublasScopy(cublasHandle_t(context->cublas_handle()), n,
                            x + offx, 1, y + offy, 1));
 }
 
-template <typename T>
-void BlasSaxpy(int n, float alpha, const T *x, int offx, T *y, int offy,
-               Context *context) {
+template <>
+void BlasSaxpy<DeviceType::kGPU, float>(int n, float alpha, const float* x,
+                                        int offx, float* y, int offy,
+                                        Context* context) {
   CUBLAS_CHECK(cublasSaxpy(cublasHandle_t(context->cublas_handle()), n, &alpha,
                            x + offx, 1, y + offy, 1));
 }
 
-template <typename T>
-void BlasSasum(int n, const T *x, int offx, float *y, Context *context) {
+template <>
+void BlasSasum<DeviceType::kGPU, float>(int n, const float* x, int offx,
+                                        float* y, Context* context) {
   CUBLAS_CHECK(
       cublasSasum(cublasHandle_t(context->cublas_handle()), n, x + offx, 1, y));
 }
 
 // Level 2
-template <typename T>
-void BlasSgemv(int TA, int M, int N, float alpha, const T *A, int offA,
-               const T *x, int offx, float beta, T *y, int offy,
-               Context *context) {
+template <>
+void BlasSgemv<DeviceType::kGPU, float>(int TA, int M, int N, float alpha,
+                                        const float* A, int offA,
+                                        const float* x, int offx, float beta,
+                                        float* y, int offy, Context* context) {
   auto transA = TA ? CUBLAS_OP_N : CUBLAS_OP_T;
   CUBLAS_CHECK(cublasSgemv(cublasHandle_t(context->cublas_handle()), transA, N,
                            M, &alpha, A + offA, N, x + offx, 1, &beta, y + offy,
@@ -150,10 +151,11 @@ void BlasSgemv(int TA, int M, int N, float alpha, const T *A, int offA,
 }
 
 // Level 3
-template <typename T>
-void BlasSgemm(int TA, int TB, int M, int N, int K, float alpha, const T *A,
-               int offA, const T *B, int offB, float beta, T *C, int offC,
-               Context *context) {
+template <>
+void BlasSgemm<DeviceType::kGPU, float>(int TA, int TB, int M, int N, int K,
+                                        float alpha, const float* A, int offA,
+                                        const float* B, int offB, float beta,
+                                        float* C, int offC, Context* context) {
   int lda = TA ? M : K, ldb = TB ? K : N;
   auto transA = TA ? CUBLAS_OP_T : CUBLAS_OP_N;
   auto transB = TB ? CUBLAS_OP_T : CUBLAS_OP_N;
@@ -161,24 +163,6 @@ void BlasSgemm(int TA, int TB, int M, int N, int K, float alpha, const T *A,
                            transA, N, M, K, &alpha, B + offB, ldb, A + offA,
                            lda, &beta, C + offC, N));
 }
-
-// Explicit instantiation
-template void Set(int, float, float *, int, Context *);
-
-// Level 1
-template void BlasSscal(int, float, float *, int, Context *);
-template void BlasScopy(int, const float *, int, float *, int, Context *);
-template void BlasSaxpy(int, float, const float *, int, float *, int,
-                        Context *);
-template void BlasSasum(int, const float *, int, float *, Context *);
-
-// Level 2
-template void BlasSgemv(int, int, int, float, const float *, int, const float *,
-                        int, float, float *, int, Context *);
-
-// Level 3
-template void BlasSgemm(int, int, int, int, int, float, const float *, int,
-                        const float *, int, float, float *, int, Context *);
 
 }  // namespace Blas
 

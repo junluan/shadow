@@ -1,5 +1,5 @@
-#ifndef SHADOW_CORE_REGISTRY_HPP
-#define SHADOW_CORE_REGISTRY_HPP
+#ifndef SHADOW_CORE_REGISTRY_HPP_
+#define SHADOW_CORE_REGISTRY_HPP_
 
 #include "common.hpp"
 
@@ -102,4 +102,4 @@ class Register {
 
 }  // namespace Shadow
 
-#endif  // SHADOW_CORE_REGISTRY_HPP
+#endif  // SHADOW_CORE_REGISTRY_HPP_

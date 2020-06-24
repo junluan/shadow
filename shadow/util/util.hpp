@@ -1,5 +1,5 @@
-#ifndef SHADOW_UTIL_UTIL_HPP
-#define SHADOW_UTIL_UTIL_HPP
+#ifndef SHADOW_UTIL_UTIL_HPP_
+#define SHADOW_UTIL_UTIL_HPP_
 
 #include <algorithm>
 #include <cassert>
@@ -45,7 +45,7 @@ inline int round(T x) {
 
 inline float rand_uniform(float min, float max) {
   static std::default_random_engine generator(
-      static_cast<unsigned long>(time(nullptr)));
+      static_cast<uint64_t>(time(nullptr)));
   std::uniform_real_distribution<float> distribute(min, max);
   return distribute(generator);
 }
@@ -57,17 +57,17 @@ inline T constrain(T min, T max, T value) {
   return value;
 }
 
-inline bool pair_ascend(const std::pair<float, int> &lhs,
-                        const std::pair<float, int> &rhs) {
+inline bool pair_ascend(const std::pair<float, int>& lhs,
+                        const std::pair<float, int>& rhs) {
   return lhs.first < rhs.first;
 }
 
-inline bool pair_descend(const std::pair<float, int> &lhs,
-                         const std::pair<float, int> &rhs) {
+inline bool pair_descend(const std::pair<float, int>& lhs,
+                         const std::pair<float, int>& rhs) {
   return lhs.first > rhs.first;
 }
 
-inline std::vector<int> top_k(const std::vector<float> &v, int K,
+inline std::vector<int> top_k(const std::vector<float>& v, int K,
                               bool descend = true) {
   std::vector<std::pair<float, int>> pairs;
   for (int i = 0; i < v.size(); ++i) {
@@ -87,14 +87,14 @@ inline std::vector<int> top_k(const std::vector<float> &v, int K,
   return result;
 }
 
-inline int stoi(const std::string &str) {
+inline int stoi(const std::string& str) {
   std::stringstream ss(str);
   int num;
   ss >> num;
   return num;
 }
 
-inline float stof(const std::string &str) {
+inline float stof(const std::string& str) {
   std::stringstream ss(str);
   float num;
   ss >> num;
@@ -102,7 +102,7 @@ inline float stof(const std::string &str) {
 }
 
 template <typename T>
-inline std::string to_string(const T &val) {
+inline std::string to_string(const T& val) {
   std::stringstream ss;
   ss << val;
   return ss.str();
@@ -122,10 +122,10 @@ inline std::string format_process(int current, int total) {
 }
 
 template <typename T>
-inline std::string format_vector(const std::vector<T> &vector,
-                                 const std::string &split = ",",
-                                 const std::string &prefix = "",
-                                 const std::string &postfix = "") {
+inline std::string format_vector(const std::vector<T>& vector,
+                                 const std::string& split = ",",
+                                 const std::string& prefix = "",
+                                 const std::string& postfix = "") {
   std::stringstream ss;
   ss << prefix;
   if (!vector.empty()) {
@@ -140,9 +140,9 @@ inline std::string format_vector(const std::vector<T> &vector,
   return ss.str();
 }
 
-inline std::string find_replace(const std::string &str,
-                                const std::string &old_str,
-                                const std::string &new_str) {
+inline std::string find_replace(const std::string& str,
+                                const std::string& old_str,
+                                const std::string& new_str) {
   std::string origin(str);
   size_t pos = 0;
   while ((pos = origin.find(old_str, pos)) != std::string::npos) {
@@ -152,11 +152,11 @@ inline std::string find_replace(const std::string &str,
   return origin;
 }
 
-inline std::string find_replace(const std::string &str,
-                                const std::vector<std::string> &old_strs,
-                                const std::string &new_str) {
+inline std::string find_replace(const std::string& str,
+                                const std::vector<std::string>& old_strs,
+                                const std::string& new_str) {
   std::string origin(str);
-  for (const auto &old_str : old_strs) {
+  for (const auto& old_str : old_strs) {
     size_t pos = 0;
     while ((pos = origin.find(old_str, pos)) != std::string::npos) {
       origin.replace(pos, old_str.length(), new_str);
@@ -166,25 +166,25 @@ inline std::string find_replace(const std::string &str,
   return origin;
 }
 
-inline std::string find_replace_last(const std::string &str,
-                                     const std::string &old_str,
-                                     const std::string &new_str) {
+inline std::string find_replace_last(const std::string& str,
+                                     const std::string& old_str,
+                                     const std::string& new_str) {
   std::string origin(str);
   auto pos = origin.find_last_of(old_str);
   origin.replace(pos, old_str.length(), new_str);
   return origin;
 }
 
-inline std::string change_extension(const std::string &str,
-                                    const std::string &new_ext) {
+inline std::string change_extension(const std::string& str,
+                                    const std::string& new_ext) {
   std::string origin(str);
   auto pos = origin.find_last_of('.');
   origin.replace(pos, origin.length(), new_ext);
   return origin;
 }
 
-inline std::vector<std::string> tokenize(const std::string &str,
-                                         const std::string &split) {
+inline std::vector<std::string> tokenize(const std::string& str,
+                                         const std::string& split) {
   std::string::size_type last_pos = 0;
   auto pos = str.find_first_of(split, last_pos);
   std::vector<std::string> tokens;
@@ -199,7 +199,7 @@ inline std::vector<std::string> tokenize(const std::string &str,
   return tokens;
 }
 
-inline std::string ltrim(const std::string &str) {
+inline std::string ltrim(const std::string& str) {
   std::string origin(str);
   origin.erase(origin.begin(),
                std::find_if(origin.begin(), origin.end(),
@@ -207,7 +207,7 @@ inline std::string ltrim(const std::string &str) {
   return origin;
 }
 
-inline std::string rtrim(const std::string &str) {
+inline std::string rtrim(const std::string& str) {
   std::string origin(str);
   origin.erase(std::find_if(origin.rbegin(), origin.rend(),
                             [](int ch) { return !std::isspace(ch); })
@@ -216,9 +216,9 @@ inline std::string rtrim(const std::string &str) {
   return origin;
 }
 
-inline std::string trim(const std::string &str) { return ltrim(rtrim(str)); }
+inline std::string trim(const std::string& str) { return ltrim(rtrim(str)); }
 
-inline std::vector<std::string> load_list(const std::string &list_file) {
+inline std::vector<std::string> load_list(const std::string& list_file) {
   std::ifstream file(list_file);
   if (!file.is_open()) {
     throw std::runtime_error("Error when loading list file: " + list_file);
@@ -234,7 +234,7 @@ inline std::vector<std::string> load_list(const std::string &list_file) {
   return list;
 }
 
-inline std::string read_text_from_file(const std::string &filename) {
+inline std::string read_text_from_file(const std::string& filename) {
   std::ifstream file(filename);
   if (!file.is_open()) {
     std::cerr << "Can't open text file " << filename;
@@ -264,9 +264,9 @@ class Path {
   };
 
   Path() = default;
-  Path(const Path &path) = default;
-  explicit Path(const char *str) { set(str); }
-  explicit Path(const std::string &str) { set(str); }
+  Path(const Path& path) = default;
+  explicit Path(const char* str) { set(str); }
+  explicit Path(const std::string& str) { set(str); }
 
   bool is_empty() const { return path_.empty(); }
 
@@ -340,13 +340,13 @@ class Path {
   }
 
   std::string name() const {
-    const auto &name = file_name();
+    const auto& name = file_name();
     auto pos = name.find_last_of('.');
     return pos == std::string::npos ? std::string() : name.substr(0, pos);
   }
 
   std::string extension() const {
-    const auto &name = file_name();
+    const auto& name = file_name();
     auto pos = name.find_last_of('.');
     return pos == std::string::npos ? std::string() : name.substr(pos + 1);
   }
@@ -402,11 +402,11 @@ class Path {
   }
 
   std::wstring wstr(PathType type = KNative) const {
-    const auto &temp = str(type);
+    const auto& temp = str(type);
     return std::wstring(temp.begin(), temp.end());
   }
 
-  void set(const std::string &str, PathType type = KNative) {
+  void set(const std::string& str, PathType type = KNative) {
     type_ = type;
     if (type == kWindows) {
       path_ = Util::tokenize(str, "/\\");
@@ -465,9 +465,9 @@ class Path {
 #endif
   }
 
-  Path &operator=(const Path &other) = default;
+  Path& operator=(const Path& other) = default;
 
-  Path operator/(const Path &other) const {
+  Path operator/(const Path& other) const {
     if (other.absolute_) {
       throw std::runtime_error("Error in operator/: expected a relative path!");
     }
@@ -476,12 +476,12 @@ class Path {
           "Error in operator/: expected a path of the same type!");
     }
     Path result(*this);
-    for (const auto &path : other.path_) {
+    for (const auto& path : other.path_) {
       result.path_.push_back(path);
     }
     return result;
   }
-  Path operator+(const Path &other) const {
+  Path operator+(const Path& other) const {
     if (other.absolute_) {
       throw std::runtime_error("Error in operator+: expected a relative path!");
     }
@@ -490,16 +490,16 @@ class Path {
           "Error in operator+: expected a path of the same type!");
     }
     Path result(*this);
-    for (const auto &path : other.path_) {
+    for (const auto& path : other.path_) {
       result.path_.push_back(path);
     }
     return result;
   }
 
-  bool operator==(const Path &other) const { return other.path_ == path_; }
-  bool operator!=(const Path &other) const { return other.path_ != path_; }
+  bool operator==(const Path& other) const { return other.path_ == path_; }
+  bool operator!=(const Path& other) const { return other.path_ != path_; }
 
-  friend std::ostream &operator<<(std::ostream &os, const Path &path) {
+  friend std::ostream& operator<<(std::ostream& os, const Path& path) {
     os << path.str();
     return os;
   }
@@ -512,7 +512,7 @@ class Path {
 
 namespace Util {
 
-inline bool make_directory(const Path &path) {
+inline bool make_directory(const Path& path) {
 #if defined(__linux__) || defined(__APPLE__)
   return mkdir(path.str().c_str(), S_IRUSR | S_IWUSR | S_IXUSR) == 0;
 #elif defined(_WIN32)
@@ -520,7 +520,7 @@ inline bool make_directory(const Path &path) {
 #endif
 }
 
-inline bool make_directory(const std::string &path) {
+inline bool make_directory(const std::string& path) {
   return make_directory(Path(path));
 }
 
@@ -618,7 +618,7 @@ class Profiler {
 
   void set_enable(bool enable) { enable_ = enable; }
 
-  void tic(const std::string &profile_name) {
+  void tic(const std::string& profile_name) {
     if (!enable_) return;
     if (timers_.count(profile_name)) {
       timers_.at(profile_name).start();
@@ -626,12 +626,12 @@ class Profiler {
       timers_[profile_name] = Timer();
     }
   }
-  void toc(const std::string &profile_name) {
+  void toc(const std::string& profile_name) {
     if (!enable_) return;
     assert(timers_.count(profile_name));
     auto time_cost = timers_.at(profile_name).get_millisecond();
     if (stats_.count(profile_name)) {
-      auto &state = stats_.at(profile_name);
+      auto& state = stats_.at(profile_name);
       state.first++;
       state.second += time_cost;
     } else {
@@ -641,7 +641,7 @@ class Profiler {
 
   const std::string get_stats_str() {
     std::stringstream ss;
-    for (const auto &state : stats_) {
+    for (const auto& state : stats_) {
       int sum_count = state.second.first;
       double sum_cost = state.second.second;
       ss << state.first << ": " << sum_cost << " / " << sum_count << " = "
@@ -658,14 +658,14 @@ class Profiler {
 
 class ProcessBar {
  public:
-  ProcessBar(int slice, int total, const std::string &prefix = "") {
+  ProcessBar(int slice, int total, const std::string& prefix = "") {
     slice_ = slice;
     total_ = total;
     prefix_ = prefix;
     time_start_ = false;
   }
 
-  void update(int current, std::ostream *os, int mode = 0) {
+  void update(int current, std::ostream* os, int mode = 0) {
     *os << prefix_ << "[";
     int pos = slice_ * (current + 1) / total_;
     for (int i = 0; i < slice_; ++i) {
@@ -716,4 +716,4 @@ class ProcessBar {
 
 }  // namespace Shadow
 
-#endif  // SHADOW_UTIL_UTIL_HPP
+#endif  // SHADOW_UTIL_UTIL_HPP_

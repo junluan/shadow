@@ -1,53 +1,44 @@
-#include "connected_op.hpp"
+#include "core/operator.hpp"
+
+#include "kernels/connected.hpp"
 
 namespace Shadow {
 
-void ConnectedOp::Forward() {
-  if (bias_term_) {
-    CHECK_EQ(bottoms_size(), 3);
-  } else {
-    CHECK_EQ(bottoms_size(), 2);
+class ConnectedOp : public Operator {
+ public:
+  ConnectedOp(const shadow::OpParam& op_param, Workspace* ws)
+      : Operator(op_param, ws) {
+    CHECK(has_argument("num_output"));
+    num_output_ = get_single_argument<int>("num_output", 0);
+    bias_term_ = get_single_argument<bool>("bias_term", true);
+    transpose_ = get_single_argument<bool>("transpose", true);
+
+    kernel_ = std::dynamic_pointer_cast<ConnectedKernel>(
+        CreateKernel(op_param.type(), ws_->Ctx()->device_type()));
+    CHECK_NOTNULL(kernel_);
   }
 
-  const auto bottom = bottoms(0);
-  const auto weight = bottoms(1);
-  auto top = tops(0);
+  void Forward() override {
+    CHECK_EQ(bottoms_size(), bias_term_ ? 3 : 2);
 
-  int batch = bottom->shape(0), bottom_num = bottom->num();
+    const auto bottom = bottoms(0);
+    const auto weight = bottoms(1);
+    auto top = tops(0);
 
-  VecInt top_shape{batch, num_output_};
-  top->reshape(top_shape);
+    CHECK_NE(bottom, top);
 
-  if (batch == 1) {
-    if (transpose_) {
-      Blas::BlasSgemv(0, num_output_, bottom_num, 1, weight->data<float>(), 0,
-                      bottom->data<float>(), 0, 0, top->mutable_data<float>(),
-                      0, ws_->Ctx());
-    } else {
-      Blas::BlasSgemv(1, bottom_num, num_output_, 1, weight->data<float>(), 0,
-                      bottom->data<float>(), 0, 0, top->mutable_data<float>(),
-                      0, ws_->Ctx());
-    }
-    if (bias_term_) {
-      Blas::BlasSaxpy(num_output_, 1, bottoms(2)->data<float>(), 0,
-                      top->mutable_data<float>(), 0, ws_->Ctx());
-    }
-  } else {
-    Blas::BlasSgemm(0, transpose_, batch, num_output_, bottom_num, 1,
-                    bottom->data<float>(), 0, weight->data<float>(), 0, 0,
-                    top->mutable_data<float>(), 0, ws_->Ctx());
-    if (bias_term_) {
-      ws_->GrowTempBuffer(batch * sizeof(float));
-      auto biases_multiplier = ws_->CreateTempBlob({batch}, DataType::kF32);
-      Blas::Set(batch, 1, biases_multiplier->mutable_data<float>(), 0,
-                ws_->Ctx());
-      Blas::BlasSgemm(0, 0, batch, num_output_, 1, 1,
-                      biases_multiplier->data<float>(), 0,
-                      bottoms(2)->data<float>(), 0, 1,
-                      top->mutable_data<float>(), 0, ws_->Ctx());
-    }
+    top->reshape({bottom->shape(0), num_output_});
+
+    kernel_->Run(bottom, weight, bias_term_ ? bottoms(2) : nullptr, top, ws_,
+                 num_output_, bias_term_, transpose_);
   }
-}
+
+ private:
+  int num_output_;
+  bool bias_term_, transpose_;
+
+  std::shared_ptr<ConnectedKernel> kernel_ = nullptr;
+};
 
 REGISTER_OPERATOR(Connected, ConnectedOp);
 

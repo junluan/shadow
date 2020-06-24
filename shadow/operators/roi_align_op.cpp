@@ -1,77 +1,45 @@
-#include "roi_align_op.hpp"
+#include "core/operator.hpp"
+
+#include "kernels/roi_align.hpp"
 
 namespace Shadow {
 
-void ROIAlignOp::Forward() {
-  CHECK_EQ(bottoms_size(), 2);
+class ROIAlignOp : public Operator {
+ public:
+  ROIAlignOp(const shadow::OpParam& op_param, Workspace* ws)
+      : Operator(op_param, ws) {
+    pooled_h_ = get_single_argument<int>("pooled_h", 0);
+    pooled_w_ = get_single_argument<int>("pooled_w", 0);
+    CHECK_GT(pooled_h_, 1) << "pooled_h must be > 1";
+    CHECK_GT(pooled_w_, 1) << "pooled_w must be > 1";
+    spatial_scale_ = get_single_argument<float>("spatial_scale", 1.f / 16);
 
-  const auto bottom_fea = bottoms(0);
-  const auto bottom_roi = bottoms(1);
-  auto top = tops(0);
+    kernel_ = std::dynamic_pointer_cast<ROIAlignKernel>(
+        CreateKernel(op_param.type(), ws_->Ctx()->device_type()));
+    CHECK_NOTNULL(kernel_);
+  }
 
-  CHECK_NE(bottom_fea, top);
+  void Forward() override {
+    CHECK_EQ(bottoms_size(), 2);
 
-  int in_c = bottom_fea->shape(1), num_rois = bottom_roi->shape(0);
-  top->reshape({num_rois, in_c, pooled_h_, pooled_w_});
+    const auto bottom = bottoms(0);
+    const auto roi = bottoms(1);
+    auto top = tops(0);
 
-  Vision::ROIAlign(bottom_fea->data<float>(), bottom_fea->shape(),
-                   bottom_roi->data<float>(), num_rois, pooled_h_, pooled_w_,
-                   spatial_scale_, top->mutable_data<float>(), ws_->Ctx());
-}
+    CHECK_NE(bottom, top);
+
+    top->reshape({roi->shape(0), bottom->shape(1), pooled_h_, pooled_w_});
+
+    kernel_->Run(bottom, roi, top, ws_, pooled_h_, pooled_w_, spatial_scale_);
+  }
+
+ private:
+  int pooled_h_, pooled_w_;
+  float spatial_scale_;
+
+  std::shared_ptr<ROIAlignKernel> kernel_ = nullptr;
+};
 
 REGISTER_OPERATOR(ROIAlign, ROIAlignOp);
-
-namespace Vision {
-
-#if !defined(USE_CUDA)
-template <typename T>
-void ROIAlign(const T *in_data, const VecInt &in_shape, const T *roi_data,
-              int num_rois, int pooled_h, int pooled_w, float spatial_scale,
-              T *out_data, Context *context) {
-  int batch = in_shape[0];
-  int in_c = in_shape[1], in_h = in_shape[2], in_w = in_shape[3];
-  for (int n = 0; n < num_rois; ++n) {
-    int roi_offset = 5 * n;
-    int roi_batch_id = roi_data[roi_offset];
-    float roi_start_w = roi_data[roi_offset + 1] * spatial_scale;
-    float roi_start_h = roi_data[roi_offset + 2] * spatial_scale;
-    float roi_end_w = roi_data[roi_offset + 3] * spatial_scale;
-    float roi_end_h = roi_data[roi_offset + 4] * spatial_scale;
-    assert(roi_batch_id >= 0);
-    assert(roi_batch_id < batch);
-    float roi_height = roi_end_h - roi_start_h;
-    float roi_width = roi_end_w - roi_start_w;
-    float bin_size_h = roi_height / static_cast<float>(pooled_h - 1);
-    float bin_size_w = roi_width / static_cast<float>(pooled_w - 1);
-    for (int c = 0; c < in_c; ++c) {
-      for (int ph = 0; ph < pooled_h; ++ph) {
-        float src_h_f = roi_start_h + ph * bin_size_h;
-        int src_h = static_cast<int>(src_h_f);
-        float sh = src_h_f - src_h;
-        int src_h_off = (roi_batch_id * in_c + c) * in_h + src_h;
-        for (int pw = 0; pw < pooled_w; ++pw) {
-          float src_w_f = roi_start_w + pw * bin_size_w;
-          int src_w = static_cast<int>(src_w_f);
-          float sw = src_w_f - src_w;
-          int src_index_0 = src_h_off * in_w + src_w;
-          int src_index_1 = (src_h_off + 1) * in_w + src_w;
-          int src_index_2 = src_h_off * in_w + src_w + 1;
-          int src_index_3 = (src_h_off + 1) * in_w + src_w + 1;
-          *out_data++ =
-              static_cast<T>((1 - sh) * (1 - sw) * in_data[src_index_0] +
-                             sh * (1 - sw) * in_data[src_index_1] +
-                             (1 - sh) * sw * in_data[src_index_2] +
-                             sh * sw * in_data[src_index_3]);
-        }
-      }
-    }
-  }
-}
-
-template void ROIAlign(const float *, const VecInt &, const float *, int, int,
-                       int, float, float *, Context *);
-#endif
-
-}  // namespace Vision
 
 }  // namespace Shadow

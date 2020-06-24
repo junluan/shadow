@@ -1,5 +1,5 @@
-#ifndef SHADOW_ALGORITHM_DETECT_FASTER_RCNN_HPP
-#define SHADOW_ALGORITHM_DETECT_FASTER_RCNN_HPP
+#ifndef SHADOW_ALGORITHM_DETECT_FASTER_RCNN_HPP_
+#define SHADOW_ALGORITHM_DETECT_FASTER_RCNN_HPP_
 
 #include "method.hpp"
 
@@ -11,22 +11,22 @@ class DetectFasterRCNN final : public Method {
  public:
   DetectFasterRCNN() = default;
 
-  void Setup(const std::string &model_file) override;
+  void Setup(const std::string& model_file) override;
 
-  void Predict(const JImage &im_src, const RectF &roi, VecBoxF *boxes,
-               std::vector<VecPointF> *Gpoints) override;
+  void Predict(const JImage& im_src, const RectF& roi, VecBoxF* boxes,
+               std::vector<VecPointF>* Gpoints) override;
 #if defined(USE_OpenCV)
-  void Predict(const cv::Mat &im_mat, const RectF &roi, VecBoxF *boxes,
-               std::vector<VecPointF> *Gpoints) override;
+  void Predict(const cv::Mat& im_mat, const RectF& roi, VecBoxF* boxes,
+               std::vector<VecPointF>* Gpoints) override;
 #endif
 
  private:
-  void Process(const VecFloat &in_data, const VecInt &in_shape,
-               const VecFloat &im_info, float height, float width,
-               VecBoxF *boxes);
+  void Process(const VecFloat& in_data, const VecInt& in_shape,
+               const VecFloat& im_info, float height, float width,
+               VecBoxF* boxes);
 
   void CalculateScales(float height, float width, float max_side,
-                       const VecFloat &min_side, VecFloat *scales);
+                       const VecFloat& min_side, VecFloat* scales);
 
   Network net_;
   VecFloat in_data_, min_side_, scales_, im_info_;
@@ -39,4 +39,4 @@ class DetectFasterRCNN final : public Method {
 
 }  // namespace Shadow
 
-#endif  // SHADOW_ALGORITHM_DETECT_FASTER_RCNN_HPP
+#endif  // SHADOW_ALGORITHM_DETECT_FASTER_RCNN_HPP_

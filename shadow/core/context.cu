@@ -6,7 +6,7 @@ namespace Shadow {
 
 class GPUContext : public Context {
  public:
-  explicit GPUContext(const ArgumentHelper &arguments) {
+  explicit GPUContext(const ArgumentHelper& arguments) {
     device_id_ = arguments.GetSingleArgument<int>("device_id", 0);
     default_cuda_stream_ =
         arguments.GetSingleArgument<bool>("default_cuda_stream", false);
@@ -54,7 +54,7 @@ class GPUContext : public Context {
 #endif
   }
 
-  Allocator *allocator() const override { return allocator_.get(); }
+  Allocator* allocator() const override { return allocator_.get(); }
 
   DeviceType device_type() const override { return DeviceType::kGPU; }
 
@@ -66,18 +66,18 @@ class GPUContext : public Context {
     CUDA_CHECK(cudaStreamSynchronize(cuda_stream_));
   }
 
-  void *cuda_stream() const override {
+  void* cuda_stream() const override {
     CHECK_NOTNULL(cuda_stream_);
     return cuda_stream_;
   }
 
-  void *cublas_handle() const override {
+  void* cublas_handle() const override {
     CHECK_NOTNULL(cublas_handle_);
     return cublas_handle_;
   }
 
 #if defined(USE_CUDNN)
-  void *cudnn_handle() const override {
+  void* cudnn_handle() const override {
     CHECK_NOTNULL(cudnn_handle_);
     return cudnn_handle_;
   }
@@ -109,7 +109,7 @@ class GPUContext : public Context {
 
 template <>
 std::shared_ptr<Context> GetContext<DeviceType::kGPU>(
-    const ArgumentHelper &arguments) {
+    const ArgumentHelper& arguments) {
   return std::make_shared<GPUContext>(arguments);
 }
 

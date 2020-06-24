@@ -1,60 +1,47 @@
-#include "reorg_op.hpp"
+#include "core/operator.hpp"
+
+#include "kernels/reorg.hpp"
 
 namespace Shadow {
 
-void ReorgOp::Forward() {
-  const auto bottom = bottoms(0);
-  auto top = tops(0);
+class ReorgOp : public Operator {
+ public:
+  ReorgOp(const shadow::OpParam& op_param, Workspace* ws)
+      : Operator(op_param, ws) {
+    stride_ = get_single_argument<int>("stride", 2);
 
-  CHECK_NE(bottom, top);
+    kernel_ = std::dynamic_pointer_cast<ReorgKernel>(
+        CreateKernel(op_param.type(), ws_->Ctx()->device_type()));
+    CHECK_NOTNULL(kernel_);
+  }
 
-  int in_c = bottom->shape(1), in_h = bottom->shape(2), in_w = bottom->shape(3);
+  void Forward() override {
+    const auto bottom = bottoms(0);
+    auto top = tops(0);
 
-  CHECK_EQ(in_h % stride_, 0);
-  CHECK_EQ(in_w % stride_, 0);
+    CHECK_NE(bottom, top);
 
-  auto top_shape = bottom->shape();
-  top_shape[1] = in_c * stride_ * stride_;
-  top_shape[2] = in_h / stride_;
-  top_shape[3] = in_w / stride_;
-  top->reshape(top_shape);
+    int in_c = bottom->shape(1), in_h = bottom->shape(2),
+        in_w = bottom->shape(3);
 
-  Vision::Reorg(bottom->data<float>(), bottom->shape(), stride_,
-                top->mutable_data<float>(), ws_->Ctx());
-}
+    CHECK_EQ(in_h % stride_, 0);
+    CHECK_EQ(in_w % stride_, 0);
+
+    auto top_shape = bottom->shape();
+    top_shape[1] = in_c * stride_ * stride_;
+    top_shape[2] = in_h / stride_;
+    top_shape[3] = in_w / stride_;
+    top->reshape(top_shape);
+
+    kernel_->Run(bottom, top, ws_, stride_);
+  }
+
+ private:
+  int stride_;
+
+  std::shared_ptr<ReorgKernel> kernel_ = nullptr;
+};
 
 REGISTER_OPERATOR(Reorg, ReorgOp);
-
-namespace Vision {
-
-#if !defined(USE_CUDA)
-template <typename T>
-void Reorg(const T *in_data, const VecInt &in_shape, int stride, T *out_data,
-           Context *context) {
-  int batch = in_shape[0], in_c = in_shape[1];
-  int in_h = in_shape[2], in_w = in_shape[3];
-  int out_c = in_c / (stride * stride);
-  for (int b = 0; b < batch; ++b) {
-    for (int c = 0; c < in_c; ++c) {
-      for (int h = 0; h < in_h; ++h) {
-        for (int w = 0; w < in_w; ++w) {
-          int c2 = c % out_c;
-          int offset = c / out_c;
-          int h2 = h * stride + offset / stride;
-          int w2 = w * stride + offset % stride;
-          int in_index = ((b * in_c + c) * in_h + h) * in_w + w;
-          int out_index =
-              ((b * out_c + c2) * in_h * stride + h2) * in_w * stride + w2;
-          out_data[in_index] = in_data[out_index];
-        }
-      }
-    }
-  }
-}
-
-template void Reorg(const float *, const VecInt &, int, float *, Context *);
-#endif
-
-}  // namespace Vision
 
 }  // namespace Shadow

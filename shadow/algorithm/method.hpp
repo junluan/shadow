@@ -1,5 +1,5 @@
-#ifndef SHADOW_ALGORITHM_METHOD_HPP
-#define SHADOW_ALGORITHM_METHOD_HPP
+#ifndef SHADOW_ALGORITHM_METHOD_HPP_
+#define SHADOW_ALGORITHM_METHOD_HPP_
 
 #include "util/boxes.hpp"
 #include "util/jimage.hpp"
@@ -12,30 +12,30 @@ class Method {
   Method() = default;
   virtual ~Method() = default;
 
-  virtual void Setup(const std::string &model_file) = 0;
+  virtual void Setup(const std::string& model_file) = 0;
 
-  virtual void Predict(const JImage &im_src, const RectF &roi, VecBoxF *boxes,
-                       std::vector<VecPointF> *Gpoints) {
+  virtual void Predict(const JImage& im_src, const RectF& roi, VecBoxF* boxes,
+                       std::vector<VecPointF>* Gpoints) {
     LOG(FATAL) << "Predict for JImage!";
   }
-  virtual void Predict(const JImage &im_src, const RectF &roi,
-                       std::map<std::string, VecFloat> *scores) {
+  virtual void Predict(const JImage& im_src, const RectF& roi,
+                       std::map<std::string, VecFloat>* scores) {
     LOG(FATAL) << "Predict for JImage!";
   }
 
 #if defined(USE_OpenCV)
-  virtual void Predict(const cv::Mat &im_mat, const RectF &roi, VecBoxF *boxes,
-                       std::vector<VecPointF> *Gpoints) {
+  virtual void Predict(const cv::Mat& im_mat, const RectF& roi, VecBoxF* boxes,
+                       std::vector<VecPointF>* Gpoints) {
     LOG(FATAL) << "Predict for Mat!";
   }
-  virtual void Predict(const cv::Mat &im_mat, const RectF &roi,
-                       std::map<std::string, VecFloat> *scores) {
+  virtual void Predict(const cv::Mat& im_mat, const RectF& roi,
+                       std::map<std::string, VecFloat>* scores) {
     LOG(FATAL) << "Predict for Mat!";
   }
 #endif
 };
 
-static void ConvertData(const JImage &im_src, float *data, const RectF &roi,
+static void ConvertData(const JImage& im_src, float* data, const RectF& roi,
                         int channel, int height, int width, int flag = 1,
                         bool transpose = false) {
   CHECK_NOTNULL(im_src.data());
@@ -43,7 +43,7 @@ static void ConvertData(const JImage &im_src, float *data, const RectF &roi,
 
   int c_ = im_src.c_, h_ = im_src.h_, w_ = im_src.w_;
   int dst_spatial_dim = height * width;
-  const auto &order_ = im_src.order();
+  const auto& order_ = im_src.order();
 
   int loc_r = 0, loc_g = 1, loc_b = 2;
   if (order_ == kGray) {
@@ -69,7 +69,7 @@ static void ConvertData(const JImage &im_src, float *data, const RectF &roi,
     LOG(FATAL) << "Crop scale must be the same!";
   }
 
-  const auto *data_src = im_src.data();
+  const auto* data_src = im_src.data();
   float *data_r = nullptr, *data_g = nullptr, *data_b = nullptr,
         *data_gray = nullptr;
   if (channel == 3 && flag == 0) {
@@ -129,7 +129,7 @@ static void ConvertData(const JImage &im_src, float *data, const RectF &roi,
 }
 
 #if defined(USE_OpenCV)
-static void ConvertData(const cv::Mat &im_mat, float *data, const RectF &roi,
+static void ConvertData(const cv::Mat& im_mat, float* data, const RectF& roi,
                         int channel, int height, int width, int flag = 1,
                         bool transpose = false) {
   CHECK(!im_mat.empty());
@@ -193,7 +193,7 @@ static void ConvertData(const cv::Mat &im_mat, float *data, const RectF &roi,
   if (channel == 3) {
     CHECK_EQ(c_, 3);
     for (int h = 0; h < dst_h; ++h) {
-      const auto *data_src = im_resize.ptr<uchar>(h);
+      const auto* data_src = im_resize.ptr<uchar>(h);
       for (int w = 0; w < dst_w; ++w) {
         *data_b++ = static_cast<float>(*data_src++);
         *data_g++ = static_cast<float>(*data_src++);
@@ -204,7 +204,7 @@ static void ConvertData(const cv::Mat &im_mat, float *data, const RectF &roi,
     cv::Mat im_gray;
     cv::cvtColor(im_resize, im_gray, cv::COLOR_BGR2GRAY);
     for (int h = 0; h < dst_h; ++h) {
-      const auto *data_src = im_gray.ptr<uchar>(h);
+      const auto* data_src = im_gray.ptr<uchar>(h);
       for (int w = 0; w < dst_w; ++w) {
         *data_gray++ = static_cast<float>(*data_src++);
       }
@@ -217,4 +217,4 @@ static void ConvertData(const cv::Mat &im_mat, float *data, const RectF &roi,
 
 }  // namespace Shadow
 
-#endif  // SHADOW_ALGORITHM_METHOD_HPP
+#endif  // SHADOW_ALGORITHM_METHOD_HPP_

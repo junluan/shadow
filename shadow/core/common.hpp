@@ -1,5 +1,5 @@
-#ifndef SHADOW_CORE_COMMON_HPP
-#define SHADOW_CORE_COMMON_HPP
+#ifndef SHADOW_CORE_COMMON_HPP_
+#define SHADOW_CORE_COMMON_HPP_
 
 #define SHADOW_STRINGIFY_IMPL(s) #s
 #define SHADOW_STRINGIFY(s) SHADOW_STRINGIFY_IMPL(s)
@@ -22,4 +22,4 @@ namespace Shadow {
 
 }  // namespace Shadow
 
-#endif  // SHADOW_CORE_COMMON_HPP
+#endif  // SHADOW_CORE_COMMON_HPP_

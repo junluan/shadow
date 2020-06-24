@@ -1,95 +1,63 @@
-#include "scale_op.hpp"
+#include "core/operator.hpp"
+
+#include "kernels/scale.hpp"
 
 namespace Shadow {
 
-void ScaleOp::Forward() {
-  const auto bottom = bottoms(0);
-  auto top = tops(0);
+class ScaleOp : public Operator {
+ public:
+  ScaleOp(const shadow::OpParam& op_param, Workspace* ws)
+      : Operator(op_param, ws) {
+    axis_ = get_single_argument<int>("axis", 1);
+    has_scale_ = get_single_argument<bool>("has_scale", false);
+    has_bias_ = get_single_argument<bool>("has_bias", false);
+    scale_value_ = get_repeated_argument<float>("scale_value");
+    bias_value_ = get_repeated_argument<float>("bias_value");
 
-  if (bottom != top) {
-    top->reshape(bottom->shape());
+    kernel_ = std::dynamic_pointer_cast<ScaleKernel>(
+        CreateKernel(op_param.type(), ws_->Ctx()->device_type()));
+    CHECK_NOTNULL(kernel_);
   }
 
-  std::shared_ptr<Blob> scale = nullptr, bias = nullptr;
-  if (scale_value_.empty() && bias_value_.empty()) {
-    CHECK_GE(bottoms_size(), 2);
+  void Forward() override {
+    const auto bottom = bottoms(0);
+    auto top = tops(0);
+
+    top->reshape(bottom->shape());
+
     if (has_scale_ && has_bias_) {
       CHECK_EQ(bottoms_size(), 3);
-      scale = bottoms(1), bias = bottoms(2);
+      kernel_->Run(bottom, bottoms(1), bottoms(2), top, ws_, axis_);
     } else if (has_scale_) {
-      scale = bottoms(1);
-      ws_->GrowTempBuffer(scale->raw_size());
-      bias = ws_->CreateTempBlob(scale->shape(), DataType::kF32);
-      Blas::Set(bias->count(), 0, bias->mutable_data<float>(), 0, ws_->Ctx());
+      CHECK_EQ(bottoms_size(), 2);
+      kernel_->Run(bottom, bottoms(1), nullptr, top, ws_, axis_);
+    } else if (has_bias_) {
+      CHECK_EQ(bottoms_size(), 2);
+      kernel_->Run(bottom, nullptr, bottoms(1), top, ws_, axis_);
     } else {
-      bias = bottoms(1);
-      ws_->GrowTempBuffer(bias->raw_size());
-      scale = ws_->CreateTempBlob(bias->shape(), DataType::kF32);
-      Blas::Set(scale->count(), 1, scale->mutable_data<float>(), 0, ws_->Ctx());
+      int dim = bottom->shape(axis_);
+      if (scale_value_.size() > 1) {
+        CHECK_EQ(scale_value_.size(), dim);
+      } else if (scale_value_.size() == 1) {
+        scale_value_ = VecFloat(dim, scale_value_[0]);
+      }
+      if (bias_value_.size() > 1) {
+        CHECK_EQ(bias_value_.size(), dim);
+      } else if (bias_value_.size() == 1) {
+        bias_value_ = VecFloat(dim, bias_value_[0]);
+      }
+      kernel_->Run(bottom, top, ws_, axis_, scale_value_, bias_value_);
     }
-  } else {
-    int dim = bottom->shape(axis_);
-    if (scale_value_.size() > 1) {
-      CHECK_EQ(scale_value_.size(), dim);
-    } else if (scale_value_.size() == 1) {
-      scale_value_ = VecFloat(dim, scale_value_[0]);
-    } else {
-      scale_value_ = VecFloat(dim, 1);
-    }
-    if (bias_value_.size() > 1) {
-      CHECK_EQ(bias_value_.size(), dim);
-    } else if (bias_value_.size() == 1) {
-      bias_value_ = VecFloat(dim, bias_value_[0]);
-    } else {
-      bias_value_ = VecFloat(dim, 0);
-    }
-    ws_->GrowTempBuffer(2 * dim * sizeof(float));
-    scale = ws_->CreateTempBlob({dim}, DataType::kF32);
-    bias = ws_->CreateTempBlob({dim}, DataType::kF32);
-    scale->set_data<float>(scale_value_.data(), dim);
-    bias->set_data<float>(bias_value_.data(), dim);
   }
 
-  VecInt shape;
-  for (int d = scale->num_axes() - 1; d >= 0; --d) {
-    int dim = scale->shape(d);
-    if (dim != 1 || !shape.empty() || d == 0) {
-      shape.insert(shape.begin(), dim);
-    }
-  }
-  scale->set_shape(shape);
-  bias->set_shape(shape);
+ private:
+  int axis_;
+  bool has_scale_, has_bias_;
+  VecFloat scale_value_, bias_value_;
 
-  CHECK_GE(bottom->num_axes(), axis_ + scale->num_axes());
-  for (int d = 0; d < scale->num_axes(); ++d) {
-    CHECK_EQ(bottom->shape(axis_ + d), scale->shape(d));
-  }
-  scale_dim_ = scale->count();
-  inner_dim_ = bottom->count(axis_ + scale->num_axes());
-
-  Vision::Scale(bottom->data<float>(), bottom->count(), scale->data<float>(),
-                bias->data<float>(), scale_dim_, inner_dim_,
-                top->mutable_data<float>(), ws_->Ctx());
-}
+  std::shared_ptr<ScaleKernel> kernel_ = nullptr;
+};
 
 REGISTER_OPERATOR(Scale, ScaleOp);
-
-namespace Vision {
-
-#if !defined(USE_CUDA)
-template <typename T>
-void Scale(const T *in_data, int count, const T *scale_data, const T *bias_data,
-           int scale_dim, int inner_dim, T *out_data, Context *context) {
-  for (int i = 0; i < count; ++i) {
-    int index = (i / inner_dim) % scale_dim;
-    out_data[i] = in_data[i] * scale_data[index] + bias_data[index];
-  }
-}
-
-template void Scale(const float *, int, const float *, const float *, int, int,
-                    float *, Context *);
-#endif
-
-}  // namespace Vision
 
 }  // namespace Shadow

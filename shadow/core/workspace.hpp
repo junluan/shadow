@@ -1,5 +1,5 @@
-#ifndef SHADOW_CORE_WORKSPACE_HPP
-#define SHADOW_CORE_WORKSPACE_HPP
+#ifndef SHADOW_CORE_WORKSPACE_HPP_
+#define SHADOW_CORE_WORKSPACE_HPP_
 
 #include "blob.hpp"
 #include "context.hpp"
@@ -12,21 +12,21 @@ namespace Shadow {
 
 class Workspace {
  public:
-  explicit Workspace(const ArgumentHelper &arguments);
+  explicit Workspace(const ArgumentHelper& arguments);
 
-  Context *Ctx();
+  Context* Ctx();
 
-  bool HasBlob(const std::string &name) const;
+  bool HasBlob(const std::string& name) const;
 
-  DataType GetBlobDataType(const std::string &name) const;
-  std::vector<int> GetBlobShape(const std::string &name) const;
+  DataType GetBlobDataType(const std::string& name) const;
+  std::vector<int> GetBlobShape(const std::string& name) const;
 
-  std::shared_ptr<Blob> GetBlob(const std::string &name) const;
+  std::shared_ptr<Blob> GetBlob(const std::string& name) const;
 
-  std::shared_ptr<Blob> CreateBlob(const std::string &name, DataType data_type,
-                                   Allocator *allocator = nullptr);
+  std::shared_ptr<Blob> CreateBlob(const std::string& name, DataType data_type,
+                                   Allocator* allocator = nullptr);
 
-  std::shared_ptr<Blob> CreateTempBlob(const std::vector<int> &shape,
+  std::shared_ptr<Blob> CreateTempBlob(const std::vector<int>& shape,
                                        DataType data_type);
 
   void GrowTempBuffer(size_t raw_size);
@@ -35,7 +35,7 @@ class Workspace {
   size_t GetWorkspaceTempSize() const;
 
  private:
-  const void *GetTempPtr(size_t raw_size);
+  const void* GetTempPtr(size_t raw_size);
 
   std::shared_ptr<Context> context_{nullptr};
 
@@ -48,4 +48,4 @@ class Workspace {
 
 }  // namespace Shadow
 
-#endif  // SHADOW_CORE_WORKSPACE_HPP
+#endif  // SHADOW_CORE_WORKSPACE_HPP_

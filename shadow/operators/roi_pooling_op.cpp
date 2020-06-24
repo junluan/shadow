@@ -1,83 +1,45 @@
-#include "roi_pooling_op.hpp"
+#include "core/operator.hpp"
+
+#include "kernels/roi_pooling.hpp"
 
 namespace Shadow {
 
-void ROIPoolingOp::Forward() {
-  CHECK_EQ(bottoms_size(), 2);
+class ROIPoolingOp : public Operator {
+ public:
+  ROIPoolingOp(const shadow::OpParam& op_param, Workspace* ws)
+      : Operator(op_param, ws) {
+    pooled_h_ = get_single_argument<int>("pooled_h", 0);
+    pooled_w_ = get_single_argument<int>("pooled_w", 0);
+    CHECK_GT(pooled_h_, 0) << "pooled_h must be > 0";
+    CHECK_GT(pooled_w_, 0) << "pooled_w must be > 0";
+    spatial_scale_ = get_single_argument<float>("spatial_scale", 1.f / 16);
 
-  const auto bottom_fea = bottoms(0);
-  const auto bottom_roi = bottoms(1);
-  auto top = tops(0);
+    kernel_ = std::dynamic_pointer_cast<ROIPoolingKernel>(
+        CreateKernel(op_param.type(), ws_->Ctx()->device_type()));
+    CHECK_NOTNULL(kernel_);
+  }
 
-  CHECK_NE(bottom_fea, top);
+  void Forward() override {
+    CHECK_EQ(bottoms_size(), 2);
 
-  int in_c = bottom_fea->shape(1), num_rois = bottom_roi->shape(0);
-  top->reshape({num_rois, in_c, pooled_h_, pooled_w_});
+    const auto bottom = bottoms(0);
+    const auto roi = bottoms(1);
+    auto top = tops(0);
 
-  Vision::ROIPooling(bottom_fea->data<float>(), bottom_fea->shape(),
-                     bottom_roi->data<float>(), num_rois, pooled_h_, pooled_w_,
-                     spatial_scale_, top->mutable_data<float>(), ws_->Ctx());
-}
+    CHECK_NE(bottom, top);
+
+    top->reshape({roi->shape(0), bottom->shape(1), pooled_h_, pooled_w_});
+
+    kernel_->Run(bottom, roi, top, ws_, pooled_h_, pooled_w_, spatial_scale_);
+  }
+
+ private:
+  int pooled_h_, pooled_w_;
+  float spatial_scale_;
+
+  std::shared_ptr<ROIPoolingKernel> kernel_ = nullptr;
+};
 
 REGISTER_OPERATOR(ROIPooling, ROIPoolingOp);
-
-namespace Vision {
-
-#if !defined(USE_CUDA)
-template <typename T>
-void ROIPooling(const T *in_data, const VecInt &in_shape, const T *roi_data,
-                int num_rois, int pooled_h, int pooled_w, float spatial_scale,
-                T *out_data, Context *context) {
-  int batch = in_shape[0];
-  int in_c = in_shape[1], in_h = in_shape[2], in_w = in_shape[3];
-  int in_num = in_c * in_h * in_w, out_num = in_c * pooled_h * pooled_w;
-  for (int n = 0; n < num_rois; ++n) {
-    int roi_offset = 5 * n;
-    int roi_batch_id = roi_data[roi_offset];
-    int roi_start_w = Util::round(roi_data[roi_offset + 1] * spatial_scale);
-    int roi_start_h = Util::round(roi_data[roi_offset + 2] * spatial_scale);
-    int roi_end_w = Util::round(roi_data[roi_offset + 3] * spatial_scale);
-    int roi_end_h = Util::round(roi_data[roi_offset + 4] * spatial_scale);
-    assert(roi_batch_id >= 0);
-    assert(roi_batch_id < batch);
-    int roi_height = std::max(roi_end_h - roi_start_h + 1, 1);
-    int roi_width = std::max(roi_end_w - roi_start_w + 1, 1);
-    float bin_size_h = roi_height / static_cast<float>(pooled_h);
-    float bin_size_w = roi_width / static_cast<float>(pooled_w);
-    const T *batch_in_data = in_data + roi_batch_id * in_num;
-    T *batch_out_data = out_data + n * out_num;
-    for (int c = 0; c < in_c; ++c) {
-      for (int ph = 0; ph < pooled_h; ++ph) {
-        for (int pw = 0; pw < pooled_w; ++pw) {
-          auto hstart = static_cast<int>(std::floor(ph * bin_size_h));
-          auto wstart = static_cast<int>(std::floor(pw * bin_size_w));
-          auto hend = static_cast<int>(std::ceil((ph + 1) * bin_size_h));
-          auto wend = static_cast<int>(std::ceil((pw + 1) * bin_size_w));
-          hstart = std::min(std::max(hstart + roi_start_h, 0), in_h);
-          hend = std::min(std::max(hend + roi_start_h, 0), in_h);
-          wstart = std::min(std::max(wstart + roi_start_w, 0), in_w);
-          wend = std::min(std::max(wend + roi_start_w, 0), in_w);
-          bool is_empty = (hend <= hstart) || (wend <= wstart);
-          T max_val = is_empty
-                          ? T(0)
-                          : batch_in_data[(c * in_h + hstart) * in_w + wstart];
-          for (int h = hstart; h < hend; ++h) {
-            for (int w = wstart; w < wend; ++w) {
-              max_val =
-                  std::max(max_val, batch_in_data[(c * in_h + h) * in_w + w]);
-            }
-          }
-          int pool_index = (c * pooled_h + ph) * pooled_w + pw;
-          batch_out_data[pool_index] = max_val;
-        }
-      }
-    }
-  }
-}
-
-template void ROIPooling(const float *, const VecInt &, const float *, int, int,
-                         int, float, float *, Context *);
-#endif
-}  // namespace Vision
 
 }  // namespace Shadow

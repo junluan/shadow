@@ -1,67 +1,36 @@
-#include "unary_op.hpp"
+#include "core/operator.hpp"
+
+#include "kernels/unary.hpp"
 
 namespace Shadow {
 
-void UnaryOp::Forward() {
-  const auto bottom = bottoms(0);
-  auto top = tops(0);
+class UnaryOp : public Operator {
+ public:
+  UnaryOp(const shadow::OpParam& op_param, Workspace* ws)
+      : Operator(op_param, ws) {
+    operation_ = get_single_argument<int>("operation", -1);
+    CHECK_GE(operation_, 0);
+    CHECK_LE(operation_, 14);
 
-  if (bottom != top) {
+    kernel_ = std::dynamic_pointer_cast<UnaryKernel>(
+        CreateKernel(op_param.type(), ws_->Ctx()->device_type()));
+    CHECK_NOTNULL(kernel_);
+  }
+
+  void Forward() override {
+    const auto bottom = bottoms(0);
+    auto top = tops(0);
+
     top->reshape(bottom->shape());
+
+    kernel_->Run(bottom, top, ws_, operation_);
   }
 
-  int count = bottom->count();
+ private:
+  int operation_;
 
-  switch (operation_) {
-    case kAbs:
-      return Blas::Abs(count, bottom->data<float>(), 0,
-                       top->mutable_data<float>(), 0, ws_->Ctx());
-    case kSquare:
-      return Blas::Square(count, bottom->data<float>(), 0,
-                          top->mutable_data<float>(), 0, ws_->Ctx());
-    case kSqrt:
-      return Blas::Sqrt(count, bottom->data<float>(), 0,
-                        top->mutable_data<float>(), 0, ws_->Ctx());
-    case kLog:
-      return Blas::Log(count, bottom->data<float>(), 0,
-                       top->mutable_data<float>(), 0, ws_->Ctx());
-    case kExp:
-      return Blas::Exp(count, bottom->data<float>(), 0,
-                       top->mutable_data<float>(), 0, ws_->Ctx());
-    case kSin:
-      return Blas::Sin(count, bottom->data<float>(), 0,
-                       top->mutable_data<float>(), 0, ws_->Ctx());
-    case kCos:
-      return Blas::Cos(count, bottom->data<float>(), 0,
-                       top->mutable_data<float>(), 0, ws_->Ctx());
-    case kTan:
-      return Blas::Tan(count, bottom->data<float>(), 0,
-                       top->mutable_data<float>(), 0, ws_->Ctx());
-    case kAsin:
-      return Blas::Asin(count, bottom->data<float>(), 0,
-                        top->mutable_data<float>(), 0, ws_->Ctx());
-    case kAcos:
-      return Blas::Acos(count, bottom->data<float>(), 0,
-                        top->mutable_data<float>(), 0, ws_->Ctx());
-    case kAtan:
-      return Blas::Atan(count, bottom->data<float>(), 0,
-                        top->mutable_data<float>(), 0, ws_->Ctx());
-    case kFloor:
-      return Blas::Floor(count, bottom->data<float>(), 0,
-                         top->mutable_data<float>(), 0, ws_->Ctx());
-    case kCeil:
-      return Blas::Ceil(count, bottom->data<float>(), 0,
-                        top->mutable_data<float>(), 0, ws_->Ctx());
-    case kNeg:
-      return Blas::Neg(count, bottom->data<float>(), 0,
-                       top->mutable_data<float>(), 0, ws_->Ctx());
-    case kReciprocal:
-      return Blas::Reciprocal(count, bottom->data<float>(), 0,
-                              top->mutable_data<float>(), 0, ws_->Ctx());
-    default:
-      LOG(FATAL) << "Unknown unary operation " << operation_;
-  }
-}
+  std::shared_ptr<UnaryKernel> kernel_ = nullptr;
+};
 
 REGISTER_OPERATOR(Unary, UnaryOp);
 

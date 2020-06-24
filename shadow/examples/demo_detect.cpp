@@ -9,7 +9,7 @@
 
 namespace Shadow {
 
-DemoDetect::DemoDetect(const std::string &method_name) {
+DemoDetect::DemoDetect(const std::string& method_name) {
   if (method_name == "faster") {
     method_ = std::make_shared<DetectFasterRCNN>();
   } else if (method_name == "mtcnn") {
@@ -23,7 +23,7 @@ DemoDetect::DemoDetect(const std::string &method_name) {
   }
 }
 
-void DemoDetect::Test(const std::string &image_file) {
+void DemoDetect::Test(const std::string& image_file) {
   im_ini_.Read(image_file);
   timer_.start();
   method_->Predict(im_ini_, RectF(0, 0, im_ini_.w_, im_ini_.h_), &boxes_,
@@ -35,15 +35,15 @@ void DemoDetect::Test(const std::string &image_file) {
   im_ini_.Show("result");
 }
 
-void DemoDetect::BatchTest(const std::string &list_file, bool image_write) {
-  const auto &image_list = Util::load_list(list_file);
+void DemoDetect::BatchTest(const std::string& list_file, bool image_write) {
+  const auto& image_list = Util::load_list(list_file);
   int num_im = static_cast<int>(image_list.size()), count = 0;
   double time_cost = 0;
   ProcessBar process_bar(20, num_im, "Processing: ");
-  const auto &result_file = Util::find_replace_last(list_file, ".", "-result.");
+  const auto& result_file = Util::find_replace_last(list_file, ".", "-result.");
   std::ofstream file(result_file);
   CHECK(file.is_open()) << "Can't open file " << result_file;
-  for (const auto &im_path : image_list) {
+  for (const auto& im_path : image_list) {
     im_ini_.Read(im_path);
     timer_.start();
     method_->Predict(im_ini_, RectF(0, 0, im_ini_.w_, im_ini_.h_), &boxes_,
@@ -52,7 +52,7 @@ void DemoDetect::BatchTest(const std::string &list_file, bool image_write) {
     time_cost += timer_.get_millisecond();
     PrintStream(im_path, boxes_, &file);
     if (image_write) {
-      const auto &out_file = Util::find_replace_last(im_path, ".", "-result.");
+      const auto& out_file = Util::find_replace_last(im_path, ".", "-result.");
       DrawDetections(boxes_, &im_ini_);
       im_ini_.Write(out_file);
     }
@@ -71,7 +71,7 @@ void DemoDetect::BatchTest(const std::string &list_file, bool image_write) {
 #define CV_CAP_PROP_FRAME_HEIGHT cv::CAP_PROP_FRAME_HEIGHT
 #endif
 
-void DemoDetect::VideoTest(const std::string &video_file, bool video_show,
+void DemoDetect::VideoTest(const std::string& video_file, bool video_show,
                            bool video_write) {
   cv::VideoCapture capture;
   CHECK(capture.open(video_file))
@@ -81,7 +81,7 @@ void DemoDetect::VideoTest(const std::string &video_file, bool video_show,
   auto height = static_cast<int>(capture.get(CV_CAP_PROP_FRAME_HEIGHT));
   cv::VideoWriter writer;
   if (video_write) {
-    const auto &out_file = Util::change_extension(video_file, "-result.mp4");
+    const auto& out_file = Util::change_extension(video_file, "-result.mp4");
     int format = CV_FOURCC('H', '2', '6', '4');
     writer.open(out_file, format, rate, cv::Size(width, height));
   }
@@ -98,7 +98,7 @@ void DemoDetect::CameraTest(int camera, bool video_write) {
   auto height = static_cast<int>(capture.get(CV_CAP_PROP_FRAME_HEIGHT));
   cv::VideoWriter writer;
   if (video_write) {
-    const auto &out_file = "data/demo-result.mp4";
+    const auto& out_file = "data/demo-result.mp4";
     int format = CV_FOURCC('H', '2', '6', '4');
     writer.open(out_file, format, rate, cv::Size(width, height));
   }
@@ -107,9 +107,9 @@ void DemoDetect::CameraTest(int camera, bool video_write) {
   writer.release();
 }
 
-void DemoDetect::CaptureTest(cv::VideoCapture *capture,
-                             const std::string &window_name, bool video_show,
-                             cv::VideoWriter *writer) {
+void DemoDetect::CaptureTest(cv::VideoCapture* capture,
+                             const std::string& window_name, bool video_show,
+                             cv::VideoWriter* writer) {
   if (video_show) {
     cv::namedWindow(window_name, cv::WINDOW_NORMAL);
   }
@@ -148,8 +148,8 @@ void DemoDetect::CaptureTest(cv::VideoCapture *capture,
   }
 }
 
-void DemoDetect::DrawDetections(const VecBoxF &boxes, cv::Mat *im_mat) {
-  for (const auto &box : boxes) {
+void DemoDetect::DrawDetections(const VecBoxF& boxes, cv::Mat* im_mat) {
+  for (const auto& box : boxes) {
     int color_r = (box.label * 100) % 255;
     int color_g = (color_r + 100) % 255;
     int color_b = (color_g + 100) % 255;
@@ -160,8 +160,8 @@ void DemoDetect::DrawDetections(const VecBoxF &boxes, cv::Mat *im_mat) {
 }
 #endif
 
-void DemoDetect::DrawDetections(const VecBoxF &boxes, JImage *im_src) {
-  for (const auto &box : boxes_) {
+void DemoDetect::DrawDetections(const VecBoxF& boxes, JImage* im_src) {
+  for (const auto& box : boxes_) {
     int color_r = (box.label * 100) % 255;
     int color_g = (color_r + 100) % 255;
     int color_b = (color_g + 100) % 255;
@@ -170,8 +170,8 @@ void DemoDetect::DrawDetections(const VecBoxF &boxes, JImage *im_src) {
   }
 }
 
-void DemoDetect::PrintConsole(const VecBoxF &boxes, bool split) {
-  for (const auto &box : boxes) {
+void DemoDetect::PrintConsole(const VecBoxF& boxes, bool split) {
+  for (const auto& box : boxes) {
     LOG(INFO) << "xmin = " << box.xmin << ", ymin = " << box.ymin
               << ", xmax = " << box.xmax << ", ymax = " << box.ymax
               << ", label = " << box.label << ", score = " << box.score;
@@ -181,11 +181,11 @@ void DemoDetect::PrintConsole(const VecBoxF &boxes, bool split) {
   }
 }
 
-void DemoDetect::PrintStream(const std::string &im_name, const VecBoxF &boxes,
-                             std::ostream *os) {
+void DemoDetect::PrintStream(const std::string& im_name, const VecBoxF& boxes,
+                             std::ostream* os) {
   *os << im_name << ":" << std::endl;
   *os << "objects:" << std::endl;
-  for (const auto &box : boxes) {
+  for (const auto& box : boxes) {
     *os << "   " << box.xmin << " " << box.ymin << " " << box.xmax << " "
         << box.ymax << " " << box.label << " " << box.score << std::endl;
   }

@@ -4,7 +4,7 @@
 
 namespace Shadow {
 
-void DetectFasterRCNN::Setup(const std::string &model_file) {
+void DetectFasterRCNN::Setup(const std::string& model_file) {
 #if defined(USE_Protobuf)
   shadow::MetaNetParam meta_net_param;
   CHECK(IO::ReadProtoFromBinaryFile(model_file, &meta_net_param))
@@ -19,12 +19,12 @@ void DetectFasterRCNN::Setup(const std::string &model_file) {
   LOG(FATAL) << "Unsupported load binary model, recompiled with USE_Protobuf";
 #endif
 
-  const auto &in_blob = net_.in_blob();
+  const auto& in_blob = net_.in_blob();
   CHECK_EQ(in_blob.size(), 2);
   in_str_ = in_blob[0];
   im_info_str_ = in_blob[1];
 
-  const auto &out_blob = net_.out_blob();
+  const auto& out_blob = net_.out_blob();
   CHECK_EQ(out_blob.size(), 3);
   rois_str_ = out_blob[0];
   cls_prob_str_ = out_blob[1];
@@ -42,9 +42,9 @@ void DetectFasterRCNN::Setup(const std::string &model_file) {
   class_agnostic_ = net_.get_single_argument<bool>("class_agnostic", false);
 }
 
-void DetectFasterRCNN::Predict(const JImage &im_src, const RectF &roi,
-                               VecBoxF *boxes,
-                               std::vector<VecPointF> *Gpoints) {
+void DetectFasterRCNN::Predict(const JImage& im_src, const RectF& roi,
+                               VecBoxF* boxes,
+                               std::vector<VecPointF>* Gpoints) {
   float crop_h = roi.h <= 1 ? roi.h * im_src.h_ : roi.h;
   float crop_w = roi.w <= 1 ? roi.w * im_src.w_ : roi.w;
   CalculateScales(crop_h, crop_w, max_side_, min_side_, &scales_);
@@ -64,9 +64,9 @@ void DetectFasterRCNN::Predict(const JImage &im_src, const RectF &roi,
 }
 
 #if defined(USE_OpenCV)
-void DetectFasterRCNN::Predict(const cv::Mat &im_mat, const RectF &roi,
-                               VecBoxF *boxes,
-                               std::vector<VecPointF> *Gpoints) {
+void DetectFasterRCNN::Predict(const cv::Mat& im_mat, const RectF& roi,
+                               VecBoxF* boxes,
+                               std::vector<VecPointF>* Gpoints) {
   float crop_h = roi.h <= 1 ? roi.h * im_mat.rows : roi.h;
   float crop_w = roi.w <= 1 ? roi.w * im_mat.cols : roi.w;
   CalculateScales(crop_h, crop_w, max_side_, min_side_, &scales_);
@@ -86,22 +86,22 @@ void DetectFasterRCNN::Predict(const cv::Mat &im_mat, const RectF &roi,
 }
 #endif
 
-void DetectFasterRCNN::Process(const VecFloat &in_data, const VecInt &in_shape,
-                               const VecFloat &im_info, float height,
-                               float width, VecBoxF *boxes) {
-  std::map<std::string, void *> data_map;
+void DetectFasterRCNN::Process(const VecFloat& in_data, const VecInt& in_shape,
+                               const VecFloat& im_info, float height,
+                               float width, VecBoxF* boxes) {
+  std::map<std::string, void*> data_map;
   std::map<std::string, VecInt> shape_map;
-  data_map[in_str_] = const_cast<float *>(in_data.data());
-  data_map[im_info_str_] = const_cast<float *>(im_info.data());
+  data_map[in_str_] = const_cast<float*>(in_data.data());
+  data_map[im_info_str_] = const_cast<float*>(im_info.data());
   shape_map[in_str_] = in_shape;
 
   net_.Forward(data_map, shape_map);
 
-  const auto &roi_shape = net_.GetBlobShapeByName<float>(rois_str_);
+  const auto& roi_shape = net_.GetBlobShapeByName<float>(rois_str_);
 
-  const auto *roi_data = net_.GetBlobDataByName<float>(rois_str_);
-  const auto *score_data = net_.GetBlobDataByName<float>(cls_prob_str_);
-  const auto *delta_data = net_.GetBlobDataByName<float>(bbox_pred_str_);
+  const auto* roi_data = net_.GetBlobDataByName<float>(rois_str_);
+  const auto* score_data = net_.GetBlobDataByName<float>(cls_prob_str_);
+  const auto* delta_data = net_.GetBlobDataByName<float>(bbox_pred_str_);
 
   boxes->clear();
   int num_rois = roi_shape[0];
@@ -163,8 +163,8 @@ void DetectFasterRCNN::Process(const VecFloat &in_data, const VecInt &in_shape,
 }
 
 void DetectFasterRCNN::CalculateScales(float height, float width,
-                                       float max_side, const VecFloat &min_side,
-                                       VecFloat *scales) {
+                                       float max_side, const VecFloat& min_side,
+                                       VecFloat* scales) {
   scales->clear();
   float pr_min = std::min(height, width), pr_max = std::max(height, width);
   for (const auto side : min_side) {
