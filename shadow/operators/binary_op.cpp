@@ -21,7 +21,7 @@ class BinaryOp : public Operator {
     CHECK_NOTNULL(kernel_);
   }
 
-  void Forward() override {
+  void Run() override {
     CHECK_EQ(bottoms_size(), has_scalar_ ? 1 : 2);
 
     const auto bottom = bottoms(0);

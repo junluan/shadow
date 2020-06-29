@@ -16,7 +16,7 @@ class BatchNormOp : public Operator {
     CHECK_NOTNULL(kernel_);
   }
 
-  void Forward() override {
+  void Run() override {
     CHECK_GE(bottoms_size(), 3);
 
     const auto bottom = bottoms(0);

@@ -15,7 +15,7 @@ class InstanceNormOp : public Operator {
     CHECK_NOTNULL(kernel_);
   }
 
-  void Forward() override {
+  void Run() override {
     const auto bottom = bottoms(0);
     auto top = tops(0);
 

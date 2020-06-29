@@ -51,7 +51,7 @@ class PriorBoxOp : public Operator {
     offset_ = get_single_argument<float>("offset", 0.5);
   }
 
-  void Forward() override {
+  void Run() override {
     const auto bottom = bottoms(0);
     const auto bottom_im = bottoms(1);
     auto top = tops(0);

@@ -18,7 +18,7 @@ class ActivateOp : public Operator {
     CHECK_NOTNULL(kernel_);
   }
 
-  void Forward() override {
+  void Run() override {
     CHECK_EQ(bottoms_size(), activate_type_ == kPRelu ? 2 : 1);
 
     const auto bottom = bottoms(0);

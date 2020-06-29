@@ -19,7 +19,7 @@ class ROIAlignOp : public Operator {
     CHECK_NOTNULL(kernel_);
   }
 
-  void Forward() override {
+  void Run() override {
     CHECK_EQ(bottoms_size(), 2);
 
     const auto bottom = bottoms(0);

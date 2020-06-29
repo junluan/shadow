@@ -15,7 +15,7 @@ class StackOp : public Operator {
     CHECK_NOTNULL(kernel_);
   }
 
-  void Forward() override {
+  void Run() override {
     CHECK_GE(bottoms_size(), 2);
 
     const auto bottom_0 = bottoms(0);

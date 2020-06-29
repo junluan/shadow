@@ -28,7 +28,7 @@ class DeformPSROIPoolingOp : public Operator {
     CHECK_NOTNULL(kernel_);
   }
 
-  void Forward() override {
+  void Run() override {
     CHECK_EQ(bottoms_size(), no_trans_ ? 2 : 3);
 
     const auto bottom = bottoms(0);

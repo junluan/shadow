@@ -11,7 +11,7 @@ class InputOp : public Operator {
     }
   }
 
-  void Forward() override {}
+  void Run() override {}
 };
 
 REGISTER_OPERATOR(Input, InputOp);

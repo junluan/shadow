@@ -62,7 +62,7 @@ void Native::Forward(const std::map<std::string, void*>& data_map,
   }
 
   for (auto& op : ops_) {
-    op->Forward();
+    op->Run();
     DLOG(INFO) << op->debug_log();
   }
 

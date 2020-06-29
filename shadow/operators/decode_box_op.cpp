@@ -21,7 +21,7 @@ class DecodeBoxOp : public Operator {
     CHECK_NOTNULL(kernel_);
   }
 
-  void Forward() override {
+  void Run() override {
     auto top = tops(0);
 
     int out_stride = output_max_score_ ? 6 : (4 + num_classes_);

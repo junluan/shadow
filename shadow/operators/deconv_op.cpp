@@ -57,7 +57,7 @@ class DeconvOp : public Operator {
     CHECK_NOTNULL(kernel_);
   }
 
-  void Forward() override {
+  void Run() override {
     CHECK_EQ(bottoms_size(), bias_term_ ? 3 : 2);
 
     const auto bottom = bottoms(0);

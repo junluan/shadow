@@ -11,7 +11,7 @@ class FlattenOp : public Operator {
     end_axis_ = get_single_argument<int>("end_axis", -1);
   }
 
-  void Forward() override {
+  void Run() override {
     const auto bottom = bottoms(0);
     auto top = tops(0);
 

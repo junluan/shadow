@@ -91,7 +91,7 @@ class ProposalOp : public Operator {
     CHECK_NOTNULL(kernel_);
   }
 
-  void Forward() override {
+  void Run() override {
     const auto score = bottoms(0);
     const auto delta = bottoms(1);
     const auto info = bottoms(2);

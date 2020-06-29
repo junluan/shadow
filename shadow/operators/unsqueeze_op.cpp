@@ -9,7 +9,7 @@ class UnsqueezeOp : public Operator {
     axes_ = get_repeated_argument<int>("axes");
   }
 
-  void Forward() override {
+  void Run() override {
     const auto bottom = bottoms(0);
     auto top = tops(0);
 

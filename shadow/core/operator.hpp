@@ -22,7 +22,7 @@ class Operator {
   Operator(const shadow::OpParam& op_param, Workspace* ws);
   virtual ~Operator();
 
-  virtual void Forward() = 0;
+  virtual void Run() = 0;
 
   bool has_argument(const std::string& name) const {
     return arg_helper_.HasArgument(name);
