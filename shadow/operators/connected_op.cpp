@@ -18,19 +18,21 @@ class ConnectedOp : public Operator {
     CHECK_NOTNULL(kernel_);
   }
 
-  void Run() override {
-    CHECK_EQ(bottoms_size(), bias_term_ ? 3 : 2);
+  void Run(const std::vector<std::shared_ptr<Blob>>& inputs,
+           std::vector<std::shared_ptr<Blob>>& outputs) override {
+    CHECK_EQ(inputs.size(), bias_term_ ? 3 : 2);
 
-    const auto bottom = bottoms(0);
-    const auto weight = bottoms(1);
-    auto top = tops(0);
+    const auto& input = inputs[0];
+    const auto& weight = inputs[1];
+    auto& output = outputs[0];
 
-    CHECK_NE(bottom, top);
+    CHECK_NE(input, output);
 
-    top->reshape({bottom->shape(0), num_output_});
+    output->reshape({input->shape(0), num_output_});
 
-    kernel_->Run(bottom, weight, bias_term_ ? bottoms(2) : nullptr, top, ws_,
-                 num_output_, bias_term_, transpose_);
+    kernel_->Run(input, weight,
+                 bias_term_ ? inputs[2] : std::shared_ptr<Blob>(nullptr),
+                 output, ws_, num_output_, bias_term_, transpose_);
   }
 
  private:

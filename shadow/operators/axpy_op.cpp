@@ -8,10 +8,10 @@ namespace Shadow {
  * @param Formulation:
  *            F = a * X + Y
  *        Shape info:
- *            a:  N x C          --> bottoms[0]
- *            X:  N x C x H x W  --> bottoms[1]
- *            Y:  N x C x H x W  --> bottoms[2]
- *            F:  N x C x H x W  --> tops[0]
+ *            a:  N x C          --> inputs[0]
+ *            X:  N x C x H x W  --> inputs[1]
+ *            Y:  N x C x H x W  --> inputs[2]
+ *            F:  N x C x H x W  --> outputs[0]
  */
 class AxpyOp : public Operator {
  public:
@@ -22,14 +22,15 @@ class AxpyOp : public Operator {
     CHECK_NOTNULL(kernel_);
   }
 
-  void Run() override {
-    CHECK_EQ(bottoms_size(), 3)
-        << "This op must have three bottoms: alpha, x and y";
+  void Run(const std::vector<std::shared_ptr<Blob>>& inputs,
+           std::vector<std::shared_ptr<Blob>>& outputs) override {
+    CHECK_EQ(inputs.size(), 3)
+        << "This op must have three inputs: alpha, x and y";
 
-    const auto alpha = bottoms(0);
-    const auto x = bottoms(1);
-    const auto y = bottoms(2);
-    auto top = tops(0);
+    const auto& alpha = inputs[0];
+    const auto& x = inputs[1];
+    const auto& y = inputs[2];
+    auto& output = outputs[0];
 
     CHECK_EQ(alpha->shape(0), x->shape(0));
     CHECK_EQ(alpha->shape(1), x->shape(1));
@@ -39,9 +40,9 @@ class AxpyOp : public Operator {
     }
     CHECK(x->shape() == y->shape());
 
-    top->reshape(x->shape());
+    output->reshape(x->shape());
 
-    kernel_->Run(alpha, x, y, top, ws_);
+    kernel_->Run(alpha, x, y, output, ws_);
   }
 
  private:

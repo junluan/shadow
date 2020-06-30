@@ -20,18 +20,19 @@ class PSROIPoolingOp : public Operator {
     CHECK_NOTNULL(kernel_);
   }
 
-  void Run() override {
-    CHECK_EQ(bottoms_size(), 2);
+  void Run(const std::vector<std::shared_ptr<Blob>>& inputs,
+           std::vector<std::shared_ptr<Blob>>& outputs) override {
+    CHECK_EQ(inputs.size(), 2);
 
-    const auto bottom = bottoms(0);
-    const auto roi = bottoms(1);
-    auto top = tops(0);
+    const auto& input = inputs[0];
+    const auto& roi = inputs[1];
+    auto& output = outputs[0];
 
-    CHECK_NE(bottom, top);
+    CHECK_NE(input, output);
 
-    top->reshape({bottom->shape(0), output_dim_, pooled_h_, pooled_w_});
+    output->reshape({input->shape(0), output_dim_, pooled_h_, pooled_w_});
 
-    kernel_->Run(bottom, roi, top, ws_, output_dim_, group_size_, pooled_h_,
+    kernel_->Run(input, roi, output, ws_, output_dim_, group_size_, pooled_h_,
                  pooled_w_, spatial_scale_);
   }
 

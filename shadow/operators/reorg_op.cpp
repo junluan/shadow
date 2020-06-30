@@ -15,25 +15,25 @@ class ReorgOp : public Operator {
     CHECK_NOTNULL(kernel_);
   }
 
-  void Run() override {
-    const auto bottom = bottoms(0);
-    auto top = tops(0);
+  void Run(const std::vector<std::shared_ptr<Blob>>& inputs,
+           std::vector<std::shared_ptr<Blob>>& outputs) override {
+    const auto& input = inputs[0];
+    auto& output = outputs[0];
 
-    CHECK_NE(bottom, top);
+    CHECK_NE(input, output);
 
-    int in_c = bottom->shape(1), in_h = bottom->shape(2),
-        in_w = bottom->shape(3);
+    int in_c = input->shape(1), in_h = input->shape(2), in_w = input->shape(3);
 
     CHECK_EQ(in_h % stride_, 0);
     CHECK_EQ(in_w % stride_, 0);
 
-    auto top_shape = bottom->shape();
-    top_shape[1] = in_c * stride_ * stride_;
-    top_shape[2] = in_h / stride_;
-    top_shape[3] = in_w / stride_;
-    top->reshape(top_shape);
+    auto out_shape = input->shape();
+    out_shape[1] = in_c * stride_ * stride_;
+    out_shape[2] = in_h / stride_;
+    out_shape[3] = in_w / stride_;
+    output->reshape(out_shape);
 
-    kernel_->Run(bottom, top, ws_, stride_);
+    kernel_->Run(input, output, ws_, stride_);
   }
 
  private:

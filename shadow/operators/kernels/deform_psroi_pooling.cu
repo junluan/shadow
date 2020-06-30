@@ -23,25 +23,23 @@ __device__ float bilinear_interp(const float* data, float x, float y, int width,
 }
 
 __global__ void DeformPSROIPoolForwardKernel(
-    int count, const float* bottom_data, float spatial_scale, int channels,
+    int count, const float* in_data, float spatial_scale, int channels,
     int height, int width, int pooled_height, int pooled_width,
-    const float* bottom_rois, const float* bottom_trans, bool no_trans,
+    const float* rois_data, const float* trans_data, bool no_trans,
     float trans_std, int sample_per_part, int output_dim, int group_size,
-    int part_size, int num_classes, int channels_each_class, float* top_data) {
+    int part_size, int num_classes, int channels_each_class, float* out_data) {
   CUDA_KERNEL_LOOP(globalid, count) {
     int pw = globalid % pooled_width;
     int ph = (globalid / pooled_width) % pooled_height;
     int ctop = (globalid / pooled_width / pooled_height) % output_dim;
     int n = globalid / pooled_width / pooled_height / output_dim;
 
-    const auto* offset_bottom_rois = bottom_rois + n * 5;
-    int roi_batch_ind = static_cast<int>(offset_bottom_rois[0]);
-    auto roi_start_w = roundf(offset_bottom_rois[1]) * spatial_scale - 0.5f;
-    auto roi_start_h = roundf(offset_bottom_rois[2]) * spatial_scale - 0.5f;
-    auto roi_end_w =
-        (roundf(offset_bottom_rois[3]) + 1.f) * spatial_scale - 0.5f;
-    auto roi_end_h =
-        (roundf(offset_bottom_rois[4]) + 1.f) * spatial_scale - 0.5f;
+    const auto* offset_rois_data = rois_data + n * 5;
+    int roi_batch_ind = static_cast<int>(offset_rois_data[0]);
+    auto roi_start_w = roundf(offset_rois_data[1]) * spatial_scale - 0.5f;
+    auto roi_start_h = roundf(offset_rois_data[2]) * spatial_scale - 0.5f;
+    auto roi_end_w = (roundf(offset_rois_data[3]) + 1.f) * spatial_scale - 0.5f;
+    auto roi_end_h = (roundf(offset_rois_data[4]) + 1.f) * spatial_scale - 0.5f;
 
     auto roi_width = fmaxf(roi_end_w - roi_start_w, 0.1f);
     auto roi_height = fmaxf(roi_end_h - roi_start_h, 0.1f);
@@ -57,20 +55,19 @@ __global__ void DeformPSROIPoolForwardKernel(
         floorf(static_cast<float>(pw) / pooled_width * part_size));
     int class_id = ctop / channels_each_class;
     auto trans_x =
-        no_trans
-            ? 0.f
-            : bottom_trans[(((n * num_classes + class_id) * 2) * part_size +
-                            part_h) *
-                               part_size +
-                           part_w] *
-                  trans_std;
+        no_trans ? 0.f
+                 : trans_data[(((n * num_classes + class_id) * 2) * part_size +
+                               part_h) *
+                                  part_size +
+                              part_w] *
+                       trans_std;
     auto trans_y =
         no_trans
             ? 0.f
-            : bottom_trans[(((n * num_classes + class_id) * 2 + 1) * part_size +
-                            part_h) *
-                               part_size +
-                           part_w] *
+            : trans_data[(((n * num_classes + class_id) * 2 + 1) * part_size +
+                          part_h) *
+                             part_size +
+                         part_w] *
                   trans_std;
 
     auto wstart = pw * bin_size_w + roi_start_w;
@@ -83,8 +80,8 @@ __global__ void DeformPSROIPoolForwardKernel(
     gw = min(max(gw, 0), group_size - 1);
     gh = min(max(gh, 0), group_size - 1);
 
-    const auto* offset_bottom_data =
-        bottom_data + (roi_batch_ind * channels) * height * width;
+    const auto* offset_in_data =
+        in_data + (roi_batch_ind * channels) * height * width;
 
     double sum = 0;
     int cou = 0;
@@ -98,13 +95,13 @@ __global__ void DeformPSROIPoolForwardKernel(
         w = fminf(fmaxf(w, 0.f), width - 1.f);
         h = fminf(fmaxf(h, 0.f), height - 1.f);
         int c = (ctop * group_size + gh) * group_size + gw;
-        auto val = bilinear_interp(offset_bottom_data + c * height * width, w,
-                                   h, width, height);
+        auto val = bilinear_interp(offset_in_data + c * height * width, w, h,
+                                   width, height);
         sum += val;
         cou++;
       }
     }
-    top_data[globalid] = cou == 0 ? 0.f : static_cast<float>(sum / cou);
+    out_data[globalid] = cou == 0 ? 0.f : static_cast<float>(sum / cou);
   }
 }
 

@@ -59,13 +59,14 @@ class PoolingOp : public Operator {
     CHECK_NOTNULL(kernel_);
   }
 
-  void Run() override {
-    const auto bottom = bottoms(0);
-    auto top = tops(0);
+  void Run(const std::vector<std::shared_ptr<Blob>>& inputs,
+           std::vector<std::shared_ptr<Blob>>& outputs) override {
+    const auto& input = inputs[0];
+    auto& output = outputs[0];
 
-    CHECK_NE(bottom, top);
+    CHECK_NE(input, output);
 
-    int in_h = bottom->shape(2), in_w = bottom->shape(3);
+    int in_h = input->shape(2), in_w = input->shape(3);
 
     if (global_pooling_) {
       kernel_size_h_ = in_h, kernel_size_w_ = in_w;
@@ -84,12 +85,12 @@ class PoolingOp : public Operator {
       if ((out_w - 1) * stride_w_ >= in_w + pad_w_) out_w--;
     }
 
-    auto top_shape = bottom->shape();
-    top_shape[2] = out_h;
-    top_shape[3] = out_w;
-    top->reshape(top_shape);
+    auto out_shape = input->shape();
+    out_shape[2] = out_h;
+    out_shape[3] = out_w;
+    output->reshape(out_shape);
 
-    kernel_->Run(bottom, top, ws_, pool_type_, kernel_size_h_, kernel_size_w_,
+    kernel_->Run(input, output, ws_, pool_type_, kernel_size_h_, kernel_size_w_,
                  stride_h_, stride_w_, pad_h_, pad_w_, full_pooling_);
   }
 

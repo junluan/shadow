@@ -15,15 +15,16 @@ class SoftmaxOp : public Operator {
     CHECK_NOTNULL(kernel_);
   }
 
-  void Run() override {
-    const auto bottom = bottoms(0);
-    auto top = tops(0);
+  void Run(const std::vector<std::shared_ptr<Blob>>& inputs,
+           std::vector<std::shared_ptr<Blob>>& outputs) override {
+    const auto& input = inputs[0];
+    auto& output = outputs[0];
 
-    axis_ = bottom->canonical_index(axis_);
+    axis_ = input->canonical_index(axis_);
 
-    top->reshape(bottom->shape());
+    output->reshape(input->shape());
 
-    kernel_->Run(bottom, top, ws_, axis_);
+    kernel_->Run(input, output, ws_, axis_);
   }
 
  private:

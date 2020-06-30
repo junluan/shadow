@@ -21,45 +21,45 @@ class BinaryOp : public Operator {
     CHECK_NOTNULL(kernel_);
   }
 
-  void Run() override {
-    CHECK_EQ(bottoms_size(), has_scalar_ ? 1 : 2);
+  void Run(const std::vector<std::shared_ptr<Blob>>& inputs,
+           std::vector<std::shared_ptr<Blob>>& outputs) override {
+    CHECK_EQ(inputs.size(), has_scalar_ ? 1 : 2);
 
-    const auto bottom = bottoms(0);
-    auto top = tops(0);
+    const auto& input = inputs[0];
+    auto& output = outputs[0];
 
     if (has_scalar_) {
-      top->reshape(bottom->shape());
-      kernel_->Run(bottom, top, ws_, operation_, scalar_value_);
+      output->reshape(input->shape());
+      kernel_->Run(input, output, ws_, operation_, scalar_value_);
     } else {
-      const auto scalar = bottoms(1);
-      if (bottom->shape() != scalar->shape()) {
-        const auto bottom_shape = bottom->shape(),
-                   scalar_shape = scalar->shape();
-        int num_diff_axes = bottom->num_axes() - scalar->num_axes();
+      auto& scalar = inputs[1];
+      if (input->shape() != scalar->shape()) {
+        const auto in_shape = input->shape(), scalar_shape = scalar->shape();
+        int num_diff_axes = input->num_axes() - scalar->num_axes();
         if (num_diff_axes > 0) {
           auto padded_scalar_shape = scalar_shape;
           padded_scalar_shape.insert(padded_scalar_shape.begin(),
                                      std::abs(num_diff_axes), 1);
           scalar->set_shape(padded_scalar_shape);
         } else if (num_diff_axes < 0) {
-          auto padded_bottom_shape = bottom_shape;
-          padded_bottom_shape.insert(padded_bottom_shape.begin(),
-                                     std::abs(num_diff_axes), 1);
-          bottom->set_shape(padded_bottom_shape);
+          auto padded_in_shape = in_shape;
+          padded_in_shape.insert(padded_in_shape.begin(),
+                                 std::abs(num_diff_axes), 1);
+          input->set_shape(padded_in_shape);
         }
-        CHECK_EQ(bottom->num_axes(), scalar->num_axes());
-        VecInt top_shape;
-        for (int n = 0; n < bottom->num_axes(); ++n) {
-          int bottom_dim = bottom->shape(n), scalar_dim = scalar->shape(n);
-          CHECK(bottom_dim == scalar_dim || bottom_dim == 1 || scalar_dim == 1);
-          top_shape.push_back(std::max(bottom_dim, scalar_dim));
+        CHECK_EQ(input->num_axes(), scalar->num_axes());
+        VecInt out_shape;
+        for (int n = 0; n < input->num_axes(); ++n) {
+          int in_dim = input->shape(n), scalar_dim = scalar->shape(n);
+          CHECK(in_dim == scalar_dim || in_dim == 1 || scalar_dim == 1);
+          out_shape.push_back(std::max(in_dim, scalar_dim));
         }
-        top->reshape(top_shape);
-        kernel_->Run(bottom, scalar, top, ws_, operation_, true);
-        bottom->set_shape(bottom_shape), scalar->set_shape(scalar_shape);
+        output->reshape(out_shape);
+        kernel_->Run(input, scalar, output, ws_, operation_, true);
+        input->set_shape(in_shape), scalar->set_shape(scalar_shape);
       } else {
-        top->reshape(bottom->shape());
-        kernel_->Run(bottom, scalar, top, ws_, operation_, false);
+        output->reshape(input->shape());
+        kernel_->Run(input, scalar, output, ws_, operation_, false);
       }
     }
   }

@@ -57,31 +57,33 @@ class ConvOp : public Operator {
     CHECK_NOTNULL(kernel_);
   }
 
-  void Run() override {
-    CHECK_EQ(bottoms_size(), bias_term_ ? 3 : 2);
+  void Run(const std::vector<std::shared_ptr<Blob>>& inputs,
+           std::vector<std::shared_ptr<Blob>>& outputs) override {
+    CHECK_EQ(inputs.size(), bias_term_ ? 3 : 2);
 
-    const auto bottom = bottoms(0);
-    auto top = tops(0);
+    const auto& input = inputs[0];
+    const auto& weight = inputs[1];
+    auto& output = outputs[0];
 
-    CHECK_NE(bottom, top);
+    CHECK_NE(input, output);
 
-    int in_c = bottom->shape(1), in_h = bottom->shape(2),
-        in_w = bottom->shape(3);
+    int in_c = input->shape(1), in_h = input->shape(2), in_w = input->shape(3);
 
     CHECK_EQ(in_c % group_, 0);
 
-    auto top_shape = bottom->shape();
-    top_shape[1] = num_output_;
-    top_shape[2] =
+    auto out_shape = input->shape();
+    out_shape[1] = num_output_;
+    out_shape[2] =
         conv_out_size(in_h, kernel_size_h_, stride_h_, pad_h_, dilation_);
-    top_shape[3] =
+    out_shape[3] =
         conv_out_size(in_w, kernel_size_w_, stride_w_, pad_w_, dilation_);
-    top->reshape(top_shape);
+    output->reshape(out_shape);
 
-    kernel_->Run(bottom, bottoms(1), bias_term_ ? bottoms(2) : nullptr, top,
-                 ws_, num_output_, kernel_size_h_, kernel_size_w_, stride_h_,
-                 stride_w_, pad_h_, pad_w_, dilation_, group_, bias_term_,
-                 activate_type_);
+    kernel_->Run(input, weight,
+                 bias_term_ ? inputs[2] : std::shared_ptr<Blob>(nullptr),
+                 output, ws_, num_output_, kernel_size_h_, kernel_size_w_,
+                 stride_h_, stride_w_, pad_h_, pad_w_, dilation_, group_,
+                 bias_term_, activate_type_);
   }
 
  private:

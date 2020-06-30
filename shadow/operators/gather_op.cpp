@@ -16,18 +16,19 @@ class GatherOp : public Operator {
     CHECK_NOTNULL(kernel_);
   }
 
-  void Run() override {
-    const auto bottom = bottoms(0);
-    auto top = tops(0);
+  void Run(const std::vector<std::shared_ptr<Blob>>& inputs,
+           std::vector<std::shared_ptr<Blob>>& outputs) override {
+    const auto& input = inputs[0];
+    auto& output = outputs[0];
 
-    CHECK_NE(bottom, top);
+    CHECK_NE(input, output);
 
-    axis_ = bottom->canonical_index(axis_);
+    axis_ = input->canonical_index(axis_);
 
     std::shared_ptr<Blob> indexes = nullptr;
     if (indexes_value_.empty()) {
-      CHECK_EQ(bottoms_size(), 2);
-      indexes = bottoms(1);
+      CHECK_EQ(inputs.size(), 2);
+      indexes = inputs[1];
       CHECK_EQ(indexes->num_axes(), 1);
     } else {
       int num_indexes = static_cast<int>(indexes_value_.size());
@@ -40,11 +41,11 @@ class GatherOp : public Operator {
 
     CHECK_GT(num_indexes, 0);
 
-    auto top_shape = bottom->shape();
-    top_shape[axis_] = num_indexes;
-    top->reshape(top_shape);
+    auto out_shape = input->shape();
+    out_shape[axis_] = num_indexes;
+    output->reshape(out_shape);
 
-    kernel_->Run(bottom, indexes, top, ws_, axis_);
+    kernel_->Run(input, indexes, output, ws_, axis_);
   }
 
  private:

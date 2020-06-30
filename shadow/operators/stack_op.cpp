@@ -15,29 +15,26 @@ class StackOp : public Operator {
     CHECK_NOTNULL(kernel_);
   }
 
-  void Run() override {
-    CHECK_GE(bottoms_size(), 2);
+  void Run(const std::vector<std::shared_ptr<Blob>>& inputs,
+           std::vector<std::shared_ptr<Blob>>& outputs) override {
+    CHECK_GE(inputs.size(), 2);
 
-    const auto bottom_0 = bottoms(0);
-    auto top = tops(0);
+    const auto& input_0 = inputs[0];
+    auto& output = outputs[0];
 
-    int num_axes = bottom_0->num_axes();
+    int num_axes = input_0->num_axes();
     CHECK(axis_ >= -(num_axes + 1) && axis_ < num_axes + 1)
         << "axis out of bound.";
     if (axis_ < 0) {
       axis_ += num_axes + 1;
     }
 
-    auto top_shape = bottom_0->shape();
-    top_shape.insert(top_shape.begin() + axis_, bottoms_size());
-    top->reshape(top_shape);
+    auto out_shape = input_0->shape();
+    out_shape.insert(out_shape.begin() + axis_,
+                     static_cast<int>(inputs.size()));
+    output->reshape(out_shape);
 
-    std::vector<std::shared_ptr<Blob>> bottom_blobs;
-    for (int n = 0; n < bottoms_size(); ++n) {
-      bottom_blobs.push_back(bottoms(n));
-    }
-
-    kernel_->Run(bottom_blobs, top, ws_, axis_);
+    kernel_->Run(inputs, output, ws_, axis_);
   }
 
  private:

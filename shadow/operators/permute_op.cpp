@@ -15,21 +15,22 @@ class PermuteOp : public Operator {
     CHECK_NOTNULL(kernel_);
   }
 
-  void Run() override {
-    const auto bottom = bottoms(0);
-    auto top = tops(0);
+  void Run(const std::vector<std::shared_ptr<Blob>>& inputs,
+           std::vector<std::shared_ptr<Blob>>& outputs) override {
+    const auto& input = inputs[0];
+    auto& output = outputs[0];
 
-    CHECK_NE(bottom, top);
+    CHECK_NE(input, output);
 
-    CHECK_EQ(bottom->num_axes(), order_value_.size());
+    CHECK_EQ(input->num_axes(), order_value_.size());
 
-    VecInt top_shape;
+    VecInt out_shape;
     for (const auto& axis : order_value_) {
-      top_shape.push_back(bottom->shape(axis));
+      out_shape.push_back(input->shape(axis));
     }
-    top->reshape(top_shape);
+    output->reshape(out_shape);
 
-    kernel_->Run(bottom, top, ws_, order_value_);
+    kernel_->Run(input, output, ws_, order_value_);
   }
 
  private:

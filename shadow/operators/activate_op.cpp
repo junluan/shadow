@@ -18,16 +18,19 @@ class ActivateOp : public Operator {
     CHECK_NOTNULL(kernel_);
   }
 
-  void Run() override {
-    CHECK_EQ(bottoms_size(), activate_type_ == kPRelu ? 2 : 1);
+  void Run(const std::vector<std::shared_ptr<Blob>>& inputs,
+           std::vector<std::shared_ptr<Blob>>& outputs) override {
+    CHECK_EQ(inputs.size(), activate_type_ == kPRelu ? 2 : 1);
 
-    const auto bottom = bottoms(0);
-    auto top = tops(0);
+    const auto& input = inputs[0];
+    auto& output = outputs[0];
 
-    top->reshape(bottom->shape());
+    output->reshape(input->shape());
 
-    kernel_->Run(bottom, activate_type_ == kPRelu ? bottoms(1) : nullptr, top,
-                 ws_, activate_type_, slope_);
+    kernel_->Run(
+        input,
+        activate_type_ == kPRelu ? inputs[1] : std::shared_ptr<Blob>(nullptr),
+        output, ws_, activate_type_, slope_);
   }
 
  private:

@@ -28,19 +28,21 @@ class DeformPSROIPoolingOp : public Operator {
     CHECK_NOTNULL(kernel_);
   }
 
-  void Run() override {
-    CHECK_EQ(bottoms_size(), no_trans_ ? 2 : 3);
+  void Run(const std::vector<std::shared_ptr<Blob>>& inputs,
+           std::vector<std::shared_ptr<Blob>>& outputs) override {
+    CHECK_EQ(inputs.size(), no_trans_ ? 2 : 3);
 
-    const auto bottom = bottoms(0);
-    const auto roi = bottoms(1);
-    auto top = tops(0);
+    const auto& input = inputs[0];
+    const auto& roi = inputs[1];
+    auto& output = outputs[0];
 
-    CHECK_NE(bottom, top);
+    CHECK_NE(input, output);
 
-    top->reshape({roi->shape(0), output_dim_, pooled_size_, pooled_size_});
+    output->reshape({roi->shape(0), output_dim_, pooled_size_, pooled_size_});
 
-    kernel_->Run(bottom, roi, no_trans_ ? nullptr : bottoms(2), top, ws_,
-                 output_dim_, group_size_, pooled_size_, part_size_,
+    kernel_->Run(input, roi,
+                 no_trans_ ? std::shared_ptr<Blob>(nullptr) : inputs[2], output,
+                 ws_, output_dim_, group_size_, pooled_size_, part_size_,
                  sample_per_part_, spatial_scale_, trans_std_, no_trans_);
   }
 

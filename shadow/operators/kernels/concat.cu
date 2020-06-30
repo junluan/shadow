@@ -12,10 +12,10 @@ __global__ void KernelConcat(const float* in_data, int count, int num_concats,
     int total_concat_size = concat_size * in_concat_axis;
     int concat_num = globalid / total_concat_size;
     int concat_index = globalid % total_concat_size;
-    int top_index =
+    int out_index =
         concat_index +
         (concat_num * out_concat_axis + offset_concat_axis) * concat_size;
-    out_data[top_index] = in_data[globalid];
+    out_data[out_index] = in_data[globalid];
   }
 }
 

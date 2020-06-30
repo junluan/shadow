@@ -17,13 +17,14 @@ class ReduceOp : public Operator {
     CHECK_NOTNULL(kernel_);
   }
 
-  void Run() override {
-    const auto bottom = bottoms(0);
-    auto top = tops(0);
+  void Run(const std::vector<std::shared_ptr<Blob>>& inputs,
+           std::vector<std::shared_ptr<Blob>>& outputs) override {
+    const auto& input = inputs[0];
+    auto& output = outputs[0];
 
-    CHECK_NE(bottom, top);
+    CHECK_NE(input, output);
 
-    int num_axes = bottom->num_axes();
+    int num_axes = input->num_axes();
 
     auto axes = axes_;
     if (axes.empty()) {
@@ -32,13 +33,13 @@ class ReduceOp : public Operator {
       }
     }
 
-    auto top_shape = bottom->shape();
+    auto out_shape = input->shape();
     for (auto axis : axes) {
-      top_shape[bottom->canonical_index(axis)] = 1;
+      out_shape[input->canonical_index(axis)] = 1;
     }
-    top->reshape(top_shape);
+    output->reshape(out_shape);
 
-    kernel_->Run(bottom, top, ws_, operation_, axes);
+    kernel_->Run(input, output, ws_, operation_, axes);
 
     if (!keep_dims_) {
       VecInt shape;
@@ -50,14 +51,14 @@ class ReduceOp : public Operator {
             break;
           }
         }
-        int dim = top->shape(n);
+        int dim = output->shape(n);
         if (need_squeeze) {
           CHECK_EQ(dim, 1);
         } else {
           shape.push_back(dim);
         }
       }
-      top->set_shape(shape);
+      output->set_shape(shape);
     }
   }
 

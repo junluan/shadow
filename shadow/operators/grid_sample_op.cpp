@@ -20,24 +20,25 @@ class GridSampleOp : public Operator {
     CHECK_NOTNULL(kernel_);
   }
 
-  void Run() override {
-    CHECK_EQ(bottoms_size(), 2);
+  void Run(const std::vector<std::shared_ptr<Blob>>& inputs,
+           std::vector<std::shared_ptr<Blob>>& outputs) override {
+    CHECK_EQ(inputs.size(), 2);
 
-    const auto bottom = bottoms(0);
-    const auto grid = bottoms(1);
-    auto top = tops(0);
+    const auto& input = inputs[0];
+    const auto& grid = inputs[1];
+    auto& output = outputs[0];
 
-    CHECK_NE(bottom, top);
+    CHECK_NE(input, output);
 
-    CHECK_EQ(bottom->shape(0), grid->shape(0));
+    CHECK_EQ(input->shape(0), grid->shape(0));
     CHECK_EQ(grid->shape(3), 2);
 
-    auto top_shape = bottom->shape();
-    top_shape[2] = grid->shape(1);
-    top_shape[3] = grid->shape(2);
-    top->reshape(top_shape);
+    auto out_shape = input->shape();
+    out_shape[2] = grid->shape(1);
+    out_shape[3] = grid->shape(2);
+    output->reshape(out_shape);
 
-    kernel_->Run(bottom, grid, top, ws_, mode_, padding_mode_);
+    kernel_->Run(input, grid, output, ws_, mode_, padding_mode_);
   }
 
  private:

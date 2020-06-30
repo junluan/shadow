@@ -16,19 +16,20 @@ class GroupNormOp : public Operator {
     CHECK_NOTNULL(kernel_);
   }
 
-  void Run() override {
-    const auto bottom = bottoms(0);
-    auto top = tops(0);
+  void Run(const std::vector<std::shared_ptr<Blob>>& inputs,
+           std::vector<std::shared_ptr<Blob>>& outputs) override {
+    const auto& input = inputs[0];
+    auto& output = outputs[0];
 
-    top->reshape(bottom->shape());
+    output->reshape(input->shape());
 
-    CHECK_EQ(bottom->shape(1) % group_, 0);
+    CHECK_EQ(input->shape(1) % group_, 0);
 
-    if (bottoms_size() == 1) {
-      kernel_->Run(bottom, nullptr, nullptr, top, ws_, group_, eps_);
+    if (inputs.size() == 1) {
+      kernel_->Run(input, nullptr, nullptr, output, ws_, group_, eps_);
     } else {
-      CHECK_EQ(bottoms_size(), 3);
-      kernel_->Run(bottom, bottoms(1), bottoms(2), top, ws_, group_, eps_);
+      CHECK_EQ(inputs.size(), 3);
+      kernel_->Run(input, inputs[1], inputs[2], output, ws_, group_, eps_);
     }
   }
 

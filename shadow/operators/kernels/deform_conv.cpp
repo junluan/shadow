@@ -6,7 +6,7 @@ namespace Shadow {
 
 namespace Vision {
 
-inline float deform_im2col_bilinear(const float* bottom_data, int data_width,
+inline float deform_im2col_bilinear(const float* in_data, int data_width,
                                     int height, int width, float h, float w) {
   auto h_low = static_cast<int>(std::floor(h));
   auto w_low = static_cast<int>(std::floor(w));
@@ -22,10 +22,10 @@ inline float deform_im2col_bilinear(const float* bottom_data, int data_width,
   float lh = h - h_low;
   float lw = w - w_low;
   float hh = 1 - lh, hw = 1 - lw;
-  float v1 = bottom_data[h_low * data_width + w_low];
-  float v2 = bottom_data[h_low * data_width + w_high];
-  float v3 = bottom_data[h_high * data_width + w_low];
-  float v4 = bottom_data[h_high * data_width + w_high];
+  float v1 = in_data[h_low * data_width + w_low];
+  float v2 = in_data[h_low * data_width + w_high];
+  float v3 = in_data[h_high * data_width + w_low];
+  float v4 = in_data[h_high * data_width + w_high];
   float w1 = hh * hw, w2 = hh * lw, w3 = lh * hw, w4 = lh * lw;
   return w1 * v1 + w2 * v2 + w3 * v3 + w4 * v4;
 }

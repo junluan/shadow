@@ -16,46 +16,44 @@ class SliceOp : public Operator {
     CHECK_NOTNULL(kernel_);
   }
 
-  void Run() override {
-    CHECK_GE(tops_size(), 2);
+  void Run(const std::vector<std::shared_ptr<Blob>>& inputs,
+           std::vector<std::shared_ptr<Blob>>& outputs) override {
+    CHECK_GE(outputs.size(), 2);
 
-    const auto bottom = bottoms(0);
+    const auto& input = inputs[0];
 
-    axis_ = bottom->canonical_index(axis_);
+    axis_ = input->canonical_index(axis_);
 
-    int num_tops = tops_size();
+    int num_outputs = static_cast<int>(outputs.size());
 
     VecInt slices;
-    int bottom_slice_axis = bottom->shape(axis_);
+    int in_slice_axis = input->shape(axis_);
     if (slice_point_.empty()) {
-      CHECK_EQ(bottom_slice_axis % num_tops, 0);
-      slices.resize(num_tops, bottom_slice_axis / num_tops);
+      CHECK_EQ(in_slice_axis % num_outputs, 0);
+      slices.resize(num_outputs, in_slice_axis / num_outputs);
     } else {
-      CHECK_EQ(slice_point_.size(), num_tops - 1);
+      CHECK_EQ(slice_point_.size(), num_outputs - 1);
       int prev = 0;
       for (auto point : slice_point_) {
         CHECK_GT(point, prev);
         slices.push_back(point - prev);
         prev = point;
       }
-      CHECK_GT(bottom_slice_axis, prev);
-      slices.push_back(bottom_slice_axis - prev);
+      CHECK_GT(in_slice_axis, prev);
+      slices.push_back(in_slice_axis - prev);
     }
-
-    std::vector<std::shared_ptr<Blob>> top_blobs;
 
     int count = 0;
-    auto top_shape = bottom->shape();
-    for (int n = 0; n < num_tops; ++n) {
-      auto top = tops(n);
-      top_shape[axis_] = slices[n];
-      top->reshape(top_shape);
-      count += top->count();
-      top_blobs.push_back(top);
+    auto out_shape = input->shape();
+    for (int n = 0; n < num_outputs; ++n) {
+      auto& output = outputs[n];
+      out_shape[axis_] = slices[n];
+      output->reshape(out_shape);
+      count += output->count();
     }
-    CHECK_EQ(count, bottom->count());
+    CHECK_EQ(count, input->count());
 
-    kernel_->Run(bottom, top_blobs, ws_, axis_);
+    kernel_->Run(input, outputs, ws_, axis_);
   }
 
  private:

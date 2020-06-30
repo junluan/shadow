@@ -19,35 +19,31 @@ class EltwiseOp : public Operator {
     CHECK_NOTNULL(kernel_);
   }
 
-  void Run() override {
-    CHECK_GE(bottoms_size(), 2);
+  void Run(const std::vector<std::shared_ptr<Blob>>& inputs,
+           std::vector<std::shared_ptr<Blob>>& outputs) override {
+    CHECK_GE(inputs.size(), 2);
 
-    const auto bottom_0 = bottoms(0);
-    auto top = tops(0);
+    const auto& input_0 = inputs[0];
+    auto& output = outputs[0];
 
-    for (int n = 1; n < bottoms_size(); ++n) {
-      CHECK(bottoms(n)->shape() == bottom_0->shape());
+    for (int n = 1; n < inputs.size(); ++n) {
+      CHECK(inputs[n]->shape() == input_0->shape());
     }
-    top->reshape(bottom_0->shape());
+    output->reshape(input_0->shape());
 
     int coeff_size = static_cast<int>(coeff_.size());
 
-    CHECK(coeff_size == 0 || coeff_size == bottoms_size())
-        << "Eltwise op takes one coefficient per bottom blob.";
+    CHECK(coeff_size == 0 || coeff_size == inputs.size())
+        << "Eltwise op takes one coefficient per input blob.";
     CHECK(!(operation_ != 1 && coeff_size))
         << "Eltwise op only takes coefficients for summation.";
 
-    VecFloat coeff(bottoms_size(), 1);
+    VecFloat coeff(inputs.size(), 1);
     for (int n = 0; n < coeff_size; ++n) {
       coeff[n] = coeff_[n];
     }
 
-    std::vector<std::shared_ptr<Blob>> bottom_blobs;
-    for (int n = 0; n < bottoms_size(); ++n) {
-      bottom_blobs.push_back(bottoms(n));
-    }
-
-    kernel_->Run(bottom_blobs, top, ws_, operation_, coeff);
+    kernel_->Run(inputs, output, ws_, operation_, coeff);
   }
 
  private:

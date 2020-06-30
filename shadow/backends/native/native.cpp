@@ -62,8 +62,17 @@ void Native::Forward(const std::map<std::string, void*>& data_map,
   }
 
   for (auto& op : ops_) {
-    op->Run();
-    DLOG(INFO) << op->debug_log();
+    std::vector<std::shared_ptr<Blob>> inputs, outputs;
+    for (const auto& name : op->op_param().bottom()) {
+      inputs.push_back(ws_->GetBlob(name));
+    }
+    for (const auto& name : op->op_param().top()) {
+      outputs.push_back(ws_->GetBlob(name));
+    }
+
+    op->Run(inputs, outputs);
+
+    LOG_IF(INFO, debug_) << op->debug_log(inputs, outputs);
   }
 
   DLOG(INFO) << "Forward Network!";
@@ -158,23 +167,21 @@ void Native::Initial(const shadow::NetParam& net_param) {
     }
   }
 
-  ops_.clear();
+  ops_.clear(), in_blob_.clear();
   for (const auto& op_param : net_param.op()) {
-    std::shared_ptr<Operator> op(CreateOperator(op_param, ws_));
-    ops_.push_back(op);
+    ops_.emplace_back(CreateOperator(op_param, ws_));
+
+    if (op_param.type() == "Input") {
+      CHECK(in_blob_.empty());
+      for (const auto& blob_name : op_param.top()) {
+        ws_->GetBlob(blob_name)->reshape(
+            ops_.back()->get_repeated_argument<int>(blob_name));
+        in_blob_.push_back(blob_name);
+      }
+    }
   }
 
   arg_helper_ = ArgumentHelper(net_param);
-
-  in_blob_.clear();
-  for (const auto& op_param : net_param.op()) {
-    if (op_param.type() == "Input") {
-      for (const auto& blob_name : op_param.top()) {
-        in_blob_.push_back(blob_name);
-      }
-      break;
-    }
-  }
 
   CHECK(arg_helper_.HasArgument("out_blob"))
       << "Network must have out_blob argument";

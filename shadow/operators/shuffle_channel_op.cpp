@@ -16,17 +16,18 @@ class ShuffleChannelOp : public Operator {
     CHECK_NOTNULL(kernel_);
   }
 
-  void Run() override {
-    const auto bottom = bottoms(0);
-    auto top = tops(0);
+  void Run(const std::vector<std::shared_ptr<Blob>>& inputs,
+           std::vector<std::shared_ptr<Blob>>& outputs) override {
+    const auto& input = inputs[0];
+    auto& output = outputs[0];
 
-    CHECK_NE(bottom, top);
+    CHECK_NE(input, output);
 
-    CHECK_EQ(bottom->shape(1) % group_, 0);
+    CHECK_EQ(input->shape(1) % group_, 0);
 
-    top->reshape(bottom->shape());
+    output->reshape(input->shape());
 
-    kernel_->Run(bottom, top, ws_, group_);
+    kernel_->Run(input, output, ws_, group_);
   }
 
  private:

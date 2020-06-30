@@ -10,10 +10,10 @@ __global__ void KernelStack(const float* in_data, int count, int num_stacks,
   CUDA_KERNEL_LOOP(globalid, count) {
     int stack_num = globalid / stack_size;
     int stack_index = globalid % stack_size;
-    int top_index =
+    int out_index =
         stack_index +
         (stack_num * out_stack_axis + offset_stack_axis) * stack_size;
-    out_data[top_index] = in_data[globalid];
+    out_data[out_index] = in_data[globalid];
   }
 }
 

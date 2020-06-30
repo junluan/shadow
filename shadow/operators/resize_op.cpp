@@ -39,17 +39,18 @@ class ResizeOp : public Operator {
     CHECK_NOTNULL(kernel_);
   }
 
-  void Run() override {
-    const auto bottom = bottoms(0);
-    auto top = tops(0);
+  void Run(const std::vector<std::shared_ptr<Blob>>& inputs,
+           std::vector<std::shared_ptr<Blob>>& outputs) override {
+    const auto& input = inputs[0];
+    auto& output = outputs[0];
 
-    CHECK_NE(bottom, top);
+    CHECK_NE(input, output);
 
-    int in_h = bottom->shape(2), in_w = bottom->shape(3);
+    int in_h = input->shape(2), in_w = input->shape(3);
     int out_h = out_h_, out_w = out_w_;
 
-    if (bottoms_size() > 1) {
-      const auto size = bottoms(1);
+    if (inputs.size() > 1) {
+      const auto& size = inputs[1];
       auto size_type = size->data_type();
       if (size_type == DataType::kI32) {
         CHECK_EQ(size->num_axes(), 1);
@@ -71,12 +72,12 @@ class ResizeOp : public Operator {
     CHECK_GT(out_h, 0);
     CHECK_GT(out_w, 0);
 
-    auto top_shape = bottom->shape();
-    top_shape[2] = out_h;
-    top_shape[3] = out_w;
-    top->reshape(top_shape);
+    auto out_shape = input->shape();
+    out_shape[2] = out_h;
+    out_shape[3] = out_w;
+    output->reshape(out_shape);
 
-    kernel_->Run(bottom, top, ws_, type_, align_corners_);
+    kernel_->Run(input, output, ws_, type_, align_corners_);
   }
 
  private:

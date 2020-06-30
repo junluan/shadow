@@ -12,10 +12,9 @@ __global__ void KernelSlice(const float* in_data, int count, int num_slices,
     int total_slice_size = slice_size * out_slice_axis;
     int slice_num = globalid / total_slice_size;
     int slice_index = globalid % total_slice_size;
-    int bottom_index =
-        slice_index +
-        (slice_num * in_slice_axis + offset_slice_axis) * slice_size;
-    out_data[globalid] = in_data[bottom_index];
+    int in_index = slice_index +
+                   (slice_num * in_slice_axis + offset_slice_axis) * slice_size;
+    out_data[globalid] = in_data[in_index];
   }
 }
 

@@ -11,7 +11,7 @@ class GPUContext : public Context {
     default_cuda_stream_ =
         arguments.GetSingleArgument<bool>("default_cuda_stream", false);
 
-    check_device(device_id_);
+    check_device(device_id_, arguments.GetSingleArgument<bool>("debug", false));
     CUDA_CHECK(cudaSetDevice(device_id_));
 
     if (default_cuda_stream_) {
@@ -84,15 +84,15 @@ class GPUContext : public Context {
 #endif
 
  private:
-  static void check_device(int device_id) {
+  static void check_device(int device_id, bool debug) {
     int num_devices = 0;
     CUDA_CHECK(cudaGetDeviceCount(&num_devices));
     CHECK_GE(device_id, 0);
     CHECK_LT(device_id, num_devices);
     cudaDeviceProp prop{};
     CUDA_CHECK(cudaGetDeviceProperties(&prop, device_id));
-    DLOG(INFO) << "GPU ID: " << device_id << ", Type: " << prop.name
-               << ", Capability: " << prop.major << "." << prop.minor;
+    LOG_IF(INFO, debug) << "GPU ID: " << device_id << ", Type: " << prop.name
+                        << ", Capability: " << prop.major << "." << prop.minor;
   }
 
   int device_id_ = 0;

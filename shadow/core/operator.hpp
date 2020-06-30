@@ -3,7 +3,6 @@
 
 #include "blas.hpp"
 #include "blob.hpp"
-#include "common.hpp"
 #include "external.hpp"
 #include "helper.hpp"
 #include "params.hpp"
@@ -20,9 +19,10 @@ namespace Shadow {
 class Operator {
  public:
   Operator(const shadow::OpParam& op_param, Workspace* ws);
-  virtual ~Operator();
+  virtual ~Operator() {}
 
-  virtual void Run() = 0;
+  virtual void Run(const std::vector<std::shared_ptr<Blob>>& inputs,
+                   std::vector<std::shared_ptr<Blob>>& outputs) = 0;
 
   bool has_argument(const std::string& name) const {
     return arg_helper_.HasArgument(name);
@@ -37,48 +37,25 @@ class Operator {
     return arg_helper_.GetRepeatedArgument<T>(name, default_value);
   }
 
-  const std::string& name() const { return op_name_; }
-  const std::string& type() const { return op_type_; }
+  Workspace* ws() const { return ws_; }
 
-  std::shared_ptr<Blob> bottoms(int n) const {
-    auto blob = ws_->GetBlob(bottoms_name(n));
-    CHECK_NOTNULL(blob);
-    return blob;
-  }
-  const std::string& bottoms_name(int n) const {
-    CHECK(check_index(n, bottoms_size()));
-    return bottom_names_[n];
-  }
-  int bottoms_size() const { return static_cast<int>(bottom_names_.size()); }
+  const shadow::OpParam& op_param() const { return op_param_; }
 
-  std::shared_ptr<Blob> tops(int n) const {
-    auto blob = ws_->GetBlob(tops_name(n));
-    CHECK_NOTNULL(blob);
-    return blob;
-  }
-  const std::string& tops_name(int n) const {
-    CHECK(check_index(n, tops_size()));
-    return top_names_[n];
-  }
-  int tops_size() const { return static_cast<int>(top_names_.size()); }
+  const std::string& name() const { return op_param_.name(); }
+  const std::string& type() const { return op_param_.type(); }
 
-  std::string debug_log() const;
+  std::string debug_log(
+      const std::vector<std::shared_ptr<Blob>>& inputs,
+      const std::vector<std::shared_ptr<Blob>>& outputs) const;
 
  protected:
   Workspace* ws_ = nullptr;
 
  private:
-  bool check_index(int i, int size) const { return i >= 0 && i < size; }
-
   DEFINE_JSON_SERIALIZATION(op_param_);
 
   shadow::OpParam op_param_;
   ArgumentHelper arg_helper_;
-
-  std::string op_name_, op_type_;
-  VecString bottom_names_, top_names_;
-
-  DISABLE_COPY_AND_ASSIGN(Operator);
 };
 
 Operator* CreateOperator(const shadow::OpParam& op_param, Workspace* ws);

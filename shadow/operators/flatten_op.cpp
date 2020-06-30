@@ -11,30 +11,31 @@ class FlattenOp : public Operator {
     end_axis_ = get_single_argument<int>("end_axis", -1);
   }
 
-  void Run() override {
-    const auto bottom = bottoms(0);
-    auto top = tops(0);
+  void Run(const std::vector<std::shared_ptr<Blob>>& inputs,
+           std::vector<std::shared_ptr<Blob>>& outputs) override {
+    const auto& input = inputs[0];
+    auto& output = outputs[0];
 
-    CHECK_NE(bottom, top);
+    CHECK_NE(input, output);
 
-    int num_axes = bottom->num_axes();
+    int num_axes = input->num_axes();
     if (end_axis_ == -1) {
       end_axis_ = num_axes - 1;
     }
     CHECK_LT(end_axis_, num_axes);
     CHECK_LE(axis_, end_axis_);
 
-    VecInt top_shape;
+    VecInt out_shape;
     for (int d = 0; d < axis_; ++d) {
-      top_shape.push_back(bottom->shape(d));
+      out_shape.push_back(input->shape(d));
     }
-    top_shape.push_back(bottom->count(axis_, end_axis_ + 1));
-    for (int d = end_axis_ + 1; d < bottom->num_axes(); ++d) {
-      top_shape.push_back(bottom->shape(d));
+    out_shape.push_back(input->count(axis_, end_axis_ + 1));
+    for (int d = end_axis_ + 1; d < input->num_axes(); ++d) {
+      out_shape.push_back(input->shape(d));
     }
 
-    top->share_data(bottom->data<float>(), top_shape);
-    CHECK_EQ(top->count(), bottom->count());
+    output->share_data(input->data<void>(), out_shape);
+    CHECK_EQ(output->count(), input->count());
   }
 
  private:

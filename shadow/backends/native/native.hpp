@@ -10,6 +10,7 @@ class Native : public Backend {
  public:
   Native(const ArgumentHelper& arguments, Workspace* ws) : Backend(ws) {
     device_input_ = arguments.GetSingleArgument<bool>("device_input", false);
+    debug_ = arguments.GetSingleArgument<bool>("debug", false);
   }
 
   void LoadModel(const shadow::NetParam& net_param) override;
@@ -49,7 +50,7 @@ class Native : public Backend {
                    const std::vector<const void*>& weights);
   void CopyWeights(const shadow::NetParam& net_param, const void* weights_data);
 
-  bool device_input_ = false;
+  bool device_input_ = false, debug_ = false;
 
   std::vector<std::shared_ptr<Operator>> ops_;
 };

@@ -9,20 +9,21 @@ class SqueezeOp : public Operator {
     axes_ = get_repeated_argument<int>("axes");
   }
 
-  void Run() override {
-    const auto bottom = bottoms(0);
-    auto top = tops(0);
+  void Run(const std::vector<std::shared_ptr<Blob>>& inputs,
+           std::vector<std::shared_ptr<Blob>>& outputs) override {
+    const auto& input = inputs[0];
+    auto& output = outputs[0];
 
-    CHECK_NE(bottom, top);
+    CHECK_NE(input, output);
 
-    int num_axes = bottom->num_axes();
+    int num_axes = input->num_axes();
 
-    VecInt top_shape;
+    VecInt out_shape;
     if (axes_.empty()) {
       for (int n = 0; n < num_axes; ++n) {
-        int dim = bottom->shape(n);
+        int dim = input->shape(n);
         if (dim > 1) {
-          top_shape.push_back(dim);
+          out_shape.push_back(dim);
         } else {
           CHECK_EQ(dim, 1);
         }
@@ -36,17 +37,17 @@ class SqueezeOp : public Operator {
             break;
           }
         }
-        int dim = bottom->shape(n);
+        int dim = input->shape(n);
         if (need_squeeze) {
           CHECK_EQ(dim, 1);
         } else {
-          top_shape.push_back(dim);
+          out_shape.push_back(dim);
         }
       }
     }
 
-    top->share_data(bottom->data<float>(), top_shape);
-    CHECK_EQ(top->count(), bottom->count());
+    output->share_data(input->data<void>(), out_shape);
+    CHECK_EQ(output->count(), input->count());
   }
 
  private:

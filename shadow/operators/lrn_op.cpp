@@ -22,13 +22,14 @@ class LRNOp : public Operator {
     CHECK_NOTNULL(kernel_);
   }
 
-  void Run() override {
-    const auto bottom = bottoms(0);
-    auto top = tops(0);
+  void Run(const std::vector<std::shared_ptr<Blob>>& inputs,
+           std::vector<std::shared_ptr<Blob>>& outputs) override {
+    const auto& input = inputs[0];
+    auto& output = outputs[0];
 
-    top->reshape(bottom->shape());
+    output->reshape(input->shape());
 
-    kernel_->Run(bottom, top, ws_, size_, alpha_, beta_, k_);
+    kernel_->Run(input, output, ws_, size_, alpha_, beta_, k_);
   }
 
  private:

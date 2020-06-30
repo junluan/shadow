@@ -19,23 +19,24 @@ class ScaleOp : public Operator {
     CHECK_NOTNULL(kernel_);
   }
 
-  void Run() override {
-    const auto bottom = bottoms(0);
-    auto top = tops(0);
+  void Run(const std::vector<std::shared_ptr<Blob>>& inputs,
+           std::vector<std::shared_ptr<Blob>>& outputs) override {
+    const auto& input = inputs[0];
+    auto& output = outputs[0];
 
-    top->reshape(bottom->shape());
+    output->reshape(input->shape());
 
     if (has_scale_ && has_bias_) {
-      CHECK_EQ(bottoms_size(), 3);
-      kernel_->Run(bottom, bottoms(1), bottoms(2), top, ws_, axis_);
+      CHECK_EQ(inputs.size(), 3);
+      kernel_->Run(input, inputs[1], inputs[2], output, ws_, axis_);
     } else if (has_scale_) {
-      CHECK_EQ(bottoms_size(), 2);
-      kernel_->Run(bottom, bottoms(1), nullptr, top, ws_, axis_);
+      CHECK_EQ(inputs.size(), 2);
+      kernel_->Run(input, inputs[1], nullptr, output, ws_, axis_);
     } else if (has_bias_) {
-      CHECK_EQ(bottoms_size(), 2);
-      kernel_->Run(bottom, nullptr, bottoms(1), top, ws_, axis_);
+      CHECK_EQ(inputs.size(), 2);
+      kernel_->Run(input, nullptr, inputs[1], output, ws_, axis_);
     } else {
-      int dim = bottom->shape(axis_);
+      int dim = input->shape(axis_);
       if (scale_value_.size() > 1) {
         CHECK_EQ(scale_value_.size(), dim);
       } else if (scale_value_.size() == 1) {
@@ -46,7 +47,7 @@ class ScaleOp : public Operator {
       } else if (bias_value_.size() == 1) {
         bias_value_ = VecFloat(dim, bias_value_[0]);
       }
-      kernel_->Run(bottom, top, ws_, axis_, scale_value_, bias_value_);
+      kernel_->Run(input, output, ws_, axis_, scale_value_, bias_value_);
     }
   }
 

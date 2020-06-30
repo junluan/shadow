@@ -16,25 +16,26 @@ class BatchNormOp : public Operator {
     CHECK_NOTNULL(kernel_);
   }
 
-  void Run() override {
-    CHECK_GE(bottoms_size(), 3);
+  void Run(const std::vector<std::shared_ptr<Blob>>& inputs,
+           std::vector<std::shared_ptr<Blob>>& outputs) override {
+    CHECK_GE(inputs.size(), 3);
 
-    const auto bottom = bottoms(0);
-    const auto mean = bottoms(1);
-    const auto variance = bottoms(2);
-    auto top = tops(0);
+    const auto& input = inputs[0];
+    const auto& mean = inputs[1];
+    const auto& variance = inputs[2];
+    auto& output = outputs[0];
 
-    top->reshape(bottom->shape());
+    output->reshape(input->shape());
 
     float scale_factor = 1;
-    if (bottoms_size() == 4) {
+    if (inputs.size() == 4) {
       float scale = 1;
-      CHECK_EQ(bottoms(3)->count(), 1);
-      bottoms(3)->get_data<float>(&scale, 1);
+      CHECK_EQ(inputs[3]->count(), 1);
+      inputs[3]->get_data<float>(&scale, 1);
       scale_factor = scale == 0 ? 0 : 1 / scale;
     }
 
-    kernel_->Run(bottom, mean, variance, top, ws_, scale_factor, eps_);
+    kernel_->Run(input, mean, variance, output, ws_, scale_factor, eps_);
   }
 
  private:

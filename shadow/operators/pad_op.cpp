@@ -18,18 +18,19 @@ class PadOp : public Operator {
     CHECK_NOTNULL(kernel_);
   }
 
-  void Run() override {
-    const auto bottom = bottoms(0);
-    auto top = tops(0);
+  void Run(const std::vector<std::shared_ptr<Blob>>& inputs,
+           std::vector<std::shared_ptr<Blob>>& outputs) override {
+    const auto& input = inputs[0];
+    auto& output = outputs[0];
 
-    CHECK_NE(bottom, top);
+    CHECK_NE(input, output);
 
-    auto top_shape = bottom->shape();
-    top_shape[2] = bottom->shape(2) + paddings_[0] + paddings_[1];
-    top_shape[3] = bottom->shape(3) + paddings_[2] + paddings_[3];
-    top->reshape(top_shape);
+    auto out_shape = input->shape();
+    out_shape[2] = input->shape(2) + paddings_[0] + paddings_[1];
+    out_shape[3] = input->shape(3) + paddings_[2] + paddings_[3];
+    output->reshape(out_shape);
 
-    kernel_->Run(bottom, top, ws_, paddings_, value_);
+    kernel_->Run(input, output, ws_, paddings_, value_);
   }
 
  private:

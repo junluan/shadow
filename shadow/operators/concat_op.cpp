@@ -15,35 +15,33 @@ class ConcatOp : public Operator {
     CHECK_NOTNULL(kernel_);
   }
 
-  void Run() override {
-    CHECK_GE(bottoms_size(), 2);
+  void Run(const std::vector<std::shared_ptr<Blob>>& inputs,
+           std::vector<std::shared_ptr<Blob>>& outputs) override {
+    CHECK_GE(inputs.size(), 2);
 
-    const auto bottom_0 = bottoms(0);
-    auto top = tops(0);
+    const auto& input_0 = inputs[0];
+    auto& output = outputs[0];
 
-    axis_ = bottom_0->canonical_index(axis_);
+    axis_ = input_0->canonical_index(axis_);
 
-    std::vector<std::shared_ptr<Blob>> bottom_blobs(1, bottom_0);
-
-    auto top_shape = bottom_0->shape();
-    int num_axes = bottom_0->num_axes();
-    for (int n = 1; n < bottoms_size(); ++n) {
-      const auto bottom = bottoms(n);
-      CHECK_EQ(num_axes, bottom->num_axes())
-          << "Bottoms must have the same axes!";
+    auto in_shape = input_0->shape();
+    int num_axes = input_0->num_axes();
+    for (int n = 1; n < inputs.size(); ++n) {
+      const auto& input = inputs[n];
+      CHECK_EQ(num_axes, input->num_axes())
+          << "Inputs must have the same axes!";
       for (int d = 0; d < num_axes; ++d) {
         if (d != axis_) {
-          CHECK_EQ(top_shape[d], bottom->shape(d))
-              << "Bottoms must have the same shape, except at concat_axis!";
+          CHECK_EQ(in_shape[d], input->shape(d))
+              << "Inputs must have the same shape, except at concat_axis!";
         }
       }
-      top_shape[axis_] += bottom->shape(axis_);
-      bottom_blobs.push_back(bottom);
+      in_shape[axis_] += input->shape(axis_);
     }
 
-    top->reshape(top_shape);
+    output->reshape(in_shape);
 
-    kernel_->Run(bottom_blobs, top, ws_, axis_);
+    kernel_->Run(inputs, output, ws_, axis_);
   }
 
  private:

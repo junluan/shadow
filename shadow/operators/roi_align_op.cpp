@@ -19,18 +19,19 @@ class ROIAlignOp : public Operator {
     CHECK_NOTNULL(kernel_);
   }
 
-  void Run() override {
-    CHECK_EQ(bottoms_size(), 2);
+  void Run(const std::vector<std::shared_ptr<Blob>>& inputs,
+           std::vector<std::shared_ptr<Blob>>& outputs) override {
+    CHECK_EQ(inputs.size(), 2);
 
-    const auto bottom = bottoms(0);
-    const auto roi = bottoms(1);
-    auto top = tops(0);
+    const auto& input = inputs[0];
+    const auto& roi = inputs[1];
+    auto& output = outputs[0];
 
-    CHECK_NE(bottom, top);
+    CHECK_NE(input, output);
 
-    top->reshape({roi->shape(0), bottom->shape(1), pooled_h_, pooled_w_});
+    output->reshape({roi->shape(0), input->shape(1), pooled_h_, pooled_w_});
 
-    kernel_->Run(bottom, roi, top, ws_, pooled_h_, pooled_w_, spatial_scale_);
+    kernel_->Run(input, roi, output, ws_, pooled_h_, pooled_w_, spatial_scale_);
   }
 
  private:

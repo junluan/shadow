@@ -91,11 +91,14 @@ class ProposalOp : public Operator {
     CHECK_NOTNULL(kernel_);
   }
 
-  void Run() override {
-    const auto score = bottoms(0);
-    const auto delta = bottoms(1);
-    const auto info = bottoms(2);
-    auto top = tops(0);
+  void Run(const std::vector<std::shared_ptr<Blob>>& inputs,
+           std::vector<std::shared_ptr<Blob>>& outputs) override {
+    CHECK_EQ(inputs.size(), 3);
+
+    const auto& score = inputs[0];
+    const auto& delta = inputs[1];
+    const auto& info = inputs[2];
+    auto& output = outputs[0];
 
     int batch = score->shape(0), in_h = score->shape(2), in_w = score->shape(3);
     int num_scores = score->shape(1), num_regs = delta->shape(1),
@@ -156,8 +159,8 @@ class ProposalOp : public Operator {
       selected_rois_[selected_offset + 4] = rect.ymax;
     }
 
-    top->reshape({picked_count, 5});
-    top->set_data<float>(selected_rois_.data(), selected_rois_.size());
+    output->reshape({picked_count, 5});
+    output->set_data<float>(selected_rois_.data(), selected_rois_.size());
   }
 
  private:

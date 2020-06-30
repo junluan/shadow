@@ -16,29 +16,30 @@ class MatMulOp : public Operator {
     CHECK_NOTNULL(kernel_);
   }
 
-  void Run() override {
-    CHECK_EQ(bottoms_size(), 2);
+  void Run(const std::vector<std::shared_ptr<Blob>>& inputs,
+           std::vector<std::shared_ptr<Blob>>& outputs) override {
+    CHECK_EQ(inputs.size(), 2);
 
-    const auto bottom_a = bottoms(0);
-    const auto bottom_b = bottoms(1);
-    auto top = tops(0);
+    const auto& input_a = inputs[0];
+    const auto& input_b = inputs[1];
+    auto& output = outputs[0];
 
-    CHECK_NE(bottom_a, top);
-    CHECK_NE(bottom_b, top);
+    CHECK_NE(input_a, output);
+    CHECK_NE(input_b, output);
 
-    int num_axes_a = bottom_a->num_axes(), num_axes_b = bottom_b->num_axes();
+    int num_axes_a = input_a->num_axes(), num_axes_b = input_b->num_axes();
 
     CHECK(num_axes_a >= 2 && num_axes_b >= 2);
     if (num_axes_a == num_axes_b) {
       for (int d = 0; d < num_axes_a - 2; ++d) {
-        CHECK_EQ(bottom_a->shape(d), bottom_b->shape(d));
+        CHECK_EQ(input_a->shape(d), input_b->shape(d));
       }
     } else {
       CHECK(num_axes_a == 2 || num_axes_b == 2);
     }
 
-    int rows_a = bottom_a->shape(-2), cols_a = bottom_a->shape(-1);
-    int rows_b = bottom_b->shape(-2), cols_b = bottom_b->shape(-1);
+    int rows_a = input_a->shape(-2), cols_a = input_a->shape(-1);
+    int rows_b = input_b->shape(-2), cols_b = input_b->shape(-1);
 
     int M = transpose_a_ ? cols_a : rows_a;
     int N = transpose_b_ ? rows_b : cols_b;
@@ -47,18 +48,18 @@ class MatMulOp : public Operator {
     CHECK_EQ(K, transpose_b_ ? cols_b : rows_b);
 
     if (num_axes_a >= num_axes_b) {
-      auto top_shape = bottom_a->shape();
-      top_shape[num_axes_a - 2] = M;
-      top_shape[num_axes_a - 1] = N;
-      top->reshape(top_shape);
+      auto out_shape = input_a->shape();
+      out_shape[num_axes_a - 2] = M;
+      out_shape[num_axes_a - 1] = N;
+      output->reshape(out_shape);
     } else {
-      auto top_shape = bottom_b->shape();
-      top_shape[num_axes_b - 2] = M;
-      top_shape[num_axes_b - 1] = N;
-      top->reshape(top_shape);
+      auto out_shape = input_b->shape();
+      out_shape[num_axes_b - 2] = M;
+      out_shape[num_axes_b - 1] = N;
+      output->reshape(out_shape);
     }
 
-    kernel_->Run(bottom_a, bottom_b, top, ws_, transpose_a_, transpose_b_);
+    kernel_->Run(input_a, input_b, output, ws_, transpose_a_, transpose_b_);
   }
 
  private:
