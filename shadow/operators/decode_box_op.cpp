@@ -10,7 +10,6 @@ class DecodeBoxOp : public Operator {
       : Operator(op_param, ws) {
     method_ = get_single_argument<int>("method", 0);
     num_classes_ = get_single_argument<int>("num_classes", 1);
-    CHECK_GT(num_classes_, 1);
     output_max_score_ = get_single_argument<bool>("output_max_score", true);
     background_label_id_ = get_single_argument<int>("background_label_id", 0);
     objectness_score_ = get_single_argument<float>("objectness_score", 0.01f);
