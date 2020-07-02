@@ -94,16 +94,17 @@ class DecodeBoxKernelDefault : public DecodeBoxKernel {
     const auto* biases_data = biases->data<float>();
     auto* out_data = output->mutable_data<float>();
 
-    int batch = output->shape(0), num_priors = output->shape(1);
+    int batch = output->shape(0), num_priors = output->shape(1),
+        out_stride = output->shape(2);
 
     for (int n = 0; n < masks.size(); ++n) {
-      const auto input = inputs[n];
+      const auto& input = inputs[n];
       int mask = masks[n], out_h = input->shape(1), out_w = input->shape(2);
       Vision::DecodeYoloV3Boxes<D, float>(
           input->data<float>(), biases_data, batch, num_priors, out_h, out_w,
           mask, num_classes, output_max_score, out_data, ws->Ctx());
       biases_data += mask * 2;
-      out_data += (out_h * out_w * mask) * 6;
+      out_data += out_h * out_w * mask * out_stride;
     }
   }
 
