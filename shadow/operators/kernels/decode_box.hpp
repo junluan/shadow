@@ -90,7 +90,7 @@ class DecodeBoxKernelDefault : public DecodeBoxKernel {
   void Run(const std::vector<std::shared_ptr<Blob>>& inputs,
            const std::shared_ptr<Blob>& biases, std::shared_ptr<Blob>& output,
            Workspace* ws, int num_classes, bool output_max_score,
-           const VecInt& masks) {
+           const VecInt& masks) override {
     const auto* biases_data = biases->data<float>();
     auto* out_data = output->mutable_data<float>();
 
