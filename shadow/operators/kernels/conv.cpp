@@ -114,11 +114,11 @@ class ConvKernelNNPACK : public ConvKernel {
       auto nnp_activation =
           activate_type == 1 ? nnp_activation_relu : nnp_activation_identity;
       auto nnp_input_size =
-          nnp_size{static_cast<size_t>(in_h), static_cast<size_t>(in_w)};
-      auto nnp_kernel_size = nnp_size{static_cast<size_t>(kernel_size_h),
-                                      static_cast<size_t>(kernel_size_w)};
-      auto nnp_stride = nnp_size{static_cast<size_t>(stride_h),
-                                 static_cast<size_t>(stride_w)};
+          nnp_size{static_cast<size_t>(in_w), static_cast<size_t>(in_h)};
+      auto nnp_kernel_size = nnp_size{static_cast<size_t>(kernel_size_w),
+                                      static_cast<size_t>(kernel_size_h)};
+      auto nnp_stride = nnp_size{static_cast<size_t>(stride_w),
+                                 static_cast<size_t>(stride_h)};
       auto nnp_pad = nnp_padding{};
       nnp_pad.top = nnp_pad.bottom = static_cast<size_t>(pad_h);
       nnp_pad.left = nnp_pad.right = static_cast<size_t>(pad_w);
