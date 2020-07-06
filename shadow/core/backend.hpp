@@ -20,8 +20,9 @@ class Backend {
       const std::map<std::string, void*>& data_map,
       const std::map<std::string, std::vector<int>>& shape_map) = 0;
 
-  virtual void SaveEngine(const std::string& save_path,
-                          std::vector<char>* save_data) = 0;
+  virtual void SaveEngine(
+      const std::string& save_path,
+      std::map<std::string, std::vector<char>>* save_data) = 0;
 
   const ArgumentHelper& arg_helper() const { return arg_helper_; }
 

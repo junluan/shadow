@@ -79,7 +79,7 @@ void Native::Forward(const std::map<std::string, void*>& data_map,
 }
 
 void Native::SaveEngine(const std::string& save_path,
-                        std::vector<char>* save_data) {}
+                        std::map<std::string, std::vector<char>>* save_data) {}
 
 void Native::LoadProtoData(const void* proto_data, int proto_size,
                            shadow::NetParam* net_param) {

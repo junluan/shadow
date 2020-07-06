@@ -26,7 +26,7 @@ class Native : public Backend {
       const std::map<std::string, std::vector<int>>& shape_map) override;
 
   void SaveEngine(const std::string& save_path,
-                  std::vector<char>* save_data) override;
+                  std::map<std::string, std::vector<char>>* save_data) override;
 
  private:
   static void LoadProtoData(const void* proto_data, int proto_size,
