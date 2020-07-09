@@ -12,7 +12,7 @@
 
 namespace Shadow {
 
-enum class DataType { kI32, kF32, kU8 };
+enum class DataType { kI32, kI16, kI8, kU32, kU16, kU8, kF32 };
 
 class Blob {
  public:
@@ -135,11 +135,19 @@ class Blob {
   size_t max_size() const { return capacity_ * elem_size(); }
   size_t elem_size() const {
     if (data_type_ == DataType::kI32) {
-      return sizeof(int);
+      return sizeof(std::int32_t);
+    } else if (data_type_ == DataType::kI16) {
+      return sizeof(std::int16_t);
+    } else if (data_type_ == DataType::kI8) {
+      return sizeof(std::int8_t);
+    } else if (data_type_ == DataType::kU32) {
+      return sizeof(std::uint32_t);
+    } else if (data_type_ == DataType::kU16) {
+      return sizeof(std::uint16_t);
+    } else if (data_type_ == DataType::kU8) {
+      return sizeof(std::uint8_t);
     } else if (data_type_ == DataType::kF32) {
       return sizeof(float);
-    } else if (data_type_ == DataType::kU8) {
-      return sizeof(unsigned char);
     } else {
       return 0;
     }
@@ -157,12 +165,20 @@ class Blob {
  private:
   template <typename T>
   static void check_data_type(DataType data_type) {
-    if (std::is_same<T, int>::value) {
+    if (std::is_same<T, std::int32_t>::value) {
       CHECK(data_type == DataType::kI32);
+    } else if (std::is_same<T, std::int16_t>::value) {
+      CHECK(data_type == DataType::kI16);
+    } else if (std::is_same<T, std::int8_t>::value) {
+      CHECK(data_type == DataType::kI8);
+    } else if (std::is_same<T, std::uint32_t>::value) {
+      CHECK(data_type == DataType::kU32);
+    } else if (std::is_same<T, std::uint16_t>::value) {
+      CHECK(data_type == DataType::kU16);
+    } else if (std::is_same<T, std::uint8_t>::value) {
+      CHECK(data_type == DataType::kU8);
     } else if (std::is_same<T, float>::value) {
       CHECK(data_type == DataType::kF32);
-    } else if (std::is_same<T, unsigned char>::value) {
-      CHECK(data_type == DataType::kU8);
     } else {
       LOG(FATAL) << "Invalid template typename " << typeid(T).name();
     }

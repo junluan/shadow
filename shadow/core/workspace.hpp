@@ -26,6 +26,10 @@ class Workspace {
   std::shared_ptr<Blob> CreateBlob(const std::string& name, DataType data_type,
                                    Allocator* allocator = nullptr);
 
+  std::shared_ptr<Blob> CreateBlob(const std::string& name,
+                                   const std::string& data_type_str,
+                                   Allocator* allocator = nullptr);
+
   std::shared_ptr<Blob> CreateTempBlob(const std::vector<int>& shape,
                                        DataType data_type);
 

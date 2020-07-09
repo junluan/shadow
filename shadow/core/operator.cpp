@@ -9,18 +9,11 @@ Operator::Operator(const shadow::OpParam& op_param, Workspace* ws)
         << name() << ": Failed to check input blob " << input_name;
   }
   for (const auto& output_name : op_param_.top()) {
-    const auto& out_type =
+    const auto& output_type =
         get_single_argument<std::string>(output_name + "_type", "float");
-    if (out_type == "int") {
-      ws->CreateBlob(output_name, DataType::kI32);
-    } else if (out_type == "float") {
-      ws->CreateBlob(output_name, DataType::kF32);
-    } else if (out_type == "unsigned char") {
-      ws->CreateBlob(output_name, DataType::kU8);
-    } else {
-      LOG(FATAL) << name() << ": Failed to create output blob " << output_name
-                 << ", asked for type " << out_type;
-    }
+    CHECK_NOTNULL(ws->CreateBlob(output_name, output_type))
+        << name() << ": Failed to create output blob " << output_name
+        << ", asked for type " << output_type;
   }
 }
 
