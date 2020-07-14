@@ -8,8 +8,8 @@ namespace Shadow {
 namespace Vision {
 
 template <DeviceType D, typename T>
-void Reorg(const T* in_data, const VecInt& in_shape, int stride, T* out_data,
-           Context* context);
+void Reorg(const T* in_data, const VecInt& in_shape, int type, int stride,
+           T* out_data, Context* context);
 
 }  // namespace Vision
 
@@ -17,10 +17,12 @@ void Reorg(const T* in_data, const VecInt& in_shape, int stride, T* out_data,
 
 namespace Shadow {
 
+enum { kDarknet = 0, kNatural = 1 };
+
 class ReorgKernel : public Kernel {
  public:
   virtual void Run(const std::shared_ptr<Blob>& input,
-                   std::shared_ptr<Blob>& output, Workspace* ws,
+                   std::shared_ptr<Blob>& output, Workspace* ws, int type,
                    int stride) = 0;
 };
 
@@ -28,8 +30,8 @@ template <DeviceType D>
 class ReorgKernelDefault : public ReorgKernel {
  public:
   void Run(const std::shared_ptr<Blob>& input, std::shared_ptr<Blob>& output,
-           Workspace* ws, int stride) override {
-    Vision::Reorg<D, float>(input->data<float>(), input->shape(), stride,
+           Workspace* ws, int type, int stride) override {
+    Vision::Reorg<D, float>(input->data<float>(), input->shape(), type, stride,
                             output->mutable_data<float>(), ws->Ctx());
   }
 

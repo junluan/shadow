@@ -8,6 +8,7 @@ class ReorgOp : public Operator {
  public:
   ReorgOp(const shadow::OpParam& op_param, Workspace* ws)
       : Operator(op_param, ws) {
+    type_ = get_single_argument<int>("type", 0);
     stride_ = get_single_argument<int>("stride", 2);
 
     kernel_ = std::dynamic_pointer_cast<ReorgKernel>(
@@ -24,6 +25,9 @@ class ReorgOp : public Operator {
 
     int in_c = input->shape(1), in_h = input->shape(2), in_w = input->shape(3);
 
+    if (type_ == kDarknet) {
+      CHECK_EQ(in_c % (stride_ * stride_), 0);
+    }
     CHECK_EQ(in_h % stride_, 0);
     CHECK_EQ(in_w % stride_, 0);
 
@@ -33,11 +37,11 @@ class ReorgOp : public Operator {
     out_shape[3] = in_w / stride_;
     output->reshape(out_shape);
 
-    kernel_->Run(input, output, ws_, stride_);
+    kernel_->Run(input, output, ws_, type_, stride_);
   }
 
  private:
-  int stride_;
+  int type_, stride_;
 
   std::shared_ptr<ReorgKernel> kernel_ = nullptr;
 };

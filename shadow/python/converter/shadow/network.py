@@ -516,10 +516,16 @@ class Network(object):
 
         return op_param
 
-    def add_reorg(self, name, bottoms, tops, stride=2):
+    def add_reorg(self, name, bottoms, tops, reorg_type='darknet', stride=2):
         op_param = self.add_net_op()
         self.add_common(op_param, name, 'Reorg', bottoms, tops)
 
+        if reorg_type == 'darknet':
+            self.add_arg(op_param, 'type', 0, 's_i')
+        elif reorg_type == 'natural':
+            self.add_arg(op_param, 'type', 1, 's_i')
+        else:
+            raise ValueError('Unsupported reorg type', reorg_type)
         self.add_arg(op_param, 'stride', stride, 's_i')
 
         return op_param
