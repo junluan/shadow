@@ -128,10 +128,7 @@ void Native::LoadProtoStrOrText(const std::string& proto_str_or_text,
 
 void Native::Initial(const shadow::NetParam& net_param) {
   for (const auto& blob : net_param.blob()) {
-    std::vector<int> blob_shape;
-    for (auto dim : blob.shape()) {
-      blob_shape.push_back(dim);
-    }
+    std::vector<int> blob_shape(blob.shape().begin(), blob.shape().end());
 
     const auto& blob_name = blob.name();
     const auto& blob_type =
@@ -242,10 +239,7 @@ void Native::CopyWeights(const shadow::NetParam& net_param,
   CHECK_EQ(net_param.blob_size(), weights.size());
   for (int n = 0; n < net_param.blob_size(); ++n) {
     const auto& blob = net_param.blob(n);
-    std::vector<int> blob_shape;
-    for (auto dim : blob.shape()) {
-      blob_shape.push_back(dim);
-    }
+    std::vector<int> blob_shape(blob.shape().begin(), blob.shape().end());
     SetWeightData(blob.name(), blob_shape, weights[n], share_weight);
   }
 }
@@ -255,10 +249,7 @@ void Native::CopyWeights(const shadow::NetParam& net_param,
   bool share_weight =
       arg_helper_.GetSingleArgument<bool>("share_weight", false);
   for (const auto& blob : net_param.blob()) {
-    std::vector<int> blob_shape;
-    for (auto dim : blob.shape()) {
-      blob_shape.push_back(dim);
-    }
+    std::vector<int> blob_shape(blob.shape().begin(), blob.shape().end());
     auto offset =
         SetWeightData(blob.name(), blob_shape, weights_data, share_weight);
     weights_data = static_cast<const unsigned char*>(weights_data) + offset;
