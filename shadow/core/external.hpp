@@ -280,19 +280,18 @@ template <typename T>
 inline dnnl::memory::desc create_memory_desc(
     const std::vector<int>& shape,
     dnnl::memory::format_tag format_tag = dnnl::memory::format_tag::nchw) {
-  dnnl::memory::dims dims;
-  for (auto dim : shape) {
-    dims.push_back(dim);
-  }
   auto data_type = dnnl::memory::data_type::undef;
-  if (std::is_same<T, float>::value) {
-    data_type = dnnl::memory::data_type::f32;
-  } else if (std::is_same<T, int>::value) {
+  if (std::is_same<T, std::int32_t>::value) {
     data_type = dnnl::memory::data_type::s32;
-  } else if (std::is_same<T, unsigned char>::value) {
+  } else if (std::is_same<T, std::int8_t>::value) {
+    data_type = dnnl::memory::data_type::s8;
+  } else if (std::is_same<T, std::uint8_t>::value) {
     data_type = dnnl::memory::data_type::u8;
+  } else if (std::is_same<T, float>::value) {
+    data_type = dnnl::memory::data_type::f32;
   }
-  return dnnl::memory::desc(dims, data_type, format_tag);
+  return dnnl::memory::desc(dnnl::memory::dims(shape.begin(), shape.end()),
+                            data_type, format_tag);
 }
 
 inline dnnl::batch_normalization_forward::desc create_batch_normalization_desc(
@@ -421,6 +420,25 @@ inline void batch_normalization_forward(
       .execute(*stream, {{DNNL_ARG_SRC, src_mem},
                          {DNNL_ARG_MEAN, mean_mem},
                          {DNNL_ARG_VARIANCE, variance_mem},
+                         {DNNL_ARG_DST, dst_mem}});
+}
+
+inline void binary_forward(void* dnnl_engine, void* dnnl_stream,
+                           const dnnl::binary::desc& desc,
+                           const void* src_a_data, const void* src_b_data,
+                           void* dst_data) {
+  const auto* engine = (dnnl::engine*)dnnl_engine;
+  auto* stream = (dnnl::stream*)dnnl_stream;
+  const auto& primitive_desc = dnnl::binary::primitive_desc(desc, *engine);
+  const auto& src_a_mem = dnnl::memory(primitive_desc.src0_desc(), *engine,
+                                       const_cast<void*>(src_a_data));
+  const auto& src_b_mem = dnnl::memory(primitive_desc.src1_desc(), *engine,
+                                       const_cast<void*>(src_b_data));
+  const auto& dst_mem =
+      dnnl::memory(primitive_desc.dst_desc(), *engine, dst_data);
+  dnnl::binary(primitive_desc)
+      .execute(*stream, {{DNNL_ARG_SRC_0, src_a_mem},
+                         {DNNL_ARG_SRC_1, src_b_mem},
                          {DNNL_ARG_DST, dst_mem}});
 }
 

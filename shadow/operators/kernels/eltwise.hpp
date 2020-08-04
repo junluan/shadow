@@ -6,6 +6,8 @@
 
 namespace Shadow {
 
+enum { kProd = 0, kSum = 1, kMax = 2, kMin = 3 };
+
 class EltwiseKernel : public Kernel {
  public:
   virtual void Run(const std::vector<std::shared_ptr<Blob>>& inputs,
@@ -66,9 +68,6 @@ class EltwiseKernelDefault : public EltwiseKernel {
   DeviceType device_type() const override { return D; }
 
   std::string kernel_type() const override { return "Default"; }
-
- private:
-  enum { kProd = 0, kSum = 1, kMax = 2, kMin = 3 };
 };
 
 }  // namespace Shadow

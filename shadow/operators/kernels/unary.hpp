@@ -6,6 +6,24 @@
 
 namespace Shadow {
 
+enum {
+  kAbs = 0,
+  kSquare = 1,
+  kSqrt = 2,
+  kLog = 3,
+  kExp = 4,
+  kSin = 5,
+  kCos = 6,
+  kTan = 7,
+  kAsin = 8,
+  kAcos = 9,
+  kAtan = 10,
+  kFloor = 11,
+  kCeil = 12,
+  kNeg = 13,
+  kReciprocal = 14
+};
+
 class UnaryKernel : public Kernel {
  public:
   virtual void Run(const std::shared_ptr<Blob>& input,
@@ -64,25 +82,6 @@ class UnaryKernelDefault : public UnaryKernel {
   DeviceType device_type() const override { return D; }
 
   std::string kernel_type() const override { return "Default"; }
-
- private:
-  enum {
-    kAbs = 0,
-    kSquare = 1,
-    kSqrt = 2,
-    kLog = 3,
-    kExp = 4,
-    kSin = 5,
-    kCos = 6,
-    kTan = 7,
-    kAsin = 8,
-    kAcos = 9,
-    kAtan = 10,
-    kFloor = 11,
-    kCeil = 12,
-    kNeg = 13,
-    kReciprocal = 14
-  };
 };
 
 }  // namespace Shadow
