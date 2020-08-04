@@ -19,7 +19,7 @@ namespace Shadow {
 class Operator {
  public:
   Operator(const shadow::OpParam& op_param, Workspace* ws);
-  virtual ~Operator() {}
+  virtual ~Operator() = default;
 
   virtual void Run(const std::vector<std::shared_ptr<Blob>>& inputs,
                    std::vector<std::shared_ptr<Blob>>& outputs) = 0;
@@ -58,7 +58,8 @@ class Operator {
   ArgumentHelper arg_helper_;
 };
 
-Operator* CreateOperator(const shadow::OpParam& op_param, Workspace* ws);
+std::shared_ptr<Operator> CreateOperator(const shadow::OpParam& op_param,
+                                         Workspace* ws);
 
 SHADOW_DECLARE_REGISTRY(OperatorRegistry, Operator, const shadow::OpParam&,
                         Workspace*);

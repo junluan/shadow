@@ -10,7 +10,7 @@ class NetworkImpl {
   void LoadXModel(const shadow::NetParam& net_param,
                   const ArgumentHelper& arguments) {
     ws_ = std::make_shared<Workspace>(arguments);
-    backend_.reset(CreateBackend(arguments, ws_.get()));
+    backend_ = CreateBackend(arguments, ws_.get());
     backend_->LoadModel(net_param);
   }
 

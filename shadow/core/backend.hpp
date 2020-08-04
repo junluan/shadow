@@ -37,12 +37,10 @@ class Backend {
 
   Workspace* ws_ = nullptr;
   std::vector<std::string> in_blob_, out_blob_;
-
- private:
-  DISABLE_COPY_AND_ASSIGN(Backend);
 };
 
-Backend* CreateBackend(const ArgumentHelper& arguments, Workspace* ws);
+std::shared_ptr<Backend> CreateBackend(const ArgumentHelper& arguments,
+                                       Workspace* ws);
 
 SHADOW_DECLARE_REGISTRY(BackendRegistry, Backend, const ArgumentHelper&,
                         Workspace*);
