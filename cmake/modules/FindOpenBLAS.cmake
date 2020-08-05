@@ -7,7 +7,7 @@ set(OpenBLAS_DIR ${OpenBLAS_ROOT_DIR} /usr /usr/local)
 find_path(OpenBLAS_INCLUDE_DIRS
           NAMES cblas.h
           PATHS ${OpenBLAS_DIR}
-          PATH_SUFFIXES include include/x86_64 include/x64
+          PATH_SUFFIXES include include/x86_64 include/x64 include/x86_64-linux-gnu include/aarch64-linux-gnu
           NO_DEFAULT_PATH)
 
 find_library(OpenBLAS_LIBRARIES
@@ -23,7 +23,7 @@ find_package_handle_standard_args(OpenBLAS DEFAULT_MSG ${__looked_for})
 if (OpenBLAS_FOUND)
   parse_header_single_define(${OpenBLAS_INCLUDE_DIRS}/openblas_config.h
                              OPENBLAS_VERSION
-                             "[0-9]+\\.[0-9]+\\.[0-9]+.[a-z]+")
+                             "[0-9]+\\.[0-9]+\\.[0-9]+")
   if (NOT OPENBLAS_VERSION)
     set(OpenBLAS_VERSION "?")
   else ()
