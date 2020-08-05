@@ -172,6 +172,9 @@ def fuse_conv_bn_scale(graph, subgraphs):
     for subgraph in subgraphs:
         conv_param, bn_param, scale_param = [graph.nodes[name]['op_param'] for name in subgraph]
 
+        if get_arg(conv_param, 'type', 's_i', -1) != -1:
+            continue
+
         out_c = get_arg(conv_param, 'num_output', 's_i', 0)
         assert out_c > 0
         has_bias = get_arg(conv_param, 'bias_term', 's_i', 1)

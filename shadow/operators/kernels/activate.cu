@@ -13,14 +13,15 @@ __device__ float ActivateValue(float x, int type, float slope) {
     case kSigmoid:
       return 1 / (1 + expf(-x));
     case kSoftPlus:
-      return logf(1 + expf(x));
+      return log1pf(expf(x));
     case kTanh: {
-      auto exp_2x = expf(2 * x);
-      return (exp_2x - 1) / (exp_2x + 1);
+      return tanhf(x);
     }
     case kRelu6: {
-      x = x > 0 ? x : 0;
-      return x < 6 ? x : 6;
+      return x < 0 ? 0 : (x > 6 ? 6 : x);
+    }
+    case kHardSwish: {
+      return x < -3 ? 0 : (x > 3 ? x : (x * (x + 3) / 6.f));
     }
     default:
       return x;
@@ -102,11 +103,11 @@ class ActivateKernelCUDNN : public ActivateKernel {
            const std::shared_ptr<Blob>& slope, std::shared_ptr<Blob>& output,
            Workspace* ws, int activate_type, float slope_val) override {
     if (activate_type == kRelu || activate_type == kSigmoid ||
-        activate_type == kTanh) {
+        activate_type == kTanh || activate_type == kRelu6) {
       int batch = input->shape(0), num = input->num();
 
       cudnn::setActivationDesc<float>(&activate_desc_, activate_type,
-                                      static_cast<double>(slope_val));
+                                      activate_type == kRelu6 ? 6 : 0);
       cudnn::setTensor4dDesc<float>(&in_out_desc_, batch, num, 1, 1);
 
       CUDNN_CHECK(cudnnActivationForward(

@@ -11,7 +11,7 @@ class ActivateOp : public Operator {
     activate_type_ = get_single_argument<int>("type", 1);
     slope_ = get_single_argument<float>("slope", 0.1);
     CHECK_GE(activate_type_, 0);
-    CHECK_LE(activate_type_, 6);
+    CHECK_LE(activate_type_, 7);
 
     kernel_ = std::dynamic_pointer_cast<ActivateKernel>(
         CreateKernel(op_param.type(), ws_->Ctx()->device_type()));

@@ -164,6 +164,9 @@ inline void setActivationDesc(cudnnActivationDescriptor_t* activate_desc,
     case 5:
       mode = CUDNN_ACTIVATION_TANH;
       break;
+    case 6:
+      mode = CUDNN_ACTIVATION_CLIPPED_RELU;
+      break;
     default:
       LOG(FATAL) << "Unsupported activate type " << activate_type;
   }

@@ -15,14 +15,15 @@ inline float Activate(float x, int type, float slope) {
     case kSigmoid:
       return 1 / (1 + std::exp(-x));
     case kSoftPlus:
-      return std::log(1 + std::exp(x));
+      return std::log1p(std::exp(x));
     case kTanh: {
-      auto exp_2x = std::exp(2 * x);
-      return (exp_2x - 1) / (exp_2x + 1);
+      return std::tanh(x);
     }
     case kRelu6: {
-      x = x > 0 ? x : 0;
-      return x < 6 ? x : 6;
+      return x < 0 ? 0 : (x > 6 ? 6 : x);
+    }
+    case kHardSwish: {
+      return x < -3 ? 0 : (x > 3 ? x : (x * (x + 3) / 6.f));
     }
     default:
       return x;
