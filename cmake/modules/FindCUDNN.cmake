@@ -21,8 +21,13 @@ set(__looked_for CUDNN_INCLUDE_DIRS CUDNN_LIBRARIES)
 find_package_handle_standard_args(CUDNN DEFAULT_MSG ${__looked_for})
 
 if (CUDNN_FOUND)
-  parse_header(${CUDNN_INCLUDE_DIRS}/cudnn.h
-               CUDNN_MAJOR CUDNN_MINOR CUDNN_PATCHLEVEL)
+  set(__version_files "cudnn.h" "cudnn_version.h")
+  foreach (__version_file ${__version_files})
+    if (EXISTS ${CUDNN_INCLUDE_DIRS}/${__version_file})
+      parse_header(${CUDNN_INCLUDE_DIRS}/${__version_file}
+                   CUDNN_MAJOR CUDNN_MINOR CUDNN_PATCHLEVEL)
+    endif ()
+  endforeach ()
   if (NOT CUDNN_MAJOR)
     set(CUDNN_VERSION "?")
   else ()
