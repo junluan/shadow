@@ -1,8 +1,9 @@
-set(main_arch 30)
-set(known_archs 20 21 30 35 37 50 52 60 61 70 75)
+set(main_arch)
+set(known_archs 20 21 30 35 37 50 52 60 61 70 75 80)
 set(known_archs8 20 21 30 35 37 50 52 60 61)
 set(known_archs9 30 35 37 50 52 60 61 70)
 set(known_archs10 30 35 37 50 52 60 61 70 75)
+set(known_archs11 52 60 61 70 75 80)
 
 function (detect_cuda_archs cuda_archs)
   if (NOT CUDA_gpu_detect_output)
@@ -31,7 +32,7 @@ function (detect_cuda_archs cuda_archs)
 
     if (__nvcc_res EQUAL 0)
       string(REPLACE "2.1" "2.1(2.0)" __nvcc_out "${__nvcc_out}")
-      set(CUDA_gpu_detect_output ${__nvcc_out} CACHE INTERNAL "Returned GPU architetures from detect_cuda_archs tool" FORCE)
+      set(CUDA_gpu_detect_output ${__nvcc_out} CACHE INTERNAL "Returned GPU architectures from detect_cuda_archs tool" FORCE)
     endif ()
   endif ()
 
@@ -44,13 +45,17 @@ function (detect_cuda_archs cuda_archs)
 endfunction ()
 
 function (select_nvcc_arch_flags out_variable)
-  if (${CUDA_VERSION_MAJOR} EQUAL 10)
+  if (${CUDA_VERSION_MAJOR} EQUAL 11)
+    set(known_archs ${known_archs11})
+  elseif (${CUDA_VERSION_MAJOR} EQUAL 10)
     set(known_archs ${known_archs10})
   elseif (${CUDA_VERSION_MAJOR} EQUAL 9)
     set(known_archs ${known_archs9})
   elseif (${CUDA_VERSION_MAJOR} EQUAL 8)
     set(known_archs ${known_archs8})
   endif ()
+
+  list(GET known_archs 0 main_arch)
 
   detect_cuda_archs(__cuda_arch)
 
