@@ -8,7 +8,7 @@ namespace Shadow {
 namespace Blas {
 
 template <DeviceType D, typename T>
-void Set(int n, float val, T* y, int offy, Context* context);
+void Set(int n, T val, T* y, int offy, Context* context);
 
 #define DECLARE_BLAS_BINARY_FUNC(name)                                         \
   template <DeviceType D, typename T>                                          \
