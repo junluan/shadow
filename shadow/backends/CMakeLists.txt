@@ -1,9 +1,9 @@
-file(GLOB_RECURSE tmp "*.cpp" "*.hpp")
-set(shadow_lib_src ${shadow_lib_src} ${tmp})
+file(GLOB backends_dir "*")
 
-if (${USE_CUDA})
-  file(GLOB_RECURSE tmp "*.cu")
-  set(shadow_lib_src ${shadow_lib_src} ${tmp})
-endif ()
+foreach (backend_dir ${backends_dir})
+  if (IS_DIRECTORY ${backend_dir})
+    add_subdirectory(${backend_dir})
+  endif ()
+endforeach ()
 
 set(shadow_lib_src ${shadow_lib_src} PARENT_SCOPE)
