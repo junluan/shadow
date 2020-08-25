@@ -46,25 +46,6 @@ void DetectYOLO::Setup(const std::string& model_file) {
   CHECK_EQ(out_str_.size(), biases_.size() / num_km_ / 2);
 }
 
-void DetectYOLO::Predict(const JImage& im_src, const RectF& roi, VecBoxF* boxes,
-                         std::vector<VecPointF>* Gpoints) {
-  ConvertData(im_src, in_data_.data(), roi, in_c_, in_h_, in_w_, 0);
-
-  std::vector<VecBoxF> Gboxes;
-  Process(in_data_, &Gboxes);
-
-  float height = roi.h, width = roi.w;
-  for (auto& box : Gboxes[0]) {
-    box.xmin *= width;
-    box.xmax *= width;
-    box.ymin *= height;
-    box.ymax *= height;
-  }
-
-  *boxes = Gboxes[0];
-}
-
-#if defined(USE_OpenCV)
 void DetectYOLO::Predict(const cv::Mat& im_mat, const RectF& roi,
                          VecBoxF* boxes, std::vector<VecPointF>* Gpoints) {
   ConvertData(im_mat, in_data_.data(), roi, in_c_, in_h_, in_w_, 0);
@@ -82,7 +63,6 @@ void DetectYOLO::Predict(const cv::Mat& im_mat, const RectF& roi,
 
   *boxes = Gboxes[0];
 }
-#endif
 
 void DetectYOLO::Process(const VecFloat& in_data,
                          std::vector<VecBoxF>* Gboxes) {

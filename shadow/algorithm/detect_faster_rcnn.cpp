@@ -42,28 +42,6 @@ void DetectFasterRCNN::Setup(const std::string& model_file) {
   class_agnostic_ = net_.get_single_argument<bool>("class_agnostic", false);
 }
 
-void DetectFasterRCNN::Predict(const JImage& im_src, const RectF& roi,
-                               VecBoxF* boxes,
-                               std::vector<VecPointF>* Gpoints) {
-  float crop_h = roi.h <= 1 ? roi.h * im_src.h_ : roi.h;
-  float crop_w = roi.w <= 1 ? roi.w * im_src.w_ : roi.w;
-  CalculateScales(crop_h, crop_w, max_side_, min_side_, &scales_);
-
-  auto scale_h = static_cast<int>(crop_h * scales_[0]);
-  auto scale_w = static_cast<int>(crop_w * scales_[0]);
-  in_shape_[2] = scale_h, in_shape_[3] = scale_w;
-  im_info_[0] = scale_h, im_info_[1] = scale_w, im_info_[2] = scales_[0];
-  in_data_.resize(1 * 3 * scale_h * scale_w);
-  if (is_bgr_) {
-    ConvertData(im_src, in_data_.data(), roi, 3, scale_h, scale_w, 1);
-  } else {
-    ConvertData(im_src, in_data_.data(), roi, 3, scale_h, scale_w, 0);
-  }
-
-  Process(in_data_, in_shape_, im_info_, crop_h, crop_w, boxes);
-}
-
-#if defined(USE_OpenCV)
 void DetectFasterRCNN::Predict(const cv::Mat& im_mat, const RectF& roi,
                                VecBoxF* boxes,
                                std::vector<VecPointF>* Gpoints) {
@@ -84,7 +62,6 @@ void DetectFasterRCNN::Predict(const cv::Mat& im_mat, const RectF& roi,
 
   Process(in_data_, in_shape_, im_info_, crop_h, crop_w, boxes);
 }
-#endif
 
 void DetectFasterRCNN::Process(const VecFloat& in_data, const VecInt& in_shape,
                                const VecFloat& im_info, float height,

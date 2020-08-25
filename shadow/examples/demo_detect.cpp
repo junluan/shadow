@@ -5,8 +5,6 @@
 #include "algorithm/detect_ssd.hpp"
 #include "algorithm/detect_yolo.hpp"
 
-#include "util/jimage_proc.hpp"
-
 namespace Shadow {
 
 DemoDetect::DemoDetect(const std::string& method_name) {
@@ -24,46 +22,40 @@ DemoDetect::DemoDetect(const std::string& method_name) {
 }
 
 void DemoDetect::Test(const std::string& image_file) {
-  im_ini_.Read(image_file);
-  timer_.start();
-  method_->Predict(im_ini_, RectF(0, 0, im_ini_.w_, im_ini_.h_), &boxes_,
-                   &Gpoints_);
+  auto im_mat = cv::imread(image_file);
+  profiler_.tic("Predict");
+  method_->Predict(im_mat, RectF(0, 0, 1, 1), &boxes_, &Gpoints_);
   boxes_ = Boxes::NMS(boxes_, 0.5);
-  LOG(INFO) << "Predicted in " << timer_.get_millisecond() << " ms";
+  profiler_.toc("Predict");
   PrintConsole(boxes_);
-  DrawDetections(boxes_, &im_ini_);
-  im_ini_.Show("result");
+  DrawDetections(boxes_, &im_mat);
+  cv::imshow("result", im_mat);
+  cv::waitKey(0);
 }
 
 void DemoDetect::BatchTest(const std::string& list_file, bool image_write) {
   const auto& image_list = Util::load_list(list_file);
   int num_im = static_cast<int>(image_list.size()), count = 0;
-  double time_cost = 0;
   ProcessBar process_bar(20, num_im, "Processing: ");
   const auto& result_file = Util::find_replace_last(list_file, ".", "-result.");
   std::ofstream file(result_file);
   CHECK(file.is_open()) << "Can't open file " << result_file;
   for (const auto& im_path : image_list) {
-    im_ini_.Read(im_path);
-    timer_.start();
-    method_->Predict(im_ini_, RectF(0, 0, im_ini_.w_, im_ini_.h_), &boxes_,
-                     &Gpoints_);
+    auto im_mat = cv::imread(im_path);
+    profiler_.tic("Predict");
+    method_->Predict(im_mat, RectF(0, 0, 1, 1), &boxes_, &Gpoints_);
     boxes_ = Boxes::NMS(boxes_, 0.5);
-    time_cost += timer_.get_millisecond();
+    profiler_.toc("Predict");
     PrintStream(im_path, boxes_, &file);
     if (image_write) {
       const auto& out_file = Util::find_replace_last(im_path, ".", "-result.");
-      DrawDetections(boxes_, &im_ini_);
-      im_ini_.Write(out_file);
+      DrawDetections(boxes_, &im_mat);
+      cv::imwrite(out_file, im_mat);
     }
     process_bar.update(count++, &std::cout);
   }
-  file.close();
-  LOG(INFO) << "Processed in: " << time_cost
-            << " ms, each frame: " << time_cost / num_im << " ms";
 }
 
-#if defined(USE_OpenCV)
 #if CV_MAJOR_VERSION >= 4
 #define CV_FOURCC cv::VideoWriter::fourcc
 #define CV_CAP_PROP_FPS cv::CAP_PROP_FPS
@@ -119,11 +111,11 @@ void DemoDetect::CaptureTest(cv::VideoCapture* capture,
   std::stringstream ss;
   ss.precision(5);
   while (capture->read(im_mat) && !im_mat.empty()) {
-    timer_.start();
+    profiler_.tic("Predict");
     method_->Predict(im_mat, RectF(0, 0, im_mat.cols, im_mat.rows), &boxes_,
                      &Gpoints_);
     boxes_ = Boxes::NMS(boxes_, 0.5);
-    time_cost = timer_.get_millisecond();
+    profiler_.toc("Predict");
     PrintConsole(boxes_, true);
     if (writer->isOpened() || video_show) {
       DrawDetections(boxes_, &im_mat);
@@ -132,12 +124,6 @@ void DemoDetect::CaptureTest(cv::VideoCapture* capture,
       writer->write(im_mat);
     }
     if (video_show) {
-      time_sum += time_cost;
-      if ((++count % 30) == 0) {
-        ss.str("");
-        ss << "FPS: " << 1000 * count / time_sum;
-        count = 0, time_sum = 0;
-      }
       cv::putText(im_mat, ss.str(), cv::Point(10, 30), cv::FONT_ITALIC, 0.7,
                   cv::Scalar(225, 105, 65), 2);
       cv::imshow(window_name, im_mat);
@@ -156,17 +142,6 @@ void DemoDetect::DrawDetections(const VecBoxF& boxes, cv::Mat* im_mat) {
     cv::Scalar scalar(color_b, color_g, color_r);
     cv::rectangle(*im_mat, cv::Point2f(box.xmin, box.ymin),
                   cv::Point2f(box.xmax, box.ymax), scalar, 2);
-  }
-}
-#endif
-
-void DemoDetect::DrawDetections(const VecBoxF& boxes, JImage* im_src) {
-  for (const auto& box : boxes_) {
-    int color_r = (box.label * 100) % 255;
-    int color_g = (color_r + 100) % 255;
-    int color_b = (color_g + 100) % 255;
-    Scalar scalar(color_r, color_g, color_b);
-    JImageProc::Rectangle(im_src, box.RectInt(), scalar);
   }
 }
 

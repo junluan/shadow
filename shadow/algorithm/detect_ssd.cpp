@@ -43,25 +43,6 @@ void DetectSSD::Setup(const std::string& model_file) {
   nms_threshold_ = net_.get_single_argument<float>("nms_threshold", 0.3);
 }
 
-void DetectSSD::Predict(const JImage& im_src, const RectF& roi, VecBoxF* boxes,
-                        std::vector<VecPointF>* Gpoints) {
-  ConvertData(im_src, in_data_.data(), roi, in_c_, in_h_, in_w_);
-
-  std::vector<VecBoxF> Gboxes;
-  Process(in_data_, &Gboxes);
-
-  float height = roi.h, width = roi.w;
-  for (auto& box : Gboxes[0]) {
-    box.xmin *= width;
-    box.xmax *= width;
-    box.ymin *= height;
-    box.ymax *= height;
-  }
-
-  *boxes = Gboxes[0];
-}
-
-#if defined(USE_OpenCV)
 void DetectSSD::Predict(const cv::Mat& im_mat, const RectF& roi, VecBoxF* boxes,
                         std::vector<VecPointF>* Gpoints) {
   ConvertData(im_mat, in_data_.data(), roi, in_c_, in_h_, in_w_);
@@ -79,7 +60,6 @@ void DetectSSD::Predict(const cv::Mat& im_mat, const RectF& roi, VecBoxF* boxes,
 
   *boxes = Gboxes[0];
 }
-#endif
 
 void DetectSSD::Process(const VecFloat& in_data, std::vector<VecBoxF>* Gboxes) {
   std::map<std::string, void*> data_map;

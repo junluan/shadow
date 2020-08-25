@@ -35,7 +35,8 @@ endif ()
 
 if (${BUILD_EXAMPLES})
   add_executable(test_demo ${shadow_examples_src} ${shadow_algorithm_src})
-  target_link_libraries(test_demo ${Shadow_LIB})
+  target_link_libraries(test_demo ${Shadow_LIB} ${OpenCV_LIBS})
+  target_include_directories(test_demo PRIVATE ${OpenCV_INCLUDE_DIRS})
   install(TARGETS test_demo DESTINATION ${Shadow_INSTALL_BIN_PREFIX})
 endif ()
 

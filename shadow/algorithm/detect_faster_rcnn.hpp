@@ -13,12 +13,8 @@ class DetectFasterRCNN final : public Method {
 
   void Setup(const std::string& model_file) override;
 
-  void Predict(const JImage& im_src, const RectF& roi, VecBoxF* boxes,
-               std::vector<VecPointF>* Gpoints) override;
-#if defined(USE_OpenCV)
   void Predict(const cv::Mat& im_mat, const RectF& roi, VecBoxF* boxes,
                std::vector<VecPointF>* Gpoints) override;
-#endif
 
  private:
   void Process(const VecFloat& in_data, const VecInt& in_shape,

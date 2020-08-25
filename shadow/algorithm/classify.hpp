@@ -13,12 +13,8 @@ class Classify final : public Method {
 
   void Setup(const std::string& model_file) override;
 
-  void Predict(const JImage& im_src, const RectF& roi,
-               std::map<std::string, VecFloat>* scores) override;
-#if defined(USE_OpenCV)
   void Predict(const cv::Mat& im_mat, const RectF& roi,
                std::map<std::string, VecFloat>* scores) override;
-#endif
 
  private:
   void Process(const VecFloat& in_data,

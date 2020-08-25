@@ -41,21 +41,12 @@ void Classify::Setup(const std::string& model_file) {
   num_classes_ = net_.get_single_argument<int>("num_classes", 1000);
 }
 
-void Classify::Predict(const JImage& im_src, const RectF& roi,
-                       std::map<std::string, VecFloat>* scores) {
-  ConvertData(im_src, in_data_.data(), roi, in_c_, in_h_, in_w_);
-
-  Process(in_data_, scores);
-}
-
-#if defined(USE_OpenCV)
 void Classify::Predict(const cv::Mat& im_mat, const RectF& roi,
                        std::map<std::string, VecFloat>* scores) {
   ConvertData(im_mat, in_data_.data(), roi, in_c_, in_h_, in_w_);
 
   Process(in_data_, scores);
 }
-#endif
 
 void Classify::Process(const VecFloat& in_data,
                        std::map<std::string, VecFloat>* scores) {
