@@ -9,6 +9,8 @@ class ReduceOp : public Operator {
   ReduceOp(const shadow::OpParam& op_param, Workspace* ws)
       : Operator(op_param, ws) {
     operation_ = get_single_argument<int>("operation", 0);
+    CHECK_GE(operation_, 0);
+    CHECK_LE(operation_, 6);
     axes_ = get_repeated_argument<int>("axes");
     keep_dims_ = get_single_argument<bool>("keep_dims", true);
 

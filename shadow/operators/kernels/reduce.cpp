@@ -1,5 +1,7 @@
 #include "reduce.hpp"
 
+#include <cmath>
+
 namespace Shadow {
 
 namespace Vision {
@@ -41,6 +43,21 @@ inline float Reduce(const float* data, const int* list, int num_list,
         val += data[list[i] + offset];
       }
       return static_cast<float>(val / num_list);
+    }
+    case kLpNorm1: {
+      double val = 0;
+      for (int i = 0; i < num_list; ++i) {
+        val += std::abs(data[list[i] + offset]);
+      }
+      return static_cast<float>(val);
+    }
+    case kLpNorm2: {
+      double val = 0;
+      for (int i = 0; i < num_list; ++i) {
+        auto abs_data = std::abs(data[list[i] + offset]);
+        val += abs_data * abs_data;
+      }
+      return std::sqrt(static_cast<float>(val));
     }
     default:
       return 0;

@@ -18,7 +18,15 @@ void Reduce(const T* in_data, const int* list_data, const int* offset_data,
 
 namespace Shadow {
 
-enum { kProd = 0, kSum = 1, kMax = 2, kMin = 3, kAvg = 4 };
+enum {
+  kProd = 0,
+  kSum = 1,
+  kMax = 2,
+  kMin = 3,
+  kAvg = 4,
+  kLpNorm1 = 5,
+  kLpNorm2 = 6
+};
 
 class ReduceKernel : public Kernel {
  public:

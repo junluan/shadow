@@ -510,6 +510,10 @@ class Network(object):
             self.add_arg(op_param, 'operation', 3, 's_i')
         elif operation == 'Avg':
             self.add_arg(op_param, 'operation', 4, 's_i')
+        elif operation == 'LpNorm1':
+            self.add_arg(op_param, 'operation', 5, 's_i')
+        elif operation == 'LpNorm2':
+            self.add_arg(op_param, 'operation', 6, 's_i')
         else:
             raise ValueError('Unsupported reduce type', operation)
         if axes is not None:

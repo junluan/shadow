@@ -224,6 +224,12 @@ inline void setReduceDesc(cudnnReduceTensorDescriptor_t* reduce_desc,
     case 4:
       mode = CUDNN_REDUCE_TENSOR_AVG;
       break;
+    case 5:
+      mode = CUDNN_REDUCE_TENSOR_NORM1;
+      break;
+    case 6:
+      mode = CUDNN_REDUCE_TENSOR_NORM2;
+      break;
     default:
       LOG(FATAL) << "Unsupported reduce type " << reduce_type;
   }
