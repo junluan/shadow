@@ -1,5 +1,5 @@
-#ifndef SHADOW_OPERATORS_KERNELS_NORMALIZE_HPP_
-#define SHADOW_OPERATORS_KERNELS_NORMALIZE_HPP_
+#ifndef SHADOW_OPERATORS_KERNELS_SSD_NORMALIZE_HPP_
+#define SHADOW_OPERATORS_KERNELS_SSD_NORMALIZE_HPP_
 
 #include "core/blas.hpp"
 #include "core/kernel.hpp"
@@ -13,8 +13,8 @@ namespace Shadow {
 namespace Vision {
 
 template <DeviceType D, typename T>
-void Normalize(const T* in_data, int outer_num, int channel, int inner_num,
-               float eps, T* val_data, T* out_data, Context* context);
+void SSDNormalize(const T* in_data, int outer_num, int channel, int inner_num,
+                  float eps, T* val_data, T* out_data, Context* context);
 
 }  // namespace Vision
 
@@ -22,7 +22,7 @@ void Normalize(const T* in_data, int outer_num, int channel, int inner_num,
 
 namespace Shadow {
 
-class NormalizeKernel : public Kernel {
+class SSDNormalizeKernel : public Kernel {
  public:
   virtual void Run(const std::shared_ptr<Blob>& input,
                    const std::shared_ptr<Blob>& scale,
@@ -31,7 +31,7 @@ class NormalizeKernel : public Kernel {
 };
 
 template <DeviceType D>
-class NormalizeKernelDefault : public NormalizeKernel {
+class SSDNormalizeKernelDefault : public SSDNormalizeKernel {
  public:
   void Run(const std::shared_ptr<Blob>& input,
            const std::shared_ptr<Blob>& scale, std::shared_ptr<Blob>& output,
@@ -59,9 +59,9 @@ class NormalizeKernelDefault : public NormalizeKernel {
 
       auto scalar = ws->CreateTempBlob({batch, spatial_dim}, DataType::kF32);
 
-      Vision::Normalize<D, float>(in_data, batch, channel, spatial_dim, eps,
-                                  scalar->mutable_data<float>(), out_data,
-                                  ws->Ctx());
+      Vision::SSDNormalize<D, float>(in_data, batch, channel, spatial_dim, eps,
+                                     scalar->mutable_data<float>(), out_data,
+                                     ws->Ctx());
     }
 
     if (scale != nullptr) {
@@ -84,4 +84,4 @@ class NormalizeKernelDefault : public NormalizeKernel {
 
 }  // namespace Shadow
 
-#endif  // SHADOW_OPERATORS_KERNELS_NORMALIZE_HPP_
+#endif  // SHADOW_OPERATORS_KERNELS_SSD_NORMALIZE_HPP_

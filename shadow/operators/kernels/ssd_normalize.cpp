@@ -1,14 +1,14 @@
-#include "normalize.hpp"
+#include "ssd_normalize.hpp"
 
 namespace Shadow {
 
 namespace Vision {
 
 template <>
-void Normalize<DeviceType::kCPU, float>(const float* in_data, int outer_num,
-                                        int channels, int inner_num, float eps,
-                                        float* val_data, float* out_data,
-                                        Context* context) {
+void SSDNormalize<DeviceType::kCPU, float>(const float* in_data, int outer_num,
+                                           int channels, int inner_num,
+                                           float eps, float* val_data,
+                                           float* out_data, Context* context) {
   int val_count = outer_num * inner_num, count = val_count * channels;
 
   for (int i = 0; i < val_count; ++i) {
@@ -33,7 +33,7 @@ void Normalize<DeviceType::kCPU, float>(const float* in_data, int outer_num,
 
 namespace Shadow {
 
-REGISTER_OP_KERNEL_DEFAULT(NormalizeCPU,
-                           NormalizeKernelDefault<DeviceType::kCPU>);
+REGISTER_OP_KERNEL_DEFAULT(SSDNormalizeCPU,
+                           SSDNormalizeKernelDefault<DeviceType::kCPU>);
 
 }  // namespace Shadow

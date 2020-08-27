@@ -1,18 +1,18 @@
 #include "core/operator.hpp"
 
-#include "kernels/normalize.hpp"
+#include "kernels/ssd_normalize.hpp"
 
 namespace Shadow {
 
-class NormalizeOp : public Operator {
+class SSDNormalizeOp : public Operator {
  public:
-  NormalizeOp(const shadow::OpParam& op_param, Workspace* ws)
+  SSDNormalizeOp(const shadow::OpParam& op_param, Workspace* ws)
       : Operator(op_param, ws) {
     across_spatial_ = get_single_argument<bool>("across_spatial", true);
     channel_shared_ = get_single_argument<bool>("channel_shared", true);
     eps_ = get_single_argument<float>("eps", 1e-5);
 
-    kernel_ = std::dynamic_pointer_cast<NormalizeKernel>(
+    kernel_ = std::dynamic_pointer_cast<SSDNormalizeKernel>(
         CreateKernel(op_param.type(), ws_->Ctx()->device_type()));
     CHECK_NOTNULL(kernel_);
   }
@@ -38,9 +38,9 @@ class NormalizeOp : public Operator {
   float eps_;
   bool across_spatial_, channel_shared_;
 
-  std::shared_ptr<NormalizeKernel> kernel_ = nullptr;
+  std::shared_ptr<SSDNormalizeKernel> kernel_ = nullptr;
 };
 
-REGISTER_OPERATOR(Normalize, NormalizeOp);
+REGISTER_OPERATOR(SSDNormalize, SSDNormalizeOp);
 
 }  // namespace Shadow

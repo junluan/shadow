@@ -1,4 +1,4 @@
-#include "normalize.hpp"
+#include "ssd_normalize.hpp"
 
 namespace Shadow {
 
@@ -28,10 +28,10 @@ __global__ void KernelChannelDiv(const float* in_data, const float* val_data,
 }
 
 template <>
-void Normalize<DeviceType::kGPU, float>(const float* in_data, int outer_num,
-                                        int channel, int inner_num, float eps,
-                                        float* val_data, float* out_data,
-                                        Context* context) {
+void SSDNormalize<DeviceType::kGPU, float>(const float* in_data, int outer_num,
+                                           int channel, int inner_num,
+                                           float eps, float* val_data,
+                                           float* out_data, Context* context) {
   int val_count = outer_num * inner_num, count = val_count * channel;
   KernelChannelSum<<<GetBlocks(val_count), NumThreads, 0,
                      cudaStream_t(context->cuda_stream())>>>(
@@ -48,7 +48,7 @@ void Normalize<DeviceType::kGPU, float>(const float* in_data, int outer_num,
 
 namespace Shadow {
 
-REGISTER_OP_KERNEL_DEFAULT(NormalizeGPU,
-                           NormalizeKernelDefault<DeviceType::kGPU>);
+REGISTER_OP_KERNEL_DEFAULT(SSDNormalizeGPU,
+                           SSDNormalizeKernelDefault<DeviceType::kGPU>);
 
 }  // namespace Shadow

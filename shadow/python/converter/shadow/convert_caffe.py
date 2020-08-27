@@ -232,7 +232,7 @@ def convert_decode_box(caffe_layer, network):
         if caffe_param.HasField('share_location'):
             assert caffe_param.share_location is True
 
-    network.add_decode_box(layer_name, bottom_names, top_names, method, num_classes, background_label_id, objectness_score)
+    network.add_decode_box(layer_name, bottom_names, top_names, method, num_classes, True, background_label_id, objectness_score)
 
 
 def convert_deconv(caffe_layer, network):
@@ -344,14 +344,17 @@ def convert_normalize(caffe_layer, network):
 
     across_spatial = True
     channel_shared = True
+    eps = 1e-5
     if caffe_layer.HasField('norm_param'):
         caffe_param = caffe_layer.norm_param
         if caffe_param.HasField('across_spatial'):
             across_spatial = caffe_param.across_spatial
         if caffe_param.HasField('channel_shared'):
             channel_shared = caffe_param.channel_shared
+        if caffe_param.HasField('eps'):
+            eps = caffe_param.eps
 
-    network.add_normalize(layer_name, bottom_names, top_names, across_spatial, channel_shared)
+    network.add_ssd_normalize(layer_name, bottom_names, top_names, across_spatial, channel_shared, eps)
 
 
 def convert_permute(caffe_layer, network):

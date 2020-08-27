@@ -401,15 +401,6 @@ class Network(object):
 
         return op_param
 
-    def add_normalize(self, name, bottoms, tops, across_spatial=True, channel_shared=True):
-        op_param = self.add_net_op()
-        self.add_common(op_param, name, 'Normalize', bottoms, tops)
-
-        self.add_arg(op_param, 'across_spatial', across_spatial, 's_i')
-        self.add_arg(op_param, 'channel_shared', channel_shared, 's_i')
-
-        return op_param
-
     def add_pad(self, name, bottoms, tops, paddings, value=0):
         op_param = self.add_net_op()
         self.add_common(op_param, name, 'Pad', bottoms, tops)
@@ -639,6 +630,16 @@ class Network(object):
 
         if axes is not None:
             self.add_arg(op_param, 'axes', axes, 'v_i')
+
+        return op_param
+
+    def add_ssd_normalize(self, name, bottoms, tops, across_spatial=True, channel_shared=True, eps=1e-5):
+        op_param = self.add_net_op()
+        self.add_common(op_param, name, 'SSDNormalize', bottoms, tops)
+
+        self.add_arg(op_param, 'across_spatial', across_spatial, 's_i')
+        self.add_arg(op_param, 'channel_shared', channel_shared, 's_i')
+        self.add_arg(op_param, 'eps', eps, 's_f')
 
         return op_param
 

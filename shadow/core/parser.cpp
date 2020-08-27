@@ -433,32 +433,6 @@ const shadow::OpParam ParseMatMul(const JValue& root) {
   return shadow_op;
 }
 
-const shadow::OpParam ParseNormalize(const JValue& root) {
-  shadow::OpParam shadow_op;
-
-  ParseCommon(root, &shadow_op);
-
-  int across_spatial = true, channel_shared = true;
-  if (root.HasMember("arg")) {
-    const auto& args = root["arg"];
-    for (int i = 0; i < args.Size(); ++i) {
-      const auto& arg = args[i];
-      CHECK(arg.HasMember("name"));
-      const auto& arg_name = Json::GetString(arg, "name", "");
-      if (arg_name == "across_spatial") {
-        across_spatial = Json::GetInt(arg, "s_i", 1);
-      } else if (arg_name == "channel_shared") {
-        channel_shared = Json::GetInt(arg, "s_i", 1);
-      }
-    }
-  }
-
-  add_s_i(&shadow_op, "across_spatial", across_spatial);
-  add_s_i(&shadow_op, "channel_shared", channel_shared);
-
-  return shadow_op;
-}
-
 const shadow::OpParam ParsePad(const JValue& root) {
   shadow::OpParam shadow_op;
 
@@ -848,6 +822,32 @@ const shadow::OpParam ParseSqueeze(const JValue& root) {
   return shadow_op;
 }
 
+const shadow::OpParam ParseSSDNormalize(const JValue& root) {
+  shadow::OpParam shadow_op;
+
+  ParseCommon(root, &shadow_op);
+
+  int across_spatial = true, channel_shared = true;
+  if (root.HasMember("arg")) {
+    const auto& args = root["arg"];
+    for (int i = 0; i < args.Size(); ++i) {
+      const auto& arg = args[i];
+      CHECK(arg.HasMember("name"));
+      const auto& arg_name = Json::GetString(arg, "name", "");
+      if (arg_name == "across_spatial") {
+        across_spatial = Json::GetInt(arg, "s_i", 1);
+      } else if (arg_name == "channel_shared") {
+        channel_shared = Json::GetInt(arg, "s_i", 1);
+      }
+    }
+  }
+
+  add_s_i(&shadow_op, "across_spatial", across_spatial);
+  add_s_i(&shadow_op, "channel_shared", channel_shared);
+
+  return shadow_op;
+}
+
 const shadow::OpParam ParseStack(const JValue& root) {
   shadow::OpParam shadow_op;
 
@@ -935,7 +935,6 @@ static const std::map<std::string, ParseFunc> parse_func_map{
     {"InstanceNorm", ParseInstanceNorm},
     {"LRN", ParseLRN},
     {"MatMul", ParseMatMul},
-    {"Normalize", ParseNormalize},
     {"Pad", ParsePad},
     {"Permute", ParsePermute},
     {"Pooling", ParsePooling},
@@ -949,6 +948,7 @@ static const std::map<std::string, ParseFunc> parse_func_map{
     {"Slice", ParseSlice},
     {"Softmax", ParseSoftmax},
     {"Squeeze", ParseSqueeze},
+    {"SSDNormalize", ParseSSDNormalize},
     {"Stack", ParseStack},
     {"Unary", ParseUnary},
     {"Unsqueeze", ParseUnsqueeze}};
@@ -1429,25 +1429,6 @@ const shadow::OpParam ParseMatMul(const std::vector<std::string>& params) {
   return shadow_op;
 }
 
-const shadow::OpParam ParseNormalize(const std::vector<std::string>& params) {
-  shadow::OpParam shadow_op;
-
-  const auto& argument = ParseCommon(params, &shadow_op);
-
-  int across_spatial = true, channel_shared = true;
-  if (argument.count("across_spatial")) {
-    across_spatial = argument.at("across_spatial").s_i;
-  }
-  if (argument.count("channel_shared")) {
-    channel_shared = argument.at("channel_shared").s_i;
-  }
-
-  add_s_i(&shadow_op, "across_spatial", across_spatial);
-  add_s_i(&shadow_op, "channel_shared", channel_shared);
-
-  return shadow_op;
-}
-
 const shadow::OpParam ParsePad(const std::vector<std::string>& params) {
   shadow::OpParam shadow_op;
 
@@ -1758,6 +1739,26 @@ const shadow::OpParam ParseSqueeze(const std::vector<std::string>& params) {
   return shadow_op;
 }
 
+const shadow::OpParam ParseSSDNormalize(
+    const std::vector<std::string>& params) {
+  shadow::OpParam shadow_op;
+
+  const auto& argument = ParseCommon(params, &shadow_op);
+
+  int across_spatial = true, channel_shared = true;
+  if (argument.count("across_spatial")) {
+    across_spatial = argument.at("across_spatial").s_i;
+  }
+  if (argument.count("channel_shared")) {
+    channel_shared = argument.at("channel_shared").s_i;
+  }
+
+  add_s_i(&shadow_op, "across_spatial", across_spatial);
+  add_s_i(&shadow_op, "channel_shared", channel_shared);
+
+  return shadow_op;
+}
+
 const shadow::OpParam ParseStack(const std::vector<std::string>& params) {
   shadow::OpParam shadow_op;
 
@@ -1822,7 +1823,6 @@ static const std::map<std::string, ParseFunc> parse_func_map{
     {"InstanceNorm", ParseInstanceNorm},
     {"LRN", ParseLRN},
     {"MatMul", ParseMatMul},
-    {"Normalize", ParseNormalize},
     {"Pad", ParsePad},
     {"Permute", ParsePermute},
     {"Pooling", ParsePooling},
@@ -1836,6 +1836,7 @@ static const std::map<std::string, ParseFunc> parse_func_map{
     {"Slice", ParseSlice},
     {"Softmax", ParseSoftmax},
     {"Squeeze", ParseSqueeze},
+    {"SSDNormalize", ParseSSDNormalize},
     {"Stack", ParseStack},
     {"Unary", ParseUnary},
     {"Unsqueeze", ParseUnsqueeze}};
