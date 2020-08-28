@@ -401,6 +401,16 @@ class Network(object):
 
         return op_param
 
+    def add_normalize(self, name, bottoms, tops, p=2, axis=1, eps=1e-12):
+        op_param = self.add_net_op()
+        self.add_common(op_param, name, 'Normalize', bottoms, tops)
+
+        self.add_arg(op_param, 'p', p, 's_f')
+        self.add_arg(op_param, 'axis', axis, 's_i')
+        self.add_arg(op_param, 'eps', eps, 's_f')
+
+        return op_param
+
     def add_pad(self, name, bottoms, tops, paddings, value=0):
         op_param = self.add_net_op()
         self.add_common(op_param, name, 'Pad', bottoms, tops)
