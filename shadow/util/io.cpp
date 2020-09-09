@@ -1,15 +1,10 @@
 #include "io.hpp"
+
 #include "log.hpp"
 
 #if defined(USE_Protobuf)
-#if defined(__linux__) || defined(__APPLE__)
-#include <unistd.h>
-#elif defined(_WIN32)
-#pragma warning(disable : 4996)
-#include <io.h>
-#endif
-#include <fcntl.h>
 #include <fstream>
+#include <memory>
 
 #include <google/protobuf/io/coded_stream.h>
 #include <google/protobuf/io/zero_copy_stream_impl.h>
@@ -29,56 +24,38 @@ namespace IO {
 
 #if defined(USE_Protobuf)
 using google::protobuf::TextFormat;
-using google::protobuf::io::ArrayInputStream;
 using google::protobuf::io::CodedInputStream;
-using google::protobuf::io::CodedOutputStream;
-using google::protobuf::io::FileInputStream;
-using google::protobuf::io::FileOutputStream;
-using google::protobuf::io::ZeroCopyInputStream;
-using google::protobuf::io::ZeroCopyOutputStream;
+using google::protobuf::io::IstreamInputStream;
+using google::protobuf::io::OstreamOutputStream;
 
 bool ReadProtoFromText(const std::string& proto_text, Message* proto) {
   return TextFormat::ParseFromString(proto_text, proto);
 }
 
 bool ReadProtoFromTextFile(const std::string& proto_file, Message* proto) {
-  int fd = open(proto_file.c_str(), O_RDONLY);
-  CHECK_NE(fd, -1) << "File not found: " << proto_file;
-  auto* input = new FileInputStream(fd);
-  bool success = TextFormat::Parse(input, proto);
-  delete input;
-  close(fd);
-  return success;
+  std::ifstream ifs(proto_file);
+  CHECK(ifs.is_open()) << "File not found: " << proto_file;
+  auto istream_input = std::make_shared<IstreamInputStream>(&ifs);
+  return TextFormat::Parse(istream_input.get(), proto);
 }
 
 bool ReadProtoFromBinaryFile(const std::string& proto_file, Message* proto) {
-#if defined(_WIN32)
-  int fd = open(proto_file.c_str(), O_RDONLY | O_BINARY);
-#else
-  int fd = open(proto_file.c_str(), O_RDONLY);
-#endif
-  CHECK_NE(fd, -1) << "File not found: " << proto_file;
-  auto* file_input = new FileInputStream(fd);
-  auto* coded_input = new CodedInputStream(file_input);
+  std::ifstream ifs(proto_file, std::ios::binary);
+  CHECK(ifs.is_open()) << "File not found: " << proto_file;
+  auto istream_input = std::make_shared<IstreamInputStream>(&ifs);
+  auto coded_input = std::make_shared<CodedInputStream>(istream_input.get());
   coded_input->SetTotalBytesLimit(INT_MAX, 1073741824);
-  bool success = proto->ParseFromCodedStream(coded_input) &&
-                 coded_input->ConsumedEntireMessage();
-  delete coded_input;
-  delete file_input;
-  close(fd);
-  return success;
+  return proto->ParseFromCodedStream(coded_input.get()) &&
+         coded_input->ConsumedEntireMessage();
 }
 
 bool ReadProtoFromArray(const void* proto_data, int proto_size,
                         Message* proto) {
-  auto* array_input = new ArrayInputStream(proto_data, proto_size);
-  auto* coded_input = new CodedInputStream(array_input);
+  auto coded_input = std::make_shared<CodedInputStream>(
+      static_cast<const uint8_t*>(proto_data), proto_size);
   coded_input->SetTotalBytesLimit(INT_MAX, 1073741824);
-  bool success = proto->ParseFromCodedStream(coded_input) &&
-                 coded_input->ConsumedEntireMessage();
-  delete coded_input;
-  delete array_input;
-  return success;
+  return proto->ParseFromCodedStream(coded_input.get()) &&
+         coded_input->ConsumedEntireMessage();
 }
 
 bool WriteProtoToText(const Message& proto, std::string* proto_text) {
@@ -86,20 +63,18 @@ bool WriteProtoToText(const Message& proto, std::string* proto_text) {
 }
 
 bool WriteProtoToTextFile(const Message& proto, const std::string& proto_file) {
-  int fd = open(proto_file.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
-  CHECK_NE(fd, -1) << "File not found: " << proto_file;
-  auto* output = new FileOutputStream(fd);
-  bool success = TextFormat::Print(proto, output);
-  delete output;
-  close(fd);
-  return success;
+  std::ofstream ofs(proto_file);
+  CHECK(ofs.is_open()) << "File open failed: " << proto_file;
+  auto ostream_output = std::make_shared<OstreamOutputStream>(&ofs);
+  return TextFormat::Print(proto, ostream_output.get());
 }
 
 bool WriteProtoToBinaryFile(const Message& proto,
                             const std::string& proto_file) {
-  std::ofstream file(proto_file,
-                     std::ios::out | std::ios::trunc | std::ios::binary);
-  return proto.SerializeToOstream(&file);
+  std::ofstream ofs(proto_file, std::ios::binary);
+  CHECK(ofs.is_open()) << "File open failed: " << proto_file;
+  auto ostream_output = std::make_shared<OstreamOutputStream>(&ofs);
+  return proto.SerializeToZeroCopyStream(ostream_output.get());
 }
 
 bool WriteProtoToArray(const Message& proto, void* proto_data) {
@@ -109,7 +84,6 @@ bool WriteProtoToArray(const Message& proto, void* proto_data) {
 #if defined(SUPPORT_JSON)
 using google::protobuf::util::JsonPrintOptions;
 using google::protobuf::util::MessageToJsonString;
-using google::protobuf::util::Status;
 
 bool WriteProtoToJsonText(const Message& proto, std::string* json_text,
                           bool compact) {
