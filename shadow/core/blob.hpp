@@ -83,8 +83,9 @@ class Blob {
   }
 
   void reshape(const std::vector<int>& shape) {
-    auto cou = std::accumulate(shape.begin(), shape.end(), 1,
-                               std::multiplies<size_t>());
+    auto cou =
+        std::accumulate(shape.begin(), shape.end(), static_cast<size_t>(1),
+                        std::multiplies<size_t>());
     CHECK_GT(cou, 0);
     if (data_ != nullptr && !shared_ && cou > capacity_) {
       allocator_->free(data_);

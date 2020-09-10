@@ -80,7 +80,8 @@ std::shared_ptr<Blob> Workspace::CreateBlob(const std::string& name,
 std::shared_ptr<Blob> Workspace::CreateTempBlob(const std::vector<int>& shape,
                                                 DataType data_type) {
   auto count =
-      std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<size_t>());
+      std::accumulate(shape.begin(), shape.end(), static_cast<size_t>(1),
+                      std::multiplies<size_t>());
   CHECK_GT(count, 0);
   auto temp_blob =
       std::make_shared<Blob>("temp", data_type, context_->allocator());
