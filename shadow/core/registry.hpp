@@ -6,7 +6,9 @@
 #include <functional>
 #include <iostream>
 #include <map>
+#include <memory>
 #include <string>
+#include <vector>
 
 namespace Shadow {
 
@@ -77,9 +79,9 @@ class Register {
 
 #define SHADOW_DEFINE_TYPED_REGISTRY(RegistryName, SrcType, ObjectType, ...) \
   Registry<SrcType, ObjectType, ##__VA_ARGS__>* RegistryName() {             \
-    static auto* registry =                                                  \
-        new Registry<SrcType, ObjectType, ##__VA_ARGS__>();                  \
-    return registry;                                                         \
+    static auto registry =                                                   \
+        std::make_shared<Registry<SrcType, ObjectType, ##__VA_ARGS__>>();    \
+    return registry.get();                                                   \
   }
 
 #define SHADOW_REGISTER_TYPED_CLASS(RegistryName, key, ...)                  \
