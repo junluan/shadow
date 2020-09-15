@@ -29,7 +29,7 @@ class ArgumentHelper {
   void AddRepeatedArgument(const std::string& name,
                            const std::vector<T>& value);
 
- private:
+ protected:
   std::map<std::string, shadow::Argument> arguments_;
 };
 
