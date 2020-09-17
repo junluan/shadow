@@ -5,7 +5,7 @@ namespace Shadow {
 namespace Vision {
 
 __global__ void KernelPSROIPooling(const float* in_data, int count,
-                                   const float* rois_data, int in_c, int in_h,
+                                   const float* roi_data, int in_c, int in_h,
                                    int in_w, int output_dim, int group_size,
                                    int pooled_h, int pooled_w,
                                    float spatial_scale, float* out_data) {
@@ -15,32 +15,32 @@ __global__ void KernelPSROIPooling(const float* in_data, int count,
     int c_out = (globalid / pooled_w / pooled_h) % output_dim;
     int n = globalid / pooled_w / pooled_h / output_dim;
 
-    const auto* offset_rois_data = rois_data + n * 5;
-    int roi_batch_id = static_cast<int>(offset_rois_data[0]);
-    auto roi_start_w = roundf(offset_rois_data[1]) * spatial_scale;
-    auto roi_start_h = roundf(offset_rois_data[2]) * spatial_scale;
-    auto roi_end_w = (roundf(offset_rois_data[3]) + 1) * spatial_scale;
-    auto roi_end_h = (roundf(offset_rois_data[4]) + 1) * spatial_scale;
+    roi_data += n * 5;
+    int roi_batch_id = static_cast<int>(roi_data[0]);
+    int roi_start_w = static_cast<int>(roundf(roi_data[1] * spatial_scale));
+    int roi_start_h = static_cast<int>(roundf(roi_data[2] * spatial_scale));
+    int roi_end_w = static_cast<int>(roundf(roi_data[3] * spatial_scale));
+    int roi_end_h = static_cast<int>(roundf(roi_data[4] * spatial_scale));
 
-    auto roi_height = fmaxf(roi_end_h - roi_start_h, 0.1f);
-    auto roi_width = fmaxf(roi_end_w - roi_start_w, 0.1f);
-    auto bin_size_h = roi_height / pooled_h;
-    auto bin_size_w = roi_width / pooled_w;
+    float roi_height = max(roi_end_h - roi_start_h, 1);
+    float roi_width = max(roi_end_w - roi_start_w, 1);
+    float bin_size_h = roi_height / static_cast<float>(pooled_h);
+    float bin_size_w = roi_width / static_cast<float>(pooled_w);
 
-    int hstart = static_cast<int>(floorf(ph * bin_size_h + roi_start_h));
-    int wstart = static_cast<int>(floorf(pw * bin_size_w + roi_start_w));
-    int hend = static_cast<int>(ceilf((ph + 1) * bin_size_h + roi_start_h));
-    int wend = static_cast<int>(ceilf((pw + 1) * bin_size_w + roi_start_w));
+    auto hstart = static_cast<int>(floorf(ph * bin_size_h));
+    auto wstart = static_cast<int>(floorf(pw * bin_size_w));
+    auto hend = static_cast<int>(ceilf((ph + 1) * bin_size_h));
+    auto wend = static_cast<int>(ceilf((pw + 1) * bin_size_w));
 
-    hstart = min(max(hstart, 0), in_h);
-    hend = min(max(hend, 0), in_h);
-    wstart = min(max(wstart, 0), in_w);
-    wend = min(max(wend, 0), in_w);
+    hstart = min(max(hstart + roi_start_h, 0), in_h - 1);
+    hend = min(max(hend + roi_start_h, 0), in_h - 1);
+    wstart = min(max(wstart + roi_start_w, 0), in_w - 1);
+    wend = min(max(wend + roi_start_w, 0), in_w - 1);
 
     bool is_empty = (hend <= hstart) || (wend <= wstart);
 
-    int gh = ph * group_size / in_h;
-    int gw = pw * group_size / in_w;
+    int gh = ph * group_size / pooled_h;
+    int gw = pw * group_size / pooled_w;
     gh = min(max(gh, 0), group_size - 1);
     gw = min(max(gw, 0), group_size - 1);
     int c_in = (c_out * group_size + gh) * group_size + gw;

@@ -30,7 +30,7 @@ class PSROIPoolingOp : public Operator {
 
     CHECK_NE(input, output);
 
-    output->reshape({input->shape(0), output_dim_, pooled_h_, pooled_w_});
+    output->reshape({roi->shape(0), output_dim_, pooled_h_, pooled_w_});
 
     kernel_->Run(input, roi, output, ws_, output_dim_, group_size_, pooled_h_,
                  pooled_w_, spatial_scale_);
