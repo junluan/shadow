@@ -36,6 +36,22 @@ class Operator {
       const std::string& name, const std::vector<T>& default_value = {}) const {
     return arg_helper_.GetRepeatedArgument<T>(name, default_value);
   }
+  template <typename T>
+  std::pair<T, T> get_paired_argument(const std::string& name,
+                                      const T& default_value) const {
+    const auto& val = arg_helper_.GetRepeatedArgument<T>(name);
+    CHECK_LE(val.size(), 2);
+    std::pair<T, T> pair;
+    if (val.empty()) {
+      pair.first = pair.second =
+          arg_helper_.GetSingleArgument<T>(name, default_value);
+    } else if (val.size() == 1) {
+      pair.first = pair.second = val[0];
+    } else {
+      pair.first = val[0], pair.second = val[1];
+    }
+    return pair;
+  }
 
   Workspace* ws() const { return ws_; }
 

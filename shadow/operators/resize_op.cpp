@@ -9,28 +9,14 @@ class ResizeOp : public Operator {
   ResizeOp(const shadow::OpParam& op_param, Workspace* ws)
       : Operator(op_param, ws) {
     if (has_argument("size")) {
-      const auto& size = get_repeated_argument<int>("size");
-      CHECK_LE(size.size(), 2);
-      if (size.empty()) {
-        out_h_ = out_w_ = get_single_argument<int>("size", 0);
-      } else if (size.size() == 1) {
-        out_h_ = out_w_ = size[0];
-      } else {
-        out_h_ = size[0], out_w_ = size[1];
-      }
+      const auto& size = get_paired_argument<int>("size", 0);
+      out_h_ = size.first, out_w_ = size.second;
     } else {
       out_h_ = get_single_argument<int>("out_h", 0);
       out_w_ = get_single_argument<int>("out_w", 0);
     }
-    const auto& scale = get_repeated_argument<float>("scale");
-    CHECK_LE(scale.size(), 2);
-    if (scale.empty()) {
-      scale_h_ = scale_w_ = get_single_argument<float>("scale", 1);
-    } else if (scale.size() == 1) {
-      scale_h_ = scale_w_ = scale[0];
-    } else {
-      scale_h_ = scale[0], scale_w_ = scale[1];
-    }
+    const auto& scale = get_paired_argument<float>("scale", 1);
+    scale_h_ = scale.first, scale_w_ = scale.second;
     type_ = get_single_argument<int>("type", 1);
     align_corners_ = get_single_argument<bool>("align_corners", false);
 

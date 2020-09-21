@@ -23,34 +23,12 @@ class PoolingOp : public Operator {
     pool_type_ = get_single_argument<int>("pool", 0);
     global_pooling_ = get_single_argument<bool>("global_pooling", false);
     if (!global_pooling_) {
-      const auto& kernel_size = get_repeated_argument<int>("kernel_size");
-      CHECK_LE(kernel_size.size(), 2);
-      if (kernel_size.empty()) {
-        kernel_size_h_ = kernel_size_w_ =
-            get_single_argument<int>("kernel_size", 0);
-      } else if (kernel_size.size() == 1) {
-        kernel_size_h_ = kernel_size_w_ = kernel_size[0];
-      } else {
-        kernel_size_h_ = kernel_size[0], kernel_size_w_ = kernel_size[1];
-      }
-      const auto& stride = get_repeated_argument<int>("stride");
-      CHECK_LE(stride.size(), 2);
-      if (stride.empty()) {
-        stride_h_ = stride_w_ = get_single_argument<int>("stride", 1);
-      } else if (stride.size() == 1) {
-        stride_h_ = stride_w_ = stride[0];
-      } else {
-        stride_h_ = stride[0], stride_w_ = stride[1];
-      }
-      const auto& pad = get_repeated_argument<int>("pad");
-      CHECK_LE(pad.size(), 2);
-      if (pad.empty()) {
-        pad_h_ = pad_w_ = get_single_argument<int>("pad", 0);
-      } else if (pad.size() == 1) {
-        pad_h_ = pad_w_ = pad[0];
-      } else {
-        pad_h_ = pad[0], pad_w_ = pad[1];
-      }
+      const auto& kernel_size = get_paired_argument<int>("kernel_size", 0);
+      kernel_size_h_ = kernel_size.first, kernel_size_w_ = kernel_size.second;
+      const auto& stride = get_paired_argument<int>("stride", 1);
+      stride_h_ = stride.first, stride_w_ = stride.second;
+      const auto& pad = get_paired_argument<int>("pad", 0);
+      pad_h_ = pad.first, pad_w_ = pad.second;
     }
     full_pooling_ = get_single_argument<bool>("full_pooling", true);
 
