@@ -16,14 +16,16 @@ class DeformConvOp : public Operator {
       : Operator(op_param, ws) {
     num_output_ = get_single_argument<int>("num_output", 0);
     CHECK(has_argument("kernel_size"));
-    kernel_size_ = get_single_argument<int>("kernel_size", 0);
-    stride_ = get_single_argument<int>("stride", 1);
-    pad_ = get_single_argument<int>("pad", 0);
+    const auto& kernel_size = get_paired_argument<int>("kernel_size", 0);
+    kernel_size_h_ = kernel_size.first, kernel_size_w_ = kernel_size.second;
+    const auto& stride = get_paired_argument<int>("stride", 1);
+    stride_h_ = stride.first, stride_w_ = stride.second;
+    const auto& pad = get_paired_argument<int>("pad", 0);
+    pad_h_ = pad.first, pad_w_ = pad.second;
     dilation_ = get_single_argument<int>("dilation", 1);
     group_ = get_single_argument<int>("group", 1);
     CHECK_EQ(num_output_ % group_, 0);
     deform_group_ = get_single_argument<int>("deform_group", 1);
-    CHECK_EQ(num_output_ % deform_group_, 0);
     bias_term_ = get_single_argument<bool>("bias_term", true);
     activate_type_ = get_single_argument<int>("type", -1);
     CHECK((activate_type_ == -1 || activate_type_ == 1))
@@ -45,28 +47,33 @@ class DeformConvOp : public Operator {
 
     CHECK_NE(input, output);
 
-    int in_c = input->shape(1), in_h = input->shape(2), in_w = input->shape(3);
-
-    CHECK_EQ(in_c % group_, 0);
-    CHECK_EQ(offset->shape(1) % deform_group_, 0);
+    CHECK_EQ(input->shape(0), offset->shape(0));
+    CHECK_EQ(input->shape(1) % group_, 0);
+    CHECK_EQ(input->shape(1) % deform_group_, 0);
+    CHECK_EQ(offset->shape(1),
+             2 * deform_group_ * kernel_size_h_ * kernel_size_w_);
 
     auto out_shape = input->shape();
     out_shape[1] = num_output_;
-    out_shape[2] =
-        deform_conv_out_size(in_h, kernel_size_, stride_, pad_, dilation_);
-    out_shape[3] =
-        deform_conv_out_size(in_w, kernel_size_, stride_, pad_, dilation_);
+    out_shape[2] = deform_conv_out_size(input->shape(2), kernel_size_h_,
+                                        stride_h_, pad_h_, dilation_);
+    out_shape[3] = deform_conv_out_size(input->shape(3), kernel_size_w_,
+                                        stride_w_, pad_w_, dilation_);
     output->reshape(out_shape);
+
+    CHECK_EQ(offset->shape(2), output->shape(2));
+    CHECK_EQ(offset->shape(3), output->shape(3));
 
     kernel_->Run(input, offset, weight,
                  bias_term_ ? inputs[3] : std::shared_ptr<Blob>(nullptr),
-                 output, ws_, num_output_, kernel_size_, stride_, pad_,
-                 dilation_, group_, deform_group_, bias_term_, activate_type_);
+                 output, ws_, num_output_, kernel_size_h_, kernel_size_w_,
+                 stride_h_, stride_w_, pad_h_, pad_w_, dilation_, group_,
+                 deform_group_, bias_term_, activate_type_);
   }
 
  private:
-  int num_output_, kernel_size_, stride_, pad_, dilation_, group_,
-      deform_group_, activate_type_;
+  int num_output_, kernel_size_h_, kernel_size_w_, stride_h_, stride_w_, pad_h_,
+      pad_w_, dilation_, group_, deform_group_, activate_type_;
   bool bias_term_;
 
   std::shared_ptr<DeformConvKernel> kernel_ = nullptr;

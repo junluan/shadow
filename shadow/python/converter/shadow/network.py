@@ -273,18 +273,27 @@ class Network(object):
 
         return op_param
 
-    def add_deform_conv(self, name, bottoms, tops, num_output, kernel_size, stride=1, pad=0, dilation=1, bias_term=True, group=1, deform_group=1):
+    def add_deform_conv(self, name, bottoms, tops, num_output, kernel_size, stride=1, pad=0, dilation=1, group=1, deform_group=1, bias_term=True):
         op_param = self.add_net_op()
         self.add_common(op_param, name, 'DeformConv', bottoms, tops)
 
         self.add_arg(op_param, 'num_output', num_output, 's_i')
-        self.add_arg(op_param, 'kernel_size', kernel_size, 's_i')
-        self.add_arg(op_param, 'stride', stride, 's_i')
-        self.add_arg(op_param, 'pad', pad, 's_i')
+        if isinstance(kernel_size, int):
+            self.add_arg(op_param, 'kernel_size', kernel_size, 's_i')
+        else:
+            self.add_arg(op_param, 'kernel_size', kernel_size, 'v_i')
+        if isinstance(stride, int):
+            self.add_arg(op_param, 'stride', stride, 's_i')
+        else:
+            self.add_arg(op_param, 'stride', stride, 'v_i')
+        if isinstance(pad, int):
+            self.add_arg(op_param, 'pad', pad, 's_i')
+        else:
+            self.add_arg(op_param, 'pad', pad, 'v_i')
         self.add_arg(op_param, 'dilation', dilation, 's_i')
-        self.add_arg(op_param, 'bias_term', bias_term, 's_i')
         self.add_arg(op_param, 'group', group, 's_i')
         self.add_arg(op_param, 'deform_group', deform_group, 's_i')
+        self.add_arg(op_param, 'bias_term', bias_term, 's_i')
 
         return op_param
 

@@ -241,11 +241,11 @@ def convert_deform_conv(mxnet_nodes, index, param_dict, network):
     stride = parse_param(json_attr, 'stride', 'v_i', [1, 1])
     pad = parse_param(json_attr, 'pad', 'v_i', [0, 0])
     dilate = parse_param(json_attr, 'dilate', 'v_i', [1, 1])
-    bias_term = parse_param(json_attr, 'no_bias', 's_s', 'False') != 'True'
     group = parse_param(json_attr, 'num_group', 's_i', 1)
     deform_group = parse_param(json_attr, 'num_deformable_group', 's_i', 1)
+    bias_term = parse_param(json_attr, 'no_bias', 's_s', 'False') != 'True'
 
-    network.add_deform_conv(json_name, bottom_names, [json_name], num_output, kernel_size[0], stride[0], pad[0], dilate[0], bias_term, group, deform_group)
+    network.add_deform_conv(json_name, bottom_names, [json_name], num_output, kernel_size, stride, pad, dilate[0], group, deform_group, bias_term)
 
 
 def convert_deform_psroi_pooling(mxnet_nodes, index, network):
