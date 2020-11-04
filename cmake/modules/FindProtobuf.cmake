@@ -1,5 +1,3 @@
-include(FindPackageHandleStandardArgs)
-
 set(Protobuf_ROOT_DIR ${PROJECT_SOURCE_DIR}/third_party/protobuf CACHE PATH "Folder contains Google Protobuf")
 
 set(Protobuf_DIR ${Protobuf_ROOT_DIR} /usr /usr/local)
@@ -24,29 +22,38 @@ find_program(Protoc_EXECUTABLE
 
 set(__looked_for Protobuf_INCLUDE_DIRS Protobuf_LIBRARIES Protoc_EXECUTABLE)
 
-find_package_handle_standard_args(Protobuf DEFAULT_MSG ${__looked_for})
+mark_as_advanced(Protobuf_ROOT_DIR ${__looked_for})
+unset(Protobuf_DIR)
 
-if (Protobuf_FOUND)
+if (Protobuf_INCLUDE_DIRS)
   parse_header(${Protobuf_INCLUDE_DIRS}/google/protobuf/stubs/common.h
                GOOGLE_PROTOBUF_VERSION)
-  math(EXPR PROTOBUF_MAJOR_VERSION "${GOOGLE_PROTOBUF_VERSION} / 1000000")
-  math(EXPR PROTOBUF_MINOR_VERSION "${GOOGLE_PROTOBUF_VERSION} / 1000 % 1000")
-  math(EXPR PROTOBUF_SUBMINOR_VERSION "${GOOGLE_PROTOBUF_VERSION} % 1000")
-  set(Protobuf_VERSION "${PROTOBUF_MAJOR_VERSION}.${PROTOBUF_MINOR_VERSION}.${PROTOBUF_SUBMINOR_VERSION}")
-  execute_process(COMMAND ${Protoc_EXECUTABLE} --version OUTPUT_VARIABLE Protoc_VERSION)
-  if ("${Protoc_VERSION}" MATCHES "libprotoc ([0-9.]+)")
-    set(Protoc_VERSION "${CMAKE_MATCH_1}")
-  endif ()
-  if (NOT "${Protoc_VERSION}" VERSION_EQUAL "${Protobuf_VERSION}")
-    message(FATAL_ERROR "Protobuf compiler version ${Protoc_VERSION} doesn't match library version ${Protobuf_VERSION}")
-  endif ()
-  if (NOT Protobuf_FIND_QUIETLY)
-    message(STATUS "Found Protobuf: ${Protobuf_INCLUDE_DIRS}, ${Protobuf_LIBRARIES} (found version ${Protobuf_VERSION})")
-    message(STATUS "Found Protoc: ${Protoc_EXECUTABLE} (found version ${Protoc_VERSION})")
-  endif ()
-  mark_as_advanced(Protobuf_ROOT_DIR ${__looked_for})
-else ()
-  if (Protobuf_FIND_REQUIRED)
-    message(FATAL_ERROR "Could not find Protobuf")
+  if (GOOGLE_PROTOBUF_VERSION)
+    math(EXPR PROTOBUF_MAJOR_VERSION "${GOOGLE_PROTOBUF_VERSION} / 1000000")
+    math(EXPR PROTOBUF_MINOR_VERSION "${GOOGLE_PROTOBUF_VERSION} / 1000 % 1000")
+    math(EXPR PROTOBUF_SUBMINOR_VERSION "${GOOGLE_PROTOBUF_VERSION} % 1000")
+    set(Protobuf_VERSION "${PROTOBUF_MAJOR_VERSION}.${PROTOBUF_MINOR_VERSION}.${PROTOBUF_SUBMINOR_VERSION}")
+  else ()
+    set(Protobuf_VERSION "?")
   endif ()
 endif ()
+
+if (Protoc_EXECUTABLE)
+  execute_process(COMMAND ${Protoc_EXECUTABLE} --version
+                  OUTPUT_VARIABLE OUTPUT
+                  OUTPUT_STRIP_TRAILING_WHITESPACE)
+  if ("${OUTPUT}" MATCHES "libprotoc ([0-9.]+)")
+    set(Protoc_VERSION "${CMAKE_MATCH_1}")
+  else ()
+    set(Protoc_VERSION "?")
+  endif ()
+endif ()
+
+if (NOT ("${Protoc_VERSION}" VERSION_EQUAL "${Protobuf_VERSION}"))
+  message(FATAL_ERROR "Protobuf compiler version ${Protoc_VERSION} doesn't match library version ${Protobuf_VERSION}")
+endif ()
+
+include(FindPackageHandleStandardArgs)
+find_package_handle_standard_args(Protobuf
+                                  REQUIRED_VARS ${__looked_for}
+                                  VERSION_VAR Protobuf_VERSION)

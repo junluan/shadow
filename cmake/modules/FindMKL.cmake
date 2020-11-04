@@ -66,22 +66,19 @@ if (NOT MKL_USE_SINGLE_DYNAMIC_LIBRARY)
   list(APPEND MKL_LIBRARIES ${MKL_RTL_LIBRARY})
 endif ()
 
-find_package_handle_standard_args(MKL DEFAULT_MSG ${__looked_for})
+mark_as_advanced(INTEL_ROOT_DIR ${__looked_for})
 
-if (MKL_FOUND)
+if (MKL_INCLUDE_DIRS)
   parse_header(${MKL_INCLUDE_DIRS}/mkl_version.h
                INTEL_MKL_VERSION)
-  if (NOT INTEL_MKL_VERSION)
-    set(MKL_VERSION "?")
-  else ()
+  if (INTEL_MKL_VERSION)
     set(MKL_VERSION ${INTEL_MKL_VERSION})
-  endif ()
-  if (NOT MKL_FIND_QUIETLY)
-    message(STATUS "Found MKL: ${MKL_INCLUDE_DIRS}, ${MKL_LIBRARIES} (found version ${MKL_VERSION})")
-  endif ()
-  mark_as_advanced(INTEL_ROOT_DIR ${__looked_for})
-else ()
-  if (MKL_FIND_REQUIRED)
-    message(FATAL_ERROR "Could not find MKL")
+  else ()
+    set(MKL_VERSION "?")
   endif ()
 endif ()
+
+include(FindPackageHandleStandardArgs)
+find_package_handle_standard_args(MKL
+                                  REQUIRED_VARS ${__looked_for}
+                                  VERSION_VAR MKL_VERSION)

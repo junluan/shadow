@@ -1,5 +1,3 @@
-include(FindPackageHandleStandardArgs)
-
 set(DNNL_ROOT_DIR ${PROJECT_SOURCE_DIR}/third_party/dnnl CACHE PATH "Folder contains Intel DNNL")
 
 set(DNNL_DIR ${DNNL_ROOT_DIR}/build /usr /usr/local)
@@ -18,22 +16,20 @@ find_library(DNNL_LIBRARIES
 
 set(__looked_for DNNL_INCLUDE_DIRS DNNL_LIBRARIES)
 
-find_package_handle_standard_args(DNNL DEFAULT_MSG ${__looked_for})
+mark_as_advanced(DNNL_ROOT_DIR ${__looked_for})
+unset(DNNL_DIR)
 
-if (DNNL_FOUND)
+if (DNNL_INCLUDE_DIRS)
   parse_header(${DNNL_INCLUDE_DIRS}/dnnl_version.h
                DNNL_VERSION_MAJOR DNNL_VERSION_MINOR DNNL_VERSION_PATCH)
-  if (NOT DNNL_VERSION_MAJOR)
-    set(DNNL_VERSION "?")
-  else ()
+  if (DNNL_VERSION_MAJOR)
     set(DNNL_VERSION "${DNNL_VERSION_MAJOR}.${DNNL_VERSION_MINOR}.${DNNL_VERSION_PATCH}")
-  endif ()
-  if (NOT DNNL_FIND_QUIETLY)
-    message(STATUS "Found DNNL: ${DNNL_INCLUDE_DIRS}, ${DNNL_LIBRARIES} (found version ${DNNL_VERSION})")
-  endif ()
-  mark_as_advanced(DNNL_ROOT_DIR ${__looked_for})
-else ()
-  if (DNNL_FIND_REQUIRED)
-    message(FATAL_ERROR "Could not find DNNL")
+  else ()
+    set(DNNL_VERSION "?")
   endif ()
 endif ()
+
+include(FindPackageHandleStandardArgs)
+find_package_handle_standard_args(DNNL
+                                  REQUIRED_VARS ${__looked_for}
+                                  VERSION_VAR DNNL_VERSION)

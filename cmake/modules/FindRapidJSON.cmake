@@ -1,5 +1,3 @@
-include(FindPackageHandleStandardArgs)
-
 set(RapidJSON_ROOT_DIR ${PROJECT_SOURCE_DIR}/third_party/rapidjson CACHE PATH "Folder contains RapidJSON")
 
 set(RapidJSON_DIR ${RapidJSON_ROOT_DIR} /usr /usr/local)
@@ -10,22 +8,20 @@ find_path(RapidJSON_INCLUDE_DIRS
           PATH_SUFFIXES include include/x86_64 include/x64 include/rapidjson
           NO_DEFAULT_PATH)
 
-find_package_handle_standard_args(RapidJSON DEFAULT_MSG RapidJSON_INCLUDE_DIRS)
+mark_as_advanced(RapidJSON_ROOT_DIR RapidJSON_INCLUDE_DIRS)
+unset(RapidJSON_DIR)
 
-if (RapidJSON_FOUND)
+if (RapidJSON_INCLUDE_DIRS)
   parse_header(${RapidJSON_INCLUDE_DIRS}/rapidjson.h
                RAPIDJSON_MAJOR_VERSION RAPIDJSON_MINOR_VERSION RAPIDJSON_PATCH_VERSION)
-  if (NOT RAPIDJSON_MAJOR_VERSION)
-    set(RapidJSON_VERSION "?")
-  else ()
+  if (RAPIDJSON_MAJOR_VERSION)
     set(RapidJSON_VERSION "${RAPIDJSON_MAJOR_VERSION}.${RAPIDJSON_MINOR_VERSION}.${RAPIDJSON_PATCH_VERSION}")
-  endif ()
-  if (NOT RapidJSON_FIND_QUIETLY)
-    message(STATUS "Found RapidJSON: ${RapidJSON_INCLUDE_DIRS} (found version ${RapidJSON_VERSION})")
-  endif ()
-  mark_as_advanced(RapidJSON_ROOT_DIR RapidJSON_INCLUDE_DIRS)
-else ()
-  if (RapidJSON_FIND_REQUIRED)
-    message(FATAL_ERROR "Could not find RapidJSON")
+  else ()
+    set(RapidJSON_VERSION "?")
   endif ()
 endif ()
+
+include(FindPackageHandleStandardArgs)
+find_package_handle_standard_args(RapidJSON
+                                  REQUIRED_VARS RapidJSON_INCLUDE_DIRS
+                                  VERSION_VAR RapidJSON_VERSION)

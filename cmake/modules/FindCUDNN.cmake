@@ -1,5 +1,3 @@
-include(FindPackageHandleStandardArgs)
-
 set(CUDNN_ROOT_DIR ${PROJECT_SOURCE_DIR}/third_party/cudnn CACHE PATH "Folder contains NVIDIA cuDNN")
 
 set(CUDNN_DIR ${CUDNN_ROOT_DIR} ${CUDA_TOOLKIT_ROOT_DIR} /usr /usr/local)
@@ -18,27 +16,25 @@ find_library(CUDNN_LIBRARIES
 
 set(__looked_for CUDNN_INCLUDE_DIRS CUDNN_LIBRARIES)
 
-find_package_handle_standard_args(CUDNN DEFAULT_MSG ${__looked_for})
+mark_as_advanced(CUDNN_ROOT_DIR ${__looked_for})
+unset(CUDNN_DIR)
 
-if (CUDNN_FOUND)
+if (CUDNN_INCLUDE_DIRS)
   set(__version_files "cudnn.h" "cudnn_version.h")
   foreach (__version_file ${__version_files})
-    if (EXISTS ${CUDNN_INCLUDE_DIRS}/${__version_file})
+    if (NOT CUDNN_MAJOR AND EXISTS ${CUDNN_INCLUDE_DIRS}/${__version_file})
       parse_header(${CUDNN_INCLUDE_DIRS}/${__version_file}
                    CUDNN_MAJOR CUDNN_MINOR CUDNN_PATCHLEVEL)
     endif ()
   endforeach ()
-  if (NOT CUDNN_MAJOR)
-    set(CUDNN_VERSION "?")
-  else ()
+  if (CUDNN_MAJOR)
     set(CUDNN_VERSION "${CUDNN_MAJOR}.${CUDNN_MINOR}.${CUDNN_PATCHLEVEL}")
-  endif ()
-  if (NOT CUDNN_FIND_QUIETLY)
-    message(STATUS "Found CUDNN: ${CUDNN_INCLUDE_DIRS}, ${CUDNN_LIBRARIES} (found version ${CUDNN_VERSION})")
-  endif ()
-  mark_as_advanced(CUDNN_ROOT_DIR ${__looked_for})
-else ()
-  if (CUDNN_FIND_REQUIRED)
-    message(FATAL_ERROR "Could not find CUDNN")
+  else ()
+    set(CUDNN_VERSION "?")
   endif ()
 endif ()
+
+include(FindPackageHandleStandardArgs)
+find_package_handle_standard_args(CUDNN
+                                  REQUIRED_VARS ${__looked_for}
+                                  VERSION_VAR CUDNN_VERSION)

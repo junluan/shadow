@@ -1,5 +1,3 @@
-include(FindPackageHandleStandardArgs)
-
 set(NNPACK_ROOT_DIR ${PROJECT_SOURCE_DIR}/third_party/nnpack CACHE PATH "Folder contains NNPACK")
 
 set(NNPACK_DIR ${NNPACK_ROOT_DIR}/build /usr /usr/local)
@@ -36,17 +34,11 @@ find_library(CLOG_LIBRARY
 
 set(__looked_for NNPACK_INCLUDE_DIRS NNPACK_LIBRARY PTHREADPOOL_LIBRARY CPUINFO_LIBRARY CLOG_LIBRARY)
 
-find_package_handle_standard_args(NNPACK DEFAULT_MSG ${__looked_for})
+mark_as_advanced(NNPACK_ROOT_DIR ${__looked_for})
+unset(NNPACK_DIR)
 
 set(NNPACK_LIBRARIES ${NNPACK_LIBRARY} ${PTHREADPOOL_LIBRARY} ${CPUINFO_LIBRARY} ${CLOG_LIBRARY})
 
-if (NNPACK_FOUND)
-  if (NOT NNPACK_FIND_QUIETLY)
-    message(STATUS "Found NNPACK: ${NNPACK_INCLUDE_DIRS}, ${NNPACK_LIBRARIES}")
-  endif ()
-  mark_as_advanced(NNPACK_ROOT_DIR ${__looked_for})
-else ()
-  if (NNPACK_FIND_REQUIRED)
-    message(FATAL_ERROR "Could not find NNPACK")
-  endif ()
-endif ()
+include(FindPackageHandleStandardArgs)
+find_package_handle_standard_args(NNPACK
+                                  REQUIRED_VARS ${__looked_for})
