@@ -54,13 +54,14 @@ class BatchNormKernelDNNL : public BatchNormKernel {
         channel, variance->data<float>(), 0, scale_factor,
         variance_dnnl->mutable_data<float>(), 0, ws->Ctx());
 
-    const auto& in_out_desc = idnnl::create_memory_desc<float>(input->shape());
-
-    const auto& batch_norm_desc =
-        idnnl::create_batch_normalization_desc(in_out_desc, eps);
+    const auto& in_out_desc = idnnl::create_memory_desc<float>(
+        input->shape(), idnnl::get_memory_format(input->num_axes()));
 
     idnnl::batch_normalization_forward(
-        ws->Ctx()->dnnl_engine(), ws->Ctx()->dnnl_stream(), batch_norm_desc,
+        ws->Ctx()->dnnl_engine(), ws->Ctx()->dnnl_stream(),
+        dnnl::batch_normalization_forward::desc(
+            dnnl::prop_kind::forward_inference, in_out_desc, eps,
+            dnnl::normalization_flags::use_global_stats),
         input->data<float>(), mean_dnnl->data<float>(),
         variance_dnnl->data<float>(), output->mutable_data<float>());
   }

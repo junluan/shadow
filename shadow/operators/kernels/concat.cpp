@@ -39,12 +39,12 @@ class ConcatKernelDNNL : public ConcatKernel {
       srcs_data.push_back(input->data<float>());
     }
 
-    const auto& concat_desc =
-        idnnl::create_concat_desc(ws->Ctx()->dnnl_engine(), srcs_desc, axis);
-
-    idnnl::concat_forward(ws->Ctx()->dnnl_engine(), ws->Ctx()->dnnl_stream(),
-                          concat_desc, srcs_data,
-                          output->mutable_data<float>());
+    idnnl::concat_forward(
+        ws->Ctx()->dnnl_engine(), ws->Ctx()->dnnl_stream(),
+        dnnl::concat::primitive_desc(
+            axis, srcs_desc,
+            *static_cast<dnnl::engine*>(ws->Ctx()->dnnl_engine())),
+        srcs_data, output->mutable_data<float>());
   }
 
   DeviceType device_type() const override { return DeviceType::kCPU; }

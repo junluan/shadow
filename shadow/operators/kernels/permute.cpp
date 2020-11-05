@@ -42,12 +42,13 @@ class PermuteKernelDNNL : public PermuteKernel {
             output->shape(), idnnl::get_memory_format(output->num_axes()))
             .permute_axes(order_value);
 
-    const auto& reorder_desc = idnnl::create_reorder_desc(
-        ws->Ctx()->dnnl_engine(), src_desc, dst_desc);
+    const auto* dnnl_engine =
+        static_cast<const dnnl::engine*>(ws->Ctx()->dnnl_engine());
 
-    idnnl::reorder_forward(ws->Ctx()->dnnl_engine(), ws->Ctx()->dnnl_stream(),
-                           reorder_desc, input->data<float>(),
-                           output->mutable_data<float>());
+    idnnl::reorder_forward(dnnl_engine, ws->Ctx()->dnnl_stream(),
+                           dnnl::reorder::primitive_desc(
+                               *dnnl_engine, src_desc, *dnnl_engine, dst_desc),
+                           input->data<float>(), output->mutable_data<float>());
   }
 
   DeviceType device_type() const override { return DeviceType::kCPU; }

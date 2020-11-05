@@ -67,15 +67,29 @@ class PoolingKernelDNNL : public PoolingKernel {
                            kernel_size_w, stride_h, stride_w, pad_h, pad_w,
                            full_pooling);
     } else {
-      const auto& src_desc = idnnl::create_memory_desc<float>(input->shape());
-      const auto& dst_desc = idnnl::create_memory_desc<float>(output->shape());
+      const auto& src_desc = idnnl::create_memory_desc<float>(
+          input->shape(), dnnl::memory::format_tag::nchw);
+      const auto& dst_desc = idnnl::create_memory_desc<float>(
+          output->shape(), dnnl::memory::format_tag::nchw);
 
-      const auto& pooling_desc = idnnl::create_pooling_desc(
-          src_desc, dst_desc, pool_type, kernel_size_h, kernel_size_w, stride_h,
-          stride_w, pad_h, pad_w);
+      dnnl::algorithm algorithm;
+      switch (pool_type) {
+        case 0:
+          algorithm = dnnl::algorithm::pooling_max;
+          break;
+        case 1:
+          algorithm = dnnl::algorithm::pooling_avg_include_padding;
+          break;
+        default:
+          algorithm = dnnl::algorithm::undef;
+      }
 
       idnnl::common_forward<dnnl::pooling_forward>(
-          ws->Ctx()->dnnl_engine(), ws->Ctx()->dnnl_stream(), pooling_desc,
+          ws->Ctx()->dnnl_engine(), ws->Ctx()->dnnl_stream(),
+          dnnl::pooling_forward::desc(
+              dnnl::prop_kind::forward_inference, algorithm, src_desc, dst_desc,
+              {stride_h, stride_w}, {kernel_size_h, kernel_size_w},
+              {pad_h, pad_w}, {pad_h, pad_w}),
           input->data<float>(), output->mutable_data<float>());
     }
   }

@@ -40,13 +40,11 @@ class ShuffleChannelKernelDNNL : public ShuffleChannelKernel {
     const auto& in_out_desc = idnnl::create_memory_desc<float>(
         input->shape(), idnnl::get_memory_format(input->num_axes()));
 
-    const auto& shuffle_channel_desc =
-        idnnl::create_shuffle_desc(in_out_desc, 1, channel / group);
-
     idnnl::common_forward<dnnl::shuffle_forward>(
         ws->Ctx()->dnnl_engine(), ws->Ctx()->dnnl_stream(),
-        shuffle_channel_desc, input->data<float>(),
-        output->mutable_data<float>());
+        dnnl::shuffle_forward::desc(dnnl::prop_kind::forward_inference,
+                                    in_out_desc, 1, channel / group),
+        input->data<float>(), output->mutable_data<float>());
   }
 
   DeviceType device_type() const override { return DeviceType::kCPU; }

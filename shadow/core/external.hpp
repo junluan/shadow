@@ -280,6 +280,18 @@ inline dnnl::memory::format_tag get_memory_format(int num_axes) {
       return dnnl::memory::format_tag::abcde;
     case 6:
       return dnnl::memory::format_tag::abcdef;
+    case 7:
+      return dnnl::memory::format_tag::abcdefg;
+    case 8:
+      return dnnl::memory::format_tag::abcdefgh;
+    case 9:
+      return dnnl::memory::format_tag::abcdefghi;
+    case 10:
+      return dnnl::memory::format_tag::abcdefghij;
+    case 11:
+      return dnnl::memory::format_tag::abcdefghijk;
+    case 12:
+      return dnnl::memory::format_tag::abcdefghijkl;
     default:
       return dnnl::memory::format_tag::undef;
   }
@@ -287,8 +299,7 @@ inline dnnl::memory::format_tag get_memory_format(int num_axes) {
 
 template <typename T>
 inline dnnl::memory::desc create_memory_desc(
-    const std::vector<int>& shape,
-    dnnl::memory::format_tag format_tag = dnnl::memory::format_tag::nchw) {
+    const std::vector<int>& shape, dnnl::memory::format_tag format_tag) {
   auto data_type = dnnl::memory::data_type::undef;
   if (std::is_same<T, std::int32_t>::value) {
     data_type = dnnl::memory::data_type::s32;
@@ -301,20 +312,6 @@ inline dnnl::memory::desc create_memory_desc(
   }
   return dnnl::memory::desc(dnnl::memory::dims(shape.begin(), shape.end()),
                             data_type, format_tag);
-}
-
-inline dnnl::batch_normalization_forward::desc create_batch_normalization_desc(
-    const dnnl::memory::desc& data_desc, float eps) {
-  return dnnl::batch_normalization_forward::desc(
-      dnnl::prop_kind::forward_inference, data_desc, eps,
-      dnnl::normalization_flags::use_global_stats);
-}
-
-inline dnnl::concat::primitive_desc create_concat_desc(
-    void* dnnl_engine, const std::vector<dnnl::memory::desc>& srcs_desc,
-    int axis) {
-  const auto* engine = (dnnl::engine*)dnnl_engine;
-  return dnnl::concat::primitive_desc(axis, srcs_desc, *engine);
 }
 
 inline dnnl::convolution_forward::desc create_convolution_desc(
@@ -354,66 +351,12 @@ inline dnnl::deconvolution_forward::desc create_deconvolution_desc(
   }
 }
 
-inline dnnl::inner_product_forward::desc create_inner_product_desc(
-    const dnnl::memory::desc& src_desc, const dnnl::memory::desc& weight_desc,
-    const dnnl::memory::desc& bias_desc, const dnnl::memory::desc& dst_desc) {
-  return dnnl::inner_product_forward::desc(dnnl::prop_kind::forward_inference,
-                                           src_desc, weight_desc, bias_desc,
-                                           dst_desc);
-}
-
-inline dnnl::matmul::desc create_matmul_desc(
-    const dnnl::memory::desc& src_a_desc, const dnnl::memory::desc& src_b_desc,
-    const dnnl::memory::desc& dst_desc) {
-  return dnnl::matmul::desc(src_a_desc, src_b_desc, dst_desc);
-}
-
-inline dnnl::pooling_forward::desc create_pooling_desc(
-    const dnnl::memory::desc& src_desc, const dnnl::memory::desc& dst_desc,
-    int pool_type, int kernel_size_h, int kernel_size_w, int stride_h,
-    int stride_w, int pad_h, int pad_w) {
-  dnnl::algorithm algorithm{};
-  switch (pool_type) {
-    case 0:
-      algorithm = dnnl::algorithm::pooling_max;
-      break;
-    case 1:
-      algorithm = dnnl::algorithm::pooling_avg_include_padding;
-      break;
-    default:
-      LOG(FATAL) << "Unsupported pool type " << pool_type;
-  }
-  return dnnl::pooling_forward::desc(
-      dnnl::prop_kind::forward_inference, algorithm, src_desc, dst_desc,
-      {stride_h, stride_w}, {kernel_size_h, kernel_size_w}, {pad_h, pad_w},
-      {pad_h, pad_w});
-}
-
-inline dnnl::reorder::primitive_desc create_reorder_desc(
-    void* dnnl_engine, const dnnl::memory::desc& src_desc,
-    const dnnl::memory::desc& dst_desc) {
-  const auto* engine = (dnnl::engine*)dnnl_engine;
-  return dnnl::reorder::primitive_desc(*engine, src_desc, *engine, dst_desc);
-}
-
-inline dnnl::shuffle_forward::desc create_shuffle_desc(
-    const dnnl::memory::desc& data_desc, int axis, int group_size) {
-  return dnnl::shuffle_forward::desc(dnnl::prop_kind::forward_inference,
-                                     data_desc, axis, group_size);
-}
-
-inline dnnl::softmax_forward::desc create_softmax_desc(
-    const dnnl::memory::desc& data_desc, int axis) {
-  return dnnl::softmax_forward::desc(dnnl::prop_kind::forward_inference,
-                                     data_desc, axis);
-}
-
 inline void batch_normalization_forward(
-    void* dnnl_engine, void* dnnl_stream,
+    const void* dnnl_engine, const void* dnnl_stream,
     const dnnl::batch_normalization_forward::desc& desc, const void* src_data,
     const void* mean_data, const void* variance_data, void* dst_data) {
-  const auto* engine = (dnnl::engine*)dnnl_engine;
-  auto* stream = (dnnl::stream*)dnnl_stream;
+  const auto* engine = static_cast<const dnnl::engine*>(dnnl_engine);
+  const auto* stream = static_cast<const dnnl::stream*>(dnnl_stream);
   const auto& primitive_desc =
       dnnl::batch_normalization_forward::primitive_desc(desc, *engine);
   const auto& src_mem = dnnl::memory(primitive_desc.src_desc(), *engine,
@@ -432,12 +375,12 @@ inline void batch_normalization_forward(
                          {DNNL_ARG_DST, dst_mem}});
 }
 
-inline void binary_forward(void* dnnl_engine, void* dnnl_stream,
+inline void binary_forward(const void* dnnl_engine, const void* dnnl_stream,
                            const dnnl::binary::desc& desc,
                            const void* src_a_data, const void* src_b_data,
                            void* dst_data) {
-  const auto* engine = (dnnl::engine*)dnnl_engine;
-  auto* stream = (dnnl::stream*)dnnl_stream;
+  const auto* engine = static_cast<const dnnl::engine*>(dnnl_engine);
+  const auto* stream = static_cast<const dnnl::stream*>(dnnl_stream);
   const auto& primitive_desc = dnnl::binary::primitive_desc(desc, *engine);
   const auto& src_a_mem = dnnl::memory(primitive_desc.src0_desc(), *engine,
                                        const_cast<void*>(src_a_data));
@@ -451,12 +394,12 @@ inline void binary_forward(void* dnnl_engine, void* dnnl_stream,
                          {DNNL_ARG_DST, dst_mem}});
 }
 
-inline void concat_forward(void* dnnl_engine, void* dnnl_stream,
+inline void concat_forward(const void* dnnl_engine, const void* dnnl_stream,
                            const dnnl::concat::primitive_desc& primitive_desc,
                            const std::vector<const void*>& srcs_data,
                            void* dst_data) {
-  const auto* engine = (dnnl::engine*)dnnl_engine;
-  auto* stream = (dnnl::stream*)dnnl_stream;
+  const auto* engine = static_cast<const dnnl::engine*>(dnnl_engine);
+  const auto* stream = static_cast<const dnnl::stream*>(dnnl_stream);
   std::unordered_map<int, dnnl::memory> args;
   for (int n = 0; n < srcs_data.size(); ++n) {
     args.insert({DNNL_ARG_MULTIPLE_SRC + n,
@@ -468,12 +411,13 @@ inline void concat_forward(void* dnnl_engine, void* dnnl_stream,
   dnnl::concat(primitive_desc).execute(*stream, args);
 }
 
-inline void inner_product_forward(void* dnnl_engine, void* dnnl_stream,
+inline void inner_product_forward(const void* dnnl_engine,
+                                  const void* dnnl_stream,
                                   const dnnl::inner_product_forward::desc& desc,
                                   const void* src_data, const void* weight_data,
                                   const void* bias_data, void* dst_data) {
-  const auto* engine = (dnnl::engine*)dnnl_engine;
-  auto* stream = (dnnl::stream*)dnnl_stream;
+  const auto* engine = static_cast<const dnnl::engine*>(dnnl_engine);
+  const auto* stream = static_cast<const dnnl::stream*>(dnnl_stream);
   const auto& primitive_desc =
       dnnl::inner_product_forward::primitive_desc(desc, *engine);
   const auto& src_mem = dnnl::memory(primitive_desc.src_desc(), *engine,
@@ -491,12 +435,12 @@ inline void inner_product_forward(void* dnnl_engine, void* dnnl_stream,
                          {DNNL_ARG_DST, dst_mem}});
 }
 
-inline void matmul_forward(void* dnnl_engine, void* dnnl_stream,
+inline void matmul_forward(const void* dnnl_engine, const void* dnnl_stream,
                            const dnnl::matmul::desc& desc,
                            const void* src_a_data, const void* src_b_data,
                            void* dst_data) {
-  const auto* engine = (dnnl::engine*)dnnl_engine;
-  auto* stream = (dnnl::stream*)dnnl_stream;
+  const auto* engine = static_cast<const dnnl::engine*>(dnnl_engine);
+  const auto* stream = static_cast<const dnnl::stream*>(dnnl_stream);
   const auto& primitive_desc = dnnl::matmul::primitive_desc(desc, *engine);
   const auto& src_mem = dnnl::memory(primitive_desc.src_desc(), *engine,
                                      const_cast<void*>(src_a_data));
@@ -510,11 +454,11 @@ inline void matmul_forward(void* dnnl_engine, void* dnnl_stream,
                          {DNNL_ARG_DST, dst_mem}});
 }
 
-inline void reorder_forward(void* dnnl_engine, void* dnnl_stream,
+inline void reorder_forward(const void* dnnl_engine, const void* dnnl_stream,
                             const dnnl::reorder::primitive_desc& primitive_desc,
                             const void* src_data, void* dst_data) {
-  const auto* engine = (dnnl::engine*)dnnl_engine;
-  auto* stream = (dnnl::stream*)dnnl_stream;
+  const auto* engine = static_cast<const dnnl::engine*>(dnnl_engine);
+  const auto* stream = static_cast<const dnnl::stream*>(dnnl_stream);
   const auto& src_mem = dnnl::memory(primitive_desc.src_desc(), *engine,
                                      const_cast<void*>(src_data));
   const auto& dst_mem =
@@ -524,12 +468,12 @@ inline void reorder_forward(void* dnnl_engine, void* dnnl_stream,
 }
 
 template <typename T>
-inline void common_forward(void* dnnl_engine, void* dnnl_stream,
+inline void common_forward(const void* dnnl_engine, const void* dnnl_stream,
                            const typename T::desc& desc, const void* src_data,
                            const void* weight_data, const void* bias_data,
                            void* dst_data, int activate_type) {
-  const auto* engine = (dnnl::engine*)dnnl_engine;
-  auto* stream = (dnnl::stream*)dnnl_stream;
+  const auto* engine = static_cast<const dnnl::engine*>(dnnl_engine);
+  const auto* stream = static_cast<const dnnl::stream*>(dnnl_stream);
   auto primitive_desc = typename T::primitive_desc(desc, *engine);
   if (activate_type == 1) {
     dnnl::post_ops ops;
@@ -554,11 +498,11 @@ inline void common_forward(void* dnnl_engine, void* dnnl_stream,
 }
 
 template <typename T>
-inline void common_forward(void* dnnl_engine, void* dnnl_stream,
+inline void common_forward(const void* dnnl_engine, const void* dnnl_stream,
                            const typename T::desc& desc, const void* src_data,
                            void* dst_data) {
-  const auto* engine = (dnnl::engine*)dnnl_engine;
-  auto* stream = (dnnl::stream*)dnnl_stream;
+  const auto* engine = static_cast<const dnnl::engine*>(dnnl_engine);
+  const auto* stream = static_cast<const dnnl::stream*>(dnnl_stream);
   const auto& primitive_desc = typename T::primitive_desc(desc, *engine);
   const auto& src_mem = dnnl::memory(primitive_desc.src_desc(), *engine,
                                      const_cast<void*>(src_data));

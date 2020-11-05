@@ -62,8 +62,10 @@ class DeconvKernelDNNL : public DeconvKernel {
            int group, bool bias_term, int activate_type) override {
     int in_c = input->shape(1);
 
-    const auto& src_desc = idnnl::create_memory_desc<float>(input->shape());
-    const auto& dst_desc = idnnl::create_memory_desc<float>(output->shape());
+    const auto& src_desc = idnnl::create_memory_desc<float>(
+        input->shape(), dnnl::memory::format_tag::nchw);
+    const auto& dst_desc = idnnl::create_memory_desc<float>(
+        output->shape(), dnnl::memory::format_tag::nchw);
     dnnl::memory::desc weight_desc;
     if (group == 1) {
       weight_desc = idnnl::create_memory_desc<float>(
