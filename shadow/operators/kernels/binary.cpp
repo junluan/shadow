@@ -59,4 +59,88 @@ namespace Shadow {
 
 REGISTER_OP_KERNEL_DEFAULT(BinaryCPU, BinaryKernelDefault<DeviceType::kCPU>);
 
+#if defined(USE_DNNL)
+
+class BinaryKernelDNNL : public BinaryKernel {
+ public:
+  BinaryKernelDNNL() {
+    default_kernel_ = std::make_shared<BinaryKernelDefault<DeviceType::kCPU>>();
+  }
+
+  void Run(const std::shared_ptr<Blob>& input, std::shared_ptr<Blob>& output,
+           Workspace* ws, int operation, float scalar_value) override {
+    int num_axes = input->num_axes();
+
+    const auto& src_desc = idnnl::create_memory_desc<float>(
+        input->shape(), idnnl::get_memory_format(num_axes));
+    const auto& scalar_desc = idnnl::create_memory_desc<float>(
+        std::vector<int>(num_axes, 1), idnnl::get_memory_format(num_axes));
+    const auto& dst_desc = idnnl::create_memory_desc<float>(
+        output->shape(), idnnl::get_memory_format(num_axes));
+
+    try {
+      idnnl::binary_forward(ws->Ctx()->dnnl_engine(), ws->Ctx()->dnnl_stream(),
+                            dnnl::binary::desc(get_algorithm(operation),
+                                               src_desc, scalar_desc, dst_desc),
+                            input->data<float>(), &scalar_value,
+                            output->mutable_data<float>());
+    } catch (std::exception& e) {
+      default_kernel_->Run(input, output, ws, operation, scalar_value);
+    }
+  }
+
+  void Run(const std::shared_ptr<Blob>& input,
+           const std::shared_ptr<Blob>& scalar, std::shared_ptr<Blob>& output,
+           Workspace* ws, int operation, bool need_broadcast) override {
+    const auto& src_desc = idnnl::create_memory_desc<float>(
+        input->shape(), idnnl::get_memory_format(input->num_axes()));
+    const auto& scalar_desc = idnnl::create_memory_desc<float>(
+        scalar->shape(), idnnl::get_memory_format(scalar->num_axes()));
+    const auto& dst_desc = idnnl::create_memory_desc<float>(
+        output->shape(), idnnl::get_memory_format(output->num_axes()));
+
+    try {
+      idnnl::binary_forward(ws->Ctx()->dnnl_engine(), ws->Ctx()->dnnl_stream(),
+                            dnnl::binary::desc(get_algorithm(operation),
+                                               src_desc, scalar_desc, dst_desc),
+                            input->data<float>(), scalar->data<float>(),
+                            output->mutable_data<float>());
+    } catch (std::exception& e) {
+      default_kernel_->Run(input, scalar, output, ws, operation,
+                           need_broadcast);
+    }
+  }
+
+  DeviceType device_type() const override { return DeviceType::kCPU; }
+
+  std::string kernel_type() const override { return "DNNL"; }
+
+ private:
+  static dnnl::algorithm get_algorithm(int operation) {
+    switch (operation) {
+      case kAdd:
+        return dnnl::algorithm::binary_add;
+      case kSub:
+        return dnnl::algorithm::binary_sub;
+      case kMul:
+        return dnnl::algorithm::binary_mul;
+      case kDiv:
+        return dnnl::algorithm::binary_div;
+      case kMax:
+        return dnnl::algorithm::binary_max;
+      case kMin:
+        return dnnl::algorithm::binary_min;
+      default:
+        return dnnl::algorithm::undef;
+    }
+  }
+
+  std::shared_ptr<BinaryKernelDefault<DeviceType::kCPU>> default_kernel_ =
+      nullptr;
+};
+
+REGISTER_OP_KERNEL_DNNL(BinaryCPU, BinaryKernelDNNL);
+
+#endif
+
 }  // namespace Shadow
