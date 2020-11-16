@@ -69,7 +69,7 @@ class Register {
 
   template <typename DerivedType>
   static ObjectType* DefaultCreator(Args... args) {
-    return reinterpret_cast<ObjectType*>(new DerivedType(args...));
+    return new DerivedType(args...);
   }
 };
 
