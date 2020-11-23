@@ -61,7 +61,7 @@ class ConvKernelDefault : public ConvKernel {
       Vision::Depthwise<D, float>(
           in_data, input->shape(), weight_data, bias_data, kernel_size_h,
           kernel_size_w, stride_h, stride_w, pad_h, pad_w, dilation, bias_term,
-          output->shape(), out_data, ws->Ctx());
+          output->shape(), out_data, ws->Ctx().get());
     } else {
       int out_spatial_dim = output->count(2);
       int kernel_dim = kernel_size_h * kernel_size_w * in_c / group;
@@ -82,25 +82,25 @@ class ConvKernelDefault : public ConvKernel {
         Vision::Im2Col<D, float>(
             in_data, input->shape(), b * in_num, kernel_size_h, kernel_size_w,
             stride_h, stride_w, pad_h, pad_w, dilation, 0, output->shape(),
-            col_image->mutable_data<float>(), ws->Ctx());
+            col_image->mutable_data<float>(), ws->Ctx().get());
         for (int g = 0; g < group; ++g) {
-          Blas::BlasSgemm<D, float>(0, 0, num_output / group, out_spatial_dim,
-                                    kernel_dim, 1, weight_data,
-                                    weight_offset * g, col_image->data<float>(),
-                                    col_offset * g, 0, out_data,
-                                    b * out_num + output_offset * g, ws->Ctx());
+          Blas::BlasSgemm<D, float>(
+              0, 0, num_output / group, out_spatial_dim, kernel_dim, 1,
+              weight_data, weight_offset * g, col_image->data<float>(),
+              col_offset * g, 0, out_data, b * out_num + output_offset * g,
+              ws->Ctx().get());
         }
       }
 
       if (bias_term) {
         Vision::Bias<D, float>(out_data, output->count(), bias_data, num_output,
-                               out_spatial_dim, out_data, ws->Ctx());
+                               out_spatial_dim, out_data, ws->Ctx().get());
       }
     }
 
     if (activate_type == 1) {
       Vision::Activate<D, float>(out_data, out_data, output->count(),
-                                 activate_type, 0, ws->Ctx());
+                                 activate_type, 0, ws->Ctx().get());
     }
   }
 

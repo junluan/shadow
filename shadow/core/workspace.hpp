@@ -14,7 +14,7 @@ class Workspace {
  public:
   explicit Workspace(const ArgumentHelper& arguments);
 
-  Context* Ctx();
+  std::shared_ptr<Context>& Ctx();
 
   bool HasBlob(const std::string& name) const;
 

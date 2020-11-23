@@ -35,8 +35,8 @@ void Native::LoadModel(const std::string& proto_str, const void* weights_data) {
   CopyWeights(net_param, weights_data);
 }
 
-void Native::Forward(const std::map<std::string, void*>& data_map,
-                     const std::map<std::string, std::vector<int>>& shape_map) {
+void Native::Run(const std::map<std::string, void*>& data_map,
+                 const std::map<std::string, std::vector<int>>& shape_map) {
   if (ops_.empty()) return;
 
   for (const auto& in_map : data_map) {
@@ -159,7 +159,7 @@ void Native::Initial(const shadow::NetParam& net_param) {
 
   ops_.clear(), in_blob_.clear();
   for (const auto& op_param : net_param.op()) {
-    ops_.emplace_back(CreateOperator(op_param, ws_));
+    ops_.emplace_back(CreateOperator(op_param, ws_.get()));
 
     if (op_param.type() == "Input") {
       CHECK(in_blob_.empty());

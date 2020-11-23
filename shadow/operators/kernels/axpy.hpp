@@ -33,7 +33,7 @@ class AxpyKernelDefault : public AxpyKernel {
            Workspace* ws) override {
     Vision::Axpy<D, float>(alpha->data<float>(), x->data<float>(),
                            y->data<float>(), alpha->count(), x->count(2),
-                           output->mutable_data<float>(), ws->Ctx());
+                           output->mutable_data<float>(), ws->Ctx().get());
   }
 
   DeviceType device_type() const override { return D; }

@@ -44,15 +44,15 @@ class SSDNormalizeKernelDefault : public SSDNormalizeKernel {
         spatial_dim = input->count(2);
     int count = input->count(), num = input->num();
 
-    Blas::Square<D, float>(count, in_data, 0, out_data, 0, ws->Ctx());
+    Blas::Square<D, float>(count, in_data, 0, out_data, 0, ws->Ctx().get());
 
     if (across_spatial) {
       for (int b = 0; b < batch; ++b) {
         int offset = b * num;
         float sum = 0;
-        Blas::BlasSasum<D, float>(num, out_data, offset, &sum, ws->Ctx());
+        Blas::BlasSasum<D, float>(num, out_data, offset, &sum, ws->Ctx().get());
         Blas::Mul<D, float>(num, in_data, offset, 1.f / std::sqrt(sum + eps),
-                            out_data, offset, ws->Ctx());
+                            out_data, offset, ws->Ctx().get());
       }
     } else {
       ws->GrowTempBuffer(batch * spatial_dim * sizeof(float));
@@ -61,7 +61,7 @@ class SSDNormalizeKernelDefault : public SSDNormalizeKernel {
 
       Vision::SSDNormalize<D, float>(in_data, batch, channel, spatial_dim, eps,
                                      scalar->mutable_data<float>(), out_data,
-                                     ws->Ctx());
+                                     ws->Ctx().get());
     }
 
     if (scale != nullptr) {
@@ -69,10 +69,11 @@ class SSDNormalizeKernelDefault : public SSDNormalizeKernel {
         CHECK_EQ(scale->count(), 1);
         float scale_data = 1;
         scale->get_data<float>(&scale_data, 1);
-        Blas::BlasSscal<D, float>(count, scale_data, out_data, 0, ws->Ctx());
+        Blas::BlasSscal<D, float>(count, scale_data, out_data, 0,
+                                  ws->Ctx().get());
       } else {
         Vision::Scale<D, float>(out_data, count, scale->data<float>(), channel,
-                                spatial_dim, out_data, ws->Ctx());
+                                spatial_dim, out_data, ws->Ctx().get());
       }
     }
   }

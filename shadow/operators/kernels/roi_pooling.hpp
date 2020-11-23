@@ -32,10 +32,10 @@ class ROIPoolingKernelDefault : public ROIPoolingKernel {
   void Run(const std::shared_ptr<Blob>& input, const std::shared_ptr<Blob>& roi,
            std::shared_ptr<Blob>& output, Workspace* ws, int pooled_h,
            int pooled_w, float spatial_scale) override {
-    Vision::ROIPooling<D, float>(input->data<float>(), input->shape(),
-                                 roi->data<float>(), roi->shape(0), pooled_h,
-                                 pooled_w, spatial_scale,
-                                 output->mutable_data<float>(), ws->Ctx());
+    Vision::ROIPooling<D, float>(
+        input->data<float>(), input->shape(), roi->data<float>(), roi->shape(0),
+        pooled_h, pooled_w, spatial_scale, output->mutable_data<float>(),
+        ws->Ctx().get());
   }
 
   DeviceType device_type() const override { return D; }

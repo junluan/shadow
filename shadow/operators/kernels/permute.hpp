@@ -56,7 +56,7 @@ class PermuteKernelDefault : public PermuteKernel {
     Vision::Permute<D, float>(input->data<float>(), input->count(),
                               input->num_axes(), order->data<int>(),
                               old_steps->data<int>(), new_steps->data<int>(),
-                              output->mutable_data<float>(), ws->Ctx());
+                              output->mutable_data<float>(), ws->Ctx().get());
   }
 
   DeviceType device_type() const override { return D; }

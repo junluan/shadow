@@ -35,22 +35,22 @@ class ConnectedKernelDefault : public ConnectedKernel {
     if (batch == 1) {
       if (transpose) {
         Blas::BlasSgemv<D, float>(0, num_output, in_num, 1, weight_data, 0,
-                                  in_data, 0, 0, out_data, 0, ws->Ctx());
+                                  in_data, 0, 0, out_data, 0, ws->Ctx().get());
       } else {
         Blas::BlasSgemv<D, float>(1, in_num, num_output, 1, weight_data, 0,
-                                  in_data, 0, 0, out_data, 0, ws->Ctx());
+                                  in_data, 0, 0, out_data, 0, ws->Ctx().get());
       }
       if (bias_term) {
         Blas::BlasSaxpy<D, float>(num_output, 1, bias_data, 0, out_data, 0,
-                                  ws->Ctx());
+                                  ws->Ctx().get());
       }
     } else {
       Blas::BlasSgemm<D, float>(0, transpose, batch, num_output, in_num, 1,
                                 in_data, 0, weight_data, 0, 0, out_data, 0,
-                                ws->Ctx());
+                                ws->Ctx().get());
       if (bias_term) {
         Vision::Bias<D, float>(out_data, output->count(), bias_data, num_output,
-                               1, out_data, ws->Ctx());
+                               1, out_data, ws->Ctx().get());
       }
     }
   }

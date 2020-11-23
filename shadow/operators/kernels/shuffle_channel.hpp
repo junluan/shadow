@@ -28,9 +28,9 @@ class ShuffleChannelKernelDefault : public ShuffleChannelKernel {
  public:
   void Run(const std::shared_ptr<Blob>& input, std::shared_ptr<Blob>& output,
            Workspace* ws, int group) override {
-    Vision::ShuffleChannel<D, float>(input->data<float>(), input->shape(0),
-                                     input->shape(1), input->count(2), group,
-                                     output->mutable_data<float>(), ws->Ctx());
+    Vision::ShuffleChannel<D, float>(
+        input->data<float>(), input->shape(0), input->shape(1), input->count(2),
+        group, output->mutable_data<float>(), ws->Ctx().get());
   }
 
   DeviceType device_type() const override { return D; }

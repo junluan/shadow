@@ -41,7 +41,7 @@ class ProposalKernelDefault : public ProposalKernel {
     Vision::Proposal<D, float>(
         anchors->data<float>(), score->data<float>(), delta->data<float>(),
         info->data<float>(), score->shape(), num_anchors, feat_stride, min_size,
-        proposals->mutable_data<float>(), ws->Ctx());
+        proposals->mutable_data<float>(), ws->Ctx().get());
   }
 
   DeviceType device_type() const override { return D; }

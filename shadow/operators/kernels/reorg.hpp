@@ -32,7 +32,7 @@ class ReorgKernelDefault : public ReorgKernel {
   void Run(const std::shared_ptr<Blob>& input, std::shared_ptr<Blob>& output,
            Workspace* ws, int type, int stride) override {
     Vision::Reorg<D, float>(input->data<float>(), input->shape(), type, stride,
-                            output->mutable_data<float>(), ws->Ctx());
+                            output->mutable_data<float>(), ws->Ctx().get());
   }
 
   DeviceType device_type() const override { return D; }

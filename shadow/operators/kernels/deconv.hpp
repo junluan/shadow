@@ -67,7 +67,7 @@ class DeconvKernelDefault : public DeconvKernel {
     int in_num = input->num(), out_num = output->num(),
         out_count = output->count();
 
-    Blas::Set<D, float>(out_count, 0, out_data, 0, ws->Ctx());
+    Blas::Set<D, float>(out_count, 0, out_data, 0, ws->Ctx().get());
 
     for (int b = 0; b < batch; ++b) {
       for (int g = 0; g < group; ++g) {
@@ -75,22 +75,22 @@ class DeconvKernelDefault : public DeconvKernel {
             1, 0, kernel_dim, conv_out_spatial_dim, in_c / group, 1,
             weight_data, weight_offset * g, in_data,
             b * in_num + output_offset * g, 0, col_image->mutable_data<float>(),
-            col_offset * g, ws->Ctx());
+            col_offset * g, ws->Ctx().get());
       }
       Vision::Col2Im<D, float>(col_image->data<float>(), output->shape(),
                                b * out_num, kernel_size_h, kernel_size_w,
                                stride_h, stride_w, pad_h, pad_w, dilation,
-                               input->shape(), out_data, ws->Ctx());
+                               input->shape(), out_data, ws->Ctx().get());
     }
 
     if (bias_term) {
       Vision::Bias<D, float>(out_data, out_count, bias_data, num_output,
-                             out_spatial_dim, out_data, ws->Ctx());
+                             out_spatial_dim, out_data, ws->Ctx().get());
     }
 
     if (activate_type == 1) {
       Vision::Activate<D, float>(out_data, out_data, out_count, activate_type,
-                                 0, ws->Ctx());
+                                 0, ws->Ctx().get());
     }
   }
 

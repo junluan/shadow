@@ -36,11 +36,11 @@ class PadKernelDefault : public PadKernel {
     if (paddings[0] == 0 && paddings[1] == 0 && paddings[2] == 0 &&
         paddings[3] == 0) {
       Blas::BlasScopy<D, float>(input->count(), in_data, 0, out_data, 0,
-                                ws->Ctx());
+                                ws->Ctx().get());
     } else {
-      Blas::Set<D, float>(output->count(), value, out_data, 0, ws->Ctx());
+      Blas::Set<D, float>(output->count(), value, out_data, 0, ws->Ctx().get());
       Vision::Pad<D, float>(in_data, input->shape(), paddings, output->shape(),
-                            out_data, ws->Ctx());
+                            out_data, ws->Ctx().get());
     }
   }
 

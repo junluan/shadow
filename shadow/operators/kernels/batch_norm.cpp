@@ -49,10 +49,10 @@ class BatchNormKernelDNNL : public BatchNormKernel {
 
     Blas::Mul<DeviceType::kCPU, float>(
         channel, mean->data<float>(), 0, scale_factor,
-        mean_dnnl->mutable_data<float>(), 0, ws->Ctx());
+        mean_dnnl->mutable_data<float>(), 0, ws->Ctx().get());
     Blas::Mul<DeviceType::kCPU, float>(
         channel, variance->data<float>(), 0, scale_factor,
-        variance_dnnl->mutable_data<float>(), 0, ws->Ctx());
+        variance_dnnl->mutable_data<float>(), 0, ws->Ctx().get());
 
     const auto& in_out_desc = idnnl::create_memory_desc<float>(
         input->shape(), idnnl::get_memory_format(input->num_axes()));

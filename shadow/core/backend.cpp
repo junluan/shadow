@@ -1,5 +1,7 @@
 #include "backend.hpp"
 
+#include "library_loader.hpp"
+
 #include "util/util.hpp"
 
 namespace Shadow {
@@ -28,14 +30,29 @@ class StaticLinkingProtector {
   }
 };
 
-std::shared_ptr<Backend> CreateBackend(const ArgumentHelper& arguments,
-                                       Workspace* ws) {
+std::shared_ptr<Backend> CreateBackend(const ArgumentHelper& arguments) {
   static StaticLinkingProtector g_protector;
   CHECK(arguments.HasArgument("backend_type"));
   const auto& backend_type =
       arguments.GetSingleArgument<std::string>("backend_type", "");
+  CHECK(!backend_type.empty());
+  if (!BackendRegistry()->Has(backend_type)) {
+    auto backend_library =
+        arguments.GetSingleArgument<std::string>("backend_library", "");
+    if (backend_library.empty()) {
+      auto backend_type_lower = backend_type;
+      std::transform(backend_type.begin(), backend_type.end(),
+                     backend_type_lower.begin(), ::tolower);
+      backend_library =
+          LibraryLoader::GetRuntimeLibraryPath() + "/" +
+          LibraryLoader::GetSharedName("backend_" + backend_type_lower);
+    }
+    static auto library_loader = LibraryLoader();
+    CHECK(library_loader.Load(backend_library))
+        << "Can not load backend library: " << backend_library;
+  }
   auto backend = std::shared_ptr<Backend>(
-      BackendRegistry()->Create(backend_type, arguments, ws));
+      BackendRegistry()->Create(backend_type, arguments));
   CHECK_NOTNULL(backend)
       << "Backend type: " << backend_type
       << " is not registered, currently registered backend types: "
@@ -43,7 +60,6 @@ std::shared_ptr<Backend> CreateBackend(const ArgumentHelper& arguments,
   return backend;
 }
 
-SHADOW_DEFINE_REGISTRY(BackendRegistry, Backend, const ArgumentHelper&,
-                       Workspace*);
+SHADOW_DEFINE_REGISTRY(BackendRegistry, Backend, const ArgumentHelper&);
 
 }  // namespace Shadow

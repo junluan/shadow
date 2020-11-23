@@ -69,7 +69,7 @@ class DecodeBoxKernelDefault : public DecodeBoxKernel {
         mbox_loc->data<float>(), mbox_conf->data<float>(),
         mbox_priorbox->data<float>(), output->shape(0), output->shape(1),
         num_classes, output_max_score, output->mutable_data<float>(),
-        ws->Ctx());
+        ws->Ctx().get());
   }
 
   void Run(const std::shared_ptr<Blob>& odm_loc,
@@ -84,7 +84,7 @@ class DecodeBoxKernelDefault : public DecodeBoxKernel {
         arm_priorbox->data<float>(), arm_conf->data<float>(),
         arm_loc->data<float>(), output->shape(0), output->shape(1), num_classes,
         background_label_id, objectness_score, output_max_score,
-        output->mutable_data<float>(), ws->Ctx());
+        output->mutable_data<float>(), ws->Ctx().get());
   }
 
   void Run(const std::vector<std::shared_ptr<Blob>>& inputs,
@@ -102,7 +102,7 @@ class DecodeBoxKernelDefault : public DecodeBoxKernel {
       int mask = masks[n], out_h = input->shape(1), out_w = input->shape(2);
       Vision::DecodeYoloV3Boxes<D, float>(
           input->data<float>(), biases_data, batch, num_priors, out_h, out_w,
-          mask, num_classes, output_max_score, out_data, ws->Ctx());
+          mask, num_classes, output_max_score, out_data, ws->Ctx().get());
       biases_data += mask * 2;
       out_data += out_h * out_w * mask * out_stride;
     }

@@ -8,9 +8,10 @@ namespace Shadow {
 
 class Native : public Backend {
  public:
-  Native(const ArgumentHelper& arguments, Workspace* ws) : Backend(ws) {
+  explicit Native(const ArgumentHelper& arguments) {
     device_input_ = arguments.GetSingleArgument<bool>("device_input", false);
     debug_ = arguments.GetSingleArgument<bool>("debug", false);
+    ws_ = std::make_shared<Workspace>(arguments);
   }
 
   void LoadModel(const shadow::NetParam& net_param) override;
@@ -21,9 +22,8 @@ class Native : public Backend {
                  const std::vector<const void*>& weights);
   void LoadModel(const std::string& proto_str, const void* weights_data);
 
-  void Forward(
-      const std::map<std::string, void*>& data_map,
-      const std::map<std::string, std::vector<int>>& shape_map) override;
+  void Run(const std::map<std::string, void*>& data_map,
+           const std::map<std::string, std::vector<int>>& shape_map) override;
 
   void SaveEngine(const std::string& save_path,
                   std::map<std::string, std::vector<char>>* save_data) override;

@@ -94,9 +94,9 @@ class GroupNormKernelCUDNN : public GroupNormKernel {
     auto bias_cudnn = ws->CreateTempBlob({outer_num}, DataType::kF32);
 
     Blas::Set<DeviceType::kGPU, float>(
-        outer_num, 1, scale_cudnn->mutable_data<float>(), 0, ws->Ctx());
+        outer_num, 1, scale_cudnn->mutable_data<float>(), 0, ws->Ctx().get());
     Blas::Set<DeviceType::kGPU, float>(
-        outer_num, 0, bias_cudnn->mutable_data<float>(), 0, ws->Ctx());
+        outer_num, 0, bias_cudnn->mutable_data<float>(), 0, ws->Ctx().get());
 
     double eps_d = eps > CUDNN_BN_MIN_EPSILON ? eps : CUDNN_BN_MIN_EPSILON;
 
@@ -113,7 +113,7 @@ class GroupNormKernelCUDNN : public GroupNormKernel {
       CHECK_EQ(bias->count(), channel);
       Vision::ScaleBias<DeviceType::kGPU, float>(
           out_data, count, scale->data<float>(), bias->data<float>(), channel,
-          spatial_dim, out_data, ws->Ctx());
+          spatial_dim, out_data, ws->Ctx().get());
     }
   }
 

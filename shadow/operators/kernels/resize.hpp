@@ -38,12 +38,13 @@ class ResizeKernelDefault : public ResizeKernel {
 
     if (out_h == in_h && out_w == in_w) {
       Blas::BlasScopy<D, float>(input->count(), input->data<float>(), 0,
-                                output->mutable_data<float>(), 0, ws->Ctx());
+                                output->mutable_data<float>(), 0,
+                                ws->Ctx().get());
     } else {
       // Nearest: 0, Bilinear: 1
       Vision::Resize<D, float>(input->data<float>(), input->shape(), type,
                                align_corners, output->shape(),
-                               output->mutable_data<float>(), ws->Ctx());
+                               output->mutable_data<float>(), ws->Ctx().get());
     }
   }
 

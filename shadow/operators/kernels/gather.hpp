@@ -34,7 +34,7 @@ class GatherKernelDefault : public GatherKernel {
     Vision::Gather<D, float>(input->data<float>(), indexes->data<int>(),
                              indexes->count(), input->shape(axis),
                              input->count(axis + 1), output->count(),
-                             output->mutable_data<float>(), ws->Ctx());
+                             output->mutable_data<float>(), ws->Ctx().get());
   }
 
   DeviceType device_type() const override { return D; }

@@ -48,7 +48,7 @@ class DeformPSROIPoolingKernelDefault : public DeformPSROIPoolingKernel {
         input->data<float>(), input->shape(), roi->data<float>(), trans_data,
         trans_shape, roi->shape(0), output_dim, group_size, pooled_size,
         part_size, sample_per_part, spatial_scale, trans_std, no_trans,
-        output->mutable_data<float>(), ws->Ctx());
+        output->mutable_data<float>(), ws->Ctx().get());
   }
 
   DeviceType device_type() const override { return D; }

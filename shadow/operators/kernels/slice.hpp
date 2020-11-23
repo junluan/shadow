@@ -40,7 +40,7 @@ class SliceKernelDefault : public SliceKernel {
       Vision::Slice<D, float>(input->data<float>(), output->count(), num_slices,
                               slice_size, in_slice_axis, out_slice_axis,
                               offset_slice_axis, output->mutable_data<float>(),
-                              ws->Ctx());
+                              ws->Ctx().get());
       offset_slice_axis += out_slice_axis;
     }
   }

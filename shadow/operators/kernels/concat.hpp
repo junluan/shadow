@@ -38,7 +38,7 @@ class ConcatKernelDefault : public ConcatKernel {
       Vision::Concat<D, float>(input->data<float>(), input->count(),
                                num_concats, concat_size, out_concat_axis,
                                in_concat_axis, offset_concat_axis,
-                               output->mutable_data<float>(), ws->Ctx());
+                               output->mutable_data<float>(), ws->Ctx().get());
       offset_concat_axis += in_concat_axis;
     }
   }

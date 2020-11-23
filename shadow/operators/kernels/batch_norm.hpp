@@ -43,7 +43,7 @@ class BatchNormKernelDefault : public BatchNormKernel {
     Vision::BatchNorm<D, float>(input->data<float>(), input->count(),
                                 mean->data<float>(), variance->data<float>(),
                                 channel, input->count(2), scale_factor, eps,
-                                output->mutable_data<float>(), ws->Ctx());
+                                output->mutable_data<float>(), ws->Ctx().get());
   }
 
   DeviceType device_type() const override { return D; }

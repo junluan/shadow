@@ -56,23 +56,23 @@ class GroupNormKernelDefault : public GroupNormKernel {
 
     Blas::Set<D, float>(inner_num, 1,
                         sum_inner_multiplier->mutable_data<float>(), 0,
-                        ws->Ctx());
+                        ws->Ctx().get());
 
     Blas::BlasSgemv<D, float>(0, outer_num, inner_num, 1.f / inner_num, in_data,
                               0, sum_inner_multiplier->data<float>(), 0, 0,
-                              mean->mutable_data<float>(), 0, ws->Ctx());
+                              mean->mutable_data<float>(), 0, ws->Ctx().get());
 
     Vision::SubtractMeanAndSquare<D, float>(
         in_data, mean->data<float>(), count, inner_num, out_data,
-        temp->mutable_data<float>(), ws->Ctx());
+        temp->mutable_data<float>(), ws->Ctx().get());
 
-    Blas::BlasSgemv<D, float>(0, outer_num, inner_num, 1.f / inner_num,
-                              temp->data<float>(), 0,
-                              sum_inner_multiplier->data<float>(), 0, 0,
-                              variance->mutable_data<float>(), 0, ws->Ctx());
+    Blas::BlasSgemv<D, float>(
+        0, outer_num, inner_num, 1.f / inner_num, temp->data<float>(), 0,
+        sum_inner_multiplier->data<float>(), 0, 0,
+        variance->mutable_data<float>(), 0, ws->Ctx().get());
 
     Vision::DivideVariance<D, float>(out_data, variance->data<float>(), count,
-                                     inner_num, eps, out_data, ws->Ctx());
+                                     inner_num, eps, out_data, ws->Ctx().get());
 
     if (scale != nullptr && bias != nullptr) {
       int channel = input->shape(1), spatial_dim = input->count(2);
@@ -80,7 +80,7 @@ class GroupNormKernelDefault : public GroupNormKernel {
       CHECK_EQ(bias->count(), channel);
       Vision::ScaleBias<D, float>(out_data, count, scale->data<float>(),
                                   bias->data<float>(), channel, spatial_dim,
-                                  out_data, ws->Ctx());
+                                  out_data, ws->Ctx().get());
     }
   }
 

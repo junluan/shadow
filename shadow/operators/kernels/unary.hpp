@@ -43,37 +43,50 @@ class UnaryKernelDefault : public UnaryKernel {
 
     switch (operation) {
       case kAbs:
-        return Blas::Abs<D, float>(count, in_data, 0, out_data, 0, ws->Ctx());
+        return Blas::Abs<D, float>(count, in_data, 0, out_data, 0,
+                                   ws->Ctx().get());
       case kSquare:
         return Blas::Square<D, float>(count, in_data, 0, out_data, 0,
-                                      ws->Ctx());
+                                      ws->Ctx().get());
       case kSqrt:
-        return Blas::Sqrt<D, float>(count, in_data, 0, out_data, 0, ws->Ctx());
+        return Blas::Sqrt<D, float>(count, in_data, 0, out_data, 0,
+                                    ws->Ctx().get());
       case kLog:
-        return Blas::Log<D, float>(count, in_data, 0, out_data, 0, ws->Ctx());
+        return Blas::Log<D, float>(count, in_data, 0, out_data, 0,
+                                   ws->Ctx().get());
       case kExp:
-        return Blas::Exp<D, float>(count, in_data, 0, out_data, 0, ws->Ctx());
+        return Blas::Exp<D, float>(count, in_data, 0, out_data, 0,
+                                   ws->Ctx().get());
       case kSin:
-        return Blas::Sin<D, float>(count, in_data, 0, out_data, 0, ws->Ctx());
+        return Blas::Sin<D, float>(count, in_data, 0, out_data, 0,
+                                   ws->Ctx().get());
       case kCos:
-        return Blas::Cos<D, float>(count, in_data, 0, out_data, 0, ws->Ctx());
+        return Blas::Cos<D, float>(count, in_data, 0, out_data, 0,
+                                   ws->Ctx().get());
       case kTan:
-        return Blas::Tan<D, float>(count, in_data, 0, out_data, 0, ws->Ctx());
+        return Blas::Tan<D, float>(count, in_data, 0, out_data, 0,
+                                   ws->Ctx().get());
       case kAsin:
-        return Blas::Asin<D, float>(count, in_data, 0, out_data, 0, ws->Ctx());
+        return Blas::Asin<D, float>(count, in_data, 0, out_data, 0,
+                                    ws->Ctx().get());
       case kAcos:
-        return Blas::Acos<D, float>(count, in_data, 0, out_data, 0, ws->Ctx());
+        return Blas::Acos<D, float>(count, in_data, 0, out_data, 0,
+                                    ws->Ctx().get());
       case kAtan:
-        return Blas::Atan<D, float>(count, in_data, 0, out_data, 0, ws->Ctx());
+        return Blas::Atan<D, float>(count, in_data, 0, out_data, 0,
+                                    ws->Ctx().get());
       case kFloor:
-        return Blas::Floor<D, float>(count, in_data, 0, out_data, 0, ws->Ctx());
+        return Blas::Floor<D, float>(count, in_data, 0, out_data, 0,
+                                     ws->Ctx().get());
       case kCeil:
-        return Blas::Ceil<D, float>(count, in_data, 0, out_data, 0, ws->Ctx());
+        return Blas::Ceil<D, float>(count, in_data, 0, out_data, 0,
+                                    ws->Ctx().get());
       case kNeg:
-        return Blas::Neg<D, float>(count, in_data, 0, out_data, 0, ws->Ctx());
+        return Blas::Neg<D, float>(count, in_data, 0, out_data, 0,
+                                   ws->Ctx().get());
       case kReciprocal:
         return Blas::Reciprocal<D, float>(count, in_data, 0, out_data, 0,
-                                          ws->Ctx());
+                                          ws->Ctx().get());
       default:
         LOG(FATAL) << "Unknown unary operation " << operation;
     }

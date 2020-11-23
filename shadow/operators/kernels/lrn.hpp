@@ -35,7 +35,7 @@ class LRNKernelDefault : public LRNKernel {
 
     Vision::LRN<D, float>(input->data<float>(), input->shape(), size, alpha,
                           beta, k, scale->mutable_data<float>(),
-                          output->mutable_data<float>(), ws->Ctx());
+                          output->mutable_data<float>(), ws->Ctx().get());
   }
 
   DeviceType device_type() const override { return D; }

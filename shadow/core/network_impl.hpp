@@ -9,25 +9,25 @@ class NetworkImpl {
  public:
   void LoadXModel(const shadow::NetParam& net_param,
                   const ArgumentHelper& arguments) {
-    ws_ = std::make_shared<Workspace>(arguments);
-    backend_ = CreateBackend(arguments, ws_.get());
+    backend_ = CreateBackend(arguments);
     backend_->LoadModel(net_param);
   }
 
   void Forward(const std::map<std::string, void*>& data_map,
                const std::map<std::string, std::vector<int>>& shape_map) {
-    ws_->Ctx()->switch_device();
-
     CHECK_NOTNULL(backend_);
-    backend_->Forward(data_map, shape_map);
 
-    ws_->Ctx()->synchronize();
+    backend_->ws()->Ctx()->switch_device();
+
+    backend_->Run(data_map, shape_map);
+
+    backend_->ws()->Ctx()->synchronize();
   }
 
   template <typename T>
   const T* GetBlobDataByName(const std::string& blob_name,
                              const std::string& locate) {
-    auto blob = ws_->GetBlob(blob_name);
+    auto blob = backend_->ws()->GetBlob(blob_name);
     CHECK_NOTNULL(blob) << "Unknown blob: " + blob_name;
     if (locate == "host") {
       return blob->cpu_data<T>();
@@ -37,7 +37,7 @@ class NetworkImpl {
   }
 
   std::vector<int> GetBlobShapeByName(const std::string& blob_name) const {
-    return ws_->GetBlobShape(blob_name);
+    return backend_->ws()->GetBlobShape(blob_name);
   }
 
   std::shared_ptr<Backend>& GetBackend() { return backend_; }
@@ -63,7 +63,6 @@ class NetworkImpl {
   }
 
  private:
-  std::shared_ptr<Workspace> ws_ = nullptr;
   std::shared_ptr<Backend> backend_ = nullptr;
 };
 

@@ -37,7 +37,7 @@ class SoftmaxKernelDefault : public SoftmaxKernel {
 
     Vision::Softmax<D, float>(input->data<float>(), outer_num, dim, inner_num,
                               scalar->mutable_data<float>(),
-                              output->mutable_data<float>(), ws->Ctx());
+                              output->mutable_data<float>(), ws->Ctx().get());
   }
 
   DeviceType device_type() const override { return D; }

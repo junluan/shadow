@@ -47,25 +47,25 @@ class BinaryKernelDefault : public BinaryKernel {
     switch (operation) {
       case kAdd:
         return Blas::Add<D, float>(count, in_data, 0, scalar_value, out_data, 0,
-                                   ws->Ctx());
+                                   ws->Ctx().get());
       case kSub:
         return Blas::Sub<D, float>(count, in_data, 0, scalar_value, out_data, 0,
-                                   ws->Ctx());
+                                   ws->Ctx().get());
       case kMul:
         return Blas::Mul<D, float>(count, in_data, 0, scalar_value, out_data, 0,
-                                   ws->Ctx());
+                                   ws->Ctx().get());
       case kDiv:
         return Blas::Div<D, float>(count, in_data, 0, scalar_value, out_data, 0,
-                                   ws->Ctx());
+                                   ws->Ctx().get());
       case kPow:
         return Blas::Pow<D, float>(count, in_data, 0, scalar_value, out_data, 0,
-                                   ws->Ctx());
+                                   ws->Ctx().get());
       case kMax:
         return Blas::Max<D, float>(count, in_data, 0, scalar_value, out_data, 0,
-                                   ws->Ctx());
+                                   ws->Ctx().get());
       case kMin:
         return Blas::Min<D, float>(count, in_data, 0, scalar_value, out_data, 0,
-                                   ws->Ctx());
+                                   ws->Ctx().get());
       default:
         LOG(FATAL) << "Unknown binary operation " << operation;
     }
@@ -94,32 +94,32 @@ class BinaryKernelDefault : public BinaryKernel {
       Vision::BroadcastBinary<D, float>(
           in_data, in_shape->data<int>(), scalar_data,
           scalar_shape->data<int>(), operation, num_axes, output->count(),
-          out_shape->data<int>(), out_data, ws->Ctx());
+          out_shape->data<int>(), out_data, ws->Ctx().get());
     } else {
       int count = input->count();
 
       switch (operation) {
         case kAdd:
           return Blas::Add<D, float>(count, in_data, 0, scalar_data, 0,
-                                     out_data, 0, ws->Ctx());
+                                     out_data, 0, ws->Ctx().get());
         case kSub:
           return Blas::Sub<D, float>(count, in_data, 0, scalar_data, 0,
-                                     out_data, 0, ws->Ctx());
+                                     out_data, 0, ws->Ctx().get());
         case kMul:
           return Blas::Mul<D, float>(count, in_data, 0, scalar_data, 0,
-                                     out_data, 0, ws->Ctx());
+                                     out_data, 0, ws->Ctx().get());
         case kDiv:
           return Blas::Div<D, float>(count, in_data, 0, scalar_data, 0,
-                                     out_data, 0, ws->Ctx());
+                                     out_data, 0, ws->Ctx().get());
         case kPow:
           return Blas::Pow<D, float>(count, in_data, 0, scalar_data, 0,
-                                     out_data, 0, ws->Ctx());
+                                     out_data, 0, ws->Ctx().get());
         case kMax:
           return Blas::Max<D, float>(count, in_data, 0, scalar_data, 0,
-                                     out_data, 0, ws->Ctx());
+                                     out_data, 0, ws->Ctx().get());
         case kMin:
           return Blas::Min<D, float>(count, in_data, 0, scalar_data, 0,
-                                     out_data, 0, ws->Ctx());
+                                     out_data, 0, ws->Ctx().get());
         default:
           LOG(FATAL) << "Unknown binary operation " << operation;
       }

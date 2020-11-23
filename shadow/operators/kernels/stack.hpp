@@ -35,7 +35,7 @@ class StackKernelDefault : public StackKernel {
     for (int n = 0; n < inputs.size(); ++n) {
       Vision::Stack<D, float>(inputs[n]->data<float>(), inputs[n]->count(),
                               num_stacks, stack_size, out_stack_axis, n,
-                              output->mutable_data<float>(), ws->Ctx());
+                              output->mutable_data<float>(), ws->Ctx().get());
     }
   }
 

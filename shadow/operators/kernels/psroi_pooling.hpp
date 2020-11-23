@@ -38,7 +38,7 @@ class PSROIPoolingKernelDefault : public PSROIPoolingKernel {
     Vision::PSROIPooling<D, float>(
         input->data<float>(), input->shape(), roi->data<float>(), roi->shape(0),
         output_dim, group_size, pooled_h, pooled_w, spatial_scale,
-        output->mutable_data<float>(), ws->Ctx());
+        output->mutable_data<float>(), ws->Ctx().get());
   }
 
   DeviceType device_type() const override { return D; }

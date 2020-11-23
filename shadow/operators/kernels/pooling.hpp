@@ -37,7 +37,7 @@ class PoolingKernelDefault : public PoolingKernel {
     Vision::Pooling<D, float>(input->data<float>(), input->shape(), pool_type,
                               kernel_size_h, kernel_size_w, stride_h, stride_w,
                               pad_h, pad_w, output->shape(),
-                              output->mutable_data<float>(), ws->Ctx());
+                              output->mutable_data<float>(), ws->Ctx().get());
   }
 
   DeviceType device_type() const override { return D; }

@@ -29,35 +29,35 @@ class EltwiseKernelDefault : public EltwiseKernel {
       case kProd:
         Blas::Mul<D, float>(count, inputs[0]->data<float>(), 0,
                             inputs[1]->data<float>(), 0, out_data, 0,
-                            ws->Ctx());
+                            ws->Ctx().get());
         for (int n = 2; n < inputs.size(); ++n) {
           Blas::Mul<D, float>(count, out_data, 0, inputs[n]->data<float>(), 0,
-                              out_data, 0, ws->Ctx());
+                              out_data, 0, ws->Ctx().get());
         }
         break;
       case kSum:
-        Blas::Set<D, float>(count, 0, out_data, 0, ws->Ctx());
+        Blas::Set<D, float>(count, 0, out_data, 0, ws->Ctx().get());
         for (int n = 0; n < inputs.size(); ++n) {
           Blas::BlasSaxpy<D, float>(count, coeff[n], inputs[n]->data<float>(),
-                                    0, out_data, 0, ws->Ctx());
+                                    0, out_data, 0, ws->Ctx().get());
         }
         break;
       case kMax:
         Blas::Max<D, float>(count, inputs[0]->data<float>(), 0,
                             inputs[1]->data<float>(), 0, out_data, 0,
-                            ws->Ctx());
+                            ws->Ctx().get());
         for (int n = 2; n < inputs.size(); ++n) {
           Blas::Max<D, float>(count, out_data, 0, inputs[n]->data<float>(), 0,
-                              out_data, 0, ws->Ctx());
+                              out_data, 0, ws->Ctx().get());
         }
         break;
       case kMin:
         Blas::Min<D, float>(count, inputs[0]->data<float>(), 0,
                             inputs[1]->data<float>(), 0, out_data, 0,
-                            ws->Ctx());
+                            ws->Ctx().get());
         for (int n = 2; n < inputs.size(); ++n) {
           Blas::Min<D, float>(count, out_data, 0, inputs[n]->data<float>(), 0,
-                              out_data, 0, ws->Ctx());
+                              out_data, 0, ws->Ctx().get());
         }
         break;
       default:

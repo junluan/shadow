@@ -83,15 +83,15 @@ class BatchNormKernelCUDNN : public BatchNormKernel {
 
     Blas::Mul<DeviceType::kGPU, float>(
         channel, mean->data<float>(), 0, scale_factor,
-        mean_cudnn->mutable_data<float>(), 0, ws->Ctx());
+        mean_cudnn->mutable_data<float>(), 0, ws->Ctx().get());
     Blas::Mul<DeviceType::kGPU, float>(
         channel, variance->data<float>(), 0, scale_factor,
-        variance_cudnn->mutable_data<float>(), 0, ws->Ctx());
+        variance_cudnn->mutable_data<float>(), 0, ws->Ctx().get());
 
     Blas::Set<DeviceType::kGPU, float>(
-        channel, 1, scale_cudnn->mutable_data<float>(), 0, ws->Ctx());
+        channel, 1, scale_cudnn->mutable_data<float>(), 0, ws->Ctx().get());
     Blas::Set<DeviceType::kGPU, float>(
-        channel, 0, bias_cudnn->mutable_data<float>(), 0, ws->Ctx());
+        channel, 0, bias_cudnn->mutable_data<float>(), 0, ws->Ctx().get());
 
     double eps_d = eps > CUDNN_BN_MIN_EPSILON ? eps : CUDNN_BN_MIN_EPSILON;
 

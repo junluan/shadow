@@ -37,7 +37,7 @@ class MatMulKernelDefault : public MatMulKernel {
       Blas::BlasSgemm<D, float>(
           transpose_a, transpose_b, M, N, K, 1, input_a->data<float>(),
           n * inner_num_a, input_b->data<float>(), n * inner_num_b, 0,
-          output->mutable_data<float>(), n * inner_num, ws->Ctx());
+          output->mutable_data<float>(), n * inner_num, ws->Ctx().get());
     }
   }
 

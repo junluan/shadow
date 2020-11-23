@@ -81,9 +81,10 @@ class ReduceKernelDefault : public ReduceKernel {
     list->set_data<int>(list_value_.data(), num_list);
     offset->set_data<int>(offset_value_.data(), num_offset);
 
-    Vision::Reduce<D, float>(
-        input->data<float>(), list->data<int>(), offset->data<int>(), num_list,
-        operation, output->count(), output->mutable_data<float>(), ws->Ctx());
+    Vision::Reduce<D, float>(input->data<float>(), list->data<int>(),
+                             offset->data<int>(), num_list, operation,
+                             output->count(), output->mutable_data<float>(),
+                             ws->Ctx().get());
   }
 
   DeviceType device_type() const override { return D; }

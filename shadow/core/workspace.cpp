@@ -16,10 +16,7 @@ Workspace::Workspace(const ArgumentHelper& arguments) {
 #endif
 }
 
-Context* Workspace::Ctx() {
-  CHECK_NOTNULL(context_);
-  return context_.get();
-}
+std::shared_ptr<Context>& Workspace::Ctx() { return context_; }
 
 bool Workspace::HasBlob(const std::string& name) const {
   return static_cast<bool>(blob_map_.count(name));

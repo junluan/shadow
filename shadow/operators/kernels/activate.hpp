@@ -54,7 +54,7 @@ class ActivateKernelDefault : public ActivateKernel {
         activate_type == kTanh || activate_type == kRelu6 ||
         activate_type == kHardSwish) {
       Vision::Activate<D, float>(in_data, out_data, output->count(),
-                                 activate_type, slope_val, ws->Ctx());
+                                 activate_type, slope_val, ws->Ctx().get());
     } else if (activate_type == kPRelu) {
       CHECK_GE(input->num_axes(), 2);
       bool channel_shared = slope->count() == 1;
@@ -62,7 +62,8 @@ class ActivateKernelDefault : public ActivateKernel {
         CHECK_EQ(slope->count(), input->shape(1));
       }
       Vision::PRelu<D, float>(in_data, out_data, output->shape(),
-                              channel_shared, slope->data<float>(), ws->Ctx());
+                              channel_shared, slope->data<float>(),
+                              ws->Ctx().get());
     }
   }
 

@@ -57,15 +57,16 @@ class ScaleKernelDefault : public ScaleKernel {
       int inner_dim = input->count(axis + scale->num_axes());
       Vision::ScaleBias<D, float>(in_data, count, scale->data<float>(),
                                   bias->data<float>(), scale->count(),
-                                  inner_dim, out_data, ws->Ctx());
+                                  inner_dim, out_data, ws->Ctx().get());
     } else if (scale != nullptr) {
       int inner_dim = input->count(axis + scale->num_axes());
       Vision::Scale<D, float>(in_data, count, scale->data<float>(),
-                              scale->count(), inner_dim, out_data, ws->Ctx());
+                              scale->count(), inner_dim, out_data,
+                              ws->Ctx().get());
     } else {
       int inner_dim = input->count(axis + bias->num_axes());
       Vision::Bias<D, float>(in_data, count, bias->data<float>(), bias->count(),
-                             inner_dim, out_data, ws->Ctx());
+                             inner_dim, out_data, ws->Ctx().get());
     }
   }
 
@@ -90,21 +91,21 @@ class ScaleKernelDefault : public ScaleKernel {
       bias->set_data<float>(bias_value.data(), dim);
       Vision::ScaleBias<D, float>(in_data, count, scale->data<float>(),
                                   bias->data<float>(), dim, inner_dim, out_data,
-                                  ws->Ctx());
+                                  ws->Ctx().get());
     } else if (!scale_value.empty()) {
       CHECK_EQ(scale_value.size(), dim);
       ws->GrowTempBuffer(dim * sizeof(float));
       auto scale = ws->CreateTempBlob({dim}, DataType::kF32);
       scale->set_data<float>(scale_value.data(), dim);
       Vision::Scale<D, float>(in_data, count, scale->data<float>(), dim,
-                              inner_dim, out_data, ws->Ctx());
+                              inner_dim, out_data, ws->Ctx().get());
     } else {
       CHECK_EQ(bias_value.size(), dim);
       ws->GrowTempBuffer(dim * sizeof(float));
       auto bias = ws->CreateTempBlob({dim}, DataType::kF32);
       bias->set_data<float>(bias_value.data(), dim);
       Vision::Bias<D, float>(in_data, count, bias->data<float>(), dim,
-                             inner_dim, out_data, ws->Ctx());
+                             inner_dim, out_data, ws->Ctx().get());
     }
   }
 

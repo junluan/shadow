@@ -35,7 +35,7 @@ class GridSampleKernelDefault : public GridSampleKernel {
     Vision::GridSample<D, float>(input->data<float>(), input->shape(),
                                  grid->data<float>(), mode, padding_mode,
                                  output->shape(), output->mutable_data<float>(),
-                                 ws->Ctx());
+                                 ws->Ctx().get());
   }
 
   DeviceType device_type() const override { return D; }
