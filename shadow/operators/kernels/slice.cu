@@ -25,7 +25,7 @@ void Slice<DeviceType::kGPU, float>(const float* in_data, int count,
                                     int offset_slice_axis, float* out_data,
                                     Context* context) {
   KernelSlice<<<GetBlocks(count), NumThreads, 0,
-                cudaStream_t(context->cuda_stream())>>>(
+                cudaStream_t(context->stream())>>>(
       in_data, count, num_slices, slice_size, in_slice_axis, out_slice_axis,
       offset_slice_axis, out_data);
   CUDA_CHECK(cudaPeekAtLastError());

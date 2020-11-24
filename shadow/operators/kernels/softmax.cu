@@ -55,17 +55,17 @@ void Softmax<DeviceType::kGPU, float>(const float* in_data, int outer_num,
                                       float* out_data, Context* context) {
   int val_count = outer_num * inner_num, count = val_count * dim;
   KernelChannelMax<<<GetBlocks(val_count), NumThreads, 0,
-                     cudaStream_t(context->cuda_stream())>>>(
-      in_data, val_count, dim, inner_num, val_data);
+                     cudaStream_t(context->stream())>>>(in_data, val_count, dim,
+                                                        inner_num, val_data);
   KernelChannelSubExp<<<GetBlocks(count), NumThreads, 0,
-                        cudaStream_t(context->cuda_stream())>>>(
+                        cudaStream_t(context->stream())>>>(
       in_data, val_data, count, dim, inner_num, out_data);
   KernelChannelSum<<<GetBlocks(val_count), NumThreads, 0,
-                     cudaStream_t(context->cuda_stream())>>>(
+                     cudaStream_t(context->stream())>>>(
       out_data, val_count, dim, inner_num, val_data);
   KernelChannelDiv<<<GetBlocks(count), NumThreads, 0,
-                     cudaStream_t(context->cuda_stream())>>>(
-      val_data, count, dim, inner_num, out_data);
+                     cudaStream_t(context->stream())>>>(val_data, count, dim,
+                                                        inner_num, out_data);
   CUDA_CHECK(cudaPeekAtLastError());
 }
 

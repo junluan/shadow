@@ -57,7 +57,7 @@ void BroadcastBinary<DeviceType::kGPU, float>(
     const int* scalar_shape, int operation, int num_axes, int count,
     const int* out_shape, float* out_data, Context* context) {
   KernelBroadcastBinary<<<GetBlocks(count), NumThreads, 0,
-                          cudaStream_t(context->cuda_stream())>>>(
+                          cudaStream_t(context->stream())>>>(
       in_data, in_shape, scalar_data, scalar_shape, operation, num_axes, count,
       out_shape, out_data);
   CUDA_CHECK(cudaPeekAtLastError());

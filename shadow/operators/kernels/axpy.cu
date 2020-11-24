@@ -20,8 +20,8 @@ void Axpy<DeviceType::kGPU, float>(const float* alpha_data, const float* x_data,
                                    Context* context) {
   int count = outer_num * inner_num;
   KernelAxpy<<<GetBlocks(count), NumThreads, 0,
-               cudaStream_t(context->cuda_stream())>>>(
-      count, inner_num, alpha_data, x_data, y_data, out_data);
+               cudaStream_t(context->stream())>>>(count, inner_num, alpha_data,
+                                                  x_data, y_data, out_data);
   CUDA_CHECK(cudaPeekAtLastError());
 }
 

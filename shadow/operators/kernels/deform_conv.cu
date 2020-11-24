@@ -76,7 +76,7 @@ void DeformIm2Col<DeviceType::kGPU, float>(
   int out_h = out_shape[2], out_w = out_shape[3];
   int count = in_c * out_h * out_w;
   deform_im2col_gpu_kernel<<<GetBlocks(count), NumThreads, 0,
-                             cudaStream_t(context->cuda_stream())>>>(
+                             cudaStream_t(context->stream())>>>(
       count, in_data, in_data_offset, offset_data, offset_data_offset, in_h,
       in_w, kernel_size_h, kernel_size_w, stride_h, stride_w, pad_h, pad_w,
       dilation, zero_point, in_c / deform_group, out_h, out_w, col_data);

@@ -27,7 +27,7 @@ void ShuffleChannel<DeviceType::kGPU, float>(const float* in_data, int batch,
                                              Context* context) {
   int count = batch * channel * spatial_dim;
   KernelShuffleChannel<<<GetBlocks(count), NumThreads, 0,
-                         cudaStream_t(context->cuda_stream())>>>(
+                         cudaStream_t(context->stream())>>>(
       in_data, count, channel, spatial_dim, group, out_data);
   CUDA_CHECK(cudaPeekAtLastError());
 }

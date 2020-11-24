@@ -79,7 +79,7 @@ class BinaryKernelDNNL : public BinaryKernel {
         output->shape(), idnnl::get_memory_format(num_axes));
 
     try {
-      idnnl::binary_forward(ws->Ctx()->dnnl_engine(), ws->Ctx()->dnnl_stream(),
+      idnnl::binary_forward(ws->Ctx()->dnnl_handle(),
                             dnnl::binary::desc(get_algorithm(operation),
                                                src_desc, scalar_desc, dst_desc),
                             input->data<float>(), &scalar_value,
@@ -100,7 +100,7 @@ class BinaryKernelDNNL : public BinaryKernel {
         output->shape(), idnnl::get_memory_format(output->num_axes()));
 
     try {
-      idnnl::binary_forward(ws->Ctx()->dnnl_engine(), ws->Ctx()->dnnl_stream(),
+      idnnl::binary_forward(ws->Ctx()->dnnl_handle(),
                             dnnl::binary::desc(get_algorithm(operation),
                                                src_desc, scalar_desc, dst_desc),
                             input->data<float>(), scalar->data<float>(),

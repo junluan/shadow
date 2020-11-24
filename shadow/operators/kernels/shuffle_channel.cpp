@@ -41,7 +41,7 @@ class ShuffleChannelKernelDNNL : public ShuffleChannelKernel {
         input->shape(), idnnl::get_memory_format(input->num_axes()));
 
     idnnl::common_forward<dnnl::shuffle_forward>(
-        ws->Ctx()->dnnl_engine(), ws->Ctx()->dnnl_stream(),
+        ws->Ctx()->dnnl_handle(),
         dnnl::shuffle_forward::desc(dnnl::prop_kind::forward_inference,
                                     in_out_desc, 1, channel / group),
         input->data<float>(), output->mutable_data<float>());

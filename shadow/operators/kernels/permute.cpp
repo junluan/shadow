@@ -42,12 +42,13 @@ class PermuteKernelDNNL : public PermuteKernel {
             output->shape(), idnnl::get_memory_format(output->num_axes()))
             .permute_axes(order_value);
 
-    const auto* dnnl_engine =
-        static_cast<const dnnl::engine*>(ws->Ctx()->dnnl_engine());
+    const auto& dnnl_engine =
+        static_cast<const dnnl::stream*>(ws->Ctx()->dnnl_handle())
+            ->get_engine();
 
-    idnnl::reorder_forward(dnnl_engine, ws->Ctx()->dnnl_stream(),
-                           dnnl::reorder::primitive_desc(
-                               *dnnl_engine, src_desc, *dnnl_engine, dst_desc),
+    idnnl::reorder_forward(ws->Ctx()->dnnl_handle(),
+                           dnnl::reorder::primitive_desc(dnnl_engine, src_desc,
+                                                         dnnl_engine, dst_desc),
                            input->data<float>(), output->mutable_data<float>());
   }
 

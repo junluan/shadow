@@ -23,9 +23,9 @@ void Stack<DeviceType::kGPU, float>(const float* in_data, int count,
                                     int out_stack_axis, int offset_stack_axis,
                                     float* out_data, Context* context) {
   KernelStack<<<GetBlocks(count), NumThreads, 0,
-                cudaStream_t(context->cuda_stream())>>>(
-      in_data, count, num_stacks, stack_size, out_stack_axis, offset_stack_axis,
-      out_data);
+                cudaStream_t(context->stream())>>>(in_data, count, num_stacks,
+                                                   stack_size, out_stack_axis,
+                                                   offset_stack_axis, out_data);
   CUDA_CHECK(cudaPeekAtLastError());
 }
 

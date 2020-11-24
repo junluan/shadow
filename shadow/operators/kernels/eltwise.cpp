@@ -46,12 +46,11 @@ class EltwiseKernelDNNL : public EltwiseKernel {
 
       auto* out_data = output->mutable_data<float>();
 
-      idnnl::binary_forward(ws->Ctx()->dnnl_engine(), ws->Ctx()->dnnl_stream(),
-                            binary_desc, inputs[0]->data<float>(),
-                            inputs[1]->data<float>(), out_data);
+      idnnl::binary_forward(ws->Ctx()->dnnl_handle(), binary_desc,
+                            inputs[0]->data<float>(), inputs[1]->data<float>(),
+                            out_data);
       for (int n = 2; n < inputs.size(); ++n) {
-        idnnl::binary_forward(ws->Ctx()->dnnl_engine(),
-                              ws->Ctx()->dnnl_stream(), binary_desc, out_data,
+        idnnl::binary_forward(ws->Ctx()->dnnl_handle(), binary_desc, out_data,
                               inputs[n]->data<float>(), out_data);
       }
     } else {

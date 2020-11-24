@@ -50,7 +50,7 @@ void Pooling<DeviceType::kGPU, float>(const float* in_data,
   int out_h = out_shape[2], out_w = out_shape[3];
   int count = batch * in_c * out_h * out_w;
   KernelPooling<<<GetBlocks(count), NumThreads, 0,
-                  cudaStream_t(context->cuda_stream())>>>(
+                  cudaStream_t(context->stream())>>>(
       in_data, count, in_c, in_h, in_w, pool_type, kernel_size_h, kernel_size_w,
       stride_h, stride_w, pad_h, pad_w, out_h, out_w, out_data);
   CUDA_CHECK(cudaPeekAtLastError());

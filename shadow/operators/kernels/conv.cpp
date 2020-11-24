@@ -189,9 +189,8 @@ class ConvKernelDNNL : public ConvKernel {
         stride_w, dilation, dilation);
 
     idnnl::common_forward<dnnl::convolution_forward>(
-        ws->Ctx()->dnnl_engine(), ws->Ctx()->dnnl_stream(), conv_desc,
-        input->data<float>(), weight->data<float>(),
-        bias_term ? bias->data<float>() : nullptr,
+        ws->Ctx()->dnnl_handle(), conv_desc, input->data<float>(),
+        weight->data<float>(), bias_term ? bias->data<float>() : nullptr,
         output->mutable_data<float>(), activate_type);
   }
 

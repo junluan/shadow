@@ -67,7 +67,7 @@ void PSROIPooling<DeviceType::kGPU, float>(
   int in_c = in_shape[1], in_h = in_shape[2], in_w = in_shape[3];
   int count = num_rois * output_dim * pooled_h * pooled_w;
   KernelPSROIPooling<<<GetBlocks(count), NumThreads, 0,
-                       cudaStream_t(context->cuda_stream())>>>(
+                       cudaStream_t(context->stream())>>>(
       in_data, count, roi_data, in_c, in_h, in_w, output_dim, group_size,
       pooled_h, pooled_w, spatial_scale, out_data);
   CUDA_CHECK(cudaPeekAtLastError());

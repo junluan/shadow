@@ -34,10 +34,10 @@ void SSDNormalize<DeviceType::kGPU, float>(const float* in_data, int outer_num,
                                            float* out_data, Context* context) {
   int val_count = outer_num * inner_num, count = val_count * channel;
   KernelChannelSum<<<GetBlocks(val_count), NumThreads, 0,
-                     cudaStream_t(context->cuda_stream())>>>(
+                     cudaStream_t(context->stream())>>>(
       out_data, val_count, channel, inner_num, eps, val_data);
   KernelChannelDiv<<<GetBlocks(count), NumThreads, 0,
-                     cudaStream_t(context->cuda_stream())>>>(
+                     cudaStream_t(context->stream())>>>(
       in_data, val_data, count, channel, inner_num, out_data);
   CUDA_CHECK(cudaPeekAtLastError());
 }

@@ -62,13 +62,13 @@ void LRN<DeviceType::kGPU, float>(const float* in_data, const VecInt& in_shape,
   int in_h = in_shape[2], in_w = in_shape[3];
   int count = batch * in_h * in_w;
   KernelLRNFillScale<<<GetBlocks(count), NumThreads, 0,
-                       cudaStream_t(context->cuda_stream())>>>(
+                       cudaStream_t(context->stream())>>>(
       in_data, count, in_c, in_h, in_w, size, alpha / size, k, scale_data);
   CUDA_CHECK(cudaPeekAtLastError());
   count *= in_c;
   KernelLRN<<<GetBlocks(count), NumThreads, 0,
-              cudaStream_t(context->cuda_stream())>>>(
-      in_data, count, scale_data, -beta, out_data);
+              cudaStream_t(context->stream())>>>(in_data, count, scale_data,
+                                                 -beta, out_data);
   CUDA_CHECK(cudaPeekAtLastError());
 }
 

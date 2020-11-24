@@ -87,11 +87,11 @@ void Resize<DeviceType::kGPU, float>(const float* in_data,
   int count = batch * channel * out_h * out_w;
   if (type == kNearest) {
     KernelResizeNearest<<<GetBlocks(count), NumThreads, 0,
-                          cudaStream_t(context->cuda_stream())>>>(
+                          cudaStream_t(context->stream())>>>(
         in_data, count, in_h, in_w, out_h, out_w, out_data);
   } else if (type == kBilinear) {
     KernelResizeBilinear<<<GetBlocks(count), NumThreads, 0,
-                           cudaStream_t(context->cuda_stream())>>>(
+                           cudaStream_t(context->stream())>>>(
         in_data, count, in_h, in_w, out_h, out_w, align_corners, out_data);
   } else {
     LOG(FATAL) << "Unsupported resize type: " << type;

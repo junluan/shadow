@@ -25,7 +25,7 @@ void Permute<DeviceType::kGPU, float>(const float* in_data, int count,
                                       const int* new_steps, float* out_data,
                                       Context* context) {
   KernelPermute<<<GetBlocks(count), NumThreads, 0,
-                  cudaStream_t(context->cuda_stream())>>>(
+                  cudaStream_t(context->stream())>>>(
       in_data, count, num_axes, order, old_steps, new_steps, out_data);
   CUDA_CHECK(cudaPeekAtLastError());
 }

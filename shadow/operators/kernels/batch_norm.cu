@@ -27,7 +27,7 @@ void BatchNorm<DeviceType::kGPU, float>(const float* in_data, int count,
                                         float eps, float* out_data,
                                         Context* context) {
   KernelBatchNorm<<<GetBlocks(count), NumThreads, 0,
-                    cudaStream_t(context->cuda_stream())>>>(
+                    cudaStream_t(context->stream())>>>(
       in_data, count, mean_data, variance_data, channel, inner_num,
       scale_factor, eps, out_data);
   CUDA_CHECK(cudaPeekAtLastError());

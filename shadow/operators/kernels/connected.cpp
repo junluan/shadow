@@ -28,7 +28,7 @@ class ConnectedKernelDNNL : public ConnectedKernel {
                                 : dnnl::memory::format_tag::undef);
 
     idnnl::inner_product_forward(
-        ws->Ctx()->dnnl_engine(), ws->Ctx()->dnnl_stream(),
+        ws->Ctx()->dnnl_handle(),
         dnnl::inner_product_forward::desc(dnnl::prop_kind::forward_inference,
                                           src_desc, weight_desc, bias_desc,
                                           dst_desc),

@@ -64,7 +64,7 @@ void Proposal<DeviceType::kGPU, float>(
   int in_h = in_shape[2], in_w = in_shape[3];
   int count = in_h * in_w * num_anchors;
   KernelProposal<<<GetBlocks(count), NumThreads, 0,
-                   cudaStream_t(context->cuda_stream())>>>(
+                   cudaStream_t(context->stream())>>>(
       count, anchor_data, score_data, delta_data, info_data, in_h, in_w,
       num_anchors, feat_stride, min_size, proposal_data);
   CUDA_CHECK(cudaPeekAtLastError());

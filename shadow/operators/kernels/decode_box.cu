@@ -72,7 +72,7 @@ void DecodeSSDBoxes<DeviceType::kGPU, float>(
     float* decode_box, Context* context) {
   int count = batch * num_priors;
   KernelDecodeSSDBoxes<<<GetBlocks(count), NumThreads, 0,
-                         cudaStream_t(context->cuda_stream())>>>(
+                         cudaStream_t(context->stream())>>>(
       count, mbox_loc, mbox_conf, mbox_priorbox, num_priors, num_classes,
       output_max_score, decode_box);
   CUDA_CHECK(cudaPeekAtLastError());
@@ -137,7 +137,7 @@ void DecodeRefineDetBoxes<DeviceType::kGPU, float>(
     bool output_max_score, float* decode_box, Context* context) {
   int count = batch * num_priors;
   KernelDecodeRefineDetBoxes<<<GetBlocks(count), NumThreads, 0,
-                               cudaStream_t(context->cuda_stream())>>>(
+                               cudaStream_t(context->stream())>>>(
       count, odm_loc, odm_conf, arm_priorbox, arm_conf, arm_loc, num_priors,
       num_classes, background_label_id, objectness_score, output_max_score,
       decode_box);
@@ -200,7 +200,7 @@ void DecodeYoloV3Boxes<DeviceType::kGPU, float>(
     float* decode_box, Context* context) {
   int count = batch * out_h * out_w * mask;
   KernelDecodeYoloV3Boxes<<<GetBlocks(count), NumThreads, 0,
-                            cudaStream_t(context->cuda_stream())>>>(
+                            cudaStream_t(context->stream())>>>(
       count, in_data, biases, num_priors, out_h, out_w, mask, num_classes,
       output_max_score, decode_box);
   CUDA_CHECK(cudaPeekAtLastError());

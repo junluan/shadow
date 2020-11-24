@@ -130,7 +130,7 @@ class ReduceKernelDNNL : public ReduceKernel {
 
     if (algorithm != dnnl::algorithm::undef) {
       idnnl::common_forward<dnnl::reduction>(
-          ws->Ctx()->dnnl_engine(), ws->Ctx()->dnnl_stream(),
+          ws->Ctx()->dnnl_handle(),
           dnnl::reduction::desc(algorithm, src_desc, dst_desc, p, eps),
           input->data<float>(), output->mutable_data<float>());
     } else {

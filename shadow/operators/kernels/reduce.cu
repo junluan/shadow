@@ -77,7 +77,7 @@ void Reduce<DeviceType::kGPU, float>(const float* in_data, const int* list_data,
                                      int operation, int count, float* out_data,
                                      Context* context) {
   KernelReduce<<<GetBlocks(count), NumThreads, 0,
-                 cudaStream_t(context->cuda_stream())>>>(
+                 cudaStream_t(context->stream())>>>(
       in_data, list_data, offset_data, num_list, operation, count, out_data);
   CUDA_CHECK(cudaPeekAtLastError());
 }

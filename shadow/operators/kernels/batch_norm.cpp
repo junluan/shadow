@@ -58,7 +58,7 @@ class BatchNormKernelDNNL : public BatchNormKernel {
         input->shape(), idnnl::get_memory_format(input->num_axes()));
 
     idnnl::batch_normalization_forward(
-        ws->Ctx()->dnnl_engine(), ws->Ctx()->dnnl_stream(),
+        ws->Ctx()->dnnl_handle(),
         dnnl::batch_normalization_forward::desc(
             dnnl::prop_kind::forward_inference, in_out_desc, eps,
             dnnl::normalization_flags::use_global_stats),

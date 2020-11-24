@@ -37,7 +37,7 @@ class CPUContext : public Context {
 
   Allocator* allocator() const override { return allocator_.get(); }
 
-  DeviceType device_type() const override { return DeviceType::kCPU; }
+  DeviceType device_type() const override { return allocator_->device_type(); }
 
   int device_id() const override { return device_id_; }
 
@@ -53,12 +53,7 @@ class CPUContext : public Context {
 #endif
 
 #if defined(USE_DNNL)
-  void* dnnl_engine() const override {
-    CHECK_NOTNULL(dnnl_engine_);
-    return dnnl_engine_.get();
-  }
-
-  void* dnnl_stream() const override {
+  void* dnnl_handle() const override {
     CHECK_NOTNULL(dnnl_stream_);
     return dnnl_stream_.get();
   }

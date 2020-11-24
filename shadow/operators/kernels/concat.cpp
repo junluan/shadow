@@ -40,10 +40,10 @@ class ConcatKernelDNNL : public ConcatKernel {
     }
 
     idnnl::concat_forward(
-        ws->Ctx()->dnnl_engine(), ws->Ctx()->dnnl_stream(),
+        ws->Ctx()->dnnl_handle(),
         dnnl::concat::primitive_desc(
             axis, srcs_desc,
-            *static_cast<dnnl::engine*>(ws->Ctx()->dnnl_engine())),
+            static_cast<dnnl::stream*>(ws->Ctx()->dnnl_handle())->get_engine()),
         srcs_data, output->mutable_data<float>());
   }
 

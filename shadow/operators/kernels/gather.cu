@@ -23,9 +23,9 @@ void Gather<DeviceType::kGPU, float>(const float* in_data,
                                      int gather_dim, int inner_num, int count,
                                      float* out_data, Context* context) {
   KernelGather<<<GetBlocks(count), NumThreads, 0,
-                 cudaStream_t(context->cuda_stream())>>>(
-      in_data, indexes_data, num_indexes, gather_dim, inner_num, count,
-      out_data);
+                 cudaStream_t(context->stream())>>>(in_data, indexes_data,
+                                                    num_indexes, gather_dim,
+                                                    inner_num, count, out_data);
   CUDA_CHECK(cudaPeekAtLastError());
 }
 

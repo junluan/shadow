@@ -100,12 +100,12 @@ void GridSample<DeviceType::kGPU, float>(const float* in_data,
   int count = batch * channel * out_h * out_w;
   if (mode == 0) {
     KernelGridSampleNearest<<<GetBlocks(count), NumThreads, 0,
-                              cudaStream_t(context->cuda_stream())>>>(
+                              cudaStream_t(context->stream())>>>(
         in_data, grid_data, count, channel, in_h, in_w, out_h, out_w,
         padding_mode, out_data);
   } else if (mode == 1) {
     KernelGridSampleBilinear<<<GetBlocks(count), NumThreads, 0,
-                               cudaStream_t(context->cuda_stream())>>>(
+                               cudaStream_t(context->stream())>>>(
         in_data, grid_data, count, channel, in_h, in_w, out_h, out_w,
         padding_mode, out_data);
   } else {

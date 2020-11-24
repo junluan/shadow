@@ -112,7 +112,7 @@ class ActivateKernelDNNL : public ActivateKernel {
 
     if (algorithm != dnnl::algorithm::undef) {
       idnnl::common_forward<dnnl::eltwise_forward>(
-          ws->Ctx()->dnnl_engine(), ws->Ctx()->dnnl_stream(),
+          ws->Ctx()->dnnl_handle(),
           dnnl::eltwise_forward::desc(dnnl::prop_kind::forward_inference,
                                       algorithm, in_out_desc, alpha),
           input->data<float>(), output->mutable_data<float>());

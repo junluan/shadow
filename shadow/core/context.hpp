@@ -20,12 +20,12 @@ class Context {
   virtual void switch_device() = 0;
   virtual void synchronize() = 0;
 
-  virtual void* cuda_stream() const { return nullptr; }
+  virtual void* stream() const { return nullptr; }
+
   virtual void* cublas_handle() const { return nullptr; }
   virtual void* cudnn_handle() const { return nullptr; }
   virtual void* nnpack_handle() const { return nullptr; }
-  virtual void* dnnl_engine() const { return nullptr; }
-  virtual void* dnnl_stream() const { return nullptr; }
+  virtual void* dnnl_handle() const { return nullptr; }
 };
 
 template <DeviceType D>

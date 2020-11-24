@@ -5,7 +5,7 @@
 
 namespace Shadow {
 
-enum class DeviceType { kCPU, kGPU };
+enum class DeviceType { kCPU, kGPU, kNPU };
 
 class Allocator {
  public:

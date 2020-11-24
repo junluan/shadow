@@ -21,7 +21,7 @@ void ScaleBias<DeviceType::kGPU, float>(const float* in_data, int count,
                                         int inner_num, float* out_data,
                                         Context* context) {
   KernelScaleBias<<<GetBlocks(count), NumThreads, 0,
-                    cudaStream_t(context->cuda_stream())>>>(
+                    cudaStream_t(context->stream())>>>(
       in_data, count, scale_data, bias_data, scale_num, inner_num, out_data);
   CUDA_CHECK(cudaPeekAtLastError());
 }
@@ -41,7 +41,7 @@ void Scale<DeviceType::kGPU, float>(const float* in_data, int count,
                                     int inner_num, float* out_data,
                                     Context* context) {
   KernelScale<<<GetBlocks(count), NumThreads, 0,
-                cudaStream_t(context->cuda_stream())>>>(
+                cudaStream_t(context->stream())>>>(
       in_data, count, scale_data, scale_num, inner_num, out_data);
   CUDA_CHECK(cudaPeekAtLastError());
 }
@@ -61,7 +61,7 @@ void Bias<DeviceType::kGPU, float>(const float* in_data, int count,
                                    int inner_num, float* out_data,
                                    Context* context) {
   KernelBias<<<GetBlocks(count), NumThreads, 0,
-               cudaStream_t(context->cuda_stream())>>>(
+               cudaStream_t(context->stream())>>>(
       in_data, count, bias_data, scale_num, inner_num, out_data);
   CUDA_CHECK(cudaPeekAtLastError());
 }

@@ -47,10 +47,10 @@ void Normalize<DeviceType::kGPU, float>(const float* in_data, int outer_num,
                                         Context* context) {
   int val_count = outer_num * inner_num, count = val_count * dim;
   KernelLpNorm<<<GetBlocks(val_count), NumThreads, 0,
-                 cudaStream_t(context->cuda_stream())>>>(
-      in_data, val_count, dim, inner_num, p, val_data);
+                 cudaStream_t(context->stream())>>>(in_data, val_count, dim,
+                                                    inner_num, p, val_data);
   KernelDivLpNorm<<<GetBlocks(count), NumThreads, 0,
-                    cudaStream_t(context->cuda_stream())>>>(
+                    cudaStream_t(context->stream())>>>(
       in_data, val_data, count, dim, inner_num, eps, out_data);
   CUDA_CHECK(cudaPeekAtLastError());
 }

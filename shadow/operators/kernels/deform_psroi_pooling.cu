@@ -117,7 +117,7 @@ void DeformPSROIPooling<DeviceType::kGPU, float>(
   int channels_each_class = no_trans ? output_dim : output_dim / num_classes;
   int count = num_rois * output_dim * pooled_size * pooled_size;
   DeformPSROIPoolForwardKernel<<<GetBlocks(count), NumThreads, 0,
-                                 cudaStream_t(context->cuda_stream())>>>(
+                                 cudaStream_t(context->stream())>>>(
       count, in_data, spatial_scale, in_c, in_h, in_w, pooled_size, pooled_size,
       roi_data, trans_data, no_trans, trans_std, sample_per_part, output_dim,
       group_size, part_size, num_classes, channels_each_class, out_data);

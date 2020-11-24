@@ -26,7 +26,7 @@ void Concat<DeviceType::kGPU, float>(const float* in_data, int count,
                                      int offset_concat_axis, float* out_data,
                                      Context* context) {
   KernelConcat<<<GetBlocks(count), NumThreads, 0,
-                 cudaStream_t(context->cuda_stream())>>>(
+                 cudaStream_t(context->stream())>>>(
       in_data, count, num_concats, concat_size, out_concat_axis, in_concat_axis,
       offset_concat_axis, out_data);
   CUDA_CHECK(cudaPeekAtLastError());

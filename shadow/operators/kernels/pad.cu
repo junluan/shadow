@@ -36,7 +36,7 @@ void Pad<DeviceType::kGPU, float>(const float* in_data, const VecInt& in_shape,
   int out_h = out_shape[2], out_w = out_shape[3];
   int count = batch * channel * in_h * in_w;
   KernelPad<<<GetBlocks(count), NumThreads, 0,
-              cudaStream_t(context->cuda_stream())>>>(
+              cudaStream_t(context->stream())>>>(
       in_data, count, channel, in_h, in_w, out_h, out_w, paddings[0],
       paddings[1], paddings[2], paddings[3], out_data);
   CUDA_CHECK(cudaPeekAtLastError());

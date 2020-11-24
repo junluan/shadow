@@ -44,7 +44,7 @@ void Im2Col<DeviceType::kGPU, float>(const float* in_data,
   int out_h = out_shape[2], out_w = out_shape[3];
   int count = in_c * out_h * out_w;
   KernelIm2Col<<<GetBlocks(count), NumThreads, 0,
-                 cudaStream_t(context->cuda_stream())>>>(
+                 cudaStream_t(context->stream())>>>(
       in_data, offset, count, in_c, in_h, in_w, kernel_size_h, kernel_size_w,
       stride_h, stride_w, pad_h, pad_w, dilation, zero_point, out_h, out_w,
       col_data);
@@ -96,7 +96,7 @@ void Depthwise<DeviceType::kGPU, float>(
   int out_h = out_shape[2], out_w = out_shape[3];
   int count = batch * in_c * out_h * out_w;
   KernelDepthwise<<<GetBlocks(count), NumThreads, 0,
-                    cudaStream_t(context->cuda_stream())>>>(
+                    cudaStream_t(context->stream())>>>(
       in_data, count, weight_data, bias_data, in_c, in_h, in_w, out_h, out_w,
       kernel_size_h, kernel_size_w, stride_h, stride_w, pad_h, pad_w, dilation,
       bias_term, out_data);

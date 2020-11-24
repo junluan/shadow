@@ -58,7 +58,7 @@ void ROIAlign<DeviceType::kGPU, float>(const float* in_data,
   int in_c = in_shape[1], in_h = in_shape[2], in_w = in_shape[3];
   int count = num_rois * in_c * pooled_h * pooled_w;
   KernelPOIAlign<<<GetBlocks(count), NumThreads, 0,
-                   cudaStream_t(context->cuda_stream())>>>(
+                   cudaStream_t(context->stream())>>>(
       in_data, count, roi_data, in_c, in_h, in_w, pooled_h, pooled_w,
       spatial_scale, out_data);
   CUDA_CHECK(cudaPeekAtLastError());

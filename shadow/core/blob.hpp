@@ -41,13 +41,13 @@ class Blob {
   template <typename T>
   const T* cpu_data() {
     check_data_type<T>(data_type_);
-    if (allocator_->device_type() == DeviceType::kGPU) {
+    if (allocator_->device_type() == DeviceType::kCPU) {
+      return data<T>();
+    } else {
       cpu_data_.resize(raw_size(), 0);
       get_data<T>(cpu_data_.data(), count());
       return const_cast<const T*>(
           static_cast<T*>(static_cast<void*>(cpu_data_.data())));
-    } else {
-      return data<T>();
     }
   }
 

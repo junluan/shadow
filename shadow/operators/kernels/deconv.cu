@@ -53,7 +53,7 @@ void Col2Im<DeviceType::kGPU, float>(const float* col_data,
   int out_h = out_shape[2], out_w = out_shape[3];
   int count = in_c * in_h * in_w;
   KernelCol2Im<<<GetBlocks(count), NumThreads, 0,
-                 cudaStream_t(context->cuda_stream())>>>(
+                 cudaStream_t(context->stream())>>>(
       col_data, offset, count, in_c, in_h, in_w, kernel_size_h, kernel_size_w,
       stride_h, stride_w, pad_h, pad_w, dilation, out_h, out_w, in_data);
   CUDA_CHECK(cudaPeekAtLastError());

@@ -15,8 +15,8 @@ __global__ void KernelSet(int n, float val, float* y, int offy) {
 template <>
 void Set<DeviceType::kGPU, float>(int n, float val, float* y, int offy,
                                   Context* context) {
-  KernelSet<<<GetBlocks(n), NumThreads, 0,
-              cudaStream_t(context->cuda_stream())>>>(n, val, y, offy);
+  KernelSet<<<GetBlocks(n), NumThreads, 0, cudaStream_t(context->stream())>>>(
+      n, val, y, offy);
   CUDA_CHECK(cudaPeekAtLastError());
 }
 
@@ -33,8 +33,8 @@ void Set<DeviceType::kGPU, float>(int n, float val, float* y, int offy,
                                      const float* b, int offb, float* y,       \
                                      int offy, Context* context) {             \
     Kernel##name<<<GetBlocks(n), NumThreads, 0,                                \
-                   cudaStream_t(context->cuda_stream())>>>(n, a, offa, b,      \
-                                                           offb, y, offy);     \
+                   cudaStream_t(context->stream())>>>(n, a, offa, b, offb, y,  \
+                                                      offy);                   \
     CUDA_CHECK(cudaPeekAtLastError());                                         \
   }
 
@@ -47,22 +47,22 @@ DEFINE_BLAS_BINARY_FUNC(Max, y[i] = fmaxf(a[i], b[i]));
 DEFINE_BLAS_BINARY_FUNC(Min, y[i] = fminf(a[i], b[i]));
 #undef DEFINE_BLAS_BINARY_FUNC
 
-#define DEFINE_BLAS_BINARY_SCALAR_FUNC(name, operation)                       \
-  __global__ void Kernel##name(int n, const float* a, int offa, float alpha,  \
-                               float* y, int offy) {                          \
-    CUDA_KERNEL_LOOP(i, n) {                                                  \
-      a += offa, y += offy;                                                   \
-      operation;                                                              \
-    }                                                                         \
-  }                                                                           \
-  template <>                                                                 \
-  void name<DeviceType::kGPU, float>(int n, const float* a, int offa,         \
-                                     float alpha, float* y, int offy,         \
-                                     Context* context) {                      \
-    Kernel##name<<<GetBlocks(n), NumThreads, 0,                               \
-                   cudaStream_t(context->cuda_stream())>>>(n, a, offa, alpha, \
-                                                           y, offy);          \
-    CUDA_CHECK(cudaPeekAtLastError());                                        \
+#define DEFINE_BLAS_BINARY_SCALAR_FUNC(name, operation)                      \
+  __global__ void Kernel##name(int n, const float* a, int offa, float alpha, \
+                               float* y, int offy) {                         \
+    CUDA_KERNEL_LOOP(i, n) {                                                 \
+      a += offa, y += offy;                                                  \
+      operation;                                                             \
+    }                                                                        \
+  }                                                                          \
+  template <>                                                                \
+  void name<DeviceType::kGPU, float>(int n, const float* a, int offa,        \
+                                     float alpha, float* y, int offy,        \
+                                     Context* context) {                     \
+    Kernel##name<<<GetBlocks(n), NumThreads, 0,                              \
+                   cudaStream_t(context->stream())>>>(n, a, offa, alpha, y,  \
+                                                      offy);                 \
+    CUDA_CHECK(cudaPeekAtLastError());                                       \
   }
 
 DEFINE_BLAS_BINARY_SCALAR_FUNC(Add, y[i] = a[i] + alpha);
@@ -86,8 +86,7 @@ DEFINE_BLAS_BINARY_SCALAR_FUNC(Min, y[i] = fminf(a[i], alpha));
   void name<DeviceType::kGPU, float>(int n, const float* a, int offa,        \
                                      float* y, int offy, Context* context) { \
     Kernel##name<<<GetBlocks(n), NumThreads, 0,                              \
-                   cudaStream_t(context->cuda_stream())>>>(n, a, offa, y,    \
-                                                           offy);            \
+                   cudaStream_t(context->stream())>>>(n, a, offa, y, offy);  \
     CUDA_CHECK(cudaPeekAtLastError());                                       \
   }
 

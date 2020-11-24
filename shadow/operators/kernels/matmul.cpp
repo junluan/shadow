@@ -44,7 +44,7 @@ class MatMulKernelDNNL : public MatMulKernel {
       src_b_desc = src_b_desc.reshape(dims_b);
     }
 
-    idnnl::matmul_forward(ws->Ctx()->dnnl_engine(), ws->Ctx()->dnnl_stream(),
+    idnnl::matmul_forward(ws->Ctx()->dnnl_handle(),
                           dnnl::matmul::desc(src_a_desc, src_b_desc, dst_desc),
                           input_a->data<float>(), input_b->data<float>(),
                           output->mutable_data<float>());

@@ -40,8 +40,8 @@ void Activate<DeviceType::kGPU, float>(const float* in_data, float* out_data,
                                        int count, int type, float slope,
                                        Context* context) {
   KernelActivate<<<GetBlocks(count), NumThreads, 0,
-                   cudaStream_t(context->cuda_stream())>>>(in_data, out_data,
-                                                           count, type, slope);
+                   cudaStream_t(context->stream())>>>(in_data, out_data, count,
+                                                      type, slope);
   CUDA_CHECK(cudaPeekAtLastError());
 }
 
@@ -64,7 +64,7 @@ void PRelu<DeviceType::kGPU, float>(const float* in_data, float* out_data,
   int count = in_shape[0] * channels * dim;
   int div_factor = channel_shared ? channels : 1;
   KernelPRelu<<<GetBlocks(count), NumThreads, 0,
-                cudaStream_t(context->cuda_stream())>>>(
+                cudaStream_t(context->stream())>>>(
       in_data, out_data, count, channels, dim, div_factor, slope_data);
   CUDA_CHECK(cudaPeekAtLastError());
 }

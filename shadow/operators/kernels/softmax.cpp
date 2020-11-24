@@ -61,7 +61,7 @@ class SoftmaxKernelDNNL : public SoftmaxKernel {
         input->shape(), idnnl::get_memory_format(input->num_axes()));
 
     idnnl::common_forward<dnnl::softmax_forward>(
-        ws->Ctx()->dnnl_engine(), ws->Ctx()->dnnl_stream(),
+        ws->Ctx()->dnnl_handle(),
         dnnl::softmax_forward::desc(dnnl::prop_kind::forward_inference,
                                     in_out_desc, axis),
         input->data<float>(), output->mutable_data<float>());

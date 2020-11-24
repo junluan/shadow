@@ -62,11 +62,11 @@ void Reorg<DeviceType::kGPU, float>(const float* in_data,
   int count = batch * in_c * in_h * in_w;
   if (type == kDarknet) {
     KernelReorgDarknet<<<GetBlocks(count), NumThreads, 0,
-                         cudaStream_t(context->cuda_stream())>>>(
+                         cudaStream_t(context->stream())>>>(
         in_data, count, in_c, in_h, in_w, stride, out_data);
   } else if (type == kNatural) {
     KernelReorgNatural<<<GetBlocks(count), NumThreads, 0,
-                         cudaStream_t(context->cuda_stream())>>>(
+                         cudaStream_t(context->stream())>>>(
         in_data, count, in_c, in_h, in_w, stride, out_data);
   } else {
     LOG(FATAL) << "Unsupported reorg type: " << type;

@@ -20,7 +20,7 @@ void SubtractMeanAndSquare<DeviceType::kGPU, float>(
     const float* in_data, const float* mean_data, int count, int inner_num,
     float* out_data, float* square_data, Context* context) {
   KernelSubtractMeanAndSquare<<<GetBlocks(count), NumThreads, 0,
-                                cudaStream_t(context->cuda_stream())>>>(
+                                cudaStream_t(context->stream())>>>(
       in_data, mean_data, count, inner_num, out_data, square_data);
   CUDA_CHECK(cudaPeekAtLastError());
 }
@@ -42,7 +42,7 @@ void DivideVariance<DeviceType::kGPU, float>(const float* in_data,
                                              float eps, float* out_data,
                                              Context* context) {
   KernelDivideVariance<<<GetBlocks(count), NumThreads, 0,
-                         cudaStream_t(context->cuda_stream())>>>(
+                         cudaStream_t(context->stream())>>>(
       in_data, variance_data, count, inner_num, eps, out_data);
   CUDA_CHECK(cudaPeekAtLastError());
 }

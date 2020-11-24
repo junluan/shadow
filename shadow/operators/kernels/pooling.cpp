@@ -85,7 +85,7 @@ class PoolingKernelDNNL : public PoolingKernel {
       }
 
       idnnl::common_forward<dnnl::pooling_forward>(
-          ws->Ctx()->dnnl_engine(), ws->Ctx()->dnnl_stream(),
+          ws->Ctx()->dnnl_handle(),
           dnnl::pooling_forward::desc(
               dnnl::prop_kind::forward_inference, algorithm, src_desc, dst_desc,
               {stride_h, stride_w}, {kernel_size_h, kernel_size_w},

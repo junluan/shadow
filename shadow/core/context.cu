@@ -56,7 +56,7 @@ class GPUContext : public Context {
 
   Allocator* allocator() const override { return allocator_.get(); }
 
-  DeviceType device_type() const override { return DeviceType::kGPU; }
+  DeviceType device_type() const override { return allocator_->device_type(); }
 
   int device_id() const override { return device_id_; }
 
@@ -66,7 +66,7 @@ class GPUContext : public Context {
     CUDA_CHECK(cudaStreamSynchronize(cuda_stream_));
   }
 
-  void* cuda_stream() const override {
+  void* stream() const override {
     CHECK_NOTNULL(cuda_stream_);
     return cuda_stream_;
   }
