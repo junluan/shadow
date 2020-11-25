@@ -50,12 +50,16 @@ void Native::Run(const std::map<std::string, void*>& data_map,
 
     const auto& blob_type = ws_->GetBlobDataType(blob_name);
 
-    if (blob_type == DataType::kI32) {
+    if (blob_type == DataType::kI64) {
+      SetInputData<std::int64_t>(blob_name, blob_shape, blob_data);
+    } else if (blob_type == DataType::kI32) {
       SetInputData<std::int32_t>(blob_name, blob_shape, blob_data);
     } else if (blob_type == DataType::kI16) {
       SetInputData<std::int16_t>(blob_name, blob_shape, blob_data);
     } else if (blob_type == DataType::kI8) {
       SetInputData<std::int8_t>(blob_name, blob_shape, blob_data);
+    } else if (blob_type == DataType::kU64) {
+      SetInputData<std::uint64_t>(blob_name, blob_shape, blob_data);
     } else if (blob_type == DataType::kU32) {
       SetInputData<std::uint32_t>(blob_name, blob_shape, blob_data);
     } else if (blob_type == DataType::kU16) {
@@ -211,12 +215,16 @@ size_t Native::SetWeightData(const std::string& blob_name,
   } else {
     blob->reshape(blob_shape);
     const auto& data_type = blob->data_type();
-    if (data_type == DataType::kI32) {
+    if (data_type == DataType::kI64) {
+      blob->set_data<std::int64_t>(blob_data, blob->count());
+    } else if (data_type == DataType::kI32) {
       blob->set_data<std::int32_t>(blob_data, blob->count());
     } else if (data_type == DataType::kI16) {
       blob->set_data<std::int16_t>(blob_data, blob->count());
     } else if (data_type == DataType::kI8) {
       blob->set_data<std::int8_t>(blob_data, blob->count());
+    } else if (data_type == DataType::kU64) {
+      blob->set_data<std::uint64_t>(blob_data, blob->count());
     } else if (data_type == DataType::kU32) {
       blob->set_data<std::uint32_t>(blob_data, blob->count());
     } else if (data_type == DataType::kU16) {

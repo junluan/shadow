@@ -12,7 +12,7 @@
 
 namespace Shadow {
 
-enum class DataType { kI32, kI16, kI8, kU32, kU16, kU8, kF32 };
+enum class DataType { kI64, kI32, kI16, kI8, kU64, kU32, kU16, kU8, kF32 };
 
 class Blob {
  public:
@@ -135,12 +135,16 @@ class Blob {
   size_t raw_size() const { return count() * elem_size(); }
   size_t max_size() const { return capacity_ * elem_size(); }
   size_t elem_size() const {
-    if (data_type_ == DataType::kI32) {
+    if (data_type_ == DataType::kI64) {
+      return sizeof(std::int64_t);
+    } else if (data_type_ == DataType::kI32) {
       return sizeof(std::int32_t);
     } else if (data_type_ == DataType::kI16) {
       return sizeof(std::int16_t);
     } else if (data_type_ == DataType::kI8) {
       return sizeof(std::int8_t);
+    } else if (data_type_ == DataType::kU64) {
+      return sizeof(std::uint64_t);
     } else if (data_type_ == DataType::kU32) {
       return sizeof(std::uint32_t);
     } else if (data_type_ == DataType::kU16) {
@@ -166,12 +170,16 @@ class Blob {
  private:
   template <typename T>
   static void check_data_type(DataType data_type) {
-    if (std::is_same<T, std::int32_t>::value) {
+    if (std::is_same<T, std::int64_t>::value) {
+      CHECK(data_type == DataType::kI64);
+    } else if (std::is_same<T, std::int32_t>::value) {
       CHECK(data_type == DataType::kI32);
     } else if (std::is_same<T, std::int16_t>::value) {
       CHECK(data_type == DataType::kI16);
     } else if (std::is_same<T, std::int8_t>::value) {
       CHECK(data_type == DataType::kI8);
+    } else if (std::is_same<T, std::uint64_t>::value) {
+      CHECK(data_type == DataType::kU64);
     } else if (std::is_same<T, std::uint32_t>::value) {
       CHECK(data_type == DataType::kU32);
     } else if (std::is_same<T, std::uint16_t>::value) {

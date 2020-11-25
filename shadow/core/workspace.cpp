@@ -55,12 +55,16 @@ std::shared_ptr<Blob> Workspace::CreateBlob(const std::string& name,
 std::shared_ptr<Blob> Workspace::CreateBlob(const std::string& name,
                                             const std::string& data_type_str,
                                             Allocator* allocator) {
-  if (data_type_str == "int32") {
+  if (data_type_str == "int64") {
+    return CreateBlob(name, DataType::kI64, allocator);
+  } else if (data_type_str == "int32") {
     return CreateBlob(name, DataType::kI32, allocator);
   } else if (data_type_str == "int16") {
     return CreateBlob(name, DataType::kI16, allocator);
   } else if (data_type_str == "int8") {
     return CreateBlob(name, DataType::kI8, allocator);
+  } else if (data_type_str == "uint64") {
+    return CreateBlob(name, DataType::kU64, allocator);
   } else if (data_type_str == "uint32") {
     return CreateBlob(name, DataType::kU32, allocator);
   } else if (data_type_str == "uint16") {
