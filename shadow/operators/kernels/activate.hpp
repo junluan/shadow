@@ -29,7 +29,8 @@ enum {
   kSoftPlus = 4,
   kTanh = 5,
   kRelu6 = 6,
-  kHardSwish = 7
+  kHardSwish = 7,
+  kGelu = 8
 };
 
 class ActivateKernel : public Kernel {
@@ -52,7 +53,7 @@ class ActivateKernelDefault : public ActivateKernel {
     if (activate_type == kRelu || activate_type == kLeaky ||
         activate_type == kSigmoid || activate_type == kSoftPlus ||
         activate_type == kTanh || activate_type == kRelu6 ||
-        activate_type == kHardSwish) {
+        activate_type == kHardSwish || activate_type == kGelu) {
       Vision::Activate<D, float>(in_data, out_data, output->count(),
                                  activate_type, slope_val, ws->Ctx().get());
     } else if (activate_type == kPRelu) {

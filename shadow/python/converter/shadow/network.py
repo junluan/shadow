@@ -150,6 +150,8 @@ class Network(object):
             self.add_arg(op_param, 'type', 6, 's_i')
         elif activate_type == 'HardSwish':
             self.add_arg(op_param, 'type', 7, 's_i')
+        elif activate_type == 'Gelu':
+            self.add_arg(op_param, 'type', 8, 's_i')
         else:
             raise ValueError('Unsupported activate type', activate_type)
 

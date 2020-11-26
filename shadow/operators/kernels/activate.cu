@@ -14,15 +14,14 @@ __device__ float ActivateValue(float x, int type, float slope) {
       return 1 / (1 + expf(-x));
     case kSoftPlus:
       return log1pf(expf(x));
-    case kTanh: {
+    case kTanh:
       return tanhf(x);
-    }
-    case kRelu6: {
+    case kRelu6:
       return x < 0 ? 0 : (x > 6 ? 6 : x);
-    }
-    case kHardSwish: {
+    case kHardSwish:
       return x < -3 ? 0 : (x > 3 ? x : (x * (x + 3) / 6.f));
-    }
+    case kGelu:
+      return 0.5f * x * (1 + tanhf(0.797885f * (x + 0.044715f * powf(x, 3.f))));
     default:
       return x;
   }
