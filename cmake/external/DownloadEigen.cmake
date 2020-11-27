@@ -6,7 +6,7 @@ include(ExternalProject)
 
 ExternalProject_Add(eigen
                     GIT_REPOSITORY "https://gitlab.com/libeigen/eigen.git"
-                    GIT_TAG "3.3.7"
+                    GIT_TAG "3.3.8"
                     SOURCE_DIR "${PROJECT_SOURCE_DIR}/third_party/eigen3"
                     BINARY_DIR "${CMAKE_BINARY_DIR}/eigen-build"
                     CONFIGURE_COMMAND ""
