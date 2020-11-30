@@ -388,6 +388,15 @@ class Network(object):
 
         return op_param
 
+    def add_layer_norm(self, name, bottoms, tops, normalized_shape, eps=1e-5):
+        op_param = self.add_net_op()
+        self.add_common(op_param, name, 'LayerNorm', bottoms, tops)
+
+        self.add_arg(op_param, 'normalized_shape', normalized_shape, 'v_i')
+        self.add_arg(op_param, 'eps', eps, 's_f')
+
+        return op_param
+
     def add_lrn(self, name, bottoms, tops, local_size=5, alpha=1, beta=0.75, norm_region='AcrossChannels', k=1):
         op_param = self.add_net_op()
         self.add_common(op_param, name, 'LRN', bottoms, tops)
