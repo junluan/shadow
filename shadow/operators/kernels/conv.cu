@@ -173,12 +173,13 @@ class ConvKernelCUDNN : public ConvKernel {
       cudnn::setActivationDesc<float>(&activate_desc_, activate_type, 0);
     }
 
+#if !CUDNN_VERSION_MIN(8, 0, 0)
     size_t workspace_limit_bytes = group == 1 ? 64 * 1024 * 1024 : 0;
-
     CUDNN_CHECK(cudnnGetConvolutionForwardAlgorithm(
         cudnnHandle_t(ws->Ctx()->cudnn_handle()), in_desc_, weight_desc_,
         conv_desc_, out_desc_, CUDNN_CONVOLUTION_FWD_SPECIFY_WORKSPACE_LIMIT,
         workspace_limit_bytes, &fwd_algo_));
+#endif
 
     size_t workspace_fwd_size = 0;
 
