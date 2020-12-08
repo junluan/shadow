@@ -21,7 +21,7 @@ __device__ float ActivateValue(float x, int type, float slope) {
     case kHardSwish:
       return x < -3 ? 0 : (x > 3 ? x : (x * (x + 3) / 6.f));
     case kGelu:
-      return 0.5f * x * (1 + tanhf(0.797885f * (x + 0.044715f * powf(x, 3.f))));
+      return 0.5f * x * (1 + erff(0.707107f * x));
     default:
       return x;
   }
