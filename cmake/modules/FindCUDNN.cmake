@@ -5,13 +5,13 @@ set(CUDNN_DIR ${CUDNN_ROOT_DIR} ${CUDA_TOOLKIT_ROOT_DIR} /usr /usr/local)
 find_path(CUDNN_INCLUDE_DIRS
           NAMES cudnn.h
           PATHS ${CUDNN_DIR}
-          PATH_SUFFIXES include include/x86_64 include/x64
+          PATH_SUFFIXES include include/x86_64-linux-gnu include/aarch64-linux-gnu
           NO_DEFAULT_PATH)
 
 find_library(CUDNN_LIBRARIES
              NAMES cudnn
              PATHS ${CUDNN_DIR}
-             PATH_SUFFIXES lib lib64 lib/x86_64 lib/x64 lib/x86_64-linux-gnu lib/aarch64-linux-gnu
+             PATH_SUFFIXES lib lib64 lib/x86_64-linux-gnu lib/aarch64-linux-gnu
              NO_DEFAULT_PATH)
 
 set(__looked_for CUDNN_INCLUDE_DIRS CUDNN_LIBRARIES)

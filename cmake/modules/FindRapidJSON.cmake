@@ -5,7 +5,7 @@ set(RapidJSON_DIR ${RapidJSON_ROOT_DIR} /usr /usr/local)
 find_path(RapidJSON_INCLUDE_DIRS
           NAMES document.h
           PATHS ${RapidJSON_DIR}
-          PATH_SUFFIXES include include/x86_64 include/x64 include/rapidjson
+          PATH_SUFFIXES include include/x86_64-linux-gnu include/aarch64-linux-gnu include/rapidjson
           NO_DEFAULT_PATH)
 
 mark_as_advanced(RapidJSON_ROOT_DIR RapidJSON_INCLUDE_DIRS)

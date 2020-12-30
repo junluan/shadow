@@ -5,13 +5,13 @@ set(OpenBLAS_DIR ${OpenBLAS_ROOT_DIR} /usr /usr/local /usr/local/opt/openblas)
 find_path(OpenBLAS_INCLUDE_DIRS
           NAMES cblas.h
           PATHS ${OpenBLAS_DIR}
-          PATH_SUFFIXES include include/x86_64 include/x64 include/x86_64-linux-gnu include/aarch64-linux-gnu
+          PATH_SUFFIXES include include/x86_64-linux-gnu include/aarch64-linux-gnu include/openblas
           NO_DEFAULT_PATH)
 
 find_library(OpenBLAS_LIBRARIES
              NAMES openblas libopenblas
              PATHS ${OpenBLAS_DIR}
-             PATH_SUFFIXES lib lib64 lib/x86_64 lib/x64 lib/x86_64-linux-gnu lib/aarch64-linux-gnu
+             PATH_SUFFIXES lib lib/x86_64-linux-gnu lib/aarch64-linux-gnu
              NO_DEFAULT_PATH)
 
 set(__looked_for OpenBLAS_INCLUDE_DIRS OpenBLAS_LIBRARIES)

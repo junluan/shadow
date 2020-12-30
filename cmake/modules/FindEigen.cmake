@@ -5,7 +5,7 @@ set(Eigen_DIR ${Eigen_ROOT_DIR} /usr /usr/local)
 find_path(Eigen_INCLUDE_DIRS
           NAMES Eigen/Eigen
           PATHS ${Eigen_DIR}
-          PATH_SUFFIXES include include/x86_64 include/x64 include/eigen3
+          PATH_SUFFIXES include include/x86_64-linux-gnu include/aarch64-linux-gnu include/eigen3
           NO_DEFAULT_PATH)
 
 mark_as_advanced(Eigen_ROOT_DIR Eigen_INCLUDE_DIRS)

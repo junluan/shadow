@@ -5,13 +5,13 @@ set(Protobuf_DIR ${Protobuf_ROOT_DIR} /usr /usr/local)
 find_path(Protobuf_INCLUDE_DIRS
           NAMES google/protobuf/message.h
           PATHS ${Protobuf_DIR}
-          PATH_SUFFIXES include include/x86_64 include/x64
+          PATH_SUFFIXES include include/x86_64-linux-gnu include/aarch64-linux-gnu
           NO_DEFAULT_PATH)
 
 find_library(Protobuf_LIBRARIES
              NAMES protobuf libprotobuf
              PATHS ${Protobuf_DIR}
-             PATH_SUFFIXES lib lib64 lib/x86_64 lib/x64 lib/x86_64-linux-gnu lib/aarch64-linux-gnu
+             PATH_SUFFIXES lib lib/x86_64-linux-gnu lib/aarch64-linux-gnu
              NO_DEFAULT_PATH)
 
 find_program(Protoc_EXECUTABLE

@@ -5,13 +5,13 @@ set(DNNL_DIR ${DNNL_ROOT_DIR}/build /usr /usr/local)
 find_path(DNNL_INCLUDE_DIRS
           NAMES dnnl.hpp
           PATHS ${DNNL_DIR}
-          PATH_SUFFIXES include include/x86_64 include/x64
+          PATH_SUFFIXES include include/x86_64-linux-gnu include/aarch64-linux-gnu
           NO_DEFAULT_PATH)
 
 find_library(DNNL_LIBRARIES
              NAMES dnnl
              PATHS ${DNNL_DIR}
-             PATH_SUFFIXES lib lib64 lib/x86_64 lib/x64
+             PATH_SUFFIXES lib lib/x86_64-linux-gnu lib/aarch64-linux-gnu
              NO_DEFAULT_PATH)
 
 set(__looked_for DNNL_INCLUDE_DIRS DNNL_LIBRARIES)
