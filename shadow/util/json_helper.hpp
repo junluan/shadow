@@ -61,7 +61,7 @@ namespace Shadow {
   out << "}"
 
 #define DEFINE_JSON_SERIALIZATION(...)            \
-  const std::string json_state() const {          \
+  std::string json_state() const {                \
     std::stringstream out;                        \
     JSON_DICT_ENTRIES(out, *this, __VA_ARGS__);   \
     return out.str();                             \

@@ -12,7 +12,7 @@ namespace Json {
 
 #if defined(USE_JSON)
 
-const JDocument GetDocument(const std::string& json_text) {
+JDocument GetDocument(const std::string& json_text) {
   JDocument document;
   document.Parse(json_text.c_str());
   return document;
@@ -23,8 +23,7 @@ const JValue& GetValue(const JValue& root, const std::string& name) {
   return root[name.c_str()];
 }
 
-const bool GetBool(const JValue& root, const std::string& name,
-                   const bool& def) {
+bool GetBool(const JValue& root, const std::string& name, const bool& def) {
   if (root.HasMember(name.c_str())) {
     const auto& value = root[name.c_str()];
     CHECK(value.IsBool());
@@ -34,7 +33,7 @@ const bool GetBool(const JValue& root, const std::string& name,
   }
 }
 
-const int GetInt(const JValue& root, const std::string& name, const int& def) {
+int GetInt(const JValue& root, const std::string& name, const int& def) {
   if (root.HasMember(name.c_str())) {
     const auto& value = root[name.c_str()];
     CHECK(value.IsNumber());
@@ -44,8 +43,7 @@ const int GetInt(const JValue& root, const std::string& name, const int& def) {
   }
 }
 
-const float GetFloat(const JValue& root, const std::string& name,
-                     const float& def) {
+float GetFloat(const JValue& root, const std::string& name, const float& def) {
   if (root.HasMember(name.c_str())) {
     const auto& value = root[name.c_str()];
     CHECK(value.IsNumber());
@@ -55,8 +53,8 @@ const float GetFloat(const JValue& root, const std::string& name,
   }
 }
 
-const std::string GetString(const JValue& root, const std::string& name,
-                            const std::string& def) {
+std::string GetString(const JValue& root, const std::string& name,
+                      const std::string& def) {
   if (root.HasMember(name.c_str())) {
     const auto& value = root[name.c_str()];
     CHECK(value.IsString());
@@ -66,8 +64,8 @@ const std::string GetString(const JValue& root, const std::string& name,
   }
 }
 
-const std::vector<bool> GetVecBool(const JValue& root, const std::string& name,
-                                   const std::vector<bool>& def) {
+std::vector<bool> GetVecBool(const JValue& root, const std::string& name,
+                             const std::vector<bool>& def) {
   if (root.HasMember(name.c_str())) {
     const auto& value = root[name.c_str()];
     CHECK(value.IsArray());
@@ -82,8 +80,8 @@ const std::vector<bool> GetVecBool(const JValue& root, const std::string& name,
   }
 }
 
-const std::vector<int> GetVecInt(const JValue& root, const std::string& name,
-                                 const std::vector<int>& def) {
+std::vector<int> GetVecInt(const JValue& root, const std::string& name,
+                           const std::vector<int>& def) {
   if (root.HasMember(name.c_str())) {
     const auto& value = root[name.c_str()];
     CHECK(value.IsArray());
@@ -98,9 +96,8 @@ const std::vector<int> GetVecInt(const JValue& root, const std::string& name,
   }
 }
 
-const std::vector<float> GetVecFloat(const JValue& root,
-                                     const std::string& name,
-                                     const std::vector<float>& def) {
+std::vector<float> GetVecFloat(const JValue& root, const std::string& name,
+                               const std::vector<float>& def) {
   if (root.HasMember(name.c_str())) {
     const auto& value = root[name.c_str()];
     CHECK(value.IsArray());
@@ -115,9 +112,9 @@ const std::vector<float> GetVecFloat(const JValue& root,
   }
 }
 
-const std::vector<std::string> GetVecString(
-    const JValue& root, const std::string& name,
-    const std::vector<std::string>& def) {
+std::vector<std::string> GetVecString(const JValue& root,
+                                      const std::string& name,
+                                      const std::vector<std::string>& def) {
   if (root.HasMember(name.c_str())) {
     const auto& value = root[name.c_str()];
     CHECK(value.IsArray());
