@@ -29,9 +29,8 @@ void ROIPooling<DeviceType::kCPU, float>(const float* in_data,
     int roi_width = std::max(roi_end_w - roi_start_w + 1, 1);
     float bin_size_h = roi_height / static_cast<float>(pooled_h);
     float bin_size_w = roi_width / static_cast<float>(pooled_w);
-    const auto* batch_in_data = in_data + roi_batch_id * in_num;
-    auto* batch_out_data = out_data + n * out_num;
-    for (int c = 0; c < in_c; ++c) {
+    const auto* in_data_ptr = in_data + roi_batch_id * in_num;
+    for (int c = 0; c < in_c; ++c, in_data_ptr += in_h * in_w) {
       for (int ph = 0; ph < pooled_h; ++ph) {
         for (int pw = 0; pw < pooled_w; ++pw) {
           auto hstart = static_cast<int>(std::floor(ph * bin_size_h));
@@ -43,17 +42,13 @@ void ROIPooling<DeviceType::kCPU, float>(const float* in_data,
           wstart = std::min(std::max(wstart + roi_start_w, 0), in_w);
           wend = std::min(std::max(wend + roi_start_w, 0), in_w);
           bool is_empty = (hend <= hstart) || (wend <= wstart);
-          auto max_val =
-              is_empty ? 0.f
-                       : batch_in_data[(c * in_h + hstart) * in_w + wstart];
+          auto max_val = is_empty ? 0.f : in_data_ptr[hstart * in_w + wstart];
           for (int h = hstart; h < hend; ++h) {
             for (int w = wstart; w < wend; ++w) {
-              max_val =
-                  std::max(max_val, batch_in_data[(c * in_h + h) * in_w + w]);
+              max_val = std::max(max_val, in_data_ptr[h * in_w + w]);
             }
           }
-          int pool_index = (c * pooled_h + ph) * pooled_w + pw;
-          batch_out_data[pool_index] = max_val;
+          *out_data++ = max_val;
         }
       }
     }

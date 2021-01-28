@@ -31,7 +31,7 @@ class ROIPoolingOp : public Operator {
 
     output->reshape({roi->shape(0), input->shape(1), pooled_h_, pooled_w_});
 
-    kernel_->Run(input, roi, output, ws_, pooled_h_, pooled_w_, spatial_scale_);
+    kernel_->Run(input, roi, output, ws_, spatial_scale_);
   }
 
  private:
