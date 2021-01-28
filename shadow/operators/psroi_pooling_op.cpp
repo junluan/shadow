@@ -8,12 +8,11 @@ class PSROIPoolingOp : public Operator {
  public:
   PSROIPoolingOp(const shadow::OpParam& op_param, Workspace* ws)
       : Operator(op_param, ws) {
-    output_dim_ = get_single_argument<int>("output_dim", 0);
-    group_size_ = get_single_argument<int>("group_size", 0);
-    CHECK_GT(output_dim_, 0) << "output_dim must be > 0";
-    CHECK_GT(group_size_, 0) << "group_size must be > 0";
+    pooled_h_ = get_single_argument<int>("pooled_h", 0);
+    pooled_w_ = get_single_argument<int>("pooled_w", 0);
+    CHECK_GT(pooled_h_, 0) << "pooled_h must be > 0";
+    CHECK_GT(pooled_w_, 0) << "pooled_w must be > 0";
     spatial_scale_ = get_single_argument<float>("spatial_scale", 1.f / 16);
-    pooled_h_ = group_size_, pooled_w_ = group_size_;
 
     kernel_ = std::dynamic_pointer_cast<PSROIPoolingKernel>(
         CreateKernel(op_param.type(), ws_->Ctx()->device_type()));
@@ -30,14 +29,18 @@ class PSROIPoolingOp : public Operator {
 
     CHECK_NE(input, output);
 
-    output->reshape({roi->shape(0), output_dim_, pooled_h_, pooled_w_});
+    int in_c = input->shape(1), out_spatial_dim = pooled_h_ * pooled_w_;
 
-    kernel_->Run(input, roi, output, ws_, output_dim_, group_size_, pooled_h_,
-                 pooled_w_, spatial_scale_);
+    CHECK_EQ(in_c % out_spatial_dim, 0);
+
+    output->reshape(
+        {roi->shape(0), in_c / out_spatial_dim, pooled_h_, pooled_w_});
+
+    kernel_->Run(input, roi, output, ws_, spatial_scale_);
   }
 
  private:
-  int output_dim_, group_size_, pooled_h_, pooled_w_;
+  int pooled_h_, pooled_w_;
   float spatial_scale_;
 
   std::shared_ptr<PSROIPoolingKernel> kernel_ = nullptr;

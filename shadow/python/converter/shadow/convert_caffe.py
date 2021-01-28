@@ -465,10 +465,6 @@ def convert_psroi_pooling(caffe_layer, network):
 
     if caffe_layer.HasField('psroi_pooling_param'):
         caffe_param = caffe_layer.psroi_pooling_param
-        if caffe_param.HasField('output_dim'):
-            output_dim = caffe_param.output_dim
-        else:
-            raise ValueError('output_dim must be supplied')
         if caffe_param.HasField('group_size'):
             group_size = caffe_param.group_size
         else:
@@ -478,7 +474,7 @@ def convert_psroi_pooling(caffe_layer, network):
         else:
             raise ValueError('spatial_scale must be supplied')
 
-    network.add_psroi_pooling(layer_name, bottom_names, top_names, output_dim, group_size, spatial_scale)
+    network.add_psroi_pooling(layer_name, bottom_names, top_names, group_size, group_size, spatial_scale)
 
 
 def convert_reshape(caffe_layer, network):

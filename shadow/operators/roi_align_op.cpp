@@ -13,6 +13,8 @@ class ROIAlignOp : public Operator {
     CHECK_GT(pooled_h_, 1) << "pooled_h must be > 1";
     CHECK_GT(pooled_w_, 1) << "pooled_w must be > 1";
     spatial_scale_ = get_single_argument<float>("spatial_scale", 1.f / 16);
+    sampling_ratio_ = get_single_argument<int>("sampling_ratio", -1);
+    align_corners_ = get_single_argument<bool>("align_corners", false);
 
     kernel_ = std::dynamic_pointer_cast<ROIAlignKernel>(
         CreateKernel(op_param.type(), ws_->Ctx()->device_type()));
@@ -31,12 +33,14 @@ class ROIAlignOp : public Operator {
 
     output->reshape({roi->shape(0), input->shape(1), pooled_h_, pooled_w_});
 
-    kernel_->Run(input, roi, output, ws_, pooled_h_, pooled_w_, spatial_scale_);
+    kernel_->Run(input, roi, output, ws_, spatial_scale_, sampling_ratio_,
+                 align_corners_);
   }
 
  private:
-  int pooled_h_, pooled_w_;
+  int pooled_h_, pooled_w_, sampling_ratio_;
   float spatial_scale_;
+  bool align_corners_;
 
   std::shared_ptr<ROIAlignKernel> kernel_ = nullptr;
 };

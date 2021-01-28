@@ -507,12 +507,12 @@ class Network(object):
 
         return op_param
 
-    def add_psroi_pooling(self, name, bottoms, tops, output_dim, group_size, spatial_scale):
+    def add_psroi_pooling(self, name, bottoms, tops, pooled_h, pooled_w, spatial_scale):
         op_param = self.add_net_op()
         self.add_common(op_param, name, 'PSROIPooling', bottoms, tops)
 
-        self.add_arg(op_param, 'output_dim', output_dim, 's_i')
-        self.add_arg(op_param, 'group_size', group_size, 's_i')
+        self.add_arg(op_param, 'pooled_h', pooled_h, 's_i')
+        self.add_arg(op_param, 'pooled_w', pooled_w, 's_i')
         self.add_arg(op_param, 'spatial_scale', spatial_scale, 's_f')
 
         return op_param
@@ -590,13 +590,15 @@ class Network(object):
 
         return op_param
 
-    def add_roi_align(self, name, bottoms, tops, pooled_h, pooled_w, spatial_scale):
+    def add_roi_align(self, name, bottoms, tops, pooled_h, pooled_w, spatial_scale, sampling_ratio=-1, align_corners=False):
         op_param = self.add_net_op()
         self.add_common(op_param, name, 'ROIAlign', bottoms, tops)
 
         self.add_arg(op_param, 'pooled_h', pooled_h, 's_i')
         self.add_arg(op_param, 'pooled_w', pooled_w, 's_i')
         self.add_arg(op_param, 'spatial_scale', spatial_scale, 's_f')
+        self.add_arg(op_param, 'sampling_ratio', sampling_ratio, 's_i')
+        self.add_arg(op_param, 'align_corners', align_corners, 's_i')
 
         return op_param
 
