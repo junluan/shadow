@@ -507,6 +507,17 @@ class Network(object):
 
         return op_param
 
+    def add_psroi_align(self, name, bottoms, tops, pooled_h, pooled_w, spatial_scale, sampling_ratio=-1):
+        op_param = self.add_net_op()
+        self.add_common(op_param, name, 'PSROIAlign', bottoms, tops)
+
+        self.add_arg(op_param, 'pooled_h', pooled_h, 's_i')
+        self.add_arg(op_param, 'pooled_w', pooled_w, 's_i')
+        self.add_arg(op_param, 'spatial_scale', spatial_scale, 's_f')
+        self.add_arg(op_param, 'sampling_ratio', sampling_ratio, 's_i')
+
+        return op_param
+
     def add_psroi_pooling(self, name, bottoms, tops, pooled_h, pooled_w, spatial_scale):
         op_param = self.add_net_op()
         self.add_common(op_param, name, 'PSROIPooling', bottoms, tops)
