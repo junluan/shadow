@@ -571,7 +571,7 @@ def convert_softmax(caffe_layer, network):
     network.add_softmax(layer_name, bottom_names, top_names, axis)
 
 
-def convert_caffe(network, net_info, model_root, model_name, copy_params):
+def convert_caffe(network, net_info, model_root, model_name):
     deploy_file = model_root + '/' + model_name + '.prototxt'
     deploy_model = model_root + '/' + model_name + '.caffemodel'
 
@@ -636,8 +636,7 @@ def convert_caffe(network, net_info, model_root, model_name, copy_params):
         else:
             print('Layer type: ' + layer_type + ' is not recognized!')
 
-    if copy_params:
-        caffe_model = caffe_pb2.NetParameter()
-        with open(deploy_model, 'rb') as caffe_file:
-            caffe_model.ParseFromString(caffe_file.read())
-        copy_weights(caffe_model, network)
+    caffe_model = caffe_pb2.NetParameter()
+    with open(deploy_model, 'rb') as caffe_file:
+        caffe_model.ParseFromString(caffe_file.read())
+    copy_weights(caffe_model, network)

@@ -26,7 +26,7 @@ if __name__ == '__main__':
 
     meta_net_info = eval('get_config_' + args.config_name)()
 
-    network = converter.convert(args.model_root, meta_net_info, args.copy_params)
+    network = converter.convert(args.model_root, meta_net_info)
 
     if args.merge_op:
         optimizer.optimize(network)

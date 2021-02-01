@@ -383,7 +383,7 @@ def convert_softmax(mxnet_nodes, index, network):
     network.add_softmax(json_name, bottom_names, [json_name])
 
 
-def convert_mxnet(network, net_info, model_root, model_name, model_epoch, copy_params):
+def convert_mxnet(network, net_info, model_root, model_name, model_epoch):
     sym, arg_params, aux_params = mx.model.load_checkpoint(model_root + '/' + model_name, model_epoch)
     mxnet_symbol = json.loads(sym.tojson())
     mxnet_nodes = mxnet_symbol['nodes']
@@ -434,5 +434,4 @@ def convert_mxnet(network, net_info, model_root, model_name, model_epoch, copy_p
         else:
             print('Skipping ' + json_op + ', please check!')
 
-    if copy_params:
-        copy_weights(arg_params, aux_params, param_dict, network)
+    copy_weights(arg_params, aux_params, param_dict, network)

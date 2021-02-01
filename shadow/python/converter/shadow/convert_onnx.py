@@ -641,7 +641,7 @@ def convert_aten(onnx_nodes, index, onnx_initializer, param_dict, network):
         raise ValueError('Unsupported aten operator', operator)
 
 
-def convert_onnx(network, net_info, model_root, model_name, copy_params):
+def convert_onnx(network, net_info, model_root, model_name):
     model_file = model_root + '/' + model_name + '.onnx'
 
     onnx_model = optimize_onnx(onnx.load(model_file))
@@ -704,5 +704,4 @@ def convert_onnx(network, net_info, model_root, model_name, copy_params):
         else:
             print('Skipping ' + op_type + ', please check!')
 
-    if copy_params:
-        copy_weights(onnx_initializer, param_dict, network)
+    copy_weights(onnx_initializer, param_dict, network)
