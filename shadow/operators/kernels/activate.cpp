@@ -105,6 +105,9 @@ class ActivateKernelDNNL : public ActivateKernel {
         algorithm = dnnl::algorithm::eltwise_bounded_relu;
         alpha = 6.f;
         break;
+      case kHardSwish:
+        algorithm = dnnl::algorithm::eltwise_hardswish;
+        break;
       case kGelu:
         algorithm = dnnl::algorithm::eltwise_gelu_erf;
         break;
