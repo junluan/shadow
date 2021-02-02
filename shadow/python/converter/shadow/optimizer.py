@@ -3,6 +3,16 @@ import networkx as nx
 from proto import OpParam
 
 
+optimizers_list = []
+
+
+def register_optimizer(find_subgraph_func, conditions):
+    def optimizer(optimizer_func):
+        optimizers_list.append(lambda graph: optimizer_func(graph, find_subgraph_func(graph, conditions)))
+        return optimizer_func
+    return optimizer
+
+
 def add_arg(op_param, arg_name, arg_type, arg_value):
     arg = op_param.arg.add()
     arg.name = arg_name
@@ -142,6 +152,7 @@ def fuse_subgraph(graph, subgraph, fused_op_param):
         graph.add_edge(fused_name, name)
 
 
+@register_optimizer(find_subgraph, ['Conv', 'Activate'])
 def fuse_conv_activate(graph, subgraphs):
     has_operation = False
 
@@ -165,6 +176,8 @@ def fuse_conv_activate(graph, subgraphs):
     return has_operation
 
 
+@register_optimizer(find_subgraph, ['Conv', 'BatchNorm', 'Scale'])
+@register_optimizer(find_subgraph, ['Deconv', 'BatchNorm', 'Scale'])
 def fuse_conv_bn_scale(graph, subgraphs):
     has_operation = False
 
@@ -238,6 +251,7 @@ def fuse_conv_bn_scale(graph, subgraphs):
     return has_operation
 
 
+@register_optimizer(find_subgraph, ['Permute', 'MatMul'])
 def fuse_permute_matmul(graph, subgraphs):
     has_operation = False
 
@@ -276,6 +290,7 @@ def fuse_permute_matmul(graph, subgraphs):
     return has_operation
 
 
+@register_optimizer(find_consecutive_subgraph, 'Permute')
 def fuse_consecutive_permute(graph, subgraphs):
     has_operation = False
 
@@ -287,7 +302,7 @@ def fuse_consecutive_permute(graph, subgraphs):
 
         fused_order = range(len(orders[0]))
         for order in orders:
-            fused_order = np.choose(fused_order, order)
+            fused_order = np.choose(order, fused_order)
 
         fused_param = OpParam(name=permute_params[0].name, type=permute_params[0].type)
         fused_param.bottom.extend(permute_params[0].bottom)
@@ -302,6 +317,7 @@ def fuse_consecutive_permute(graph, subgraphs):
     return has_operation
 
 
+@register_optimizer(find_consecutive_subgraph, 'Squeeze')
 def fuse_consecutive_squeeze(graph, subgraphs):
     has_operation = False
 
@@ -336,6 +352,48 @@ def fuse_consecutive_squeeze(graph, subgraphs):
     return has_operation
 
 
+@register_optimizer(find_subgraph, ['Binary'])
+def move_binary_const_to_scalar(graph, subgraphs):
+    has_operation = False
+
+    net_param = graph.graph['net_param']
+    for subgraph in subgraphs:
+        binary_param = graph.nodes[subgraph[0]]['op_param']
+
+        if len(binary_param.bottom) == 1:
+            break
+
+        has_weight, weight_index, weight_val = False, -1, None
+        for n, bottom in enumerate(binary_param.bottom):
+            weight_blob = get_blob(net_param, bottom)
+            if weight_blob is not None and len(weight_blob.data_f) == 1:
+                has_weight = True
+                weight_index = n
+                weight_val = weight_blob.data_f[0]
+                break
+        if not has_weight:
+            break
+
+        operation = get_arg(binary_param, 'operation', 's_i', None)
+        assert operation is not None
+
+        if operation in [1, 3, 4] and weight_index == 0:
+            break
+
+        fused_param = OpParam(name=binary_param.name, type=binary_param.type)
+        fused_param.bottom.append(binary_param.bottom[1 - weight_index])
+        fused_param.top.extend(binary_param.top)
+
+        add_arg(fused_param, 'operation', 's_i', operation)
+        add_arg(fused_param, 'scalar', 's_f', weight_val)
+
+        fuse_subgraph(graph, subgraph, fused_param)
+
+        has_operation = True
+
+    return has_operation
+
+
 def optimize(network):
     for net_param in network.get_meta_net_network():
         if len(net_param.op) == 0:
@@ -346,12 +404,8 @@ def optimize(network):
         while True:
             has_operation = False
 
-            has_operation |= fuse_conv_activate(graph, find_subgraph(graph, ['Conv', 'Activate']))
-            has_operation |= fuse_conv_bn_scale(graph, find_subgraph(graph, ['Conv', 'BatchNorm', 'Scale']))
-            has_operation |= fuse_conv_bn_scale(graph, find_subgraph(graph, ['Deconv', 'BatchNorm', 'Scale']))
-            has_operation |= fuse_permute_matmul(graph, find_subgraph(graph, ['Permute', 'MatMul']))
-            has_operation |= fuse_consecutive_permute(graph, find_consecutive_subgraph(graph, 'Permute'))
-            has_operation |= fuse_consecutive_squeeze(graph, find_consecutive_subgraph(graph, 'Squeeze'))
+            for optimizer in optimizers_list:
+                has_operation |= optimizer(graph)
 
             if not has_operation:
                 break
