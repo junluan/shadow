@@ -12,7 +12,18 @@
 
 namespace Shadow {
 
-enum class DataType { kI64, kI32, kI16, kI8, kU64, kU32, kU16, kU8, kF32 };
+enum class DataType {
+  kI64,
+  kI32,
+  kI16,
+  kI8,
+  kU64,
+  kU32,
+  kU16,
+  kU8,
+  kF32,
+  kBool
+};
 
 class Blob {
  public:
@@ -153,6 +164,8 @@ class Blob {
       return sizeof(std::uint8_t);
     } else if (data_type_ == DataType::kF32) {
       return sizeof(float);
+    } else if (data_type_ == DataType::kBool) {
+      return sizeof(bool);
     } else {
       return 0;
     }
@@ -188,6 +201,8 @@ class Blob {
       CHECK(data_type == DataType::kU8);
     } else if (std::is_same<T, float>::value) {
       CHECK(data_type == DataType::kF32);
+    } else if (std::is_same<T, bool>::value) {
+      CHECK(data_type == DataType::kBool);
     } else {
       LOG(FATAL) << "Invalid template typename " << typeid(T).name();
     }

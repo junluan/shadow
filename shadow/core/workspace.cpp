@@ -73,6 +73,8 @@ std::shared_ptr<Blob> Workspace::CreateBlob(const std::string& name,
     return CreateBlob(name, DataType::kU8, allocator);
   } else if (data_type_str == "float") {
     return CreateBlob(name, DataType::kF32, allocator);
+  } else if (data_type_str == "bool") {
+    return CreateBlob(name, DataType::kBool, allocator);
   } else {
     return nullptr;
   }

@@ -68,6 +68,8 @@ void Native::Run(const std::map<std::string, void*>& data_map,
       SetInputData<std::uint8_t>(blob_name, blob_shape, blob_data);
     } else if (blob_type == DataType::kF32) {
       SetInputData<float>(blob_name, blob_shape, blob_data);
+    } else if (blob_type == DataType::kBool) {
+      SetInputData<bool>(blob_name, blob_shape, blob_data);
     } else {
       LOG(FATAL) << "Blob " << blob_name << " has unsupported type";
     }
@@ -233,6 +235,8 @@ size_t Native::SetWeightData(const std::string& blob_name,
       blob->set_data<std::uint8_t>(blob_data, blob->count());
     } else if (data_type == DataType::kF32) {
       blob->set_data<float>(blob_data, blob->count());
+    } else if (data_type == DataType::kBool) {
+      blob->set_data<bool>(blob_data, blob->count());
     } else {
       LOG(FATAL) << "Invalid data type";
     }
