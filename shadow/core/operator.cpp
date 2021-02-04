@@ -5,7 +5,7 @@ namespace Shadow {
 Operator::Operator(const shadow::OpParam& op_param, Workspace* ws)
     : op_param_(op_param), arg_helper_(op_param), ws_(ws) {
   for (const auto& input_name : op_param_.bottom()) {
-    CHECK(ws->HasBlob(input_name))
+    DLOG_IF(WARNING, !ws->HasBlob(input_name))
         << name() << ": Failed to check input blob " << input_name;
   }
   for (const auto& output_name : op_param_.top()) {

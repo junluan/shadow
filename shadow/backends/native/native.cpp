@@ -78,9 +78,13 @@ void Native::Run(const std::map<std::string, void*>& data_map,
   for (auto& op : ops_) {
     std::vector<std::shared_ptr<Blob>> inputs, outputs;
     for (const auto& name : op->op_param().bottom()) {
+      CHECK(ws_->HasBlob(name))
+          << op->name() << ": Can not find input blob " << name;
       inputs.push_back(ws_->GetBlob(name));
     }
     for (const auto& name : op->op_param().top()) {
+      CHECK(ws_->HasBlob(name))
+          << op->name() << ":  Can not find output blob " << name;
       outputs.push_back(ws_->GetBlob(name));
     }
 
