@@ -15,20 +15,30 @@ inline int pooling_out_size(int dim, int kernel_size, int stride, int pad,
   }
 }
 
+inline VecInt expand_param(const VecInt& param, int num) {
+  if (param.size() == 1) {
+    return VecInt(num, param[0]);
+  } else {
+    CHECK_EQ(param.size(), num);
+    return param;
+  }
+}
+
 class PoolingOp : public Operator {
  public:
   PoolingOp(const shadow::OpParam& op_param, Workspace* ws)
       : Operator(op_param, ws) {
     // Max: 0, Avg: 1
     pool_type_ = get_single_argument<int>("pool", 0);
+    CHECK_GE(pool_type_, 0);
+    CHECK_LE(pool_type_, 1);
     global_pooling_ = get_single_argument<bool>("global_pooling", false);
-    if (!global_pooling_) {
-      const auto& kernel_size = get_paired_argument<int>("kernel_size", 0);
-      kernel_size_h_ = kernel_size.first, kernel_size_w_ = kernel_size.second;
-      const auto& stride = get_paired_argument<int>("stride", 1);
-      stride_h_ = stride.first, stride_w_ = stride.second;
-      const auto& pad = get_paired_argument<int>("pad", 0);
-      pad_h_ = pad.first, pad_w_ = pad.second;
+    if (global_pooling_) {
+      stride_ = VecInt(1, 1), pad_ = VecInt(1, 0);
+    } else {
+      kernel_size_ = get_repeated_argument<int>("kernel_size", 0);
+      stride_ = get_repeated_argument<int>("stride", 1);
+      pad_ = get_repeated_argument<int>("pad", 0);
     }
     full_pooling_ = get_single_argument<bool>("full_pooling", true);
 
@@ -44,38 +54,43 @@ class PoolingOp : public Operator {
 
     CHECK_NE(input, output);
 
-    int in_h = input->shape(2), in_w = input->shape(3);
+    int num_spatial_axes = input->num_axes() - 2;
 
-    if (global_pooling_) {
-      kernel_size_h_ = in_h, kernel_size_w_ = in_w;
-      stride_h_ = stride_w_ = 1;
-      pad_h_ = pad_w_ = 0;
+    CHECK(num_spatial_axes == 2 || num_spatial_axes == 3)
+        << "Only support 2D or 3D Pooling";
+
+    if (global_pooling_ && kernel_size_.size() != num_spatial_axes) {
+      for (int n = 0; n < num_spatial_axes; ++n) {
+        kernel_size_.push_back(input->shape(n + 2));
+      }
     }
 
-    int out_h = pooling_out_size(in_h, kernel_size_h_, stride_h_, pad_h_,
-                                 full_pooling_);
-    int out_w = pooling_out_size(in_w, kernel_size_w_, stride_w_, pad_w_,
-                                 full_pooling_);
-    if (pad_h_) {
-      if ((out_h - 1) * stride_h_ >= in_h + pad_h_) out_h--;
-    }
-    if (pad_w_) {
-      if ((out_w - 1) * stride_w_ >= in_w + pad_w_) out_w--;
-    }
+    const auto& kernel_size = expand_param(kernel_size_, num_spatial_axes);
+    const auto& stride = expand_param(stride_, num_spatial_axes);
+    const auto& pad = expand_param(pad_, num_spatial_axes);
 
     auto out_shape = input->shape();
-    out_shape[2] = out_h;
-    out_shape[3] = out_w;
+    for (int n = 0; n < num_spatial_axes; ++n) {
+      out_shape[n + 2] = pooling_out_size(input->shape(n + 2), kernel_size[n],
+                                          stride[n], pad[n], full_pooling_);
+    }
     output->reshape(out_shape);
 
-    kernel_->Run(input, output, ws_, pool_type_, kernel_size_h_, kernel_size_w_,
-                 stride_h_, stride_w_, pad_h_, pad_w_, full_pooling_);
+    if (num_spatial_axes == 2) {
+      kernel_->Run(input, output, ws_, pool_type_, kernel_size[0],
+                   kernel_size[1], stride[0], stride[1], pad[0], pad[1],
+                   full_pooling_);
+    } else if (num_spatial_axes == 3) {
+      kernel_->Run(input, output, ws_, pool_type_, kernel_size[0],
+                   kernel_size[1], kernel_size[2], stride[0], stride[1],
+                   stride[2], pad[0], pad[1], pad[2], full_pooling_);
+    }
   }
 
  private:
-  int pool_type_, kernel_size_h_, kernel_size_w_, stride_h_, stride_w_, pad_h_,
-      pad_w_;
+  int pool_type_;
   bool global_pooling_, full_pooling_;
+  VecInt kernel_size_, stride_, pad_;
 
   std::shared_ptr<PoolingKernel> kernel_ = nullptr;
 };

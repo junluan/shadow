@@ -37,6 +37,17 @@ class Operator {
     return arg_helper_.GetRepeatedArgument<T>(name, default_value);
   }
   template <typename T>
+  std::vector<T> get_repeated_argument(const std::string& name,
+                                       const T& default_value) const {
+    const auto& val = arg_helper_.GetRepeatedArgument<T>(name);
+    if (val.empty()) {
+      return std::vector<T>(
+          1, arg_helper_.GetSingleArgument<T>(name, default_value));
+    } else {
+      return val;
+    }
+  }
+  template <typename T>
   std::pair<T, T> get_paired_argument(const std::string& name,
                                       const T& default_value) const {
     const auto& val = arg_helper_.GetRepeatedArgument<T>(name);

@@ -179,10 +179,7 @@ inline void createPoolingDesc(cudnnPoolingDescriptor_t* pool_desc) {
   CUDNN_CHECK(cudnnCreatePoolingDescriptor(pool_desc));
 }
 
-template <typename T>
-inline void setPooling2dDesc(cudnnPoolingDescriptor_t* pool_desc, int pool_type,
-                             int window_h, int window_w, int pad_h, int pad_w,
-                             int stride_h, int stride_w) {
+inline cudnnPoolingMode_t getPoolingMode(int pool_type) {
   cudnnPoolingMode_t mode{};
   switch (pool_type) {
     case 0:
@@ -194,9 +191,25 @@ inline void setPooling2dDesc(cudnnPoolingDescriptor_t* pool_desc, int pool_type,
     default:
       LOG(FATAL) << "Unsupported pool type " << pool_type;
   }
-  CUDNN_CHECK(cudnnSetPooling2dDescriptor(*pool_desc, mode, CUDNN_PROPAGATE_NAN,
-                                          window_h, window_w, pad_h, pad_w,
-                                          stride_h, stride_w));
+  return mode;
+}
+
+template <typename T>
+inline void setPooling2dDesc(cudnnPoolingDescriptor_t* pool_desc, int pool_type,
+                             int window_h, int window_w, int pad_h, int pad_w,
+                             int stride_h, int stride_w) {
+  CUDNN_CHECK(cudnnSetPooling2dDescriptor(
+      *pool_desc, getPoolingMode(pool_type), CUDNN_PROPAGATE_NAN, window_h,
+      window_w, pad_h, pad_w, stride_h, stride_w));
+}
+
+template <typename T>
+inline void setPoolingNdDesc(cudnnPoolingDescriptor_t* pool_desc, int pool_type,
+                             int n, const int* window, const int* pad,
+                             const int* stride) {
+  CUDNN_CHECK(cudnnSetPoolingNdDescriptor(*pool_desc, getPoolingMode(pool_type),
+                                          CUDNN_PROPAGATE_NAN, n, window, pad,
+                                          stride));
 }
 
 template <typename T>
