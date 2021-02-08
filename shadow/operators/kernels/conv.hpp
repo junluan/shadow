@@ -12,17 +12,32 @@ namespace Shadow {
 namespace Vision {
 
 template <DeviceType D, typename T>
-void Im2Col(const T* in_data, const VecInt& in_shape, int offset,
-            int kernel_size_h, int kernel_size_w, int stride_h, int stride_w,
-            int pad_h, int pad_w, int dilation, int zero_point,
-            const VecInt& out_shape, T* col_data, Context* context);
+void Im2Col2D(const T* in_data, const VecInt& in_shape, int kernel_size_h,
+              int kernel_size_w, int stride_h, int stride_w, int pad_h,
+              int pad_w, int dilation_h, int dilation_w,
+              const VecInt& out_shape, T* col_data, Context* context);
 
 template <DeviceType D, typename T>
-void Depthwise(const T* in_data, const VecInt& in_shape, const T* weight_data,
-               const T* bias_data, int kernel_size_h, int kernel_size_w,
-               int stride_h, int stride_w, int pad_h, int pad_w, int dilation,
-               bool bias_term, const VecInt& out_shape, T* out_data,
-               Context* context);
+void Im2Col3D(const T* in_data, const VecInt& in_shape, int kernel_size_d,
+              int kernel_size_h, int kernel_size_w, int stride_d, int stride_h,
+              int stride_w, int pad_d, int pad_h, int pad_w, int dilation_d,
+              int dilation_h, int dilation_w, const VecInt& out_shape,
+              T* col_data, Context* context);
+
+template <DeviceType D, typename T>
+void Depthwise2D(const T* in_data, const VecInt& in_shape, const T* weight_data,
+                 const T* bias_data, int kernel_size_h, int kernel_size_w,
+                 int stride_h, int stride_w, int pad_h, int pad_w,
+                 int dilation_h, int dilation_w, bool bias_term,
+                 const VecInt& out_shape, T* out_data, Context* context);
+
+template <DeviceType D, typename T>
+void Depthwise3D(const T* in_data, const VecInt& in_shape, const T* weight_data,
+                 const T* bias_data, int kernel_size_d, int kernel_size_h,
+                 int kernel_size_w, int stride_d, int stride_h, int stride_w,
+                 int pad_d, int pad_h, int pad_w, int dilation_d,
+                 int dilation_h, int dilation_w, bool bias_term,
+                 const VecInt& out_shape, T* out_data, Context* context);
 
 }  // namespace Vision
 
@@ -37,8 +52,19 @@ class ConvKernel : public Kernel {
                    const std::shared_ptr<Blob>& bias,
                    std::shared_ptr<Blob>& output, Workspace* ws, int num_output,
                    int kernel_size_h, int kernel_size_w, int stride_h,
-                   int stride_w, int pad_h, int pad_w, int dilation, int group,
-                   bool bias_term, int activate_type) = 0;
+                   int stride_w, int pad_h, int pad_w, int dilation_h,
+                   int dilation_w, int group, bool bias_term,
+                   int activate_type) = 0;
+
+  virtual void Run(const std::shared_ptr<Blob>& input,
+                   const std::shared_ptr<Blob>& weight,
+                   const std::shared_ptr<Blob>& bias,
+                   std::shared_ptr<Blob>& output, Workspace* ws, int num_output,
+                   int kernel_size_d, int kernel_size_h, int kernel_size_w,
+                   int stride_d, int stride_h, int stride_w, int pad_d,
+                   int pad_h, int pad_w, int dilation_d, int dilation_h,
+                   int dilation_w, int group, bool bias_term,
+                   int activate_type) = 0;
 };
 
 template <DeviceType D>
@@ -48,8 +74,9 @@ class ConvKernelDefault : public ConvKernel {
            const std::shared_ptr<Blob>& weight,
            const std::shared_ptr<Blob>& bias, std::shared_ptr<Blob>& output,
            Workspace* ws, int num_output, int kernel_size_h, int kernel_size_w,
-           int stride_h, int stride_w, int pad_h, int pad_w, int dilation,
-           int group, bool bias_term, int activate_type) override {
+           int stride_h, int stride_w, int pad_h, int pad_w, int dilation_h,
+           int dilation_w, int group, bool bias_term,
+           int activate_type) override {
     const auto* in_data = input->data<float>();
     const auto* weight_data = weight->data<float>();
     const auto* bias_data = bias_term ? bias->data<float>() : nullptr;
@@ -57,11 +84,11 @@ class ConvKernelDefault : public ConvKernel {
 
     int in_c = input->shape(1);
 
-    if (group == in_c && group == num_output) {
-      Vision::Depthwise<D, float>(
+    if (group == in_c && (num_output % in_c == 0)) {
+      Vision::Depthwise2D<D, float>(
           in_data, input->shape(), weight_data, bias_data, kernel_size_h,
-          kernel_size_w, stride_h, stride_w, pad_h, pad_w, dilation, bias_term,
-          output->shape(), out_data, ws->Ctx().get());
+          kernel_size_w, stride_h, stride_w, pad_h, pad_w, dilation_h,
+          dilation_w, bias_term, output->shape(), out_data, ws->Ctx().get());
     } else {
       int out_spatial_dim = output->count(2);
       int kernel_dim = kernel_size_h * kernel_size_w * in_c / group;
@@ -79,9 +106,74 @@ class ConvKernelDefault : public ConvKernel {
           out_num = output->num();
 
       for (int b = 0; b < batch; ++b) {
-        Vision::Im2Col<D, float>(
-            in_data, input->shape(), b * in_num, kernel_size_h, kernel_size_w,
-            stride_h, stride_w, pad_h, pad_w, dilation, 0, output->shape(),
+        Vision::Im2Col2D<D, float>(
+            in_data + b * in_num, input->shape(), kernel_size_h, kernel_size_w,
+            stride_h, stride_w, pad_h, pad_w, dilation_h, dilation_w,
+            output->shape(), col_image->mutable_data<float>(), ws->Ctx().get());
+        for (int g = 0; g < group; ++g) {
+          Blas::BlasSgemm<D, float>(
+              0, 0, num_output / group, out_spatial_dim, kernel_dim, 1,
+              weight_data, weight_offset * g, col_image->data<float>(),
+              col_offset * g, 0, out_data, b * out_num + output_offset * g,
+              ws->Ctx().get());
+        }
+      }
+
+      if (bias_term) {
+        Vision::Bias<D, float>(out_data, output->count(), bias_data, num_output,
+                               out_spatial_dim, out_data, ws->Ctx().get());
+      }
+    }
+
+    if (activate_type == 1) {
+      Vision::Activate<D, float>(out_data, out_data, output->count(),
+                                 activate_type, 0, ws->Ctx().get());
+    }
+  }
+
+  void Run(const std::shared_ptr<Blob>& input,
+           const std::shared_ptr<Blob>& weight,
+           const std::shared_ptr<Blob>& bias, std::shared_ptr<Blob>& output,
+           Workspace* ws, int num_output, int kernel_size_d, int kernel_size_h,
+           int kernel_size_w, int stride_d, int stride_h, int stride_w,
+           int pad_d, int pad_h, int pad_w, int dilation_d, int dilation_h,
+           int dilation_w, int group, bool bias_term,
+           int activate_type) override {
+    const auto* in_data = input->data<float>();
+    const auto* weight_data = weight->data<float>();
+    const auto* bias_data = bias_term ? bias->data<float>() : nullptr;
+    auto* out_data = output->mutable_data<float>();
+
+    int in_c = input->shape(1);
+
+    if (group == in_c && (num_output % in_c == 0)) {
+      Vision::Depthwise3D<D, float>(
+          in_data, input->shape(), weight_data, bias_data, kernel_size_d,
+          kernel_size_h, kernel_size_w, stride_d, stride_h, stride_w, pad_d,
+          pad_h, pad_w, dilation_d, dilation_h, dilation_w, bias_term,
+          output->shape(), out_data, ws->Ctx().get());
+    } else {
+      int out_spatial_dim = output->count(2);
+      int kernel_dim =
+          kernel_size_d * kernel_size_h * kernel_size_w * in_c / group;
+
+      int weight_offset = num_output * kernel_dim / group;
+      int col_offset = kernel_dim * out_spatial_dim;
+      int output_offset = num_output * out_spatial_dim / group;
+
+      ws->GrowTempBuffer(kernel_dim * group * out_spatial_dim * sizeof(float));
+
+      auto col_image = ws->CreateTempBlob({kernel_dim * group, out_spatial_dim},
+                                          DataType::kF32);
+
+      int batch = input->shape(0), in_num = input->num(),
+          out_num = output->num();
+
+      for (int b = 0; b < batch; ++b) {
+        Vision::Im2Col3D<D, float>(
+            in_data + b * in_num, input->shape(), kernel_size_d, kernel_size_h,
+            kernel_size_w, stride_d, stride_h, stride_w, pad_d, pad_h, pad_w,
+            dilation_d, dilation_h, dilation_w, output->shape(),
             col_image->mutable_data<float>(), ws->Ctx().get());
         for (int g = 0; g < group; ++g) {
           Blas::BlasSgemm<D, float>(

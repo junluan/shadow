@@ -123,6 +123,13 @@ inline void setFilter4dDesc(cudnnFilterDescriptor_t* desc, int n, int c, int h,
 }
 
 template <typename T>
+inline void setFilterNdDesc(cudnnFilterDescriptor_t* desc, int n,
+                            const int* dim) {
+  CUDNN_CHECK(cudnnSetFilterNdDescriptor(*desc, dataType<T>::type,
+                                         CUDNN_TENSOR_NCHW, n, dim));
+}
+
+template <typename T>
 inline void createConvolutionDesc(cudnnConvolutionDescriptor_t* conv_desc) {
   CUDNN_CHECK(cudnnCreateConvolutionDescriptor(conv_desc));
 }
@@ -135,6 +142,18 @@ inline void setConvolution2dDesc(cudnnConvolutionDescriptor_t* conv_desc,
   CUDNN_CHECK(cudnnSetConvolution2dDescriptor(
       *conv_desc, pad_h, pad_w, stride_h, stride_w, dilation_h, dilation_w,
       CUDNN_CROSS_CORRELATION, dataType<T>::type));
+#if CUDNN_VERSION_MIN(7, 0, 1)
+  CUDNN_CHECK(cudnnSetConvolutionGroupCount(*conv_desc, group));
+#endif
+}
+
+template <typename T>
+inline void setConvolutionNdDesc(cudnnConvolutionDescriptor_t* conv_desc, int n,
+                                 const int* pad, const int* stride,
+                                 const int* dilation, int group) {
+  CUDNN_CHECK(cudnnSetConvolutionNdDescriptor(*conv_desc, n, pad, stride,
+                                              dilation, CUDNN_CROSS_CORRELATION,
+                                              dataType<T>::type));
 #if CUDNN_VERSION_MIN(7, 0, 1)
   CUDNN_CHECK(cudnnSetConvolutionGroupCount(*conv_desc, group));
 #endif
@@ -325,24 +344,6 @@ inline dnnl::memory::desc create_memory_desc(
   }
   return dnnl::memory::desc(dnnl::memory::dims(shape.begin(), shape.end()),
                             data_type, format_tag);
-}
-
-inline dnnl::convolution_forward::desc create_convolution_desc(
-    const dnnl::memory::desc& src_desc, const dnnl::memory::desc& weight_desc,
-    const dnnl::memory::desc& bias_desc, const dnnl::memory::desc& dst_desc,
-    int pad_h, int pad_w, int stride_h, int stride_w, int dilation_h,
-    int dilation_w) {
-  if (dilation_h == 1 && dilation_w == 1) {
-    return dnnl::convolution_forward::desc(
-        dnnl::prop_kind::forward_inference, dnnl::algorithm::convolution_auto,
-        src_desc, weight_desc, bias_desc, dst_desc, {stride_h, stride_w},
-        {pad_h, pad_w}, {pad_h, pad_w});
-  } else {
-    return dnnl::convolution_forward::desc(
-        dnnl::prop_kind::forward_inference, dnnl::algorithm::convolution_auto,
-        src_desc, weight_desc, bias_desc, dst_desc, {stride_h, stride_w},
-        {dilation_h - 1, dilation_w - 1}, {pad_h, pad_w}, {pad_h, pad_w});
-  }
 }
 
 inline dnnl::deconvolution_forward::desc create_deconvolution_desc(

@@ -10,35 +10,32 @@ inline bool check_border(int a, int b) {
 }
 
 template <>
-void Im2Col<DeviceType::kCPU, float>(const float* in_data,
-                                     const VecInt& in_shape, int offset,
-                                     int kernel_size_h, int kernel_size_w,
-                                     int stride_h, int stride_w, int pad_h,
-                                     int pad_w, int dilation, int zero_point,
-                                     const VecInt& out_shape, float* col_data,
-                                     Context* context) {
-  in_data += offset;
+void Im2Col2D<DeviceType::kCPU, float>(const float* in_data,
+                                       const VecInt& in_shape,
+                                       int kernel_size_h, int kernel_size_w,
+                                       int stride_h, int stride_w, int pad_h,
+                                       int pad_w, int dilation_h,
+                                       int dilation_w, const VecInt& out_shape,
+                                       float* col_data, Context* context) {
   int in_c = in_shape[1], in_h = in_shape[2], in_w = in_shape[3];
   int out_h = out_shape[2], out_w = out_shape[3];
-  int spatial_dim = in_h * in_w;
-  for (int k_c = 0; k_c < in_c; ++k_c, in_data += spatial_dim) {
+  for (int c = 0; c < in_c; ++c, in_data += in_h * in_w) {
     for (int k_s = 0; k_s < kernel_size_h * kernel_size_w; ++k_s) {
-      int k_h = k_s / kernel_size_w;
-      int k_w = k_s % kernel_size_w;
-      int im_row = -pad_h + k_h * dilation;
-      for (int h = 0; h < out_h; ++h, im_row += stride_h) {
-        if (check_border(im_row, in_h)) {
-          int im_col = -pad_w + k_w * dilation;
-          for (int w = 0; w < out_w; ++w, im_col += stride_w) {
-            if (check_border(im_col, in_w)) {
-              *(col_data++) = in_data[im_row * in_w + im_col];
+      int kh = k_s / kernel_size_w, kw = k_s % kernel_size_w;
+      int h_in = kh * dilation_h - pad_h;
+      for (int h = 0; h < out_h; ++h, h_in += stride_h) {
+        if (check_border(h_in, in_h)) {
+          int w_in = kw * dilation_w - pad_w;
+          for (int w = 0; w < out_w; ++w, w_in += stride_w) {
+            if (check_border(w_in, in_w)) {
+              *col_data++ = in_data[h_in * in_w + w_in];
             } else {
-              *(col_data++) = static_cast<float>(zero_point);
+              *col_data++ = 0.f;
             }
           }
         } else {
           for (int w = 0; w < out_w; ++w) {
-            *(col_data++) = static_cast<float>(zero_point);
+            *col_data++ = 0.f;
           }
         }
       }
@@ -47,39 +44,138 @@ void Im2Col<DeviceType::kCPU, float>(const float* in_data,
 }
 
 template <>
-void Depthwise<DeviceType::kCPU, float>(
+void Im2Col3D<DeviceType::kCPU, float>(
+    const float* in_data, const VecInt& in_shape, int kernel_size_d,
+    int kernel_size_h, int kernel_size_w, int stride_d, int stride_h,
+    int stride_w, int pad_d, int pad_h, int pad_w, int dilation_d,
+    int dilation_h, int dilation_w, const VecInt& out_shape, float* col_data,
+    Context* context) {
+  int in_c = in_shape[1], in_d = in_shape[2], in_h = in_shape[3],
+      in_w = in_shape[4];
+  int out_d = out_shape[2], out_h = out_shape[3], out_w = out_shape[4];
+  for (int c = 0; c < in_c; ++c, in_data += in_d * in_h * in_w) {
+    for (int k_s = 0; k_s < kernel_size_d * kernel_size_h * kernel_size_w;
+         ++k_s) {
+      int temp = k_s / kernel_size_w;
+      int kd = temp / kernel_size_h, kh = temp % kernel_size_h,
+          kw = k_s % kernel_size_w;
+      int d_in = kd * dilation_d - pad_d;
+      for (int d = 0; d < out_d; ++d, d_in += stride_d) {
+        if (check_border(d_in, in_d)) {
+          int h_in = kh * dilation_h - pad_h;
+          for (int h = 0; h < out_h; ++h, h_in += stride_h) {
+            if (check_border(h_in, in_h)) {
+              int w_in = kw * dilation_w - pad_w;
+              for (int w = 0; w < out_w; ++w, w_in += stride_w) {
+                if (check_border(w_in, in_w)) {
+                  *col_data++ = in_data[(d_in * in_h + h_in) * in_w + w_in];
+                } else {
+                  *col_data++ = 0.f;
+                }
+              }
+            } else {
+              for (int w = 0; w < out_w; ++w) {
+                *col_data++ = 0.f;
+              }
+            }
+          }
+        } else {
+          for (int n = 0; n < out_h * out_w; ++n) {
+            *col_data++ = 0.f;
+          }
+        }
+      }
+    }
+  }
+}
+
+template <>
+void Depthwise2D<DeviceType::kCPU, float>(
     const float* in_data, const VecInt& in_shape, const float* weight_data,
     const float* bias_data, int kernel_size_h, int kernel_size_w, int stride_h,
-    int stride_w, int pad_h, int pad_w, int dilation, bool bias_term,
-    const VecInt& out_shape, float* out_data, Context* context) {
+    int stride_w, int pad_h, int pad_w, int dilation_h, int dilation_w,
+    bool bias_term, const VecInt& out_shape, float* out_data,
+    Context* context) {
   int batch = in_shape[0];
   int in_c = in_shape[1], in_h = in_shape[2], in_w = in_shape[3];
-  int out_h = out_shape[2], out_w = out_shape[3];
+  int out_c = out_shape[1], out_h = out_shape[2], out_w = out_shape[3];
+  int k = out_c / in_c;
   for (int b = 0; b < batch; ++b) {
-    for (int c = 0; c < in_c; ++c) {
-      const auto* in_offset_data = in_data + (b * in_c + c) * in_h * in_w;
-      auto* out_offset_data = out_data + (b * in_c + c) * out_h * out_w;
+    for (int c = 0; c < out_c; ++c) {
       for (int h = 0; h < out_h; ++h) {
         for (int w = 0; w < out_w; ++w) {
-          const auto* weight_offset_data =
+          const auto* weight_data_ptr =
               weight_data + c * kernel_size_h * kernel_size_w;
           double sum_val = 0;
           for (int kh = 0; kh < kernel_size_h; ++kh) {
+            int h_in = h * stride_h - pad_h + kh * dilation_h;
             for (int kw = 0; kw < kernel_size_w; ++kw) {
-              int h_in = h * stride_h - pad_h + kh * dilation;
-              int w_in = w * stride_w - pad_w + kw * dilation;
+              int w_in = w * stride_w - pad_w + kw * dilation_w;
               if (h_in >= 0 && h_in < in_h && w_in >= 0 && w_in < in_w) {
-                sum_val +=
-                    in_offset_data[h_in * in_w + w_in] * *weight_offset_data;
+                sum_val += in_data[h_in * in_w + w_in] * *weight_data_ptr;
               }
-              weight_offset_data++;
+              weight_data_ptr++;
             }
           }
           if (bias_term) {
             sum_val += bias_data[c];
           }
-          out_offset_data[h * out_w + w] = static_cast<float>(sum_val);
+          *out_data++ = static_cast<float>(sum_val);
         }
+      }
+      if ((c + 1) % k == 0) {
+        in_data += in_h * in_w;
+      }
+    }
+  }
+}
+
+template <>
+void Depthwise3D<DeviceType::kCPU, float>(
+    const float* in_data, const VecInt& in_shape, const float* weight_data,
+    const float* bias_data, int kernel_size_d, int kernel_size_h,
+    int kernel_size_w, int stride_d, int stride_h, int stride_w, int pad_d,
+    int pad_h, int pad_w, int dilation_d, int dilation_h, int dilation_w,
+    bool bias_term, const VecInt& out_shape, float* out_data,
+    Context* context) {
+  int batch = in_shape[0];
+  int in_c = in_shape[1], in_d = in_shape[2], in_h = in_shape[3],
+      in_w = in_shape[4];
+  int out_c = out_shape[1], out_d = out_shape[2], out_h = out_shape[3],
+      out_w = out_shape[4];
+  int k = out_c / in_c;
+  for (int b = 0; b < batch; ++b) {
+    for (int c = 0; c < out_c; ++c) {
+      for (int d = 0; d < out_d; ++d) {
+        for (int h = 0; h < out_h; ++h) {
+          for (int w = 0; w < out_w; ++w) {
+            const auto* weight_data_ptr =
+                weight_data + c * kernel_size_d * kernel_size_h * kernel_size_w;
+            double sum_val = 0;
+            for (int kd = 0; kd < kernel_size_d; ++kd) {
+              int d_in = d * stride_d - pad_d + kd * dilation_d;
+              for (int kh = 0; kh < kernel_size_h; ++kh) {
+                int h_in = h * stride_h - pad_h + kh * dilation_h;
+                for (int kw = 0; kw < kernel_size_w; ++kw) {
+                  int w_in = w * stride_w - pad_w + kw * dilation_w;
+                  if (d_in >= 0 && d_in < in_d && h_in >= 0 && h_in < in_h &&
+                      w_in >= 0 && w_in < in_w) {
+                    sum_val += in_data[(d_in * in_h + h_in) * in_w + w_in] *
+                               *weight_data_ptr;
+                  }
+                  weight_data_ptr++;
+                }
+              }
+            }
+            if (bias_term) {
+              sum_val += bias_data[c];
+            }
+            *out_data++ = static_cast<float>(sum_val);
+          }
+        }
+      }
+      if ((c + 1) % k == 0) {
+        in_data += in_d * in_h * in_w;
       }
     }
   }
@@ -105,12 +201,14 @@ class ConvKernelNNPACK : public ConvKernel {
            const std::shared_ptr<Blob>& weight,
            const std::shared_ptr<Blob>& bias, std::shared_ptr<Blob>& output,
            Workspace* ws, int num_output, int kernel_size_h, int kernel_size_w,
-           int stride_h, int stride_w, int pad_h, int pad_w, int dilation,
-           int group, bool bias_term, int activate_type) override {
+           int stride_h, int stride_w, int pad_h, int pad_w, int dilation_h,
+           int dilation_w, int group, bool bias_term,
+           int activate_type) override {
     int batch = input->shape(0), in_c = input->shape(1), in_h = input->shape(2),
         in_w = input->shape(3);
 
-    if (batch == 1 && group == 1 && dilation == 1 && bias_term) {
+    if (batch == 1 && group == 1 && dilation_h == 1 && dilation_w == 1 &&
+        bias_term) {
       auto nnp_activation =
           activate_type == 1 ? nnp_activation_relu : nnp_activation_identity;
       auto nnp_input_size =
@@ -135,9 +233,24 @@ class ConvKernelNNPACK : public ConvKernel {
     } else {
       default_kernel_->Run(input, weight, bias, output, ws, num_output,
                            kernel_size_h, kernel_size_w, stride_h, stride_w,
-                           pad_h, pad_w, dilation, group, bias_term,
-                           activate_type);
+                           pad_h, pad_w, dilation_h, dilation_w, group,
+                           bias_term, activate_type);
     }
+  }
+
+  void Run(const std::shared_ptr<Blob>& input,
+           const std::shared_ptr<Blob>& weight,
+           const std::shared_ptr<Blob>& bias, std::shared_ptr<Blob>& output,
+           Workspace* ws, int num_output, int kernel_size_d, int kernel_size_h,
+           int kernel_size_w, int stride_d, int stride_h, int stride_w,
+           int pad_d, int pad_h, int pad_w, int dilation_d, int dilation_h,
+           int dilation_w, int group, bool bias_term,
+           int activate_type) override {
+    default_kernel_->Run(input, weight, bias, output, ws, num_output,
+                         kernel_size_d, kernel_size_h, kernel_size_w, stride_d,
+                         stride_h, stride_w, pad_d, pad_h, pad_w, dilation_d,
+                         dilation_h, dilation_w, group, bias_term,
+                         activate_type);
   }
 
   DeviceType device_type() const override { return DeviceType::kCPU; }
@@ -161,8 +274,9 @@ class ConvKernelDNNL : public ConvKernel {
            const std::shared_ptr<Blob>& weight,
            const std::shared_ptr<Blob>& bias, std::shared_ptr<Blob>& output,
            Workspace* ws, int num_output, int kernel_size_h, int kernel_size_w,
-           int stride_h, int stride_w, int pad_h, int pad_w, int dilation,
-           int group, bool bias_term, int activate_type) override {
+           int stride_h, int stride_w, int pad_h, int pad_w, int dilation_h,
+           int dilation_w, int group, bool bias_term,
+           int activate_type) override {
     int in_c = input->shape(1);
 
     const auto& src_desc = idnnl::create_memory_desc<float>(
@@ -184,9 +298,52 @@ class ConvKernelDNNL : public ConvKernel {
         {num_output}, bias_term ? dnnl::memory::format_tag::x
                                 : dnnl::memory::format_tag::undef);
 
-    const auto& conv_desc = idnnl::create_convolution_desc(
-        src_desc, weight_desc, bias_desc, dst_desc, pad_h, pad_w, stride_h,
-        stride_w, dilation, dilation);
+    const auto& conv_desc = dnnl::convolution_forward::desc(
+        dnnl::prop_kind::forward_inference, dnnl::algorithm::convolution_auto,
+        src_desc, weight_desc, bias_desc, dst_desc, {stride_h, stride_w},
+        {dilation_h - 1, dilation_w - 1}, {pad_h, pad_w}, {pad_h, pad_w});
+
+    idnnl::common_forward<dnnl::convolution_forward>(
+        ws->Ctx()->dnnl_handle(), conv_desc, input->data<float>(),
+        weight->data<float>(), bias_term ? bias->data<float>() : nullptr,
+        output->mutable_data<float>(), activate_type);
+  }
+
+  void Run(const std::shared_ptr<Blob>& input,
+           const std::shared_ptr<Blob>& weight,
+           const std::shared_ptr<Blob>& bias, std::shared_ptr<Blob>& output,
+           Workspace* ws, int num_output, int kernel_size_d, int kernel_size_h,
+           int kernel_size_w, int stride_d, int stride_h, int stride_w,
+           int pad_d, int pad_h, int pad_w, int dilation_d, int dilation_h,
+           int dilation_w, int group, bool bias_term,
+           int activate_type) override {
+    int in_c = input->shape(1);
+
+    const auto& src_desc = idnnl::create_memory_desc<float>(
+        input->shape(), dnnl::memory::format_tag::ncdhw);
+    const auto& dst_desc = idnnl::create_memory_desc<float>(
+        output->shape(), dnnl::memory::format_tag::ncdhw);
+    dnnl::memory::desc weight_desc;
+    if (group == 1) {
+      weight_desc = idnnl::create_memory_desc<float>(
+          {num_output, in_c, kernel_size_d, kernel_size_h, kernel_size_w},
+          dnnl::memory::format_tag::oidhw);
+    } else {
+      weight_desc = idnnl::create_memory_desc<float>(
+          {group, num_output / group, in_c / group, kernel_size_d,
+           kernel_size_h, kernel_size_w},
+          dnnl::memory::format_tag::goidhw);
+    }
+    const auto& bias_desc = idnnl::create_memory_desc<float>(
+        {num_output}, bias_term ? dnnl::memory::format_tag::x
+                                : dnnl::memory::format_tag::undef);
+
+    const auto& conv_desc = dnnl::convolution_forward::desc(
+        dnnl::prop_kind::forward_inference, dnnl::algorithm::convolution_auto,
+        src_desc, weight_desc, bias_desc, dst_desc,
+        {stride_d, stride_h, stride_w},
+        {dilation_d - 1, dilation_h - 1, dilation_w - 1}, {pad_d, pad_h, pad_w},
+        {pad_d, pad_h, pad_w});
 
     idnnl::common_forward<dnnl::convolution_forward>(
         ws->Ctx()->dnnl_handle(), conv_desc, input->data<float>(),

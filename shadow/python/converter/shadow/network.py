@@ -232,7 +232,10 @@ class Network(object):
             self.add_arg(op_param, 'pad', pad, 's_i')
         else:
             self.add_arg(op_param, 'pad', pad, 'v_i')
-        self.add_arg(op_param, 'dilation', dilation, 's_i')
+        if isinstance(dilation, int):
+            self.add_arg(op_param, 'dilation', dilation, 's_i')
+        else:
+            self.add_arg(op_param, 'dilation', dilation, 'v_i')
         self.add_arg(op_param, 'group', group, 's_i')
         self.add_arg(op_param, 'bias_term', bias_term, 's_i')
 
@@ -269,7 +272,10 @@ class Network(object):
             self.add_arg(op_param, 'pad', pad, 's_i')
         else:
             self.add_arg(op_param, 'pad', pad, 'v_i')
-        self.add_arg(op_param, 'dilation', dilation, 's_i')
+        if isinstance(dilation, int):
+            self.add_arg(op_param, 'dilation', dilation, 's_i')
+        else:
+            self.add_arg(op_param, 'dilation', dilation, 'v_i')
         self.add_arg(op_param, 'group', group, 's_i')
         self.add_arg(op_param, 'bias_term', bias_term, 's_i')
 
@@ -292,7 +298,10 @@ class Network(object):
             self.add_arg(op_param, 'pad', pad, 's_i')
         else:
             self.add_arg(op_param, 'pad', pad, 'v_i')
-        self.add_arg(op_param, 'dilation', dilation, 's_i')
+        if isinstance(dilation, int):
+            self.add_arg(op_param, 'dilation', dilation, 's_i')
+        else:
+            self.add_arg(op_param, 'dilation', dilation, 'v_i')
         self.add_arg(op_param, 'group', group, 's_i')
         self.add_arg(op_param, 'deform_group', deform_group, 's_i')
         self.add_arg(op_param, 'bias_term', bias_term, 's_i')
