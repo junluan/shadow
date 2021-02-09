@@ -346,25 +346,6 @@ inline dnnl::memory::desc create_memory_desc(
                             data_type, format_tag);
 }
 
-inline dnnl::deconvolution_forward::desc create_deconvolution_desc(
-    const dnnl::memory::desc& src_desc, const dnnl::memory::desc& weight_desc,
-    const dnnl::memory::desc& bias_desc, const dnnl::memory::desc& dst_desc,
-    int pad_h, int pad_w, int stride_h, int stride_w, int dilation_h,
-    int dilation_w) {
-  if (dilation_h == 1 && dilation_w == 1) {
-    return dnnl::deconvolution_forward::desc(
-        dnnl::prop_kind::forward_inference,
-        dnnl::algorithm::deconvolution_direct, src_desc, weight_desc, bias_desc,
-        dst_desc, {stride_h, stride_w}, {pad_h, pad_w}, {pad_h, pad_w});
-  } else {
-    return dnnl::deconvolution_forward::desc(
-        dnnl::prop_kind::forward_inference,
-        dnnl::algorithm::deconvolution_direct, src_desc, weight_desc, bias_desc,
-        dst_desc, {stride_h, stride_w}, {dilation_h - 1, dilation_w - 1},
-        {pad_h, pad_w}, {pad_h, pad_w});
-  }
-}
-
 inline void batch_normalization_forward(
     void* dnnl_handle, const dnnl::batch_normalization_forward::desc& desc,
     const void* src_data, const void* mean_data, const void* variance_data,
