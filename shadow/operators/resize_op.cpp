@@ -4,20 +4,26 @@
 
 namespace Shadow {
 
+template <typename T>
+inline std::vector<T> expand_param(const std::vector<T>& param, int num) {
+  if (param.size() == 1) {
+    return std::vector<T>(num, param[0]);
+  } else {
+    CHECK_EQ(param.size(), num);
+    return param;
+  }
+}
+
 class ResizeOp : public Operator {
  public:
   ResizeOp(const shadow::OpParam& op_param, Workspace* ws)
       : Operator(op_param, ws) {
-    if (has_argument("size")) {
-      const auto& size = get_paired_argument<int>("size", 0);
-      out_h_ = size.first, out_w_ = size.second;
-    } else {
-      out_h_ = get_single_argument<int>("out_h", 0);
-      out_w_ = get_single_argument<int>("out_w", 0);
-    }
-    const auto& scale = get_paired_argument<float>("scale", 1);
-    scale_h_ = scale.first, scale_w_ = scale.second;
+    size_ = get_repeated_argument<int>("size", 0);
+    scale_ = get_repeated_argument<float>("scale", 1);
+    // Nearest: 0, Bilinear: 1
     type_ = get_single_argument<int>("type", 1);
+    CHECK_GE(type_, 0);
+    CHECK_LE(type_, 1);
     align_corners_ = get_single_argument<bool>("align_corners", false);
 
     kernel_ = std::dynamic_pointer_cast<ResizeKernel>(
@@ -32,44 +38,30 @@ class ResizeOp : public Operator {
 
     CHECK_NE(input, output);
 
-    int in_h = input->shape(2), in_w = input->shape(3);
-    int out_h = out_h_, out_w = out_w_;
+    int num_spatial_axes = input->num_axes() - 2;
 
-    if (inputs.size() > 1) {
-      const auto& size = inputs[1];
-      auto size_type = size->data_type();
-      if (size_type == DataType::kI32) {
-        CHECK_EQ(size->num_axes(), 1);
-        CHECK_EQ(size->count(), 2);
-        VecInt size_data(2, 0);
-        size->get_data<int>(size_data.data(), 2);
-        out_h = size_data[0], out_w = size_data[1];
-      } else if (size_type == DataType::kF32) {
-        CHECK_EQ(size->num_axes(), 4);
-        out_h = size->shape(2), out_w = size->shape(3);
-      }
-    }
+    CHECK_EQ(num_spatial_axes, 2) << "Only support 2D Resize";
 
-    if (out_h == 0 || out_w == 0) {
-      out_h = static_cast<int>(in_h * scale_h_);
-      out_w = static_cast<int>(in_w * scale_w_);
-    }
-
-    CHECK_GT(out_h, 0);
-    CHECK_GT(out_w, 0);
+    const auto& size = expand_param(size_, num_spatial_axes);
+    const auto& scale = expand_param(scale_, num_spatial_axes);
 
     auto out_shape = input->shape();
-    out_shape[2] = out_h;
-    out_shape[3] = out_w;
+    for (int n = 0; n < num_spatial_axes; ++n) {
+      out_shape[n + 2] = size[n] > 0
+                             ? size[n]
+                             : static_cast<int>(input->shape(n + 2) * scale[n]);
+      CHECK_GT(out_shape[n + 2], 0);
+    }
     output->reshape(out_shape);
 
     kernel_->Run(input, output, ws_, type_, align_corners_);
   }
 
  private:
-  int out_h_, out_w_, type_;
-  float scale_h_, scale_w_;
+  int type_;
   bool align_corners_;
+  VecInt size_;
+  VecFloat scale_;
 
   std::shared_ptr<ResizeKernel> kernel_ = nullptr;
 };

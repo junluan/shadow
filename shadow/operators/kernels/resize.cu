@@ -4,9 +4,9 @@ namespace Shadow {
 
 namespace Vision {
 
-__global__ void KernelResizeNearest(const float* in_data, int count, int in_h,
-                                    int in_w, int out_h, int out_w,
-                                    float* out_data) {
+__global__ void KernelResizeNearest2D(const float* in_data, int count, int in_h,
+                                      int in_w, int out_h, int out_w,
+                                      float* out_data) {
   CUDA_KERNEL_LOOP(globalid, count) {
     int temp = globalid / out_w;
     int w_out = globalid % out_w;
@@ -24,9 +24,9 @@ __global__ void KernelResizeNearest(const float* in_data, int count, int in_h,
   }
 }
 
-__global__ void KernelResizeBilinear(const float* in_data, int count, int in_h,
-                                     int in_w, int out_h, int out_w,
-                                     bool align_corners, float* out_data) {
+__global__ void KernelResizeBilinear2D(const float* in_data, int count,
+                                       int in_h, int in_w, int out_h, int out_w,
+                                       bool align_corners, float* out_data) {
   CUDA_KERNEL_LOOP(globalid, count) {
     int temp = globalid / out_w;
     int w_out = globalid % out_w;
@@ -76,26 +76,32 @@ __global__ void KernelResizeBilinear(const float* in_data, int count, int in_h,
 }
 
 template <>
-void Resize<DeviceType::kGPU, float>(const float* in_data,
-                                     const VecInt& in_shape, int type,
-                                     bool align_corners,
-                                     const VecInt& out_shape, float* out_data,
-                                     Context* context) {
-  int batch = in_shape[0], channel = in_shape[1];
+void ResizeNearest2D<DeviceType::kGPU, float>(const float* in_data,
+                                              const VecInt& in_shape,
+                                              const VecInt& out_shape,
+                                              float* out_data,
+                                              Context* context) {
+  int outer_num = in_shape[0] * in_shape[1];
   int in_h = in_shape[2], in_w = in_shape[3];
   int out_h = out_shape[2], out_w = out_shape[3];
-  int count = batch * channel * out_h * out_w;
-  if (type == kNearest) {
-    KernelResizeNearest<<<GetBlocks(count), NumThreads, 0,
+  int count = outer_num * out_h * out_w;
+  KernelResizeNearest2D<<<GetBlocks(count), NumThreads, 0,
                           cudaStream_t(context->stream())>>>(
-        in_data, count, in_h, in_w, out_h, out_w, out_data);
-  } else if (type == kBilinear) {
-    KernelResizeBilinear<<<GetBlocks(count), NumThreads, 0,
+      in_data, count, in_h, in_w, out_h, out_w, out_data);
+  CUDA_CHECK(cudaPeekAtLastError());
+}
+
+template <>
+void ResizeBilinear2D<DeviceType::kGPU, float>(
+    const float* in_data, const VecInt& in_shape, bool align_corners,
+    const VecInt& out_shape, float* out_data, Context* context) {
+  int outer_num = in_shape[0] * in_shape[1];
+  int in_h = in_shape[2], in_w = in_shape[3];
+  int out_h = out_shape[2], out_w = out_shape[3];
+  int count = outer_num * out_h * out_w;
+  KernelResizeBilinear2D<<<GetBlocks(count), NumThreads, 0,
                            cudaStream_t(context->stream())>>>(
-        in_data, count, in_h, in_w, out_h, out_w, align_corners, out_data);
-  } else {
-    LOG(FATAL) << "Unsupported resize type: " << type;
-  }
+      in_data, count, in_h, in_w, out_h, out_w, align_corners, out_data);
   CUDA_CHECK(cudaPeekAtLastError());
 }
 

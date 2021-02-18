@@ -9,17 +9,19 @@ namespace Shadow {
 namespace Vision {
 
 template <DeviceType D, typename T>
-void Resize(const T* in_data, const VecInt& in_shape, int type,
-            bool align_corners, const VecInt& out_shape, T* out_data,
-            Context* context);
+void ResizeNearest2D(const T* in_data, const VecInt& in_shape,
+                     const VecInt& out_shape, T* out_data, Context* context);
+
+template <DeviceType D, typename T>
+void ResizeBilinear2D(const T* in_data, const VecInt& in_shape,
+                      bool align_corners, const VecInt& out_shape, T* out_data,
+                      Context* context);
 
 }  // namespace Vision
 
 }  // namespace Shadow
 
 namespace Shadow {
-
-enum { kNearest = 0, kBilinear = 1 };
 
 class ResizeKernel : public Kernel {
  public:
@@ -41,10 +43,15 @@ class ResizeKernelDefault : public ResizeKernel {
                                 output->mutable_data<float>(), 0,
                                 ws->Ctx().get());
     } else {
-      // Nearest: 0, Bilinear: 1
-      Vision::Resize<D, float>(input->data<float>(), input->shape(), type,
-                               align_corners, output->shape(),
-                               output->mutable_data<float>(), ws->Ctx().get());
+      if (type == 0) {
+        Vision::ResizeNearest2D<D, float>(
+            input->data<float>(), input->shape(), output->shape(),
+            output->mutable_data<float>(), ws->Ctx().get());
+      } else {
+        Vision::ResizeBilinear2D<D, float>(
+            input->data<float>(), input->shape(), align_corners,
+            output->shape(), output->mutable_data<float>(), ws->Ctx().get());
+      }
     }
   }
 
