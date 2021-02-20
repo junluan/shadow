@@ -20,7 +20,7 @@ mark_as_advanced(DNNL_ROOT_DIR ${__looked_for})
 unset(DNNL_DIR)
 
 if (DNNL_INCLUDE_DIRS)
-  parse_header(${DNNL_INCLUDE_DIRS}/dnnl_version.h
+  parse_header(${DNNL_INCLUDE_DIRS}/oneapi/dnnl/dnnl_version.h
                DNNL_VERSION_MAJOR DNNL_VERSION_MINOR DNNL_VERSION_PATCH)
   if (DNNL_VERSION_MAJOR)
     set(DNNL_VERSION "${DNNL_VERSION_MAJOR}.${DNNL_VERSION_MINOR}.${DNNL_VERSION_PATCH}")

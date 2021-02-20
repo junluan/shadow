@@ -407,30 +407,6 @@ inline void concat_forward(void* dnnl_handle,
   stream->wait();
 }
 
-inline void inner_product_forward(void* dnnl_handle,
-                                  const dnnl::inner_product_forward::desc& desc,
-                                  const void* src_data, const void* weight_data,
-                                  const void* bias_data, void* dst_data) {
-  auto* stream = static_cast<dnnl::stream*>(dnnl_handle);
-  const auto& engine = stream->get_engine();
-  const auto& primitive_desc =
-      dnnl::inner_product_forward::primitive_desc(desc, engine);
-  const auto& src_mem = dnnl::memory(primitive_desc.src_desc(), engine,
-                                     const_cast<void*>(src_data));
-  const auto& weight_mem = dnnl::memory(primitive_desc.weights_desc(), engine,
-                                        const_cast<void*>(weight_data));
-  const auto& bias_mem = dnnl::memory(primitive_desc.bias_desc(), engine,
-                                      const_cast<void*>(bias_data));
-  const auto& dst_mem =
-      dnnl::memory(primitive_desc.dst_desc(), engine, dst_data);
-  dnnl::inner_product_forward(primitive_desc)
-      .execute(*stream, {{DNNL_ARG_SRC, src_mem},
-                         {DNNL_ARG_WEIGHTS, weight_mem},
-                         {DNNL_ARG_BIAS, bias_mem},
-                         {DNNL_ARG_DST, dst_mem}});
-  stream->wait();
-}
-
 inline void matmul_forward(void* dnnl_handle, const dnnl::matmul::desc& desc,
                            const void* src_a_data, const void* src_b_data,
                            void* dst_data) {

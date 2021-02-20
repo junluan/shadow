@@ -27,14 +27,14 @@ class ConnectedKernelDNNL : public ConnectedKernel {
         {num_output}, bias_term ? dnnl::memory::format_tag::x
                                 : dnnl::memory::format_tag::undef);
 
-    idnnl::inner_product_forward(
-        ws->Ctx()->dnnl_handle(),
-        dnnl::inner_product_forward::desc(dnnl::prop_kind::forward_inference,
-                                          src_desc, weight_desc, bias_desc,
-                                          dst_desc),
-        input->data<float>(), weight->data<float>(),
-        bias_term ? bias->data<float>() : nullptr,
-        output->mutable_data<float>());
+    const auto& connected_desc = dnnl::inner_product_forward::desc(
+        dnnl::prop_kind::forward_inference, src_desc, weight_desc, bias_desc,
+        dst_desc);
+
+    idnnl::common_forward<dnnl::inner_product_forward>(
+        ws->Ctx()->dnnl_handle(), connected_desc, input->data<float>(),
+        weight->data<float>(), bias_term ? bias->data<float>() : nullptr,
+        output->mutable_data<float>(), -1);
   }
 
   DeviceType device_type() const override { return DeviceType::kCPU; }
