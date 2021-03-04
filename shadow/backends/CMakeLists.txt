@@ -1,7 +1,7 @@
 file(GLOB backends_dir "*")
 
 foreach (backend_dir ${backends_dir})
-  if (IS_DIRECTORY ${backend_dir})
+  if (IS_DIRECTORY ${backend_dir} AND EXISTS ${backend_dir}/CMakeLists.txt)
     add_subdirectory(${backend_dir})
   endif ()
 endforeach ()
