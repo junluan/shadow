@@ -281,7 +281,7 @@ class Network(object):
 
         return op_param
 
-    def add_deform_conv(self, name, bottoms, tops, num_output, kernel_size, stride=1, pad=0, dilation=1, group=1, deform_group=1, bias_term=True):
+    def add_deform_conv(self, name, bottoms, tops, num_output, kernel_size, stride=1, pad=0, dilation=1, group=1, deform_group=1, use_mask=False, bias_term=True):
         op_param = self.add_net_op()
         self.add_common(op_param, name, 'DeformConv', bottoms, tops)
 
@@ -304,6 +304,7 @@ class Network(object):
             self.add_arg(op_param, 'dilation', dilation, 'v_i')
         self.add_arg(op_param, 'group', group, 's_i')
         self.add_arg(op_param, 'deform_group', deform_group, 's_i')
+        self.add_arg(op_param, 'use_mask', use_mask, 's_i')
         self.add_arg(op_param, 'bias_term', bias_term, 's_i')
 
         return op_param

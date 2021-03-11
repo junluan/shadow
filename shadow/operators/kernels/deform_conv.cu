@@ -24,10 +24,11 @@ __device__ float deform_im2col_bilinear(const float* data, float x, float y,
 }
 
 __global__ void deform_im2col_gpu_kernel(
-    int count, const float* in_data, const float* offset_data, int in_h,
-    int in_w, int kernel_size_h, int kernel_size_w, int stride_h, int stride_w,
-    int pad_h, int pad_w, int dilation_h, int dilation_w,
-    int channel_per_deform_group, int out_h, int out_w, float* col_data) {
+    int count, const float* in_data, const float* offset_data,
+    const float* mask_data, int in_h, int in_w, int kernel_size_h,
+    int kernel_size_w, int stride_h, int stride_w, int pad_h, int pad_w,
+    int dilation_h, int dilation_w, int channel_per_deform_group, int out_h,
+    int out_w, bool use_mask, float* col_data) {
   CUDA_KERNEL_LOOP(globalid, count) {
     int temp = globalid / out_w;
     int w_out = globalid % out_w;
@@ -35,25 +36,33 @@ __global__ void deform_im2col_gpu_kernel(
     int c_in = temp / out_h;
     int c_out = c_in * kernel_size_h * kernel_size_w;
     int deform_group_idx = c_in / channel_per_deform_group;
+    int om_offset = deform_group_idx * kernel_size_h * kernel_size_w * out_h;
     int h_offset = h_out * stride_h - pad_h;
     int w_offset = w_out * stride_w - pad_w;
+    int out_spatial = out_h * out_w;
     in_data += c_in * in_h * in_w;
-    offset_data +=
-        (2 * deform_group_idx * kernel_size_h * kernel_size_w * out_h + h_out) *
-            out_w +
-        w_out;
+    offset_data += (2 * om_offset + h_out) * out_w + w_out;
+    if (use_mask) {
+      mask_data += (om_offset + h_out) * out_w + w_out;
+    }
     col_data += (c_out * out_h + h_out) * out_w + w_out;
     for (int kh = 0; kh < kernel_size_h; ++kh) {
       for (int kw = 0; kw < kernel_size_w;
-           ++kw, offset_data += 2 * out_h * out_w) {
+           ++kw, offset_data += 2 * out_spatial) {
         auto h_in = h_offset + kh * dilation_h + offset_data[0];
-        auto w_in = w_offset + kw * dilation_w + offset_data[out_h * out_w];
+        auto w_in = w_offset + kw * dilation_w + offset_data[out_spatial];
+        auto mask_val = 1.f;
+        if (use_mask) {
+          mask_val = *mask_data;
+          mask_data += out_spatial;
+        }
         if (h_in > -1 && h_in < in_h && w_in > -1 && w_in < in_w) {
-          *col_data = deform_im2col_bilinear(in_data, w_in, h_in, in_w, in_h);
+          *col_data = mask_val *
+                      deform_im2col_bilinear(in_data, w_in, h_in, in_w, in_h);
         } else {
           *col_data = 0.f;
         }
-        col_data += out_h * out_w;
+        col_data += out_spatial;
       }
     }
   }
@@ -62,17 +71,18 @@ __global__ void deform_im2col_gpu_kernel(
 template <>
 void DeformIm2Col2D<DeviceType::kGPU, float>(
     const float* in_data, const VecInt& in_shape, const float* offset_data,
-    int kernel_size_h, int kernel_size_w, int stride_h, int stride_w, int pad_h,
-    int pad_w, int dilation_h, int dilation_w, int deform_group,
-    const VecInt& out_shape, float* col_data, Context* context) {
+    const float* mask_data, int kernel_size_h, int kernel_size_w, int stride_h,
+    int stride_w, int pad_h, int pad_w, int dilation_h, int dilation_w,
+    int deform_group, bool use_mask, const VecInt& out_shape, float* col_data,
+    Context* context) {
   int in_c = in_shape[1], in_h = in_shape[2], in_w = in_shape[3];
   int out_h = out_shape[2], out_w = out_shape[3];
   int count = in_c * out_h * out_w;
   deform_im2col_gpu_kernel<<<GetBlocks(count), NumThreads, 0,
                              cudaStream_t(context->stream())>>>(
-      count, in_data, offset_data, in_h, in_w, kernel_size_h, kernel_size_w,
-      stride_h, stride_w, pad_h, pad_w, dilation_h, dilation_w,
-      in_c / deform_group, out_h, out_w, col_data);
+      count, in_data, offset_data, mask_data, in_h, in_w, kernel_size_h,
+      kernel_size_w, stride_h, stride_w, pad_h, pad_w, dilation_h, dilation_w,
+      in_c / deform_group, out_h, out_w, use_mask, col_data);
   CUDA_CHECK(cudaPeekAtLastError());
 }
 
