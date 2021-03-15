@@ -92,7 +92,10 @@ class GPUContext : public Context {
     cudaDeviceProp prop{};
     CUDA_CHECK(cudaGetDeviceProperties(&prop, device_id));
     LOG_IF(INFO, debug) << "GPU ID: " << device_id << ", Type: " << prop.name
-                        << ", Capability: " << prop.major << "." << prop.minor;
+                        << ", Capability: " << prop.major << "." << prop.minor
+                        << ", MP: " << prop.multiProcessorCount
+                        << ", Thread/Block: " << prop.maxThreadsPerBlock
+                        << ", Thread/MP: " << prop.maxThreadsPerMultiProcessor;
   }
 
   int device_id_ = 0;
