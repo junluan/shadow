@@ -30,13 +30,6 @@ class MatMulOp : public Operator {
     int num_axes_a = input_a->num_axes(), num_axes_b = input_b->num_axes();
 
     CHECK(num_axes_a >= 2 && num_axes_b >= 2);
-    if (num_axes_a == num_axes_b) {
-      for (int d = 0; d < num_axes_a - 2; ++d) {
-        CHECK_EQ(input_a->shape(d), input_b->shape(d));
-      }
-    } else {
-      CHECK(num_axes_a == 2 || num_axes_b == 2);
-    }
 
     int rows_a = input_a->shape(-2), cols_a = input_a->shape(-1);
     int rows_b = input_b->shape(-2), cols_b = input_b->shape(-1);
@@ -47,19 +40,34 @@ class MatMulOp : public Operator {
 
     CHECK_EQ(K, transpose_b_ ? cols_b : rows_b);
 
-    if (num_axes_a >= num_axes_b) {
-      auto out_shape = input_a->shape();
-      out_shape[num_axes_a - 2] = M;
-      out_shape[num_axes_a - 1] = N;
-      output->reshape(out_shape);
-    } else {
-      auto out_shape = input_b->shape();
-      out_shape[num_axes_b - 2] = M;
-      out_shape[num_axes_b - 1] = N;
-      output->reshape(out_shape);
+    const auto input_a_shape = input_a->shape(),
+               input_b_shape = input_b->shape();
+    int num_diff_axes = num_axes_a - num_axes_b;
+    if (num_diff_axes > 0) {
+      auto padded_shape = input_b_shape;
+      padded_shape.insert(padded_shape.begin(), std::abs(num_diff_axes), 1);
+      input_b->set_shape(padded_shape);
+    } else if (num_diff_axes < 0) {
+      auto padded_shape = input_a_shape;
+      padded_shape.insert(padded_shape.begin(), std::abs(num_diff_axes), 1);
+      input_a->set_shape(padded_shape);
     }
+    CHECK_EQ(input_a->num_axes(), input_b->num_axes());
+
+    int num_axes = input_a->num_axes();
+
+    VecInt out_shape(num_axes);
+    for (int n = 0; n < num_axes - 2; ++n) {
+      int input_a_dim = input_a->shape(n), input_b_dim = input_b->shape(n);
+      CHECK(input_a_dim == input_b_dim || input_a_dim == 1 || input_b_dim == 1);
+      out_shape[n] = std::max(input_a_dim, input_b_dim);
+    }
+    out_shape[num_axes - 2] = M, out_shape[num_axes - 1] = N;
+    output->reshape(out_shape);
 
     kernel_->Run(input_a, input_b, output, ws_, transpose_a_, transpose_b_);
+
+    input_a->set_shape(input_a_shape), input_b->set_shape(input_b_shape);
   }
 
  private:
