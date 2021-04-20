@@ -1,9 +1,9 @@
 set(main_arch)
-set(known_archs 20 21 30 35 37 50 52 60 61 70 75 80)
+set(known_archs 20 21 30 35 37 50 52 60 61 70 72 75 80)
 set(known_archs8 20 21 30 35 37 50 52 60 61)
-set(known_archs9 30 35 37 50 52 60 61 70)
-set(known_archs10 30 35 37 50 52 60 61 70 75)
-set(known_archs11 52 60 61 70 75 80)
+set(known_archs9 30 35 37 50 52 60 61 70 72)
+set(known_archs10 30 35 37 50 52 60 61 70 72 75)
+set(known_archs11 52 60 61 70 72 75 80)
 
 function (detect_cuda_archs cuda_archs)
   if (NOT CUDA_gpu_detect_output)
@@ -73,7 +73,7 @@ function (select_nvcc_arch_flags out_variable)
     endif ()
   endforeach ()
 
-  set(__nvcc_flags "-gencode arch=compute_${main_arch},code=\"compute_${main_arch}${__nvcc_ptx_archs}\"")
+  set(__nvcc_flags "-gencode arch=compute_${main_arch},code=\\\"compute_${main_arch}${__nvcc_ptx_archs}\\\"")
 
   set(${out_variable}          ${__nvcc_flags}          PARENT_SCOPE)
   set(${out_variable}_readable ${__nvcc_archs_readable} PARENT_SCOPE)
